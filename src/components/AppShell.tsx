@@ -16,7 +16,7 @@ export function AppShell() {
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
       <div className="relative w-full max-w-[390px] min-h-screen bg-background flex flex-col">
-        <main className="flex-1 pb-28">
+        <main key={location.pathname} className="flex-1 pb-28 animate-fade-in">
           <Outlet />
         </main>
 
@@ -31,7 +31,9 @@ export function AppShell() {
                 <Link
                   to="/new-order"
                   aria-label="New Order"
-                  className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background transition-transform active:scale-95"
+                  className={`-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background transition-transform active:scale-95 ${
+                    isActive("/new-order") ? "scale-105" : ""
+                  }`}
                 >
                   <Plus className="h-7 w-7" strokeWidth={2.5} />
                 </Link>
@@ -62,12 +64,15 @@ function NavItem({
     <li>
       <Link
         to={to}
-        className={`flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors ${
+        className={`flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors relative ${
           active ? "text-primary" : "text-muted-foreground"
         }`}
       >
-        <Icon className="h-5 w-5" />
+        <Icon className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`} />
         <span>{label}</span>
+        {active && (
+          <span className="absolute -bottom-0.5 h-1 w-1 rounded-full bg-primary" />
+        )}
       </Link>
     </li>
   );
