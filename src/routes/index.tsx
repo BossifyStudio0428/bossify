@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { DollarSign, ShoppingBag, AlertCircle, PackageX } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -48,10 +48,19 @@ function Index() {
   return (
     <div className="px-5 pt-10 pb-4 space-y-6">
       {/* Greeting */}
-      <header>
-        <p className="text-sm text-muted-foreground">Good morning,</p>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Kak Siti 👋</h1>
-        <p className="mt-1 text-xs text-muted-foreground">{today}</p>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm text-muted-foreground">Good morning,</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Kak Siti 👋</h1>
+          <p className="mt-1 text-xs text-muted-foreground">{today}</p>
+        </div>
+        <Link
+          to="/profile"
+          aria-label="Profile & Settings"
+          className="h-11 w-11 shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-sm font-bold shadow-[var(--shadow-soft)] active:scale-95 transition-transform"
+        >
+          KS
+        </Link>
       </header>
 
       {/* Stats grid */}
