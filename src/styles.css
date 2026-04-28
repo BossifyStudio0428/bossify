@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -62,26 +63,32 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 1rem;
+  /* #F4F3F8 */
+  --background: oklch(0.964 0.008 290);
+  /* #1E1333 */
+  --foreground: oklch(0.215 0.062 295);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: oklch(0.215 0.062 295);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.215 0.062 295);
+  /* #7C3AED */
+  --primary: oklch(0.553 0.245 295);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.964 0.008 290);
+  --secondary-foreground: oklch(0.215 0.062 295);
+  --muted: oklch(0.964 0.008 290);
+  /* #6B7280 */
+  --muted-foreground: oklch(0.551 0.022 264);
+  --accent: oklch(0.95 0.03 295);
+  --accent-foreground: oklch(0.553 0.245 295);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --border: oklch(0.92 0.012 290);
+  --input: oklch(0.92 0.012 290);
+  --ring: oklch(0.553 0.245 295);
+  --shadow-soft: 0 8px 24px -8px color-mix(in oklab, var(--primary) 25%, transparent);
+  --shadow-card: 0 4px 16px -6px color-mix(in oklab, var(--primary) 15%, transparent);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -140,5 +147,6 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: "DM Sans", system-ui, sans-serif;
   }
 }
