@@ -1,50 +1,62 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/orders")({
-  component: OrdersPage,
-});
+export const Route = createFileRoute("/orders")({ component: OrdersPage });
 
-type Status = "Unpaid" | "Paid" | "Pending";
-type Filter = "All" | Status;
-
-const orders: {
-  id: string;
-  name: string;
-  product: string;
-  amount: string;
-  status: Status;
-  time: string;
-}[] = [
-  { id: "ORD-001", name: "Siti Aminah", product: "Kuih Lapis (x3)", amount: "RM 18", status: "Unpaid", time: "9:41 AM" },
-  { id: "ORD-002", name: "Farah Nadia", product: "Nasi Lemak Pack (x5)", amount: "RM 45", status: "Paid", time: "9:15 AM" },
-  { id: "ORD-003", name: "Mei Ling", product: "Baju Kurung Moden", amount: "RM 120", status: "Paid", time: "8:50 AM" },
-  { id: "ORD-004", name: "Nurul Huda", product: "Handmade Scrunchie (x10)", amount: "RM 60", status: "Pending", time: "8:30 AM" },
-  { id: "ORD-005", name: "Zainab Hassan", product: "Kek Batik (Large)", amount: "RM 35", status: "Unpaid", time: "8:00 AM" },
-];
-
+type Filter = "All" | OrderStatus;
 const filters: Filter[] = ["All", "Unpaid", "Paid", "Pending"];
 
-const statusStyles: Record<Status, string> = {
+const statusStyles: Record<OrderStatus, string> = {
   Paid: "bg-emerald-100 text-emerald-700",
   Unpaid: "bg-red-100 text-red-600",
   Pending: "bg-amber-100 text-amber-700",
 };
 
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("en-MY", { hour: "numeric", minute: "2-digit" });
+}
+
 function OrdersPage() {
   const [active, setActive] = useState<Filter>("All");
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) setError(error.message);
+    else setOrders((data ?? []) as OrderRow[]);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const markPaid = async (id: string) => {
+    await supabase.from("orders").update({ status: "Paid" }).eq("id", id);
+    load();
+  };
+
   const visible = active === "All" ? orders : orders.filter((o) => o.status === active);
+  const todayCount = orders.filter((o) => {
+    const d = new Date(o.created_at);
+    const t = new Date();
+    return d.toDateString() === t.toDateString();
+  }).length;
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-5">
       <header className="flex items-center gap-3">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Orders</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
-          5 today
+          {todayCount} today
         </span>
       </header>
 
-      {/* Filter tabs */}
       <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
         <div className="flex gap-2 w-max">
           {filters.map((f) => {
@@ -66,41 +78,50 @@ function OrdersPage() {
         </div>
       </div>
 
-      {/* Order cards */}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
       <div className="space-y-3">
-        {visible.map((o) => (
+        {loading && <p className="text-center text-sm text-muted-foreground py-10">Loading...</p>}
+
+        {!loading && visible.map((o) => (
           <article
             key={o.id}
             className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4"
           >
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold shrink-0">
-                {o.name.charAt(0)}
+                {o.customer_name.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{o.name}</p>
+                <p className="text-sm font-semibold text-foreground truncate">{o.customer_name}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {o.id} · {o.time}
+                  {o.code} · {formatTime(o.created_at)}
                 </p>
               </div>
-              <span
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}
-              >
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}>
                 {o.status}
               </span>
             </div>
 
-            <p className="mt-3 text-sm text-muted-foreground">{o.product}</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {o.product} {o.quantity > 1 ? `(x${o.quantity})` : ""}
+            </p>
 
             <div className="mt-3 flex items-center justify-between">
-              <p className="text-lg font-bold text-foreground">{o.amount}</p>
+              <p className="text-lg font-bold text-foreground">RM {Number(o.amount).toFixed(2)}</p>
               {o.status === "Unpaid" && (
-                <button className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500 text-white shadow-sm active:scale-95 transition-transform">
-                  📲 Send Reminder
+                <button
+                  onClick={() => markPaid(o.id)}
+                  className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500 text-white shadow-sm active:scale-95 transition-transform"
+                >
+                  Mark Paid ✓
                 </button>
               )}
               {o.status === "Pending" && (
-                <button className="text-xs font-semibold px-3 py-2 rounded-xl bg-amber-400 text-amber-950 shadow-sm active:scale-95 transition-transform">
+                <button
+                  onClick={() => markPaid(o.id)}
+                  className="text-xs font-semibold px-3 py-2 rounded-xl bg-amber-400 text-amber-950 shadow-sm active:scale-95 transition-transform"
+                >
                   Mark Paid ✓
                 </button>
               )}
@@ -108,7 +129,7 @@ function OrdersPage() {
           </article>
         ))}
 
-        {visible.length === 0 && (
+        {!loading && visible.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-10">No orders here.</p>
         )}
       </div>

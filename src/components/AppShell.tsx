@@ -1,5 +1,7 @@
-import { Outlet, Link, useLocation } from "@tanstack/react-router";
+import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
+import { useEffect } from "react";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
@@ -9,7 +11,38 @@ const tabs = [
 ] as const;
 
 export function AppShell() {
+  return (
+    <AuthProvider>
+      <ShellInner />
+    </AuthProvider>
+  );
+}
+
+function ShellInner() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { session, loading } = useAuth();
+
+  const isAuthRoute = location.pathname === "/auth";
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session && !isAuthRoute) navigate({ to: "/auth" });
+    if (session && isAuthRoute) navigate({ to: "/" });
+  }, [session, loading, isAuthRoute, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
+        Loading...
+      </div>
+    );
+  }
+
+  if (isAuthRoute || !session) {
+    return <Outlet />;
+  }
+
   const isActive = (to: string) =>
     to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
 
