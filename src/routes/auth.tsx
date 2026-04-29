@@ -42,10 +42,16 @@ function AuthPage() {
     <div className="min-h-screen flex items-center justify-center px-5 bg-background">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Bossify <span className="text-primary">✦</span>
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <img
+            src="/assets/bossify-logo.png"
+            alt="Bossify"
+            className="mx-auto mb-3"
+            style={{ width: 140 }}
+          />
+          <p className="text-sm italic text-muted-foreground">
+            Manage your shop like a boss.
+          </p>
+          <p className="mt-3 text-sm text-muted-foreground">
             {mode === "signin" ? "欢迎回来" : "创建你的店铺账号"}
           </p>
         </div>
