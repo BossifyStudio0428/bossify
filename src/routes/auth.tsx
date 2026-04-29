@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
+import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -8,6 +9,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const { signIn, signUp } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -49,17 +51,17 @@ function AuthPage() {
             style={{ width: 140 }}
           />
           <p className="text-sm italic text-muted-foreground">
-            Manage your shop like a boss.
+            {t("slogan")}
           </p>
           <p className="mt-3 text-sm text-muted-foreground">
-            {mode === "signin" ? "欢迎回来" : "创建你的店铺账号"}
+            {mode === "signin" ? t("login_title") : t("register_title")}
           </p>
         </div>
 
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
-              Email
+              {t("email")}
             </label>
             <input
               type="email"
@@ -72,7 +74,7 @@ function AuthPage() {
           </div>
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
-              Password
+              {t("password")}
             </label>
             <input
               type="password"
@@ -93,7 +95,7 @@ function AuthPage() {
             disabled={loading}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition-transform disabled:opacity-60"
           >
-            {loading ? "请稍候..." : mode === "signin" ? "登录" : "注册"}
+            {loading ? t("loading") : mode === "signin" ? t("login_btn") : t("register")}
           </button>
         </form>
 
@@ -106,7 +108,7 @@ function AuthPage() {
           }}
           className="w-full text-center text-xs text-muted-foreground underline"
         >
-          {mode === "signin" ? "没有账号？去注册" : "已有账号？去登录"}
+          {mode === "signin" ? `${t("no_account")} ${t("register")}` : `${t("already_account")} ${t("login_btn")}`}
         </button>
       </div>
     </div>
