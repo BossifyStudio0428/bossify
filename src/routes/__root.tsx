@@ -30,14 +30,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Bossify" },
+      { name: "description", content: "Bossify — order & payment app for Malaysian WhatsApp sellers. Track orders, payments, inventory & customers. React + Supabase. English, BM & Chinese." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Bossify" },
+      { property: "og:description", content: "Bossify — order & payment app for Malaysian WhatsApp sellers. Track orders, payments, inventory & customers. React + Supabase. English, BM & Chinese." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Bossify" },
+      { name: "twitter:description", content: "Bossify — order & payment app for Malaysian WhatsApp sellers. Track orders, payments, inventory & customers. React + Supabase. English, BM & Chinese." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9734b75e-f861-4dba-b5c6-dc7c548a69d7/id-preview-38e0a08e--db91ee30-ba9c-4741-9a03-2d8ed9ec2d81.lovable.app-1777450424073.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9734b75e-f861-4dba-b5c6-dc7c548a69d7/id-preview-38e0a08e--db91ee30-ba9c-4741-9a03-2d8ed9ec2d81.lovable.app-1777450424073.png" },
     ],
     links: [
       {
