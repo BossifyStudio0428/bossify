@@ -14,6 +14,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NewOrderRouteImport } from './routes/new-order'
+import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -44,6 +45,11 @@ const NewOrderRoute = NewOrderRouteImport.update({
   path: '/new-order',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LanguageRoute = LanguageRouteImport.update({
+  id: '/language',
+  path: '/language',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InventoryRoute = InventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/customers': typeof CustomersRoute
   '/inventory': typeof InventoryRoute
+  '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/customers': typeof CustomersRoute
   '/inventory': typeof InventoryRoute
+  '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/customers': typeof CustomersRoute
   '/inventory': typeof InventoryRoute
+  '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/customers'
     | '/inventory'
+    | '/language'
     | '/new-order'
     | '/onboarding'
     | '/orders'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/customers'
     | '/inventory'
+    | '/language'
     | '/new-order'
     | '/onboarding'
     | '/orders'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/customers'
     | '/inventory'
+    | '/language'
     | '/new-order'
     | '/onboarding'
     | '/orders'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CustomersRoute: typeof CustomersRoute
   InventoryRoute: typeof InventoryRoute
+  LanguageRoute: typeof LanguageRoute
   NewOrderRoute: typeof NewOrderRoute
   OnboardingRoute: typeof OnboardingRoute
   OrdersRoute: typeof OrdersRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/language': {
+      id: '/language'
+      path: '/language'
+      fullPath: '/language'
+      preLoaderRoute: typeof LanguageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/inventory': {
       id: '/inventory'
       path: '/inventory'
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CustomersRoute: CustomersRoute,
   InventoryRoute: InventoryRoute,
+  LanguageRoute: LanguageRoute,
   NewOrderRoute: NewOrderRoute,
   OnboardingRoute: OnboardingRoute,
   OrdersRoute: OrdersRoute,

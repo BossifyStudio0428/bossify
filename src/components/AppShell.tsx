@@ -3,6 +3,7 @@ import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { I18nProvider, useI18n } from "@/contexts/I18nContext";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
@@ -13,9 +14,11 @@ const tabs = [
 
 export function AppShell() {
   return (
-    <AuthProvider>
-      <ShellInner />
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <ShellInner />
+      </AuthProvider>
+    </I18nProvider>
   );
 }
 
@@ -23,9 +26,25 @@ function ShellInner() {
   const location = useLocation();
   const navigate = useNavigate();
   const { session, loading } = useAuth();
+  const { t } = useI18n();
 
   const isAuthRoute = location.pathname === "/auth";
   const isOnboardingRoute = location.pathname === "/onboarding";
+  const isSplashRoute = location.pathname === "/splash";
+  const isLanguageRoute = location.pathname === "/language";
+  const isPublicFlow = isSplashRoute || isLanguageRoute;
+
+  // Splash gate — first visit goes to /splash
+  const [splashShown, setSplashShown] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return sessionStorage.getItem("bossify_splash_shown") === "1";
+  });
+  useEffect(() => {
+    if (isSplashRoute) {
+      sessionStorage.setItem("bossify_splash_shown", "1");
+      setSplashShown(true);
+    }
+  }, [isSplashRoute]);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
@@ -53,6 +72,11 @@ function ShellInner() {
 
   useEffect(() => {
     if (loading) return;
+    if (!splashShown) {
+      navigate({ to: "/splash" });
+      return;
+    }
+    if (isPublicFlow) return;
     if (!session && !isAuthRoute) {
       navigate({ to: "/auth" });
       return;
@@ -65,17 +89,17 @@ function ShellInner() {
       if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding" });
       if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/" });
     }
-  }, [session, loading, isAuthRoute, isOnboardingRoute, onboardingChecked, needsOnboarding, navigate]);
+  }, [session, loading, isAuthRoute, isOnboardingRoute, isPublicFlow, splashShown, onboardingChecked, needsOnboarding, navigate]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
-        Loading...
+        {t("loading")}
       </div>
     );
   }
 
-  if (isAuthRoute || isOnboardingRoute || !session) {
+  if (isPublicFlow || isAuthRoute || isOnboardingRoute || !session) {
     return <Outlet />;
   }
 
