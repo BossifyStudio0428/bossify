@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
+import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/orders")({ component: OrdersPage });
 
@@ -18,6 +19,7 @@ function formatTime(iso: string) {
 }
 
 function OrdersPage() {
+  const { t } = useI18n();
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,9 +53,9 @@ function OrdersPage() {
   return (
     <div className="px-5 pt-10 pb-4 space-y-5">
       <header className="flex items-center gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Orders</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("orders")}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
-          {todayCount} today
+          {todayCount} {t("today_count")}
         </span>
       </header>
 
@@ -71,7 +73,7 @@ function OrdersPage() {
                     : "bg-muted text-muted-foreground"
                 }`}
               >
-                {f}
+                {f === "All" ? t("all") : f === "Paid" ? t("paid") : f === "Unpaid" ? t("unpaid") : t("pending")}
               </button>
             );
           })}
@@ -81,7 +83,7 @@ function OrdersPage() {
       {error && <p className="text-xs text-red-500">{error}</p>}
 
       <div className="space-y-3">
-        {loading && <p className="text-center text-sm text-muted-foreground py-10">Loading...</p>}
+        {loading && <p className="text-center text-sm text-muted-foreground py-10">{t("loading")}</p>}
 
         {!loading && visible.map((o) => (
           <article
@@ -99,7 +101,7 @@ function OrdersPage() {
                 </p>
               </div>
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}>
-                {o.status}
+                {o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending")}
               </span>
             </div>
 
@@ -114,7 +116,7 @@ function OrdersPage() {
                   onClick={() => markPaid(o.id)}
                   className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500 text-white shadow-sm active:scale-95 transition-transform"
                 >
-                  Mark Paid ✓
+                  {t("mark_paid")}
                 </button>
               )}
               {o.status === "Pending" && (
@@ -122,7 +124,7 @@ function OrdersPage() {
                   onClick={() => markPaid(o.id)}
                   className="text-xs font-semibold px-3 py-2 rounded-xl bg-amber-400 text-amber-950 shadow-sm active:scale-95 transition-transform"
                 >
-                  Mark Paid ✓
+                  {t("mark_paid")}
                 </button>
               )}
             </div>
@@ -130,7 +132,7 @@ function OrdersPage() {
         ))}
 
         {!loading && visible.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10">No orders here.</p>
+          <p className="text-center text-sm text-muted-foreground py-10">{t("no_orders_here")}</p>
         )}
       </div>
     </div>
