@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { DollarSign, ShoppingBag, AlertCircle, PackageX } from "lucide-react";
 import { supabase, type OrderRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -14,6 +15,7 @@ const statusStyles: Record<string, string> = {
 
 function Index() {
   const { user } = useAuth();
+  const { t, lang } = useI18n();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
 
@@ -28,7 +30,8 @@ function Index() {
     })();
   }, []);
 
-  const today = new Date().toLocaleDateString("en-MY", {
+  const localeMap = { en: "en-MY", ms: "ms-MY", zh: "zh-CN" } as const;
+  const today = new Date().toLocaleDateString(localeMap[lang], {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
   const isToday = (iso: string) => new Date(iso).toDateString() === new Date().toDateString();
@@ -37,10 +40,10 @@ function Index() {
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
 
   const stats = [
-    { label: "Today's Revenue", value: `RM ${todayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "New Orders", value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Unpaid", value: String(unpaidCount), icon: AlertCircle, color: "text-red-500", bg: "bg-red-50" },
-    { label: "Low Stock", value: String(lowStock), icon: PackageX, color: "text-amber-500", bg: "bg-amber-50" },
+    { label: t("todays_revenue"), value: `RM ${todayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: t("new_orders"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" },
+    { label: t("unpaid"), value: String(unpaidCount), icon: AlertCircle, color: "text-red-500", bg: "bg-red-50" },
+    { label: t("low_stock"), value: String(lowStock), icon: PackageX, color: "text-amber-500", bg: "bg-amber-50" },
   ];
 
   // Weekly chart
@@ -58,13 +61,15 @@ function Index() {
 
   const recent = orders.slice(0, 3);
   const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? t("good_morning") : hour < 18 ? t("good_afternoon") : t("good_evening");
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-6">
       <header className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm text-muted-foreground">Good morning,</p>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome 👋</h1>
+          <p className="text-sm text-muted-foreground">{greeting},</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("welcome")} 👋</h1>
           <p className="mt-1 text-xs text-muted-foreground">{today}</p>
         </div>
         <Link
@@ -90,7 +95,7 @@ function Index() {
 
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
-          Weekly Sales (RM)
+          {t("weekly_sales")}
         </p>
         <div className="mt-4 flex items-end justify-between gap-2 h-32">
           {weekly.map((w, i) => {
@@ -113,11 +118,11 @@ function Index() {
 
       <section>
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
-          Recent Orders
+          {t("recent_orders")}
         </p>
         <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
           {recent.length === 0 && (
-            <p className="text-center text-xs text-muted-foreground py-6">No orders yet.</p>
+            <p className="text-center text-xs text-muted-foreground py-6">{t("no_orders_yet")}</p>
           )}
           {recent.map((o) => (
             <div key={o.id} className="flex items-center gap-3 p-4">
