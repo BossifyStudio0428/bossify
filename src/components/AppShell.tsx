@@ -1,7 +1,8 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
@@ -24,12 +25,47 @@ function ShellInner() {
   const { session, loading } = useAuth();
 
   const isAuthRoute = location.pathname === "/auth";
+  const isOnboardingRoute = location.pathname === "/onboarding";
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (!session?.user) {
+      setOnboardingChecked(false);
+      setNeedsOnboarding(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("onboarding_responses")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setNeedsOnboarding(!data);
+      setOnboardingChecked(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (loading) return;
-    if (!session && !isAuthRoute) navigate({ to: "/auth" });
-    if (session && isAuthRoute) navigate({ to: "/" });
-  }, [session, loading, isAuthRoute, navigate]);
+    if (!session && !isAuthRoute) {
+      navigate({ to: "/auth" });
+      return;
+    }
+    if (session && isAuthRoute) {
+      navigate({ to: "/" });
+      return;
+    }
+    if (session && onboardingChecked) {
+      if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding" });
+      if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/" });
+    }
+  }, [session, loading, isAuthRoute, isOnboardingRoute, onboardingChecked, needsOnboarding, navigate]);
 
   if (loading) {
     return (
@@ -39,7 +75,7 @@ function ShellInner() {
     );
   }
 
-  if (isAuthRoute || !session) {
+  if (isAuthRoute || isOnboardingRoute || !session) {
     return <Outlet />;
   }
 
@@ -49,6 +85,13 @@ function ShellInner() {
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
       <div className="relative w-full max-w-[390px] min-h-screen bg-background flex flex-col">
+        {/* Top header with Bossify icon */}
+        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur border-b border-border/40">
+          <div className="flex items-center gap-2 px-5 h-12">
+            <img src="/assets/bossify-logo.png" alt="Bossify" className="h-7 w-7 object-contain" />
+            <span className="text-[13px] font-bold text-foreground tracking-tight">Bossify</span>
+          </div>
+        </header>
         <main key={location.pathname} className="flex-1 pb-28 animate-fade-in">
           <Outlet />
         </main>
