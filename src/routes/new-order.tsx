@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
@@ -13,7 +14,13 @@ const statuses: { key: OrderStatus; label: string; bg: string; text: string; rin
 
 function NewOrderPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
+  const statusLabels: Record<OrderStatus, string> = {
+    Paid: `${t("paid")} ✓`,
+    Unpaid: t("unpaid"),
+    Pending: t("pending"),
+  };
   const [status, setStatus] = useState<OrderStatus>("Unpaid");
   const [form, setForm] = useState({
     customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "",
@@ -80,21 +87,21 @@ function NewOrderPage() {
     <div className="px-5 pt-10 pb-6 space-y-6">
       <header>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          New Order <span className="text-primary">✦</span>
+          {t("new_order")} <span className="text-primary">✦</span>
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">Fill in the details below</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t("fill_details")}</p>
       </header>
 
       <form className="space-y-5" onSubmit={save}>
-        <Field label="Customer Name" icon="👤" placeholder="e.g. Siti Aminah" value={form.customer_name} onChange={upd("customer_name")} required />
-        <Field label="Phone Number" icon="📱" placeholder="e.g. 0123456789" value={form.phone} onChange={upd("phone")} type="tel" />
-        <Field label="Product Name" icon="🛍️" placeholder="Type or select product" value={form.product} onChange={upd("product")} required />
-        <Field label="Quantity" icon="#" placeholder="1" value={form.quantity} onChange={upd("quantity")} type="number" />
-        <Field label="Price (RM)" icon="💰" placeholder="0.00" value={form.amount} onChange={upd("amount")} type="number" required />
+        <Field label={t("customer_name")} icon="👤" placeholder="e.g. Siti Aminah" value={form.customer_name} onChange={upd("customer_name")} required />
+        <Field label={t("phone_number")} icon="📱" placeholder="e.g. 0123456789" value={form.phone} onChange={upd("phone")} type="tel" />
+        <Field label={t("product")} icon="🛍️" placeholder="..." value={form.product} onChange={upd("product")} required />
+        <Field label={t("quantity")} icon="#" placeholder="1" value={form.quantity} onChange={upd("quantity")} type="number" />
+        <Field label={t("price")} icon="💰" placeholder="0.00" value={form.amount} onChange={upd("amount")} type="number" required />
 
         <div className="space-y-1.5">
           <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
-            Payment Status
+            {t("payment_status")}
           </p>
           <div className="grid grid-cols-3 gap-2">
             {statuses.map((s) => {
@@ -104,7 +111,7 @@ function NewOrderPage() {
                   key={s.key} type="button" onClick={() => setStatus(s.key)}
                   className={`py-3 rounded-2xl text-sm font-semibold transition-all ${s.bg} ${s.text} ${sel ? `ring-2 ${s.ring}` : "ring-0"}`}
                 >
-                  {s.label}
+                  {statusLabels[s.key]}
                 </button>
               );
             })}
@@ -113,11 +120,11 @@ function NewOrderPage() {
 
         <div className="space-y-1.5">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
-            Notes (Optional)
+            {t("notes")}
           </label>
           <textarea
             rows={3} value={form.notes} onChange={upd("notes")}
-            placeholder="Add special instructions..."
+            placeholder={t("add_special")}
             className="w-full rounded-2xl bg-muted/60 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
           />
         </div>
@@ -129,13 +136,13 @@ function NewOrderPage() {
             type="submit" disabled={saving}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition-transform disabled:opacity-60"
           >
-            {saving ? "Saving..." : "Save Order"}
+            {saving ? t("saving") : t("save_order")}
           </button>
           <button
             type="button"
             className="w-full py-4 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-sm active:scale-[0.99] transition-transform"
           >
-            📲 Save & Send WhatsApp Confirmation
+            📲 {t("save_whatsapp")}
           </button>
         </div>
       </form>
