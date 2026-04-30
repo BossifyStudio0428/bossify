@@ -1,37 +1,61 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { supabase, type CustomerRow } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/customers")({ component: CustomersPage });
 
+function relTime(iso: string | null, t: (k: any) => string) {
+  if (!iso) return t("never");
+  const d = new Date(iso);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const that = new Date(d); that.setHours(0,0,0,0);
+  const diff = Math.floor((today.getTime() - that.getTime()) / 86400000);
+  if (diff <= 0) return t("today_word");
+  if (diff === 1) return t("yesterday");
+  if (diff < 7) return `${diff} ${t("days_ago")}`;
+  return d.toLocaleDateString("en-MY", { day: "numeric", month: "short" });
+}
+
+function buildWA(phone: string, message: string) {
+  const cleaned = phone.replace(/[^0-9]/g, "");
+  return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+}
+
 function CustomersPage() {
   const { t } = useI18n();
-  const relTime = (iso: string | null) => {
-    if (!iso) return t("never");
-    const d = new Date(iso);
-    const today = new Date();
-    const diffDays = Math.floor((today.setHours(0,0,0,0) - new Date(d).setHours(0,0,0,0)) / 86400000);
-    if (diffDays <= 0) return t("today_word");
-    if (diffDays === 1) return t("yesterday");
-    return `${diffDays} ${t("days_ago")}`;
-  };
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("customers")
-        .select("*")
-        .order("total_spent", { ascending: false });
-      setCustomers((data ?? []) as CustomerRow[]);
-      setLoading(false);
-    })();
-  }, []);
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("customers")
+      .select("*")
+      .order("last_order_at", { ascending: false, nullsFirst: false });
+    if (error) toast.error(error.message);
+    setCustomers((data ?? []) as CustomerRow[]);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
 
-  const visible = customers.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel("cust-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers", filter: `user_id=eq.${user.id}` }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user?.id]);
+
+  const visible = customers.filter((c) => {
+    const q = query.toLowerCase();
+    return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q);
+  });
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-5">
@@ -53,30 +77,46 @@ function CustomersPage() {
       </div>
 
       <div className="space-y-3">
-        {loading && <p className="text-center text-sm text-muted-foreground py-10">{t("loading")}</p>}
-        {!loading && visible.map((c) => (
-          <article
-            key={c.id}
-            className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 flex items-center gap-3"
-          >
-            <div className="h-12 w-12 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold text-base shrink-0">
-              {c.name.charAt(0)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                {c.total_orders} {t("orders_word")} · {t("last")}: {relTime(c.last_order_at)}
-              </p>
-            </div>
+        {loading && (
+          <div className="flex justify-center py-10">
+            <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          </div>
+        )}
+        {!loading && customers.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_customers_create")}</p>
+        )}
+        {!loading && customers.length > 0 && visible.map((c) => (
+          <div key={c.id} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] flex items-center gap-3 p-4">
+            <Link
+              to="/customers/$customerId"
+              params={{ customerId: c.id }}
+              className="flex items-center gap-3 flex-1 min-w-0"
+            >
+              <div className="h-12 w-12 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold text-base shrink-0">
+                {c.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {c.total_orders} {t("orders_word")} · {t("last")}: {relTime(c.last_order_at, t)}
+                </p>
+              </div>
+            </Link>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               <p className="text-sm font-bold text-primary">RM {Number(c.total_spent).toFixed(0)}</p>
-              <button className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500 text-white active:scale-95 transition-transform">
+              <button
+                onClick={() => {
+                  if (!c.phone) { toast.error(t("no_phone_for_wa")); return; }
+                  window.open(buildWA(c.phone, `Hi ${c.name}! 👋 Thank you for being a valued customer! 😊`), "_blank");
+                }}
+                className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500 text-white active:scale-95 transition-transform"
+              >
                 📲 WA
               </button>
             </div>
-          </article>
+          </div>
         ))}
-        {!loading && visible.length === 0 && (
+        {!loading && customers.length > 0 && visible.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-10">{t("no_customers")}</p>
         )}
       </div>

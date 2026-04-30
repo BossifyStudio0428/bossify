@@ -96,7 +96,7 @@ function ShellInner() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
-        {t("loading")}
+        <span className="opacity-0">·</span>
       </div>
     );
   }
