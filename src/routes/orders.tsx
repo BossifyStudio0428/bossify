@@ -305,6 +305,7 @@ function OrdersPage() {
                       <Link
                         to="/orders/$orderId"
                         params={{ orderId: o.id }}
+                        search={{ edit: true }}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
