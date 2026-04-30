@@ -168,7 +168,6 @@ function OrdersPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm(t("delete_confirm"))) return;
     setRemovingId(id);
     setTimeout(async () => {
       const { error } = await supabase.from("orders").delete().eq("id", id);
