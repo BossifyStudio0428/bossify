@@ -187,10 +187,10 @@ function Index() {
         </p>
         <div className="mt-2 flex items-baseline justify-between gap-3">
           <p className="text-2xl font-bold text-foreground">
-            RM {Number(selectedWeekly ? selectedWeekly.value : weekly[weekly.length - 1]?.value ?? 0).toFixed(0)}
+            RM {Number(selectedWeekly ? selectedWeekly.value : weeklyTotal).toFixed(0)}
           </p>
           <p className="text-xs font-medium text-muted-foreground">
-            {selectedWeekly ? selectedWeekly.day : weekly[weekly.length - 1]?.day}
+            {selectedWeekly ? selectedWeekly.day : (t("this_week") || "This week")}
           </p>
         </div>
         <div className="mt-4 flex items-end justify-between gap-2 h-32 min-h-[8rem]">
