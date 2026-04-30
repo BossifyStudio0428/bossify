@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
+import { isNativeBillingAvailable, purchasePlan, restorePurchases } from "@/lib/billing";
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
 
@@ -61,6 +62,38 @@ function PlansPage() {
     } else {
       toast.error(error.message);
     }
+    setSubmitting(false);
+  };
+
+  const handleGooglePlayPurchase = async () => {
+    if (!user) return;
+    if (!isNativeBillingAvailable()) {
+      toast.error("Google Play purchase only works in the Android app.");
+      return;
+    }
+    setSubmitting(true);
+    await purchasePlan(
+      billing,
+      async (receipt) => {
+        const expiresAt = new Date();
+        if (billing === "monthly") expiresAt.setMonth(expiresAt.getMonth() + 1);
+        else expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        await supabase.from("subscriptions").upsert({
+          user_id: user.id,
+          plan: "pro",
+          status: "active",
+          provider: "google_play",
+          provider_product_id: receipt.productId,
+          provider_transaction_id: receipt.transactionId,
+          provider_purchase_token: receipt.purchaseToken ?? null,
+          current_period_end: expiresAt.toISOString(),
+        }, { onConflict: "user_id" });
+        toast.success("Welcome to Pro! 🎉");
+        await refresh();
+        setPaymentSheet(false);
+      },
+      (msg) => toast.error(msg),
+    );
     setSubmitting(false);
   };
 
@@ -164,7 +197,11 @@ function PlansPage() {
       </section>
 
       <button
-        onClick={async () => { await refresh(); toast.success(t("restore_purchases")); }}
+        onClick={async () => {
+          await restorePurchases((msg) => toast.error(msg));
+          await refresh();
+          toast.success(t("restore_purchases"));
+        }}
         className="w-full text-xs text-muted-foreground underline py-2"
       >
         {t("restore_purchases")}
@@ -176,11 +213,14 @@ function PlansPage() {
           <div className="w-full max-w-[390px] bg-card rounded-t-3xl p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto h-1 w-10 rounded-full bg-muted" />
             <p className="text-sm font-semibold py-2">{t("payment_method")}</p>
-            <button disabled className="w-full flex items-center gap-3 p-3 rounded-2xl bg-muted/50 text-muted-foreground text-sm">
-              <span className="text-lg">💳</span><span className="flex-1 text-left">Online Banking / DuitNow</span><span className="text-[10px]">{t("coming_soon")}</span>
-            </button>
-            <button disabled className="w-full flex items-center gap-3 p-3 rounded-2xl bg-muted/50 text-muted-foreground text-sm">
-              <span className="text-lg">📱</span><span className="flex-1 text-left">Touch 'n Go eWallet</span><span className="text-[10px]">{t("coming_soon")}</span>
+            <button
+              onClick={handleGooglePlayPurchase}
+              disabled={submitting}
+              className="w-full flex items-center gap-3 p-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
+            >
+              <span className="text-lg">▶️</span>
+              <span className="flex-1 text-left">Google Play{!isNativeBillingAvailable() && <span className="block text-[10px] font-normal opacity-80">Android app only</span>}</span>
+              →
             </button>
             <button onClick={() => { setPaymentSheet(false); setBankSheet(true); }}
               className="w-full flex items-center gap-3 p-3 rounded-2xl bg-primary/10 text-primary text-sm font-semibold">
