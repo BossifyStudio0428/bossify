@@ -430,6 +430,9 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
     await supabase.from("subscriptions").upsert({ user_id: uid, plan: "free" }, { onConflict: "user_id" });
     // Sign out so user logs in fresh
     await supabase.auth.signOut();
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("bossify_registering");
+    }
     setLoading(false);
     setSuccess(true);
     setTimeout(onDone, 1500);
