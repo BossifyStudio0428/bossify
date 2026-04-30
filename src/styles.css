@@ -163,6 +163,11 @@
 }
 
 /* Eliminate 300ms tap delay on Android WebView */
-* {
+*,
+*::before,
+*::after {
   touch-action: manipulation;
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
 }
