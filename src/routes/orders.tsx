@@ -344,14 +344,13 @@ function OrdersPage() {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuItem asChild>
-                      <a
-                        href={`/orders/${encodeURIComponent(o.id)}?edit=true`}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
-                      </a>
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        openEdit(o);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600 focus:text-red-600"
@@ -478,6 +477,40 @@ function OrdersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {editingOrder && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center" onClick={() => setEditingOrder(null)}>
+          <div className="w-full max-w-[390px] bg-background rounded-t-3xl sm:rounded-3xl p-5 space-y-3 max-h-[88vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-1">
+              <h2 className="text-lg font-bold">{t("edit") || "Edit"}</h2>
+              <button onClick={() => setEditingOrder(null)} className="h-9 w-9 rounded-full bg-muted text-muted-foreground text-xl leading-none">×</button>
+            </div>
+            <EditInput label={t("customer_name")} value={editForm.customer_name ?? ""} onChange={(v) => setEditForm((p) => ({ ...p, customer_name: v }))} />
+            <EditInput label={t("phone_number")} value={(editForm.phone as string) ?? ""} onChange={(v) => setEditForm((p) => ({ ...p, phone: v }))} />
+            <EditInput label={t("product")} value={editForm.product ?? ""} onChange={(v) => setEditForm((p) => ({ ...p, product: v }))} />
+            <EditInput label={t("quantity")} type="number" value={String(editForm.quantity ?? 1)} onChange={(v) => setEditForm((p) => ({ ...p, quantity: Number(v) }))} />
+            <EditInput label={t("price")} type="number" value={String(editForm.amount ?? 0)} onChange={(v) => setEditForm((p) => ({ ...p, amount: Number(v) }))} />
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase font-semibold text-muted-foreground px-1">{t("payment_status")}</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["Paid", "Unpaid", "Pending"] as OrderStatus[]).map((s) => (
+                  <button key={s} type="button" onClick={() => setEditForm((p) => ({ ...p, status: s }))}
+                    className={`py-3 rounded-xl text-xs font-semibold ${editForm.status === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <EditInput label={t("notes")} value={(editForm.notes as string) ?? ""} onChange={(v) => setEditForm((p) => ({ ...p, notes: v }))} />
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => setEditingOrder(null)} className="flex-1 py-3 rounded-2xl bg-muted font-semibold text-sm">{t("cancel") || "Cancel"}</button>
+              <button onClick={saveEdit} disabled={editSaving} className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-60">
+                {editSaving ? t("saving") : t("save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -487,6 +520,16 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="flex items-start justify-between gap-3 py-1 border-b border-border/40 last:border-0">
       <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</span>
       <span className="text-sm font-medium text-foreground text-right">{value}</span>
+    </div>
+  );
+}
+
+function EditInput({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{label}</label>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary" />
     </div>
   );
 }
