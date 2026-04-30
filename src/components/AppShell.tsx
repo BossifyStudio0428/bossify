@@ -197,7 +197,7 @@ function ShellInner() {
         {/* Top header with Bossify icon */}
         <header className="sticky top-0 z-30 bg-background/90 backdrop-blur border-b border-border/40">
           <div className="flex items-center gap-2 px-5 h-12">
-            <img src="/assets/bossify-logo.png" alt="Bossify" className="h-7 w-7 object-contain" />
+            <img src="/assets/bossify-logo.png" alt="Bossify" className="h-10 w-10 object-contain" />
             <span className="text-[13px] font-bold text-foreground tracking-tight">Bossify</span>
           </div>
         </header>

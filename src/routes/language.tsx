@@ -23,7 +23,7 @@ function LanguagePage() {
 
   return (
     <div className="min-h-screen px-5 pt-12 pb-8 flex flex-col" style={{ background: "#F4F3F8" }}>
-      <img src="/assets/bossify-logo.png" alt="Bossify" width={44} height={44} className="object-contain" />
+      <img src="/assets/bossify-logo.png" alt="Bossify" width={64} height={64} className="object-contain" />
 
       <h1 className="mt-6 text-[20px] font-bold" style={{ color: "#1E1333" }}>
         Choose Your Language

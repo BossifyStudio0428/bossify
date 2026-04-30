@@ -206,7 +206,7 @@ function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void 
       <img
         src="/assets/bossify-logo.png"
         alt="Bossify"
-        style={{ width: 180 }}
+        style={{ width: 240 }}
         className="mb-6"
       />
       <h1 className="text-[22px] font-medium text-foreground">
