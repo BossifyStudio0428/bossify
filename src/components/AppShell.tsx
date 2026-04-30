@@ -30,7 +30,7 @@ function getTabIndex(path: string): number {
 function usePageDirection(pathname: string): TransitionDirection {
   const prev = useRef<string>(pathname);
   const popRef = useRef(false);
-  const [direction, setDirection] = useState<TransitionDirection>("fade");
+  const directionRef = useRef<TransitionDirection>("fade");
 
   useEffect(() => {
     const onPop = () => {
@@ -40,10 +40,9 @@ function usePageDirection(pathname: string): TransitionDirection {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  useEffect(() => {
+  if (prev.current !== pathname) {
     const from = prev.current;
     const to = pathname;
-    if (from === to) return;
     const wasPop = popRef.current;
     popRef.current = false;
 
@@ -57,11 +56,11 @@ function usePageDirection(pathname: string): TransitionDirection {
     } else {
       next = "fade";
     }
-    setDirection(next);
+    directionRef.current = next;
     prev.current = to;
-  }, [pathname]);
+  }
 
-  return direction;
+  return directionRef.current;
 }
 
 export function AppShell() {
