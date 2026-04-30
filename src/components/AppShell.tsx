@@ -95,11 +95,14 @@ function ShellInner() {
       navigate({ to: "/auth" });
       return;
     }
-    if (session && isLoginRoute) {
+    const isRegistering =
+      typeof window !== "undefined" &&
+      sessionStorage.getItem("bossify_registering") === "1";
+    if (session && isLoginRoute && !isRegistering) {
       navigate({ to: "/" });
       return;
     }
-    if (session && onboardingChecked && !isAuthFlowRoute) {
+    if (session && onboardingChecked && !isAuthFlowRoute && !isRegistering) {
       if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding" });
       if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/" });
     }

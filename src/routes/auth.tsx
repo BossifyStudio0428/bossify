@@ -16,6 +16,13 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [businessName, setBusinessName] = useState("");
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (mode === "login" || mode === "reg_email") {
+      sessionStorage.removeItem("bossify_registering");
+    }
+  }, [mode]);
+
   return (
     <div className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}>
       {mode === "login" && <LoginScreen onGoRegister={() => setMode("reg_email")} />}
@@ -317,6 +324,9 @@ function RegOtpScreen({ email, onBack, onNext }: { email: string; onBack: () => 
   const verify = async () => {
     if (!allFilled) return;
     setError(null); setLoading(true);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("bossify_registering", "1");
+    }
     const { data, error: err } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
     setLoading(false);
     if (err || !data?.session) {
@@ -427,6 +437,9 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
     await supabase.from("subscriptions").upsert({ user_id: uid, plan: "free" }, { onConflict: "user_id" });
     // Sign out so user logs in fresh
     await supabase.auth.signOut();
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("bossify_registering");
+    }
     setLoading(false);
     setSuccess(true);
     setTimeout(onDone, 1500);
