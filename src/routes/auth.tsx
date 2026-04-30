@@ -58,7 +58,7 @@ function AuthPage() {
 
 /* ---------- Shared UI ---------- */
 
-function Logo({ size = 70 }: { size?: number }) {
+function Logo({ size = 110 }: { size?: number }) {
   return (
     <div className="flex flex-col items-center">
       <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: size, height: size, objectFit: "contain" }} />
@@ -244,7 +244,7 @@ function RegEmailScreen({
     <div className="w-full max-w-[400px] mx-auto space-y-4 flex-1">
       <BackArrow onClick={onBack} />
       <div className="flex flex-col items-center gap-1">
-        <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 44, height: 44 }} />
+        <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 64, height: 64 }} />
         <p className="text-[16px] font-bold" style={{ color: "#1E1333" }}>Bossify</p>
       </div>
       <ProgressDots step={1} />

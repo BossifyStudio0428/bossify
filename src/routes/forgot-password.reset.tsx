@@ -68,7 +68,7 @@ function ResetPage() {
     <div className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}>
       <div className="w-full max-w-[400px] mx-auto space-y-4 flex-1">
         <div className="flex flex-col items-center">
-          <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 56, height: 56 }} />
+          <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 84, height: 84 }} />
         </div>
         <div className="text-center">
           <h1 className="text-[20px] font-bold" style={{ color: "#1E1333" }}>Set New Password</h1>
