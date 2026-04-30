@@ -1,6 +1,10 @@
 import { createRouter, useRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
+function PendingRouteComponent() {
+  return <div className="min-h-[calc(100vh-7rem)] bg-background" />;
+}
+
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
 
@@ -64,6 +68,7 @@ export const getRouter = () => {
     defaultPreloadStaleTime: 0,
     defaultPendingMs: 0,
     defaultPendingMinMs: 0,
+    defaultPendingComponent: PendingRouteComponent,
     defaultErrorComponent: DefaultErrorComponent,
   });
 
