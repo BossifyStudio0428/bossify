@@ -317,6 +317,9 @@ function RegOtpScreen({ email, onBack, onNext }: { email: string; onBack: () => 
   const verify = async () => {
     if (!allFilled) return;
     setError(null); setLoading(true);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("bossify_registering", "1");
+    }
     const { data, error: err } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
     setLoading(false);
     if (err || !data?.session) {
