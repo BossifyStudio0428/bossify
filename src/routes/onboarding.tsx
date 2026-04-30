@@ -176,7 +176,7 @@ function Onboarding() {
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
       <div className="w-full max-w-[420px] min-h-screen flex flex-col px-5 py-8">
-        {step === 0 && <Welcome onStart={goNext} onSkip={() => finish(true)} />}
+        {step === 0 && <Welcome onStart={goNext} />}
 
         {step >= 1 && step <= 7 && (
           <QuestionScreen
@@ -211,7 +211,7 @@ function Onboarding() {
   );
 }
 
-function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void }) {
+function Welcome({ onStart }: { onStart: () => void }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center animate-fade-in">
       <img
@@ -241,13 +241,6 @@ function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void 
           style={{ padding: "13px" }}
         >
           Let's Get Started →
-        </button>
-        <button
-          onClick={onSkip}
-          className="w-full text-center text-[12px]"
-          style={{ color: "#A78BFA" }}
-        >
-          Skip for now
         </button>
       </div>
     </div>
