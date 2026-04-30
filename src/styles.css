@@ -156,9 +156,15 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: "DM Sans", system-ui, sans-serif;
+    min-height: 100vh;
     /* Respect iOS / Android safe areas — no grey bleed in status bar */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior: none;
+  }
+
+  html {
+    background-color: #F4F3F8;
   }
 }
 
