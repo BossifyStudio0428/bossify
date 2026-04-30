@@ -52,7 +52,6 @@ function OrdersPage() {
   }, []);
 
   const load = async (silent = false) => {
-    if (!silent) setLoading(true);
     const { data, error } = await supabase
       .from("orders")
       .select("*")

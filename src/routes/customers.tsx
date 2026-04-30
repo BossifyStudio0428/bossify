@@ -32,7 +32,6 @@ function CustomersPage() {
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    setLoading(true);
     const { data, error } = await supabase
       .from("customers")
       .select("*")
