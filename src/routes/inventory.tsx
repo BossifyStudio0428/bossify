@@ -237,7 +237,7 @@ function SheetShell({ children, onClose }: { children: React.ReactNode; onClose:
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={onClose}>
       <div
-        className="w-full max-w-[390px] rounded-t-3xl bg-card p-5 pb-8 space-y-4 shadow-2xl"
+        className="w-full max-w-[390px] rounded-t-3xl bg-white text-slate-900 p-5 pb-8 space-y-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -251,20 +251,32 @@ function ProductFormSheet({
 }: { item?: InventoryRow; onClose: () => void; onSaved: () => void; userId: string }) {
   const { t } = useI18n();
   const [name, setName] = useState(item?.name ?? "");
-  const [stock, setStock] = useState(String(item?.stock ?? 0));
-  const [unit, setUnit] = useState(item?.unit ?? "pcs");
-  const [maxStock, setMaxStock] = useState(String(item?.max_stock ?? 100));
+  const [stock, setStock] = useState(item?.stock != null ? String(item.stock) : "");
+  const PRESET_UNITS = [
+    { value: "pcs", label: "pieces (pcs)", icon: "🔢" },
+    { value: "packs", label: "packs", icon: "📦" },
+    { value: "bottles", label: "bottles", icon: "🍶" },
+    { value: "jars", label: "jars", icon: "🧴" },
+    { value: "boxes", label: "boxes", icon: "🎁" },
+  ];
+  const initialUnit = item?.unit ?? "pcs";
+  const isPreset = PRESET_UNITS.some((u) => u.value === initialUnit);
+  const [unit, setUnit] = useState(isPreset ? initialUnit : "other");
+  const [customUnit, setCustomUnit] = useState(isPreset ? "" : initialUnit);
+  const [price, setPrice] = useState(item?.price ? String(item.price) : "");
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
     if (!name.trim()) { toast.error(t("required_field")); return; }
     if (!userId) return;
+    const finalUnit = unit === "other" ? customUnit.trim() || "pcs" : unit;
     setSaving(true);
     const payload = {
       name: name.trim(),
       stock: Math.max(0, Number(stock) || 0),
-      unit: unit.trim() || "pcs",
-      max_stock: Math.max(1, Number(maxStock) || 100),
+      unit: finalUnit,
+      max_stock: 999,
+      price: Math.max(0, Number(price) || 0),
     };
     const { error } = item
       ? await supabase.from("inventory").update(payload).eq("id", item.id)
@@ -278,18 +290,61 @@ function ProductFormSheet({
   return (
     <SheetShell onClose={onClose}>
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold">{item ? t("edit") : t("new_product")}</h3>
-        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted"><X className="h-4 w-4" /></button>
+        <h3 className="text-lg font-bold text-slate-900">{item ? t("edit") : t("new_product")}</h3>
+        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-600"><X className="h-4 w-4" /></button>
       </div>
-      <SheetField label={t("product_name")} value={name} onChange={setName} />
-      <SheetField label={t("initial_stock")} value={stock} onChange={setStock} type="number" />
-      <SheetField label={t("unit_label")} value={unit} onChange={setUnit} />
-      <SheetField label={t("max_stock_label")} value={maxStock} onChange={setMaxStock} type="number" />
+      <SheetField label={t("product_name")} value={name} onChange={setName} placeholder="e.g. Kuih Lapis, Baju Kurung..." />
+      <SheetField label="How many do you have now?" value={stock} onChange={setStock} type="number" placeholder="e.g. 24" />
+
+      <div className="space-y-2">
+        <label className="text-[11px] font-semibold tracking-wider uppercase text-slate-500 px-1">Measure in</label>
+        <div className="flex flex-wrap gap-2">
+          {PRESET_UNITS.map((u) => {
+            const selected = unit === u.value;
+            return (
+              <button
+                key={u.value}
+                type="button"
+                onClick={() => setUnit(u.value)}
+                className={`px-3 py-2 rounded-full text-xs font-semibold border transition active:scale-95 ${
+                  selected
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                <span className="mr-1">{u.icon}</span>{u.label}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setUnit("other")}
+            className={`px-3 py-2 rounded-full text-xs font-semibold border transition active:scale-95 ${
+              unit === "other"
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            <span className="mr-1">✏️</span>others
+          </button>
+        </div>
+        {unit === "other" && (
+          <input
+            value={customUnit}
+            onChange={(e) => setCustomUnit(e.target.value)}
+            placeholder="Type your unit (e.g. kg, liters)"
+            className="mt-2 w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+          />
+        )}
+      </div>
+
+      <SheetField label="Selling Price (RM)" value={price} onChange={setPrice} type="number" placeholder="e.g. 5.00" />
+
       <button
         onClick={save} disabled={saving}
         className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
       >
-        {saving ? t("saving") : t("save_product")}
+        {saving ? t("saving") : "Add to Inventory +"}
       </button>
     </SheetShell>
   );
@@ -340,14 +395,14 @@ function ConfirmSheet({
 }
 
 function SheetField({
-  label, value, onChange, type = "text",
-}: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  label, value, onChange, type = "text", placeholder,
+}: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{label}</label>
+      <label className="text-[11px] font-semibold tracking-wider uppercase text-slate-500 px-1">{label}</label>
       <input
-        type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+        type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+        className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
       />
     </div>
   );
