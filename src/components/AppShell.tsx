@@ -16,15 +16,10 @@ const tabs = [
   { to: "/customers", label: "Customers", icon: Users },
 ] as const;
 
-const SPLASH_MIN_MS = 500;
+const SPLASH_MIN_MS = 0;
 
 export function AppShell() {
-  const [appReady, setAppReady] = useState(false);
-
-  if (!appReady) {
-    return <BootSplash onFinish={() => setAppReady(true)} />;
-  }
-
+  // BootSplash removed entirely — splash route handles the intro.
   return (
     <I18nProvider>
       <ThemeProvider>
