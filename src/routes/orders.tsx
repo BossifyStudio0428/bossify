@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,14 @@ import { renderTemplate, buildWhatsAppLink, daysSince, DEFAULT_REMINDER_TPL } fr
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/orders")({ component: OrdersPage });
 
@@ -34,6 +42,7 @@ function formatTime(iso: string) {
 function OrdersPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const navigate = useNavigate();
   const { isPro, showUpgrade } = useSubscription();
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -43,6 +52,7 @@ function OrdersPage() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
   const [bulkProgress, setBulkProgress] = useState<{ i: number; n: number } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<OrderRow | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -158,7 +168,6 @@ function OrdersPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm(t("delete_confirm"))) return;
     setRemovingId(id);
     setTimeout(async () => {
       const { error } = await supabase.from("orders").delete().eq("id", id);
@@ -250,6 +259,28 @@ function OrdersPage() {
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}>
                   {statusLabel}
                 </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Order options"
+                      className="h-7 w-7 -mr-1 -mt-1 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-95"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuItem onSelect={() => navigate({ to: "/orders/$orderId", params: { orderId: o.id } })}>
+                      <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600"
+                      onSelect={() => setPendingDelete(o)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" /> {t("delete_order") || "Delete"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <p className="mt-3 text-sm text-muted-foreground">
@@ -331,7 +362,7 @@ function OrdersPage() {
             </div>
 
             <button
-              onClick={() => remove(detail.id)}
+              onClick={() => setPendingDelete(detail)}
               className="w-full py-3 rounded-2xl bg-red-50 text-red-600 border border-red-200 font-semibold text-sm"
             >
               🗑 {t("delete_order")}
@@ -339,6 +370,31 @@ function OrdersPage() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("delete_order") || "Delete order?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete
+                ? `${pendingDelete.customer_name} · ${pendingDelete.code} — RM ${Number(pendingDelete.amount).toFixed(2)}`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel") || "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600 text-white"
+              onClick={() => {
+                if (pendingDelete) remove(pendingDelete.id);
+                setPendingDelete(null);
+              }}
+            >
+              {t("delete_order") || "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
