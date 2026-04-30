@@ -174,9 +174,14 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
           </div>
 
           <div className="text-right">
-            <Link to="/forgot-password" className="text-[12px] font-semibold" style={{ color: "#7C3AED" }}>
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/forgot-password" })}
+              className="text-[12px] font-semibold"
+              style={{ color: "#7C3AED" }}
+            >
               {t("forgot_password")}
-            </Link>
+            </button>
           </div>
 
           <PrimaryButton type="submit" loading={loading}>{t("login_btn")}</PrimaryButton>
