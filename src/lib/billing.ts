@@ -18,8 +18,10 @@ export function isNativeBillingAvailable(): boolean {
 let initialized = false;
 
 async function getStore(): Promise<any> {
-  const mod: any = await import("cordova-plugin-purchase");
-  const CdvPurchase = mod.default ?? mod.CdvPurchase ?? (window as any).CdvPurchase;
+  // The plugin attaches itself as a global when the cordova script loads on Android.
+  // We avoid importing it as a module since its types aren't ESM-compatible.
+  await import(/* @vite-ignore */ "cordova-plugin-purchase" as any).catch(() => {});
+  const CdvPurchase = (window as any).CdvPurchase;
   if (!CdvPurchase) throw new Error("CdvPurchase not available");
   const store = CdvPurchase.store;
 
