@@ -6,12 +6,7 @@ function PendingRouteComponent() {
     <div className="min-h-[calc(100vh-7rem)] w-full flex items-center justify-center bg-background">
       <div
         aria-label="Loading"
-        className="h-8 w-8 rounded-full border-[3px] border-primary/20 border-t-primary"
-        style={{
-          animation: "bossify-spin 0.8s linear infinite",
-          // override the global "animation: none !important" so the spinner can move
-          animationName: "bossify-spin",
-        }}
+        className="bossify-spinner h-8 w-8 rounded-full border-[3px] border-primary/20 border-t-primary"
       />
     </div>
   );
