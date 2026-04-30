@@ -16,6 +16,8 @@ const tabs = [
   { to: "/customers", label: "Customers", icon: Users },
 ] as const;
 
+const SPLASH_MIN_MS = 1200;
+
 export function AppShell() {
   const [appReady, setAppReady] = useState(false);
 
@@ -45,7 +47,7 @@ function BootSplash({ onFinish }: { onFinish: () => void }) {
         sessionStorage.setItem("bossify_splash_shown", "1");
       } catch {}
       onFinish();
-    }, 2200);
+    }, SPLASH_MIN_MS);
     return () => clearTimeout(t);
   }, [onFinish]);
 
@@ -76,6 +78,12 @@ function BootSplash({ onFinish }: { onFinish: () => void }) {
           style={{ color: "#1E1333" }}
         >
           Bossify
+        </p>
+        <p
+          className="mt-1 text-[13px] italic"
+          style={{ color: "#6B7280" }}
+        >
+          Manage your shop like a boss.
         </p>
       </div>
     </div>
