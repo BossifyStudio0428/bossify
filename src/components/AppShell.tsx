@@ -207,7 +207,7 @@ const BottomNav = memo(function BottomNav() {
           <li className="flex justify-center">
             <Link
               to="/new-order"
-              preload="intent"
+              preload="render"
               preloadDelay={0}
               aria-label="New Order"
               className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
@@ -237,7 +237,7 @@ function NavItem({
     <li>
       <Link
         to={to}
-        preload="intent"
+        preload="render"
         preloadDelay={0}
         className="flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-muted-foreground relative"
         activeProps={{ className: "text-primary" }}
