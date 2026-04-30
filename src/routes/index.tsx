@@ -19,16 +19,31 @@ function Index() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
 
+  const load = async () => {
+    const [{ data: o }, { data: inv }] = await Promise.all([
+      supabase.from("orders").select("*").order("created_at", { ascending: false }),
+      supabase.from("inventory").select("stock"),
+    ]);
+    setOrders((o ?? []) as OrderRow[]);
+    setLowStock((inv ?? []).filter((i: any) => i.stock <= 5).length);
+  };
+
   useEffect(() => {
-    (async () => {
-      const [{ data: o }, { data: inv }] = await Promise.all([
-        supabase.from("orders").select("*").order("created_at", { ascending: false }),
-        supabase.from("inventory").select("stock"),
-      ]);
-      setOrders((o ?? []) as OrderRow[]);
-      setLowStock((inv ?? []).filter((i: any) => i.stock <= 10).length);
-    })();
+    load();
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel("dash-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "inventory", filter: `user_id=eq.${user.id}` }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user?.id]);
 
   const localeMap = { en: "en-MY", ms: "ms-MY", zh: "zh-CN" } as const;
   const today = new Date().toLocaleDateString(localeMap[lang], {

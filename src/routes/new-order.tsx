@@ -1,16 +1,29 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { supabase, type OrderStatus } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { supabase, type OrderStatus, type InventoryRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
-const statuses: { key: OrderStatus; label: string; bg: string; text: string; ring: string }[] = [
-  { key: "Paid", label: "Paid ✓", bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-500" },
-  { key: "Unpaid", label: "Unpaid", bg: "bg-red-50", text: "text-red-600", ring: "ring-red-500" },
-  { key: "Pending", label: "Pending", bg: "bg-amber-50", text: "text-amber-700", ring: "ring-amber-500" },
+const statuses: { key: OrderStatus; bg: string; text: string; ring: string }[] = [
+  { key: "Paid", bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-500" },
+  { key: "Unpaid", bg: "bg-red-50", text: "text-red-600", ring: "ring-red-500" },
+  { key: "Pending", bg: "bg-amber-50", text: "text-amber-700", ring: "ring-amber-500" },
 ];
+
+function genCode() {
+  const d = new Date();
+  const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  const rnd = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+  return `ORD-${ymd}-${rnd}`;
+}
+
+function buildWhatsAppLink(phone: string, message: string) {
+  const cleaned = phone.replace(/[^0-9]/g, "");
+  return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+}
 
 function NewOrderPage() {
   const { user } = useAuth();
@@ -25,63 +38,132 @@ function NewOrderPage() {
   const [form, setForm] = useState({
     customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [inventory, setInventory] = useState<InventoryRow[]>([]);
+  const [showSuggest, setShowSuggest] = useState(false);
 
-  const upd = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("inventory").select("*");
+      setInventory((data ?? []) as InventoryRow[]);
+    })();
+  }, []);
+
+  const upd = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((p) => ({ ...p, [k]: e.target.value }));
+    if (errors[k]) setErrors((p) => ({ ...p, [k]: "" }));
+  };
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.customer_name.trim()) e.customer_name = t("required_field");
+    if (!form.product.trim()) e.product = t("required_field");
+    if (!form.quantity || Number(form.quantity) < 1) e.quantity = t("required_field");
+    if (!form.amount || Number(form.amount) < 0) e.amount = t("required_field");
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const persist = async (): Promise<{ id: string; code: string } | null> => {
+    if (!user) return null;
+    const code = genCode();
+    const amount = Number(form.amount) || 0;
+    const quantity = Number(form.quantity) || 1;
+
+    const { data: inserted, error: orderErr } = await supabase
+      .from("orders")
+      .insert({
+        user_id: user.id,
+        code,
+        customer_name: form.customer_name.trim(),
+        phone: form.phone.trim() || null,
+        product: form.product.trim(),
+        quantity,
+        amount,
+        status,
+        notes: form.notes.trim() || null,
+      })
+      .select("id, code")
+      .single();
+
+    if (orderErr || !inserted) {
+      toast.error(t("order_save_failed"));
+      return null;
+    }
+
+    // Upsert customer by phone (only if phone provided)
+    if (form.phone.trim()) {
+      const phone = form.phone.trim();
+      const { data: existing } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("phone", phone)
+        .maybeSingle();
+      if (existing) {
+        await supabase.from("customers").update({
+          total_orders: (existing.total_orders ?? 0) + 1,
+          total_spent: Number(existing.total_spent ?? 0) + amount,
+          last_order_at: new Date().toISOString(),
+          name: existing.name || form.customer_name.trim(),
+        }).eq("id", existing.id);
+      } else {
+        await supabase.from("customers").insert({
+          user_id: user.id,
+          name: form.customer_name.trim(),
+          phone,
+          total_orders: 1,
+          total_spent: amount,
+          last_order_at: new Date().toISOString(),
+        });
+      }
+    }
+
+    return { id: inserted.id, code: inserted.code };
+  };
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!validate()) return;
     setSaving(true);
-    setError(null);
-
-    const code = `ORD-${Date.now().toString().slice(-6)}`;
-    const { error: orderErr } = await supabase.from("orders").insert({
-      user_id: user.id,
-      code,
-      customer_name: form.customer_name,
-      phone: form.phone || null,
-      product: form.product,
-      quantity: Number(form.quantity) || 1,
-      amount: Number(form.amount) || 0,
-      status,
-      notes: form.notes || null,
-    });
-
-    if (orderErr) { setError(orderErr.message); setSaving(false); return; }
-
-    // Upsert customer aggregate
-    const amount = Number(form.amount) || 0;
-    const { data: existing } = await supabase
-      .from("customers")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("name", form.customer_name)
-      .maybeSingle();
-
-    if (existing) {
-      await supabase.from("customers").update({
-        total_orders: (existing.total_orders ?? 0) + 1,
-        total_spent: Number(existing.total_spent ?? 0) + amount,
-        last_order_at: new Date().toISOString(),
-        phone: existing.phone ?? form.phone ?? null,
-      }).eq("id", existing.id);
-    } else {
-      await supabase.from("customers").insert({
-        user_id: user.id,
-        name: form.customer_name,
-        phone: form.phone || null,
-        total_orders: 1,
-        total_spent: amount,
-        last_order_at: new Date().toISOString(),
-      });
-    }
-
+    const res = await persist();
     setSaving(false);
-    navigate({ to: "/orders" });
+    if (!res) return;
+    toast.success(t("order_saved"));
+    setForm({ customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "" });
+    setStatus("Unpaid");
+    setTimeout(() => navigate({ to: "/orders" }), 1500);
   };
+
+  const saveAndWhatsApp = async () => {
+    if (!validate()) return;
+    if (!form.phone.trim()) {
+      alert(t("enter_phone_for_wa"));
+      return;
+    }
+    setSaving(true);
+    const res = await persist();
+    setSaving(false);
+    if (!res) return;
+    toast.success(t("order_saved"));
+    const msg =
+      `Hi ${form.customer_name}! 👋\n\n` +
+      `Thank you for your order with Bossify! 🛍️\n\n` +
+      `📋 Order: ${res.code}\n` +
+      `🛒 Product: ${form.product} x${form.quantity}\n` +
+      `💰 Total: RM ${Number(form.amount).toFixed(2)}\n` +
+      `💳 Status: ${status}\n` +
+      (form.notes.trim() ? `\n📝 Notes: ${form.notes}\n` : "") +
+      `\nThank you for supporting our business! 🙏`;
+    window.open(buildWhatsAppLink(form.phone, msg), "_blank");
+    setTimeout(() => navigate({ to: "/orders" }), 800);
+  };
+
+  const productMatches =
+    form.product.length > 0
+      ? inventory.filter((i) => i.name.toLowerCase().includes(form.product.toLowerCase())).slice(0, 5)
+      : [];
 
   return (
     <div className="px-5 pt-10 pb-6 space-y-6">
@@ -92,12 +174,43 @@ function NewOrderPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t("fill_details")}</p>
       </header>
 
-      <form className="space-y-5" onSubmit={save}>
-        <Field label={t("customer_name")} icon="👤" placeholder="e.g. Siti Aminah" value={form.customer_name} onChange={upd("customer_name")} required />
-        <Field label={t("phone_number")} icon="📱" placeholder="e.g. 0123456789" value={form.phone} onChange={upd("phone")} type="tel" />
-        <Field label={t("product")} icon="🛍️" placeholder="..." value={form.product} onChange={upd("product")} required />
-        <Field label={t("quantity")} icon="#" placeholder="1" value={form.quantity} onChange={upd("quantity")} type="number" />
-        <Field label={t("price")} icon="💰" placeholder="0.00" value={form.amount} onChange={upd("amount")} type="number" required />
+      <form className="space-y-5" onSubmit={save} noValidate>
+        <Field label={t("customer_name")} icon="👤" placeholder="e.g. Siti Aminah" value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
+        <Field label={t("phone_number")} icon="📱" placeholder="e.g. 60123456789" value={form.phone} onChange={upd("phone")} type="tel" />
+
+        <div className="space-y-1.5 relative">
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("product")}</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🛍️</span>
+            <input
+              value={form.product}
+              onChange={(e) => { upd("product")(e); setShowSuggest(true); }}
+              onFocus={() => setShowSuggest(true)}
+              onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
+              placeholder="..."
+              className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${errors.product ? "border-red-400" : "border-border/60"}`}
+            />
+          </div>
+          {errors.product && <p className="text-[11px] text-red-500 px-1">{errors.product}</p>}
+          {showSuggest && productMatches.length > 0 && (
+            <div className="absolute z-10 left-0 right-0 top-full mt-1 rounded-xl bg-card border border-border/60 shadow-lg overflow-hidden">
+              {productMatches.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { setForm((p) => ({ ...p, product: m.name })); setShowSuggest(false); }}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-muted/60"
+                >
+                  {m.name} <span className="text-xs text-muted-foreground">· {m.stock} {m.unit}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Field label={t("quantity")} icon="#" placeholder="1" value={form.quantity} onChange={upd("quantity")} type="number" error={errors.quantity} />
+        <Field label={t("price")} icon="💰" placeholder="0.00" value={form.amount} onChange={upd("amount")} type="number" error={errors.amount} />
 
         <div className="space-y-1.5">
           <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
@@ -129,8 +242,6 @@ function NewOrderPage() {
           />
         </div>
 
-        {error && <p className="text-xs text-red-500">{error}</p>}
-
         <div className="space-y-3 pt-2">
           <button
             type="submit" disabled={saving}
@@ -140,7 +251,9 @@ function NewOrderPage() {
           </button>
           <button
             type="button"
-            className="w-full py-4 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-sm active:scale-[0.99] transition-transform"
+            onClick={saveAndWhatsApp}
+            disabled={saving}
+            className="w-full py-4 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-sm active:scale-[0.99] transition-transform disabled:opacity-60"
           >
             📲 {t("save_whatsapp")}
           </button>
@@ -150,7 +263,9 @@ function NewOrderPage() {
   );
 }
 
-function Field({ label, icon, ...rest }: { label: string; icon: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+function Field({
+  label, icon, error, ...rest
+}: { label: string; icon: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div className="space-y-1.5">
       <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{label}</label>
@@ -158,9 +273,10 @@ function Field({ label, icon, ...rest }: { label: string; icon: string } & React
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">{icon}</span>
         <input
           {...rest}
-          className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+          className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${error ? "border-red-400" : "border-border/60"}`}
         />
       </div>
+      {error && <p className="text-[11px] text-red-500 px-1">{error}</p>}
     </div>
   );
 }
