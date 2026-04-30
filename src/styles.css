@@ -151,7 +151,6 @@
 @layer base {
   * {
     border-color: var(--color-border);
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
 
   body {
@@ -165,12 +164,16 @@
 }
 
 /* Lightweight CSS page transitions (replaces framer-motion) */
-.page-enter {
-  opacity: 0;
-  transform: translateY(8px);
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-.page-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.15s ease, transform 0.15s ease;
+.page-transition {
+  animation: fadeIn 0.12s ease-out;
+  will-change: opacity;
+}
+
+/* Eliminate 300ms tap delay on Android WebView */
+* {
+  touch-action: manipulation;
 }
