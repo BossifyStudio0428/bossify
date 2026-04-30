@@ -89,12 +89,20 @@ function PrivacyPage() {
       {del.open && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={() => setDel({ open: false, text: "" })}>
           <div className="w-full max-w-[390px] bg-card rounded-t-3xl sm:rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-bold">Confirm deletion</h3>
-            <p className="text-xs text-muted-foreground">Type <strong>DELETE</strong> to confirm.</p>
-            <Input value={del.text} onChange={(v) => setDel((p) => ({ ...p, text: v }))} placeholder="DELETE" />
+            <div className="flex items-center gap-2">
+              <span className="text-xl">⚠️</span>
+              <h3 className="text-base font-bold text-red-600">{t("delete_acc_title")}</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">{t("delete_acc_warn")}</p>
+            <Input
+              value={del.text}
+              onChange={(v) => setDel((p) => ({ ...p, text: v }))}
+              placeholder={t("type_delete")}
+              className="border-red-300 focus:border-red-500"
+            />
             <div className="flex gap-2">
               <button onClick={() => setDel({ open: false, text: "" })} className="flex-1 py-3 rounded-2xl bg-muted font-semibold text-sm">{t("cancel")}</button>
-              <button onClick={deleteAccount} disabled={del.text !== "DELETE" || busy} className="flex-1 py-3 rounded-2xl bg-red-600 text-white font-semibold text-sm disabled:opacity-50">Delete</button>
+              <button onClick={deleteAccount} disabled={del.text !== "DELETE" || busy} className="flex-1 py-3 rounded-2xl bg-red-600 text-white font-semibold text-sm disabled:opacity-50">{t("delete_account")}</button>
             </div>
           </div>
         </div>
@@ -103,13 +111,13 @@ function PrivacyPage() {
   );
 }
 
-function Input({ value, onChange, ...rest }: { value: string; onChange: (v: string) => void } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value">) {
+function Input({ value, onChange, className, ...rest }: { value: string; onChange: (v: string) => void; className?: string } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | "className">) {
   return (
     <input
       {...rest}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-xl bg-muted/50 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary"
+      className={"w-full rounded-xl bg-muted/50 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary " + (className ?? "")}
     />
   );
 }
