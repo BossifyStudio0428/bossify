@@ -312,9 +312,9 @@ function RegOtpScreen({ email, onBack, onNext }: { email: string; onBack: () => 
   const verify = async () => {
     if (!allFilled) return;
     setError(null); setLoading(true);
-    const { error: err } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
+    const { data, error: err } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
     setLoading(false);
-    if (err) {
+    if (err || !data?.session) {
       setError(t("invalid_code"));
       setShake(true); setTimeout(() => setShake(false), 500);
       return;
