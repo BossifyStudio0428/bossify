@@ -29,8 +29,8 @@ function Splash() {
         <img
           src="/assets/bossify-logo.png"
           alt="Bossify"
-          width={140}
-          height={140}
+          width={180}
+          height={180}
           className="object-contain"
           style={{
             animation: "splashLogo 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.3s both",
