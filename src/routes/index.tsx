@@ -22,18 +22,21 @@ function Index() {
   const [lowStock, setLowStock] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const load = async () => {
-    const [{ data: o }, { data: inv }, { data: tc }, { count: nc }] = await Promise.all([
+    const [{ data: o }, { data: inv }, { data: tc }, { count: nc }, { data: prof }] = await Promise.all([
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("inventory").select("stock"),
       supabase.from("customers").select("*").order("total_spent", { ascending: false }).limit(3),
       supabase.from("notifications").select("*", { count: "exact", head: true }).eq("is_read", false),
+      supabase.from("profiles").select("avatar_url").maybeSingle(),
     ]);
     setOrders((o ?? []) as OrderRow[]);
     setLowStock((inv ?? []).filter((i: any) => i.stock <= 5).length);
     setTopCustomers((tc ?? []) as CustomerRow[]);
     setUnreadNotif(nc ?? 0);
+    setAvatarUrl((prof as any)?.avatar_url ?? null);
   };
 
   useEffect(() => {
@@ -50,6 +53,7 @@ function Index() {
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "inventory", filter: `user_id=eq.${user.id}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user?.id]);
@@ -143,8 +147,8 @@ function Index() {
             <Bell className="h-4 w-4 text-foreground" />
             {unreadNotif > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full" />}
           </Link>
-          <Link to="/profile" aria-label="Profile" className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold shadow-[var(--shadow-soft)] active:scale-95">
-            {initials}
+          <Link to="/profile" aria-label="Profile" className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold shadow-[var(--shadow-soft)] active:scale-95 overflow-hidden">
+            {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
           </Link>
         </div>
       </header>
