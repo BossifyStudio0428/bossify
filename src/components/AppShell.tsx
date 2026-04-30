@@ -16,7 +16,7 @@ const tabs = [
   { to: "/customers", label: "Customers", icon: Users },
 ] as const;
 
-const SPLASH_MIN_MS = 1200;
+const SPLASH_MIN_MS = 500;
 
 export function AppShell() {
   const [appReady, setAppReady] = useState(false);
