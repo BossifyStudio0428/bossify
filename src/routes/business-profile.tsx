@@ -55,9 +55,16 @@ function BusinessProfilePage() {
     const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
     if (upErr) { toast.error(upErr.message); setUploading(false); return; }
     const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-    setForm((p) => ({ ...p, avatar_url: pub.publicUrl }));
+    const url = pub.publicUrl;
+    setForm((p) => ({ ...p, avatar_url: url }));
+    // Persist immediately so the avatar shows everywhere even if user doesn't tap Save
+    const { error: updErr } = await supabase
+      .from("profiles")
+      .update({ avatar_url: url })
+      .eq("id", user.id);
     setUploading(false);
-    toast.success("Photo uploaded");
+    if (updErr) toast.error(updErr.message);
+    else toast.success("Photo updated!");
   };
 
   const save = async () => {
