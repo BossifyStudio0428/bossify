@@ -90,12 +90,15 @@ function BusinessProfilePage() {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="relative h-28 w-28 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-3xl font-bold overflow-hidden shadow-[var(--shadow-soft)]"
+          className="relative h-28 w-28 rounded-full shadow-[var(--shadow-soft)]"
+          aria-label="Change photo"
         >
-          {form.avatar_url
-            ? <img src={form.avatar_url} alt="" className="h-full w-full object-cover" />
-            : (form.business_name || "MB").slice(0, 2).toUpperCase()}
-          <span className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-card border border-border flex items-center justify-center">
+          <span className="block h-full w-full rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-3xl font-bold overflow-hidden">
+            {form.avatar_url
+              ? <img src={form.avatar_url} alt="" className="h-full w-full object-cover" />
+              : (form.business_name || "MB").slice(0, 2).toUpperCase()}
+          </span>
+          <span className="absolute -bottom-1 -right-1 h-9 w-9 rounded-full bg-card border-2 border-background flex items-center justify-center shadow-md">
             <Camera className="h-4 w-4 text-foreground" />
           </span>
         </button>
