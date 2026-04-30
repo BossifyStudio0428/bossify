@@ -91,13 +91,17 @@ function Index() {
   // Weekly chart
   const weekly: { day: string; value: number }[] = [];
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const total = orders
-      .filter((o) => o.status === "Paid" && new Date(o.created_at).toDateString() === d.toDateString())
-      .reduce((s, o) => s + Number(o.amount), 0);
-    weekly.push({ day: dayNames[d.getDay()], value: total });
+  if (hydrated) {
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const total = orders
+        .filter((o) => o.status === "Paid" && new Date(o.created_at).toDateString() === d.toDateString())
+        .reduce((s, o) => s + Number(o.amount), 0);
+      weekly.push({ day: dayNames[d.getDay()], value: total });
+    }
+  } else {
+    for (let i = 6; i >= 0; i--) weekly.push({ day: "", value: 0 });
   }
   const maxVal = Math.max(1, ...weekly.map((w) => w.value));
 
@@ -176,15 +180,15 @@ function Index() {
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
           {t("weekly_sales")}
         </p>
-        <div className="mt-4 flex items-end justify-between gap-2 h-32">
+        <div className="mt-4 flex items-end justify-between gap-2 h-32 min-h-[8rem]">
           {weekly.map((w, i) => {
             const hasValue = w.value > 0;
-            const h = hasValue ? Math.max(15, (w.value / maxVal) * 100) : 6;
+            const h = hasValue ? Math.max(25, (w.value / maxVal) * 100) : 8;
             const isLast = i === weekly.length - 1;
             return (
-              <div key={i} className="flex-1 flex flex-col items-center gap-2">
+              <div key={i} className="flex-1 h-full flex flex-col items-center justify-end gap-2">
                 <div
-                  className={`w-full rounded-t-lg ${
+                  className={`w-full rounded-t-lg min-h-[6px] ${
                     isLast
                       ? "bg-gradient-to-t from-primary to-primary/70"
                       : hasValue
