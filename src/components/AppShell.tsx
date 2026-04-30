@@ -96,8 +96,20 @@ function ShellInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
-        <span className="opacity-0">·</span>
+      <div
+        className="min-h-screen w-full flex flex-col items-center justify-center"
+        style={{ backgroundColor: "#F4F3F8" }}
+      >
+        <img
+          src="/assets/bossify-logo.png"
+          alt="Bossify"
+          width={120}
+          height={120}
+          className="object-contain animate-pulse"
+        />
+        <p className="mt-3 text-[20px] font-extrabold tracking-tight" style={{ color: "#1E1333" }}>
+          Bossify
+        </p>
       </div>
     );
   }
