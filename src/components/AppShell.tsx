@@ -1,7 +1,6 @@
-import { Outlet, Link, useLocation, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
-import { memo, useEffect, useRef, useState } from "react";
-import { PageTransition, type TransitionDirection } from "@/components/PageTransition";
+import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { I18nProvider, useI18n } from "@/contexts/I18nContext";
@@ -17,59 +16,8 @@ const tabs = [
   { to: "/customers", label: "Customers", icon: Users },
 ] as const;
 
-const tabOrder = ["/", "/orders", "/new-order", "/inventory", "/customers"];
-
-function getTabIndex(path: string): number {
-  if (path === "/") return 0;
-  const found = tabOrder.findIndex(
-    (t) => t !== "/" && (path === t || path.startsWith(t + "/")),
-  );
-  return found;
-}
-
-function usePageDirection(pathname: string): TransitionDirection {
-  const prev = useRef<string>(pathname);
-  const popRef = useRef(false);
-  const directionRef = useRef<TransitionDirection>("fade");
-
-  useEffect(() => {
-    const onPop = () => {
-      popRef.current = true;
-    };
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
-
-  if (prev.current !== pathname) {
-    const from = prev.current;
-    const to = pathname;
-    const wasPop = popRef.current;
-    popRef.current = false;
-
-    let next: TransitionDirection = "fade";
-    const fromIdx = getTabIndex(from);
-    const toIdx = getTabIndex(to);
-    if (fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx) {
-      next = toIdx > fromIdx ? "right" : "left";
-    } else if (wasPop) {
-      next = "left";
-    } else {
-      next = "fade";
-    }
-    directionRef.current = next;
-    prev.current = to;
-  }
-
-  return directionRef.current;
-}
-
 export function AppShell() {
-  // Top-level splash gate: render ONLY the splash screen until ready,
-  // preventing any homepage flash before the splash animation finishes.
-  const [appReady, setAppReady] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return sessionStorage.getItem("bossify_splash_shown") === "1";
-  });
+  const [appReady, setAppReady] = useState(false);
 
   if (!appReady) {
     return <BootSplash onFinish={() => setAppReady(true)} />;
