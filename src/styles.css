@@ -158,5 +158,19 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: "DM Sans", system-ui, sans-serif;
+    /* Respect iOS / Android safe areas — no grey bleed in status bar */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/* Lightweight CSS page transitions (replaces framer-motion) */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
