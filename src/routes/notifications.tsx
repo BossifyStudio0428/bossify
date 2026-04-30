@@ -4,6 +4,16 @@ import { ChevronLeft, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/notifications")({ component: NotificationsPage });
 
@@ -27,6 +37,8 @@ function NotificationsPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [items, setItems] = useState<Notif[]>([]);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [confirmAll, setConfirmAll] = useState(false);
 
   const load = async () => {
     const { data } = await supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(100);
@@ -53,14 +65,16 @@ function NotificationsPage() {
     load();
   };
 
-  const removeOne = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
+  const doRemoveOne = async () => {
+    if (!confirmId) return;
+    const id = confirmId;
+    setConfirmId(null);
     setItems((prev) => prev.filter((x) => x.id !== id));
     await supabase.from("notifications").delete().eq("id", id);
   };
 
-  const clearAll = async () => {
-    if (!confirm(t("delete") + "?")) return;
+  const doClearAll = async () => {
+    setConfirmAll(false);
     setItems([]);
     await supabase.from("notifications").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   };
@@ -77,7 +91,7 @@ function NotificationsPage() {
             <button onClick={markAll} className="text-xs text-primary font-semibold">{t("mark_all_read")}</button>
           )}
           {items.length > 0 && (
-            <button onClick={clearAll} className="text-xs text-red-500 font-semibold">{t("delete")}</button>
+            <button onClick={() => setConfirmAll(true)} className="text-xs text-red-500 font-semibold">{t("delete")}</button>
           )}
         </div>
       </header>
@@ -109,7 +123,7 @@ function NotificationsPage() {
                   <p className="text-[10px] text-muted-foreground mt-1">{formatTime(n.created_at)}</p>
                 </button>
                 <button
-                  onClick={(e) => removeOne(e, n.id)}
+                  onClick={(e) => { e.stopPropagation(); setConfirmId(n.id); }}
                   aria-label="Delete"
                   className="absolute top-3 right-3 h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-red-500 active:bg-muted"
                 >
@@ -120,6 +134,36 @@ function NotificationsPage() {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!confirmId} onOpenChange={(o) => !o && setConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("delete")}?</AlertDialogTitle>
+            <AlertDialogDescription>{t("notifications")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel") || "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={doRemoveOne} className="bg-red-500 hover:bg-red-600">
+              {t("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmAll} onOpenChange={setConfirmAll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("delete")} {t("notifications")}?</AlertDialogTitle>
+            <AlertDialogDescription>—</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel") || "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={doClearAll} className="bg-red-500 hover:bg-red-600">
+              {t("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
