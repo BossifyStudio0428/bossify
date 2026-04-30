@@ -139,19 +139,6 @@ function ShellInner() {
 }
 
 const BottomNav = memo(function BottomNav() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const idle = window.setTimeout(() => {
-      router.preloadRoute({ to: "/" });
-      router.preloadRoute({ to: "/orders" });
-      router.preloadRoute({ to: "/inventory" });
-      router.preloadRoute({ to: "/customers" });
-      router.preloadRoute({ to: "/new-order" });
-    }, 800);
-    return () => window.clearTimeout(idle);
-  }, [router]);
-
   return (
     <nav
       className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40"
@@ -165,8 +152,6 @@ const BottomNav = memo(function BottomNav() {
           <li className="flex justify-center">
             <Link
               to="/new-order"
-              preload="render"
-              preloadDelay={0}
               aria-label="New Order"
               className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
             >
@@ -195,8 +180,6 @@ function NavItem({
     <li>
       <Link
         to={to}
-        preload="render"
-        preloadDelay={0}
         className="flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-muted-foreground relative"
         activeProps={{ className: "text-primary" }}
       >
