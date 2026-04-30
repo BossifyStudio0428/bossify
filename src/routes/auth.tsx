@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { createFileRoute, useNavigate, useRouter, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { ChevronLeft, Eye, EyeOff, Mail, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -174,9 +174,14 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
           </div>
 
           <div className="text-right">
-            <Link to="/forgot-password" className="text-[12px] font-semibold" style={{ color: "#7C3AED" }}>
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/forgot-password" })}
+              className="text-[12px] font-semibold"
+              style={{ color: "#7C3AED" }}
+            >
               {t("forgot_password")}
-            </Link>
+            </button>
           </div>
 
           <PrimaryButton type="submit" loading={loading}>{t("login_btn")}</PrimaryButton>
