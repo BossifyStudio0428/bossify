@@ -44,6 +44,7 @@ function OrdersPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { isPro, showUpgrade } = useSubscription();
+  const [hydrated, setHydrated] = useState(false);
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +54,8 @@ function OrdersPage() {
   const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
   const [bulkProgress, setBulkProgress] = useState<{ i: number; n: number } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<OrderRow | null>(null);
+
+  useEffect(() => { setHydrated(true); }, []);
 
   useEffect(() => {
     (async () => {
@@ -277,7 +280,10 @@ function OrdersPage() {
           return (
             <article
               key={o.id}
-              onClick={() => navigate({ to: "/orders/$orderId", params: { orderId: o.id } })}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("button,a,[role='menuitem']")) return;
+                navigate({ to: "/orders/$orderId", params: { orderId: o.id } });
+              }}
               className={`rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 cursor-pointer transition-all ${removing ? "opacity-0 scale-95" : "opacity-100"}`}
             >
               <div className="flex items-start gap-3">
@@ -286,7 +292,9 @@ function OrdersPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">{o.customer_name}</p>
-                  <p className="text-[11px] text-muted-foreground">{o.code} · {formatTime(o.created_at)}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {o.code} · <span suppressHydrationWarning>{hydrated ? formatTime(o.created_at) : ""}</span>
+                  </p>
                 </div>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}>
                   {statusLabel}
@@ -302,19 +310,14 @@ function OrdersPage() {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        setTimeout(() => {
-                          navigate({
-                            to: "/orders/$orderId",
-                            params: { orderId: o.id },
-                            search: { edit: true },
-                          });
-                        }, 50);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
+                    <DropdownMenuItem asChild>
+                      <a
+                        href={`/orders/${encodeURIComponent(o.id)}?edit=true`}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
+                      </a>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600 focus:text-red-600"
