@@ -178,12 +178,19 @@ function Index() {
         </p>
         <div className="mt-4 flex items-end justify-between gap-2 h-32">
           {weekly.map((w, i) => {
-            const h = Math.max(8, (w.value / maxVal) * 100);
+            const hasValue = w.value > 0;
+            const h = hasValue ? Math.max(15, (w.value / maxVal) * 100) : 6;
             const isLast = i === weekly.length - 1;
             return (
               <div key={i} className="flex-1 flex flex-col items-center gap-2">
                 <div
-                  className={`w-full rounded-t-lg ${isLast ? "bg-gradient-to-t from-primary to-primary/70" : "bg-primary/20"}`}
+                  className={`w-full rounded-t-lg ${
+                    isLast
+                      ? "bg-gradient-to-t from-primary to-primary/70"
+                      : hasValue
+                      ? "bg-primary/40"
+                      : "bg-muted"
+                  }`}
                   style={{ height: `${h}%` }}
                 />
                 <span className={`text-[10px] ${isLast ? "text-primary font-semibold" : "text-muted-foreground"}`}>
