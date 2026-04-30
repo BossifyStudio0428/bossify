@@ -76,9 +76,9 @@ function InventoryPage() {
   const atLimit = !isPro && items.length >= FREE_LIMITS.inventory;
 
   return (
-    <div className="px-5 pt-10 pb-4 space-y-5 relative">
+    <div className="px-5 pt-10 pb-4 space-y-5 relative bg-[#F4F3F8] text-slate-900 min-h-full">
       <header className="flex items-center gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("inventory")}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">{t("inventory")}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {items.length} {t("items")}
         </span>
