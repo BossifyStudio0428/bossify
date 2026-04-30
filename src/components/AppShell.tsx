@@ -38,7 +38,8 @@ function ShellInner() {
   const { session, loading } = useAuth();
   const { t } = useI18n();
 
-  const isAuthRoute = location.pathname === "/auth";
+  const isLoginRoute = location.pathname === "/auth";
+  const isAuthFlowRoute = ["/auth", "/forgot-password", "/reset-password"].includes(location.pathname);
   const isOnboardingRoute = location.pathname === "/onboarding";
   const isSplashRoute = location.pathname === "/splash";
   const isLanguageRoute = location.pathname === "/language";
@@ -87,11 +88,11 @@ function ShellInner() {
       return;
     }
     if (isPublicFlow) return;
-    if (!session && !isAuthRoute) {
+    if (!session && !isAuthFlowRoute) {
       navigate({ to: "/auth" });
       return;
     }
-    if (session && isAuthRoute) {
+    if (session && isLoginRoute) {
       navigate({ to: "/" });
       return;
     }
@@ -99,7 +100,7 @@ function ShellInner() {
       if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding" });
       if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/" });
     }
-  }, [session, loading, isAuthRoute, isOnboardingRoute, isPublicFlow, splashShown, onboardingChecked, needsOnboarding, navigate]);
+  }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, splashShown, onboardingChecked, needsOnboarding, navigate]);
 
   if (loading) {
     return (
@@ -109,7 +110,7 @@ function ShellInner() {
     );
   }
 
-  if (isPublicFlow || isAuthRoute || isOnboardingRoute || !session) {
+  if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
     return <Outlet />;
   }
 
