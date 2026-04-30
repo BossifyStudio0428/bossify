@@ -1,7 +1,11 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 export type TransitionDirection = "fade" | "left" | "right";
 
+/**
+ * Pure CSS page transition. Re-mounts on pathKey change and runs a 120ms fade-in.
+ * No JS animation libraries, no rAF — keeps mobile WebView fast.
+ */
 export function PageTransition({
   children,
   pathKey,
@@ -10,19 +14,10 @@ export function PageTransition({
   direction?: TransitionDirection;
   pathKey: string;
 }) {
-  const [active, setActive] = useState(false);
-
-  useEffect(() => {
-    setActive(false);
-    // Trigger transition on next frame for smooth CSS animation
-    const id = requestAnimationFrame(() => setActive(true));
-    return () => cancelAnimationFrame(id);
-  }, [pathKey]);
-
   return (
     <div
       key={pathKey}
-      className={`page-enter${active ? " page-enter-active" : ""}`}
+      className="page-transition"
       style={{ width: "100%", minHeight: "100%" }}
     >
       {children}
