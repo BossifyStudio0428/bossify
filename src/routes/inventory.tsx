@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase, type InventoryRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
 
 export const Route = createFileRoute("/inventory")({ component: InventoryPage });
 
@@ -20,6 +21,7 @@ type Sheet =
 function InventoryPage() {
   const { t } = useI18n();
   const { user } = useAuth();
+  const { isPro, showUpgrade } = useSubscription();
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<InventoryRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +73,7 @@ function InventoryPage() {
 
   const visible = items.filter((i) => i.name.toLowerCase().includes(query.toLowerCase()));
   const lowItems = items.filter((i) => i.stock <= LOW_THRESHOLD);
+  const atLimit = !isPro && items.length >= FREE_LIMITS.inventory;
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-5 relative">
@@ -179,12 +182,13 @@ function InventoryPage() {
       </div>
 
       <button
-        onClick={() => setSheet({ kind: "form" })}
+        onClick={() => atLimit ? showUpgrade(t("limit_inventory")) : setSheet({ kind: "form" })}
         aria-label={t("add_product")}
-        className="fixed bottom-24 z-30 h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] flex items-center justify-center active:scale-95 transition-transform"
+        title={atLimit ? t("limit_inventory") : t("add_product")}
+        className={`fixed bottom-24 z-30 h-14 w-14 rounded-full text-primary-foreground shadow-[var(--shadow-soft)] flex items-center justify-center active:scale-95 transition-transform ${atLimit ? "bg-muted-foreground/60" : "bg-gradient-to-br from-primary to-primary/80"}`}
         style={{ right: "max(1.5rem, calc(50vw - 180px + 1rem))" }}
       >
-        <Plus className="h-6 w-6" strokeWidth={2.5} />
+        {atLimit ? <span className="text-base">🔒</span> : <Plus className="h-6 w-6" strokeWidth={2.5} />}
       </button>
 
       {sheet.kind === "form" && (
