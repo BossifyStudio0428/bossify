@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
 import { toast } from "sonner";
 import { DEFAULT_ORDER_TPL, DEFAULT_REMINDER_TPL } from "@/lib/wa";
+import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
+import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -19,6 +21,7 @@ function ProfilePage() {
   const { user, signOut } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
+  const { isPro, ordersUsed, showUpgrade } = useSubscription();
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string } | null>(null);
   const [langOpen, setLangOpen] = useState(false);
@@ -31,8 +34,8 @@ function ProfilePage() {
     { icon: "📊", key: "rep", label: t("sales_reports"), onClick: () => navigate({ to: "/reports" }) },
     { icon: "🔔", key: "notif2", label: t("notifications"), onClick: () => navigate({ to: "/notifications" }) },
     { icon: "🌐", key: "lang", label: t("language"), value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`, onClick: () => setLangOpen(true) },
-    { icon: "💳", key: "sub", label: t("subscription") },
-    { icon: "📲", key: "wa", label: t("wa_template"), onClick: () => setTplOpen(true) },
+    { icon: "💳", key: "sub", label: t("subscription"), value: isPro ? t("pro_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
+    { icon: "📲", key: "wa", label: t("wa_template"), value: isPro ? undefined : "🔒", onClick: () => isPro ? setTplOpen(true) : showUpgrade(t("wa_template")) },
     { icon: "🔒", key: "priv", label: t("privacy") },
   ];
 
@@ -89,9 +92,17 @@ function ProfilePage() {
           {initials}
         </div>
         <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">{businessName}</h1>
-        <span className="mt-2 text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
-          {plan} ✦
+        <span className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+          {isPro ? <>{t("pro_plan")} <Sparkles className="h-3 w-3" /></> : t("free_plan")}
         </span>
+        {!isPro && (
+          <button
+            onClick={() => navigate({ to: "/plans" })}
+            className="mt-2 text-[11px] text-primary font-semibold underline"
+          >
+            {ordersUsed} / {FREE_LIMITS.ordersPerMonth} {t("orders_used")} → {t("upgrade_to_pro")}
+          </button>
+        )}
         <p className="mt-2 text-xs text-muted-foreground">Member since {memberSince}</p>
         <p className="mt-1 text-[11px] text-muted-foreground">{user?.email}</p>
       </header>
