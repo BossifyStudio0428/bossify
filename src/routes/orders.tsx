@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +42,7 @@ function formatTime(iso: string) {
 function OrdersPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const navigate = useNavigate();
   const { isPro, showUpgrade } = useSubscription();
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -276,7 +277,7 @@ function OrdersPage() {
           return (
             <article
               key={o.id}
-              onClick={() => window.location.assign(`/orders/${o.id}`)}
+              onClick={() => navigate({ to: "/orders/$orderId", params: { orderId: o.id } })}
               className={`rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 cursor-pointer transition-all ${removing ? "opacity-0 scale-95" : "opacity-100"}`}
             >
               <div className="flex items-start gap-3">
@@ -301,15 +302,19 @@ function OrdersPage() {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        to="/orders/$orderId"
-                        params={{ orderId: o.id }}
-                        search={{ edit: true }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
-                      </Link>
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setTimeout(() => {
+                          navigate({
+                            to: "/orders/$orderId",
+                            params: { orderId: o.id },
+                            search: { edit: true },
+                          });
+                        }, 50);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600 focus:text-red-600"
