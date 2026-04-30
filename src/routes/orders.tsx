@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,7 +42,6 @@ function formatTime(iso: string) {
 function OrdersPage() {
   const { user } = useAuth();
   const { t } = useI18n();
-  const navigate = useNavigate();
   const { isPro, showUpgrade } = useSubscription();
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -302,13 +301,15 @@ function OrdersPage() {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        setTimeout(() => navigate({ to: "/orders/$orderId", params: { orderId: o.id } }), 0);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/orders/$orderId"
+                        params={{ orderId: o.id }}
+                        search={{ edit: true }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600 focus:text-red-600"
