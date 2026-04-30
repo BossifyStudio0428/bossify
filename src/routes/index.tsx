@@ -163,6 +163,44 @@ function Index() {
           ))}
         </div>
       </section>
+
+      {lowStock > 0 && (
+        <Link
+          to="/inventory"
+          className="block rounded-2xl bg-amber-50 border border-amber-200 p-3 active:scale-[0.99] transition-transform"
+        >
+          <p className="text-xs text-amber-800 font-semibold">
+            ⚠️ {lowStock} {t("inventory_alert")}
+          </p>
+        </Link>
+      )}
+
+      {topCustomers.length > 0 && (
+        <section>
+          <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
+            {t("top_customers")}
+          </p>
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+            {topCustomers.map((c) => (
+              <Link
+                key={c.id}
+                to="/customers/$customerId"
+                params={{ customerId: c.id }}
+                className="flex items-center gap-3 p-4"
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                  {c.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                  <p className="text-[11px] text-muted-foreground">{c.total_orders} {t("orders_word")}</p>
+                </div>
+                <p className="text-sm font-bold text-primary">RM {Number(c.total_spent).toFixed(0)}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
