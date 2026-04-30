@@ -82,7 +82,7 @@ export function AppShell() {
 function ShellInner() {
   const location = useLocation();
   const renderedPathname = useRouterState({
-    select: (state) => state.matches.at(-1)?.pathname ?? state.location.pathname,
+    select: (state) => state.matches[state.matches.length - 1]?.pathname ?? state.location.pathname,
   });
   const navigate = useNavigate();
   const { session, loading } = useAuth();
