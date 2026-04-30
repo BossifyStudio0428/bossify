@@ -231,26 +231,20 @@ function NavItem({
   to,
   label,
   icon: Icon,
-  active,
 }: {
   to: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  active: boolean;
 }) {
   return (
     <li>
       <Link
         to={to}
-        className={`flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors relative ${
-          active ? "text-primary" : "text-muted-foreground"
-        }`}
+        className="flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-muted-foreground relative"
+        activeProps={{ className: "text-primary" }}
       >
-        <Icon className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`} />
+        <Icon className="h-5 w-5" />
         <span>{label}</span>
-        {active && (
-          <span className="absolute -bottom-0.5 h-1 w-1 rounded-full bg-primary" />
-        )}
       </Link>
     </li>
   );
