@@ -10,9 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SplashRouteImport } from './routes/splash'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NewOrderRouteImport } from './routes/new-order'
 import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
@@ -24,6 +27,16 @@ import { Route as CustomersCustomerIdRouteImport } from './routes/customers.$cus
 const SplashRoute = SplashRouteImport.update({
   id: '/splash',
   path: '/splash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -39,6 +52,11 @@ const OrdersRoute = OrdersRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NewOrderRoute = NewOrderRouteImport.update({
@@ -84,9 +102,12 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
+  '/reports': typeof ReportsRoute
+  '/search': typeof SearchRoute
   '/splash': typeof SplashRoute
   '/customers/$customerId': typeof CustomersCustomerIdRoute
 }
@@ -97,9 +118,12 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
+  '/reports': typeof ReportsRoute
+  '/search': typeof SearchRoute
   '/splash': typeof SplashRoute
   '/customers/$customerId': typeof CustomersCustomerIdRoute
 }
@@ -111,9 +135,12 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
+  '/reports': typeof ReportsRoute
+  '/search': typeof SearchRoute
   '/splash': typeof SplashRoute
   '/customers/$customerId': typeof CustomersCustomerIdRoute
 }
@@ -126,9 +153,12 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/language'
     | '/new-order'
+    | '/notifications'
     | '/onboarding'
     | '/orders'
     | '/profile'
+    | '/reports'
+    | '/search'
     | '/splash'
     | '/customers/$customerId'
   fileRoutesByTo: FileRoutesByTo
@@ -139,9 +169,12 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/language'
     | '/new-order'
+    | '/notifications'
     | '/onboarding'
     | '/orders'
     | '/profile'
+    | '/reports'
+    | '/search'
     | '/splash'
     | '/customers/$customerId'
   id:
@@ -152,9 +185,12 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/language'
     | '/new-order'
+    | '/notifications'
     | '/onboarding'
     | '/orders'
     | '/profile'
+    | '/reports'
+    | '/search'
     | '/splash'
     | '/customers/$customerId'
   fileRoutesById: FileRoutesById
@@ -166,9 +202,12 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   LanguageRoute: typeof LanguageRoute
   NewOrderRoute: typeof NewOrderRoute
+  NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
   OrdersRoute: typeof OrdersRoute
   ProfileRoute: typeof ProfileRoute
+  ReportsRoute: typeof ReportsRoute
+  SearchRoute: typeof SearchRoute
   SplashRoute: typeof SplashRoute
 }
 
@@ -179,6 +218,20 @@ declare module '@tanstack/react-router' {
       path: '/splash'
       fullPath: '/splash'
       preLoaderRoute: typeof SplashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -200,6 +253,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/new-order': {
@@ -273,11 +333,23 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   LanguageRoute: LanguageRoute,
   NewOrderRoute: NewOrderRoute,
+  NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
   OrdersRoute: OrdersRoute,
   ProfileRoute: ProfileRoute,
+  ReportsRoute: ReportsRoute,
+  SearchRoute: SearchRoute,
   SplashRoute: SplashRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
