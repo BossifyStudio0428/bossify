@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isValidEmail } from "@/lib/authErrors";
@@ -8,9 +8,14 @@ export const Route = createFileRoute("/forgot-password")({ component: ForgotPass
 
 function ForgotPasswordPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  if (location.pathname !== "/forgot-password") {
+    return <Outlet />;
+  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
