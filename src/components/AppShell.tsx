@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Outlet, Link, useLocation, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PageTransition, type TransitionDirection } from "@/components/PageTransition";
@@ -30,7 +30,7 @@ function getTabIndex(path: string): number {
 function usePageDirection(pathname: string): TransitionDirection {
   const prev = useRef<string>(pathname);
   const popRef = useRef(false);
-  const [direction, setDirection] = useState<TransitionDirection>("fade");
+  const directionRef = useRef<TransitionDirection>("fade");
 
   useEffect(() => {
     const onPop = () => {
@@ -40,10 +40,9 @@ function usePageDirection(pathname: string): TransitionDirection {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  useEffect(() => {
+  if (prev.current !== pathname) {
     const from = prev.current;
     const to = pathname;
-    if (from === to) return;
     const wasPop = popRef.current;
     popRef.current = false;
 
@@ -57,11 +56,11 @@ function usePageDirection(pathname: string): TransitionDirection {
     } else {
       next = "fade";
     }
-    setDirection(next);
+    directionRef.current = next;
     prev.current = to;
-  }, [pathname]);
+  }
 
-  return direction;
+  return directionRef.current;
 }
 
 export function AppShell() {
@@ -82,10 +81,13 @@ export function AppShell() {
 
 function ShellInner() {
   const location = useLocation();
+  const transitionPathname = useRouterState({
+    select: (state) => state.resolvedLocation?.pathname ?? state.location.pathname,
+  });
   const navigate = useNavigate();
   const { session, loading } = useAuth();
   const { t } = useI18n();
-  const direction = usePageDirection(location.pathname);
+  const direction = usePageDirection(transitionPathname);
 
   const isLoginRoute = location.pathname === "/auth";
   const isAuthFlowRoute =
@@ -176,8 +178,8 @@ function ShellInner() {
         }}
       >
         <PageTransition
-          key={location.pathname}
-          pathKey={location.pathname}
+          key={transitionPathname}
+          pathKey={transitionPathname}
           direction={direction}
         >
           <Outlet />
@@ -201,8 +203,8 @@ function ShellInner() {
         </header>
         <main className="flex-1 pb-28 relative overflow-x-hidden">
           <PageTransition
-            key={location.pathname}
-            pathKey={location.pathname}
+            key={transitionPathname}
+            pathKey={transitionPathname}
             direction={direction}
           >
             <Outlet />
