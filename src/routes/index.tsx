@@ -24,29 +24,32 @@ function Index() {
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [selectedWeeklyIndex, setSelectedWeeklyIndex] = useState<number | null>(null);
 
   const load = async () => {
+    if (!user?.id) return;
     const [{ data: o }, { data: inv }, { data: tc }, { count: nc }, { data: prof }] = await Promise.all([
-      supabase.from("orders").select("*").order("created_at", { ascending: false }),
-      supabase.from("inventory").select("stock"),
-      supabase.from("customers").select("*").order("total_spent", { ascending: false }).limit(3),
-      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("is_read", false),
-      supabase.from("profiles").select("avatar_url").maybeSingle(),
+      supabase.from("orders").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("inventory").select("stock").eq("user_id", user.id),
+      supabase.from("customers").select("*").eq("user_id", user.id).order("total_spent", { ascending: false }).limit(3),
+      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
+      supabase.from("profiles").select("avatar_url").eq("id", user.id).maybeSingle(),
     ]);
     setOrders((o ?? []) as OrderRow[]);
     setLowStock((inv ?? []).filter((i: any) => i.stock <= 5).length);
     setTopCustomers((tc ?? []) as CustomerRow[]);
     setUnreadNotif(nc ?? 0);
-    setAvatarUrl((prof as any)?.avatar_url ?? null);
+    setAvatarUrl((prof as any)?.avatar_url || (user.user_metadata as any)?.avatar_url || null);
   };
 
   useEffect(() => {
+    if (!user?.id) return;
     setHydrated(true);
     load();
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
