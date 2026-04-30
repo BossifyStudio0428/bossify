@@ -10,6 +10,30 @@ import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
+const COUNTRIES: { code: string; flag: string; name: string }[] = [
+  { code: "60", flag: "🇲🇾", name: "Malaysia" },
+  { code: "65", flag: "🇸🇬", name: "Singapore" },
+  { code: "62", flag: "🇮🇩", name: "Indonesia" },
+  { code: "66", flag: "🇹🇭", name: "Thailand" },
+  { code: "84", flag: "🇻🇳", name: "Vietnam" },
+  { code: "63", flag: "🇵🇭", name: "Philippines" },
+  { code: "673", flag: "🇧🇳", name: "Brunei" },
+  { code: "86", flag: "🇨🇳", name: "China" },
+  { code: "852", flag: "🇭🇰", name: "Hong Kong" },
+  { code: "886", flag: "🇹🇼", name: "Taiwan" },
+  { code: "91", flag: "🇮🇳", name: "India" },
+  { code: "1", flag: "🇺🇸", name: "USA" },
+  { code: "44", flag: "🇬🇧", name: "UK" },
+  { code: "61", flag: "🇦🇺", name: "Australia" },
+];
+
+function buildFullPhone(countryCode: string, local: string): string {
+  // Strip non-digits, drop leading 0
+  const digits = local.replace(/\D/g, "").replace(/^0+/, "");
+  if (!digits) return "";
+  return countryCode + digits;
+}
+
 const statuses: { key: OrderStatus; bg: string; text: string; ring: string }[] = [
   { key: "Paid", bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-500" },
   { key: "Unpaid", bg: "bg-red-50", text: "text-red-600", ring: "ring-red-500" },
@@ -37,6 +61,13 @@ function NewOrderPage() {
   const [form, setForm] = useState({
     customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "",
   });
+  const [countryCode, setCountryCode] = useState<string>(() => {
+    if (typeof window === "undefined") return "60";
+    return localStorage.getItem("bossify_country_code") || "60";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("bossify_country_code", countryCode);
+  }, [countryCode]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
@@ -82,6 +113,7 @@ function NewOrderPage() {
     const code = genCode();
     const amount = Number(form.amount) || 0;
     const quantity = Number(form.quantity) || 1;
+    const fullPhone = buildFullPhone(countryCode, form.phone);
 
     const { data: inserted, error: orderErr } = await supabase
       .from("orders")
@@ -89,7 +121,7 @@ function NewOrderPage() {
         user_id: user.id,
         code,
         customer_name: form.customer_name.trim(),
-        phone: form.phone.trim() || null,
+        phone: fullPhone || null,
         product: form.product.trim(),
         quantity,
         amount,
@@ -105,8 +137,8 @@ function NewOrderPage() {
     }
 
     // Upsert customer by phone (only if phone provided)
-    if (form.phone.trim()) {
-      const phone = form.phone.trim();
+    if (fullPhone) {
+      const phone = fullPhone;
       const { data: existing } = await supabase
         .from("customers")
         .select("*")
@@ -190,7 +222,7 @@ function NewOrderPage() {
         link: "/orders",
       });
     }
-    window.open(buildWhatsAppLink(form.phone, msg), "_blank");
+    window.open(buildWhatsAppLink(buildFullPhone(countryCode, form.phone), msg), "_blank");
     setTimeout(() => navigate({ to: "/orders" }), 800);
   };
 
@@ -210,7 +242,44 @@ function NewOrderPage() {
 
       <form className="space-y-5" onSubmit={save} noValidate>
         <Field label={t("customer_name")} icon="👤" placeholder="e.g. Siti Aminah" value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
-        <Field label={t("phone_number")} icon="📱" placeholder="e.g. 60123456789" value={form.phone} onChange={upd("phone")} type="tel" />
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
+            {t("phone_number")}
+          </label>
+          <div className="flex gap-2">
+            <div className="relative shrink-0">
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="appearance-none h-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-3 pr-7 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+                aria-label="Country code"
+              >
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.flag} +{c.code}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">▼</span>
+            </div>
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">📱</span>
+              <input
+                type="tel"
+                inputMode="numeric"
+                placeholder="123456789"
+                value={form.phone}
+                onChange={upd("phone")}
+                className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+              />
+            </div>
+          </div>
+          {form.phone.trim() && (
+            <p className="text-[10px] text-muted-foreground px-1">
+              → +{buildFullPhone(countryCode, form.phone)}
+            </p>
+          )}
+        </div>
 
         <div className="space-y-1.5 relative">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("product")}</label>
