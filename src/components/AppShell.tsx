@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Outlet, Link, useLocation, useNavigate, useRouter } from "@tanstack/react-router";
 import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -187,6 +187,16 @@ function ShellInner() {
 }
 
 const BottomNav = memo(function BottomNav() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.preloadRoute({ to: "/" });
+    router.preloadRoute({ to: "/orders" });
+    router.preloadRoute({ to: "/inventory" });
+    router.preloadRoute({ to: "/customers" });
+    router.preloadRoute({ to: "/new-order" });
+  }, [router]);
+
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40">
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
@@ -197,6 +207,8 @@ const BottomNav = memo(function BottomNav() {
           <li className="flex justify-center">
             <Link
               to="/new-order"
+              preload="intent"
+              preloadDelay={0}
               aria-label="New Order"
               className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
             >
@@ -225,6 +237,8 @@ function NavItem({
     <li>
       <Link
         to={to}
+        preload="intent"
+        preloadDelay={0}
         className="flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-muted-foreground relative"
         activeProps={{ className: "text-primary" }}
       >
