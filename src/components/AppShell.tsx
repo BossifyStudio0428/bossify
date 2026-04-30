@@ -39,7 +39,10 @@ function ShellInner() {
   const { t } = useI18n();
 
   const isLoginRoute = location.pathname === "/auth";
-  const isAuthFlowRoute = ["/auth", "/forgot-password", "/reset-password"].includes(location.pathname);
+  const isAuthFlowRoute =
+    location.pathname === "/auth" ||
+    location.pathname === "/reset-password" ||
+    location.pathname.startsWith("/forgot-password");
   const isOnboardingRoute = location.pathname === "/onboarding";
   const isSplashRoute = location.pathname === "/splash";
   const isLanguageRoute = location.pathname === "/language";
