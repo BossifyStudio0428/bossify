@@ -259,6 +259,28 @@ function OrdersPage() {
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}>
                   {statusLabel}
                 </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Order options"
+                      className="h-7 w-7 -mr-1 -mt-1 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-95"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuItem onSelect={() => navigate({ to: "/orders/$orderId", params: { orderId: o.id } })}>
+                      <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600"
+                      onSelect={() => setPendingDelete(o)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" /> {t("delete_order") || "Delete"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <p className="mt-3 text-sm text-muted-foreground">
