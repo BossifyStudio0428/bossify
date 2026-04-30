@@ -8,8 +8,7 @@ function Splash() {
   useEffect(() => {
     const t = setTimeout(() => {
       const lang = typeof window !== "undefined" ? localStorage.getItem("bossify_lang") : null;
-      if (!lang) navigate({ to: "/language" });
-      else navigate({ to: "/auth" });
+      navigate({ to: lang ? "/auth" : "/language", replace: true });
     }, 3000);
     return () => clearTimeout(t);
   }, [navigate]);
@@ -54,6 +53,7 @@ function Splash() {
           }}
         >
           <div
+            className="bossify-progress-bar"
             style={{
               height: "100%",
               width: "100%",
@@ -66,11 +66,13 @@ function Splash() {
           {[0, 1, 2].map((i) => (
             <span
               key={i}
+              className="bossify-loading-dot"
               style={{
                 width: 5,
                 height: 5,
                 borderRadius: 999,
                 background: "#A78BFA",
+                animationDelay: `${i * 0.15}s`,
               }}
             />
           ))}

@@ -53,6 +53,15 @@ function ShellInner() {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
+    if (!isSplashRoute) return;
+    const t = window.setTimeout(() => {
+      const lang = localStorage.getItem("bossify_lang");
+      navigate({ to: lang ? "/auth" : "/language", replace: true });
+    }, 3000);
+    return () => window.clearTimeout(t);
+  }, [isSplashRoute, navigate]);
+
+  useEffect(() => {
     if (!session?.user) {
       setOnboardingChecked(false);
       setNeedsOnboarding(false);
@@ -94,7 +103,7 @@ function ShellInner() {
     }
   }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, onboardingChecked, needsOnboarding, navigate]);
 
-  if (loading) {
+  if (loading && !isPublicFlow) {
     return (
       <div
         className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden"
@@ -124,11 +133,11 @@ function ShellInner() {
         </div>
         <div className="absolute bottom-20 flex flex-col items-center">
           <div style={{ width: 160, height: 3, background: "#E0DCF0", borderRadius: 2, overflow: "hidden" }}>
-            <div style={{ height: "100%", width: "100%", background: "#7C3AED", borderRadius: 2 }} />
+            <div className="bossify-progress-bar" style={{ height: "100%", width: "100%", background: "#7C3AED", borderRadius: 2 }} />
           </div>
           <div className="mt-3 flex gap-1.5">
             {[0, 1, 2].map((i) => (
-              <span key={i} style={{ width: 5, height: 5, borderRadius: 999, background: "#A78BFA" }} />
+              <span key={i} className="bossify-loading-dot" style={{ width: 5, height: 5, borderRadius: 999, background: "#A78BFA", animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
         </div>
