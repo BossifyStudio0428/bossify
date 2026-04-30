@@ -107,6 +107,7 @@ function Index() {
     for (let i = 6; i >= 0; i--) weekly.push({ day: "", value: 0 });
   }
   const maxVal = Math.max(1, ...weekly.map((w) => w.value));
+  const selectedWeekly = selectedWeeklyIndex === null ? weekly[weekly.length - 1] : weekly[selectedWeeklyIndex];
 
   const recent = orders.slice(0, 3);
   const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
@@ -183,16 +184,24 @@ function Index() {
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
           {t("weekly_sales")}
         </p>
+        <div className="mt-2 flex items-baseline justify-between gap-3">
+          <p className="text-2xl font-bold text-foreground">RM {Number(selectedWeekly?.value ?? 0).toFixed(0)}</p>
+          <p className="text-xs font-medium text-muted-foreground">{selectedWeekly?.day}</p>
+        </div>
         <div className="mt-4 flex items-end justify-between gap-2 h-32 min-h-[8rem]">
           {weekly.map((w, i) => {
             const hasValue = w.value > 0;
             const h = hasValue ? Math.max(25, (w.value / maxVal) * 100) : 8;
             const isLast = i === weekly.length - 1;
+            const isSelected = selectedWeeklyIndex === i || (selectedWeeklyIndex === null && isLast);
             return (
               <div key={i} className="flex-1 h-full flex flex-col items-center justify-end gap-2">
-                <div
-                  className={`w-full rounded-t-lg min-h-[6px] ${
-                    isLast
+                <button
+                  type="button"
+                  aria-label={`${w.day} RM ${Number(w.value).toFixed(0)}`}
+                  onClick={() => setSelectedWeeklyIndex(i)}
+                  className={`w-full rounded-t-lg min-h-[8px] transition-all active:scale-95 ${
+                    isSelected
                       ? "bg-gradient-to-t from-primary to-primary/70"
                       : hasValue
                       ? "bg-primary/40"
@@ -200,7 +209,7 @@ function Index() {
                   }`}
                   style={{ height: `${h}%` }}
                 />
-                <span className={`text-[10px] ${isLast ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                <span className={`text-[10px] ${isSelected ? "text-primary font-semibold" : "text-muted-foreground"}`}>
                   {w.day}
                 </span>
               </div>
