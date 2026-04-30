@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { PageTransition, type TransitionDirection } from "@/components/PageTransition";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,6 +64,17 @@ function usePageDirection(pathname: string): TransitionDirection {
 }
 
 export function AppShell() {
+  // Top-level splash gate: render ONLY the splash screen until ready,
+  // preventing any homepage flash before the splash animation finishes.
+  const [appReady, setAppReady] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem("bossify_splash_shown") === "1";
+  });
+
+  if (!appReady) {
+    return <BootSplash onFinish={() => setAppReady(true)} />;
+  }
+
   return (
     <I18nProvider>
       <ThemeProvider>
@@ -76,6 +87,65 @@ export function AppShell() {
         </AuthProvider>
       </ThemeProvider>
     </I18nProvider>
+  );
+}
+
+function BootSplash({ onFinish }: { onFinish: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        sessionStorage.setItem("bossify_splash_shown", "1");
+      } catch {}
+      onFinish();
+    }, 2200);
+    return () => clearTimeout(t);
+  }, [onFinish]);
+
+  return (
+    <div
+      className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden"
+      style={{ backgroundColor: "#F4F3F8" }}
+    >
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
+        style={{
+          width: 280,
+          height: 280,
+          background:
+            "radial-gradient(circle, rgba(124,58,237,0.10) 0%, rgba(124,58,237,0) 70%)",
+        }}
+      />
+      <div className="relative flex flex-col items-center">
+        <img
+          src="/assets/bossify-logo.png"
+          alt="Bossify"
+          width={160}
+          height={160}
+          className="object-contain"
+          style={{
+            animation:
+              "splashLogo 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
+          }}
+        />
+        <p
+          className="mt-3 text-[26px] font-extrabold tracking-tight"
+          style={{ color: "#1E1333", animation: "splashText 0.4s ease-out 0.6s both" }}
+        >
+          Bossify
+        </p>
+      </div>
+      <style>{`
+        @keyframes splashLogo {
+          0% { transform: scale(0.3); opacity: 0; }
+          70% { transform: scale(1.08); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes splashText {
+          from { transform: translateY(12px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
+    </div>
   );
 }
 
@@ -218,34 +288,41 @@ function ShellInner() {
           </PageTransition>
         </main>
 
-        {/* Bottom nav */}
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40">
-          <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
-            <ul className="grid grid-cols-5 items-center h-16 px-2">
-              {tabs.slice(0, 2).map((t) => (
-                <NavItem key={t.to} {...t} active={isActive(t.to)} />
-              ))}
-              <li className="flex justify-center">
-                <Link
-                  to="/new-order"
-                  aria-label="New Order"
-                  className={`-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background transition-transform active:scale-95 ${
-                    isActive("/new-order") ? "scale-105" : ""
-                  }`}
-                >
-                  <Plus className="h-7 w-7" strokeWidth={2.5} />
-                </Link>
-              </li>
-              {tabs.slice(2).map((t) => (
-                <NavItem key={t.to} {...t} active={isActive(t.to)} />
-              ))}
-            </ul>
-          </div>
-        </nav>
+        <BottomNav activePath={renderedPathname} />
       </div>
     </div>
   );
 }
+
+const BottomNav = memo(function BottomNav({ activePath }: { activePath: string }) {
+  const isActive = (to: string) =>
+    to === "/" ? activePath === "/" : activePath.startsWith(to);
+  return (
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40">
+      <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
+        <ul className="grid grid-cols-5 items-center h-16 px-2">
+          {tabs.slice(0, 2).map((t) => (
+            <NavItem key={t.to} {...t} active={isActive(t.to)} />
+          ))}
+          <li className="flex justify-center">
+            <Link
+              to="/new-order"
+              aria-label="New Order"
+              className={`-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background transition-transform active:scale-95 ${
+                isActive("/new-order") ? "scale-105" : ""
+              }`}
+            >
+              <Plus className="h-7 w-7" strokeWidth={2.5} />
+            </Link>
+          </li>
+          {tabs.slice(2).map((t) => (
+            <NavItem key={t.to} {...t} active={isActive(t.to)} />
+          ))}
+        </ul>
+      </div>
+    </nav>
+  );
+});
 
 function NavItem({
   to,
