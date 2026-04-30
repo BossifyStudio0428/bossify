@@ -208,3 +208,22 @@ textarea,
 .bossify-spinner {
   animation: bossify-spin 0.8s linear infinite !important;
 }
+
+@keyframes bossify-progress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes bossify-dot-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.82); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+.bossify-progress-bar {
+  animation: bossify-progress 3s linear forwards !important;
+  transform-origin: left center;
+}
+
+.bossify-loading-dot {
+  animation: bossify-dot-pulse 0.9s ease-in-out infinite !important;
+}
