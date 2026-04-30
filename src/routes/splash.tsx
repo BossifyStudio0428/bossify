@@ -10,7 +10,7 @@ function Splash() {
       const lang = typeof window !== "undefined" ? localStorage.getItem("bossify_lang") : null;
       if (!lang) navigate({ to: "/language" });
       else navigate({ to: "/auth" });
-    }, 1000);
+    }, 3000);
     return () => clearTimeout(t);
   }, [navigate]);
 
