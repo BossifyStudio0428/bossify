@@ -52,7 +52,8 @@ function PrivacyPage() {
     // Sign out — user data is purged.
     await signOut();
     setBusy(false);
-    toast.success("Account data deleted");
+    if (typeof window !== "undefined") localStorage.removeItem("bossify_lang");
+    toast.success(t("account_deleted"));
     navigate({ to: "/auth" });
   };
 
