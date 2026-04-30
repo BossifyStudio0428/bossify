@@ -30,6 +30,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "google", content: "notranslate" },
       { title: "Bossify" },
       { name: "description", content: "Bossify — order & payment app for Malaysian WhatsApp sellers. Track orders, payments, inventory & customers. React + Supabase. English, BM & Chinese." },
       { name: "author", content: "Lovable" },
