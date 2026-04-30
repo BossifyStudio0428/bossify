@@ -29,7 +29,6 @@ function InventoryPage() {
   const firstLowRef = useRef<HTMLElement | null>(null);
 
   const load = async () => {
-    setLoading(true);
     const { data, error } = await supabase.from("inventory").select("*").order("name", { ascending: true });
     if (error) toast.error(error.message);
     setItems((data ?? []) as InventoryRow[]);
