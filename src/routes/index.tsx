@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { DollarSign, ShoppingBag, AlertCircle, PackageX } from "lucide-react";
-import { supabase, type OrderRow } from "@/integrations/supabase/client";
+import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 
@@ -18,14 +18,17 @@ function Index() {
   const { t, lang } = useI18n();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
+  const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
 
   const load = async () => {
-    const [{ data: o }, { data: inv }] = await Promise.all([
+    const [{ data: o }, { data: inv }, { data: tc }] = await Promise.all([
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("inventory").select("stock"),
+      supabase.from("customers").select("*").order("total_spent", { ascending: false }).limit(3),
     ]);
     setOrders((o ?? []) as OrderRow[]);
     setLowStock((inv ?? []).filter((i: any) => i.stock <= 5).length);
+    setTopCustomers((tc ?? []) as CustomerRow[]);
   };
 
   useEffect(() => {
