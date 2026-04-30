@@ -42,6 +42,7 @@ function formatTime(iso: string) {
 function OrdersPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const navigate = useNavigate();
   const { isPro, showUpgrade } = useSubscription();
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -51,6 +52,7 @@ function OrdersPage() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
   const [bulkProgress, setBulkProgress] = useState<{ i: number; n: number } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<OrderRow | null>(null);
 
   useEffect(() => {
     (async () => {
