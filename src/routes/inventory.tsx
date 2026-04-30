@@ -76,12 +76,9 @@ function InventoryPage() {
   const atLimit = !isPro && items.length >= FREE_LIMITS.inventory;
 
   return (
-    <div
-      className="px-5 pt-10 pb-32 space-y-5 relative bg-[#F4F3F8] text-slate-900 min-h-screen -mx-px"
-      style={{ marginLeft: 0, marginRight: 0 }}
-    >
+    <div className="px-5 pt-10 pb-4 space-y-5 relative">
       <header className="flex items-center gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">{t("inventory")}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("inventory")}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {items.length} {t("items")}
         </span>
@@ -105,7 +102,7 @@ function InventoryPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("search_products")}
-          className="w-full rounded-2xl bg-white border border-slate-200 shadow-sm pl-10 pr-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+          className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
         />
       </div>
 
@@ -116,7 +113,7 @@ function InventoryPage() {
           </div>
         )}
         {!loading && items.length === 0 && (
-          <p className="text-center text-sm text-slate-500 py-10 px-4">{t("no_products_create")}</p>
+          <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_products_create")}</p>
         )}
         {!loading && items.length > 0 && visible.map((it) => {
           const low = it.stock <= LOW_THRESHOLD;
@@ -126,10 +123,10 @@ function InventoryPage() {
             <article
               key={it.id}
               ref={isFirstLow ? (el) => { firstLowRef.current = el; } : undefined}
-              className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 space-y-3"
+              className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3"
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-semibold text-slate-900 flex-1">{it.name}</p>
+                <p className="text-sm font-semibold text-foreground flex-1">{it.name}</p>
                 <div className="flex items-center gap-1.5">
                   {low && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600">
@@ -138,7 +135,7 @@ function InventoryPage() {
                   )}
                   <button
                     onClick={() => setSheet({ kind: "form", item: it })}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"
+                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
                     aria-label="Edit"
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -153,10 +150,10 @@ function InventoryPage() {
                 </div>
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className={`text-2xl font-bold ${low ? "text-red-500" : "text-slate-900"}`}>{it.stock}</span>
-                <span className="text-xs text-slate-500">{it.unit} {t("left")}</span>
+                <span className={`text-2xl font-bold ${low ? "text-red-500" : "text-foreground"}`}>{it.stock}</span>
+                <span className="text-xs text-muted-foreground">{it.unit} {t("left")}</span>
               </div>
-              <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
                   className={`h-full rounded-full ${low ? "bg-red-500" : "bg-gradient-to-r from-primary to-primary/70"}`}
                   style={{ width: `${pct}%` }}
@@ -180,7 +177,7 @@ function InventoryPage() {
           );
         })}
         {!loading && items.length > 0 && visible.length === 0 && (
-          <p className="text-center text-sm text-slate-500 py-10">{t("no_products")}</p>
+          <p className="text-center text-sm text-muted-foreground py-10">{t("no_products")}</p>
         )}
       </div>
 
@@ -240,7 +237,7 @@ function SheetShell({ children, onClose }: { children: React.ReactNode; onClose:
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={onClose}>
       <div
-        className="w-full max-w-[390px] rounded-t-3xl bg-white text-slate-900 p-5 pb-8 space-y-4 shadow-2xl"
+        className="w-full max-w-[390px] rounded-t-3xl bg-card text-foreground p-5 pb-8 space-y-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -293,14 +290,14 @@ function ProductFormSheet({
   return (
     <SheetShell onClose={onClose}>
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-slate-900">{item ? t("edit") : t("new_product")}</h3>
-        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-600"><X className="h-4 w-4" /></button>
+        <h3 className="text-lg font-bold text-foreground">{item ? t("edit") : t("new_product")}</h3>
+        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
       </div>
       <SheetField label={t("product_name")} value={name} onChange={setName} placeholder="e.g. Kuih Lapis, Baju Kurung..." />
       <SheetField label="How many do you have now?" value={stock} onChange={setStock} type="number" placeholder="e.g. 24" />
 
       <div className="space-y-2">
-        <label className="text-[11px] font-semibold tracking-wider uppercase text-slate-500 px-1">Measure in</label>
+        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">Measure in</label>
         <div className="flex flex-wrap gap-2">
           {PRESET_UNITS.map((u) => {
             const selected = unit === u.value;
@@ -312,7 +309,7 @@ function ProductFormSheet({
                 className={`px-3 py-2 rounded-full text-xs font-semibold border transition active:scale-95 ${
                   selected
                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                    : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
                 }`}
               >
                 <span className="mr-1">{u.icon}</span>{u.label}
@@ -325,7 +322,7 @@ function ProductFormSheet({
             className={`px-3 py-2 rounded-full text-xs font-semibold border transition active:scale-95 ${
               unit === "other"
                 ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
             }`}
           >
             <span className="mr-1">✏️</span>others
@@ -336,7 +333,7 @@ function ProductFormSheet({
             value={customUnit}
             onChange={(e) => setCustomUnit(e.target.value)}
             placeholder="Type your unit (e.g. kg, liters)"
-            className="mt-2 w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+            className="mt-2 w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
           />
         )}
       </div>
@@ -402,10 +399,10 @@ function SheetField({
 }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[11px] font-semibold tracking-wider uppercase text-slate-500 px-1">{label}</label>
+      <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{label}</label>
       <input
         type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+        className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
       />
     </div>
   );
