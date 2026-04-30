@@ -34,6 +34,7 @@ export type InventoryRow = {
   stock: number;
   unit: string;
   max_stock: number;
+  price: number;
   created_at: string;
 };
 
