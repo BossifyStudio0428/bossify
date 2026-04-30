@@ -121,6 +121,8 @@ function ShellInner() {
           overflowX: "hidden",
           width: "100%",
           minHeight: "100vh",
+          paddingTop: "env(safe-area-inset-top)",
+          paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         <Outlet />
@@ -132,7 +134,10 @@ function ShellInner() {
     <div className="min-h-screen w-full bg-background flex justify-center">
       <div className="relative w-full max-w-[390px] min-h-screen bg-background flex flex-col">
         {/* Top header with Bossify icon */}
-        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur border-b border-border/40">
+        <header
+          className="sticky top-0 z-30 bg-background/90 backdrop-blur border-b border-border/40"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
           <div className="flex items-center gap-2 px-5 h-12">
             <img src="/assets/bossify-logo.png" alt="Bossify" className="h-10 w-10 object-contain" />
             <span className="text-[13px] font-bold text-foreground tracking-tight">Bossify</span>
