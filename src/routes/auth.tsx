@@ -16,6 +16,13 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [businessName, setBusinessName] = useState("");
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (mode === "login" || mode === "reg_email") {
+      sessionStorage.removeItem("bossify_registering");
+    }
+  }, [mode]);
+
   return (
     <div className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}>
       {mode === "login" && <LoginScreen onGoRegister={() => setMode("reg_email")} />}
