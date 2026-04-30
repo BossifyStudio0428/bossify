@@ -99,13 +99,9 @@ function BootSplash({ onFinish }: { onFinish: () => void }) {
 
 function ShellInner() {
   const location = useLocation();
-  const renderedPathname = useRouterState({
-    select: (state) => state.matches[state.matches.length - 1]?.pathname ?? state.location.pathname,
-  });
   const navigate = useNavigate();
   const { session, loading } = useAuth();
   const { t } = useI18n();
-  const direction = usePageDirection(renderedPathname);
 
   const locationPathname = location.pathname;
   const isLoginRoute = locationPathname === "/auth";
@@ -117,24 +113,6 @@ function ShellInner() {
   const isSplashRoute = locationPathname === "/splash";
   const isLanguageRoute = locationPathname === "/language";
   const isPublicFlow = isSplashRoute || isLanguageRoute;
-  const renderedIsAuthFlowRoute =
-    renderedPathname === "/auth" ||
-    renderedPathname === "/reset-password" ||
-    renderedPathname.startsWith("/forgot-password");
-  const renderedIsOnboardingRoute = renderedPathname === "/onboarding";
-  const renderedIsPublicFlow = renderedPathname === "/splash" || renderedPathname === "/language";
-
-  // Splash gate — first visit goes to /splash
-  const [splashShown, setSplashShown] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    return sessionStorage.getItem("bossify_splash_shown") === "1";
-  });
-  useEffect(() => {
-    if (isSplashRoute) {
-      sessionStorage.setItem("bossify_splash_shown", "1");
-      setSplashShown(true);
-    }
-  }, [isSplashRoute]);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
@@ -162,10 +140,6 @@ function ShellInner() {
 
   useEffect(() => {
     if (loading) return;
-    if (!splashShown) {
-      navigate({ to: "/splash" });
-      return;
-    }
     if (isPublicFlow) return;
     if (!session && !isAuthFlowRoute) {
       navigate({ to: "/auth" });
@@ -182,7 +156,7 @@ function ShellInner() {
       if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding" });
       if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/" });
     }
-  }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, splashShown, onboardingChecked, needsOnboarding, navigate]);
+  }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, onboardingChecked, needsOnboarding, navigate]);
 
   if (loading) {
     return (
@@ -192,7 +166,7 @@ function ShellInner() {
     );
   }
 
-  if (renderedIsPublicFlow || renderedIsAuthFlowRoute || renderedIsOnboardingRoute || !session) {
+  if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
     return (
       <div
         style={{
@@ -202,19 +176,10 @@ function ShellInner() {
           minHeight: "100vh",
         }}
       >
-        <PageTransition
-          key={renderedPathname}
-          pathKey={renderedPathname}
-          direction={direction}
-        >
-          <Outlet />
-        </PageTransition>
+        <Outlet />
       </div>
     );
   }
-
-  const isActive = (to: string) =>
-    to === "/" ? renderedPathname === "/" : renderedPathname.startsWith(to);
 
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
@@ -227,44 +192,34 @@ function ShellInner() {
           </div>
         </header>
         <main className="flex-1 pb-28 relative overflow-x-hidden">
-          <PageTransition
-            key={renderedPathname}
-            pathKey={renderedPathname}
-            direction={direction}
-          >
-            <Outlet />
-          </PageTransition>
+          <Outlet />
         </main>
 
-        <BottomNav activePath={renderedPathname} />
+        <BottomNav />
       </div>
     </div>
   );
 }
 
-const BottomNav = memo(function BottomNav({ activePath }: { activePath: string }) {
-  const isActive = (to: string) =>
-    to === "/" ? activePath === "/" : activePath.startsWith(to);
+const BottomNav = memo(function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40">
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
         <ul className="grid grid-cols-5 items-center h-16 px-2">
           {tabs.slice(0, 2).map((t) => (
-            <NavItem key={t.to} {...t} active={isActive(t.to)} />
+            <NavItem key={t.to} {...t} />
           ))}
           <li className="flex justify-center">
             <Link
               to="/new-order"
               aria-label="New Order"
-              className={`-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background transition-transform active:scale-95 ${
-                isActive("/new-order") ? "scale-105" : ""
-              }`}
+              className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
             >
               <Plus className="h-7 w-7" strokeWidth={2.5} />
             </Link>
           </li>
           {tabs.slice(2).map((t) => (
-            <NavItem key={t.to} {...t} active={isActive(t.to)} />
+            <NavItem key={t.to} {...t} />
           ))}
         </ul>
       </div>
