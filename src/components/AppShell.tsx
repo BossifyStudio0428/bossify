@@ -1,6 +1,8 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import { PageTransition, type TransitionDirection } from "@/components/PageTransition";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { I18nProvider, useI18n } from "@/contexts/I18nContext";
@@ -15,6 +17,53 @@ const tabs = [
   { to: "/inventory", label: "Inventory", icon: Package },
   { to: "/customers", label: "Customers", icon: Users },
 ] as const;
+
+const tabOrder = ["/", "/orders", "/new-order", "/inventory", "/customers"];
+
+function getTabIndex(path: string): number {
+  if (path === "/") return 0;
+  const found = tabOrder.findIndex(
+    (t) => t !== "/" && (path === t || path.startsWith(t + "/")),
+  );
+  return found;
+}
+
+function usePageDirection(pathname: string): TransitionDirection {
+  const prev = useRef<string>(pathname);
+  const popRef = useRef(false);
+  const [direction, setDirection] = useState<TransitionDirection>("fade");
+
+  useEffect(() => {
+    const onPop = () => {
+      popRef.current = true;
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  useEffect(() => {
+    const from = prev.current;
+    const to = pathname;
+    if (from === to) return;
+    const wasPop = popRef.current;
+    popRef.current = false;
+
+    let next: TransitionDirection = "fade";
+    const fromIdx = getTabIndex(from);
+    const toIdx = getTabIndex(to);
+    if (fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx) {
+      next = toIdx > fromIdx ? "right" : "left";
+    } else if (wasPop) {
+      next = "left";
+    } else {
+      next = "fade";
+    }
+    setDirection(next);
+    prev.current = to;
+  }, [pathname]);
+
+  return direction;
+}
 
 export function AppShell() {
   return (
@@ -37,6 +86,7 @@ function ShellInner() {
   const navigate = useNavigate();
   const { session, loading } = useAuth();
   const { t } = useI18n();
+  const direction = usePageDirection(location.pathname);
 
   const isLoginRoute = location.pathname === "/auth";
   const isAuthFlowRoute =
@@ -117,7 +167,13 @@ function ShellInner() {
   }
 
   if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
-    return <Outlet />;
+    return (
+      <AnimatePresence mode="wait" initial={false}>
+        <PageTransition key={location.pathname} pathKey={location.pathname} direction={direction}>
+          <Outlet />
+        </PageTransition>
+      </AnimatePresence>
+    );
   }
 
   const isActive = (to: string) =>
@@ -133,8 +189,16 @@ function ShellInner() {
             <span className="text-[13px] font-bold text-foreground tracking-tight">Bossify</span>
           </div>
         </header>
-        <main key={location.pathname} className="flex-1 pb-28 animate-fade-in">
-          <Outlet />
+        <main className="flex-1 pb-28">
+          <AnimatePresence mode="wait" initial={false}>
+            <PageTransition
+              key={location.pathname}
+              pathKey={location.pathname}
+              direction={direction}
+            >
+              <Outlet />
+            </PageTransition>
+          </AnimatePresence>
         </main>
 
         {/* Bottom nav */}
