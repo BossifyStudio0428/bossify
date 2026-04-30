@@ -170,11 +170,43 @@ function OrdersPage() {
   const remove = async (id: string) => {
     setRemovingId(id);
     setTimeout(async () => {
+      const target = orders.find((o) => o.id === id);
       const { error } = await supabase.from("orders").delete().eq("id", id);
       if (error) {
         toast.error(t("update_failed"));
         setRemovingId(null);
         return;
+      }
+      // Sync customer aggregates
+      if (target && user && target.phone) {
+        const { data: existing } = await supabase
+          .from("customers")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("phone", target.phone)
+          .maybeSingle();
+        if (existing) {
+          const newOrders = Math.max(0, (existing.total_orders ?? 0) - 1);
+          const newSpent = Math.max(0, Number(existing.total_spent ?? 0) - Number(target.amount));
+          if (newOrders === 0) {
+            await supabase.from("customers").delete().eq("id", existing.id);
+          } else {
+            await supabase.from("customers").update({
+              total_orders: newOrders,
+              total_spent: newSpent,
+            }).eq("id", existing.id);
+          }
+        }
+      }
+      // Notification
+      if (target && user) {
+        await createNotification({
+          user_id: user.id,
+          type: "order_deleted",
+          title: `Order ${target.code} deleted`,
+          message: `${target.customer_name} · RM ${Number(target.amount).toFixed(2)}`,
+          link: "/orders",
+        });
       }
       setOrders((p) => p.filter((o) => o.id !== id));
       setRemovingId(null);
