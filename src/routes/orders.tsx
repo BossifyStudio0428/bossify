@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, daysSince, DEFAULT_REMINDER_TPL } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
+import { createNotification } from "@/lib/notify";
 
 export const Route = createFileRoute("/orders")({ component: OrdersPage });
 
@@ -99,6 +100,7 @@ function OrdersPage() {
 
   const updateStatus = async (id: string, next: OrderStatus) => {
     const prev = orders;
+    const target = orders.find((o) => o.id === id);
     setOrders((p) => p.map((o) => (o.id === id ? { ...o, status: next } : o)));
     if (detail?.id === id) setDetail({ ...detail, status: next });
     const { error } = await supabase.from("orders").update({ status: next }).eq("id", id);
@@ -107,6 +109,13 @@ function OrdersPage() {
       toast.error(t("update_failed"));
     } else {
       toast.success(t("order_updated"));
+      if (next === "Paid" && target && user) {
+        createNotification({
+          user_id: user.id, type: "paid",
+          title: t("notif_paid").replace("{name}", target.customer_name).replace("{amount}", Number(target.amount).toFixed(2)),
+          message: target.code, link: "/orders",
+        });
+      }
     }
   };
 
