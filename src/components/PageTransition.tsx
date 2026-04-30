@@ -40,7 +40,12 @@ export function PageTransition({
       animate={v.animate}
       exit={v.exit}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      style={{ width: "100%", minHeight: "100%" }}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        minHeight: "100%",
+      }}
     >
       {children}
     </motion.div>

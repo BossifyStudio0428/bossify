@@ -168,11 +168,24 @@ function ShellInner() {
 
   if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
     return (
-      <AnimatePresence mode="wait" initial={false}>
-        <PageTransition key={location.pathname} pathKey={location.pathname} direction={direction}>
-          <Outlet />
-        </PageTransition>
-      </AnimatePresence>
+      <div
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          width: "100%",
+          minHeight: "100vh",
+        }}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <PageTransition
+            key={location.pathname}
+            pathKey={location.pathname}
+            direction={direction}
+          >
+            <Outlet />
+          </PageTransition>
+        </AnimatePresence>
+      </div>
     );
   }
 
@@ -189,7 +202,7 @@ function ShellInner() {
             <span className="text-[13px] font-bold text-foreground tracking-tight">Bossify</span>
           </div>
         </header>
-        <main className="flex-1 pb-28">
+        <main className="flex-1 pb-28 relative overflow-hidden">
           <AnimatePresence mode="wait" initial={false}>
             <PageTransition
               key={location.pathname}
