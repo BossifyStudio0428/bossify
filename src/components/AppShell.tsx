@@ -86,6 +86,16 @@ function ShellInner() {
   useEffect(() => {
     if (loading) return;
     if (isPublicFlow) return;
+    // First-time launch (no language picked yet) → show splash → language flow.
+    if (typeof window !== "undefined") {
+      const hasLang = localStorage.getItem("bossify_lang");
+      const seenSplash = sessionStorage.getItem("bossify_seen_splash") === "1";
+      if (!hasLang && !seenSplash && !isAuthFlowRoute && !isOnboardingRoute) {
+        sessionStorage.setItem("bossify_seen_splash", "1");
+        navigate({ to: "/splash", replace: true });
+        return;
+      }
+    }
     if (!session && !isAuthFlowRoute) {
       navigate({ to: "/auth" });
       return;
