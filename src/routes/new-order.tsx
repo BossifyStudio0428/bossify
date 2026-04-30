@@ -222,7 +222,7 @@ function NewOrderPage() {
         link: "/orders",
       });
     }
-    window.open(buildWhatsAppLink(form.phone, msg), "_blank");
+    window.open(buildWhatsAppLink(buildFullPhone(countryCode, form.phone), msg), "_blank");
     setTimeout(() => navigate({ to: "/orders" }), 800);
   };
 
