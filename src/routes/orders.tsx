@@ -4,6 +4,9 @@ import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { renderTemplate, buildWhatsAppLink, daysSince, DEFAULT_REMINDER_TPL } from "@/lib/wa";
+import { exportOrdersListPDF } from "@/lib/pdf";
+import { createNotification } from "@/lib/notify";
 
 export const Route = createFileRoute("/orders")({ component: OrdersPage });
 
@@ -27,11 +30,6 @@ function formatTime(iso: string) {
   return d.toLocaleDateString("en-MY", { day: "numeric", month: "short" });
 }
 
-function buildWhatsAppLink(phone: string, message: string) {
-  const cleaned = phone.replace(/[^0-9]/g, "");
-  return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
-}
-
 function OrdersPage() {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -41,6 +39,15 @@ function OrdersPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [detail, setDetail] = useState<OrderRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
+  const [bulkProgress, setBulkProgress] = useState<{ i: number; n: number } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("user_preferences").select("wa_reminder_template").maybeSingle();
+      if (data?.wa_reminder_template) setReminderTpl(data.wa_reminder_template);
+    })();
+  }, []);
 
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -93,6 +100,7 @@ function OrdersPage() {
 
   const updateStatus = async (id: string, next: OrderStatus) => {
     const prev = orders;
+    const target = orders.find((o) => o.id === id);
     setOrders((p) => p.map((o) => (o.id === id ? { ...o, status: next } : o)));
     if (detail?.id === id) setDetail({ ...detail, status: next });
     const { error } = await supabase.from("orders").update({ status: next }).eq("id", id);
@@ -101,19 +109,50 @@ function OrdersPage() {
       toast.error(t("update_failed"));
     } else {
       toast.success(t("order_updated"));
+      if (next === "Paid" && target && user) {
+        createNotification({
+          user_id: user.id, type: "paid",
+          title: t("notif_paid").replace("{name}", target.customer_name).replace("{amount}", Number(target.amount).toFixed(2)),
+          message: target.code, link: "/orders",
+        });
+      }
     }
   };
 
   const remind = (o: OrderRow) => {
     if (!o.phone) { alert(t("no_phone_for_wa")); return; }
-    const msg =
-      `Hi ${o.customer_name}! 👋\n\n` +
-      `Just a friendly reminder that your order is still pending payment. 😊\n\n` +
-      `📋 Order: ${o.code}\n` +
-      `🛒 Product: ${o.product} x${o.quantity}\n` +
-      `💰 Amount due: RM ${Number(o.amount).toFixed(2)}\n\n` +
-      `Please make payment when you can. Thank you! 🙏`;
+    const msg = renderTemplate(reminderTpl, {
+      customer_name: o.customer_name, code: o.code, product: o.product,
+      quantity: o.quantity, amount: Number(o.amount).toFixed(2),
+      status: o.status, days_ago: daysSince(o.created_at),
+    });
     window.open(buildWhatsAppLink(o.phone, msg), "_blank");
+  };
+
+  const remindAllUnpaid = async () => {
+    const unpaid = orders.filter((o) => o.status === "Unpaid" && o.phone);
+    if (unpaid.length === 0) return;
+    if (!confirm(t("confirm_remind_all").replace("{n}", String(unpaid.length)))) return;
+    for (let i = 0; i < unpaid.length; i++) {
+      setBulkProgress({ i: i + 1, n: unpaid.length });
+      remind(unpaid[i]);
+      if (i < unpaid.length - 1) await new Promise((r) => setTimeout(r, 2000));
+    }
+    setBulkProgress(null);
+  };
+
+  const exportPDF = () => {
+    try {
+      const rows = visible.map((o) => ({
+        date: new Date(o.created_at).toLocaleDateString("en-MY"),
+        code: o.code, customer: o.customer_name, product: o.product,
+        amount: Number(o.amount), status: o.status,
+      }));
+      exportOrdersListPDF({
+        businessName: user?.email?.split("@")[0] ?? "My Store",
+        statusLabel: active, orders: rows,
+      });
+    } catch { toast.error(t("pdf_failed")); }
   };
 
   const remove = async (id: string) => {
@@ -145,7 +184,19 @@ function OrdersPage() {
           {todayCount} {t("today_count")}
         </span>
         {refreshing && <span className="text-[10px] text-muted-foreground">↻</span>}
+        <button onClick={exportPDF} className="ml-auto p-2 rounded-full bg-card border border-border/60 active:scale-95" aria-label={t("export_pdf")}>
+          📄
+        </button>
       </header>
+
+      {active === "Unpaid" && unpaidCount > 0 && (
+        <button onClick={remindAllUnpaid} disabled={!!bulkProgress}
+          className="w-full py-3 rounded-2xl bg-orange-500 text-white font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60">
+          {bulkProgress
+            ? t("sending_progress").replace("{i}", String(bulkProgress.i)).replace("{n}", String(bulkProgress.n))
+            : `📲 ${t("remind_all_unpaid")} (${orders.filter((o) => o.status === "Unpaid" && o.phone).length})`}
+        </button>
+      )}
 
       <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
         <div className="flex gap-2 w-max">

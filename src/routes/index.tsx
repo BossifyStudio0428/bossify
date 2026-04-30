@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { DollarSign, ShoppingBag, AlertCircle, PackageX } from "lucide-react";
+import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search } from "lucide-react";
 import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -19,16 +19,19 @@ function Index() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
+  const [unreadNotif, setUnreadNotif] = useState(0);
 
   const load = async () => {
-    const [{ data: o }, { data: inv }, { data: tc }] = await Promise.all([
+    const [{ data: o }, { data: inv }, { data: tc }, { count: nc }] = await Promise.all([
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("inventory").select("stock"),
       supabase.from("customers").select("*").order("total_spent", { ascending: false }).limit(3),
+      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("is_read", false),
     ]);
     setOrders((o ?? []) as OrderRow[]);
     setLowStock((inv ?? []).filter((i: any) => i.stock <= 5).length);
     setTopCustomers((tc ?? []) as CustomerRow[]);
+    setUnreadNotif(nc ?? 0);
   };
 
   useEffect(() => {
@@ -44,6 +47,7 @@ function Index() {
       .channel("dash-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "inventory", filter: `user_id=eq.${user.id}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user?.id]);
@@ -56,6 +60,18 @@ function Index() {
   const todayOrders = orders.filter((o) => isToday(o.created_at));
   const todayRevenue = todayOrders.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0);
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
+
+  // Comparison vs yesterday
+  const yest = new Date(); yest.setDate(yest.getDate() - 1);
+  const isYesterday = (iso: string) => new Date(iso).toDateString() === yest.toDateString();
+  const yesterdayRevenue = orders.filter((o) => o.status === "Paid" && isYesterday(o.created_at)).reduce((s, o) => s + Number(o.amount), 0);
+  const revDelta = yesterdayRevenue > 0 ? Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100) : null;
+
+  // Motivational
+  let motivMsg = t("motiv_default");
+  if (lowStock > 0) motivMsg = t("motiv_low_stock");
+  if (unpaidCount > 3) motivMsg = t("motiv_unpaid").replace("{n}", String(unpaidCount));
+  if (todayRevenue > yesterdayRevenue && yesterdayRevenue > 0) motivMsg = t("motiv_better");
 
   const stats = [
     { label: t("todays_revenue"), value: `RM ${todayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
@@ -89,24 +105,35 @@ function Index() {
           <p className="text-sm text-muted-foreground">{greeting},</p>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("welcome")} 👋</h1>
           <p className="mt-1 text-xs text-muted-foreground">{today}</p>
+          <p className="mt-2 text-xs font-medium text-primary/90">{motivMsg}</p>
         </div>
-        <Link
-          to="/profile"
-          aria-label="Profile & Settings"
-          className="h-11 w-11 shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-sm font-bold shadow-[var(--shadow-soft)] active:scale-95 transition-transform"
-        >
-          {initials}
-        </Link>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Link to="/search" aria-label={t("search")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
+            <Search className="h-4 w-4 text-foreground" />
+          </Link>
+          <Link to="/notifications" aria-label={t("notifications")} className="relative h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
+            <Bell className="h-4 w-4 text-foreground" />
+            {unreadNotif > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full" />}
+          </Link>
+          <Link to="/profile" aria-label="Profile" className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold shadow-[var(--shadow-soft)] active:scale-95">
+            {initials}
+          </Link>
+        </div>
       </header>
 
       <section className="grid grid-cols-2 gap-3">
-        {stats.map((s) => (
+        {stats.map((s, i) => (
           <div key={s.label} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
             <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${s.bg}`}>
               <s.icon className={`h-5 w-5 ${s.color}`} />
             </div>
             <p className={`mt-3 text-xl font-bold ${s.color}`}>{s.value}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+            {i === 0 && revDelta !== null && (
+              <p className={`text-[10px] mt-0.5 font-semibold ${revDelta >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                {revDelta >= 0 ? "↑" : "↓"} {Math.abs(revDelta)}% {t("vs_yesterday")}
+              </p>
+            )}
           </div>
         ))}
       </section>
