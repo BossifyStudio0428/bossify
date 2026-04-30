@@ -113,6 +113,7 @@ function NewOrderPage() {
     const code = genCode();
     const amount = Number(form.amount) || 0;
     const quantity = Number(form.quantity) || 1;
+    const fullPhone = buildFullPhone(countryCode, form.phone);
 
     const { data: inserted, error: orderErr } = await supabase
       .from("orders")
@@ -120,7 +121,7 @@ function NewOrderPage() {
         user_id: user.id,
         code,
         customer_name: form.customer_name.trim(),
-        phone: form.phone.trim() || null,
+        phone: fullPhone || null,
         product: form.product.trim(),
         quantity,
         amount,
@@ -136,8 +137,8 @@ function NewOrderPage() {
     }
 
     // Upsert customer by phone (only if phone provided)
-    if (form.phone.trim()) {
-      const phone = form.phone.trim();
+    if (fullPhone) {
+      const phone = fullPhone;
       const { data: existing } = await supabase
         .from("customers")
         .select("*")
