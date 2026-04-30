@@ -190,7 +190,7 @@ function Index() {
             RM {Number(selectedWeekly ? selectedWeekly.value : weeklyTotal).toFixed(0)}
           </p>
           <p className="text-xs font-medium text-muted-foreground">
-            {selectedWeekly ? selectedWeekly.day : t("this_week") || "This week"}
+            {selectedWeekly ? selectedWeekly.day : (t("this_week") || "This week")}
           </p>
         </div>
         <div className="mt-4 flex items-end justify-between gap-2 h-32 min-h-[8rem]">
