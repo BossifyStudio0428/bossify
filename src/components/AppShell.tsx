@@ -7,6 +7,7 @@ import { I18nProvider, useI18n } from "@/contexts/I18nContext";
 import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
@@ -18,13 +19,15 @@ const tabs = [
 export function AppShell() {
   return (
     <I18nProvider>
-      <AuthProvider>
-        <SubscriptionProvider>
-          <ShellInner />
-          <UpgradeModal />
-          <Toaster position="top-center" richColors closeButton />
-        </SubscriptionProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <SubscriptionProvider>
+            <ShellInner />
+            <UpgradeModal />
+            <Toaster position="top-center" richColors closeButton />
+          </SubscriptionProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </I18nProvider>
   );
 }
