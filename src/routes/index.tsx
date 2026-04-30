@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, BarChart3 } from "lucide-react";
+import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, BarChart3, Sparkles } from "lucide-react";
 import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { isNativeBillingAvailable, purchasePlan } from "@/lib/billing";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -16,6 +19,8 @@ const statusStyles: Record<string, string> = {
 function Index() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
+  const { isPro, ordersUsed, ordersLimit, refresh } = useSubscription();
+  const [upgrading, setUpgrading] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
@@ -98,6 +103,38 @@ function Index() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? t("good_morning") : hour < 18 ? t("good_afternoon") : t("good_evening");
 
+  const handleUpgrade = async () => {
+    if (!user) return;
+    if (!isNativeBillingAvailable()) {
+      toast.error("Google Play purchase only works in the Android app.");
+      return;
+    }
+    setUpgrading(true);
+    await purchasePlan(
+      "monthly",
+      async (receipt) => {
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
+        await supabase.from("subscriptions").upsert({
+          user_id: user.id,
+          plan: "pro",
+          status: "active",
+          provider: "google_play",
+          provider_product_id: receipt.productId,
+          provider_transaction_id: receipt.transactionId,
+          provider_purchase_token: receipt.purchaseToken ?? null,
+          current_period_end: expiresAt.toISOString(),
+        }, { onConflict: "user_id" });
+        toast.success("Welcome to Pro! 🎉");
+        await refresh();
+      },
+      (msg) => toast.error(msg),
+    );
+    setUpgrading(false);
+  };
+
+  const usagePct = Math.min(100, Math.round((ordersUsed / ordersLimit) * 100));
+
   return (
     <div className="px-5 pt-10 pb-4 space-y-6">
       <header className="flex items-start justify-between gap-3">
@@ -140,6 +177,36 @@ function Index() {
           </div>
         ))}
       </section>
+
+      {!isPro && (
+        <section className="relative rounded-2xl p-[1.5px] bg-gradient-to-br from-primary via-primary/70 to-primary/30 shadow-[var(--shadow-card)]">
+          <div className="rounded-[calc(1rem-1.5px)] bg-card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">{t("free_plan")}</p>
+                <p className="mt-1 text-lg font-bold text-foreground">
+                  {ordersUsed} <span className="text-muted-foreground font-medium">/ {ordersLimit}</span>
+                  <span className="ml-1.5 text-[11px] font-normal text-muted-foreground">{t("orders_used")}</span>
+                </p>
+              </div>
+              <button
+                onClick={handleUpgrade}
+                disabled={upgrading}
+                className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-xs font-bold shadow-[var(--shadow-soft)] active:scale-[0.97] disabled:opacity-60"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                {upgrading ? "..." : `${t("upgrade_to_pro")} — RM 19`}
+              </button>
+            </div>
+            <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
+                style={{ width: `${usagePct}%` }}
+              />
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
