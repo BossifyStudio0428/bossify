@@ -4,6 +4,8 @@ import { ChevronRight, LogOut, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
+import { toast } from "sonner";
+import { DEFAULT_ORDER_TPL, DEFAULT_REMINDER_TPL } from "@/lib/wa";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -20,30 +22,48 @@ function ProfilePage() {
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string } | null>(null);
   const [langOpen, setLangOpen] = useState(false);
+  const [tplOpen, setTplOpen] = useState(false);
+  const [orderTpl, setOrderTpl] = useState(DEFAULT_ORDER_TPL);
+  const [reminderTpl, setReminderTpl] = useState(DEFAULT_REMINDER_TPL);
+  const navigate2 = navigate;
 
   const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
     { icon: "🏪", key: "biz", label: t("business_profile") },
-    { icon: "🔔", key: "notif", label: t("notifications") },
+    { icon: "📊", key: "rep", label: t("sales_reports"), onClick: () => navigate({ to: "/reports" }) },
+    { icon: "🔔", key: "notif2", label: t("notifications"), onClick: () => navigate({ to: "/notifications" }) },
     { icon: "🌐", key: "lang", label: t("language"), value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`, onClick: () => setLangOpen(true) },
     { icon: "💳", key: "sub", label: t("subscription") },
-    { icon: "📲", key: "wa", label: t("whatsapp") },
+    { icon: "📲", key: "wa", label: t("wa_template"), onClick: () => setTplOpen(true) },
     { icon: "🔒", key: "priv", label: t("privacy") },
   ];
 
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [{ data: o }, { count: cust }, { data: p }] = await Promise.all([
+      const [{ data: o }, { count: cust }, { data: p }, { data: pref }] = await Promise.all([
         supabase.from("orders").select("amount,status"),
         supabase.from("customers").select("*", { count: "exact", head: true }),
         supabase.from("profiles").select("business_name,plan,created_at").eq("id", user.id).maybeSingle(),
+        supabase.from("user_preferences").select("wa_order_template,wa_reminder_template").maybeSingle(),
       ]);
       const orders = o ?? [];
       const revenue = orders.filter((x: any) => x.status === "Paid").reduce((s: number, x: any) => s + Number(x.amount), 0);
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
       setProfile(p as any);
+      if (pref?.wa_order_template) setOrderTpl(pref.wa_order_template);
+      if (pref?.wa_reminder_template) setReminderTpl(pref.wa_reminder_template);
     })();
   }, [user]);
+
+  const saveTemplates = async () => {
+    if (!user) return;
+    const { error } = await supabase.from("user_preferences").upsert(
+      { user_id: user.id, wa_order_template: orderTpl, wa_reminder_template: reminderTpl, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" }
+    );
+    if (error) toast.error(error.message);
+    else { toast.success(t("template_saved")); setTplOpen(false); }
+  };
 
   const businessName = profile?.business_name ?? user?.email?.split("@")[0] ?? "My Store";
   const initials = businessName.slice(0, 2).toUpperCase();
@@ -141,6 +161,29 @@ function ProfilePage() {
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {tplOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 animate-fade-in" onClick={() => setTplOpen(false)}>
+          <div className="w-full max-w-[390px] bg-card rounded-t-3xl p-5 space-y-3 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto h-1 w-10 rounded-full bg-muted" />
+            <p className="text-sm font-semibold py-1">{t("wa_template")}</p>
+            <div>
+              <label className="text-[11px] uppercase font-semibold text-muted-foreground">{t("order_template")}</label>
+              <textarea value={orderTpl} onChange={(e) => setOrderTpl(e.target.value)} rows={6}
+                className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono" />
+              <button onClick={() => setOrderTpl(DEFAULT_ORDER_TPL)} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
+            </div>
+            <div>
+              <label className="text-[11px] uppercase font-semibold text-muted-foreground">{t("reminder_template")}</label>
+              <textarea value={reminderTpl} onChange={(e) => setReminderTpl(e.target.value)} rows={6}
+                className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono" />
+              <button onClick={() => setReminderTpl(DEFAULT_REMINDER_TPL)} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
+            </div>
+            <p className="text-[10px] text-muted-foreground">Variables: [customer_name] [code] [product] [quantity] [amount] [status] [notes] [days_ago]</p>
+            <button onClick={saveTemplates} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold">{t("save")}</button>
           </div>
         </div>
       )}
