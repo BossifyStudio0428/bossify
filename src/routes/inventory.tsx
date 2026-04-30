@@ -76,7 +76,10 @@ function InventoryPage() {
   const atLimit = !isPro && items.length >= FREE_LIMITS.inventory;
 
   return (
-    <div className="px-5 pt-10 pb-4 space-y-5 relative bg-[#F4F3F8] text-slate-900 min-h-full">
+    <div
+      className="px-5 pt-10 pb-32 space-y-5 relative bg-[#F4F3F8] text-slate-900 min-h-screen -mx-px"
+      style={{ marginLeft: 0, marginRight: 0 }}
+    >
       <header className="flex items-center gap-3">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">{t("inventory")}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
@@ -102,7 +105,7 @@ function InventoryPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("search_products")}
-          className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+          className="w-full rounded-2xl bg-white border border-slate-200 shadow-sm pl-10 pr-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
         />
       </div>
 
