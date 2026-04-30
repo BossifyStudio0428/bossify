@@ -54,6 +54,9 @@ function OrdersPage() {
   const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
   const [bulkProgress, setBulkProgress] = useState<{ i: number; n: number } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<OrderRow | null>(null);
+  const [editingOrder, setEditingOrder] = useState<OrderRow | null>(null);
+  const [editForm, setEditForm] = useState<Partial<OrderRow>>({});
+  const [editSaving, setEditSaving] = useState(false);
 
   useEffect(() => { setHydrated(true); }, []);
 
@@ -216,6 +219,37 @@ function OrdersPage() {
       setDetail(null);
       toast.success(t("order_deleted"));
     }, 220);
+  };
+
+  const openEdit = (order: OrderRow) => {
+    setEditingOrder(order);
+    setEditForm(order);
+  };
+
+  const saveEdit = async () => {
+    if (!editingOrder || !user) return;
+    setEditSaving(true);
+    const updates = {
+      customer_name: editForm.customer_name?.toString().trim() || editingOrder.customer_name,
+      phone: editForm.phone?.toString().trim() || null,
+      product: editForm.product?.toString().trim() || editingOrder.product,
+      quantity: Number(editForm.quantity ?? editingOrder.quantity),
+      amount: Number(editForm.amount ?? editingOrder.amount),
+      status: (editForm.status ?? editingOrder.status) as OrderStatus,
+      notes: editForm.notes?.toString().trim() || null,
+    };
+    const { error } = await supabase.from("orders").update(updates).eq("id", editingOrder.id).eq("user_id", user.id);
+    setEditSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const next = { ...editingOrder, ...updates } as OrderRow;
+    setOrders((prev) => prev.map((order) => (order.id === editingOrder.id ? next : order)));
+    if (detail?.id === editingOrder.id) setDetail(next);
+    setEditingOrder(null);
+    setEditForm({});
+    toast.success(t("order_updated"));
   };
 
   const visible = active === "All" ? orders : orders.filter((o) => o.status === active);
