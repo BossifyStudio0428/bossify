@@ -26,7 +26,7 @@ function ProfilePage() {
   const { theme, toggle: toggleTheme } = useTheme();
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
-  const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string } | null>(null);
+  const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string; avatar_url: string | null } | null>(null);
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
   const [orderTpl, setOrderTpl] = useState(DEFAULT_ORDER_TPL);
@@ -51,7 +51,7 @@ function ProfilePage() {
       const [{ data: o }, { count: cust }, { data: p }, { data: pref }, { data: adminCheck }] = await Promise.all([
         supabase.from("orders").select("amount,status"),
         supabase.from("customers").select("*", { count: "exact", head: true }),
-        supabase.from("profiles").select("business_name,plan,created_at,is_admin").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("business_name,plan,created_at,is_admin,avatar_url").eq("id", user.id).maybeSingle(),
         supabase.from("user_preferences").select("wa_order_template,wa_reminder_template").maybeSingle(),
         supabase.from("profiles").select("is_admin").eq("id", user.id).maybeSingle(),
       ]);
@@ -96,8 +96,8 @@ function ProfilePage() {
   return (
     <div className="px-5 pt-10 pb-6 space-y-6">
       <header className="flex flex-col items-center text-center">
-        <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-3xl font-bold shadow-[var(--shadow-soft)]">
-          {initials}
+        <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-3xl font-bold shadow-[var(--shadow-soft)] overflow-hidden">
+          {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : initials}
         </div>
         <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">{businessName}</h1>
         <span className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
