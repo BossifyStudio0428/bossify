@@ -70,29 +70,14 @@ function BootSplash({ onFinish }: { onFinish: () => void }) {
           width={160}
           height={160}
           className="object-contain"
-          style={{
-            animation:
-              "splashLogo 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
-          }}
         />
         <p
           className="mt-3 text-[26px] font-extrabold tracking-tight"
-          style={{ color: "#1E1333", animation: "splashText 0.4s ease-out 0.6s both" }}
+          style={{ color: "#1E1333" }}
         >
           Bossify
         </p>
       </div>
-      <style>{`
-        @keyframes splashLogo {
-          0% { transform: scale(0.3); opacity: 0; }
-          70% { transform: scale(1.08); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes splashText {
-          from { transform: translateY(12px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }
