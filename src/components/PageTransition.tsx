@@ -38,11 +38,8 @@ export function PageTransition({
       key={pathKey}
       initial={v.initial}
       animate={v.animate}
-      exit={v.exit}
       transition={{ duration: 0.2, ease: "easeOut" }}
       style={{
-        position: "absolute",
-        inset: 0,
         width: "100%",
         minHeight: "100%",
       }}
