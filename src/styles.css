@@ -157,9 +157,10 @@
     color: var(--color-foreground);
     font-family: "DM Sans", system-ui, sans-serif;
     min-height: 100vh;
-    /* Respect iOS / Android safe areas — no grey bleed in status bar */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    /* Background extends fully under status bar / nav bar.
+       Individual screens add their own safe-area padding on inner content. */
+    padding-top: 0;
+    padding-bottom: 0;
     overscroll-behavior: none;
   }
 
