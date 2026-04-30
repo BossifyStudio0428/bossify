@@ -166,6 +166,15 @@
   html {
     background-color: #F4F3F8;
   }
+
+  /* Auth / onboarding flow always uses the light brand surface so logging out
+     from dark mode never leaves a black flash behind the form. */
+  html:has(body [data-auth-surface]) {
+    background-color: #F4F3F8 !important;
+  }
+  body:has([data-auth-surface]) {
+    background-color: #F4F3F8 !important;
+  }
 }
 
 /* Eliminate 300ms tap delay on Android WebView */

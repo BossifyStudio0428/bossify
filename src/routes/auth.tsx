@@ -24,7 +24,7 @@ function AuthPage() {
   }, [mode]);
 
   return (
-    <div className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}>
+    <div data-auth-surface className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}>
       {mode === "login" && <LoginScreen onGoRegister={() => setMode("reg_email")} />}
       {mode === "reg_email" && (
         <RegEmailScreen

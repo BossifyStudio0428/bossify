@@ -44,6 +44,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    // Reset theme to light so the auth screen never flashes a dark background
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("bossify_theme", "light");
+        const root = document.documentElement;
+        root.classList.remove("dark");
+        root.classList.add("light");
+        root.style.colorScheme = "light";
+      } catch {}
+    }
     await supabase.auth.signOut();
   };
 
