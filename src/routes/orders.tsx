@@ -7,6 +7,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, daysSince, DEFAULT_REMINDER_TPL } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 export const Route = createFileRoute("/orders")({ component: OrdersPage });
 
@@ -33,6 +34,7 @@ function formatTime(iso: string) {
 function OrdersPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { isPro, showUpgrade } = useSubscription();
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,6 +144,7 @@ function OrdersPage() {
   };
 
   const exportPDF = () => {
+    if (!isPro) { showUpgrade(t("export_pdf")); return; }
     try {
       const rows = visible.map((o) => ({
         date: new Date(o.created_at).toLocaleDateString("en-MY"),
@@ -190,11 +193,11 @@ function OrdersPage() {
       </header>
 
       {active === "Unpaid" && unpaidCount > 0 && (
-        <button onClick={remindAllUnpaid} disabled={!!bulkProgress}
+        <button onClick={isPro ? remindAllUnpaid : () => showUpgrade(t("remind_all_unpaid"))} disabled={!!bulkProgress}
           className="w-full py-3 rounded-2xl bg-orange-500 text-white font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60">
           {bulkProgress
             ? t("sending_progress").replace("{i}", String(bulkProgress.i)).replace("{n}", String(bulkProgress.n))
-            : `📲 ${t("remind_all_unpaid")} (${orders.filter((o) => o.status === "Unpaid" && o.phone).length})`}
+            : `${isPro ? "📲" : "🔒"} ${t("remind_all_unpaid")} (${orders.filter((o) => o.status === "Unpaid" && o.phone).length})`}
         </button>
       )}
 
