@@ -63,7 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         root.classList.remove("dark");
         root.classList.add("light");
         root.style.colorScheme = "light";
-      } catch {}
+      } catch {
+        // Ignore theme reset errors.
+      }
     }
     await supabase.auth.signOut();
   };
