@@ -81,23 +81,30 @@ export function AppShell() {
 
 function ShellInner() {
   const location = useLocation();
-  const transitionPathname = useRouterState({
-    select: (state) => state.resolvedLocation?.pathname ?? state.location.pathname,
+  const renderedPathname = useRouterState({
+    select: (state) => state.matches.at(-1)?.pathname ?? state.location.pathname,
   });
   const navigate = useNavigate();
   const { session, loading } = useAuth();
   const { t } = useI18n();
-  const direction = usePageDirection(transitionPathname);
+  const direction = usePageDirection(renderedPathname);
 
-  const isLoginRoute = location.pathname === "/auth";
+  const locationPathname = location.pathname;
+  const isLoginRoute = locationPathname === "/auth";
   const isAuthFlowRoute =
-    location.pathname === "/auth" ||
-    location.pathname === "/reset-password" ||
-    location.pathname.startsWith("/forgot-password");
-  const isOnboardingRoute = location.pathname === "/onboarding";
-  const isSplashRoute = location.pathname === "/splash";
-  const isLanguageRoute = location.pathname === "/language";
+    locationPathname === "/auth" ||
+    locationPathname === "/reset-password" ||
+    locationPathname.startsWith("/forgot-password");
+  const isOnboardingRoute = locationPathname === "/onboarding";
+  const isSplashRoute = locationPathname === "/splash";
+  const isLanguageRoute = locationPathname === "/language";
   const isPublicFlow = isSplashRoute || isLanguageRoute;
+  const renderedIsAuthFlowRoute =
+    renderedPathname === "/auth" ||
+    renderedPathname === "/reset-password" ||
+    renderedPathname.startsWith("/forgot-password");
+  const renderedIsOnboardingRoute = renderedPathname === "/onboarding";
+  const renderedIsPublicFlow = renderedPathname === "/splash" || renderedPathname === "/language";
 
   // Splash gate — first visit goes to /splash
   const [splashShown, setSplashShown] = useState<boolean>(() => {
@@ -167,7 +174,7 @@ function ShellInner() {
     );
   }
 
-  if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
+  if (renderedIsPublicFlow || renderedIsAuthFlowRoute || renderedIsOnboardingRoute || !session) {
     return (
       <div
         style={{
@@ -178,8 +185,8 @@ function ShellInner() {
         }}
       >
         <PageTransition
-          key={transitionPathname}
-          pathKey={transitionPathname}
+          key={renderedPathname}
+          pathKey={renderedPathname}
           direction={direction}
         >
           <Outlet />
@@ -189,7 +196,7 @@ function ShellInner() {
   }
 
   const isActive = (to: string) =>
-    to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+    to === "/" ? renderedPathname === "/" : renderedPathname.startsWith(to);
 
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
@@ -203,8 +210,8 @@ function ShellInner() {
         </header>
         <main className="flex-1 pb-28 relative overflow-x-hidden">
           <PageTransition
-            key={transitionPathname}
-            pathKey={transitionPathname}
+            key={renderedPathname}
+            pathKey={renderedPathname}
             direction={direction}
           >
             <Outlet />
