@@ -1,6 +1,5 @@
 @import "tailwindcss" source(none);
 @source "../src";
-@import "tw-animate-css";
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
 
 @custom-variant dark (&:is(.dark *));
@@ -163,17 +162,12 @@
   }
 }
 
-/* Lightweight CSS page transitions (replaces framer-motion) */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.page-transition {
-  animation: fadeIn 0.12s ease-out;
-  will-change: opacity;
-}
-
 /* Eliminate 300ms tap delay on Android WebView */
-* {
+*,
+*::before,
+*::after {
   touch-action: manipulation;
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
 }

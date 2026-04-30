@@ -1,7 +1,6 @@
-import { Outlet, Link, useLocation, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
-import { memo, useEffect, useRef, useState } from "react";
-import { PageTransition, type TransitionDirection } from "@/components/PageTransition";
+import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { I18nProvider, useI18n } from "@/contexts/I18nContext";
@@ -17,59 +16,8 @@ const tabs = [
   { to: "/customers", label: "Customers", icon: Users },
 ] as const;
 
-const tabOrder = ["/", "/orders", "/new-order", "/inventory", "/customers"];
-
-function getTabIndex(path: string): number {
-  if (path === "/") return 0;
-  const found = tabOrder.findIndex(
-    (t) => t !== "/" && (path === t || path.startsWith(t + "/")),
-  );
-  return found;
-}
-
-function usePageDirection(pathname: string): TransitionDirection {
-  const prev = useRef<string>(pathname);
-  const popRef = useRef(false);
-  const directionRef = useRef<TransitionDirection>("fade");
-
-  useEffect(() => {
-    const onPop = () => {
-      popRef.current = true;
-    };
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
-
-  if (prev.current !== pathname) {
-    const from = prev.current;
-    const to = pathname;
-    const wasPop = popRef.current;
-    popRef.current = false;
-
-    let next: TransitionDirection = "fade";
-    const fromIdx = getTabIndex(from);
-    const toIdx = getTabIndex(to);
-    if (fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx) {
-      next = toIdx > fromIdx ? "right" : "left";
-    } else if (wasPop) {
-      next = "left";
-    } else {
-      next = "fade";
-    }
-    directionRef.current = next;
-    prev.current = to;
-  }
-
-  return directionRef.current;
-}
-
 export function AppShell() {
-  // Top-level splash gate: render ONLY the splash screen until ready,
-  // preventing any homepage flash before the splash animation finishes.
-  const [appReady, setAppReady] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return sessionStorage.getItem("bossify_splash_shown") === "1";
-  });
+  const [appReady, setAppReady] = useState(false);
 
   if (!appReady) {
     return <BootSplash onFinish={() => setAppReady(true)} />;
@@ -122,42 +70,23 @@ function BootSplash({ onFinish }: { onFinish: () => void }) {
           width={160}
           height={160}
           className="object-contain"
-          style={{
-            animation:
-              "splashLogo 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
-          }}
         />
         <p
           className="mt-3 text-[26px] font-extrabold tracking-tight"
-          style={{ color: "#1E1333", animation: "splashText 0.4s ease-out 0.6s both" }}
+          style={{ color: "#1E1333" }}
         >
           Bossify
         </p>
       </div>
-      <style>{`
-        @keyframes splashLogo {
-          0% { transform: scale(0.3); opacity: 0; }
-          70% { transform: scale(1.08); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes splashText {
-          from { transform: translateY(12px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }
 
 function ShellInner() {
   const location = useLocation();
-  const renderedPathname = useRouterState({
-    select: (state) => state.matches[state.matches.length - 1]?.pathname ?? state.location.pathname,
-  });
   const navigate = useNavigate();
   const { session, loading } = useAuth();
   const { t } = useI18n();
-  const direction = usePageDirection(renderedPathname);
 
   const locationPathname = location.pathname;
   const isLoginRoute = locationPathname === "/auth";
@@ -169,24 +98,6 @@ function ShellInner() {
   const isSplashRoute = locationPathname === "/splash";
   const isLanguageRoute = locationPathname === "/language";
   const isPublicFlow = isSplashRoute || isLanguageRoute;
-  const renderedIsAuthFlowRoute =
-    renderedPathname === "/auth" ||
-    renderedPathname === "/reset-password" ||
-    renderedPathname.startsWith("/forgot-password");
-  const renderedIsOnboardingRoute = renderedPathname === "/onboarding";
-  const renderedIsPublicFlow = renderedPathname === "/splash" || renderedPathname === "/language";
-
-  // Splash gate — first visit goes to /splash
-  const [splashShown, setSplashShown] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    return sessionStorage.getItem("bossify_splash_shown") === "1";
-  });
-  useEffect(() => {
-    if (isSplashRoute) {
-      sessionStorage.setItem("bossify_splash_shown", "1");
-      setSplashShown(true);
-    }
-  }, [isSplashRoute]);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
@@ -214,10 +125,6 @@ function ShellInner() {
 
   useEffect(() => {
     if (loading) return;
-    if (!splashShown) {
-      navigate({ to: "/splash" });
-      return;
-    }
     if (isPublicFlow) return;
     if (!session && !isAuthFlowRoute) {
       navigate({ to: "/auth" });
@@ -234,7 +141,7 @@ function ShellInner() {
       if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding" });
       if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/" });
     }
-  }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, splashShown, onboardingChecked, needsOnboarding, navigate]);
+  }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, onboardingChecked, needsOnboarding, navigate]);
 
   if (loading) {
     return (
@@ -244,7 +151,7 @@ function ShellInner() {
     );
   }
 
-  if (renderedIsPublicFlow || renderedIsAuthFlowRoute || renderedIsOnboardingRoute || !session) {
+  if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
     return (
       <div
         style={{
@@ -254,19 +161,10 @@ function ShellInner() {
           minHeight: "100vh",
         }}
       >
-        <PageTransition
-          key={renderedPathname}
-          pathKey={renderedPathname}
-          direction={direction}
-        >
-          <Outlet />
-        </PageTransition>
+        <Outlet />
       </div>
     );
   }
-
-  const isActive = (to: string) =>
-    to === "/" ? renderedPathname === "/" : renderedPathname.startsWith(to);
 
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
@@ -279,44 +177,34 @@ function ShellInner() {
           </div>
         </header>
         <main className="flex-1 pb-28 relative overflow-x-hidden">
-          <PageTransition
-            key={renderedPathname}
-            pathKey={renderedPathname}
-            direction={direction}
-          >
-            <Outlet />
-          </PageTransition>
+          <Outlet />
         </main>
 
-        <BottomNav activePath={renderedPathname} />
+        <BottomNav />
       </div>
     </div>
   );
 }
 
-const BottomNav = memo(function BottomNav({ activePath }: { activePath: string }) {
-  const isActive = (to: string) =>
-    to === "/" ? activePath === "/" : activePath.startsWith(to);
+const BottomNav = memo(function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40">
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
         <ul className="grid grid-cols-5 items-center h-16 px-2">
           {tabs.slice(0, 2).map((t) => (
-            <NavItem key={t.to} {...t} active={isActive(t.to)} />
+            <NavItem key={t.to} {...t} />
           ))}
           <li className="flex justify-center">
             <Link
               to="/new-order"
               aria-label="New Order"
-              className={`-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background transition-transform active:scale-95 ${
-                isActive("/new-order") ? "scale-105" : ""
-              }`}
+              className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
             >
               <Plus className="h-7 w-7" strokeWidth={2.5} />
             </Link>
           </li>
           {tabs.slice(2).map((t) => (
-            <NavItem key={t.to} {...t} active={isActive(t.to)} />
+            <NavItem key={t.to} {...t} />
           ))}
         </ul>
       </div>
@@ -328,26 +216,20 @@ function NavItem({
   to,
   label,
   icon: Icon,
-  active,
 }: {
   to: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  active: boolean;
 }) {
   return (
     <li>
       <Link
         to={to}
-        className={`flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors relative ${
-          active ? "text-primary" : "text-muted-foreground"
-        }`}
+        className="flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-muted-foreground relative"
+        activeProps={{ className: "text-primary" }}
       >
-        <Icon className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`} />
+        <Icon className="h-5 w-5" />
         <span>{label}</span>
-        {active && (
-          <span className="absolute -bottom-0.5 h-1 w-1 rounded-full bg-primary" />
-        )}
       </Link>
     </li>
   );
