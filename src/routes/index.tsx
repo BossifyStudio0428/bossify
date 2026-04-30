@@ -18,6 +18,7 @@ function Index() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
   const { isPro, ordersUsed, ordersLimit } = useSubscription();
+  const [hydrated, setHydrated] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
@@ -40,6 +41,7 @@ function Index() {
   };
 
   useEffect(() => {
+    setHydrated(true);
     load();
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
@@ -59,9 +61,9 @@ function Index() {
   }, [user?.id]);
 
   const localeMap = { en: "en-MY", ms: "ms-MY", zh: "zh-CN" } as const;
-  const today = new Date().toLocaleDateString(localeMap[lang], {
+  const today = hydrated ? new Date().toLocaleDateString(localeMap[lang], {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
-  });
+  }) : "";
   const isToday = (iso: string) => new Date(iso).toDateString() === new Date().toDateString();
   const todayOrders = orders.filter((o) => isToday(o.created_at));
   const todayRevenue = todayOrders.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0);
@@ -101,8 +103,8 @@ function Index() {
 
   const recent = orders.slice(0, 3);
   const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? t("good_morning") : hour < 18 ? t("good_afternoon") : t("good_evening");
+  const hour = hydrated ? new Date().getHours() : 12;
+  const greeting = hydrated ? (hour < 12 ? t("good_morning") : hour < 18 ? t("good_afternoon") : t("good_evening")) : "";
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-6">
