@@ -2,7 +2,19 @@ import { createRouter, useRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 function PendingRouteComponent() {
-  return <div className="min-h-[calc(100vh-7rem)] bg-background" />;
+  return (
+    <div className="min-h-[calc(100vh-7rem)] w-full flex items-center justify-center bg-background">
+      <div
+        aria-label="Loading"
+        className="h-8 w-8 rounded-full border-[3px] border-primary/20 border-t-primary"
+        style={{
+          animation: "bossify-spin 0.8s linear infinite",
+          // override the global "animation: none !important" so the spinner can move
+          animationName: "bossify-spin",
+        }}
+      />
+    </div>
+  );
 }
 
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
