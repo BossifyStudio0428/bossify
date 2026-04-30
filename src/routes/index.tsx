@@ -103,35 +103,36 @@ function Index() {
   return (
     <div className="px-5 pt-10 pb-4 space-y-6">
       <header className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted-foreground">{greeting},</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm text-muted-foreground">{greeting},</p>
+            {!isPro ? (
+              <Link
+                to="/plans"
+                aria-label="Upgrade plan"
+                className="h-6 px-2 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/30 inline-flex items-center gap-1 active:scale-95 transition-transform"
+              >
+                <Sparkles className="h-3 w-3 text-primary" />
+                <span className="text-[10px] font-bold text-primary tabular-nums leading-none">
+                  {ordersUsed}/{ordersLimit}
+                </span>
+              </Link>
+            ) : (
+              <Link
+                to="/plans"
+                aria-label="Pro plan"
+                className="h-6 px-2 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground inline-flex items-center gap-1 shadow-[var(--shadow-soft)] active:scale-95 transition-transform"
+              >
+                <Sparkles className="h-3 w-3" />
+                <span className="text-[10px] font-bold leading-none">PRO</span>
+              </Link>
+            )}
+          </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("welcome")} 👋</h1>
           <p className="mt-1 text-xs text-muted-foreground">{today}</p>
           <p className="mt-2 text-xs font-medium text-primary/90">{motivMsg}</p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {!isPro && (
-            <Link
-              to="/plans"
-              aria-label="Upgrade plan"
-              className="h-10 px-2.5 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/30 flex items-center gap-1 active:scale-95 transition-transform"
-            >
-              <Sparkles className="h-3 w-3 text-primary" />
-              <span className="text-[11px] font-bold text-primary tabular-nums">
-                {ordersUsed}/{ordersLimit}
-              </span>
-            </Link>
-          )}
-          {isPro && (
-            <Link
-              to="/plans"
-              aria-label="Pro plan"
-              className="h-10 px-2.5 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center gap-1 shadow-[var(--shadow-soft)] active:scale-95 transition-transform"
-            >
-              <Sparkles className="h-3 w-3" />
-              <span className="text-[11px] font-bold">PRO</span>
-            </Link>
-          )}
           <Link to="/analytics" aria-label="Analytics" className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
             <BarChart3 className="h-4 w-4 text-foreground" />
           </Link>
