@@ -116,7 +116,7 @@ function InventoryPage() {
           </div>
         )}
         {!loading && items.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_products_create")}</p>
+          <p className="text-center text-sm text-slate-500 py-10 px-4">{t("no_products_create")}</p>
         )}
         {!loading && items.length > 0 && visible.map((it) => {
           const low = it.stock <= LOW_THRESHOLD;
@@ -126,10 +126,10 @@ function InventoryPage() {
             <article
               key={it.id}
               ref={isFirstLow ? (el) => { firstLowRef.current = el; } : undefined}
-              className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3"
+              className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 space-y-3"
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-semibold text-foreground flex-1">{it.name}</p>
+                <p className="text-sm font-semibold text-slate-900 flex-1">{it.name}</p>
                 <div className="flex items-center gap-1.5">
                   {low && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600">
@@ -138,7 +138,7 @@ function InventoryPage() {
                   )}
                   <button
                     onClick={() => setSheet({ kind: "form", item: it })}
-                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"
                     aria-label="Edit"
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -153,10 +153,10 @@ function InventoryPage() {
                 </div>
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className={`text-2xl font-bold ${low ? "text-red-500" : "text-foreground"}`}>{it.stock}</span>
-                <span className="text-xs text-muted-foreground">{it.unit} {t("left")}</span>
+                <span className={`text-2xl font-bold ${low ? "text-red-500" : "text-slate-900"}`}>{it.stock}</span>
+                <span className="text-xs text-slate-500">{it.unit} {t("left")}</span>
               </div>
-              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                 <div
                   className={`h-full rounded-full ${low ? "bg-red-500" : "bg-gradient-to-r from-primary to-primary/70"}`}
                   style={{ width: `${pct}%` }}
@@ -180,7 +180,7 @@ function InventoryPage() {
           );
         })}
         {!loading && items.length > 0 && visible.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10">{t("no_products")}</p>
+          <p className="text-center text-sm text-slate-500 py-10">{t("no_products")}</p>
         )}
       </div>
 
