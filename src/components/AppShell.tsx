@@ -99,7 +99,7 @@ function ShellInner() {
       navigate({ to: "/" });
       return;
     }
-    if (session && onboardingChecked) {
+    if (session && onboardingChecked && !isAuthFlowRoute) {
       if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding" });
       if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/" });
     }
