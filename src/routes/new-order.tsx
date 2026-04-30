@@ -37,6 +37,13 @@ function NewOrderPage() {
   const [form, setForm] = useState({
     customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "",
   });
+  const [countryCode, setCountryCode] = useState<string>(() => {
+    if (typeof window === "undefined") return "60";
+    return localStorage.getItem("bossify_country_code") || "60";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("bossify_country_code", countryCode);
+  }, [countryCode]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
