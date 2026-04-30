@@ -302,12 +302,20 @@ function OrdersPage() {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuItem onSelect={() => navigate({ to: "/orders/$orderId", params: { orderId: o.id } })}>
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setTimeout(() => navigate({ to: "/orders/$orderId", params: { orderId: o.id } }), 0);
+                      }}
+                    >
                       <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600 focus:text-red-600"
-                      onSelect={() => setPendingDelete(o)}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setPendingDelete(o);
+                      }}
                     >
                       <Trash2 className="h-4 w-4 mr-2" /> {t("delete_order") || "Delete"}
                     </DropdownMenuItem>
