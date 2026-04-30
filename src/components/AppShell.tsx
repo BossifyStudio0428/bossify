@@ -1,7 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence } from "framer-motion";
 import { PageTransition, type TransitionDirection } from "@/components/PageTransition";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -171,20 +170,18 @@ function ShellInner() {
       <div
         style={{
           position: "relative",
-          overflow: "hidden",
+          overflowX: "hidden",
           width: "100%",
           minHeight: "100vh",
         }}
       >
-        <AnimatePresence mode="wait" initial={false}>
-          <PageTransition
-            key={location.pathname}
-            pathKey={location.pathname}
-            direction={direction}
-          >
-            <Outlet />
-          </PageTransition>
-        </AnimatePresence>
+        <PageTransition
+          key={location.pathname}
+          pathKey={location.pathname}
+          direction={direction}
+        >
+          <Outlet />
+        </PageTransition>
       </div>
     );
   }
@@ -202,16 +199,14 @@ function ShellInner() {
             <span className="text-[13px] font-bold text-foreground tracking-tight">Bossify</span>
           </div>
         </header>
-        <main className="flex-1 pb-28 relative overflow-hidden">
-          <AnimatePresence mode="wait" initial={false}>
-            <PageTransition
-              key={location.pathname}
-              pathKey={location.pathname}
-              direction={direction}
-            >
-              <Outlet />
-            </PageTransition>
-          </AnimatePresence>
+        <main className="flex-1 pb-28 relative overflow-x-hidden">
+          <PageTransition
+            key={location.pathname}
+            pathKey={location.pathname}
+            direction={direction}
+          >
+            <Outlet />
+          </PageTransition>
         </main>
 
         {/* Bottom nav */}
