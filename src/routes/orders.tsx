@@ -52,7 +52,7 @@ function OrdersPage() {
   }, []);
 
   const load = async (silent = false) => {
-    if (!silent) const { data, error } = await supabase
+    const { data, error } = await supabase
       .from("orders")
       .select("*")
       .order("created_at", { ascending: false });
