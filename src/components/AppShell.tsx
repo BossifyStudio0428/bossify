@@ -198,11 +198,14 @@ const BottomNav = memo(function BottomNav() {
   const router = useRouter();
 
   useEffect(() => {
-    router.preloadRoute({ to: "/" });
-    router.preloadRoute({ to: "/orders" });
-    router.preloadRoute({ to: "/inventory" });
-    router.preloadRoute({ to: "/customers" });
-    router.preloadRoute({ to: "/new-order" });
+    const idle = window.setTimeout(() => {
+      router.preloadRoute({ to: "/" });
+      router.preloadRoute({ to: "/orders" });
+      router.preloadRoute({ to: "/inventory" });
+      router.preloadRoute({ to: "/customers" });
+      router.preloadRoute({ to: "/new-order" });
+    }, 800);
+    return () => window.clearTimeout(idle);
   }, [router]);
 
   return (
