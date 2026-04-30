@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Outlet, Link, useLocation, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Home, ClipboardList, Plus, Package, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PageTransition, type TransitionDirection } from "@/components/PageTransition";
@@ -82,10 +82,13 @@ export function AppShell() {
 
 function ShellInner() {
   const location = useLocation();
+  const transitionPathname = useRouterState({
+    select: (state) => state.resolvedLocation?.pathname ?? state.location.pathname,
+  });
   const navigate = useNavigate();
   const { session, loading } = useAuth();
   const { t } = useI18n();
-  const direction = usePageDirection(location.pathname);
+  const direction = usePageDirection(transitionPathname);
 
   const isLoginRoute = location.pathname === "/auth";
   const isAuthFlowRoute =
@@ -176,8 +179,8 @@ function ShellInner() {
         }}
       >
         <PageTransition
-          key={location.pathname}
-          pathKey={location.pathname}
+          key={transitionPathname}
+          pathKey={transitionPathname}
           direction={direction}
         >
           <Outlet />
@@ -201,8 +204,8 @@ function ShellInner() {
         </header>
         <main className="flex-1 pb-28 relative overflow-x-hidden">
           <PageTransition
-            key={location.pathname}
-            pathKey={location.pathname}
+            key={transitionPathname}
+            pathKey={transitionPathname}
             direction={direction}
           >
             <Outlet />
