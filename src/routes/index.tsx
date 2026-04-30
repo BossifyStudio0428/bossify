@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search } from "lucide-react";
+import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, BarChart3 } from "lucide-react";
 import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -108,6 +108,9 @@ function Index() {
           <p className="mt-2 text-xs font-medium text-primary/90">{motivMsg}</p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
+          <Link to="/analytics" aria-label="Analytics" className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
+            <BarChart3 className="h-4 w-4 text-foreground" />
+          </Link>
           <Link to="/search" aria-label={t("search")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
             <Search className="h-4 w-4 text-foreground" />
           </Link>

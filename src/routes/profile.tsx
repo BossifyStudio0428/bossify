@@ -7,7 +7,8 @@ import { useI18n, type Lang } from "@/contexts/I18nContext";
 import { toast } from "sonner";
 import { DEFAULT_ORDER_TPL, DEFAULT_REMINDER_TPL } from "@/lib/wa";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -22,6 +23,8 @@ function ProfilePage() {
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
   const { isPro, ordersUsed, showUpgrade } = useSubscription();
+  const { theme, toggle: toggleTheme } = useTheme();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string } | null>(null);
   const [langOpen, setLangOpen] = useState(false);
@@ -30,28 +33,33 @@ function ProfilePage() {
   const [reminderTpl, setReminderTpl] = useState(DEFAULT_REMINDER_TPL);
 
   const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
-    { icon: "🏪", key: "biz", label: t("business_profile") },
+    { icon: "🏪", key: "biz", label: t("business_profile"), onClick: () => navigate({ to: "/business-profile" }) },
+    { icon: "📊", key: "analytics", label: "Analytics", onClick: () => navigate({ to: "/analytics" }) },
     { icon: "📊", key: "rep", label: t("sales_reports"), onClick: () => navigate({ to: "/reports" }) },
     { icon: "🔔", key: "notif2", label: t("notifications"), onClick: () => navigate({ to: "/notifications" }) },
     { icon: "🌐", key: "lang", label: t("language"), value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`, onClick: () => setLangOpen(true) },
+    { icon: theme === "dark" ? "🌙" : "☀️", key: "theme", label: "Appearance", value: theme === "dark" ? "Dark" : "Light", onClick: toggleTheme },
     { icon: "💳", key: "sub", label: t("subscription"), value: isPro ? t("pro_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
     { icon: "📲", key: "wa", label: t("wa_template"), value: isPro ? undefined : "🔒", onClick: () => isPro ? setTplOpen(true) : showUpgrade(t("wa_template")) },
-    { icon: "🔒", key: "priv", label: t("privacy") },
+    { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
+    ...(isAdmin ? [{ icon: "⚙️", key: "admin", label: "Admin Panel", value: "PRO", onClick: () => navigate({ to: "/admin" }) }] : []),
   ];
 
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [{ data: o }, { count: cust }, { data: p }, { data: pref }] = await Promise.all([
+      const [{ data: o }, { count: cust }, { data: p }, { data: pref }, { data: adminCheck }] = await Promise.all([
         supabase.from("orders").select("amount,status"),
         supabase.from("customers").select("*", { count: "exact", head: true }),
-        supabase.from("profiles").select("business_name,plan,created_at").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("business_name,plan,created_at,is_admin").eq("id", user.id).maybeSingle(),
         supabase.from("user_preferences").select("wa_order_template,wa_reminder_template").maybeSingle(),
+        supabase.from("profiles").select("is_admin").eq("id", user.id).maybeSingle(),
       ]);
       const orders = o ?? [];
       const revenue = orders.filter((x: any) => x.status === "Paid").reduce((s: number, x: any) => s + Number(x.amount), 0);
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
       setProfile(p as any);
+      setIsAdmin(!!(p as any)?.is_admin);
       if (pref?.wa_order_template) setOrderTpl(pref.wa_order_template);
       if (pref?.wa_reminder_template) setReminderTpl(pref.wa_reminder_template);
     })();

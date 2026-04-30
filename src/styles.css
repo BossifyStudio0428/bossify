@@ -105,25 +105,34 @@
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
+  /* Bossify dark theme — purple-black */
+  /* #0F0D1A */
+  --background: oklch(0.155 0.025 295);
+  /* #F8F5FF */
+  --foreground: oklch(0.972 0.012 295);
+  /* #1A1628 */
+  --card: oklch(0.205 0.028 295);
+  --card-foreground: oklch(0.972 0.012 295);
+  --popover: oklch(0.205 0.028 295);
+  --popover-foreground: oklch(0.972 0.012 295);
+  /* #7C3AED keep primary */
+  --primary: oklch(0.553 0.245 295);
+  --primary-foreground: oklch(1 0 0);
+  /* #231D35 */
+  --secondary: oklch(0.245 0.034 295);
+  --secondary-foreground: oklch(0.972 0.012 295);
+  --muted: oklch(0.245 0.034 295);
+  /* #9B8EC4 */
+  --muted-foreground: oklch(0.66 0.055 295);
+  --accent: oklch(0.245 0.034 295);
+  --accent-foreground: oklch(0.972 0.012 295);
+  --destructive: oklch(0.65 0.21 22);
+  --destructive-foreground: oklch(0.985 0.003 247);
+  --border: oklch(0.66 0.055 295 / 18%);
+  --input: oklch(0.66 0.055 295 / 22%);
+  --ring: oklch(0.553 0.245 295);
+  --shadow-soft: 0 8px 24px -8px color-mix(in oklab, var(--primary) 40%, transparent);
+  --shadow-card: 0 4px 16px -6px color-mix(in oklab, black 60%, transparent);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -142,6 +151,7 @@
 @layer base {
   * {
     border-color: var(--color-border);
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
 
   body {

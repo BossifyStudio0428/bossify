@@ -237,7 +237,7 @@ function OrdersPage() {
           return (
             <article
               key={o.id}
-              onClick={() => setDetail(o)}
+              onClick={() => window.location.assign(`/orders/${o.id}`)}
               className={`rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 cursor-pointer transition-all ${removing ? "opacity-0 scale-95" : "opacity-100"}`}
             >
               <div className="flex items-start gap-3">
