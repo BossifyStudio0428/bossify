@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { supabase, type OrderStatus, type InventoryRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { renderTemplate, buildWhatsAppLink, DEFAULT_ORDER_TPL } from "@/lib/wa";
+import { createNotification } from "@/lib/notify";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
@@ -18,11 +20,6 @@ function genCode() {
   const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   const rnd = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
   return `ORD-${ymd}-${rnd}`;
-}
-
-function buildWhatsAppLink(phone: string, message: string) {
-  const cleaned = phone.replace(/[^0-9]/g, "");
-  return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
 }
 
 function NewOrderPage() {
@@ -42,11 +39,16 @@ function NewOrderPage() {
   const [saving, setSaving] = useState(false);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
+  const [orderTpl, setOrderTpl] = useState<string>(DEFAULT_ORDER_TPL);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("inventory").select("*");
-      setInventory((data ?? []) as InventoryRow[]);
+      const [{ data: inv }, { data: pref }] = await Promise.all([
+        supabase.from("inventory").select("*"),
+        supabase.from("user_preferences").select("wa_order_template").maybeSingle(),
+      ]);
+      setInventory((inv ?? []) as InventoryRow[]);
+      if (pref?.wa_order_template) setOrderTpl(pref.wa_order_template);
     })();
   }, []);
 
@@ -123,6 +125,18 @@ function NewOrderPage() {
     return { id: inserted.id, code: inserted.code };
   };
 
+  const buildMessage = (code: string) => renderTemplate(orderTpl, {
+    customer_name: form.customer_name || "Customer",
+    code,
+    product: form.product || "—",
+    quantity: form.quantity || "1",
+    amount: form.amount ? Number(form.amount).toFixed(2) : "0.00",
+    status,
+    notes: form.notes,
+  });
+
+  const livePreview = buildMessage("ORD-PREVIEW-001");
+
   const save = async (e: FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -131,6 +145,14 @@ function NewOrderPage() {
     setSaving(false);
     if (!res) return;
     toast.success(t("order_saved"));
+    if (user) {
+      await createNotification({
+        user_id: user.id, type: "new_order",
+        title: t("notif_new_order").replace("{code}", res.code).replace("{name}", form.customer_name),
+        message: `RM ${Number(form.amount).toFixed(2)} · ${form.product}`,
+        link: "/orders",
+      });
+    }
     setForm({ customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "" });
     setStatus("Unpaid");
     setTimeout(() => navigate({ to: "/orders" }), 1500);
@@ -147,15 +169,15 @@ function NewOrderPage() {
     setSaving(false);
     if (!res) return;
     toast.success(t("order_saved"));
-    const msg =
-      `Hi ${form.customer_name}! 👋\n\n` +
-      `Thank you for your order with Bossify! 🛍️\n\n` +
-      `📋 Order: ${res.code}\n` +
-      `🛒 Product: ${form.product} x${form.quantity}\n` +
-      `💰 Total: RM ${Number(form.amount).toFixed(2)}\n` +
-      `💳 Status: ${status}\n` +
-      (form.notes.trim() ? `\n📝 Notes: ${form.notes}\n` : "") +
-      `\nThank you for supporting our business! 🙏`;
+    const msg = buildMessage(res.code);
+    if (user) {
+      await createNotification({
+        user_id: user.id, type: "new_order",
+        title: t("notif_new_order").replace("{code}", res.code).replace("{name}", form.customer_name),
+        message: `RM ${Number(form.amount).toFixed(2)} · ${form.product}`,
+        link: "/orders",
+      });
+    }
     window.open(buildWhatsAppLink(form.phone, msg), "_blank");
     setTimeout(() => navigate({ to: "/orders" }), 800);
   };
@@ -258,6 +280,13 @@ function NewOrderPage() {
             📲 {t("save_whatsapp")}
           </button>
         </div>
+
+        {(form.customer_name || form.product) && (
+          <div className="rounded-2xl bg-emerald-50/60 border border-emerald-200 p-3">
+            <p className="text-[10px] uppercase font-semibold text-emerald-700 mb-1">{t("live_preview")}</p>
+            <pre className="whitespace-pre-wrap text-[11px] text-emerald-900 font-sans">{livePreview}</pre>
+          </div>
+        )}
       </form>
     </div>
   );

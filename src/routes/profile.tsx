@@ -25,7 +25,6 @@ function ProfilePage() {
   const [tplOpen, setTplOpen] = useState(false);
   const [orderTpl, setOrderTpl] = useState(DEFAULT_ORDER_TPL);
   const [reminderTpl, setReminderTpl] = useState(DEFAULT_REMINDER_TPL);
-  const navigate2 = navigate;
 
   const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
     { icon: "🏪", key: "biz", label: t("business_profile") },
