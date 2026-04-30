@@ -209,7 +209,10 @@ const BottomNav = memo(function BottomNav() {
   }, [router]);
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40">
+    <nav
+      className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40"
+      style={{ bottom: "max(env(safe-area-inset-bottom), 0px)" }}
+    >
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
         <ul className="grid grid-cols-5 items-center h-16 px-2">
           {tabs.slice(0, 2).map((t) => (
