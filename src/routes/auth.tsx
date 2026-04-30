@@ -407,7 +407,10 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
   const submit = async () => {
     if (!allOk) return;
     setError(null); setLoading(true);
-    const { data: userRes, error: updErr } = await supabase.auth.updateUser({ password: pw });
+    const { data: userRes, error: updErr } = await supabase.auth.updateUser({
+      password: pw,
+      data: { business_name: businessName },
+    });
     if (updErr || !userRes.user) {
       setLoading(false);
       setError(t(mapAuthError(updErr?.message)));
