@@ -7,7 +7,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, DEFAULT_ORDER_TPL } from "@/lib/wa";
 
-export const Route = createFileRoute("/orders/$orderId")({ component: OrderDetailPage });
+export const Route = createFileRoute("/orders/$orderId")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    edit: search.edit === true || search.edit === "true",
+  }),
+  component: OrderDetailPage,
+});
 
 const statusBanner: Record<OrderStatus, string> = {
   Paid: "bg-emerald-500 text-white",
@@ -17,12 +22,13 @@ const statusBanner: Record<OrderStatus, string> = {
 
 function OrderDetailPage() {
   const { orderId } = useParams({ from: "/orders/$orderId" });
+  const { edit } = Route.useSearch();
   const { user } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(edit);
   const [form, setForm] = useState<Partial<OrderRow>>({});
   const [orderTpl, setOrderTpl] = useState(DEFAULT_ORDER_TPL);
   const [saving, setSaving] = useState(false);
