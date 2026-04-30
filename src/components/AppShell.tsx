@@ -121,6 +121,8 @@ function ShellInner() {
           overflowX: "hidden",
           width: "100%",
           minHeight: "100vh",
+          paddingTop: "env(safe-area-inset-top)",
+          paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         <Outlet />
