@@ -134,21 +134,32 @@ function Onboarding() {
   const finish = async (skip = false) => {
     if (!user || saving) return;
     setSaving(true);
-    const payload: Record<string, string | null> = {
-      user_id: user.id,
-      business_type: null,
-      order_management: null,
-      biggest_challenge: null,
-      daily_orders: null,
-      business_fulltime: null,
-      primary_goal: null,
-      growth_goal: null,
-    };
-    if (!skip) {
-      for (const q of QUESTIONS) payload[q.key] = answers[q.key] ?? null;
+    try {
+      const payload: Record<string, string | null> = {
+        user_id: user.id,
+        business_type: null,
+        order_management: null,
+        biggest_challenge: null,
+        daily_orders: null,
+        business_fulltime: null,
+        primary_goal: null,
+        growth_goal: null,
+      };
+      if (!skip) {
+        for (const q of QUESTIONS) payload[q.key] = answers[q.key] ?? null;
+      }
+      const { error } = await supabase
+        .from("onboarding_responses")
+        .insert(payload as any);
+      if (error) {
+        console.error("onboarding insert failed", error);
+      }
+    } catch (e) {
+      console.error("onboarding finish error", e);
+    } finally {
+      setSaving(false);
+      navigate({ to: "/" });
     }
-    await supabase.from("onboarding_responses").insert(payload as any);
-    navigate({ to: "/" });
   };
 
   if (checking || authLoading) {
