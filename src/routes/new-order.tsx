@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, DEFAULT_ORDER_TPL } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
+import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
@@ -26,6 +27,7 @@ function NewOrderPage() {
   const { user } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const { isPro, ordersUsed, ordersLimit, ordersRemaining, showUpgrade } = useSubscription();
   const statusLabels: Record<OrderStatus, string> = {
     Paid: `${t("paid")} ✓`,
     Unpaid: t("unpaid"),
@@ -65,6 +67,14 @@ function NewOrderPage() {
     if (!form.amount || Number(form.amount) < 0) e.amount = t("required_field");
     setErrors(e);
     return Object.keys(e).length === 0;
+  };
+
+  const checkLimit = () => {
+    if (!isPro && ordersUsed >= FREE_LIMITS.ordersPerMonth) {
+      showUpgrade(t("limit_orders"));
+      return false;
+    }
+    return true;
   };
 
   const persist = async (): Promise<{ id: string; code: string } | null> => {
@@ -140,6 +150,7 @@ function NewOrderPage() {
   const save = async (e: FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    if (!checkLimit()) return;
     setSaving(true);
     const res = await persist();
     setSaving(false);
@@ -160,6 +171,7 @@ function NewOrderPage() {
 
   const saveAndWhatsApp = async () => {
     if (!validate()) return;
+    if (!checkLimit()) return;
     if (!form.phone.trim()) {
       alert(t("enter_phone_for_wa"));
       return;
@@ -271,6 +283,14 @@ function NewOrderPage() {
           >
             {saving ? t("saving") : t("save_order")}
           </button>
+          {!isPro && (
+            <p className="text-center text-[11px] text-muted-foreground">
+              {ordersUsed} / {ordersLimit} {t("orders_used")}
+              {ordersRemaining <= 5 && ordersRemaining > 0 && (
+                <span className="ml-1 text-amber-600 font-semibold">· {ordersRemaining} left</span>
+              )}
+            </p>
+          )}
           <button
             type="button"
             onClick={saveAndWhatsApp}

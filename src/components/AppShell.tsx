@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { I18nProvider, useI18n } from "@/contexts/I18nContext";
 import { Toaster } from "@/components/ui/sonner";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
@@ -17,8 +19,11 @@ export function AppShell() {
   return (
     <I18nProvider>
       <AuthProvider>
-        <ShellInner />
-        <Toaster position="top-center" richColors closeButton />
+        <SubscriptionProvider>
+          <ShellInner />
+          <UpgradeModal />
+          <Toaster position="top-center" richColors closeButton />
+        </SubscriptionProvider>
       </AuthProvider>
     </I18nProvider>
   );

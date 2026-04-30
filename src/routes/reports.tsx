@@ -7,6 +7,7 @@ import { supabase, type OrderRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { exportSalesReportPDF } from "@/lib/pdf";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 export const Route = createFileRoute("/reports")({ component: ReportsPage });
 
@@ -18,6 +19,7 @@ function endOfDay(d: Date) { const x = new Date(d); x.setHours(23,59,59,999); re
 function ReportsPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { isPro, showUpgrade } = useSubscription();
   const [range, setRange] = useState<Range>("month");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,6 +117,7 @@ function ReportsPage() {
   }, [inRange]);
 
   const handleExport = () => {
+    if (!isPro) { showUpgrade(t("export_pdf")); return; }
     try {
       exportSalesReportPDF({
         businessName: user?.email?.split("@")[0] ?? "My Store",
@@ -141,6 +144,18 @@ function ReportsPage() {
 
   return (
     <div className="px-5 pt-10 pb-6 space-y-5">
+      {!isPro && (
+        <div className="rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/40 p-4 flex items-center gap-3">
+          <span className="text-2xl">🔒</span>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-foreground">{t("upgrade_title")}</p>
+            <p className="text-[11px] text-muted-foreground">{t("upgrade_desc")}</p>
+          </div>
+          <Link to="/plans" className="text-xs font-bold px-3 py-2 rounded-xl bg-primary text-primary-foreground whitespace-nowrap">
+            {t("upgrade_to_pro")}
+          </Link>
+        </div>
+      )}
       <header className="flex items-center gap-2">
         <Link to="/profile" className="-ml-2 p-2 rounded-full active:bg-muted"><ChevronLeft className="h-5 w-5" /></Link>
         <h1 className="text-2xl font-bold tracking-tight">{t("sales_reports")}</h1>
