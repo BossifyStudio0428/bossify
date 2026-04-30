@@ -16,8 +16,6 @@ function PlansPage() {
   const navigate = useNavigate();
   const { isPro, plan, ordersUsed, sub, refresh } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
-  const [paymentSheet, setPaymentSheet] = useState(false);
-  const [bankSheet, setBankSheet] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const price = billing === "monthly" ? "RM 19" : "RM 159";
@@ -44,27 +42,6 @@ function PlansPage() {
     "Priority support ✦",
   ];
 
-  const submitManualPayment = async () => {
-    if (!user) return;
-    setSubmitting(true);
-    const { error } = await supabase.from("admin_requests").insert({
-      user_id: user.id,
-      type: "upgrade_request",
-      status: "pending",
-      notes: `Plan: ${billing} (${price})`,
-    });
-    if (!error) {
-      await supabase.from("subscriptions").update({ status: "pending" }).eq("user_id", user.id);
-      toast.success(t("payment_submitted"));
-      await refresh();
-      setBankSheet(false);
-      setPaymentSheet(false);
-    } else {
-      toast.error(error.message);
-    }
-    setSubmitting(false);
-  };
-
   const handleGooglePlayPurchase = async () => {
     if (!user) return;
     if (!isNativeBillingAvailable()) {
@@ -90,7 +67,6 @@ function PlansPage() {
         }, { onConflict: "user_id" });
         toast.success("Welcome to Pro! 🎉");
         await refresh();
-        setPaymentSheet(false);
       },
       (msg) => toast.error(msg),
     );
@@ -187,10 +163,11 @@ function PlansPage() {
             </button>
           ) : (
             <button
-              onClick={() => setPaymentSheet(true)}
-              className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition"
+              onClick={handleGooglePlayPurchase}
+              disabled={submitting}
+              className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
-              {t("upgrade_to_pro")} →
+              {submitting ? "..." : `${t("upgrade_to_pro")} — ${price}`}
             </button>
           )}
         </div>
@@ -207,59 +184,6 @@ function PlansPage() {
         {t("restore_purchases")}
       </button>
 
-      {/* Payment method bottom sheet */}
-      {paymentSheet && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 animate-fade-in" onClick={() => setPaymentSheet(false)}>
-          <div className="w-full max-w-[390px] bg-card rounded-t-3xl p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto h-1 w-10 rounded-full bg-muted" />
-            <p className="text-sm font-semibold py-2">{t("payment_method")}</p>
-            <button
-              onClick={handleGooglePlayPurchase}
-              disabled={submitting}
-              className="w-full flex items-center gap-3 p-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
-            >
-              <span className="text-lg">▶️</span>
-              <span className="flex-1 text-left">Google Play{!isNativeBillingAvailable() && <span className="block text-[10px] font-normal opacity-80">Android app only</span>}</span>
-              →
-            </button>
-            <button onClick={() => { setPaymentSheet(false); setBankSheet(true); }}
-              className="w-full flex items-center gap-3 p-3 rounded-2xl bg-primary/10 text-primary text-sm font-semibold">
-              <span className="text-lg">🏦</span><span className="flex-1 text-left">{t("manual_transfer")}</span>→
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Bank details sheet */}
-      {bankSheet && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 animate-fade-in" onClick={() => setBankSheet(false)}>
-          <div className="w-full max-w-[390px] bg-card rounded-t-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto h-1 w-10 rounded-full bg-muted" />
-            <p className="text-sm font-semibold">{t("bank_details")}</p>
-            <div className="rounded-2xl bg-muted/40 p-4 space-y-2 text-sm">
-              <Row k="Bank" v="Maybank" />
-              <Row k={t("account_number")} v="5121 8888 8888" />
-              <Row k={t("account_holder")} v="Bossify Sdn Bhd" />
-              <Row k="Amount" v={`${price} (${billing === "monthly" ? t("monthly") : t("annual")})`} />
-              <Row k="Reference" v={user?.email ?? "—"} />
-            </div>
-            <p className="text-[11px] text-muted-foreground">{t("payment_pending")}</p>
-            <button onClick={submitManualPayment} disabled={submitting}
-              className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-60">
-              {submitting ? t("saving") : t("i_have_paid")}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Row({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="flex justify-between gap-2">
-      <span className="text-muted-foreground text-xs">{k}</span>
-      <span className="font-semibold text-foreground text-xs text-right">{v}</span>
     </div>
   );
 }
