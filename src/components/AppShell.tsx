@@ -53,6 +53,13 @@ function ShellInner() {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
+  // Decide synchronously (first render) whether we still need to show the splash.
+  // This prevents the router's pending spinner from flashing before navigation kicks in.
+  const [showInlineSplash] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return safeSessionStorage.getItem("bossify_seen_splash") !== "1";
+  });
+
   useEffect(() => {
     if (!isSplashRoute) return;
     const t = window.setTimeout(() => {
@@ -111,6 +118,12 @@ function ShellInner() {
       if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/" });
     }
   }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, onboardingChecked, needsOnboarding, navigate]);
+
+  // While first-time splash is queued (or navigation hasn't completed yet), render the
+  // Bossify logo immediately so the user never sees the generic loading spinner.
+  if (showInlineSplash && !isPublicFlow && !isAuthFlowRoute && !isOnboardingRoute) {
+    return <InlineSplash />;
+  }
 
   if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
     return (
