@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { BossifySplash } from "@/components/BossifySplash";
 import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splashTiming";
+import bossifyLogo from "@/assets/bossify-logo.png";
 
 // Module-level flag — true only on a real cold start of the JS bundle.
 // Survives re-renders but resets when the WebView reloads the app.
@@ -162,7 +163,7 @@ function ShellInner() {
           style={{ paddingTop: "env(safe-area-inset-top)" }}
         >
           <div className="flex items-center gap-2 px-5 h-12">
-            <img src="/assets/bossify-logo.png" alt="Bossify" className="h-10 w-10 object-contain" />
+            <img src={bossifyLogo} alt="Bossify" className="h-10 w-10 object-contain" />
             <span className="text-[13px] font-bold text-foreground tracking-tight">Bossify</span>
           </div>
         </header>
