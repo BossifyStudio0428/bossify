@@ -50,7 +50,7 @@ function AdminPage() {
     setAllOrders(o ?? []);
   };
 
-  if (checking) return <p className="p-6 text-sm text-muted-foreground">Checking access…</p>;
+  if (checking) return <p className="p-6 text-sm text-muted-foreground">{t("admin_checking")}</p>;
   if (!isAdmin) return null;
 
   const totalUsers = users.length;
