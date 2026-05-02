@@ -21,11 +21,7 @@ function patchManifest() {
     return;
   }
 
-  let activityTag = activityMatch[0].replace(/\sandroid:screenOrientation="[^"]*"/g, "");
-  activityTag = activityTag.replace(
-    /<activity\b/,
-    '<activity\n            android:screenOrientation="portrait"',
-  );
+  const activityTag = activityMatch[0].replace(/\sandroid:screenOrientation="[^"]*"/g, "");
   manifest = manifest.replace(activityMatch[0], activityTag);
   writeFileSync(manifestPath, manifest);
 }
@@ -38,20 +34,8 @@ function patchStyles() {
 
   let styles = readFileSync(stylesPath, "utf8");
   styles = styles.replace(
-    /<style name="AppTheme\.NoActionBarLaunch" parent="Theme\.SplashScreen">/g,
-    '<style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">',
-  );
-  styles = styles.replace(
-    /<item name="windowSplashScreenAnimatedIcon">@drawable\/splash<\/item>\s*/g,
-    "",
-  );
-  styles = styles.replace(
-    /<item name="windowSplashScreenBackground">@color\/splash_background<\/item>\s*/g,
-    "",
-  );
-  styles = styles.replace(
-    /<item name="postSplashScreenTheme">@style\/AppTheme\.NoActionBar<\/item>\s*/g,
-    "",
+    /<style name="AppTheme\.NoActionBarLaunch" parent="AppTheme\.NoActionBar">/g,
+    '<style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">',
   );
   if (!styles.includes('<item name="android:background">@drawable/splash</item>')) {
     styles = styles.replace(
