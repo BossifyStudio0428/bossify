@@ -84,17 +84,17 @@ function ShellInner() {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (loading) return;
     if (isPublicFlow) return;
-    // First-time launch (no language picked yet) → show splash → language flow.
+    // First-time launch → ALWAYS show splash → language flow first, even before auth resolves.
     if (typeof window !== "undefined") {
       const seenSplash = safeSessionStorage.getItem("bossify_seen_splash") === "1";
-      if (!seenSplash && !session && !isAuthFlowRoute && !isOnboardingRoute) {
+      if (!seenSplash) {
         safeSessionStorage.setItem("bossify_seen_splash", "1");
         navigate({ to: "/splash", replace: true });
         return;
       }
     }
+    if (loading) return;
     if (!session && !isAuthFlowRoute) {
       navigate({ to: "/auth" });
       return;
