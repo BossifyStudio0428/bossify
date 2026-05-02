@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
@@ -57,6 +57,11 @@ function OrdersPage() {
   const [editingOrder, setEditingOrder] = useState<OrderRow | null>(null);
   const [editForm, setEditForm] = useState<Partial<OrderRow>>({});
   const [editSaving, setEditSaving] = useState(false);
+  // IDs of orders that the user deleted but that are still inside the
+  // 5-second Undo window (DB row still exists). Any reload from realtime
+  // or pull-to-refresh must filter these out, otherwise the deleted card
+  // reappears on its own.
+  const pendingDeleteIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => { setHydrated(true); }, []);
 
@@ -73,7 +78,11 @@ function OrdersPage() {
       .select("*")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
-    else setOrders((data ?? []) as OrderRow[]);
+    else {
+      const pending = pendingDeleteIdsRef.current;
+      const rows = (data ?? []) as OrderRow[];
+      setOrders(pending.size ? rows.filter((o) => !pending.has(o.id)) : rows);
+    }
     setLoading(false);
     setRefreshing(false);
   };
@@ -181,6 +190,7 @@ function OrdersPage() {
     setOrders((p) => p.filter((o) => o.id !== id));
     setDetail(null);
     setRemovingId(null);
+    pendingDeleteIdsRef.current.add(id);
 
     let undone = false;
     const UNDO_MS = 5000;
@@ -190,10 +200,12 @@ function OrdersPage() {
       const { error } = await supabase.from("orders").delete().eq("id", id);
       if (error) {
         // Restore on failure
+        pendingDeleteIdsRef.current.delete(id);
         setOrders((p) => [target, ...p.filter((o) => o.id !== id)]);
         toast.error(t("update_failed"));
         return;
       }
+      pendingDeleteIdsRef.current.delete(id);
       // Sync customer aggregates
       if (user && target.phone) {
         const { data: existing } = await supabase
@@ -235,6 +247,7 @@ function OrdersPage() {
         onClick: () => {
           undone = true;
           window.clearTimeout(timer);
+          pendingDeleteIdsRef.current.delete(id);
           setOrders((p) => {
             if (p.some((o) => o.id === target.id)) return p;
             return [target, ...p];
