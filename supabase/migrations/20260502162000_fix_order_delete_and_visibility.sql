@@ -2,6 +2,8 @@
 -- Orders must only be visible to their owner, and delete must remove exactly
 -- the selected order when it belongs to the signed-in user.
 
+alter table public.orders enable row level security;
+
 drop policy if exists "own orders select" on public.orders;
 create policy "own orders select"
   on public.orders
