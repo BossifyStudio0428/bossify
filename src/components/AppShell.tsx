@@ -8,7 +8,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
+import { safeSessionStorage } from "@/lib/safeStorage";
+import { BossifySplash } from "@/components/BossifySplash";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
@@ -53,12 +54,9 @@ function ShellInner() {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
-  // Decide synchronously (first render) whether we still need to show the splash.
-  // This prevents the router's pending spinner from flashing before navigation kicks in.
-  const [showInlineSplash] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return safeSessionStorage.getItem("bossify_seen_splash") !== "1";
-  });
+  // Start with the Bossify splash on the first frame. This keeps SSR/client output
+  // identical and prevents the router/auth loading spinner from flashing first.
+  const [showInlineSplash, setShowInlineSplash] = useState(true);
 
   useEffect(() => {
     if (!isSplashRoute) return;
@@ -91,7 +89,10 @@ function ShellInner() {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (isPublicFlow) return;
+    if (isPublicFlow) {
+      setShowInlineSplash(false);
+      return;
+    }
     // First-time launch → ALWAYS show splash → language flow first, even before auth resolves.
     if (typeof window !== "undefined") {
       const seenSplash = safeSessionStorage.getItem("bossify_seen_splash") === "1";
@@ -101,6 +102,7 @@ function ShellInner() {
         return;
       }
     }
+    setShowInlineSplash(false);
     if (loading) return;
     if (!session && !isAuthFlowRoute) {
       navigate({ to: "/auth" });
@@ -121,8 +123,8 @@ function ShellInner() {
 
   // While first-time splash is queued (or navigation hasn't completed yet), render the
   // Bossify logo immediately so the user never sees the generic loading spinner.
-  if (showInlineSplash && !isPublicFlow && !isAuthFlowRoute && !isOnboardingRoute) {
-    return <InlineSplash />;
+  if (showInlineSplash && !isPublicFlow) {
+    return <BossifySplash />;
   }
 
   if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
@@ -214,42 +216,5 @@ function NavItem({
         <span>{label}</span>
       </Link>
     </li>
-  );
-}
-
-function InlineSplash() {
-  return (
-    <div
-      className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden"
-      style={{ backgroundColor: "#F4F3F8" }}
-    >
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
-        style={{
-          width: 280,
-          height: 280,
-          background:
-            "radial-gradient(circle, rgba(124,58,237,0.10) 0%, rgba(124,58,237,0) 70%)",
-        }}
-      />
-      <div className="relative flex flex-col items-center">
-        <img
-          src="/assets/bossify-logo.png"
-          alt="Bossify"
-          width={180}
-          height={180}
-          className="object-contain"
-        />
-        <p
-          className="mt-4 text-[28px] font-extrabold tracking-tight"
-          style={{ color: "#1E1333" }}
-        >
-          Bossify
-        </p>
-        <p className="mt-1 text-[13px] italic" style={{ color: "#6B7280" }}>
-          Manage your shop like a boss.
-        </p>
-      </div>
-    </div>
   );
 }
