@@ -19,22 +19,22 @@ function PrivacyPage() {
   const [busy, setBusy] = useState(false);
 
   const updatePassword = async () => {
-    if (pw.next.length < 8) { toast.error("Password must be 8+ chars"); return; }
-    if (pw.next !== pw.confirm) { toast.error("Passwords do not match"); return; }
+    if (pw.next.length < 8) { toast.error(t("pw_must_8")); return; }
+    if (pw.next !== pw.confirm) { toast.error(t("err_pw_mismatch")); return; }
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password: pw.next });
     setBusy(false);
     if (error) toast.error(error.message);
-    else { toast.success("Password updated!"); setPw({ next: "", confirm: "" }); }
+    else { toast.success(t("password_updated")); setPw({ next: "", confirm: "" }); }
   };
 
   const updateEmail = async () => {
-    if (!newEmail.includes("@")) { toast.error("Invalid email"); return; }
+    if (!newEmail.includes("@")) { toast.error(t("invalid_email_short")); return; }
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ email: newEmail });
     setBusy(false);
     if (error) toast.error(error.message);
-    else { toast.success("Confirmation link sent to new email"); setNewEmail(""); }
+    else { toast.success(t("confirm_link_sent")); setNewEmail(""); }
   };
 
   const deleteAccount = async () => {
@@ -69,22 +69,22 @@ function PrivacyPage() {
 
       <section className="rounded-2xl bg-card border border-border/60 p-5 space-y-3">
         <h2 className="text-sm font-bold">{t("change_password")}</h2>
-        <Input type="password" placeholder="New password (8+ chars)" value={pw.next} onChange={(v) => setPw((p) => ({ ...p, next: v }))} />
-        <Input type="password" placeholder="Confirm new password" value={pw.confirm} onChange={(v) => setPw((p) => ({ ...p, confirm: v }))} />
-        <button onClick={updatePassword} disabled={busy} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-60">Update Password</button>
+        <Input type="password" placeholder={t("new_password_ph")} value={pw.next} onChange={(v) => setPw((p) => ({ ...p, next: v }))} />
+        <Input type="password" placeholder={t("confirm_new_password_ph")} value={pw.confirm} onChange={(v) => setPw((p) => ({ ...p, confirm: v }))} />
+        <button onClick={updatePassword} disabled={busy} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-60">{t("update_password")}</button>
       </section>
 
       <section className="rounded-2xl bg-card border border-border/60 p-5 space-y-3">
-        <h2 className="text-sm font-bold">Change Email</h2>
-        <p className="text-xs text-muted-foreground">Current: {user?.email}</p>
-        <Input type="email" placeholder="New email" value={newEmail} onChange={setNewEmail} />
-        <button onClick={updateEmail} disabled={busy} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-60">Update Email</button>
-        <p className="text-[11px] text-muted-foreground">A confirmation link will be sent to your new email.</p>
+        <h2 className="text-sm font-bold">{t("change_email")}</h2>
+        <p className="text-xs text-muted-foreground">{t("current_email_label")}: {user?.email}</p>
+        <Input type="email" placeholder={t("new_email_ph")} value={newEmail} onChange={setNewEmail} />
+        <button onClick={updateEmail} disabled={busy} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-60">{t("update_email")}</button>
+        <p className="text-[11px] text-muted-foreground">{t("confirm_link_note")}</p>
       </section>
 
       <section className="rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-5 space-y-3">
-        <h2 className="text-sm font-bold text-red-700 dark:text-red-400">Danger Zone</h2>
-        <p className="text-xs text-red-600 dark:text-red-300">Permanently delete your account and all data. This cannot be undone.</p>
+        <h2 className="text-sm font-bold text-red-700 dark:text-red-400">{t("danger_zone")}</h2>
+        <p className="text-xs text-red-600 dark:text-red-300">{t("danger_zone_desc")}</p>
         <button onClick={() => setDel({ open: true, text: "" })} className="w-full py-3 rounded-2xl bg-red-600 text-white font-semibold text-sm">{t("delete_account")}</button>
       </section>
 

@@ -124,7 +124,7 @@ function Index() {
             {!isPro ? (
               <Link
                 to="/plans"
-                aria-label="Upgrade plan"
+                aria-label={t("upgrade_to_pro")}
                 className="h-6 px-2 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/30 inline-flex items-center gap-1 active:scale-95 transition-transform"
               >
                 <Sparkles className="h-3 w-3 text-primary" />
@@ -135,7 +135,7 @@ function Index() {
             ) : (
               <Link
                 to="/plans"
-                aria-label="Pro plan"
+                aria-label={t("pro_plan")}
                 className="h-6 px-2 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground inline-flex items-center gap-1 shadow-[var(--shadow-soft)] active:scale-95 transition-transform"
               >
                 <Sparkles className="h-3 w-3" />
@@ -148,7 +148,7 @@ function Index() {
           <p className="mt-2 text-xs font-medium text-primary/90">{motivMsg}</p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <Link to="/analytics" aria-label="Analytics" className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
+          <Link to="/analytics" aria-label={t("analytics_label")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
             <BarChart3 className="h-4 w-4 text-foreground" />
           </Link>
           <Link to="/search" aria-label={t("search")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
@@ -158,7 +158,7 @@ function Index() {
             <Bell className="h-4 w-4 text-foreground" />
             {unreadNotif > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full" />}
           </Link>
-          <Link to="/profile" aria-label="Profile" className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold shadow-[var(--shadow-soft)] active:scale-95 overflow-hidden">
+          <Link to="/profile" aria-label={t("profile")} className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold shadow-[var(--shadow-soft)] active:scale-95 overflow-hidden">
             {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
           </Link>
         </div>

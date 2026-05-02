@@ -106,7 +106,7 @@ function AnalyticsPage() {
         <button onClick={() => navigate({ to: "/" })} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-2xl font-bold">📊 Analytics</h1>
+        <h1 className="text-2xl font-bold">📊 {t("analytics_label")}</h1>
       </header>
 
       <div className="flex gap-2 overflow-x-auto -mx-5 px-5 scrollbar-none">
@@ -120,7 +120,7 @@ function AnalyticsPage() {
 
       {loading ? <p className="text-sm text-muted-foreground">{t("loading")}</p> : (
         <>
-          <Card title="Revenue Trend" subtitle={`Total: RM ${totalRev.toFixed(2)}`}>
+          <Card title={t("revenue_trend")} subtitle={`${t("total_label")}: RM ${totalRev.toFixed(2)}`}>
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={trend}>
                 <defs>
@@ -138,7 +138,7 @@ function AnalyticsPage() {
           </Card>
 
           <Card title={t("top_products")}>
-            {topProducts.length === 0 ? <p className="text-xs text-muted-foreground">No data</p> : (
+            {topProducts.length === 0 ? <p className="text-xs text-muted-foreground">{t("no_data")}</p> : (
               <ResponsiveContainer width="100%" height={Math.max(120, topProducts.length * 40)}>
                 <BarChart data={topProducts} layout="vertical">
                   <XAxis type="number" fontSize={10} tick={{ fill: "currentColor" }} />
@@ -150,7 +150,7 @@ function AnalyticsPage() {
             )}
           </Card>
 
-          <Card title="Best Selling Days">
+          <Card title={t("best_selling_days")}>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={dowCounts}>
                 <XAxis dataKey="day" fontSize={10} tick={{ fill: "currentColor" }} />
@@ -175,7 +175,7 @@ function AnalyticsPage() {
             </ResponsiveContainer>
           </Card>
 
-          <Card title="Peak Hours">
+          <Card title={t("peak_hours")}>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={peak}>
                 <XAxis dataKey="hour" fontSize={10} tick={{ fill: "currentColor" }} />

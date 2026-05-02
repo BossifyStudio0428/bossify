@@ -35,15 +35,15 @@ function ProfilePage() {
 
   const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
     { icon: "🏪", key: "biz", label: t("business_profile"), onClick: () => navigate({ to: "/business-profile" }) },
-    { icon: "📊", key: "analytics", label: "Analytics", onClick: () => navigate({ to: "/analytics" }) },
+    { icon: "📊", key: "analytics", label: t("analytics_label"), onClick: () => navigate({ to: "/analytics" }) },
     { icon: "📊", key: "rep", label: t("sales_reports"), onClick: () => navigate({ to: "/reports" }) },
     { icon: "🔔", key: "notif2", label: t("notifications"), onClick: () => navigate({ to: "/notifications" }) },
     { icon: "🌐", key: "lang", label: t("language"), value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`, onClick: () => setLangOpen(true) },
-    { icon: theme === "dark" ? "🌙" : "☀️", key: "theme", label: "Appearance", value: theme === "dark" ? "Dark" : "Light", onClick: toggleTheme },
+    { icon: theme === "dark" ? "🌙" : "☀️", key: "theme", label: t("appearance"), value: theme === "dark" ? t("dark") : t("light"), onClick: toggleTheme },
     { icon: "💳", key: "sub", label: t("subscription"), value: isPro ? t("pro_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
     { icon: "📲", key: "wa", label: t("wa_template"), value: isPro ? undefined : "🔒", onClick: () => isPro ? setTplOpen(true) : showUpgrade(t("wa_template")) },
     { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
-    ...(isAdmin ? [{ icon: "⚙️", key: "admin", label: "Admin Panel", value: "PRO", onClick: () => navigate({ to: "/admin" }) }] : []),
+    ...(isAdmin ? [{ icon: "⚙️", key: "admin", label: t("admin_panel"), value: "PRO", onClick: () => navigate({ to: "/admin" }) }] : []),
   ];
 
   useEffect(() => {
@@ -76,7 +76,7 @@ function ProfilePage() {
     else { toast.success(t("template_saved")); setTplOpen(false); }
   };
 
-  const businessName = profile?.business_name ?? user?.email?.split("@")[0] ?? "My Store";
+  const businessName = profile?.business_name ?? user?.email?.split("@")[0] ?? t("my_store");
   const initials = businessName.slice(0, 2).toUpperCase();
   const plan = profile?.plan ?? "Free Plan";
   const memberSince = profile?.created_at
@@ -116,7 +116,7 @@ function ProfilePage() {
             {ordersUsed} / {FREE_LIMITS.ordersPerMonth} {t("orders_used")} → {t("upgrade_to_pro")}
           </button>
         )}
-        <p className="mt-2 text-xs text-muted-foreground">Member since {memberSince}</p>
+        <p className="mt-2 text-xs text-muted-foreground">{t("member_since_label")} {memberSince}</p>
         <p className="mt-1 text-[11px] text-muted-foreground">{user?.email}</p>
       </header>
 
@@ -205,7 +205,7 @@ function ProfilePage() {
                 className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono" />
               <button onClick={() => setReminderTpl(DEFAULT_REMINDER_TPL)} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
             </div>
-            <p className="text-[10px] text-muted-foreground">Variables: [customer_name] [code] [product] [quantity] [amount] [status] [notes] [days_ago]</p>
+            <p className="text-[10px] text-muted-foreground">{t("variables_help")}</p>
             <button onClick={saveTemplates} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold">{t("save")}</button>
           </div>
         </div>

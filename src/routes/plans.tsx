@@ -22,8 +22,8 @@ function PlansPage() {
   const period = billing === "monthly" ? t("per_month") : t("per_year");
 
   const freeRows: { ok: boolean; label: string }[] = [
-    { ok: true, label: `30 ${t("orders").toLowerCase()} / ${t("monthly").toLowerCase()}` },
-    { ok: true, label: `10 ${t("inventory").toLowerCase()}` },
+    { ok: true, label: t("free_orders_per_month") },
+    { ok: true, label: t("free_inventory_count") },
     { ok: true, label: t("todays_revenue") + " · " + t("recent_orders") },
     { ok: true, label: "WhatsApp " + t("order_template") },
     { ok: false, label: t("sales_reports") },
@@ -33,19 +33,19 @@ function PlansPage() {
   ];
 
   const proRows = [
-    "Unlimited " + t("orders").toLowerCase(),
-    "Unlimited " + t("inventory").toLowerCase(),
-    "Full " + t("sales_reports").toLowerCase(),
+    t("unlimited_orders_feat"),
+    t("unlimited_inventory_feat"),
+    t("full_reports_feat"),
     t("export_pdf"),
     t("wa_template"),
     t("remind_all_unpaid"),
-    "Priority support ✦",
+    t("priority_support_feat"),
   ];
 
   const handleGooglePlayPurchase = async () => {
     if (!user) return;
     if (!isNativeBillingAvailable()) {
-      toast.error("Google Play purchase only works in the Android app.");
+      toast.error(t("google_play_only_android"));
       return;
     }
     setSubmitting(true);
@@ -65,7 +65,7 @@ function PlansPage() {
           provider_purchase_token: receipt.purchaseToken ?? null,
           current_period_end: expiresAt.toISOString(),
         }, { onConflict: "user_id" });
-        toast.success("Welcome to Pro! 🎉");
+        toast.success(t("welcome_to_pro"));
         await refresh();
       },
       (msg) => toast.error(msg),
@@ -122,7 +122,7 @@ function PlansPage() {
       <section className="rounded-3xl bg-card border border-border/60 p-5">
         <div className="flex items-baseline justify-between">
           <h2 className="text-lg font-bold">{t("free_plan")}</h2>
-          <p className="text-xl font-bold">RM 0<span className="text-xs text-muted-foreground font-normal"> {t("per_month")}</span></p>
+          <p className="text-xl font-bold">{`RM 0`}<span className="text-xs text-muted-foreground font-normal"> {t("per_month")}</span></p>
         </div>
         <ul className="mt-4 space-y-2">
           {freeRows.map((r, i) => (

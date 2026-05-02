@@ -210,7 +210,7 @@ function OrdersPage() {
     }
     if (!deletedOrder) {
       setDeletingId(null);
-      toast.error("Failed to delete order (permission denied)");
+      toast.error(t("failed_delete_perm"));
       return;
     }
 
@@ -371,7 +371,7 @@ function OrdersPage() {
                   <DropdownMenuTrigger asChild>
                     <button
                       onClick={(e) => e.stopPropagation()}
-                      aria-label="Order options"
+                      aria-label={t("order_options")}
                       className="h-7 w-7 -mr-1 -mt-1 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-95"
                     >
                       <MoreVertical className="h-4 w-4" />
@@ -450,7 +450,7 @@ function OrdersPage() {
             <div className="space-y-2 text-sm">
               <Row label={t("customer_name")} value={detail.customer_name} />
               <Row label={t("phone_number")} value={detail.phone || "—"} />
-              <Row label="Code" value={detail.code} />
+              <Row label={t("code_label")} value={detail.code} />
               <Row label={t("product")} value={`${detail.product} x${detail.quantity}`} />
               <Row label={t("price")} value={`RM ${Number(detail.amount).toFixed(2)}`} />
               <Row label={t("payment_status")} value={
@@ -459,7 +459,7 @@ function OrdersPage() {
                 </span>
               } />
               <Row label={t("notes")} value={detail.notes || "—"} />
-              <Row label="Date" value={new Date(detail.created_at).toLocaleString("en-MY")} />
+              <Row label={t("date_label")} value={new Date(detail.created_at).toLocaleString("en-MY")} />
             </div>
 
             <div className="space-y-2 pt-2">

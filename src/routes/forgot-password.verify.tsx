@@ -4,11 +4,13 @@ import { ChevronLeft, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { safeSessionStorage } from "@/lib/safeStorage";
+import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/forgot-password/verify")({ component: VerifyPage });
 
 function VerifyPage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +64,7 @@ function VerifyPage() {
     const { data, error: err } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
     setLoading(false);
     if (err || !data?.session) {
-      setError("Invalid or expired code");
+      setError(t("fp_invalid_code"));
       setShake(true); setTimeout(() => setShake(false), 500);
       return;
     }
@@ -73,8 +75,8 @@ function VerifyPage() {
     if (!email) return;
     setError(null);
     const { error: err } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-    if (err) setError(err.message || "Failed to resend");
-    else { setSeconds(60); toast.success("Code resent"); }
+    if (err) setError(err.message || t("fp_failed_resend"));
+    else { setSeconds(60); toast.success(t("fp_code_resent")); }
   };
 
   return (
@@ -88,9 +90,9 @@ function VerifyPage() {
           <div className="h-14 w-14 rounded-full flex items-center justify-center" style={{ background: "#F3F0FF" }}>
             <Mail className="h-7 w-7" style={{ color: "#7C3AED" }} />
           </div>
-          <h1 className="text-[20px] font-bold" style={{ color: "#1E1333" }}>Enter Verification Code</h1>
+          <h1 className="text-[20px] font-bold" style={{ color: "#1E1333" }}>{t("verify")}</h1>
           <p className="text-[13px]" style={{ color: "#6B7280" }}>
-            We sent a 6-digit code to <span className="font-semibold" style={{ color: "#1E1333" }}>{email}</span>
+            {t("sent_code_to")} <span className="font-semibold" style={{ color: "#1E1333" }}>{email}</span>
           </p>
         </div>
 
@@ -120,9 +122,9 @@ function VerifyPage() {
 
         <div className="text-center text-[12px]" style={{ color: "#6B7280" }}>
           {seconds > 0 ? (
-            <span>Resend in 0:{seconds.toString().padStart(2, "0")}</span>
+            <span>{t("fp_resend_in")} 0:{seconds.toString().padStart(2, "0")}</span>
           ) : (
-            <button onClick={resend} className="font-bold" style={{ color: "#7C3AED" }}>Resend code</button>
+            <button onClick={resend} className="font-bold" style={{ color: "#7C3AED" }}>{t("fp_resend_code")}</button>
           )}
         </div>
 
@@ -131,7 +133,7 @@ function VerifyPage() {
           className="w-full text-white font-bold text-[14px] disabled:opacity-60"
           style={{ background: "#7C3AED", borderRadius: 12, padding: 13 }}
         >
-          {loading ? "…" : "Verify"}
+          {loading ? "…" : t("verify")}
         </button>
         {error && <p className="text-[12px] text-center" style={{ color: "#EF4444" }}>{error}</p>}
 

@@ -129,20 +129,20 @@ function InventoryPage() {
                 <div className="flex items-center gap-1.5">
                   {low && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600">
-                      LOW STOCK
+                      {t("low_stock_badge")}
                     </span>
                   )}
                   <button
                     onClick={() => setSheet({ kind: "form", item: it })}
                     className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
-                    aria-label="Edit"
+                    aria-label={t("edit")}
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => setSheet({ kind: "delete", item: it })}
                     className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
-                    aria-label="Delete"
+                    aria-label={t("delete")}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -252,11 +252,11 @@ function ProductFormSheet({
   const [name, setName] = useState(item?.name ?? "");
   const [stock, setStock] = useState(item?.stock != null ? String(item.stock) : "");
   const PRESET_UNITS = [
-    { value: "pcs", label: "pieces (pcs)", icon: "🔢" },
-    { value: "packs", label: "packs", icon: "📦" },
-    { value: "bottles", label: "bottles", icon: "🍶" },
-    { value: "jars", label: "jars", icon: "🧴" },
-    { value: "boxes", label: "boxes", icon: "🎁" },
+    { value: "pcs", label: t("unit_pieces"), icon: "🔢" },
+    { value: "packs", label: t("unit_packs"), icon: "📦" },
+    { value: "bottles", label: t("unit_bottles"), icon: "🍶" },
+    { value: "jars", label: t("unit_jars"), icon: "🧴" },
+    { value: "boxes", label: t("unit_boxes"), icon: "🎁" },
   ];
   const initialUnit = item?.unit ?? "pcs";
   const isPreset = PRESET_UNITS.some((u) => u.value === initialUnit);
@@ -292,11 +292,11 @@ function ProductFormSheet({
         <h3 className="text-lg font-bold text-foreground">{item ? t("edit") : t("new_product")}</h3>
         <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
       </div>
-      <SheetField label={t("product_name")} value={name} onChange={setName} placeholder="e.g. Kuih Lapis, Baju Kurung..." />
-      <SheetField label="How many do you have now?" value={stock} onChange={setStock} type="number" placeholder="e.g. 24" />
+      <SheetField label={t("product_name")} value={name} onChange={setName} placeholder={t("product_name_ph")} />
+      <SheetField label={t("how_many_now")} value={stock} onChange={setStock} type="number" placeholder={t("stock_now_ph")} />
 
       <div className="space-y-2">
-        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">Measure in</label>
+        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("measure_in")}</label>
         <div className="flex flex-wrap gap-2">
           {PRESET_UNITS.map((u) => {
             const selected = unit === u.value;
@@ -324,20 +324,20 @@ function ProductFormSheet({
                 : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
             }`}
           >
-            <span className="mr-1">✏️</span>others
+            <span className="mr-1">✏️</span>{t("unit_others")}
           </button>
         </div>
         {unit === "other" && (
           <input
             value={customUnit}
             onChange={(e) => setCustomUnit(e.target.value)}
-            placeholder="Type your unit (e.g. kg, liters)"
+            placeholder={t("custom_unit_ph")}
             className="mt-2 w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
           />
         )}
       </div>
 
-      <SheetField label="Selling Price (RM)" value={price} onChange={setPrice} type="number" placeholder="e.g. 5.00" />
+      <SheetField label={t("selling_price")} value={price} onChange={setPrice} type="number" placeholder={t("price_ph")} />
 
       <button
         onClick={save} disabled={saving}

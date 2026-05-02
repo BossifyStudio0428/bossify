@@ -242,7 +242,7 @@ function NewOrderPage() {
       </header>
 
       <form className="space-y-5" onSubmit={save} noValidate>
-        <Field label={t("customer_name")} icon="👤" placeholder="e.g. Siti Aminah" value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
+        <Field label={t("customer_name")} icon="👤" placeholder={t("customer_name_ph")} value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
         <div className="space-y-1.5">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
             {t("phone_number")}

@@ -124,7 +124,7 @@ function NotificationsPage() {
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setConfirmId(n.id); }}
-                  aria-label="Delete"
+                  aria-label={t("delete")}
                   className="absolute top-3 right-3 h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-red-500 active:bg-muted"
                 >
                   <Trash2 className="h-4 w-4" />
