@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/privacy")({ component: PrivacyPage });
 
@@ -52,7 +53,7 @@ function PrivacyPage() {
     // Sign out — user data is purged.
     await signOut();
     setBusy(false);
-    if (typeof window !== "undefined") localStorage.removeItem("bossify_lang");
+    if (typeof window !== "undefined") safeLocalStorage.removeItem("bossify_lang");
     toast.success(t("account_deleted"));
     navigate({ to: "/auth" });
   };
