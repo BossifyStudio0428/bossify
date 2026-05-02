@@ -109,23 +109,22 @@ webDir: 'dist/client'
 
 ---
 
-## 🔒 锁定竖屏 (Portrait Only) + 防启动闪退
+## ⚠️ APK 一打开闪退时先用安全启动配置
 
-不要手动乱改 `AndroidManifest.xml`。每次 `npx cap sync android` 之后运行：
+不要手动加 `android:screenOrientation="portrait"`。部分 Android 设备会因为这个 Manifest 设置在启动阶段直接闪退。
+每次 `npx cap sync android` 之后运行：
 
 ```bash
 npm run android:patch
 ```
 
-它会自动给 `MainActivity` 加竖屏，并把启动 Splash 主题改成旧机型兼容写法，避免部分 Android 8/旧机型出现
-`Only fullscreen opaque activities can request orientation` 后一打开就闪退。
+它会自动移除 `MainActivity` 上的 `android:screenOrientation`，并恢复 Capacitor 默认启动 Splash 主题，先保证 APK 能打开。
 
-最终 `MainActivity` 会长这样：
+最终 `MainActivity` 应该不要有 `android:screenOrientation`：
 
 ```xml
 <activity
-    android:screenOrientation="portrait"
-    android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize"
+    android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
     android:name=".MainActivity"
     android:label="@string/title_activity_main"
     android:theme="@style/AppTheme.NoActionBarLaunch"
@@ -135,4 +134,4 @@ npm run android:patch
 </activity>
 ```
 
-这样 app 永远竖屏，不会跟着手机旋转，同时不会因为启动主题透明/Android 8 兼容问题直接崩。每次重新生成 Android 项目后都要再跑一次 `npm run android:patch`。
+如果这样能打开，再处理竖屏；不要先把竖屏写进 Manifest。每次重新生成 Android 项目后都要再跑一次 `npm run android:patch`。
