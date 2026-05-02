@@ -231,7 +231,7 @@ function OrdersPage() {
     toast.success(t("order_deleted"), {
       duration: UNDO_MS,
       action: {
-        label: t("undo") || "Undo",
+        label: "Undo",
         onClick: () => {
           undone = true;
           window.clearTimeout(timer);
