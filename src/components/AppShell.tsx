@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
+import { safeSessionStorage } from "@/lib/safeStorage";
 import { BossifySplash } from "@/components/BossifySplash";
 
 const tabs = [
