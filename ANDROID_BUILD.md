@@ -97,3 +97,27 @@ npx cap sync android
 | 隐私政策 URL | Play 必填 |
 | Lovable Cloud (后端) | 继续在云端跑，无需改动 |
 | 离线访问 | 在线壳模式不支持，需要可改成离线 SPA 模式 |
+
+---
+
+## 🔒 锁定竖屏 (Portrait Only)
+
+`npx cap add android` 之后，打开
+`android/app/src/main/AndroidManifest.xml`，找到 `<activity ... android:name=".MainActivity" ...>`
+这一行，加上 `android:screenOrientation="portrait"`。最终长这样：
+
+```xml
+<activity
+    android:screenOrientation="portrait"
+    android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize"
+    android:name=".MainActivity"
+    android:label="@string/title_activity_main"
+    android:theme="@style/AppTheme.NoActionBarLaunch"
+    android:launchMode="singleTask"
+    android:exported="true">
+    ...
+</activity>
+```
+
+这样 app 永远竖屏，不会跟着手机旋转。
+每次 `npx cap add android` 重新生成都要再加一次（或备份 manifest）。
