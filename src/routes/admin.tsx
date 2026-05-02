@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
@@ -19,6 +20,7 @@ function AdminPage() {
   const { user } = useAuth();
   const { refresh: refreshSub } = useSubscription();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [tab, setTab] = useState<"stats" | "users" | "orders">("stats");
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
