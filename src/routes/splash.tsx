@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/splash")({ component: Splash });
 
@@ -7,7 +8,7 @@ function Splash() {
   const navigate = useNavigate();
   useEffect(() => {
     const t = setTimeout(() => {
-      const lang = typeof window !== "undefined" ? localStorage.getItem("bossify_lang") : null;
+      const lang = typeof window !== "undefined" ? safeLocalStorage.getItem("bossify_lang") : null;
       navigate({ to: lang ? "/auth" : "/language", replace: true });
     }, 3000);
     return () => clearTimeout(t);
