@@ -202,14 +202,6 @@ textarea,
   user-select: text !important;
 }
 
-/* Loading spinner — override the global animation: none rule */
-@keyframes bossify-spin {
-  to { transform: rotate(360deg); }
-}
-.bossify-spinner {
-  animation: bossify-spin 0.8s linear infinite !important;
-}
-
 @keyframes bossify-progress {
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
