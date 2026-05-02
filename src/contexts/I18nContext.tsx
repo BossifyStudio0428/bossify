@@ -8,7 +8,7 @@ const dict = {
   en: {
     continue: "Continue", back: "Back", save: "Save", cancel: "Cancel", delete: "Delete",
     edit: "Edit", search: "Search", loading: "Loading...", logout: "Log Out",
-    login_title: "Welcome Back", login_subtitle: "Log in to your account",
+    login_title: "Welcome", login_subtitle: "Log in to your account",
     email: "Email", password: "Password", login_btn: "Log In",
     no_account: "Don't have an account?", register: "Sign Up",
     register_title: "Create Account", already_account: "Already have an account?",
@@ -123,7 +123,7 @@ const dict = {
     limit_orders: "You've hit your free monthly limit (30 orders).",
     limit_inventory: "Free plan is limited to 10 products.",
     limit_customers: "You're approaching the free plan customer limit (50).",
-    welcome_back: "Welcome Back", confirm_password: "Confirm Password",
+    welcome_back: "Welcome", confirm_password: "Confirm Password",
     forgot_password: "Forgot Password?", send_otp: "Send Verification Code",
     verify: "Verify", resend_code: "Resend Code", create_account: "Create Account",
     create_password: "Create Password", check_email: "Check Your Email",
