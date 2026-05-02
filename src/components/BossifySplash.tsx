@@ -1,3 +1,5 @@
+import bossifyLogo from "@/assets/bossify-logo.png";
+
 export function BossifySplash() {
   return (
     <div
@@ -14,7 +16,7 @@ export function BossifySplash() {
       />
       <div className="relative flex flex-col items-center">
         <img
-          src="/assets/bossify-logo.png"
+          src={bossifyLogo}
           alt="Bossify"
           width={180}
           height={180}
