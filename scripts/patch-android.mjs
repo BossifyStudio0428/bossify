@@ -5,7 +5,7 @@ import {
   mkdirSync,
   readdirSync,
   rmdirSync,
-  renameSync,
+  unlinkSync,
   statSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
@@ -92,16 +92,7 @@ function patchMainActivityPackage() {
   // Delete the old file and clean up empty parent dirs up to javaRoot.
   try {
     const oldDir = dirname(current);
-    // Delete old file by overwriting with rename trick (cross-platform safe).
-    renameSync(current, current + ".bak");
-    writeFileSync(current + ".bak", ""); // empty so we can unlink via rmdir cleanup
-    // Best-effort delete:
-    try {
-      const { unlinkSync } = require("node:fs");
-      unlinkSync(current + ".bak");
-    } catch {
-      // fall back: leave the .bak; not fatal
-    }
+    unlinkSync(current);
     removeEmptyDirsUp(oldDir, javaRoot);
   } catch (e) {
     console.warn(`Warning: could not fully clean up old MainActivity location: ${e.message}`);
