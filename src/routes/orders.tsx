@@ -481,15 +481,18 @@ function OrdersPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("cancel") || "Cancel"}</AlertDialogCancel>
+            <AlertDialogCancel disabled={!!deletingId}>{t("cancel") || "Cancel"}</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600 text-white"
-              onClick={() => {
-                if (pendingDelete) remove(pendingDelete.id);
+              disabled={!!deletingId}
+              className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-60"
+              onClick={async () => {
+                if (!pendingDelete) return;
+                const target = pendingDelete;
                 setPendingDelete(null);
+                await remove(target.id);
               }}
             >
-              {t("delete_order") || "Delete"}
+              {deletingId ? "..." : (t("delete_order") || "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
