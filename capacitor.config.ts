@@ -16,9 +16,8 @@ const config: CapacitorConfig = {
   appName: 'Bossify',
   webDir: 'dist',
   server: {
-    url: 'https://bossify-malaysia.lovable.app',
+    url: 'https://bossify-malaysia.lovable.app/',
     cleartext: true,
-    androidScheme: 'https',
   },
   android: {
     allowMixedContent: true,
@@ -31,8 +30,8 @@ const config: CapacitorConfig = {
       backgroundColor: '#00000000',
     },
     SplashScreen: {
-      launchShowDuration: 5000,
-      launchAutoHide: false,
+      launchShowDuration: 2500,
+      launchAutoHide: true,
       backgroundColor: '#6B46C1',
       showSpinner: false,
       splashFullScreen: true,
