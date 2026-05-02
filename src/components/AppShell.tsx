@@ -53,6 +53,13 @@ function ShellInner() {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
+  // Decide synchronously (first render) whether we still need to show the splash.
+  // This prevents the router's pending spinner from flashing before navigation kicks in.
+  const [showInlineSplash] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return safeSessionStorage.getItem("bossify_seen_splash") !== "1";
+  });
+
   useEffect(() => {
     if (!isSplashRoute) return;
     const t = window.setTimeout(() => {
@@ -84,17 +91,17 @@ function ShellInner() {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (loading) return;
     if (isPublicFlow) return;
-    // First-time launch (no language picked yet) → show splash → language flow.
+    // First-time launch → ALWAYS show splash → language flow first, even before auth resolves.
     if (typeof window !== "undefined") {
       const seenSplash = safeSessionStorage.getItem("bossify_seen_splash") === "1";
-      if (!seenSplash && !session && !isAuthFlowRoute && !isOnboardingRoute) {
+      if (!seenSplash) {
         safeSessionStorage.setItem("bossify_seen_splash", "1");
         navigate({ to: "/splash", replace: true });
         return;
       }
     }
+    if (loading) return;
     if (!session && !isAuthFlowRoute) {
       navigate({ to: "/auth" });
       return;
@@ -111,6 +118,12 @@ function ShellInner() {
       if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/" });
     }
   }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, onboardingChecked, needsOnboarding, navigate]);
+
+  // While first-time splash is queued (or navigation hasn't completed yet), render the
+  // Bossify logo immediately so the user never sees the generic loading spinner.
+  if (showInlineSplash && !isPublicFlow && !isAuthFlowRoute && !isOnboardingRoute) {
+    return <InlineSplash />;
+  }
 
   if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
     return (
@@ -201,5 +214,42 @@ function NavItem({
         <span>{label}</span>
       </Link>
     </li>
+  );
+}
+
+function InlineSplash() {
+  return (
+    <div
+      className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden"
+      style={{ backgroundColor: "#F4F3F8" }}
+    >
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
+        style={{
+          width: 280,
+          height: 280,
+          background:
+            "radial-gradient(circle, rgba(124,58,237,0.10) 0%, rgba(124,58,237,0) 70%)",
+        }}
+      />
+      <div className="relative flex flex-col items-center">
+        <img
+          src="/assets/bossify-logo.png"
+          alt="Bossify"
+          width={180}
+          height={180}
+          className="object-contain"
+        />
+        <p
+          className="mt-4 text-[28px] font-extrabold tracking-tight"
+          style={{ color: "#1E1333" }}
+        >
+          Bossify
+        </p>
+        <p className="mt-1 text-[13px] italic" style={{ color: "#6B7280" }}>
+          Manage your shop like a boss.
+        </p>
+      </div>
+    </div>
   );
 }
