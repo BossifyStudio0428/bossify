@@ -16,6 +16,7 @@ function AuthPage() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const { t } = useI18n();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -49,7 +50,7 @@ function AuthPage() {
           businessName={businessName}
           onDone={() => {
             setMode("login");
-            toast.success("Account created! Please log in.");
+            toast.success(t("please_login"));
           }}
         />
       )}
@@ -163,7 +164,7 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
             <FieldLabel>{t("email")}</FieldLabel>
             <TextInput
               type="email" required name="email" autoComplete="email" autoCapitalize="none"
-              placeholder="Enter your email" value={email}
+              placeholder={t("enter_email_ph")} value={email}
               onChange={(e) => { setEmail(e.target.value); setError(null); }}
             />
           </div>
@@ -172,7 +173,7 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
             <div className="relative">
               <TextInput
                 type={showPw ? "text" : "password"} required name="password" autoComplete="current-password"
-                placeholder="Enter your password" value={password}
+                placeholder={t("enter_password_ph")} value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(null); }}
               />
               <button type="button" onClick={() => setShowPw((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]">
@@ -198,7 +199,7 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
 
         <div className="flex items-center gap-3 my-1">
           <div className="flex-1 h-px bg-[#E0DCF0]" />
-          <span className="text-[11px]" style={{ color: "#6B7280" }}>— or —</span>
+          <span className="text-[11px]" style={{ color: "#6B7280" }}>{t("or_label")}</span>
           <div className="flex-1 h-px bg-[#E0DCF0]" />
         </div>
 
@@ -267,7 +268,7 @@ function RegEmailScreen({
           <FieldLabel>{t("email")}</FieldLabel>
           <TextInput
             type="email" required name="email" autoComplete="email" autoCapitalize="none"
-            placeholder="Enter your email" value={email}
+            placeholder={t("enter_email_ph")} value={email}
             onChange={(e) => { setEmail(e.target.value); setError(null); }}
           />
         </div>
