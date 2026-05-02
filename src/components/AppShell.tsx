@@ -10,6 +10,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { BossifySplash } from "@/components/BossifySplash";
+import { getBossifySplashRemainingMs } from "@/lib/splashTiming";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
@@ -60,9 +61,10 @@ function ShellInner() {
 
   useEffect(() => {
     if (!isSplashRoute) return;
+    const remainingMs = getBossifySplashRemainingMs();
     const t = window.setTimeout(() => {
       navigate({ to: "/language", replace: true });
-    }, 2500);
+    }, remainingMs);
     return () => window.clearTimeout(t);
   }, [isSplashRoute, navigate]);
 
@@ -98,11 +100,12 @@ function ShellInner() {
       const seenSplash = safeSessionStorage.getItem("bossify_seen_splash") === "1";
       if (!seenSplash) {
         safeSessionStorage.setItem("bossify_seen_splash", "1");
-        // Show inline splash for 2.5s, then go straight to language (no extra splash route hop).
+        // Count from the real page load time, not from React hydration/auth completion.
+        const remainingMs = getBossifySplashRemainingMs();
         const t = window.setTimeout(() => {
           setShowInlineSplash(false);
           navigate({ to: "/language", replace: true });
-        }, 2500);
+        }, remainingMs);
         return () => window.clearTimeout(t);
       }
     }
