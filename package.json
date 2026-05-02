@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "android:patch": "node scripts/patch-android.mjs",
-    "android:fresh": "powershell -ExecutionPolicy Bypass -File scripts/reset-android.ps1"
+    "android:fresh": "powershell -ExecutionPolicy Bypass -File scripts/reset-android.ps1",
+    "android:logcat": "powershell -ExecutionPolicy Bypass -File scripts/logcat-crash.ps1"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
