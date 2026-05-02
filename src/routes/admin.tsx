@@ -123,20 +123,20 @@ function AdminPage() {
         {tab === "stats" && (
           <>
             <div className="grid grid-cols-2 gap-3">
-              <Stat label="Total Users" value={totalUsers} />
-              <Stat label="Total Orders" value={totalOrders} />
-              <Stat label="Total Revenue" value={`RM ${totalRevenue.toFixed(0)}`} />
-              <Stat label="Pro Users" value={proUsers} accent />
-              <Stat label="Free Users" value={freeUsers} />
-              <Stat label="New Today" value={newToday} />
+              <Stat label={t("admin_total_users")} value={totalUsers} />
+              <Stat label={t("admin_total_orders")} value={totalOrders} />
+              <Stat label={t("admin_total_revenue")} value={`RM ${totalRevenue.toFixed(0)}`} />
+              <Stat label={t("admin_pro_users")} value={proUsers} accent />
+              <Stat label={t("admin_free_users")} value={freeUsers} />
+              <Stat label={t("admin_new_today")} value={newToday} />
             </div>
 
             <section className="rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 p-4 space-y-3">
-              <h3 className="text-sm font-bold">🧪 Test Mode</h3>
-              <p className="text-xs text-muted-foreground">Toggle your own Pro plan to test gated features.</p>
+              <h3 className="text-sm font-bold">🧪 {t("admin_test_mode")}</h3>
+              <p className="text-xs text-muted-foreground">{t("admin_test_desc")}</p>
               <div className="grid grid-cols-2 gap-2">
-                <button onClick={grantSelfPro} className="py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-xs">Grant Pro to Me (30d)</button>
-                <button onClick={revokeSelf} className="py-3 rounded-2xl bg-muted text-muted-foreground font-semibold text-xs">Revert to Free</button>
+                <button onClick={grantSelfPro} className="py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-xs">{t("admin_grant_self")}</button>
+                <button onClick={revokeSelf} className="py-3 rounded-2xl bg-muted text-muted-foreground font-semibold text-xs">{t("admin_revert_self")}</button>
               </div>
             </section>
           </>
@@ -149,7 +149,7 @@ function AdminPage() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold truncate">{u.business_name || u.id.slice(0, 12)}</p>
-                    <p className="text-[10px] text-muted-foreground">Joined {new Date(u.created_at).toLocaleDateString()}</p>
+                    <p className="text-[10px] text-muted-foreground">{t("admin_joined")} {new Date(u.created_at).toLocaleDateString()}</p>
                   </div>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.plan === "pro" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                     {(u.plan ?? "free").toUpperCase()}
@@ -158,13 +158,13 @@ function AdminPage() {
                 <div className="flex gap-3 text-[11px] text-muted-foreground">
                   <span>📦 {u.total_orders}</span>
                   <span>💰 RM {Number(u.total_revenue).toFixed(0)}</span>
-                  {u.is_admin && <span className="text-primary font-semibold">👑 Admin</span>}
+                  {u.is_admin && <span className="text-primary font-semibold">👑 {t("admin_admin_badge")}</span>}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {u.plan === "pro"
-                    ? <button onClick={() => revokePro(u.id)} className="py-2 rounded-xl bg-muted text-muted-foreground text-[11px] font-semibold">Revoke Pro</button>
-                    : <button onClick={() => setGrantOpen({ uid: u.id, name: u.business_name || u.id.slice(0, 8) })} className="py-2 rounded-xl bg-primary text-primary-foreground text-[11px] font-semibold">Grant Pro</button>}
-                  <button onClick={() => toast.info(`User ID: ${u.id}`)} className="py-2 rounded-xl bg-muted text-muted-foreground text-[11px] font-semibold">View</button>
+                    ? <button onClick={() => revokePro(u.id)} className="py-2 rounded-xl bg-muted text-muted-foreground text-[11px] font-semibold">{t("admin_revoke_pro")}</button>
+                    : <button onClick={() => setGrantOpen({ uid: u.id, name: u.business_name || u.id.slice(0, 8) })} className="py-2 rounded-xl bg-primary text-primary-foreground text-[11px] font-semibold">{t("admin_grant_pro")}</button>}
+                  <button onClick={() => toast.info(`${t("admin_user_id_copy")} ${u.id}`)} className="py-2 rounded-xl bg-muted text-muted-foreground text-[11px] font-semibold">{t("admin_view")}</button>
                 </div>
               </div>
             ))}
@@ -177,7 +177,7 @@ function AdminPage() {
               {(["All","Paid","Unpaid","Pending"] as const).map((s) => (
                 <button key={s} onClick={() => setOrderStatusFilter(s)}
                   className={`px-3 py-1.5 rounded-full text-[11px] font-semibold ${orderStatusFilter===s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                  {s}
+                  {t(`admin_filter_${s.toLowerCase()}` as any)}
                 </button>
               ))}
             </div>
@@ -204,19 +204,19 @@ function AdminPage() {
       {grantOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={() => setGrantOpen(null)}>
           <div className="w-full max-w-[390px] bg-card rounded-t-3xl sm:rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-bold">Grant Pro to {grantOpen.name}</h3>
-            <p className="text-xs text-muted-foreground">Choose duration:</p>
+            <h3 className="text-base font-bold">{t("admin_grant_to")} {grantOpen.name}</h3>
+            <p className="text-xs text-muted-foreground">{t("admin_choose_duration")}</p>
             <div className="grid grid-cols-2 gap-2">
               {[1, 3, 6, 12].map((m) => (
                 <button key={m} onClick={() => grantPro(grantOpen.uid, m)} className="py-3 rounded-xl bg-primary/10 text-primary font-semibold text-sm">
-                  {m} month{m>1?"s":""}
+                  {m} {m>1 ? t("months_many") : t("month_one")}
                 </button>
               ))}
               <button onClick={() => grantPro(grantOpen.uid, "lifetime")} className="col-span-2 py-3 rounded-xl bg-gradient-to-r from-primary to-primary/70 text-primary-foreground font-bold text-sm">
-                ✨ Lifetime
+                ✨ {t("admin_lifetime")}
               </button>
             </div>
-            <button onClick={() => setGrantOpen(null)} className="w-full py-3 rounded-xl bg-muted text-muted-foreground font-semibold text-sm">Cancel</button>
+            <button onClick={() => setGrantOpen(null)} className="w-full py-3 rounded-xl bg-muted text-muted-foreground font-semibold text-sm">{t("cancel")}</button>
           </div>
         </div>
       )}
