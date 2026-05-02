@@ -8,8 +8,7 @@ function Splash() {
   const navigate = useNavigate();
   useEffect(() => {
     const t = setTimeout(() => {
-      const lang = typeof window !== "undefined" ? safeLocalStorage.getItem("bossify_lang") : null;
-      navigate({ to: lang ? "/auth" : "/language", replace: true });
+      navigate({ to: "/language", replace: true });
     }, 3000);
     return () => clearTimeout(t);
   }, [navigate]);
