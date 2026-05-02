@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 export type Theme = "light" | "dark";
 
@@ -8,7 +9,7 @@ const ThemeCtx = createContext<Ctx | undefined>(undefined);
 
 function getInitial(): Theme {
   if (typeof window === "undefined") return "light";
-  const saved = localStorage.getItem("bossify_theme") as Theme | null;
+  const saved = safeLocalStorage.getItem("bossify_theme") as Theme | null;
   if (saved === "dark" || saved === "light") return saved;
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
@@ -21,7 +22,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.remove("light", "dark");
     root.classList.add(theme);
     root.style.colorScheme = theme;
-    localStorage.setItem("bossify_theme", theme);
+    safeLocalStorage.setItem("bossify_theme", theme);
   }, [theme]);
 
   const setTheme = (t: Theme) => {
