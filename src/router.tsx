@@ -1,9 +1,15 @@
 import { createRouter, useRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
-import { BossifySplash } from "./components/BossifySplash";
 
 function PendingRouteComponent() {
-  return <BossifySplash />;
+  return (
+    <div className="min-h-[calc(100vh-7rem)] w-full flex items-center justify-center bg-background">
+      <div
+        aria-label="Loading"
+        className="bossify-spinner h-8 w-8 rounded-full border-[3px] border-primary/20 border-t-primary"
+      />
+    </div>
+  );
 }
 
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
