@@ -88,9 +88,8 @@ function ShellInner() {
     if (isPublicFlow) return;
     // First-time launch (no language picked yet) → show splash → language flow.
     if (typeof window !== "undefined") {
-      const hasLang = safeLocalStorage.getItem("bossify_lang");
       const seenSplash = safeSessionStorage.getItem("bossify_seen_splash") === "1";
-      if (!hasLang && !seenSplash && !isAuthFlowRoute && !isOnboardingRoute) {
+      if (!seenSplash && !session && !isAuthFlowRoute && !isOnboardingRoute) {
         safeSessionStorage.setItem("bossify_seen_splash", "1");
         navigate({ to: "/splash", replace: true });
         return;
