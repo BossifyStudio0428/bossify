@@ -62,8 +62,37 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Pre-paint splash background + centered logo so the user never sees
+            a white flash before React mounts. The real <BossifySplash />
+            renders on top of this once the bundle is ready. */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              html, body { background-color: #F4F3F8 !important; margin: 0; }
+              #bossify-prepaint {
+                position: fixed; inset: 0; z-index: 0;
+                background-color: #F4F3F8;
+                display: flex; align-items: center; justify-content: center;
+                pointer-events: none;
+              }
+              #bossify-prepaint p {
+                margin: 16px 0 0; font-weight: 800; font-size: 28px;
+                color: #1E1333; letter-spacing: -0.02em;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              }
+              #bossify-prepaint .col {
+                display: flex; flex-direction: column; align-items: center;
+              }
+            `,
+          }}
+        />
       </head>
       <body style={{ backgroundColor: "#F4F3F8" }}>
+        <div id="bossify-prepaint" aria-hidden="true">
+          <div className="col">
+            <p>Bossify</p>
+          </div>
+        </div>
         {children}
         <Scripts />
       </body>
