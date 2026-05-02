@@ -3,24 +3,17 @@ import type { CapacitorConfig } from '@capacitor/cli';
 /**
  * Capacitor configuration for Bossify Android app.
  *
- * Strategy: the app is a thin native shell that loads the published
- * Lovable site directly. Without `server.url`, Capacitor tries to boot
- * local TanStack Start build files from `dist/`, which is what caused
- * the downloaded APK to open to a black screen.
- *
- * If you ever want a fully offline app, remove the `server.url` block
- * and switch to a static SPA build copied into `dist/`.
+ * Strategy: offline Play Store build. The TanStack Start client bundle is
+ * generated into `dist/client`, then Capacitor copies that into the APK/AAB.
+ * Do not set `server.url` here — that turns the app into a remote WebView.
  */
 const config: CapacitorConfig = {
   appId: 'com.zhstudio.bossify',
   appName: 'Bossify',
-  webDir: 'dist',
+  webDir: 'dist/client',
   backgroundColor: '#F4F3F8',
   server: {
-    url: 'https://bossify-malaysia.lovable.app',
     androidScheme: 'https',
-    cleartext: false,
-    allowNavigation: ['bossify-malaysia.lovable.app'],
   },
   android: {
     backgroundColor: '#F4F3F8',
