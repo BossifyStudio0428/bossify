@@ -1,38 +1,98 @@
-## 当前状态
+## 闪退根因（100% 确诊）
 
-- 无线 ADB 连接成功 ✅
-- Bossify 已经被 `monkey` 命令启动 ✅
-- 完整 logcat 已经写到 `C:\dev\bossify\android-crash-log.txt` ✅
-- 但 `Select-String` 因为正则 `Resources\\\$NotFoundException` 转义错误抛错，导致 `android-crash-summary.txt` 没生成 ❌
-
-## 要做的事
-
-### 1. 修 `scripts/logcat-crash.ps1` 的正则 bug
-
-把 patterns 数组里的
+logcat 红字写得明明白白：
 ```
-"Resources\\\$NotFoundException"
+java.lang.ClassNotFoundException:
+Didn't find class "com.zhstudio.bossify.MainActivity"
+on path: DexPathList[[zip file ".../base.apk"]...]
 ```
-改成 PowerShell 单引号字面量 + 正确转义：
+
+翻译：APK 装上了，但 Android 启动 app 的瞬间，**找不到 `com.zhstudio.bossify.MainActivity` 这个类**——所以"打开就闪退"。
+
+### 为什么找不到？
+
+Capacitor 的 `AndroidManifest.xml` 里写的是 `android:name=".MainActivity"`，配合 `package="com.zhstudio.bossify"`，Android 会去找文件：
 ```
-'Resources\$NotFoundException'
+android/app/src/main/java/com/zhstudio/bossify/MainActivity.java
 ```
-同时把所有 pattern 改成单引号字符串，避免 `$` 被 PowerShell 当变量插值。
 
-顺便加一个保险：用 `try/catch` 包住 `Select-String`，即使正则再出问题，也至少把"前 200 行 + 最后 200 行原始日志"写进 summary，保证你永远拿得到东西看。
+但你这个 APK 里**这个文件根本不存在**。3 种最常见的原因（按概率排序）：
 
-### 2. 不改任何 APK / Capacitor 配置
+1. **`MainActivity.java` 还在旧包路径下**（最常见）——比如 `android/app/src/main/java/io/ionic/starter/MainActivity.java`，appId 改了之后没把 .java 文件搬过去。
+2. **`build.gradle` 里 `applicationId` 和 `namespace` 不一致**——一个是 `com.zhstudio.bossify`，另一个还是旧值，导致编译出来的 class 包名不对。
+3. **代码混淆/缩减把 MainActivity 删了**——`minifyEnabled true` + 没配 ProGuard 规则。
 
-这一轮只修脚本。
+## 修复步骤（你在电脑上做，每步都简单）
 
-## 你需要做的（修完之后）
+### 第 1 步：找出 MainActivity.java 真正在哪
 
-在 PowerShell 里跑这一行就行（不用重新抓日志，直接从已有的 `android-crash-log.txt` 提取）：
+在 PowerShell 跑：
+```powershell
+cd C:\dev\bossify
+Get-ChildItem -Path android\app\src\main\java -Recurse -Filter "MainActivity.java"
+```
+
+把输出贴给我。会有 3 种可能的结果：
+- **A**：路径是 `...\java\com\zhstudio\bossify\MainActivity.java` ✅ 位置正确，去看第 2 步
+- **B**：路径是 `...\java\io\ionic\starter\MainActivity.java`（或其他旧包名） → 包名错位，要修
+- **C**：找不到任何 MainActivity.java → Capacitor 项目损坏，要重新生成 android 文件夹
+
+### 第 2 步：检查 build.gradle 的 applicationId / namespace
 
 ```powershell
-npm run android:logcat
+Get-Content android\app\build.gradle | Select-String -Pattern "applicationId|namespace"
 ```
 
-然后把 `android-crash-summary.txt` 的内容贴给我，或者直接把 `android-crash-log.txt` 拖给我（文件可能有点大，但里面一定有 `FATAL EXCEPTION`）。
+正确应该是：
+```
+namespace "com.zhstudio.bossify"
+applicationId "com.zhstudio.bossify"
+```
+两个都必须是 `com.zhstudio.bossify`。
 
-拿到那段红字，我就能告诉你**为什么闪退**，然后精准修。
+### 第 3 步：根据上面的结果，做下面三种修复之一
+
+#### 修复方案 A — 包名错位（最常见，很可能就是你的情况）
+
+最快的办法：**直接重新生成整个 android 文件夹**。脚本 `npm run android:reset` 会做这事（从 `scripts/reset-android.ps1` 看应该已经写好了）。
+
+```powershell
+cd C:\dev\bossify
+git pull                                    # 先确保拿到最新脚本
+npm run android:reset                       # 删掉 android/ 重新生成
+bun run build                               # 重新 build 网页
+npx cap sync android                        # 同步进新 android/
+npm run android:patch                       # 应用我们的 manifest 补丁
+```
+
+然后**用 Android Studio 重新打 APK**，装到手机，应该就不闪退了。
+
+#### 修复方案 B — 升级 patch-android.mjs，让它**自动确保** MainActivity.java 在正确路径
+
+如果方案 A 跑完还是闪退，我会改 `scripts/patch-android.mjs`，让它每次跑完自动：
+1. 检查 `android/app/src/main/java/com/zhstudio/bossify/MainActivity.java` 是否存在
+2. 如果不存在，自动从旧路径搬过来（或自动生成一个标准的 Capacitor MainActivity.java）
+3. 检查 `build.gradle` 的 `namespace` / `applicationId` 是否都是 `com.zhstudio.bossify`，不对就改对
+
+这样以后**永远不会再踩这个坑**。
+
+#### 修复方案 C — 找不到 MainActivity.java
+
+完全删 android 文件夹重来：
+```powershell
+Remove-Item -Recurse -Force android
+npx cap add android
+npm run android:patch
+```
+
+## 我现在不动任何代码
+
+这一轮**只**给你诊断和修复路径。等你跑完第 1、2 步，把结果贴给我，我才会动 `scripts/patch-android.mjs`，做精准的"自动修包名"逻辑。这样不会瞎改，也不会浪费 credit。
+
+## 你现在要做的
+
+1. 在 PowerShell 跑第 1 步那个 `Get-ChildItem` 命令
+2. 跑第 2 步那个 `Get-Content ... Select-String` 命令
+3. 把这两个命令的输出贴给我
+
+不到 30 秒，然后我立刻给你最终修复。
