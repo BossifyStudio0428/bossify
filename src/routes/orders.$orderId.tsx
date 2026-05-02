@@ -87,8 +87,8 @@ function OrderDetailPage() {
   if (loading) return <p className="p-6 text-sm text-muted-foreground">{t("loading")}</p>;
   if (!order) return (
     <div className="p-6 space-y-3">
-      <p className="text-sm">Order not found.</p>
-      <button onClick={() => navigate({ to: "/orders" })} className="text-primary text-sm">← Back</button>
+      <p className="text-sm">{t("order_not_found")}</p>
+      <button onClick={() => navigate({ to: "/orders" })} className="text-primary text-sm">{t("back_arrow")}</button>
     </div>
   );
 
@@ -120,26 +120,26 @@ function OrderDetailPage() {
               <p className="text-sm font-semibold truncate">👤 {order.customer_name}</p>
               {order.phone ? (
                 <div className="flex gap-3 mt-1">
-                  <a href={`tel:${order.phone}`} className="text-xs text-primary">📞 Call</a>
+                  <a href={`tel:${order.phone}`} className="text-xs text-primary">📞 {t("call")}</a>
                   <a href={buildWhatsAppLink(order.phone, "")} target="_blank" rel="noreferrer" className="text-xs text-emerald-600">📱 WhatsApp</a>
                 </div>
-              ) : <p className="text-xs text-muted-foreground mt-1">No phone</p>}
+              ) : <p className="text-xs text-muted-foreground mt-1">{t("no_phone")}</p>}
             </div>
           </div>
 
           <div className="rounded-2xl bg-card border border-border/60 p-4 space-y-2 text-sm">
-            <Row label="🛍️ Product" value={order.product} />
-            <Row label="📦 Quantity" value={String(order.quantity)} />
-            <Row label="💰 Amount" value={`RM ${Number(order.amount).toFixed(2)}`} />
-            <Row label="📅 Date" value={new Date(order.created_at).toLocaleString("en-MY")} />
-            <Row label="📋 Code" value={order.code} />
-            <Row label="📝 Notes" value={order.notes || "No notes"} />
+            <Row label={`🛍️ ${t("product")}`} value={order.product} />
+            <Row label={`📦 ${t("quantity")}`} value={String(order.quantity)} />
+            <Row label={`💰 ${t("price")}`} value={`RM ${Number(order.amount).toFixed(2)}`} />
+            <Row label={`📅 ${t("date_label")}`} value={new Date(order.created_at).toLocaleString("en-MY")} />
+            <Row label={`📋 ${t("code_label")}`} value={order.code} />
+            <Row label={`📝 ${t("notes")}`} value={order.notes || t("no_notes")} />
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             <button onClick={sendWA} className="py-3 rounded-2xl bg-emerald-500 text-white font-semibold text-xs">📲 WhatsApp</button>
-            <button onClick={() => setEditing(true)} className="py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-xs">✏️ Edit</button>
-            <button onClick={remove} className="py-3 rounded-2xl bg-red-500 text-white font-semibold text-xs">🗑️ Delete</button>
+            <button onClick={() => setEditing(true)} className="py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-xs">✏️ {t("edit")}</button>
+            <button onClick={remove} className="py-3 rounded-2xl bg-red-500 text-white font-semibold text-xs">🗑️ {t("delete")}</button>
           </div>
         </div>
       ) : (
