@@ -119,7 +119,7 @@ webDir: 'dist/client'
 npm run android:patch
 ```
 
-它会自动移除 `MainActivity` 上的 `android:screenOrientation`，并恢复 Capacitor 默认启动 Splash 主题，先保证 APK 能打开。
+它会自动移除 `MainActivity` 上的 `android:screenOrientation`，关闭容易闪退的启动退出动画，并使用更保守的启动主题，先保证 APK 能打开。
 
 最终 `MainActivity` 应该不要有 `android:screenOrientation`：
 
