@@ -174,17 +174,28 @@ function OrdersPage() {
   };
 
   const remove = async (id: string) => {
-    setRemovingId(id);
-    setTimeout(async () => {
-      const target = orders.find((o) => o.id === id);
+    const target = orders.find((o) => o.id === id);
+    if (!target) return;
+    // Optimistically hide the order. Keep a reference so we can restore it
+    // if the user taps "Undo" before the toast expires.
+    setOrders((p) => p.filter((o) => o.id !== id));
+    setDetail(null);
+    setRemovingId(null);
+
+    let undone = false;
+    const UNDO_MS = 5000;
+
+    const commitDelete = async () => {
+      if (undone) return;
       const { error } = await supabase.from("orders").delete().eq("id", id);
       if (error) {
+        // Restore on failure
+        setOrders((p) => [target, ...p.filter((o) => o.id !== id)]);
         toast.error(t("update_failed"));
-        setRemovingId(null);
         return;
       }
       // Sync customer aggregates
-      if (target && user && target.phone) {
+      if (user && target.phone) {
         const { data: existing } = await supabase
           .from("customers")
           .select("*")
@@ -204,8 +215,7 @@ function OrdersPage() {
           }
         }
       }
-      // Notification
-      if (target && user) {
+      if (user) {
         await createNotification({
           user_id: user.id,
           type: "order_deleted",
@@ -214,11 +224,24 @@ function OrdersPage() {
           link: "/orders",
         });
       }
-      setOrders((p) => p.filter((o) => o.id !== id));
-      setRemovingId(null);
-      setDetail(null);
-      toast.success(t("order_deleted"));
-    }, 220);
+    };
+
+    const timer = window.setTimeout(commitDelete, UNDO_MS);
+
+    toast.success(t("order_deleted"), {
+      duration: UNDO_MS,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          undone = true;
+          window.clearTimeout(timer);
+          setOrders((p) => {
+            if (p.some((o) => o.id === target.id)) return p;
+            return [target, ...p];
+          });
+        },
+      },
+    });
   };
 
   const openEdit = (order: OrderRow) => {

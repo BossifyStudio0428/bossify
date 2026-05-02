@@ -33,7 +33,7 @@ export function AppShell() {
           <SubscriptionProvider>
             <ShellInner />
             <UpgradeModal />
-            <Toaster position="top-center" richColors closeButton />
+            <Toaster position="bottom-center" richColors closeButton />
           </SubscriptionProvider>
         </AuthProvider>
       </ThemeProvider>
