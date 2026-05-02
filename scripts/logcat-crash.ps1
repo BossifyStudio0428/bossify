@@ -7,21 +7,37 @@ $summaryFile = Join-Path $root "android-crash-summary.txt"
 $errFile = Join-Path $root "android-crash-log.err.txt"
 
 function Resolve-Adb {
-  $candidates = @(
-    "adb",
-    (Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools\adb.exe"),
-    (Join-Path $env:ANDROID_HOME "platform-tools\adb.exe"),
-    (Join-Path $env:ANDROID_SDK_ROOT "platform-tools\adb.exe")
-  ) | Where-Object { $_ -and $_.Trim() -ne "" }
+  # Build candidate list safely — never call Join-Path with a $null base.
+  $bases = @()
+  if ($env:LOCALAPPDATA)      { $bases += (Join-Path $env:LOCALAPPDATA "Android\Sdk") }
+  if ($env:USERPROFILE)       { $bases += (Join-Path $env:USERPROFILE "AppData\Local\Android\Sdk") }
+  if ($env:ANDROID_HOME)      { $bases += $env:ANDROID_HOME }
+  if ($env:ANDROID_SDK_ROOT)  { $bases += $env:ANDROID_SDK_ROOT }
+  $bases += "C:\Android\Sdk"
+  $bases += "C:\Program Files\Android\Android Studio\sdk"
 
-  foreach ($candidate in $candidates) {
-    $command = Get-Command $candidate -ErrorAction SilentlyContinue
-    if ($command) {
-      return $command.Source
-    }
+  # 1) Try `adb` already on PATH.
+  $cmd = Get-Command "adb" -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd.Source }
+
+  # 2) Try each known SDK location.
+  $tried = @()
+  foreach ($base in ($bases | Select-Object -Unique)) {
+    if (-not $base) { continue }
+    $candidate = Join-Path $base "platform-tools\adb.exe"
+    $tried += $candidate
+    if (Test-Path $candidate) { return $candidate }
   }
 
-  throw "ADB not found. Install Android Studio platform-tools or add adb.exe to PATH."
+  Write-Host ""
+  Write-Host "Could not find adb.exe. Tried these locations:" -ForegroundColor Red
+  foreach ($p in $tried) { Write-Host "  - $p" -ForegroundColor DarkGray }
+  Write-Host ""
+  Write-Host "Fix: open Android Studio -> SDK Manager -> copy 'Android SDK Location'." -ForegroundColor Yellow
+  Write-Host "Then either:" -ForegroundColor Yellow
+  Write-Host "  a) Add '<that path>\platform-tools' to your Windows PATH, OR" -ForegroundColor Yellow
+  Write-Host "  b) Run in PowerShell:  setx ANDROID_HOME `"<that path>`"  (then open a new terminal)" -ForegroundColor Yellow
+  throw "ADB not found."
 }
 
 $adb = Resolve-Adb
@@ -29,8 +45,17 @@ Write-Host "Using ADB: $adb" -ForegroundColor Cyan
 
 $devices = & $adb devices
 Write-Host ($devices -join "`n")
-if (-not (($devices | Select-String -Pattern "\tdevice$").Count -gt 0)) {
-  throw "No authorized Android device found. Enable USB debugging, accept the phone prompt, then run again."
+$connected = @($devices | Select-String -Pattern "\tdevice\s*$")
+if ($connected.Count -le 0) {
+  Write-Host ""
+  Write-Host "No authorized Android device found." -ForegroundColor Red
+  Write-Host "Checklist:" -ForegroundColor Yellow
+  Write-Host "  1. Connect phone with USB cable (not just charging cable)." -ForegroundColor Yellow
+  Write-Host "  2. On phone: Settings -> About -> tap Build Number 7 times to enable Developer options." -ForegroundColor Yellow
+  Write-Host "  3. On phone: Developer options -> enable 'USB debugging'." -ForegroundColor Yellow
+  Write-Host "  4. Re-plug USB. When phone shows 'Allow USB debugging?' popup, tap ALLOW." -ForegroundColor Yellow
+  Write-Host "  5. Run this script again." -ForegroundColor Yellow
+  throw "No device."
 }
 
 Remove-Item $logFile, $summaryFile, $errFile -Force -ErrorAction SilentlyContinue
