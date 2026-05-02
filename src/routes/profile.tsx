@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, LogOut, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
 import { toast } from "sonner";
@@ -90,7 +91,11 @@ function ProfilePage() {
 
   const handleLogout = async () => {
     await signOut();
-    navigate({ to: "/auth" });
+    if (typeof window !== "undefined") {
+      safeLocalStorage.removeItem("bossify_lang");
+      safeSessionStorage.removeItem("bossify_seen_splash");
+    }
+    navigate({ to: "/language", replace: true });
   };
 
   return (
