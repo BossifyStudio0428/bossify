@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
@@ -68,18 +68,25 @@ function OrdersPage() {
     })();
   }, []);
 
-  const load = async (silent = false) => {
+  const load = useCallback(async (silent = false) => {
+    if (!user) {
+      setOrders([]);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     const { data, error } = await supabase
       .from("orders")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     else setOrders((data ?? []) as OrderRow[]);
     setLoading(false);
     setRefreshing(false);
-  };
+  }, [user?.id]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   // Re-fetch whenever the page/tab regains focus so the list never shows
   // stale local state (e.g. after a delete from another device).
@@ -92,7 +99,7 @@ function OrdersPage() {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, []);
+  }, [load]);
 
   // Realtime
   useEffect(() => {
@@ -104,7 +111,7 @@ function OrdersPage() {
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user?.id]);
+  }, [user?.id, load]);
 
   // Pull to refresh
   useEffect(() => {
@@ -127,7 +134,7 @@ function OrdersPage() {
       window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", onEnd);
     };
-  }, [refreshing]);
+  }, [refreshing, load]);
 
   const updateStatus = async (id: string, next: OrderStatus) => {
     const prev = orders;
