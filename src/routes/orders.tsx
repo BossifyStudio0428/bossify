@@ -190,8 +190,6 @@ function OrdersPage() {
   const remove = async (id: string) => {
     const target = orders.find((o) => o.id === id);
     if (!target) return;
-    // Temp diagnostic — verifies the real Supabase UUID is being sent.
-    console.log("[orders] delete request for id:", id, "user:", user?.id);
     setDeletingId(id);
 
     // Delete from DB FIRST. Use `.select()` so Supabase returns the deleted
@@ -203,8 +201,6 @@ function OrdersPage() {
       .delete()
       .eq("id", id)
       .select();
-
-    console.log("[orders] delete result:", { deletedRows, error });
 
     if (error) {
       setDeletingId(null);
