@@ -18,7 +18,7 @@ export function BossifySplash() {
           alt="Bossify"
           width={180}
           height={180}
-          className="object-contain"
+          className="object-contain bossify-logo-anim"
         />
         <p className="mt-4 text-[28px] font-extrabold tracking-tight" style={{ color: "#1E1333" }}>
           Bossify
@@ -26,6 +26,9 @@ export function BossifySplash() {
         <p className="mt-1 text-[13px] italic" style={{ color: "#6B7280" }}>
           Manage your shop like a boss.
         </p>
+        <div className="mt-6 bossify-line-wrap" aria-hidden="true">
+          <span className="bossify-line" />
+        </div>
       </div>
     </div>
   );
