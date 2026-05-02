@@ -1,4 +1,4 @@
-export const BOSSIFY_SPLASH_MS = 3000;
+export const BOSSIFY_SPLASH_MS = 5000;
 
 // Module-level start timestamp — set the first time this module is evaluated
 // (i.e. on a real cold start of the JS bundle). We intentionally do NOT use
