@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
+import { safeSessionStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/language")({ component: LanguagePage });
 
@@ -18,6 +19,12 @@ function LanguagePage() {
 
   const onContinue = () => {
     setLang(selected);
+    // Mark that the user has gone through the language picker this session,
+    // so subsequent in-session navigations (onboarding → dashboard, etc.)
+    // don't bounce back here.
+    if (typeof window !== "undefined") {
+      safeSessionStorage.setItem("bossify_lang_picked_session", "1");
+    }
     navigate({ to: "/auth" });
   };
 
