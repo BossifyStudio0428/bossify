@@ -1,14 +1,11 @@
 # Bossify → Android (Play Console) 操作手册
 
-这个 app 用 **Capacitor** 把 Bossify 网站包成 Android app。
-采用「在线壳」模式 — app 加载 `https://bossify-malaysia.lovable.app`，
-所以以后在 Lovable 改动 → 用户打开 app 就看到新版本，**不用重新上传 Play**。
+这个 app 用 **Capacitor** 打包成真正的 Android app（**离线 SPA 模式**），
+package id 是 `com.zhstudio.bossify`。
+Play Console 不允许「只是加载外部网址」的 webview 壳，所以我们把网页 build
+进 `dist/` 然后打包进 APK/AAB。
 
-只有以下情况才需要重新打包 + 上传 Play：
-- 改 app 图标 / 名称 / 启动画面
-- 改 `capacitor.config.ts`
-- 升级 Capacitor 或加新原生插件
-- Play 要求更新 target SDK
+**意味着：以后 Lovable 改了东西 → 必须重新 build + 上传新版本到 Play。**
 
 ---
 
@@ -32,20 +29,16 @@ cd bossify
 # 2. 装依赖
 bun install
 
-# 3. 装 Capacitor
-bun add @capacitor/core @capacitor/android
-bun add -D @capacitor/cli
+# 3. Build 真正的网页进 dist/
+bun run build
 
-# 4. 准备一个空 dist/（在线壳模式不需要真正的 web build）
-mkdir -p dist && echo "<!doctype html><title>Bossify</title>" > dist/index.html
-
-# 5. 加 Android 平台
+# 4. 加 Android 平台（第一次）
 npx cap add android
 
-# 6. 同步配置进 Android 项目
+# 5. 同步 dist/ + 配置进 Android 项目
 npx cap sync android
 
-# 7. 打开 Android Studio
+# 6. 打开 Android Studio
 npx cap open android
 ```
 
@@ -77,15 +70,13 @@ npx cap open android
 
 ## 以后 Lovable 改了东西
 
-**内容/功能更新（99% 的情况）：什么都不用做。**
-用户打开 app 自动看到最新版本（在线壳）。
-
-**需要重新打包的情况：**
+**每次改动都要重新 build + 上传 Play**（因为是离线 SPA）：
 
 ```bash
 cd bossify
 git pull
 bun install
+bun run build
 npx cap sync android
 ```
 
@@ -102,7 +93,7 @@ npx cap sync android
 | 事项 | 说明 |
 |------|------|
 | Keystore (`.jks`) | 备份云盘 + U盘，丢了 = app 永远无法更新 |
-| `appId` | `com.bossify.app` 上架后**永远不能改** |
+| `appId` | `com.zhstudio.bossify` 上架后**永远不能改** |
 | 隐私政策 URL | Play 必填 |
 | Lovable Cloud (后端) | 继续在云端跑，无需改动 |
 | 离线访问 | 在线壳模式不支持，需要可改成离线 SPA 模式 |
