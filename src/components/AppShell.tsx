@@ -13,10 +13,26 @@ import { BossifySplash } from "@/components/BossifySplash";
 import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splashTiming";
 import bossifyLogo from "@/assets/bossify-logo.png";
 
-// Module-level flag — true only on a real cold start of the JS bundle.
-// Survives re-renders but resets when the WebView reloads the app.
-let bossifySplashShownThisSession = false;
+// Session-level flag — true once we've shown the cold-start splash this app
+// launch. We use sessionStorage so the splash flow survives client-side
+// navigations (e.g. onboarding → dashboard) without re-triggering, but a
+// real cold start (process killed, app reopened, reinstall) starts fresh.
+const SPLASH_SESSION_KEY = "bossify_splash_done";
+const LANG_PICKED_KEY = "bossify_lang_picked_session";
 markBossifySplashStart();
+
+function hasShownSplashThisSession(): boolean {
+  if (typeof window === "undefined") return false;
+  return safeSessionStorage.getItem(SPLASH_SESSION_KEY) === "1";
+}
+function markSplashShown() {
+  if (typeof window === "undefined") return;
+  safeSessionStorage.setItem(SPLASH_SESSION_KEY, "1");
+}
+function hasPickedLangThisSession(): boolean {
+  if (typeof window === "undefined") return false;
+  return safeSessionStorage.getItem(LANG_PICKED_KEY) === "1";
+}
 
 // Hide the native Capacitor splash screen after the same duration as the
 // in-app splash. Wrapped in a dynamic import + try/catch so this is safe in
@@ -78,7 +94,7 @@ function ShellInner() {
 
   // Start with the Bossify splash on the first frame of every cold start.
   const [showInlineSplash, setShowInlineSplash] = useState(
-    () => !bossifySplashShownThisSession,
+    () => !hasShownSplashThisSession(),
   );
 
   useEffect(() => {
@@ -118,14 +134,14 @@ function ShellInner() {
       return;
     }
     // Cold-start launch → ALWAYS show splash → language flow first.
-    if (typeof window !== "undefined" && !bossifySplashShownThisSession) {
-      bossifySplashShownThisSession = true;
+    if (typeof window !== "undefined" && !hasShownSplashThisSession()) {
+      markSplashShown();
       const remainingMs = getBossifySplashRemainingMs();
-      const t = window.setTimeout(() => {
+      const timer = window.setTimeout(() => {
         setShowInlineSplash(false);
         navigate({ to: "/language", replace: true });
       }, remainingMs);
-      return () => window.clearTimeout(t);
+      return () => window.clearTimeout(timer);
     }
     setShowInlineSplash(false);
     if (loading) return;
