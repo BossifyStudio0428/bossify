@@ -17,14 +17,7 @@ const config: CapacitorConfig = {
   },
   android: {
     backgroundColor: '#F4F3F8',
-    allowMixedContent: true,
-    webContentsDebuggingEnabled: true,
   },
-  // Lock app to portrait orientation only.
-  // Note: Capacitor honors this on iOS automatically, but on Android the
-  // authoritative setting lives in AndroidManifest.xml — see ANDROID_BUILD.md.
-  // @ts-ignore - `orientation` is a valid runtime hint Capacitor reads.
-  orientation: 'portrait',
   plugins: {
     StatusBar: {
       overlaysWebView: false,

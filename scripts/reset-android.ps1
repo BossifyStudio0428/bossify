@@ -38,6 +38,10 @@ npx cap add android
 Write-Host "Syncing Capacitor config..." -ForegroundColor Yellow
 npx cap sync android
 
+Write-Host "Applying Bossify Android safety patch..." -ForegroundColor Yellow
+npx cap update android
+node scripts/patch-android.mjs
+
 Write-Host "Done. Opening Android Studio..." -ForegroundColor Green
 npx cap open android
 

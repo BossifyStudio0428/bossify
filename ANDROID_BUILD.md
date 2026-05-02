@@ -78,6 +78,7 @@ git pull
 bun install
 bun run build
 npx cap sync android
+npm run android:patch
 ```
 
 确认 `capacitor.config.ts` 里必须是：
@@ -108,11 +109,18 @@ webDir: 'dist/client'
 
 ---
 
-## 🔒 锁定竖屏 (Portrait Only)
+## 🔒 锁定竖屏 (Portrait Only) + 防启动闪退
 
-`npx cap add android` 之后，打开
-`android/app/src/main/AndroidManifest.xml`，找到 `<activity ... android:name=".MainActivity" ...>`
-这一行，加上 `android:screenOrientation="portrait"`。最终长这样：
+不要手动乱改 `AndroidManifest.xml`。每次 `npx cap sync android` 之后运行：
+
+```bash
+npm run android:patch
+```
+
+它会自动给 `MainActivity` 加竖屏，并把启动 Splash 主题改成旧机型兼容写法，避免部分 Android 8/旧机型出现
+`Only fullscreen opaque activities can request orientation` 后一打开就闪退。
+
+最终 `MainActivity` 会长这样：
 
 ```xml
 <activity
@@ -127,5 +135,4 @@ webDir: 'dist/client'
 </activity>
 ```
 
-这样 app 永远竖屏，不会跟着手机旋转。
-每次 `npx cap add android` 重新生成都要再加一次（或备份 manifest）。
+这样 app 永远竖屏，不会跟着手机旋转，同时不会因为启动主题透明/Android 8 兼容问题直接崩。每次重新生成 Android 项目后都要再跑一次 `npm run android:patch`。
