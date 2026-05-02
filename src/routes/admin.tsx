@@ -74,7 +74,7 @@ function AdminPage() {
     }).eq("user_id", uid);
     if (error) toast.error(error.message);
     else {
-      toast.success(`Pro granted${months === "lifetime" ? " (Lifetime)" : ` for ${months} mo`}`);
+      toast.success(`${t("admin_pro_granted")}${months === "lifetime" ? ` (${t("admin_lifetime")})` : ` ${months} ${t("months_short")}`}`);
       if (uid === user?.id) refreshSub();
       loadAll();
       setGrantOpen(null);
@@ -82,13 +82,13 @@ function AdminPage() {
   };
 
   const revokePro = async (uid: string) => {
-    if (!confirm("Revoke Pro?")) return;
+    if (!confirm(t("admin_revoke_confirm"))) return;
     const { error } = await supabase.from("subscriptions").update({
       plan: "free", status: "active", expires_at: null,
     }).eq("user_id", uid);
     if (error) toast.error(error.message);
     else {
-      toast.success("Reverted to Free");
+      toast.success(t("admin_reverted_free"));
       if (uid === user?.id) refreshSub();
       loadAll();
     }
@@ -106,8 +106,8 @@ function AdminPage() {
           </button>
           <Sparkles className="h-5 w-5" />
         </div>
-        <h1 className="text-2xl font-bold">Admin Panel ⚙️</h1>
-        <p className="text-xs opacity-80 mt-1">Bossify Management Console</p>
+        <h1 className="text-2xl font-bold">{t("admin_panel")} ⚙️</h1>
+        <p className="text-xs opacity-80 mt-1">{t("admin_console_sub")}</p>
       </header>
 
       <div className="px-5 pt-5 space-y-5">
