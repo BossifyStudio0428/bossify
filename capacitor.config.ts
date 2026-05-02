@@ -12,12 +12,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
  * and switch to a static SPA build copied into `dist/`.
  */
 const config: CapacitorConfig = {
-  appId: 'com.bossify.app',
+  appId: 'com.zhstudio.bossify',
   appName: 'Bossify',
   webDir: 'dist',
   server: {
-    url: 'https://bossify-malaysia.lovable.app/',
-    cleartext: true,
+    androidScheme: 'https',
   },
   android: {
     allowMixedContent: true,
@@ -30,9 +29,9 @@ const config: CapacitorConfig = {
       backgroundColor: '#00000000',
     },
     SplashScreen: {
-      launchShowDuration: 2500,
-      launchAutoHide: true,
-      backgroundColor: '#6B46C1',
+      launchShowDuration: 3500,
+      launchAutoHide: false,
+      backgroundColor: '#F4F3F8',
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true,
