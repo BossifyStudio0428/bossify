@@ -190,12 +190,31 @@ function OrdersPage() {
   const remove = async (id: string) => {
     const target = orders.find((o) => o.id === id);
     if (!target) return;
+    // Temp diagnostic — verifies the real Supabase UUID is being sent.
+    console.log("[orders] delete request for id:", id, "user:", user?.id);
     setDeletingId(id);
-    // Delete from DB first. Only mutate UI on success — never use stale state.
-    const { error } = await supabase.from("orders").delete().eq("id", id);
+
+    // Delete from DB FIRST. Use `.select()` so Supabase returns the deleted
+    // rows — this lets us detect the silent-RLS case where `error` is null
+    // but 0 rows were actually removed (which causes the row to "come back"
+    // on the next refetch).
+    const { data: deletedRows, error } = await supabase
+      .from("orders")
+      .delete()
+      .eq("id", id)
+      .select();
+
+    console.log("[orders] delete result:", { deletedRows, error });
+
     if (error) {
       setDeletingId(null);
       toast.error(error.message || t("update_failed"));
+      return;
+    }
+    if (!deletedRows || deletedRows.length === 0) {
+      // Row exists but RLS prevented the delete. Do NOT touch the UI.
+      setDeletingId(null);
+      toast.error("Failed to delete order (permission denied)");
       return;
     }
 
@@ -230,12 +249,14 @@ function OrdersPage() {
       });
     }
 
+    // Step 2: only mutate UI after DB confirms delete.
+    setOrders((prev) => prev.filter((o) => o.id !== id));
     setDetail(null);
     setRemovingId(null);
     setDeletingId(null);
-    // Re-fetch fresh from DB instead of trusting local state.
-    await load(true);
     toast.success(t("order_deleted"));
+    // Re-fetch in the background to stay in sync (no navigation).
+    load(true);
   };
 
   const openEdit = (order: OrderRow) => {
