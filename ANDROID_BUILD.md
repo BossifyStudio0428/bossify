@@ -35,7 +35,7 @@ bun run build
 # 4. 加 Android 平台（第一次）
 npx cap add android
 
-# 5. 同步 dist/ + 配置进 Android 项目
+# 5. 同步 dist/client/ + 配置进 Android 项目
 npx cap sync android
 
 # 6. 打开 Android Studio
@@ -70,7 +70,7 @@ npx cap open android
 
 ## 以后 Lovable 改了东西
 
-**每次改动都要重新 build + 上传 Play**（因为是离线 SPA）：
+**每次改动都要 git pull → 重新 build → 重新上传 Play**（因为是离线 SPA，不是远程 WebView）：
 
 ```bash
 cd bossify
@@ -79,6 +79,14 @@ bun install
 bun run build
 npx cap sync android
 ```
+
+确认 `capacitor.config.ts` 里必须是：
+
+```ts
+webDir: 'dist/client'
+```
+
+不要加 `server.url`，否则就会变成远程 WebView，不适合上传 Google Play。
 
 然后在 Android Studio：
 1. 打开 `android/app/build.gradle`
