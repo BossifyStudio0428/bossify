@@ -54,12 +54,9 @@ function ShellInner() {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
-  // Decide synchronously (first render) whether we still need to show the splash.
-  // This prevents the router's pending spinner from flashing before navigation kicks in.
-  const [showInlineSplash] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return safeSessionStorage.getItem("bossify_seen_splash") !== "1";
-  });
+  // Start with the Bossify splash on the first frame. This keeps SSR/client output
+  // identical and prevents the router/auth loading spinner from flashing first.
+  const [showInlineSplash, setShowInlineSplash] = useState(true);
 
   useEffect(() => {
     if (!isSplashRoute) return;
@@ -92,7 +89,10 @@ function ShellInner() {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (isPublicFlow) return;
+    if (isPublicFlow) {
+      setShowInlineSplash(false);
+      return;
+    }
     // First-time launch → ALWAYS show splash → language flow first, even before auth resolves.
     if (typeof window !== "undefined") {
       const seenSplash = safeSessionStorage.getItem("bossify_seen_splash") === "1";
@@ -102,6 +102,7 @@ function ShellInner() {
         return;
       }
     }
+    setShowInlineSplash(false);
     if (loading) return;
     if (!session && !isAuthFlowRoute) {
       navigate({ to: "/auth" });
@@ -122,7 +123,7 @@ function ShellInner() {
 
   // While first-time splash is queued (or navigation hasn't completed yet), render the
   // Bossify logo immediately so the user never sees the generic loading spinner.
-  if (showInlineSplash && !isPublicFlow && !isAuthFlowRoute && !isOnboardingRoute) {
+  if (showInlineSplash && !isPublicFlow) {
     return <BossifySplash />;
   }
 
