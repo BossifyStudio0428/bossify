@@ -199,13 +199,9 @@ function OrdersPage() {
     if (!target) return;
     setDeletingId(id);
 
-    // Delete from DB FIRST through a security-definer RPC.
-    // It accepts the visible order id and the current user's id, so old rows
-    // created under mismatched auth records can still be cleaned up safely.
-    const { data: deletedOrder, error } = await supabase.rpc("delete_own_order", {
-      _order_id: id,
-      _user_id: user?.id ?? null,
-    });
+    // Delete from DB FIRST through a security-definer RPC that enforces
+    // ownership with auth.uid().
+    const { data: deletedOrder, error } = await supabase.rpc("delete_own_order", { _order_id: id });
 
     if (error) {
       setDeletingId(null);
