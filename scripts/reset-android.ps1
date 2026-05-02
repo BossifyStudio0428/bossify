@@ -9,8 +9,7 @@ $processNames = @(
   "java",
   "javaw",
   "gradle",
-  "adb",
-  "node"
+  "adb"
 )
 
 foreach ($name in $processNames) {
