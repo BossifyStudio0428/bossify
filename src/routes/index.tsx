@@ -24,7 +24,7 @@ function Index() {
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [selectedWeeklyIndex, setSelectedWeeklyIndex] = useState<number | null>(null);
+  const [selectedWeeklyIndex, setSelectedWeeklyIndex] = useState<number>(6);
 
   const load = async () => {
     if (!user?.id) return;
@@ -108,7 +108,7 @@ function Index() {
   }
   const maxVal = Math.max(1, ...weekly.map((w) => w.value));
   const weeklyTotal = weekly.reduce((s, w) => s + w.value, 0);
-  const selectedWeekly = selectedWeeklyIndex === null ? null : weekly[selectedWeeklyIndex];
+  const selectedWeekly = weekly[selectedWeeklyIndex] ?? weekly[6];
 
   const recent = orders.slice(0, 3);
   const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
@@ -187,34 +187,41 @@ function Index() {
         </p>
         <div className="mt-2 flex items-baseline justify-between gap-3">
           <p className="text-2xl font-bold text-foreground">
-            RM {Number(selectedWeekly ? selectedWeekly.value : weeklyTotal).toFixed(0)}
+            RM {Number(weeklyTotal).toFixed(0)}
           </p>
           <p className="text-xs font-medium text-muted-foreground">
-            {selectedWeekly ? selectedWeekly.day : (t("this_week") || "This week")}
+            {selectedWeekly?.day || (t("this_week") || "This week")}
           </p>
         </div>
         <div className="mt-4 flex items-end justify-between gap-2 h-32 min-h-[8rem]">
           {weekly.map((w, i) => {
             const hasValue = w.value > 0;
             const h = hasValue ? Math.max(25, (w.value / maxVal) * 100) : 8;
-            const isLast = i === weekly.length - 1;
-            const isSelected = selectedWeeklyIndex === i;
-            const highlight = isSelected || (selectedWeeklyIndex === null && isLast);
+            const highlight = selectedWeeklyIndex === i;
             return (
               <div key={i} className="flex-1 h-full flex flex-col items-center justify-end gap-2">
                 <button
                   type="button"
                   aria-label={`${w.day} RM ${Number(w.value).toFixed(0)}`}
-                  onClick={() => setSelectedWeeklyIndex((prev) => (prev === i ? null : i))}
-                  className={`w-full rounded-t-lg min-h-[8px] transition-all active:scale-95 ${
-                    highlight
-                      ? "bg-gradient-to-t from-primary to-primary/70"
-                      : hasValue
-                      ? "bg-primary/40"
-                      : "bg-muted"
-                  }`}
-                  style={{ height: `${h}%` }}
-                />
+                  onClick={() => setSelectedWeeklyIndex(i)}
+                  className="w-full h-full flex flex-col items-center justify-end gap-1"
+                >
+                  {highlight && (
+                    <span className="text-[10px] font-semibold text-primary leading-none whitespace-nowrap">
+                      RM {Number(w.value).toFixed(0)}
+                    </span>
+                  )}
+                  <span
+                    className={`w-full rounded-t-lg min-h-[8px] transition-all active:scale-95 ${
+                      highlight
+                        ? "bg-gradient-to-t from-primary to-primary/70"
+                        : hasValue
+                        ? "bg-primary/40"
+                        : "bg-muted"
+                    }`}
+                    style={{ height: `${h}%` }}
+                  />
+                </button>
                 <span className={`text-[10px] ${highlight ? "text-primary font-semibold" : "text-muted-foreground"}`}>
                   {w.day}
                 </span>
