@@ -112,6 +112,7 @@ webDir: 'dist/client'
 ## ⚠️ APK 一打开闪退时先用安全启动配置
 
 不要手动加 `android:screenOrientation="portrait"`。部分 Android 设备会因为这个 Manifest 设置在启动阶段直接闪退。
+另外，部分 Oppo/OnePlus/Android 12 系设备会因为 Android 12 Splash Screen 退出动画在启动阶段直接闪退；当前补丁会关闭这段启动动画，并把启动主题改回更保守的 `AppTheme.NoActionBar`。
 每次 `npx cap sync android` 之后运行：
 
 ```bash

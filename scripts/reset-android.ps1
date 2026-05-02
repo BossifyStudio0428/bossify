@@ -23,14 +23,11 @@ if (Test-Path ".\android") {
   Remove-Item -LiteralPath ".\android" -Recurse -Force
 }
 
-if (-not (Test-Path ".\dist")) {
-  New-Item -ItemType Directory -Path ".\dist" | Out-Null
-}
-
-Set-Content -Path ".\dist\index.html" -Value "<!doctype html><html><head><meta charset='utf-8'><title>Bossify</title></head><body>Bossify</body></html>" -Encoding UTF8
-
 Write-Host "Installing dependencies..." -ForegroundColor Yellow
-npm install
+bun install
+
+Write-Host "Building Bossify web bundle..." -ForegroundColor Yellow
+bun run build
 
 Write-Host "Creating fresh Capacitor Android project..." -ForegroundColor Yellow
 npx cap add android
@@ -39,7 +36,6 @@ Write-Host "Syncing Capacitor config..." -ForegroundColor Yellow
 npx cap sync android
 
 Write-Host "Applying Bossify Android safety patch..." -ForegroundColor Yellow
-npx cap update android
 node scripts/patch-android.mjs
 
 Write-Host "Done. Opening Android Studio..." -ForegroundColor Green

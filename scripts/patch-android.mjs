@@ -34,8 +34,12 @@ function patchStyles() {
 
   let styles = readFileSync(stylesPath, "utf8");
   styles = styles.replace(
-    /<style name="AppTheme\.NoActionBarLaunch" parent="AppTheme\.NoActionBar">/g,
-    '<style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">',
+    /<style name="AppTheme\.NoActionBarLaunch" parent="Theme\.SplashScreen">/g,
+    '<style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">',
+  );
+  styles = styles.replace(
+    /<item name="windowSplashScreenAnimatedIcon">[^<]*<\/item>\s*/g,
+    "",
   );
   if (!styles.includes('<item name="android:background">@drawable/splash</item>')) {
     styles = styles.replace(
