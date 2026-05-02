@@ -3,91 +3,92 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useI18n, type TKey } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
 
 type Q = {
   key: string;
-  label: string;
-  title: string;
-  options: { emoji: string; text: string }[];
+  labelKey: TKey;
+  titleKey: TKey;
+  options: { emoji: string; textKey: TKey }[];
 };
 
 const QUESTIONS: Q[] = [
   {
     key: "business_type",
-    label: "Your Business",
-    title: "What type of business do you run?",
+    labelKey: "ob_q1_label",
+    titleKey: "ob_q1_title",
     options: [
-      { emoji: "🍱", text: "Food & Beverage" },
-      { emoji: "👗", text: "Fashion & Apparel" },
-      { emoji: "💄", text: "Beauty & Personal Care" },
-      { emoji: "🧵", text: "Handmade / Custom Products" },
-      { emoji: "📦", text: "Others" },
+      { emoji: "🍱", textKey: "ob_q1_o1" },
+      { emoji: "👗", textKey: "ob_q1_o2" },
+      { emoji: "💄", textKey: "ob_q1_o3" },
+      { emoji: "🧵", textKey: "ob_q1_o4" },
+      { emoji: "📦", textKey: "ob_q1_o5" },
     ],
   },
   {
     key: "order_management",
-    label: "Order Management",
-    title: "How are you currently managing your orders?",
+    labelKey: "ob_q2_label",
+    titleKey: "ob_q2_title",
     options: [
-      { emoji: "📱", text: "WhatsApp messages" },
-      { emoji: "📓", text: "Manual (paper / notebook)" },
-      { emoji: "📊", text: "Spreadsheet (Excel / Google Sheets)" },
-      { emoji: "❌", text: "No proper system" },
+      { emoji: "📱", textKey: "ob_q2_o1" },
+      { emoji: "📓", textKey: "ob_q2_o2" },
+      { emoji: "📊", textKey: "ob_q2_o3" },
+      { emoji: "❌", textKey: "ob_q2_o4" },
     ],
   },
   {
     key: "biggest_challenge",
-    label: "Your Challenges",
-    title: "What is your biggest challenge today?",
+    labelKey: "ob_q3_label",
+    titleKey: "ob_q3_title",
     options: [
-      { emoji: "🗂️", text: "Missing or disorganized orders" },
-      { emoji: "💸", text: "Difficulty tracking payments" },
-      { emoji: "📦", text: "Inventory not updated accurately" },
-      { emoji: "👥", text: "No clear customer records" },
+      { emoji: "🗂️", textKey: "ob_q3_o1" },
+      { emoji: "💸", textKey: "ob_q3_o2" },
+      { emoji: "📦", textKey: "ob_q3_o3" },
+      { emoji: "👥", textKey: "ob_q3_o4" },
     ],
   },
   {
     key: "daily_orders",
-    label: "Order Volume",
-    title: "What is your average daily order volume?",
+    labelKey: "ob_q4_label",
+    titleKey: "ob_q4_title",
     options: [
-      { emoji: "📋", text: "1 – 5 orders" },
-      { emoji: "📋", text: "6 – 10 orders" },
-      { emoji: "📋", text: "11 – 20 orders" },
-      { emoji: "📋", text: "20+ orders" },
+      { emoji: "📋", textKey: "ob_q4_o1" },
+      { emoji: "📋", textKey: "ob_q4_o2" },
+      { emoji: "📋", textKey: "ob_q4_o3" },
+      { emoji: "📋", textKey: "ob_q4_o4" },
     ],
   },
   {
     key: "business_fulltime",
-    label: "Business Type",
-    title: "How would you describe your business?",
+    labelKey: "ob_q5_label",
+    titleKey: "ob_q5_title",
     options: [
-      { emoji: "💼", text: "Full-time business" },
-      { emoji: "🌙", text: "Side business / part-time" },
+      { emoji: "💼", textKey: "ob_q5_o1" },
+      { emoji: "🌙", textKey: "ob_q5_o2" },
     ],
   },
   {
     key: "primary_goal",
-    label: "Your Goals",
-    title: "What is your primary goal with Bossify?",
+    labelKey: "ob_q6_label",
+    titleKey: "ob_q6_title",
     options: [
-      { emoji: "✅", text: "Improve order tracking" },
-      { emoji: "💰", text: "Keep track of payments" },
-      { emoji: "👥", text: "Organise customer data" },
-      { emoji: "⏱️", text: "Save time and reduce manual work" },
+      { emoji: "✅", textKey: "ob_q6_o1" },
+      { emoji: "💰", textKey: "ob_q6_o2" },
+      { emoji: "👥", textKey: "ob_q6_o3" },
+      { emoji: "⏱️", textKey: "ob_q6_o4" },
     ],
   },
   {
     key: "growth_goal",
-    label: "Growth Plans",
-    title: "What is your growth goal for the next 3–6 months?",
+    labelKey: "ob_q7_label",
+    titleKey: "ob_q7_title",
     options: [
-      { emoji: "🗂️", text: "Stay organised" },
-      { emoji: "⚡", text: "Increase efficiency" },
-      { emoji: "📈", text: "Grow sales steadily" },
-      { emoji: "🚀", text: "Scale the business significantly" },
+      { emoji: "🗂️", textKey: "ob_q7_o1" },
+      { emoji: "⚡", textKey: "ob_q7_o2" },
+      { emoji: "📈", textKey: "ob_q7_o3" },
+      { emoji: "🚀", textKey: "ob_q7_o4" },
     ],
   },
 ];
@@ -95,6 +96,7 @@ const QUESTIONS: Q[] = [
 function Onboarding() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   // step: 0 = welcome, 1..7 = questions, 8 = complete
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -165,7 +167,7 @@ function Onboarding() {
   if (checking || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">
-        Loading...
+        {t("loading")}
       </div>
     );
   }
@@ -212,6 +214,7 @@ function Onboarding() {
 }
 
 function Welcome({ onStart }: { onStart: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center animate-fade-in">
       <img
@@ -221,17 +224,17 @@ function Welcome({ onStart }: { onStart: () => void }) {
         className="mb-6"
       />
       <h1 className="text-[22px] font-medium text-foreground">
-        Welcome to Bossify!
+        {t("welcome_title")}
       </h1>
       <p className="mt-2 text-sm italic text-muted-foreground">
-        Manage your shop like a boss.
+        {t("slogan")}
       </p>
       <div className="mt-6 flex gap-2">
         <span className="px-4 py-1.5 rounded-full bg-[#F3F0FF] text-primary text-xs font-medium">
-          Takes 1 min
+          {t("takes_1min")}
         </span>
         <span className="px-4 py-1.5 rounded-full bg-[#F3F0FF] text-primary text-xs font-medium">
-          7 quick questions
+          {t("q7")}
         </span>
       </div>
       <div className="w-full mt-10 space-y-3">
@@ -240,7 +243,7 @@ function Welcome({ onStart }: { onStart: () => void }) {
           className="w-full bg-primary text-primary-foreground rounded-xl font-semibold text-sm active:scale-[0.99] transition"
           style={{ padding: "13px" }}
         >
-          Let's Get Started →
+          {t("get_started")} →
         </button>
       </div>
     </div>
@@ -266,6 +269,7 @@ function QuestionScreen({
   animClass: string;
   isLast: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <div className={`flex-1 flex flex-col ${animClass}`}>
       {/* Progress */}
@@ -287,28 +291,29 @@ function QuestionScreen({
         ))}
       </div>
       <p className="text-[11px]" style={{ color: "#A78BFA" }}>
-        Question {qIndex + 1} of 7
+        {t("ob_question_of").replace("{i}", String(qIndex + 1))}
       </p>
       <p
         className="mt-5 text-[11px] uppercase font-semibold"
         style={{ color: "#A78BFA", letterSpacing: "0.8px" }}
       >
-        {question.label}
+        {t(question.labelKey)}
       </p>
       <h2
         className="mt-2 text-[17px] font-medium text-foreground"
         style={{ lineHeight: 1.4 }}
       >
-        {question.title}
+        {t(question.titleKey)}
       </h2>
 
       <div className="mt-6 space-y-2.5 flex-1">
         {question.options.map((o) => {
-          const selected = value === o.text;
+          const optText = t(o.textKey);
+          const selected = value === optText;
           return (
             <button
-              key={o.text}
-              onClick={() => onSelect(o.text)}
+              key={o.textKey}
+              onClick={() => onSelect(optText)}
               className="w-full flex items-center gap-3 text-left transition-all active:scale-[1.02]"
               style={{
                 padding: "11px 14px",
@@ -329,7 +334,7 @@ function QuestionScreen({
               >
                 {o.emoji}
               </span>
-              <span className="text-[13px] font-medium">{o.text}</span>
+              <span className="text-[13px] font-medium">{optText}</span>
             </button>
           );
         })}
@@ -347,7 +352,7 @@ function QuestionScreen({
           disabled={!value}
           className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:bg-[#E0DCF0] disabled:text-muted-foreground transition"
         >
-          {isLast ? "Finish" : "Continue"} <ArrowRight className="h-4 w-4" />
+          {isLast ? t("ob_finish") : t("continue")} <ArrowRight className="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -363,11 +368,12 @@ function Completion({
   saving: boolean;
   onFinish: () => void;
 }) {
-  const summary = [
-    { label: "Business", key: "business_type" },
-    { label: "Challenge", key: "biggest_challenge" },
-    { label: "Goal", key: "primary_goal" },
-    { label: "Growth", key: "growth_goal" },
+  const { t } = useI18n();
+  const summary: { labelKey: TKey; key: string }[] = [
+    { labelKey: "ob_summary_business", key: "business_type" },
+    { labelKey: "ob_summary_challenge", key: "biggest_challenge" },
+    { labelKey: "ob_summary_goal", key: "primary_goal" },
+    { labelKey: "ob_summary_growth", key: "growth_goal" },
   ];
   return (
     <div className="flex-1 flex flex-col items-center text-center animate-fade-in pt-6">
@@ -378,11 +384,10 @@ function Completion({
         <Check className="h-7 w-7 text-white" strokeWidth={3} />
       </div>
       <h1 className="mt-5 text-[18px] font-medium text-foreground">
-        You're all set, Boss!
+        {t("youre_set")}
       </h1>
       <p className="mt-2 text-[13px] text-muted-foreground px-4">
-        We've personalised Bossify based on your answers. Time to take control
-        of your business.
+        {t("ob_personalised")}
       </p>
 
       <div
@@ -392,7 +397,7 @@ function Completion({
         {summary.map((s) => (
           <div key={s.key} className="flex items-start justify-between gap-3">
             <span className="text-[11px] uppercase font-semibold tracking-wider text-muted-foreground">
-              {s.label}
+              {t(s.labelKey)}
             </span>
             <span className="text-[13px] text-foreground text-right">
               {answers[s.key] || "—"}
@@ -407,7 +412,7 @@ function Completion({
         className="w-full mt-8 bg-primary text-primary-foreground rounded-xl font-semibold text-sm disabled:opacity-60"
         style={{ padding: "13px" }}
       >
-        {saving ? "Saving..." : "Go to Dashboard →"}
+        {saving ? t("saving") : `${t("go_dashboard")} →`}
       </button>
     </div>
   );
