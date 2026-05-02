@@ -74,26 +74,50 @@ if ($logcat -and -not $logcat.HasExited) {
 }
 
 $patterns = @(
-  "FATAL EXCEPTION",
-  "AndroidRuntime",
-  $appId,
-  "Capacitor",
-  "Bridge",
-  "chromium",
-  "WebView",
-  "ClassNotFoundException",
-  "RuntimeException",
-  "Resources\\\$NotFoundException",
-  "UnsatisfiedLinkError",
-  "ActivityThread"
+  'FATAL EXCEPTION',
+  'AndroidRuntime',
+  [regex]::Escape($appId),
+  'Capacitor',
+  'Bridge',
+  'chromium',
+  'WebView',
+  'ClassNotFoundException',
+  'RuntimeException',
+  'Resources\$NotFoundException',
+  'UnsatisfiedLinkError',
+  'ActivityThread',
+  'beginning of crash',
+  'died',
+  'force-finishing'
 )
 
-$matches = Select-String -Path $logFile -Pattern $patterns -Context 8, 35 -ErrorAction SilentlyContinue
-if ($matches) {
-  $matches | Out-String -Width 260 | Set-Content -Path $summaryFile -Encoding UTF8
-} else {
-  "No crash pattern found. Full log is in android-crash-log.txt." | Set-Content -Path $summaryFile -Encoding UTF8
+$summaryParts = @()
+try {
+  $found = Select-String -Path $logFile -Pattern $patterns -Context 8, 35 -ErrorAction Stop
+  if ($found) {
+    $summaryParts += "=== MATCHED CRASH/RUNTIME LINES ==="
+    $summaryParts += ($found | Out-String -Width 260)
+  } else {
+    $summaryParts += "=== NO CRASH PATTERN MATCHED ==="
+  }
+} catch {
+  $summaryParts += "=== Select-String FAILED: $($_.Exception.Message) ==="
 }
+
+# Always include head + tail of raw log as a safety net so the user gets SOMETHING.
+if (Test-Path $logFile) {
+  $all = Get-Content -Path $logFile -ErrorAction SilentlyContinue
+  if ($all) {
+    $summaryParts += ""
+    $summaryParts += "=== FIRST 200 LINES OF RAW LOG ==="
+    $summaryParts += ($all | Select-Object -First 200 | Out-String -Width 260)
+    $summaryParts += ""
+    $summaryParts += "=== LAST 400 LINES OF RAW LOG ==="
+    $summaryParts += ($all | Select-Object -Last 400 | Out-String -Width 260)
+  }
+}
+
+$summaryParts -join "`r`n" | Set-Content -Path $summaryFile -Encoding UTF8
 
 Write-Host "Done." -ForegroundColor Green
 Write-Host "Send back this file content: $summaryFile" -ForegroundColor Green
