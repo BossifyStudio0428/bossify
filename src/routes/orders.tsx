@@ -192,23 +192,17 @@ function OrdersPage() {
     if (!target) return;
     setDeletingId(id);
 
-    // Delete from DB FIRST. Use `.select()` so Supabase returns the deleted
-    // rows — this lets us detect the silent-RLS case where `error` is null
-    // but 0 rows were actually removed (which causes the row to "come back"
-    // on the next refetch).
-    const { data: deletedRows, error } = await supabase
-      .from("orders")
-      .delete()
-      .eq("id", id)
-      .select();
+    // Delete from DB FIRST through a security-definer RPC that enforces
+    // ownership with auth.uid(). This avoids silent 0-row deletes when RLS
+    // policies are missing or not applied correctly.
+    const { data: deletedOrder, error } = await supabase.rpc("delete_own_order", { _order_id: id });
 
     if (error) {
       setDeletingId(null);
       toast.error(error.message || t("update_failed"));
       return;
     }
-    if (!deletedRows || deletedRows.length === 0) {
-      // Row exists but RLS prevented the delete. Do NOT touch the UI.
+    if (!deletedOrder) {
       setDeletingId(null);
       toast.error("Failed to delete order (permission denied)");
       return;
