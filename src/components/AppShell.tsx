@@ -62,7 +62,7 @@ function ShellInner() {
     if (!isSplashRoute) return;
     const t = window.setTimeout(() => {
       navigate({ to: "/language", replace: true });
-    }, 3000);
+    }, 2500);
     return () => window.clearTimeout(t);
   }, [isSplashRoute, navigate]);
 
@@ -98,8 +98,12 @@ function ShellInner() {
       const seenSplash = safeSessionStorage.getItem("bossify_seen_splash") === "1";
       if (!seenSplash) {
         safeSessionStorage.setItem("bossify_seen_splash", "1");
-        navigate({ to: "/splash", replace: true });
-        return;
+        // Show inline splash for 2.5s, then go straight to language (no extra splash route hop).
+        const t = window.setTimeout(() => {
+          setShowInlineSplash(false);
+          navigate({ to: "/language", replace: true });
+        }, 2500);
+        return () => window.clearTimeout(t);
       }
     }
     setShowInlineSplash(false);
