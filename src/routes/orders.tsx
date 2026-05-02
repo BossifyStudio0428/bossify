@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
@@ -57,11 +57,7 @@ function OrdersPage() {
   const [editingOrder, setEditingOrder] = useState<OrderRow | null>(null);
   const [editForm, setEditForm] = useState<Partial<OrderRow>>({});
   const [editSaving, setEditSaving] = useState(false);
-  // IDs of orders that the user deleted but that are still inside the
-  // 5-second Undo window (DB row still exists). Any reload from realtime
-  // or pull-to-refresh must filter these out, otherwise the deleted card
-  // reappears on its own.
-  const pendingDeleteIdsRef = useRef<Set<string>>(new Set());
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => { setHydrated(true); }, []);
 
@@ -78,16 +74,25 @@ function OrdersPage() {
       .select("*")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
-    else {
-      const pending = pendingDeleteIdsRef.current;
-      const rows = (data ?? []) as OrderRow[];
-      setOrders(pending.size ? rows.filter((o) => !pending.has(o.id)) : rows);
-    }
+    else setOrders((data ?? []) as OrderRow[]);
     setLoading(false);
     setRefreshing(false);
   };
 
   useEffect(() => { load(); }, []);
+
+  // Re-fetch whenever the page/tab regains focus so the list never shows
+  // stale local state (e.g. after a delete from another device).
+  useEffect(() => {
+    const onFocus = () => load(true);
+    const onVisible = () => { if (document.visibilityState === "visible") load(true); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
   // Realtime
   useEffect(() => {
@@ -185,76 +190,52 @@ function OrdersPage() {
   const remove = async (id: string) => {
     const target = orders.find((o) => o.id === id);
     if (!target) return;
-    // Optimistically hide the order. Keep a reference so we can restore it
-    // if the user taps "Undo" before the toast expires.
-    setOrders((p) => p.filter((o) => o.id !== id));
-    setDetail(null);
-    setRemovingId(null);
-    pendingDeleteIdsRef.current.add(id);
+    setDeletingId(id);
+    // Delete from DB first. Only mutate UI on success — never use stale state.
+    const { error } = await supabase.from("orders").delete().eq("id", id);
+    if (error) {
+      setDeletingId(null);
+      toast.error(error.message || t("update_failed"));
+      return;
+    }
 
-    let undone = false;
-    const UNDO_MS = 5000;
-
-    const commitDelete = async () => {
-      if (undone) return;
-      const { error } = await supabase.from("orders").delete().eq("id", id);
-      if (error) {
-        // Restore on failure
-        pendingDeleteIdsRef.current.delete(id);
-        setOrders((p) => [target, ...p.filter((o) => o.id !== id)]);
-        toast.error(t("update_failed"));
-        return;
-      }
-      pendingDeleteIdsRef.current.delete(id);
-      // Sync customer aggregates
-      if (user && target.phone) {
-        const { data: existing } = await supabase
-          .from("customers")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("phone", target.phone)
-          .maybeSingle();
-        if (existing) {
-          const newOrders = Math.max(0, (existing.total_orders ?? 0) - 1);
-          const newSpent = Math.max(0, Number(existing.total_spent ?? 0) - Number(target.amount));
-          if (newOrders === 0) {
-            await supabase.from("customers").delete().eq("id", existing.id);
-          } else {
-            await supabase.from("customers").update({
-              total_orders: newOrders,
-              total_spent: newSpent,
-            }).eq("id", existing.id);
-          }
+    // Sync customer aggregates
+    if (user && target.phone) {
+      const { data: existing } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("phone", target.phone)
+        .maybeSingle();
+      if (existing) {
+        const newOrders = Math.max(0, (existing.total_orders ?? 0) - 1);
+        const newSpent = Math.max(0, Number(existing.total_spent ?? 0) - Number(target.amount));
+        if (newOrders === 0) {
+          await supabase.from("customers").delete().eq("id", existing.id);
+        } else {
+          await supabase.from("customers").update({
+            total_orders: newOrders,
+            total_spent: newSpent,
+          }).eq("id", existing.id);
         }
       }
-      if (user) {
-        await createNotification({
-          user_id: user.id,
-          type: "order_deleted",
-          title: `Order ${target.code} deleted`,
-          message: `${target.customer_name} · RM ${Number(target.amount).toFixed(2)}`,
-          link: "/orders",
-        });
-      }
-    };
+    }
+    if (user) {
+      await createNotification({
+        user_id: user.id,
+        type: "order_deleted",
+        title: `Order ${target.code} deleted`,
+        message: `${target.customer_name} · RM ${Number(target.amount).toFixed(2)}`,
+        link: "/orders",
+      });
+    }
 
-    const timer = window.setTimeout(commitDelete, UNDO_MS);
-
-    toast.success(t("order_deleted"), {
-      duration: UNDO_MS,
-      action: {
-        label: "Undo",
-        onClick: () => {
-          undone = true;
-          window.clearTimeout(timer);
-          pendingDeleteIdsRef.current.delete(id);
-          setOrders((p) => {
-            if (p.some((o) => o.id === target.id)) return p;
-            return [target, ...p];
-          });
-        },
-      },
-    });
+    setDetail(null);
+    setRemovingId(null);
+    setDeletingId(null);
+    // Re-fetch fresh from DB instead of trusting local state.
+    await load(true);
+    toast.success(t("order_deleted"));
   };
 
   const openEdit = (order: OrderRow) => {
@@ -500,15 +481,18 @@ function OrdersPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("cancel") || "Cancel"}</AlertDialogCancel>
+            <AlertDialogCancel disabled={!!deletingId}>{t("cancel") || "Cancel"}</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600 text-white"
-              onClick={() => {
-                if (pendingDelete) remove(pendingDelete.id);
+              disabled={!!deletingId}
+              className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-60"
+              onClick={async () => {
+                if (!pendingDelete) return;
+                const target = pendingDelete;
                 setPendingDelete(null);
+                await remove(target.id);
               }}
             >
-              {t("delete_order") || "Delete"}
+              {deletingId ? "..." : (t("delete_order") || "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

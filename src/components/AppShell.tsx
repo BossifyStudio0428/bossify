@@ -18,6 +18,21 @@ import bossifyLogo from "@/assets/bossify-logo.png";
 let bossifySplashShownThisSession = false;
 markBossifySplashStart();
 
+// Hide the native Capacitor splash screen after the same duration as the
+// in-app splash. Wrapped in a dynamic import + try/catch so this is safe in
+// the web preview where Capacitor isn't available.
+if (typeof window !== "undefined") {
+  const NATIVE_SPLASH_MS = 3500;
+  window.setTimeout(async () => {
+    try {
+      const { SplashScreen } = await import("@capacitor/splash-screen");
+      await SplashScreen.hide({ fadeOutDuration: 500 });
+    } catch {
+      // Not running inside Capacitor — ignore.
+    }
+  }, NATIVE_SPLASH_MS);
+}
+
 const tabs = [
   { to: "/", label: "Home", icon: Home },
   { to: "/orders", label: "Orders", icon: ClipboardList },
