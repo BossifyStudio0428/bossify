@@ -18,8 +18,9 @@ export function BossifySplash() {
         <img
           src={bossifyLogo}
           alt="Bossify"
-          width={180}
-          height={180}
+          width={160}
+          height={undefined}
+          style={{ width: 160, height: "auto" }}
           className="object-contain bossify-logo-anim"
         />
         <p className="mt-4 text-[28px] font-extrabold tracking-tight" style={{ color: "#1E1333" }}>
