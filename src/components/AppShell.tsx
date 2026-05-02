@@ -56,8 +56,7 @@ function ShellInner() {
   useEffect(() => {
     if (!isSplashRoute) return;
     const t = window.setTimeout(() => {
-      const lang = safeLocalStorage.getItem("bossify_lang");
-      navigate({ to: lang ? "/auth" : "/language", replace: true });
+      navigate({ to: "/language", replace: true });
     }, 3000);
     return () => window.clearTimeout(t);
   }, [isSplashRoute, navigate]);
