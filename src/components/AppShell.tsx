@@ -10,7 +10,12 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { BossifySplash } from "@/components/BossifySplash";
-import { getBossifySplashRemainingMs } from "@/lib/splashTiming";
+import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splashTiming";
+
+// Module-level flag — true only on a real cold start of the JS bundle.
+// Survives re-renders but resets when the WebView reloads the app.
+let bossifySplashShownThisSession = false;
+markBossifySplashStart();
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
@@ -55,9 +60,10 @@ function ShellInner() {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
-  // Start with the Bossify splash on the first frame. This keeps SSR/client output
-  // identical and prevents the router/auth loading spinner from flashing first.
-  const [showInlineSplash, setShowInlineSplash] = useState(true);
+  // Start with the Bossify splash on the first frame of every cold start.
+  const [showInlineSplash, setShowInlineSplash] = useState(
+    () => !bossifySplashShownThisSession,
+  );
 
   useEffect(() => {
     if (!isSplashRoute) return;
@@ -95,19 +101,15 @@ function ShellInner() {
       setShowInlineSplash(false);
       return;
     }
-    // First-time launch → ALWAYS show splash → language flow first, even before auth resolves.
-    if (typeof window !== "undefined") {
-      const seenSplash = safeSessionStorage.getItem("bossify_seen_splash") === "1";
-      if (!seenSplash) {
-        safeSessionStorage.setItem("bossify_seen_splash", "1");
-        // Count from the real page load time, not from React hydration/auth completion.
-        const remainingMs = getBossifySplashRemainingMs();
-        const t = window.setTimeout(() => {
-          setShowInlineSplash(false);
-          navigate({ to: "/language", replace: true });
-        }, remainingMs);
-        return () => window.clearTimeout(t);
-      }
+    // Cold-start launch → ALWAYS show splash → language flow first.
+    if (typeof window !== "undefined" && !bossifySplashShownThisSession) {
+      bossifySplashShownThisSession = true;
+      const remainingMs = getBossifySplashRemainingMs();
+      const t = window.setTimeout(() => {
+        setShowInlineSplash(false);
+        navigate({ to: "/language", replace: true });
+      }, remainingMs);
+      return () => window.clearTimeout(t);
     }
     setShowInlineSplash(false);
     if (loading) return;
