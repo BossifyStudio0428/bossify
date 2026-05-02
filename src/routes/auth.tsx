@@ -16,6 +16,7 @@ function AuthPage() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const { t } = useI18n();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -49,18 +50,13 @@ function AuthPage() {
           businessName={businessName}
           onDone={() => {
             setMode("login");
-            toast.success(t_global("please_login"));
+            toast.success(t("please_login"));
           }}
         />
       )}
     </div>
   );
 }
-
-// Lightweight non-hook accessor for use in the top-level component closure
-// (where `useI18n` is already called). We need access to `t` from inside the
-// onDone callback but we're in `AuthPage` which DOES have access via hook —
-// add it there.
 
 /* ---------- Shared UI ---------- */
 
