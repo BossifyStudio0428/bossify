@@ -316,7 +316,7 @@ function OrdersPage() {
               key={o.id}
               onClick={(e) => {
                 if ((e.target as HTMLElement).closest("button,a,[role='menuitem']")) return;
-                navigate({ to: "/orders/$orderId", params: { orderId: o.id } });
+                navigate({ to: "/orders/$orderId", params: { orderId: o.id }, search: {} as never });
               }}
               className={`rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 cursor-pointer transition-all ${removing ? "opacity-0 scale-95" : "opacity-100"}`}
             >
