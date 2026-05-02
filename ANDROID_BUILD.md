@@ -136,3 +136,18 @@ npm run android:patch
 ```
 
 如果这样能打开，再处理竖屏；不要先把竖屏写进 Manifest。每次重新生成 Android 项目后都要再跑一次 `npm run android:patch`。
+
+---
+
+## 用 Logcat 抓真正闪退原因
+
+电脑 USB 连接手机，打开手机 **Developer options → USB debugging**，然后运行：
+
+```bash
+npm run android:logcat
+```
+
+脚本会自动清空旧日志、启动 Bossify、等待 25 秒并生成：
+
+- `android-crash-summary.txt`：优先看这个，复制内容回来
+- `android-crash-log.txt`：完整原始日志
