@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
@@ -55,7 +56,7 @@ function ShellInner() {
   useEffect(() => {
     if (!isSplashRoute) return;
     const t = window.setTimeout(() => {
-      const lang = localStorage.getItem("bossify_lang");
+      const lang = safeLocalStorage.getItem("bossify_lang");
       navigate({ to: lang ? "/auth" : "/language", replace: true });
     }, 3000);
     return () => window.clearTimeout(t);
@@ -88,10 +89,10 @@ function ShellInner() {
     if (isPublicFlow) return;
     // First-time launch (no language picked yet) → show splash → language flow.
     if (typeof window !== "undefined") {
-      const hasLang = localStorage.getItem("bossify_lang");
-      const seenSplash = sessionStorage.getItem("bossify_seen_splash") === "1";
+      const hasLang = safeLocalStorage.getItem("bossify_lang");
+      const seenSplash = safeSessionStorage.getItem("bossify_seen_splash") === "1";
       if (!hasLang && !seenSplash && !isAuthFlowRoute && !isOnboardingRoute) {
-        sessionStorage.setItem("bossify_seen_splash", "1");
+        safeSessionStorage.setItem("bossify_seen_splash", "1");
         navigate({ to: "/splash", replace: true });
         return;
       }
@@ -102,7 +103,7 @@ function ShellInner() {
     }
     const isRegistering =
       typeof window !== "undefined" &&
-      sessionStorage.getItem("bossify_registering") === "1";
+      safeSessionStorage.getItem("bossify_registering") === "1";
     if (session && isLoginRoute && !isRegistering) {
       navigate({ to: "/" });
       return;

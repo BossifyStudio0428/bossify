@@ -4,6 +4,7 @@ import { Eye, EyeOff, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { pwStrength } from "@/lib/authErrors";
+import { safeSessionStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/forgot-password/reset")({ component: ResetPage });
 
@@ -49,7 +50,7 @@ function ResetPage() {
     }
     await supabase.auth.signOut();
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("bossify_fp_email");
+      safeSessionStorage.removeItem("bossify_fp_email");
     }
     setLoading(false);
     toast.success("Password updated!");

@@ -7,6 +7,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, DEFAULT_ORDER_TPL } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
@@ -63,10 +64,10 @@ function NewOrderPage() {
   });
   const [countryCode, setCountryCode] = useState<string>(() => {
     if (typeof window === "undefined") return "60";
-    return localStorage.getItem("bossify_country_code") || "60";
+    return safeLocalStorage.getItem("bossify_country_code") || "60";
   });
   useEffect(() => {
-    if (typeof window !== "undefined") localStorage.setItem("bossify_country_code", countryCode);
+    if (typeof window !== "undefined") safeLocalStorage.setItem("bossify_country_code", countryCode);
   }, [countryCode]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);

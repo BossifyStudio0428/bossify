@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { safeSessionStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/forgot-password/verify")({ component: VerifyPage });
 
@@ -18,7 +19,7 @@ function VerifyPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const stored = sessionStorage.getItem("bossify_fp_email");
+    const stored = safeSessionStorage.getItem("bossify_fp_email");
     if (!stored) {
       navigate({ to: "/forgot-password" });
       return;

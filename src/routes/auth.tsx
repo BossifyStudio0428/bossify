@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { mapAuthError, isValidEmail, pwStrength } from "@/lib/authErrors";
+import { safeSessionStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/auth")({ component: AuthPage });
 
@@ -19,7 +20,7 @@ function AuthPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (mode === "login" || mode === "reg_email") {
-      sessionStorage.removeItem("bossify_registering");
+      safeSessionStorage.removeItem("bossify_registering");
     }
   }, [mode]);
 
@@ -325,7 +326,7 @@ function RegOtpScreen({ email, onBack, onNext }: { email: string; onBack: () => 
     if (!allFilled) return;
     setError(null); setLoading(true);
     if (typeof window !== "undefined") {
-      sessionStorage.setItem("bossify_registering", "1");
+      safeSessionStorage.setItem("bossify_registering", "1");
     }
     const { data, error: err } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
     setLoading(false);
@@ -438,7 +439,7 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
     // Sign out so user logs in fresh
     await supabase.auth.signOut();
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("bossify_registering");
+      safeSessionStorage.removeItem("bossify_registering");
     }
     setLoading(false);
     setSuccess(true);

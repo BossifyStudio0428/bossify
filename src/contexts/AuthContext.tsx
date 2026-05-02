@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 type AuthCtx = {
   session: Session | null;
@@ -58,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Reset theme to light so the auth screen never flashes a dark background
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("bossify_theme", "light");
+        safeLocalStorage.setItem("bossify_theme", "light");
         const root = document.documentElement;
         root.classList.remove("dark");
         root.classList.add("light");

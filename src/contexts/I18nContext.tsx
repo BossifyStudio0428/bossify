@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 export type Lang = "en" | "ms" | "zh";
 
@@ -482,18 +483,18 @@ const I18nContext = createContext<Ctx | null>(null);
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
     if (typeof window === "undefined") return "en";
-    return (localStorage.getItem("bossify_lang") as Lang) || "en";
+    return (safeLocalStorage.getItem("bossify_lang") as Lang) || "en";
   });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("bossify_lang", lang);
+      safeLocalStorage.setItem("bossify_lang", lang);
     }
   }, [lang]);
 
   const setLang = (l: Lang) => {
     setLangState(l);
-    if (typeof window !== "undefined") localStorage.setItem("bossify_lang", l);
+    if (typeof window !== "undefined") safeLocalStorage.setItem("bossify_lang", l);
     // best-effort sync to supabase
     (async () => {
       const { data } = await supabase.auth.getUser();
