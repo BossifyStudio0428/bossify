@@ -48,7 +48,7 @@ function BusinessProfilePage() {
   const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error(t("photo_max_5mb")); return; }
     setUploading(true);
     const ext = file.name.split(".").pop() || "jpg";
     const path = `${user.id}/avatar-${Date.now()}.${ext}`;
@@ -64,7 +64,7 @@ function BusinessProfilePage() {
       .eq("id", user.id);
     setUploading(false);
     if (updErr) toast.error(updErr.message);
-    else toast.success("Photo updated!");
+    else toast.success(t("photo_updated"));
   };
 
   const save = async () => {
@@ -79,7 +79,7 @@ function BusinessProfilePage() {
     }).eq("id", user.id);
     setSaving(false);
     if (error) toast.error(error.message);
-    else { toast.success("Profile updated!"); navigate({ to: "/profile" }); }
+    else { toast.success(t("profile_updated")); navigate({ to: "/profile" }); }
   };
 
   if (loading) return <p className="p-6 text-sm text-muted-foreground">{t("loading")}</p>;
@@ -98,32 +98,32 @@ function BusinessProfilePage() {
           type="button"
           onClick={() => fileRef.current?.click()}
           className="relative h-28 w-28 rounded-full shadow-[var(--shadow-soft)]"
-          aria-label="Change photo"
+          aria-label={t("change_photo")}
         >
           <span className="block h-full w-full rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-3xl font-bold overflow-hidden">
             {form.avatar_url
               ? <img src={form.avatar_url} alt="" className="h-full w-full object-cover" />
-              : (form.business_name || "MB").slice(0, 2).toUpperCase()}
+              : (form.business_name || t("name_initial_ph")).slice(0, 2).toUpperCase()}
           </span>
           <span className="absolute -bottom-1 -right-1 h-9 w-9 rounded-full bg-card border-2 border-background flex items-center justify-center shadow-md">
             <Camera className="h-4 w-4 text-foreground" />
           </span>
         </button>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onUpload} />
-        {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
+        {uploading && <p className="text-xs text-muted-foreground">{t("uploading")}</p>}
       </div>
 
       <div className="space-y-4">
         <Field label={t("business_name")} value={form.business_name} onChange={(v) => setForm((p) => ({ ...p, business_name: v }))} />
 
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">Business Type</label>
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("business_type_label")}</label>
           <select
             value={form.business_type}
             onChange={(e) => setForm((p) => ({ ...p, business_type: e.target.value }))}
             className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground"
           >
-            <option value="">— Select —</option>
+            <option value="">{t("select_dash")}</option>
             {BUSINESS_TYPES.map((b) => <option key={b} value={b}>{b}</option>)}
           </select>
         </div>
