@@ -110,15 +110,33 @@ function Onboarding() {
       navigate({ to: "/auth" });
       return;
     }
+    let cancelled = false;
+    const failOpenTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        console.error("onboarding page check timed out");
+        setChecking(false);
+      }
+    }, 5000);
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("onboarding_responses")
         .select("id")
         .eq("user_id", user.id)
         .maybeSingle();
+      if (cancelled) return;
+      window.clearTimeout(failOpenTimer);
+      if (error) {
+        console.error("onboarding page check failed", error);
+        setChecking(false);
+        return;
+      }
       if (data) navigate({ to: "/" });
       else setChecking(false);
     })();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(failOpenTimer);
+    };
   }, [user, authLoading, navigate]);
 
   const select = (key: string, val: string) =>

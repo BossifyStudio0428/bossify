@@ -10,6 +10,9 @@ export default defineConfig({
   cloudflare: false,
   vite: {
     base: "./",
+    ssr: {
+      noExternal: ["h3-v2", "h3", "rou3", "srvx"],
+    },
   },
   tanstackStart: {
     spa: {
