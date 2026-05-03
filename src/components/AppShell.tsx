@@ -113,18 +113,32 @@ function ShellInner() {
       return;
     }
     let cancelled = false;
+    const failOpenTimer = window.setTimeout(() => {
+      if (cancelled) return;
+      console.error("onboarding check timed out");
+      setNeedsOnboarding(false);
+      setOnboardingChecked(true);
+    }, 5000);
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("onboarding_responses")
         .select("id")
         .eq("user_id", session.user.id)
         .maybeSingle();
       if (cancelled) return;
+      window.clearTimeout(failOpenTimer);
+      if (error) {
+        console.error("onboarding check failed", error);
+        setNeedsOnboarding(false);
+        setOnboardingChecked(true);
+        return;
+      }
       setNeedsOnboarding(!data);
       setOnboardingChecked(true);
     })();
     return () => {
       cancelled = true;
+      window.clearTimeout(failOpenTimer);
     };
   }, [session?.user?.id]);
 
