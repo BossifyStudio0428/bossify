@@ -93,9 +93,7 @@ function ShellInner() {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   // Start with the Bossify splash on the first frame of every cold start.
-  const [showInlineSplash, setShowInlineSplash] = useState(
-    () => !hasShownSplashThisSession(),
-  );
+  const [showInlineSplash, setShowInlineSplash] = useState(true);
 
   useEffect(() => {
     if (!isSplashRoute) return;
