@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
-import { isNativeBillingAvailable, purchasePlan, restorePurchases } from "@/lib/billing";
+import { isNativeBillingAvailable, purchasePlan, restorePurchases, type BillingError } from "@/lib/billing";
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
 
@@ -45,7 +45,7 @@ function PlansPage() {
   const handleGooglePlayPurchase = async () => {
     if (!user) return;
     if (!isNativeBillingAvailable()) {
-      toast.error(t("google_play_only_android"));
+      toast.message(t("google_play_only_android"));
       return;
     }
     setSubmitting(true);
@@ -68,7 +68,12 @@ function PlansPage() {
         toast.success(t("welcome_to_pro"));
         await refresh();
       },
-      (msg) => toast.error(msg),
+      (err: BillingError) => {
+        if (err.code === "item_unavailable") toast.message(t("billing_item_unavailable"));
+        else if (err.code === "user_cancelled") toast.message(t("billing_user_cancelled"));
+        else if (err.code === "not_android") toast.message(t("google_play_only_android"));
+        else toast.error(t("billing_unknown_error"));
+      },
     );
     setSubmitting(false);
   };
@@ -175,9 +180,36 @@ function PlansPage() {
 
       <button
         onClick={async () => {
-          await restorePurchases((msg) => toast.error(msg));
-          await refresh();
-          toast.success(t("restore_purchases"));
+          if (!isNativeBillingAvailable()) {
+            toast.message(t("google_play_only_android"));
+            return;
+          }
+          await restorePurchases(
+            async (receipts) => {
+              if (!receipts.length) {
+                toast.message(t("no_purchases_to_restore"));
+                return;
+              }
+              if (user) {
+                const r = receipts[0];
+                await supabase.from("subscriptions").upsert({
+                  user_id: user.id,
+                  plan: "pro",
+                  status: "active",
+                  provider: "google_play",
+                  provider_product_id: r.productId,
+                  provider_transaction_id: r.transactionId,
+                  provider_purchase_token: r.purchaseToken ?? null,
+                }, { onConflict: "user_id" });
+              }
+              await refresh();
+              toast.success(t("welcome_to_pro"));
+            },
+            (err) => {
+              if (err.code === "item_unavailable") toast.message(t("no_purchases_to_restore"));
+              else toast.error(t("billing_unknown_error"));
+            },
+          );
         }}
         className="w-full text-xs text-muted-foreground underline py-2"
       >
