@@ -114,6 +114,9 @@ function ShellInner() {
   const isOnboardingRoute = locationPathname === "/onboarding";
   const isSplashRoute = locationPathname === "/splash";
   const isLanguageRoute = locationPathname === "/language";
+  // Only /language is a true "public bypass" for the language guard.
+  // /splash must still respect the language gate so a user who exits the
+  // app on the language screen without choosing is redirected back to it.
   const isPublicFlow = isSplashRoute || isLanguageRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
