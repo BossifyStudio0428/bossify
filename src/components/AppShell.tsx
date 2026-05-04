@@ -22,6 +22,18 @@ const LANG_PICKED_KEY = "bossify_lang_picked_session";
 const ONBOARDING_DONE_KEY = "bossify_onboarding_done_session";
 markBossifySplashStart();
 
+// One-time cleanup: previous builds wrote a global "onboarding done" flag to
+// sessionStorage, which made brand-new signups skip onboarding because they
+// inherited the previous user's flag. Wipe it on boot so the per-user
+// localStorage flag becomes the single source of truth.
+if (typeof window !== "undefined") {
+  try {
+    safeSessionStorage.removeItem(ONBOARDING_DONE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 function hasShownSplashThisSession(): boolean {
   if (typeof window === "undefined") return false;
   return safeSessionStorage.getItem(SPLASH_SESSION_KEY) === "1";
