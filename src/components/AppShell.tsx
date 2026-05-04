@@ -79,6 +79,11 @@ function ShellInner() {
   const { session, loading } = useAuth();
   const { t } = useI18n();
 
+  useEffect(() => {
+    document.body.classList.add("bossify-mounted");
+    return () => document.body.classList.remove("bossify-mounted");
+  }, []);
+
   const locationPathname = location.pathname;
   const isLoginRoute = locationPathname === "/auth";
   const isAuthFlowRoute =

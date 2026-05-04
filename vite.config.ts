@@ -11,10 +11,9 @@ export default defineConfig({
   vite: {
     base: "./",
     ssr: {
-      // The published/mobile runtime cannot resolve external npm modules at
-      // request time. Bundle TanStack's internal runtime packages too, or SSR
-      // can fail with "No such module @tanstack/router-core" and show only
-      // "Internal server error" in the WebView.
+      // The published/mobile runtime cannot resolve these runtime modules at
+      // request time. Bundle TanStack's server/runtime deps so missing imports
+      // like `seroval` cannot crash the app with only "Internal server error".
       noExternal: [
         "@tanstack/history",
         "@tanstack/react-router",
@@ -29,9 +28,14 @@ export default defineConfig({
         "@tanstack/start-server-core",
         "@tanstack/start-storage-context",
         "@tanstack/store",
+        "cookie-es",
         "h3-v2",
         "h3",
+        "isbot",
+        "pathe",
         "rou3",
+        "seroval",
+        "seroval-plugins",
         "srvx",
       ],
     },
