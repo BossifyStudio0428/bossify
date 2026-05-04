@@ -340,7 +340,7 @@ function ProductFormSheet({
       </div>
 
       <SheetField label={t("selling_price")} value={price} onChange={setPrice} type="number" placeholder={t("price_ph")} />
-      <SheetField label="Cost Price (RM)" value={costPrice} onChange={setCostPrice} type="number" placeholder="e.g. 5.00" />
+      <SheetField label={t("cost_price")} value={costPrice} onChange={setCostPrice} type="number" placeholder={t("cost_price_placeholder")} />
 
       <button
         onClick={save} disabled={saving}
