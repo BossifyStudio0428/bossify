@@ -159,11 +159,12 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
           <p className="text-[13px]" style={{ color: "#6B7280" }}>{t("login_subtitle")}</p>
         </div>
 
-        <form onSubmit={submit} className="space-y-3" autoComplete="on">
+        <form onSubmit={submit} className="space-y-3" autoComplete="on" action="#" method="post">
           <div className="space-y-1.5">
             <FieldLabel>{t("email")}</FieldLabel>
             <TextInput
-              type="email" required name="email" autoComplete="email" autoCapitalize="none"
+              type="email" required name="email" id="email" autoComplete="email" autoCapitalize="none" autoFocus
+              inputMode="email"
               placeholder={t("enter_email_ph")} value={email}
               onChange={(e) => { setEmail(e.target.value); setError(null); }}
             />
@@ -172,7 +173,7 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
             <FieldLabel>{t("password")}</FieldLabel>
             <div className="relative">
               <TextInput
-                type={showPw ? "text" : "password"} required name="password" autoComplete="current-password"
+                type={showPw ? "text" : "password"} required name="password" id="password" autoComplete="current-password"
                 placeholder={t("enter_password_ph")} value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(null); }}
               />
@@ -255,11 +256,11 @@ function RegEmailScreen({
         <p className="text-[13px]" style={{ color: "#6B7280" }}>{t("enter_email_started")}</p>
       </div>
 
-      <form onSubmit={submit} className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-3" autoComplete="on">
+      <form onSubmit={submit} className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-3" autoComplete="on" action="#" method="post">
         <div className="space-y-1.5">
           <FieldLabel>{t("business_name")}</FieldLabel>
           <TextInput
-            type="text" required autoComplete="organization"
+            type="text" required name="business_name" autoComplete="organization"
             placeholder={t("business_name_ph")} value={businessName}
             onChange={(e) => { setBusinessName(e.target.value); setError(null); }}
           />
@@ -267,7 +268,7 @@ function RegEmailScreen({
         <div className="space-y-1.5">
           <FieldLabel>{t("email")}</FieldLabel>
           <TextInput
-            type="email" required name="email" autoComplete="email" autoCapitalize="none"
+            type="email" required name="email" id="reg-email" autoComplete="email" autoCapitalize="none" inputMode="email"
             placeholder={t("enter_email_ph")} value={email}
             onChange={(e) => { setEmail(e.target.value); setError(null); }}
           />
