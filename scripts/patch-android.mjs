@@ -122,6 +122,19 @@ function patchManifest() {
 
   const activityTag = activityMatch[0].replace(/\sandroid:screenOrientation="[^"]*"/g, "");
   manifest = manifest.replace(activityMatch[0], activityTag);
+
+  // Ensure <application> has android:allowBackup="true" so Google Password
+  // Manager / Android Autofill can persist saved credentials.
+  manifest = manifest.replace(
+    /<application\b([^>]*)>/,
+    (_full, attrs) => {
+      let a = attrs;
+      if (!/android:allowBackup=/.test(a)) a += ' android:allowBackup="true"';
+      else a = a.replace(/android:allowBackup="[^"]*"/, 'android:allowBackup="true"');
+      return `<application${a}>`;
+    },
+  );
+
   writeFileSync(manifestPath, manifest);
 }
 
@@ -152,4 +165,5 @@ function patchStyles() {
 patchManifest();
 patchStyles();
 patchMainActivityPackage();
+patchMainActivityAutofill();
 console.log("Bossify Android patch applied.");
