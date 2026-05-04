@@ -104,7 +104,7 @@ function PlansPage() {
           ) : (
             <div className="text-right">
               <p className="text-sm font-bold text-foreground">{ordersUsed} / {FREE_LIMITS.ordersPerMonth}</p>
-              <p className="text-[10px] text-muted-foreground">{t("orders_used")}</p>
+              <p className="text-[10px] text-muted-foreground">{t("free_limit")}</p>
             </div>
           )}
         </div>

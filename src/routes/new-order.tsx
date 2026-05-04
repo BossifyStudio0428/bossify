@@ -103,7 +103,7 @@ function NewOrderPage() {
 
   const checkLimit = () => {
     if (!isPro && ordersUsed >= FREE_LIMITS.ordersPerMonth) {
-      showUpgrade(t("limit_orders"));
+      showUpgrade(t("upgrade_message"));
       return false;
     }
     return true;
@@ -372,7 +372,7 @@ function NewOrderPage() {
           </button>
           {!isPro && (
             <p className="text-center text-[11px] text-muted-foreground">
-              {ordersUsed} / {ordersLimit} {t("orders_used")}
+              {t("orders_used").replace("{x}", String(ordersUsed))}
               {ordersRemaining <= 5 && ordersRemaining > 0 && (
                 <span className="ml-1 text-amber-600 font-semibold">· {ordersRemaining} left</span>
               )}

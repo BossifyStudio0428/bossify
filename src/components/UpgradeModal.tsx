@@ -10,6 +10,12 @@ export function UpgradeModal() {
 
   if (!upgradeOpen) return null;
 
+  // When the modal is opened because the user hit the monthly free order
+  // limit, swap to the limit-specific title and copy.
+  const isLimitReached = upgradeReason === t("upgrade_message");
+  const title = isLimitReached ? t("limit_reached") : t("upgrade_title");
+  const description = isLimitReached ? t("upgrade_message") : t("upgrade_desc");
+
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 animate-fade-in p-5"
@@ -22,18 +28,15 @@ export function UpgradeModal() {
         <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center shadow-[var(--shadow-soft)]">
           <Lock className="h-7 w-7" />
         </div>
-        <h2 className="mt-4 text-lg font-bold text-foreground">{t("upgrade_title")}</h2>
-        {upgradeReason && (
-          <p className="mt-2 text-sm text-muted-foreground">{upgradeReason}</p>
-        )}
-        <p className="mt-3 text-[12px] text-muted-foreground leading-relaxed">
-          {t("upgrade_desc")}
+        <h2 className="mt-4 text-lg font-bold text-foreground">{title}</h2>
+        <p className="mt-3 text-[13px] text-muted-foreground leading-relaxed">
+          {description}
         </p>
         <button
           onClick={() => { hideUpgrade(); navigate({ to: "/plans" }); }}
           className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition"
         >
-          {t("upgrade_to_pro")} — RM 19/mo
+          {t("upgrade_to_pro")} → RM 19/{t("per_month").replace(/^\s*\/\s*/, "")}
         </button>
         <button
           onClick={hideUpgrade}
