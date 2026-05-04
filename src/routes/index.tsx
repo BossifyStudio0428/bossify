@@ -135,39 +135,6 @@ function Index() {
         <div className="min-w-0 flex-1">
           <p className="text-sm text-muted-foreground">{greeting},</p>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("welcome")} 👋</h1>
-          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-            {!isPro ? (
-              <Link
-                to="/plans"
-                aria-label={t("upgrade_to_pro")}
-                className="h-6 px-2.5 rounded-full bg-muted border border-border/60 inline-flex items-center gap-1.5 active:scale-95 transition-transform"
-              >
-                <span className="text-[10px] font-semibold text-muted-foreground leading-none">
-                  {t("free_plan_badge")} · {ordersUsed}/{ordersLimit}
-                </span>
-              </Link>
-            ) : (
-              <Link
-                to="/plans"
-                aria-label={t("pro_plan")}
-                className="h-6 px-2.5 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground inline-flex items-center gap-1 shadow-[var(--shadow-soft)] active:scale-95 transition-transform"
-              >
-                <Sparkles className="h-3 w-3" />
-                <span className="text-[10px] font-bold leading-none">Pro ✦</span>
-              </Link>
-            )}
-            <p className="text-xs text-muted-foreground">{today}</p>
-          </div>
-          <p className="mt-2 text-xs font-medium text-primary/90">{motivMsg}</p>
-          {!isPro && (
-            <Link
-              to="/plans"
-              className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground"
-              aria-label={t("orders_used").replace("{x}", String(ordersUsed))}
-            >
-              <span>📋 {t("orders_used").replace("{x}", String(ordersUsed))}</span>
-            </Link>
-          )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <Link to="/analytics" aria-label={t("analytics_label")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
@@ -185,6 +152,31 @@ function Index() {
           </Link>
         </div>
       </header>
+
+      <div className="flex items-center justify-between gap-3 -mt-3">
+        <p className="text-xs text-muted-foreground truncate">{today}</p>
+        {!isPro ? (
+          <Link
+            to="/plans"
+            aria-label={t("upgrade_to_pro")}
+            className="h-6 px-2.5 rounded-full bg-muted border border-border/60 inline-flex items-center gap-1.5 active:scale-95 transition-transform shrink-0"
+          >
+            <span className="text-[10px] font-semibold text-muted-foreground leading-none">
+              {t("free_plan_badge")} · {ordersUsed}/{ordersLimit}
+            </span>
+          </Link>
+        ) : (
+          <Link
+            to="/plans"
+            aria-label={t("pro_plan")}
+            className="h-6 px-2.5 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground inline-flex items-center gap-1 shadow-[var(--shadow-soft)] active:scale-95 transition-transform shrink-0"
+          >
+            <Sparkles className="h-3 w-3" />
+            <span className="text-[10px] font-bold leading-none">Pro ✦</span>
+          </Link>
+        )}
+      </div>
+      <p className="-mt-3 text-xs font-medium text-primary/90">{motivMsg}</p>
 
       <section className="grid grid-cols-2 gap-3">
         {stats.map((s, i) => (
