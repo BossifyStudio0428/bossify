@@ -831,7 +831,7 @@ const dict = {
     payment_submitted: "付款已提交",
     i_have_paid: "我已完成付款",
     restore_purchases: "恢复购买",
-    limit_orders: "您已达到本月免费上限（30 个订单）。",
+    limit_orders: "您已达到本月免费上限（15 个订单）。",
     limit_inventory: "免费版限 10 个产品。",
     limit_customers: "您即将达到免费版客户上限（50）。",
     welcome_back: "欢迎", confirm_password: "确认密码",
