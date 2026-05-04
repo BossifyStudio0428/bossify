@@ -16,7 +16,7 @@ export type SubscriptionRow = {
 };
 
 export const FREE_LIMITS = {
-  ordersPerMonth: 30,
+  ordersPerMonth: 15,
   inventory: 10,
   customers: 50,
 } as const;
