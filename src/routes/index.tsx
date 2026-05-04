@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, BarChart3, Sparkles } from "lucide-react";
+import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, BarChart3, Sparkles, TrendingUp } from "lucide-react";
 import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -82,6 +82,7 @@ function Index() {
   const isToday = (iso: string) => new Date(iso).toDateString() === new Date().toDateString();
   const todayOrders = orders.filter((o) => isToday(o.created_at));
   const todayRevenue = todayOrders.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0);
+  const todayGrossProfit = todayOrders.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.gross_profit ?? 0), 0);
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
 
   // Comparison vs yesterday
@@ -98,6 +99,7 @@ function Index() {
 
   const stats = [
     { label: t("todays_revenue"), value: `RM ${todayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Today's Profit", value: `RM ${todayGrossProfit.toFixed(0)}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
     { label: t("new_orders"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" },
     { label: t("unpaid"), value: String(unpaidCount), icon: AlertCircle, color: "text-red-500", bg: "bg-red-50" },
     { label: t("low_stock"), value: String(lowStock), icon: PackageX, color: "text-amber-500", bg: "bg-amber-50" },
