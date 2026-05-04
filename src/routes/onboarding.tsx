@@ -157,7 +157,6 @@ function Onboarding() {
   const finish = async (skip = false) => {
     if (!user || saving) return;
     setSaving(true);
-    safeSessionStorage.setItem(ONBOARDING_DONE_KEY, "1");
     safeLocalStorage.setItem(`${ONBOARDING_DONE_KEY}:${user.id}`, "1");
     navigate({ to: "/", replace: true });
     try {
