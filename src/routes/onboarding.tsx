@@ -4,8 +4,11 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
+import { safeSessionStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
+
+const ONBOARDING_DONE_KEY = "bossify_onboarding_done_session";
 
 type Q = {
   key: string;
@@ -155,6 +158,7 @@ function Onboarding() {
     if (!user || saving) return;
     setSaving(true);
     try {
+      safeSessionStorage.setItem(ONBOARDING_DONE_KEY, "1");
       const payload: Record<string, string | null> = {
         user_id: user.id,
         business_type: null,
@@ -168,9 +172,13 @@ function Onboarding() {
       if (!skip) {
         for (const q of QUESTIONS) payload[q.key] = answers[q.key] ?? null;
       }
-      const { error } = await supabase
+      const savePromise = supabase
         .from("onboarding_responses")
         .upsert(payload as any, { onConflict: "user_id" });
+      const timeoutPromise = new Promise<{ error: Error }>((resolve) => {
+        window.setTimeout(() => resolve({ error: new Error("onboarding save timed out") }), 5000);
+      });
+      const { error } = await Promise.race([savePromise, timeoutPromise]);
       if (error) {
         console.error("onboarding insert failed", error);
       }

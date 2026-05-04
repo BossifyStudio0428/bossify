@@ -19,6 +19,7 @@ import bossifyLogo from "@/assets/bossify-logo.png";
 // real cold start (process killed, app reopened, reinstall) starts fresh.
 const SPLASH_SESSION_KEY = "bossify_splash_done";
 const LANG_PICKED_KEY = "bossify_lang_picked_session";
+const ONBOARDING_DONE_KEY = "bossify_onboarding_done_session";
 markBossifySplashStart();
 
 function hasShownSplashThisSession(): boolean {
@@ -113,6 +114,11 @@ function ShellInner() {
     if (!session?.user) {
       setOnboardingChecked(false);
       setNeedsOnboarding(false);
+      return;
+    }
+    if (safeSessionStorage.getItem(ONBOARDING_DONE_KEY) === "1") {
+      setNeedsOnboarding(false);
+      setOnboardingChecked(true);
       return;
     }
     let cancelled = false;
