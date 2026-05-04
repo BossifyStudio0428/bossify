@@ -14,6 +14,7 @@ const APP_ID = "com.zhstudio.bossify";
 const javaRoot = "android/app/src/main/java";
 const manifestPath = "android/app/src/main/AndroidManifest.xml";
 const stylesPath = "android/app/src/main/res/values/styles.xml";
+const autofillHintsXmlPath = "android/app/src/main/res/xml/autofill_hints.xml";
 
 /**
  * Find every MainActivity.java under android/app/src/main/java, regardless of
@@ -212,8 +213,28 @@ function patchStyles() {
   writeFileSync(stylesPath, styles);
 }
 
+/**
+ * Marker resource that signals to Android that this app participates in the
+ * Autofill framework. Required so Google Password Manager can attach to the
+ * Capacitor WebView's input fields on first launch.
+ */
+function writeAutofillHintsXml() {
+  if (!existsSync("android/app/src/main/res")) {
+    console.warn("Skipped autofill_hints.xml: android/app/src/main/res not found.");
+    return;
+  }
+  const xmlDir = dirname(autofillHintsXmlPath);
+  if (!existsSync(xmlDir)) mkdirSync(xmlDir, { recursive: true });
+  const contents =
+    '<?xml version="1.0" encoding="utf-8"?>\n' +
+    '<autofill-service xmlns:android="http://schemas.android.com/apk/res/android"/>\n';
+  writeFileSync(autofillHintsXmlPath, contents);
+  console.log(`Wrote ${autofillHintsXmlPath}`);
+}
+
 patchManifest();
 patchStyles();
 patchMainActivityPackage();
 patchMainActivityAutofill();
+writeAutofillHintsXml();
 console.log("Bossify Android patch applied.");
