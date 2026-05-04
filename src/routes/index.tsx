@@ -28,18 +28,30 @@ function Index() {
 
   const load = async () => {
     if (!user?.id) return;
-    const [{ data: o }, { data: inv }, { data: tc }, { count: nc }, { data: prof }] = await Promise.all([
-      supabase.from("orders").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("inventory").select("stock").eq("user_id", user.id),
-      supabase.from("customers").select("*").eq("user_id", user.id).order("total_spent", { ascending: false }).limit(3),
-      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
-      supabase.from("profiles").select("avatar_url").eq("id", user.id).maybeSingle(),
-    ]);
-    setOrders((o ?? []) as OrderRow[]);
-    setLowStock((inv ?? []).filter((i: any) => i.stock <= 5).length);
-    setTopCustomers((tc ?? []) as CustomerRow[]);
-    setUnreadNotif(nc ?? 0);
-    setAvatarUrl((prof as any)?.avatar_url || (user.user_metadata as any)?.avatar_url || null);
+    try {
+      const [ordersRes, inventoryRes, customersRes, notificationsRes, profileRes] = await Promise.all([
+        supabase.from("orders").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("inventory").select("stock").eq("user_id", user.id),
+        supabase.from("customers").select("*").eq("user_id", user.id).order("total_spent", { ascending: false }).limit(3),
+        supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
+        supabase.from("profiles").select("avatar_url").eq("id", user.id).maybeSingle(),
+      ]);
+      for (const [label, result] of Object.entries({ ordersRes, inventoryRes, customersRes, notificationsRes, profileRes })) {
+        if (result.error) console.error(`dashboard ${label} failed`, result.error);
+      }
+      setOrders((ordersRes.data ?? []) as OrderRow[]);
+      setLowStock((inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length);
+      setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
+      setUnreadNotif(notificationsRes.count ?? 0);
+      setAvatarUrl((profileRes.data as any)?.avatar_url || (user.user_metadata as any)?.avatar_url || null);
+    } catch (error) {
+      console.error("dashboard load failed", error);
+      setOrders([]);
+      setLowStock(0);
+      setTopCustomers([]);
+      setUnreadNotif(0);
+      setAvatarUrl((user.user_metadata as any)?.avatar_url || null);
+    }
   };
 
   useEffect(() => {

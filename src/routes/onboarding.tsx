@@ -170,7 +170,7 @@ function Onboarding() {
       }
       const { error } = await supabase
         .from("onboarding_responses")
-        .insert(payload as any);
+        .upsert(payload as any, { onConflict: "user_id" });
       if (error) {
         console.error("onboarding insert failed", error);
       }
@@ -178,7 +178,7 @@ function Onboarding() {
       console.error("onboarding finish error", e);
     } finally {
       setSaving(false);
-      navigate({ to: "/" });
+      navigate({ to: "/", replace: true });
     }
   };
 
