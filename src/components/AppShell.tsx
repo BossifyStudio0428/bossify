@@ -36,10 +36,10 @@ function hasPickedLangThisSession(): boolean {
 }
 function hasCompletedOnboarding(userId: string): boolean {
   if (typeof window === "undefined") return false;
-  return (
-    safeSessionStorage.getItem(ONBOARDING_DONE_KEY) === "1" ||
-    safeLocalStorage.getItem(`${ONBOARDING_DONE_KEY}:${userId}`) === "1"
-  );
+  // IMPORTANT: only trust a per-user flag. A global session flag would make
+  // a brand-new signup inherit the previous account's "done" state and skip
+  // straight to the homepage.
+  return safeLocalStorage.getItem(`${ONBOARDING_DONE_KEY}:${userId}`) === "1";
 }
 
 // Hide the native Capacitor splash screen after the same duration as the
