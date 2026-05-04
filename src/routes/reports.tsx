@@ -140,9 +140,9 @@ function ReportsPage() {
 
   const summaryCards = [
     { label: t("total_revenue"), value: `RM ${totalRevenue.toFixed(0)}`, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Total Cost", value: `RM ${totalCost.toFixed(0)}`, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Gross Profit", value: `RM ${totalGrossProfit.toFixed(0)}`, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Profit Margin", value: `${profitMargin.toFixed(1)}%`, color: "text-primary", bg: "bg-primary/10" },
+    { label: t("total_cost"), value: `RM ${totalCost.toFixed(0)}`, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: t("gross_profit"), value: `RM ${totalGrossProfit.toFixed(0)}`, color: "text-primary", bg: "bg-primary/10" },
+    { label: t("profit_margin"), value: `${profitMargin.toFixed(1)}%`, color: "text-primary", bg: "bg-primary/10" },
     { label: t("total_orders"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
     { label: t("paid_orders_label"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: t("unpaid_amount"), value: `RM ${unpaidAmount.toFixed(0)}`, color: "text-red-500", bg: "bg-red-50" },
