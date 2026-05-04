@@ -11,10 +11,33 @@ export default defineConfig({
   vite: {
     base: "./",
     ssr: {
-      // The published/mobile runtime cannot resolve npm modules at request
-      // time. Bundle dependencies into the SSR output so runtime imports like
-      // `seroval` cannot crash the app with only "Internal server error".
-      noExternal: true,
+      // The published/mobile runtime cannot resolve these runtime modules at
+      // request time. Bundle TanStack's server/runtime deps so missing imports
+      // like `seroval` cannot crash the app with only "Internal server error".
+      noExternal: [
+        "@tanstack/history",
+        "@tanstack/react-router",
+        "@tanstack/react-start",
+        "@tanstack/react-start-client",
+        "@tanstack/react-start-server",
+        "@tanstack/react-store",
+        "@tanstack/router-core",
+        "@tanstack/router-utils",
+        "@tanstack/start-client-core",
+        "@tanstack/start-fn-stubs",
+        "@tanstack/start-server-core",
+        "@tanstack/start-storage-context",
+        "@tanstack/store",
+        "cookie-es",
+        "h3-v2",
+        "h3",
+        "isbot",
+        "pathe",
+        "rou3",
+        "seroval",
+        "seroval-plugins",
+        "srvx",
+      ],
     },
   },
   tanstackStart: {
