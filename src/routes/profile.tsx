@@ -113,7 +113,7 @@ function ProfilePage() {
             onClick={() => navigate({ to: "/plans" })}
             className="mt-2 text-[11px] text-primary font-semibold underline"
           >
-            {ordersUsed} / {FREE_LIMITS.ordersPerMonth} {t("orders_used")} → {t("upgrade_to_pro")}
+            {t("orders_used").replace("{x}", String(ordersUsed))} → {t("upgrade_to_pro")}
           </button>
         )}
         <p className="mt-2 text-xs text-muted-foreground">{t("member_since_label")} {memberSince}</p>
