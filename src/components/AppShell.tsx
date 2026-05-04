@@ -18,7 +18,7 @@ import bossifyLogo from "@/assets/bossify-logo.png";
 // navigations (e.g. onboarding → dashboard) without re-triggering, but a
 // real cold start (process killed, app reopened, reinstall) starts fresh.
 const SPLASH_SESSION_KEY = "bossify_splash_done";
-const LANG_PICKED_PERSISTENT_KEY = "bossify_lang_picked";
+const LANG_PICKED_PERSISTENT_KEY = "bossify_lang";
 const ONBOARDING_DONE_KEY = "bossify_onboarding_done_session";
 markBossifySplashStart();
 
@@ -45,7 +45,10 @@ function markSplashShown() {
 function hasPickedLanguageEver(): boolean {
   if (typeof window === "undefined") return false;
   // Persistent across cold starts; only cleared by reinstall / storage wipe.
-  return safeLocalStorage.getItem(LANG_PICKED_PERSISTENT_KEY) === "1";
+  // The presence of `bossify_lang` means the user tapped Continue on the
+  // language page (or later changed language from Profile). It is NEVER
+  // written automatically on app boot.
+  return !!safeLocalStorage.getItem(LANG_PICKED_PERSISTENT_KEY);
 }
 function hasCompletedOnboarding(userId: string): boolean {
   if (typeof window === "undefined") return false;
