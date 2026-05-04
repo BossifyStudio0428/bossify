@@ -91,6 +91,21 @@ function NewOrderPage() {
     if (errors[k]) setErrors((p) => ({ ...p, [k]: "" }));
   };
 
+  // Find inventory match for the currently-typed product (case-insensitive exact match)
+  const matchedInventory = inventory.find(
+    (i) => i.name.trim().toLowerCase() === form.product.trim().toLowerCase(),
+  );
+
+  const selectInventoryProduct = (item: InventoryRow) => {
+    setForm((p) => ({
+      ...p,
+      product: item.name,
+      amount: item.price ? String(item.price) : p.amount,
+    }));
+    setShowSuggest(false);
+    if (errors.product) setErrors((p) => ({ ...p, product: "" }));
+  };
+
   const validate = () => {
     const e: Record<string, string> = {};
     if (!form.customer_name.trim()) e.customer_name = t("required_field");
@@ -308,25 +323,46 @@ function NewOrderPage() {
               onChange={(e) => { upd("product")(e); setShowSuggest(true); }}
               onFocus={() => setShowSuggest(true)}
               onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
-              placeholder="..."
+              placeholder={t("select_product")}
               className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${errors.product ? "border-red-400" : "border-border/60"}`}
             />
           </div>
           {errors.product && <p className="text-[11px] text-red-500 px-1">{errors.product}</p>}
           {showSuggest && productMatches.length > 0 && (
-            <div className="absolute z-10 left-0 right-0 top-full mt-1 rounded-xl bg-card border border-border/60 shadow-lg overflow-hidden">
+            <div className="absolute z-20 left-0 right-0 top-full mt-1 rounded-xl bg-card border border-border/60 shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+              <p className="px-4 pt-2 pb-1 text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">
+                {t("select_from_list")}
+              </p>
               {productMatches.map((m) => (
                 <button
                   key={m.id}
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => { setForm((p) => ({ ...p, product: m.name })); setShowSuggest(false); }}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-muted/60"
+                  onClick={() => selectInventoryProduct(m)}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-muted/60 flex items-center justify-between gap-2"
                 >
-                  {m.name} <span className="text-xs text-muted-foreground">· {m.stock} {m.unit}</span>
+                  <span className="font-medium text-foreground">{m.name}</span>
+                  <span className="text-[11px] text-muted-foreground shrink-0">
+                    {m.stock} {m.unit}{m.price ? ` · RM ${Number(m.price).toFixed(2)}` : ""}
+                  </span>
                 </button>
               ))}
             </div>
+          )}
+          {form.product.trim() && (
+            matchedInventory ? (
+              <p className="text-[11px] text-emerald-600 px-1 flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {t("from_inventory")} · {t("stock_available")
+                  .replace("{x}", String(matchedInventory.stock))
+                  .replace("{unit}", matchedInventory.unit)}
+              </p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground px-1 flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
+                {t("manual_entry")} · {t("product_not_found")}
+              </p>
+            )
           )}
         </div>
 
