@@ -175,17 +175,16 @@ function ShellInner() {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (isPublicFlow) {
-      setShowInlineSplash(false);
-      return;
-    }
-    // Hard guard: until the user has picked a language (first launch or
-    // post-reinstall), force them onto /language no matter what URL they
-    // landed on (refresh on /auth, deep link, etc.). The splash route is
-    // allowed because it transitions into /language itself.
-    if (!hasPickedLanguageEver()) {
+    // Language gate runs FIRST and applies to every route except /language
+    // itself. Even on /splash we redirect immediately if the user has not
+    // tapped Continue on the language page yet.
+    if (!isLanguageRoute && !hasPickedLanguageEver()) {
       setShowInlineSplash(false);
       navigate({ to: "/language", replace: true });
+      return;
+    }
+    if (isPublicFlow) {
+      setShowInlineSplash(false);
       return;
     }
     // Cold-start launch → ALWAYS show splash → language flow first.
