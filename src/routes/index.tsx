@@ -108,6 +108,7 @@ function Index() {
   // Weekly chart
   const weekly: { day: string; value: number }[] = [];
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dowKeys = ["dow_sun", "dow_mon", "dow_tue", "dow_wed", "dow_thu", "dow_fri", "dow_sat"] as const;
   if (hydrated) {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -115,7 +116,7 @@ function Index() {
       const total = orders
         .filter((o) => o.status === "Paid" && new Date(o.created_at).toDateString() === d.toDateString())
         .reduce((s, o) => s + Number(o.amount), 0);
-      weekly.push({ day: dayNames[d.getDay()], value: total });
+      weekly.push({ day: t(dowKeys[d.getDay()]), value: total });
     }
   } else {
     for (let i = 6; i >= 0; i--) weekly.push({ day: "", value: 0 });
