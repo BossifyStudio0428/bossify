@@ -83,6 +83,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
               #bossify-prepaint .col {
                 display: flex; flex-direction: column; align-items: center;
               }
+              body.bossify-mounted #bossify-prepaint { display: none; }
             `,
           }}
         />
