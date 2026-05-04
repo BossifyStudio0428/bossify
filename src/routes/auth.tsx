@@ -470,12 +470,29 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
         <p className="text-[13px]" style={{ color: "#6B7280" }}>{t("choose_strong_pw")}</p>
       </div>
 
-      <div className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-3">
+      <form
+        onSubmit={(e) => { e.preventDefault(); submit(); }}
+        autoComplete="on"
+        action="#"
+        method="post"
+        className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-3"
+      >
+        {/* Hidden username field helps Google Password Manager associate the
+            new password with the account being created. */}
+        <input
+          type="email"
+          name="username"
+          autoComplete="username"
+          value=""
+          readOnly
+          hidden
+          aria-hidden="true"
+        />
         <div className="space-y-1.5">
           <FieldLabel>{t("password")}</FieldLabel>
           <div className="relative">
             <TextInput
-              type={showA ? "text" : "password"} autoComplete="new-password"
+              type={showA ? "text" : "password"} name="new-password" autoComplete="new-password"
               placeholder="Min. 8 characters" value={pw}
               onChange={(e) => setPw(e.target.value)}
             />
@@ -499,7 +516,7 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
           <FieldLabel>{t("confirm_password")}</FieldLabel>
           <div className="relative">
             <TextInput
-              type={showB ? "text" : "password"} autoComplete="new-password"
+              type={showB ? "text" : "password"} name="confirm-password" autoComplete="new-password"
               placeholder="Re-enter your password" value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
             />
@@ -515,9 +532,9 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
           <ReqLine ok={checks.match}>{t("pw_match")}</ReqLine>
         </ul>
 
-        <PrimaryButton onClick={submit} disabled={!allOk} loading={loading}>{t("create_account")}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={!allOk} loading={loading}>{t("create_account")}</PrimaryButton>
         <ErrorText>{error}</ErrorText>
-      </div>
+      </form>
     </div>
   );
 }
