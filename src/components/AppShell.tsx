@@ -221,7 +221,7 @@ function ShellInner() {
       if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding", replace: true });
       if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/", replace: true });
     }
-  }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, onboardingChecked, needsOnboarding, navigate]);
+  }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, isLanguageRoute, onboardingChecked, needsOnboarding, navigate]);
 
   // While first-time splash is queued (or navigation hasn't completed yet), render the
   // Bossify logo immediately so the user never sees the generic loading spinner.
