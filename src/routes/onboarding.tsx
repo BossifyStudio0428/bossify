@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
-import { safeSessionStorage } from "@/lib/safeStorage";
+import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
 
@@ -113,6 +113,7 @@ function Onboarding() {
       navigate({ to: "/auth" });
       return;
     }
+    setChecking(false);
     let cancelled = false;
     const failOpenTimer = window.setTimeout(() => {
       if (!cancelled) {
@@ -133,8 +134,7 @@ function Onboarding() {
         setChecking(false);
         return;
       }
-      if (data) navigate({ to: "/" });
-      else setChecking(false);
+      if (data) navigate({ to: "/", replace: true });
     })();
     return () => {
       cancelled = true;
@@ -159,6 +159,7 @@ function Onboarding() {
     setSaving(true);
     try {
       safeSessionStorage.setItem(ONBOARDING_DONE_KEY, "1");
+      safeLocalStorage.setItem(`${ONBOARDING_DONE_KEY}:${user.id}`, "1");
       const payload: Record<string, string | null> = {
         user_id: user.id,
         business_type: null,
