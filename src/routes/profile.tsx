@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
 import { toast } from "sonner";
 import { DEFAULT_ORDER_TPL, DEFAULT_REMINDER_TPL } from "@/lib/wa";
-import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 
