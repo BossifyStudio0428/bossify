@@ -13,6 +13,7 @@ export type SubscriptionRow = {
   expires_at: string | null;
   order_count: number;
   count_period_start: string | null;
+  last_reset_at: string | null;
 };
 
 export const FREE_LIMITS = {
@@ -71,14 +72,41 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         if (!period || period < curMonthStart) {
           const { error: resetError } = await supabase
             .from("subscriptions")
-            .update({ order_count: 0, count_period_start: curMonthStart.toISOString() })
+            .update({
+              order_count: 0,
+              count_period_start: curMonthStart.toISOString(),
+              last_reset_at: now.toISOString(),
+            })
             .eq("user_id", user.id);
           if (resetError) console.error("subscription counter reset failed", resetError);
           else {
             data.order_count = 0;
             data.count_period_start = curMonthStart.toISOString();
+            data.last_reset_at = now.toISOString();
           }
         }
+
+        // Verify the cached order_count against reality (count of orders in
+        // the current calendar month). If they drift apart (manual deletes,
+        // missed trigger, etc.), self-heal so the dashboard counter is
+        // always accurate.
+        try {
+          const { count: actualCount, error: countError } = await supabase
+            .from("orders")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .gte("created_at", curMonthStart.toISOString());
+          if (!countError && typeof actualCount === "number" && actualCount !== data.order_count) {
+            const { error: syncError } = await supabase
+              .from("subscriptions")
+              .update({ order_count: actualCount })
+              .eq("user_id", user.id);
+            if (!syncError) data.order_count = actualCount;
+          }
+        } catch (e) {
+          console.error("order count verification failed", e);
+        }
+
         setSub(data as SubscriptionRow);
       } else {
         // Auto-create on first access (covers users created before trigger)
