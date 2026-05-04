@@ -159,6 +159,15 @@ function Index() {
             <p className="text-xs text-muted-foreground">{today}</p>
           </div>
           <p className="mt-2 text-xs font-medium text-primary/90">{motivMsg}</p>
+          {!isPro && (
+            <Link
+              to="/plans"
+              className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground"
+              aria-label={t("orders_used").replace("{x}", String(ordersUsed))}
+            >
+              <span>📋 {t("orders_used").replace("{x}", String(ordersUsed))}</span>
+            </Link>
+          )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <Link to="/analytics" aria-label={t("analytics_label")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
