@@ -14,7 +14,7 @@ function Splash() {
     // timer and never fall through to /auth.
     const pickedLang =
       typeof window !== "undefined" &&
-      safeLocalStorage.getItem("bossify_lang_picked") === "1";
+      !!safeLocalStorage.getItem("bossify_lang");
     if (!pickedLang) {
       navigate({ to: "/language", replace: true });
       return;
