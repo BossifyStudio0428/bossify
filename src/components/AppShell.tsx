@@ -199,8 +199,14 @@ function ShellInner() {
       return;
     }
     if (session && onboardingChecked && !isAuthFlowRoute && !isRegistering) {
-      if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding" });
-      if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/" });
+      const completedOnboarding = hasCompletedOnboarding(session.user.id);
+      if (completedOnboarding) {
+        if (needsOnboarding) setNeedsOnboarding(false);
+        if (isOnboardingRoute) navigate({ to: "/", replace: true });
+        return;
+      }
+      if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding", replace: true });
+      if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/", replace: true });
     }
   }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, onboardingChecked, needsOnboarding, navigate]);
 
