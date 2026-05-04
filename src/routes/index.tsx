@@ -133,32 +133,31 @@ function Index() {
     <div className="px-5 pt-10 pb-4 space-y-6">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm text-muted-foreground">{greeting},</p>
+          <p className="text-sm text-muted-foreground">{greeting},</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("welcome")} 👋</h1>
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
             {!isPro ? (
               <Link
                 to="/plans"
                 aria-label={t("upgrade_to_pro")}
-                className="h-6 px-2 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/30 inline-flex items-center gap-1 active:scale-95 transition-transform"
+                className="h-6 px-2.5 rounded-full bg-muted border border-border/60 inline-flex items-center gap-1.5 active:scale-95 transition-transform"
               >
-                <Sparkles className="h-3 w-3 text-primary" />
-                <span className="text-[10px] font-bold text-primary tabular-nums leading-none">
-                  {ordersUsed}/{ordersLimit}
+                <span className="text-[10px] font-semibold text-muted-foreground leading-none">
+                  {t("free_plan_badge")} · {ordersUsed}/{ordersLimit}
                 </span>
               </Link>
             ) : (
               <Link
                 to="/plans"
                 aria-label={t("pro_plan")}
-                className="h-6 px-2 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground inline-flex items-center gap-1 shadow-[var(--shadow-soft)] active:scale-95 transition-transform"
+                className="h-6 px-2.5 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground inline-flex items-center gap-1 shadow-[var(--shadow-soft)] active:scale-95 transition-transform"
               >
                 <Sparkles className="h-3 w-3" />
-                <span className="text-[10px] font-bold leading-none">PRO</span>
+                <span className="text-[10px] font-bold leading-none">Pro ✦</span>
               </Link>
             )}
+            <p className="text-xs text-muted-foreground">{today}</p>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("welcome")} 👋</h1>
-          <p className="mt-1 text-xs text-muted-foreground">{today}</p>
           <p className="mt-2 text-xs font-medium text-primary/90">{motivMsg}</p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">

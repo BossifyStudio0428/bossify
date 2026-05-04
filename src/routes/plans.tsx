@@ -181,13 +181,13 @@ function PlansPage() {
       <button
         onClick={async () => {
           if (!isNativeBillingAvailable()) {
-            toast.message(t("google_play_only_android"));
+            toast.message(t("restore_only_android"));
             return;
           }
           await restorePurchases(
             async (receipts) => {
               if (!receipts.length) {
-                toast.message(t("no_purchases_to_restore"));
+                toast.message(t("no_purchase_found"));
                 return;
               }
               if (user) {
@@ -203,10 +203,10 @@ function PlansPage() {
                 }, { onConflict: "user_id" });
               }
               await refresh();
-              toast.success(t("welcome_to_pro"));
+              toast.success(t("pro_restored"));
             },
             (err) => {
-              if (err.code === "item_unavailable") toast.message(t("no_purchases_to_restore"));
+              if (err.code === "item_unavailable") toast.message(t("no_purchase_found"));
               else toast.error(t("billing_unknown_error"));
             },
           );
