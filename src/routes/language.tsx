@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
-import { safeSessionStorage } from "@/lib/safeStorage";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/language")({ component: LanguagePage });
 
@@ -19,11 +19,12 @@ function LanguagePage() {
 
   const onContinue = () => {
     setLang(selected);
-    // Mark that the user has gone through the language picker this session,
-    // so subsequent in-session navigations (onboarding → dashboard, etc.)
-    // don't bounce back here.
+    // Persistently mark that the user has picked a language. This survives
+    // app restarts, browser refreshes, and backgrounding — only a real
+    // reinstall / storage wipe will clear it, which is exactly when we
+    // want to show the language picker again.
     if (typeof window !== "undefined") {
-      safeSessionStorage.setItem("bossify_lang_picked_session", "1");
+      safeLocalStorage.setItem("bossify_lang_picked", "1");
     }
     navigate({ to: "/auth" });
   };

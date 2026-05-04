@@ -18,7 +18,7 @@ import bossifyLogo from "@/assets/bossify-logo.png";
 // navigations (e.g. onboarding → dashboard) without re-triggering, but a
 // real cold start (process killed, app reopened, reinstall) starts fresh.
 const SPLASH_SESSION_KEY = "bossify_splash_done";
-const LANG_PICKED_KEY = "bossify_lang_picked_session";
+const LANG_PICKED_PERSISTENT_KEY = "bossify_lang_picked";
 const ONBOARDING_DONE_KEY = "bossify_onboarding_done_session";
 markBossifySplashStart();
 
@@ -42,9 +42,10 @@ function markSplashShown() {
   if (typeof window === "undefined") return;
   safeSessionStorage.setItem(SPLASH_SESSION_KEY, "1");
 }
-function hasPickedLangThisSession(): boolean {
+function hasPickedLanguageEver(): boolean {
   if (typeof window === "undefined") return false;
-  return safeSessionStorage.getItem(LANG_PICKED_KEY) === "1";
+  // Persistent across cold starts; only cleared by reinstall / storage wipe.
+  return safeLocalStorage.getItem(LANG_PICKED_PERSISTENT_KEY) === "1";
 }
 function hasCompletedOnboarding(userId: string): boolean {
   if (typeof window === "undefined") return false;
@@ -181,6 +182,12 @@ function ShellInner() {
       const remainingMs = getBossifySplashRemainingMs();
       const timer = window.setTimeout(() => {
         setShowInlineSplash(false);
+        // Only show the language picker on a true first launch /
+        // reinstall. Returning users skip straight into the app.
+        if (hasPickedLanguageEver()) {
+          // Fall through to normal auth/home routing on the next effect run.
+          return;
+        }
         navigate({ to: "/language", replace: true });
       }, remainingMs);
       return () => window.clearTimeout(timer);
