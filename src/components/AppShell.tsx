@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { safeSessionStorage } from "@/lib/safeStorage";
+import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { BossifySplash } from "@/components/BossifySplash";
 import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splashTiming";
 import bossifyLogo from "@/assets/bossify-logo.png";
@@ -33,6 +33,13 @@ function markSplashShown() {
 function hasPickedLangThisSession(): boolean {
   if (typeof window === "undefined") return false;
   return safeSessionStorage.getItem(LANG_PICKED_KEY) === "1";
+}
+function hasCompletedOnboarding(userId: string): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    safeSessionStorage.getItem(ONBOARDING_DONE_KEY) === "1" ||
+    safeLocalStorage.getItem(`${ONBOARDING_DONE_KEY}:${userId}`) === "1"
+  );
 }
 
 // Hide the native Capacitor splash screen after the same duration as the
@@ -116,7 +123,7 @@ function ShellInner() {
       setNeedsOnboarding(false);
       return;
     }
-    if (safeSessionStorage.getItem(ONBOARDING_DONE_KEY) === "1") {
+    if (hasCompletedOnboarding(session.user.id)) {
       setNeedsOnboarding(false);
       setOnboardingChecked(true);
       return;
