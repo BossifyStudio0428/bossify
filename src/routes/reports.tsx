@@ -99,9 +99,9 @@ function ReportsPage() {
 
   // Status breakdown
   const statusData = [
-    { name: "Paid", value: inRange.filter((o) => o.status === "Paid").length, color: "#10b981" },
-    { name: "Unpaid", value: inRange.filter((o) => o.status === "Unpaid").length, color: "#ef4444" },
-    { name: "Pending", value: inRange.filter((o) => o.status === "Pending").length, color: "#f59e0b" },
+    { name: t("paid"), value: inRange.filter((o) => o.status === "Paid").length, color: "#10b981" },
+    { name: t("unpaid"), value: inRange.filter((o) => o.status === "Unpaid").length, color: "#ef4444" },
+    { name: t("pending"), value: inRange.filter((o) => o.status === "Pending").length, color: "#f59e0b" },
   ].filter((s) => s.value > 0);
 
   // Top customers
@@ -140,9 +140,9 @@ function ReportsPage() {
 
   const summaryCards = [
     { label: t("total_revenue"), value: `RM ${totalRevenue.toFixed(0)}`, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Total Cost", value: `RM ${totalCost.toFixed(0)}`, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Gross Profit", value: `RM ${totalGrossProfit.toFixed(0)}`, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Profit Margin", value: `${profitMargin.toFixed(1)}%`, color: "text-primary", bg: "bg-primary/10" },
+    { label: t("total_cost"), value: `RM ${totalCost.toFixed(0)}`, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: t("gross_profit"), value: `RM ${totalGrossProfit.toFixed(0)}`, color: "text-primary", bg: "bg-primary/10" },
+    { label: t("profit_margin"), value: `${profitMargin.toFixed(1)}%`, color: "text-primary", bg: "bg-primary/10" },
     { label: t("total_orders"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
     { label: t("paid_orders_label"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: t("unpaid_amount"), value: `RM ${unpaidAmount.toFixed(0)}`, color: "text-red-500", bg: "bg-red-50" },

@@ -68,16 +68,16 @@ function AnalyticsPage() {
     .sort((a, b) => b.qty - a.qty).slice(0, 5);
 
   // Best days of week
-  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const dowCounts = dayNames.map((d) => ({ day: d, orders: 0 }));
+  const dowKeys = ["dow_sun","dow_mon","dow_tue","dow_wed","dow_thu","dow_fri","dow_sat"] as const;
+  const dowCounts = dowKeys.map((k) => ({ day: t(k), orders: 0 }));
   filtered.forEach((o) => { dowCounts[new Date(o.created_at).getDay()].orders++; });
   const bestDayIdx = dowCounts.reduce((m, c, i) => c.orders > dowCounts[m].orders ? i : m, 0);
 
   // Status breakdown
   const statusData = [
-    { name: "Paid", value: filtered.filter((o)=>o.status==="Paid").length, color: "#10B981" },
-    { name: "Unpaid", value: filtered.filter((o)=>o.status==="Unpaid").length, color: "#EF4444" },
-    { name: "Pending", value: filtered.filter((o)=>o.status==="Pending").length, color: "#F59E0B" },
+    { name: t("paid"), value: filtered.filter((o)=>o.status==="Paid").length, color: "#10B981" },
+    { name: t("unpaid"), value: filtered.filter((o)=>o.status==="Unpaid").length, color: "#EF4444" },
+    { name: t("pending"), value: filtered.filter((o)=>o.status==="Pending").length, color: "#F59E0B" },
   ];
 
   // Peak hours
