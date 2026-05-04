@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
@@ -1068,12 +1068,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return "en";
     return (safeLocalStorage.getItem("bossify_lang") as Lang) || "en";
   });
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      safeLocalStorage.setItem("bossify_lang", lang);
-    }
-  }, [lang]);
 
   const setLang = (l: Lang) => {
     setLangState(l);
