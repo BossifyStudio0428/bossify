@@ -1069,12 +1069,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     return (safeLocalStorage.getItem("bossify_lang") as Lang) || "en";
   });
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      safeLocalStorage.setItem("bossify_lang", lang);
-    }
-  }, [lang]);
-
   const setLang = (l: Lang) => {
     setLangState(l);
     if (typeof window !== "undefined") safeLocalStorage.setItem("bossify_lang", l);
