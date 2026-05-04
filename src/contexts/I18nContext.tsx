@@ -332,6 +332,25 @@ const dict = {
     months_short: "mo",
     month_one: "month",
     months_many: "months",
+    // Profit tracking
+    cost_price: "Cost Price (RM)",
+    gross_profit: "Gross Profit",
+    net_profit: "Net Profit",
+    total_cost: "Total Cost",
+    profit_margin: "Profit Margin",
+    stock_deducted: "Stock updated automatically",
+    cost_price_placeholder: "e.g. 5.00",
+    todays_profit: "Today's Profit",
+    profit_breakdown: "Profit Breakdown",
+    // Bottom nav
+    nav_home: "Home",
+    nav_orders: "Orders",
+    nav_inventory: "Inventory",
+    nav_customers: "Customers",
+    nav_new_order: "New Order",
+    // Day names (short)
+    dow_sun: "Sun", dow_mon: "Mon", dow_tue: "Tue", dow_wed: "Wed",
+    dow_thu: "Thu", dow_fri: "Fri", dow_sat: "Sat",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
