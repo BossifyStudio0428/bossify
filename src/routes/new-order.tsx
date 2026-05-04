@@ -115,6 +115,15 @@ function NewOrderPage() {
     const amount = Number(form.amount) || 0;
     const quantity = Number(form.quantity) || 1;
     const fullPhone = buildFullPhone(countryCode, form.phone);
+    const productName = form.product.trim();
+
+    // Look up matching inventory item (case-insensitive) for cost & stock
+    const matchedItem = inventory.find(
+      (i) => i.name.trim().toLowerCase() === productName.toLowerCase(),
+    );
+    const unitCost = matchedItem ? Number(matchedItem.cost_price ?? 0) : 0;
+    const cost = unitCost * quantity;
+    const gross_profit = amount - cost;
 
     const { data: inserted, error: orderErr } = await supabase
       .from("orders")
@@ -123,9 +132,11 @@ function NewOrderPage() {
         code,
         customer_name: form.customer_name.trim(),
         phone: fullPhone || null,
-        product: form.product.trim(),
+        product: productName,
         quantity,
         amount,
+        cost,
+        gross_profit,
         status,
         notes: form.notes.trim() || null,
       })
@@ -135,6 +146,12 @@ function NewOrderPage() {
     if (orderErr || !inserted) {
       toast.error(t("order_save_failed"));
       return null;
+    }
+
+    // Auto-deduct stock if inventory item matches
+    if (matchedItem) {
+      const newStock = Math.max(0, Number(matchedItem.stock ?? 0) - quantity);
+      await supabase.from("inventory").update({ stock: newStock }).eq("id", matchedItem.id);
     }
 
     // Upsert customer by phone (only if phone provided)

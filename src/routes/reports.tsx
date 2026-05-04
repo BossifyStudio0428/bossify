@@ -29,7 +29,7 @@ function ReportsPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await supabase.from("orders").select("id,code,customer_name,product,quantity,amount,status,created_at").order("created_at", { ascending: false });
+      const { data } = await supabase.from("orders").select("id,code,customer_name,product,quantity,amount,cost,gross_profit,status,created_at").order("created_at", { ascending: false });
       setOrders((data ?? []) as OrderRow[]);
       setLoading(false);
     })();
@@ -55,6 +55,9 @@ function ReportsPage() {
   });
 
   const totalRevenue = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0);
+  const totalCost = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.cost ?? 0), 0);
+  const totalGrossProfit = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.gross_profit ?? 0), 0);
+  const profitMargin = totalRevenue > 0 ? (totalGrossProfit / totalRevenue) * 100 : 0;
   const totalOrders = inRange.length;
   const paidOrders = inRange.filter((o) => o.status === "Paid").length;
   const unpaidAmount = inRange.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount), 0);
@@ -137,6 +140,9 @@ function ReportsPage() {
 
   const summaryCards = [
     { label: t("total_revenue"), value: `RM ${totalRevenue.toFixed(0)}`, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Total Cost", value: `RM ${totalCost.toFixed(0)}`, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: "Gross Profit", value: `RM ${totalGrossProfit.toFixed(0)}`, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Profit Margin", value: `${profitMargin.toFixed(1)}%`, color: "text-primary", bg: "bg-primary/10" },
     { label: t("total_orders"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
     { label: t("paid_orders_label"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: t("unpaid_amount"), value: `RM ${unpaidAmount.toFixed(0)}`, color: "text-red-500", bg: "bg-red-50" },

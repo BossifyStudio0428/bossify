@@ -263,6 +263,7 @@ function ProductFormSheet({
   const [unit, setUnit] = useState(isPreset ? initialUnit : "other");
   const [customUnit, setCustomUnit] = useState(isPreset ? "" : initialUnit);
   const [price, setPrice] = useState(item?.price ? String(item.price) : "");
+  const [costPrice, setCostPrice] = useState(item?.cost_price ? String(item.cost_price) : "");
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -276,6 +277,7 @@ function ProductFormSheet({
       unit: finalUnit,
       max_stock: 999,
       price: Math.max(0, Number(price) || 0),
+      cost_price: Math.max(0, Number(costPrice) || 0),
     };
     const { error } = item
       ? await supabase.from("inventory").update(payload).eq("id", item.id)
@@ -338,6 +340,7 @@ function ProductFormSheet({
       </div>
 
       <SheetField label={t("selling_price")} value={price} onChange={setPrice} type="number" placeholder={t("price_ph")} />
+      <SheetField label="Cost Price (RM)" value={costPrice} onChange={setCostPrice} type="number" placeholder="e.g. 5.00" />
 
       <button
         onClick={save} disabled={saving}

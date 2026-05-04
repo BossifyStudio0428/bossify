@@ -26,6 +26,8 @@ export type OrderRow = {
   status: OrderStatus;
   notes: string | null;
   created_at: string;
+  cost?: number;
+  gross_profit?: number;
 };
 
 export type InventoryRow = {
@@ -37,6 +39,7 @@ export type InventoryRow = {
   max_stock: number;
   price: number;
   created_at: string;
+  cost_price?: number;
 };
 
 export type CustomerRow = {
