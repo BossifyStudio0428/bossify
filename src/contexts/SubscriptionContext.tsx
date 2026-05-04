@@ -52,35 +52,50 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       return;
     }
     setLoading(true);
-    const { data } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (data) {
-      // Client-side monthly reset safety net
-      const period = data.count_period_start ? new Date(data.count_period_start) : null;
-      const now = new Date();
-      const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      if (!period || period < curMonthStart) {
-        await supabase
-          .from("subscriptions")
-          .update({ order_count: 0, count_period_start: curMonthStart.toISOString() })
-          .eq("user_id", user.id);
-        data.order_count = 0;
-        data.count_period_start = curMonthStart.toISOString();
-      }
-      setSub(data as SubscriptionRow);
-    } else {
-      // Auto-create on first access (covers users created before trigger)
-      const { data: created } = await supabase
+    try {
+      const { data, error } = await supabase
         .from("subscriptions")
-        .insert({ user_id: user.id, plan: "free", status: "active" })
         .select("*")
+        .eq("user_id", user.id)
         .maybeSingle();
-      setSub((created as SubscriptionRow) ?? null);
+      if (error) {
+        console.error("subscription load failed", error);
+        setSub(null);
+        return;
+      }
+      if (data) {
+        // Client-side monthly reset safety net
+        const period = data.count_period_start ? new Date(data.count_period_start) : null;
+        const now = new Date();
+        const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        if (!period || period < curMonthStart) {
+          const { error: resetError } = await supabase
+            .from("subscriptions")
+            .update({ order_count: 0, count_period_start: curMonthStart.toISOString() })
+            .eq("user_id", user.id);
+          if (resetError) console.error("subscription counter reset failed", resetError);
+          else {
+            data.order_count = 0;
+            data.count_period_start = curMonthStart.toISOString();
+          }
+        }
+        setSub(data as SubscriptionRow);
+      } else {
+        // Auto-create on first access (covers users created before trigger)
+        const { data: created, error: createError } = await supabase
+          .from("subscriptions")
+          .insert({ user_id: user.id, plan: "free", status: "active" })
+          .select("*")
+          .maybeSingle();
+        if (createError) console.error("subscription create failed", createError);
+        setSub((created as SubscriptionRow) ?? null);
+      }
+    } catch (error) {
+      console.error("subscription refresh failed", error);
+      setSub(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [user]);
 
   useEffect(() => { refresh(); }, [refresh]);
