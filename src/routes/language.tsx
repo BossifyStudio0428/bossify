@@ -19,12 +19,11 @@ function LanguagePage() {
 
   const onContinue = () => {
     setLang(selected);
-    // Persistently mark that the user has picked a language. This survives
-    // app restarts, browser refreshes, and backgrounding — only a real
-    // reinstall / storage wipe will clear it, which is exactly when we
-    // want to show the language picker again.
+    // setLang persists `bossify_lang` to localStorage. That key is the
+    // single source of truth for "user has chosen a language". It is only
+    // written here (Continue) or from Profile after the user is in the app.
     if (typeof window !== "undefined") {
-      safeLocalStorage.setItem("bossify_lang_picked", "1");
+      safeLocalStorage.setItem("bossify_lang", selected);
     }
     navigate({ to: "/auth" });
   };
