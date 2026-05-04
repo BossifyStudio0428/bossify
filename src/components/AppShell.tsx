@@ -71,10 +71,10 @@ if (typeof window !== "undefined") {
 }
 
 const tabs = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/orders", label: "Orders", icon: ClipboardList },
-  { to: "/inventory", label: "Inventory", icon: Package },
-  { to: "/customers", label: "Customers", icon: Users },
+  { to: "/", labelKey: "nav_home", icon: Home },
+  { to: "/orders", labelKey: "nav_orders", icon: ClipboardList },
+  { to: "/inventory", labelKey: "nav_inventory", icon: Package },
+  { to: "/customers", labelKey: "nav_customers", icon: Users },
 ] as const;
 
 export function AppShell() {
@@ -268,6 +268,7 @@ function ShellInner() {
 }
 
 const BottomNav = memo(function BottomNav() {
+  const { t } = useI18n();
   return (
     <nav
       className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40"
@@ -275,20 +276,20 @@ const BottomNav = memo(function BottomNav() {
     >
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
         <ul className="grid grid-cols-5 items-center h-16 px-2">
-          {tabs.slice(0, 2).map((t) => (
-            <NavItem key={t.to} {...t} />
+          {tabs.slice(0, 2).map((tab) => (
+            <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} />
           ))}
           <li className="flex justify-center">
             <Link
               to="/new-order"
-              aria-label="New Order"
+              aria-label={t("nav_new_order")}
               className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
             >
               <Plus className="h-7 w-7" strokeWidth={2.5} />
             </Link>
           </li>
-          {tabs.slice(2).map((t) => (
-            <NavItem key={t.to} {...t} />
+          {tabs.slice(2).map((tab) => (
+            <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} />
           ))}
         </ul>
       </div>
