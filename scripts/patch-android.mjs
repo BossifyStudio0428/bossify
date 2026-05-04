@@ -102,6 +102,56 @@ function patchMainActivityPackage() {
   console.log(`Rewrote package declaration to: ${APP_ID}`);
 }
 
+/**
+ * Force-enable autofill on the Capacitor WebView so Google Password Manager
+ * can detect and fill <input type="email"> / <input type="password"> fields
+ * inside the bundled web app.
+ */
+function patchMainActivityAutofill() {
+  const expectedDir = join(javaRoot, ...APP_ID.split("."));
+  const expectedFile = join(expectedDir, "MainActivity.java");
+  if (!existsSync(expectedFile)) {
+    console.warn(`Skipped autofill patch: ${expectedFile} not found.`);
+    return;
+  }
+  let src = readFileSync(expectedFile, "utf8");
+
+  if (src.includes("setImportantForAutofill")) {
+    console.log("Autofill already patched in MainActivity.java");
+    return;
+  }
+
+  const imports = [
+    "import android.os.Build;",
+    "import android.os.Bundle;",
+    "import android.view.View;",
+    "import android.webkit.WebView;",
+  ];
+  for (const imp of imports) {
+    if (!src.includes(imp)) {
+      src = src.replace(/(package\s+[^;]+;\s*)/, `$1\n${imp}\n`);
+    }
+  }
+
+  const overrideBlock = `
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Enable Android Autofill / Google Password Manager inside the WebView.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      WebView webView = this.bridge != null ? this.bridge.getWebView() : null;
+      if (webView != null) {
+        webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
+      }
+    }
+  }
+`;
+
+  src = src.replace(/public class MainActivity extends BridgeActivity\s*\{\s*/, (m) => m + overrideBlock);
+  writeFileSync(expectedFile, src);
+  console.log("Patched MainActivity.java to enable WebView autofill.");
+}
+
 function patchManifest() {
   if (!existsSync(manifestPath)) {
     console.warn(`Skipped: ${manifestPath} not found. Run npx cap add android first.`);
@@ -122,6 +172,19 @@ function patchManifest() {
 
   const activityTag = activityMatch[0].replace(/\sandroid:screenOrientation="[^"]*"/g, "");
   manifest = manifest.replace(activityMatch[0], activityTag);
+
+  // Ensure <application> has android:allowBackup="true" so Google Password
+  // Manager / Android Autofill can persist saved credentials.
+  manifest = manifest.replace(
+    /<application\b([^>]*)>/,
+    (_full, attrs) => {
+      let a = attrs;
+      if (!/android:allowBackup=/.test(a)) a += ' android:allowBackup="true"';
+      else a = a.replace(/android:allowBackup="[^"]*"/, 'android:allowBackup="true"');
+      return `<application${a}>`;
+    },
+  );
+
   writeFileSync(manifestPath, manifest);
 }
 
@@ -152,4 +215,5 @@ function patchStyles() {
 patchManifest();
 patchStyles();
 patchMainActivityPackage();
+patchMainActivityAutofill();
 console.log("Bossify Android patch applied.");
