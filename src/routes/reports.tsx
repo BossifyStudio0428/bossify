@@ -99,9 +99,9 @@ function ReportsPage() {
 
   // Status breakdown
   const statusData = [
-    { name: "Paid", value: inRange.filter((o) => o.status === "Paid").length, color: "#10b981" },
-    { name: "Unpaid", value: inRange.filter((o) => o.status === "Unpaid").length, color: "#ef4444" },
-    { name: "Pending", value: inRange.filter((o) => o.status === "Pending").length, color: "#f59e0b" },
+    { name: t("paid"), value: inRange.filter((o) => o.status === "Paid").length, color: "#10b981" },
+    { name: t("unpaid"), value: inRange.filter((o) => o.status === "Unpaid").length, color: "#ef4444" },
+    { name: t("pending"), value: inRange.filter((o) => o.status === "Pending").length, color: "#f59e0b" },
   ].filter((s) => s.value > 0);
 
   // Top customers
