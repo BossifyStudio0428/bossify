@@ -176,19 +176,23 @@ function ShellInner() {
       setShowInlineSplash(false);
       return;
     }
+    // Hard guard: until the user has picked a language (first launch or
+    // post-reinstall), force them onto /language no matter what URL they
+    // landed on (refresh on /auth, deep link, etc.). The splash route is
+    // allowed because it transitions into /language itself.
+    if (!hasPickedLanguageEver()) {
+      setShowInlineSplash(false);
+      navigate({ to: "/language", replace: true });
+      return;
+    }
     // Cold-start launch → ALWAYS show splash → language flow first.
     if (typeof window !== "undefined" && !hasShownSplashThisSession()) {
       markSplashShown();
       const remainingMs = getBossifySplashRemainingMs();
       const timer = window.setTimeout(() => {
         setShowInlineSplash(false);
-        // Only show the language picker on a true first launch /
-        // reinstall. Returning users skip straight into the app.
-        if (hasPickedLanguageEver()) {
-          // Fall through to normal auth/home routing on the next effect run.
-          return;
-        }
-        navigate({ to: "/language", replace: true });
+        // Returning user (already picked language) → fall through on next
+        // effect run to normal auth/home routing. No forced /language jump.
       }, remainingMs);
       return () => window.clearTimeout(timer);
     }
