@@ -12,6 +12,7 @@ import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { BossifySplash } from "@/components/BossifySplash";
 import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splashTiming";
 import bossifyLogo from "@/assets/bossify-logo.png";
+import { AppTour, hasCompletedTour } from "@/components/AppTour";
 
 // Session-level flag — true once we've shown the cold-start splash this app
 // launch. We use sessionStorage so the splash flow survives client-side
@@ -74,10 +75,10 @@ if (typeof window !== "undefined") {
 }
 
 const tabs = [
-  { to: "/", labelKey: "nav_home", icon: Home },
-  { to: "/orders", labelKey: "nav_orders", icon: ClipboardList },
-  { to: "/inventory", labelKey: "nav_inventory", icon: Package },
-  { to: "/customers", labelKey: "nav_customers", icon: Users },
+  { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
+  { to: "/orders", labelKey: "nav_orders", icon: ClipboardList, id: "tour-tab-orders" },
+  { to: "/inventory", labelKey: "nav_inventory", icon: Package, id: "tour-tab-inventory" },
+  { to: "/customers", labelKey: "nav_customers", icon: Users, id: "tour-tab-customers" },
 ] as const;
 
 export function AppShell() {
@@ -123,6 +124,7 @@ function ShellInner() {
   const isPublicFlow = isSplashRoute || isLanguageRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   // Start with the Bossify splash on the first frame of every cold start.
   const [showInlineSplash, setShowInlineSplash] = useState(true);
@@ -226,6 +228,21 @@ function ShellInner() {
     }
   }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, isLanguageRoute, onboardingChecked, needsOnboarding, navigate]);
 
+  useEffect(() => {
+    if (!session?.user) return;
+    if (!onboardingChecked || needsOnboarding) return;
+    if (locationPathname !== "/") return;
+    if (hasCompletedTour()) return;
+    const t = window.setTimeout(() => setShowTour(true), 600);
+    return () => window.clearTimeout(t);
+  }, [session?.user?.id, onboardingChecked, needsOnboarding, locationPathname]);
+
+  useEffect(() => {
+    const handler = () => setShowTour(true);
+    window.addEventListener("bossify:start-tour", handler);
+    return () => window.removeEventListener("bossify:start-tour", handler);
+  }, []);
+
   // While first-time splash is queued (or navigation hasn't completed yet), render the
   // Bossify logo immediately so the user never sees the generic loading spinner.
   if (showInlineSplash && !isPublicFlow) {
@@ -267,6 +284,7 @@ function ShellInner() {
         </main>
 
         <BottomNav />
+        {showTour && <AppTour onClose={() => setShowTour(false)} />}
       </div>
     </div>
   );
@@ -282,10 +300,11 @@ const BottomNav = memo(function BottomNav() {
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
         <ul className="grid grid-cols-5 items-center h-16 px-2">
           {tabs.slice(0, 2).map((tab) => (
-            <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} />
+            <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
           <li className="flex justify-center">
             <Link
+              id="tour-new-order"
               to="/new-order"
               aria-label={t("nav_new_order")}
               className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
@@ -294,7 +313,7 @@ const BottomNav = memo(function BottomNav() {
             </Link>
           </li>
           {tabs.slice(2).map((tab) => (
-            <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} />
+            <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
         </ul>
       </div>
@@ -306,13 +325,15 @@ function NavItem({
   to,
   label,
   icon: Icon,
+  id,
 }: {
   to: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  id?: string;
 }) {
   return (
-    <li>
+    <li id={id}>
       <Link
         to={to}
         className="flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-muted-foreground relative"

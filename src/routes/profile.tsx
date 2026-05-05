@@ -10,6 +10,7 @@ import { DEFAULT_ORDER_TPL, DEFAULT_REMINDER_TPL } from "@/lib/wa";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { resetTour } from "@/components/AppTour";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -43,6 +44,11 @@ function ProfilePage() {
     { icon: "💳", key: "sub", label: t("subscription"), value: isPro ? t("pro_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
     { icon: "📲", key: "wa", label: t("wa_template"), value: isPro ? undefined : "🔒", onClick: () => isPro ? setTplOpen(true) : showUpgrade(t("wa_template")) },
     { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
+    { icon: "🎓", key: "tour", label: t("tour_restart"), onClick: () => {
+        resetTour();
+        navigate({ to: "/" });
+        setTimeout(() => window.dispatchEvent(new Event("bossify:start-tour")), 400);
+      } },
     ...(isAdmin ? [{ icon: "⚙️", key: "admin", label: t("admin_panel"), value: "PRO", onClick: () => navigate({ to: "/admin" }) }] : []),
   ];
 
