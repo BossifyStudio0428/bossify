@@ -283,10 +283,11 @@ const BottomNav = memo(function BottomNav() {
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
         <ul className="grid grid-cols-5 items-center h-16 px-2">
           {tabs.slice(0, 2).map((tab) => (
-            <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} />
+            <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
           <li className="flex justify-center">
             <Link
+              id="tour-new-order"
               to="/new-order"
               aria-label={t("nav_new_order")}
               className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
@@ -295,7 +296,7 @@ const BottomNav = memo(function BottomNav() {
             </Link>
           </li>
           {tabs.slice(2).map((tab) => (
-            <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} />
+            <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
         </ul>
       </div>
@@ -307,13 +308,15 @@ function NavItem({
   to,
   label,
   icon: Icon,
+  id,
 }: {
   to: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  id?: string;
 }) {
   return (
-    <li>
+    <li id={id}>
       <Link
         to={to}
         className="flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-muted-foreground relative"
