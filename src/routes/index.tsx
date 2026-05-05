@@ -178,7 +178,7 @@ function Index() {
       </div>
       <p className="-mt-3 text-xs font-medium text-primary/90">{motivMsg}</p>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section id="tour-stats" className="grid grid-cols-2 gap-3">
         {stats.map((s, i) => (
           <div key={s.label} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
             <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${s.bg}`}>

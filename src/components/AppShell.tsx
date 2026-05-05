@@ -12,6 +12,7 @@ import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { BossifySplash } from "@/components/BossifySplash";
 import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splashTiming";
 import bossifyLogo from "@/assets/bossify-logo.png";
+import { AppTour, hasCompletedTour } from "@/components/AppTour";
 
 // Session-level flag — true once we've shown the cold-start splash this app
 // launch. We use sessionStorage so the splash flow survives client-side
@@ -74,10 +75,10 @@ if (typeof window !== "undefined") {
 }
 
 const tabs = [
-  { to: "/", labelKey: "nav_home", icon: Home },
-  { to: "/orders", labelKey: "nav_orders", icon: ClipboardList },
-  { to: "/inventory", labelKey: "nav_inventory", icon: Package },
-  { to: "/customers", labelKey: "nav_customers", icon: Users },
+  { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
+  { to: "/orders", labelKey: "nav_orders", icon: ClipboardList, id: "tour-tab-orders" },
+  { to: "/inventory", labelKey: "nav_inventory", icon: Package, id: "tour-tab-inventory" },
+  { to: "/customers", labelKey: "nav_customers", icon: Users, id: "tour-tab-customers" },
 ] as const;
 
 export function AppShell() {
