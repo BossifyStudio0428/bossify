@@ -370,6 +370,14 @@ const dict = {
     // Day names (short)
     dow_sun: "Sun", dow_mon: "Mon", dow_tue: "Tue", dow_wed: "Wed",
     dow_thu: "Thu", dow_fri: "Fri", dow_sat: "Sat",
+    tour_next: "Next", tour_skip: "Skip tour", tour_finish: "Let's go! 🚀",
+    tour_step: "Step {x} of 6", tour_restart: "Restart tour",
+    tour_msg_1: "This is your Dashboard. See today's revenue, orders and more at a glance.",
+    tour_msg_2: "Tap here to create a new order. Add customer name, product and payment status.",
+    tour_msg_3: "View all your orders here. Filter by paid, unpaid or pending.",
+    tour_msg_4: "Add your products here first. Set selling price and cost price to track profits automatically.",
+    tour_msg_5: "Customer records are created automatically when you add orders. Send WhatsApp reminders in one tap.",
+    tour_msg_6: "Tap the WhatsApp button on any order to send confirmation or payment reminder to your customer instantly.",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
