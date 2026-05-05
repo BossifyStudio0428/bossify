@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase, type OrderStatus, type InventoryRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { renderTemplate, buildWhatsAppLink, DEFAULT_ORDER_TPL } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, getOrderTemplate } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
 import { safeLocalStorage } from "@/lib/safeStorage";
@@ -50,7 +50,7 @@ function genCode() {
 
 function NewOrderPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const { isPro, ordersUsed, ordersLimit, ordersRemaining, showUpgrade } = useSubscription();
   const statusLabels: Record<OrderStatus, string> = {
@@ -73,7 +73,7 @@ function NewOrderPage() {
   const [saving, setSaving] = useState(false);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
-  const [orderTpl, setOrderTpl] = useState<string>(DEFAULT_ORDER_TPL);
+  const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -82,7 +82,7 @@ function NewOrderPage() {
         supabase.from("user_preferences").select("wa_order_template").maybeSingle(),
       ]);
       setInventory((inv ?? []) as InventoryRow[]);
-      if (pref?.wa_order_template) setOrderTpl(pref.wa_order_template);
+      if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
     })();
   }, []);
 
@@ -200,7 +200,7 @@ function NewOrderPage() {
     return { id: inserted.id, code: inserted.code };
   };
 
-  const buildMessage = (code: string) => renderTemplate(orderTpl, {
+  const buildMessage = (code: string) => renderTemplate(getOrderTemplate(lang, customOrderTpl), {
     customer_name: form.customer_name || "Customer",
     code,
     product: form.product || "—",
@@ -208,7 +208,7 @@ function NewOrderPage() {
     amount: form.amount ? Number(form.amount).toFixed(2) : "0.00",
     status,
     notes: form.notes,
-  });
+  }, lang);
 
   const livePreview = buildMessage("ORD-PREVIEW-001");
 

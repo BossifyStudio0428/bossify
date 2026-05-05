@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { renderTemplate, buildWhatsAppLink, daysSince, DEFAULT_REMINDER_TPL } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -41,7 +41,7 @@ function formatTime(iso: string) {
 
 function OrdersPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const { isPro, showUpgrade } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
@@ -51,7 +51,7 @@ function OrdersPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [detail, setDetail] = useState<OrderRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
-  const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
+  const [customReminderTpl, setCustomReminderTpl] = useState<string | null>(null);
   const [bulkProgress, setBulkProgress] = useState<{ i: number; n: number } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<OrderRow | null>(null);
   const [editingOrder, setEditingOrder] = useState<OrderRow | null>(null);
@@ -64,7 +64,7 @@ function OrdersPage() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("user_preferences").select("wa_reminder_template").maybeSingle();
-      if (data?.wa_reminder_template) setReminderTpl(data.wa_reminder_template);
+      if (data?.wa_reminder_template) setCustomReminderTpl(data.wa_reminder_template);
     })();
   }, []);
 
@@ -159,11 +159,11 @@ function OrdersPage() {
 
   const remind = (o: OrderRow) => {
     if (!o.phone) { alert(t("no_phone_for_wa")); return; }
-    const msg = renderTemplate(reminderTpl, {
+    const msg = renderTemplate(getReminderTemplate(lang, customReminderTpl), {
       customer_name: o.customer_name, code: o.code, product: o.product,
       quantity: o.quantity, amount: Number(o.amount).toFixed(2),
       status: o.status, days_ago: daysSince(o.created_at),
-    });
+    }, lang);
     window.open(buildWhatsAppLink(o.phone, msg), "_blank");
   };
 

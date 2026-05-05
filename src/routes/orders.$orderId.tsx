@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { renderTemplate, buildWhatsAppLink, DEFAULT_ORDER_TPL } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, getOrderTemplate } from "@/lib/wa";
 
 export const Route = createFileRoute("/orders/$orderId")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -24,13 +24,13 @@ function OrderDetailPage() {
   const { orderId } = useParams({ from: "/orders/$orderId" });
   const { edit } = Route.useSearch();
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(edit);
   const [form, setForm] = useState<Partial<OrderRow>>({});
-  const [orderTpl, setOrderTpl] = useState(DEFAULT_ORDER_TPL);
+  const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -41,18 +41,18 @@ function OrderDetailPage() {
       ]);
       setOrder(data as OrderRow | null);
       setForm((data ?? {}) as Partial<OrderRow>);
-      if (pref?.wa_order_template) setOrderTpl(pref.wa_order_template);
+      if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
       setLoading(false);
     })();
   }, [orderId]);
 
   const sendWA = () => {
     if (!order?.phone) { alert(t("no_phone_for_wa")); return; }
-    const msg = renderTemplate(orderTpl, {
+    const msg = renderTemplate(getOrderTemplate(lang, customOrderTpl), {
       customer_name: order.customer_name, code: order.code, product: order.product,
       quantity: order.quantity, amount: Number(order.amount).toFixed(2),
       status: order.status, notes: order.notes ?? "",
-    });
+    }, lang);
     window.open(buildWhatsAppLink(order.phone, msg), "_blank");
   };
 
