@@ -228,6 +228,21 @@ function ShellInner() {
     }
   }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, isLanguageRoute, onboardingChecked, needsOnboarding, navigate]);
 
+  useEffect(() => {
+    if (!session?.user) return;
+    if (!onboardingChecked || needsOnboarding) return;
+    if (locationPathname !== "/") return;
+    if (hasCompletedTour()) return;
+    const t = window.setTimeout(() => setShowTour(true), 600);
+    return () => window.clearTimeout(t);
+  }, [session?.user?.id, onboardingChecked, needsOnboarding, locationPathname]);
+
+  useEffect(() => {
+    const handler = () => setShowTour(true);
+    window.addEventListener("bossify:start-tour", handler);
+    return () => window.removeEventListener("bossify:start-tour", handler);
+  }, []);
+
   // While first-time splash is queued (or navigation hasn't completed yet), render the
   // Bossify logo immediately so the user never sees the generic loading spinner.
   if (showInlineSplash && !isPublicFlow) {
