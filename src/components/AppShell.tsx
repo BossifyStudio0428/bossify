@@ -124,6 +124,7 @@ function ShellInner() {
   const isPublicFlow = isSplashRoute || isLanguageRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   // Start with the Bossify splash on the first frame of every cold start.
   const [showInlineSplash, setShowInlineSplash] = useState(true);
@@ -268,6 +269,7 @@ function ShellInner() {
         </main>
 
         <BottomNav />
+        {showTour && <AppTour onClose={() => setShowTour(false)} />}
       </div>
     </div>
   );
