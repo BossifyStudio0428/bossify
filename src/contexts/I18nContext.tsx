@@ -1089,6 +1089,14 @@ const dict = {
     nav_new_order: "新订单",
     dow_sun: "日", dow_mon: "一", dow_tue: "二", dow_wed: "三",
     dow_thu: "四", dow_fri: "五", dow_sat: "六",
+    tour_next: "下一步", tour_skip: "跳过", tour_finish: "开始吧！🚀",
+    tour_step: "第{x}步，共6步", tour_restart: "重新教学",
+    tour_msg_1: "这是您的仪表板。一目了然查看今日收入、订单等数据。",
+    tour_msg_2: "点击这里创建新订单。添加客户姓名、产品和付款状态。",
+    tour_msg_3: "在这里查看所有订单。可按已付款、未付款或待处理筛选。",
+    tour_msg_4: "先在这里添加产品。设置售价和成本价以自动追踪利润。",
+    tour_msg_5: "添加订单时会自动创建客户记录。一键发送 WhatsApp 提醒。",
+    tour_msg_6: "点击任意订单上的 WhatsApp 按钮，立即向客户发送确认或付款提醒。",
   },
 } as const;
 
