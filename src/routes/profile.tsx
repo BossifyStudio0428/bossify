@@ -11,6 +11,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { resetTour } from "@/components/AppTour";
+import PaymentDetailsSection from "@/components/PaymentDetailsSection";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -150,6 +151,8 @@ function ProfilePage() {
           </button>
         ))}
       </section>
+
+      <PaymentDetailsSection />
 
       <button
         type="button"

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase, type OrderStatus, type InventoryRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { renderTemplate, buildWhatsAppLink, getOrderTemplate } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, getOrderTemplate, formatPaymentBlock } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
 import { safeLocalStorage } from "@/lib/safeStorage";
@@ -74,17 +74,25 @@ function NewOrderPage() {
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
+  const [paymentBlock, setPaymentBlock] = useState<string>("");
 
   useEffect(() => {
     (async () => {
-      const [{ data: inv }, { data: pref }] = await Promise.all([
+      const [{ data: inv }, { data: pref }, { data: prof }] = await Promise.all([
         supabase.from("inventory").select("*"),
         supabase.from("user_preferences").select("wa_order_template").maybeSingle(),
+        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_2_type,payment_method_2_number,payment_method_2_name").maybeSingle(),
       ]);
       setInventory((inv ?? []) as InventoryRow[]);
       if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
+      if (prof) {
+        setPaymentBlock(formatPaymentBlock([
+          { type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name },
+          { type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name },
+        ], lang));
+      }
     })();
-  }, []);
+  }, [lang]);
 
   const upd = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((p) => ({ ...p, [k]: e.target.value }));
@@ -208,6 +216,7 @@ function NewOrderPage() {
     amount: form.amount ? Number(form.amount).toFixed(2) : "0.00",
     status,
     notes: form.notes,
+    payment_details: status !== "Paid" ? paymentBlock : "",
   }, lang);
 
   const livePreview = buildMessage("ORD-PREVIEW-001");
