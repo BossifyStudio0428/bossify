@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, formatPaymentBlock } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -52,6 +52,7 @@ function OrdersPage() {
   const [detail, setDetail] = useState<OrderRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [customReminderTpl, setCustomReminderTpl] = useState<string | null>(null);
+  const [paymentBlock, setPaymentBlock] = useState<string>("");
   const [bulkProgress, setBulkProgress] = useState<{ i: number; n: number } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<OrderRow | null>(null);
   const [editingOrder, setEditingOrder] = useState<OrderRow | null>(null);
@@ -63,10 +64,19 @@ function OrdersPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("user_preferences").select("wa_reminder_template").maybeSingle();
+      const [{ data }, { data: prof }] = await Promise.all([
+        supabase.from("user_preferences").select("wa_reminder_template").maybeSingle(),
+        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_2_type,payment_method_2_number,payment_method_2_name").maybeSingle(),
+      ]);
       if (data?.wa_reminder_template) setCustomReminderTpl(data.wa_reminder_template);
+      if (prof) {
+        setPaymentBlock(formatPaymentBlock([
+          { type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name },
+          { type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name },
+        ], lang));
+      }
     })();
-  }, []);
+  }, [lang]);
 
   const load = useCallback(async (silent = false) => {
     if (!user) {
@@ -163,6 +173,7 @@ function OrdersPage() {
       customer_name: o.customer_name, code: o.code, product: o.product,
       quantity: o.quantity, amount: Number(o.amount).toFixed(2),
       status: o.status, days_ago: daysSince(o.created_at),
+      payment_details: paymentBlock,
     }, lang);
     window.open(buildWhatsAppLink(o.phone, msg), "_blank");
   };
