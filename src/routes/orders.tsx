@@ -508,6 +508,13 @@ function OrdersPage() {
         </div>
       )}
 
+      <PhoneActionSheet
+        open={!!phoneSheet}
+        onOpenChange={(o) => { if (!o) setPhoneSheet(null); }}
+        phone={phoneSheet?.phone ?? null}
+        name={phoneSheet?.name}
+      />
+
       <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
