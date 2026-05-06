@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, getOrderTemplate, formatPaymentBlock } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
+import { notify as deviceNotify } from "@/lib/notifications";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
