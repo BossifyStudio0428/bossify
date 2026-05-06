@@ -54,6 +54,11 @@ function InventoryPage() {
       toast.error(error.message);
     } else {
       toast.success(t("stock_updated"));
+      if (next <= 5 && next < it.stock) {
+        import("@/lib/notifications").then(({ notify }) =>
+          notify("Low Stock Alert 📦", `${it.name} is running low. Only ${next} left!`, { route: "/inventory" }),
+        ).catch(() => {});
+      }
     }
   };
 

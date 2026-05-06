@@ -9,6 +9,7 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
@@ -59,6 +60,7 @@ function OrdersPage() {
   const [editForm, setEditForm] = useState<Partial<OrderRow>>({});
   const [editSaving, setEditSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [phoneSheet, setPhoneSheet] = useState<{ phone: string; name: string } | null>(null);
 
   useEffect(() => { setHydrated(true); }, []);
 
@@ -371,6 +373,14 @@ function OrdersPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">{o.customer_name}</p>
+                  {o.phone ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setPhoneSheet({ phone: o.phone!, name: o.customer_name }); }}
+                      className="text-[11px] text-primary font-medium flex items-center gap-1"
+                    >
+                      📱 {o.phone}
+                    </button>
+                  ) : null}
                   <p className="text-[11px] text-muted-foreground">
                     {o.code} · <span suppressHydrationWarning>{hydrated ? formatTime(o.created_at) : ""}</span>
                   </p>
@@ -497,6 +507,13 @@ function OrdersPage() {
           </div>
         </div>
       )}
+
+      <PhoneActionSheet
+        open={!!phoneSheet}
+        onOpenChange={(o) => { if (!o) setPhoneSheet(null); }}
+        phone={phoneSheet?.phone ?? null}
+        name={phoneSheet?.name}
+      />
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
         <AlertDialogContent>

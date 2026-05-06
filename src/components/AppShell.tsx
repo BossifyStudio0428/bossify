@@ -13,6 +13,8 @@ import { BossifySplash } from "@/components/BossifySplash";
 import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splashTiming";
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { AppTour, hasCompletedTour } from "@/components/AppTour";
+import { NotifPermissionPrompt } from "@/components/NotifPermissionPrompt";
+import { isNotifGranted, runOverdueCheck, schedulePaymentReminder } from "@/lib/notifications";
 
 // Session-level flag — true once we've shown the cold-start splash this app
 // launch. We use sessionStorage so the splash flow survives client-side
@@ -125,6 +127,7 @@ function ShellInner() {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [notifReady, setNotifReady] = useState(false);
 
   // Start with the Bossify splash on the first frame of every cold start.
   const [showInlineSplash, setShowInlineSplash] = useState(true);
@@ -243,6 +246,18 @@ function ShellInner() {
     return () => window.removeEventListener("bossify:start-tour", handler);
   }, []);
 
+  // Once tour is complete (or already done) and user is signed in past onboarding,
+  // arm the notification permission prompt and run overdue check if granted.
+  useEffect(() => {
+    if (!session?.user || !onboardingChecked || needsOnboarding) return;
+    if (showTour) return;
+    setNotifReady(true);
+    if (isNotifGranted()) {
+      schedulePaymentReminder();
+      runOverdueCheck(session.user.id, t).catch(() => {});
+    }
+  }, [session?.user?.id, onboardingChecked, needsOnboarding, showTour, t]);
+
   // While first-time splash is queued (or navigation hasn't completed yet), render the
   // Bossify logo immediately so the user never sees the generic loading spinner.
   if (showInlineSplash && !isPublicFlow) {
@@ -285,6 +300,7 @@ function ShellInner() {
 
         <BottomNav />
         {showTour && <AppTour onClose={() => setShowTour(false)} />}
+        <NotifPermissionPrompt enabled={notifReady && !showTour} />
       </div>
     </div>
   );

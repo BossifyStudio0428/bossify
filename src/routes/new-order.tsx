@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, getOrderTemplate, formatPaymentBlock } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
+import { notify as deviceNotify } from "@/lib/notifications";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
@@ -238,6 +239,7 @@ function NewOrderPage() {
         link: "/orders",
       });
     }
+    deviceNotify("New Order Added! 🎉", `Order from ${form.customer_name} — RM ${Number(form.amount).toFixed(2)} has been saved.`, { route: "/orders" }).catch(() => {});
     setForm({ customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "" });
     setStatus("Unpaid");
     setTimeout(() => navigate({ to: "/orders" }), 1500);
@@ -264,6 +266,7 @@ function NewOrderPage() {
         link: "/orders",
       });
     }
+    deviceNotify("New Order Added! 🎉", `Order from ${form.customer_name} — RM ${Number(form.amount).toFixed(2)} has been saved.`, { route: "/orders" }).catch(() => {});
     window.open(buildWhatsAppLink(buildFullPhone(countryCode, form.phone), msg), "_blank");
     setTimeout(() => navigate({ to: "/orders" }), 800);
   };

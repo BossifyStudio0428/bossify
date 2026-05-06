@@ -1,0 +1,111 @@
+import { supabase } from "@/integrations/supabase/client";
+
+const PERM_ASKED_KEY = "bossify_notif_asked";
+const PERM_GRANTED_KEY = "bossify_notif_granted";
+const REMINDER_SCHEDULED_KEY = "bossify_reminder_scheduled";
+
+export function hasAskedNotifPermission(): boolean {
+  if (typeof window === "undefined") return true;
+  return localStorage.getItem(PERM_ASKED_KEY) === "1";
+}
+export function markNotifAsked() {
+  try { localStorage.setItem(PERM_ASKED_KEY, "1"); } catch {}
+}
+export function isNotifGranted(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(PERM_GRANTED_KEY) === "1";
+}
+
+async function getPlugin() {
+  try {
+    const { LocalNotifications } = await import("@capacitor/local-notifications");
+    return LocalNotifications;
+  } catch {
+    return null;
+  }
+}
+
+export async function requestNotifPermission(): Promise<boolean> {
+  markNotifAsked();
+  const plugin = await getPlugin();
+  if (!plugin) {
+    // Web fallback
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        const res = await Notification.requestPermission();
+        const ok = res === "granted";
+        if (ok) localStorage.setItem(PERM_GRANTED_KEY, "1");
+        return ok;
+      } catch { return false; }
+    }
+    return false;
+  }
+  try {
+    const res = await plugin.requestPermissions();
+    const ok = res.display === "granted";
+    if (ok) {
+      try { localStorage.setItem(PERM_GRANTED_KEY, "1"); } catch {}
+      await schedulePaymentReminder();
+    }
+    return ok;
+  } catch { return false; }
+}
+
+export async function notify(title: string, body: string, extra?: Record<string, unknown>) {
+  const plugin = await getPlugin();
+  if (plugin) {
+    try {
+      await plugin.schedule({
+        notifications: [{
+          id: Math.floor(Math.random() * 2_000_000_000),
+          title, body,
+          extra,
+        }],
+      });
+      return;
+    } catch (e) { console.warn("notify failed", e); }
+  }
+  // Web fallback
+  if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+    try { new Notification(title, { body }); } catch {}
+  }
+}
+
+const REMINDER_ID = 9001;
+export async function schedulePaymentReminder() {
+  const plugin = await getPlugin();
+  if (!plugin) return;
+  try {
+    // Cancel existing first
+    await plugin.cancel({ notifications: [{ id: REMINDER_ID }] }).catch(() => {});
+    // Schedule daily 9am check trigger; the actual filter happens in handler below.
+    await plugin.schedule({
+      notifications: [{
+        id: REMINDER_ID,
+        title: "Bossify",
+        body: "Checking your unpaid orders...",
+        schedule: { on: { hour: 9, minute: 0 }, allowWhileIdle: true, repeats: true },
+        extra: { kind: "daily_unpaid_check" },
+      }],
+    });
+    try { localStorage.setItem(REMINDER_SCHEDULED_KEY, "1"); } catch {}
+  } catch (e) { console.warn("schedule reminder failed", e); }
+}
+
+/** Run an in-app check for overdue unpaid orders and notify if any. */
+export async function runOverdueCheck(userId: string, t: (k: any) => string) {
+  if (!isNotifGranted()) return;
+  const cutoff = new Date(Date.now() - 3 * 86400000).toISOString();
+  const { data, error } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("status", "Unpaid")
+    .lte("created_at", cutoff);
+  if (error || !data || data.length === 0) return;
+  await notify(
+    "Payment Reminder ⚠️",
+    `${t("you_have")} ${data.length} ${t("payment_overdue")}`,
+    { route: "/orders", filter: "Unpaid" },
+  );
+}

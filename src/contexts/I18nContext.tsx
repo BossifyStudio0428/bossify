@@ -384,6 +384,11 @@ const dict = {
     tour_msg_4: "Add your products here first. Set selling price and cost price to track profits automatically.",
     tour_msg_5: "Customer records are created automatically when you add orders. Send WhatsApp reminders in one tap.",
     tour_msg_6: "Tap the WhatsApp button on any order to send confirmation or payment reminder to your customer instantly.",
+    allow_notifications: "Allow Notifications",
+    notification_title: "Stay on top of your orders!",
+    notification_message: "Allow Bossify to send payment reminders and order updates",
+    payment_overdue: "unpaid order(s) waiting more than 3 days",
+    you_have: "You have",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
@@ -750,6 +755,11 @@ const dict = {
     tour_msg_4: "Tambah produk anda di sini dahulu. Tetapkan harga jual dan kos untuk jejak untung secara automatik.",
     tour_msg_5: "Rekod pelanggan dicipta secara automatik bila anda tambah pesanan. Hantar peringatan WhatsApp dengan satu ketukan.",
     tour_msg_6: "Ketuk butang WhatsApp pada mana-mana pesanan untuk hantar pengesahan atau peringatan bayaran kepada pelanggan dengan serta-merta.",
+    allow_notifications: "Benarkan Pemberitahuan",
+    notification_title: "Pantau pesanan anda!",
+    notification_message: "Benarkan Bossify menghantar peringatan bayaran dan kemas kini pesanan",
+    payment_overdue: "pesanan belum bayar lebih 3 hari",
+    you_have: "Anda ada",
   },
   zh: {
     continue: "继续", back: "返回", save: "保存", cancel: "取消", delete: "删除",
@@ -1115,6 +1125,11 @@ const dict = {
     tour_msg_4: "先在这里添加产品。设置售价和成本价以自动追踪利润。",
     tour_msg_5: "添加订单时会自动创建客户记录。一键发送 WhatsApp 提醒。",
     tour_msg_6: "点击任意订单上的 WhatsApp 按钮，立即向客户发送确认或付款提醒。",
+    allow_notifications: "允许通知",
+    notification_title: "掌握您的订单！",
+    notification_message: "允许Bossify发送付款提醒和订单更新",
+    payment_overdue: "个未付款订单超过3天",
+    you_have: "您有",
   },
 } as const;
 
