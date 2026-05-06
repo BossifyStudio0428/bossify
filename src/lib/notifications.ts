@@ -93,7 +93,7 @@ export async function schedulePaymentReminder() {
 }
 
 /** Run an in-app check for overdue unpaid orders and notify if any. */
-export async function runOverdueCheck(userId: string, t: (k: never) => string) {
+export async function runOverdueCheck(userId: string, t: (k: any) => string) {
   if (!isNotifGranted()) return;
   const cutoff = new Date(Date.now() - 3 * 86400000).toISOString();
   const { data, error } = await supabase
