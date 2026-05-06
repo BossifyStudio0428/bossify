@@ -11,6 +11,7 @@ export const DEFAULT_ORDER_TPL =
   `💰 Total: RM [amount]\n` +
   `💳 Status: [status]\n` +
   `[notes]\n` +
+  `[payment_details]\n` +
   `Thank you for supporting our business! 🙏`;
 
 export const DEFAULT_REMINDER_TPL =
@@ -19,6 +20,7 @@ export const DEFAULT_REMINDER_TPL =
   `📋 Order: [code]\n` +
   `🛒 Product: [product] x[quantity]\n` +
   `💰 Amount due: RM [amount]\n\n` +
+  `[payment_details]` +
   `Please make payment at your earliest convenience. Thank you! 🙏`;
 
 const ORDER_TPL_BY_LANG: Record<Lang, string> = {
