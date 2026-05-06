@@ -252,6 +252,7 @@ function writeAutofillHintsXml() {
 }
 
 patchManifest();
+patchManifestPermissions();
 patchStyles();
 patchMainActivityPackage();
 patchMainActivityAutofill();
