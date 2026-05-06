@@ -189,6 +189,25 @@ function patchManifest() {
   writeFileSync(manifestPath, manifest);
 }
 
+function patchManifestPermissions() {
+  if (!existsSync(manifestPath)) return;
+  let manifest = readFileSync(manifestPath, "utf8");
+  const perms = [
+    "android.permission.POST_NOTIFICATIONS",
+    "android.permission.RECEIVE_BOOT_COMPLETED",
+    "android.permission.SCHEDULE_EXACT_ALARM",
+  ];
+  for (const p of perms) {
+    if (!manifest.includes(p)) {
+      manifest = manifest.replace(
+        /<manifest\b([^>]*)>/,
+        (m) => `${m}\n    <uses-permission android:name="${p}"/>`,
+      );
+    }
+  }
+  writeFileSync(manifestPath, manifest);
+}
+
 function patchStyles() {
   if (!existsSync(stylesPath)) {
     console.warn(`Skipped: ${stylesPath} not found. Run npx cap add android first.`);
