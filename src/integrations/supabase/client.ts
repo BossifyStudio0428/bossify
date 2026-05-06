@@ -58,4 +58,10 @@ export type ProfileRow = {
   business_name: string | null;
   plan: string | null;
   created_at: string;
+  payment_method_1_type?: string | null;
+  payment_method_1_number?: string | null;
+  payment_method_1_name?: string | null;
+  payment_method_2_type?: string | null;
+  payment_method_2_number?: string | null;
+  payment_method_2_name?: string | null;
 };
