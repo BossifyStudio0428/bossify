@@ -18,7 +18,7 @@ function PlansPage() {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [submitting, setSubmitting] = useState(false);
 
-  const price = billing === "monthly" ? "RM 19" : "RM 159";
+  const price = billing === "monthly" ? "RM 50" : "RM 500";
   const period = billing === "monthly" ? t("per_month") : t("per_year");
 
   const freeRows: { ok: boolean; label: string }[] = [
