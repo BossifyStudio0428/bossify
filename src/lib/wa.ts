@@ -70,9 +70,9 @@ const REMINDER_TPL_BY_LANG: Record<Lang, string> = {
 const NOTES_LABEL: Record<Lang, string> = { en: "Notes", ms: "Nota", zh: "备注" };
 
 const PAYMENT_LABELS: Record<Lang, { header: string; name: string }> = {
-  en: { header: "Payment Details", name: "Name" },
-  ms: { header: "Maklumat Pembayaran", name: "Nama" },
-  zh: { header: "付款方式", name: "户名" },
+  en: { header: "Payment Details", name: "Name", qr: "QR Code" },
+  ms: { header: "Maklumat Pembayaran", name: "Nama", qr: "Kod QR" },
+  zh: { header: "付款方式", name: "户名", qr: "QR码" },
 };
 
 export type PaymentMethod = {
