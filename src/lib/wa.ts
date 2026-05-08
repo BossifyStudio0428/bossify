@@ -69,16 +69,17 @@ const REMINDER_TPL_BY_LANG: Record<Lang, string> = {
 
 const NOTES_LABEL: Record<Lang, string> = { en: "Notes", ms: "Nota", zh: "备注" };
 
-const PAYMENT_LABELS: Record<Lang, { header: string; name: string }> = {
-  en: { header: "Payment Details", name: "Name" },
-  ms: { header: "Maklumat Pembayaran", name: "Nama" },
-  zh: { header: "付款方式", name: "户名" },
+const PAYMENT_LABELS: Record<Lang, { header: string; name: string; qr: string }> = {
+  en: { header: "Payment Details", name: "Name", qr: "QR Code" },
+  ms: { header: "Maklumat Pembayaran", name: "Nama", qr: "Kod QR" },
+  zh: { header: "付款方式", name: "户名", qr: "QR码" },
 };
 
 export type PaymentMethod = {
   type?: string | null;
   number?: string | null;
   name?: string | null;
+  qr_url?: string | null;
 };
 
 export function formatPaymentBlock(
@@ -89,11 +90,13 @@ export function formatPaymentBlock(
   if (valid.length === 0) return "";
   const sep = lang === "zh" ? "：" : ": ";
   const labels = PAYMENT_LABELS[lang];
-  const lines: string[] = [`💳 ${labels.header}:`];
+  const lines: string[] = ["━━━━━━━━━━━━━━━", `💳 ${labels.header}${sep}`];
   for (const m of valid) {
     lines.push(`${m.type}${sep}${m.number}`);
     if (m.name) lines.push(`${labels.name}${sep}${m.name}`);
+    if (m.qr_url) lines.push(`📷 ${labels.qr}${sep}${m.qr_url}`);
   }
+  lines.push("━━━━━━━━━━━━━━━");
   return lines.join("\n") + "\n\n";
 }
 

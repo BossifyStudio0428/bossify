@@ -68,13 +68,13 @@ function OrdersPage() {
     (async () => {
       const [{ data }, { data: prof }] = await Promise.all([
         supabase.from("user_preferences").select("wa_reminder_template").maybeSingle(),
-        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_2_type,payment_method_2_number,payment_method_2_name").maybeSingle(),
+        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url").maybeSingle(),
       ]);
       if (data?.wa_reminder_template) setCustomReminderTpl(data.wa_reminder_template);
       if (prof) {
         setPaymentBlock(formatPaymentBlock([
-          { type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name },
-          { type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name },
+          { type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name, qr_url: prof.payment_method_1_qr_url },
+          { type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name, qr_url: prof.payment_method_2_qr_url },
         ], lang));
       }
     })();

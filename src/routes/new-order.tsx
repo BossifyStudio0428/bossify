@@ -82,14 +82,14 @@ function NewOrderPage() {
       const [{ data: inv }, { data: pref }, { data: prof }] = await Promise.all([
         supabase.from("inventory").select("*"),
         supabase.from("user_preferences").select("wa_order_template").maybeSingle(),
-        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_2_type,payment_method_2_number,payment_method_2_name").maybeSingle(),
+        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url").maybeSingle(),
       ]);
       setInventory((inv ?? []) as InventoryRow[]);
       if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
       if (prof) {
         setPaymentBlock(formatPaymentBlock([
-          { type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name },
-          { type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name },
+          { type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name, qr_url: prof.payment_method_1_qr_url },
+          { type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name, qr_url: prof.payment_method_2_qr_url },
         ], lang));
       }
     })();
