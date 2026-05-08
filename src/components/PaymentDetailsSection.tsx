@@ -143,7 +143,7 @@ function QrUploader({
   uploading: boolean;
   onPick: (f: File) => void;
   onRemove: () => void;
-  t: (k: string) => string;
+  t: (k: any) => string;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
