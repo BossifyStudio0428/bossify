@@ -36,7 +36,7 @@ export function UpgradeModal() {
           onClick={() => { hideUpgrade(); navigate({ to: "/plans" }); }}
           className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition"
         >
-          {t("upgrade_to_pro")} → RM 19/{t("per_month").replace(/^\s*\/\s*/, "")}
+          {t("upgrade_to_pro")} → RM 49/{t("per_month").replace(/^\s*\/\s*/, "")}
         </button>
         <button
           onClick={hideUpgrade}
