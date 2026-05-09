@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, formatPaymentBlock } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -53,7 +53,6 @@ function OrdersPage() {
   const [detail, setDetail] = useState<OrderRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [customReminderTpl, setCustomReminderTpl] = useState<string | null>(null);
-  const [paymentBlock, setPaymentBlock] = useState<string>("");
   const [bulkProgress, setBulkProgress] = useState<{ i: number; n: number } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<OrderRow | null>(null);
   const [editingOrder, setEditingOrder] = useState<OrderRow | null>(null);
@@ -67,23 +66,10 @@ function OrdersPage() {
   useEffect(() => {
     (async () => {
       if (!user) return;
-      const [{ data }, { data: prof }] = await Promise.all([
-        supabase.from("user_preferences").select("wa_reminder_template").maybeSingle(),
-        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url").eq("id", user.id).maybeSingle(),
-      ]);
+      const { data } = await supabase.from("user_preferences").select("wa_reminder_template").maybeSingle();
       if (data?.wa_reminder_template) setCustomReminderTpl(data.wa_reminder_template);
-      if (prof) {
-        const methods = [];
-        if (prof.payment_method_1_type) {
-          methods.push({ type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name, qr_url: prof.payment_method_1_qr_url ?? null });
-        }
-        if (prof.payment_method_2_type) {
-          methods.push({ type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name, qr_url: prof.payment_method_2_qr_url ?? null });
-        }
-        setPaymentBlock(formatPaymentBlock(methods, lang));
-      }
     })();
-  }, [lang, user]);
+  }, [user]);
 
   const load = useCallback(async (silent = false) => {
     if (!user) {
@@ -174,13 +160,15 @@ function OrdersPage() {
     }
   };
 
-  const remind = (o: OrderRow) => {
+  const remind = async (o: OrderRow) => {
     if (!o.phone) { alert(t("no_phone_for_wa")); return; }
+    if (!user) return;
+    const paymentDetails = await fetchFreshPaymentBlock(user.id, lang);
     const msg = renderTemplate(getReminderTemplate(lang, customReminderTpl), {
       customer_name: o.customer_name, code: o.code, product: o.product,
       quantity: o.quantity, amount: Number(o.amount).toFixed(2),
       status: o.status, days_ago: daysSince(o.created_at),
-      payment_details: paymentBlock,
+      payment_details: paymentDetails,
     }, lang);
     window.open(buildWhatsAppLink(o.phone, msg), "_blank");
   };
@@ -191,7 +179,7 @@ function OrdersPage() {
     if (!confirm(t("confirm_remind_all").replace("{n}", String(unpaid.length)))) return;
     for (let i = 0; i < unpaid.length; i++) {
       setBulkProgress({ i: i + 1, n: unpaid.length });
-      remind(unpaid[i]);
+      await remind(unpaid[i]);
       if (i < unpaid.length - 1) await new Promise((r) => setTimeout(r, 2000));
     }
     setBulkProgress(null);
