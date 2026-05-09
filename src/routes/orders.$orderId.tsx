@@ -38,7 +38,7 @@ function OrderDetailPage() {
       if (!user) return;
       const [{ data }, { data: pref }] = await Promise.all([
         supabase.from("orders").select("*").eq("id", orderId).maybeSingle(),
-        supabase.from("user_preferences").select("wa_order_template").maybeSingle(),
+        supabase.from("user_preferences").select("wa_order_template").eq("user_id", user.id).maybeSingle(),
       ]);
       setOrder(data as OrderRow | null);
       setForm((data ?? {}) as Partial<OrderRow>);
