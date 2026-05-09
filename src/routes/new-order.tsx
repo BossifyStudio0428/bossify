@@ -82,7 +82,7 @@ function NewOrderPage() {
       if (!user) return;
       const [{ data: inv }, { data: pref }] = await Promise.all([
         supabase.from("inventory").select("*"),
-        supabase.from("user_preferences").select("wa_order_template").maybeSingle(),
+        supabase.from("user_preferences").select("wa_order_template").eq("user_id", user.id).maybeSingle(),
       ]);
       setInventory((inv ?? []) as InventoryRow[]);
       if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
