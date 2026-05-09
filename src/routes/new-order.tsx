@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase, type OrderStatus, type InventoryRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { renderTemplate, buildWhatsAppLink, getOrderTemplate, formatPaymentBlock } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
 import { notify as deviceNotify } from "@/lib/notifications";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
@@ -75,28 +75,18 @@ function NewOrderPage() {
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
-  const [paymentBlock, setPaymentBlock] = useState<string>("");
+  const [paymentPreviewBlock, setPaymentPreviewBlock] = useState<string>("");
 
   useEffect(() => {
     (async () => {
       if (!user) return;
-      const [{ data: inv }, { data: pref }, { data: prof }] = await Promise.all([
+      const [{ data: inv }, { data: pref }] = await Promise.all([
         supabase.from("inventory").select("*"),
-        supabase.from("user_preferences").select("wa_order_template").maybeSingle(),
-        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url").eq("id", user.id).maybeSingle(),
+        supabase.from("user_preferences").select("wa_order_template").eq("user_id", user.id).maybeSingle(),
       ]);
       setInventory((inv ?? []) as InventoryRow[]);
       if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
-      if (prof) {
-        const methods = [];
-        if (prof.payment_method_1_type) {
-          methods.push({ type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name, qr_url: prof.payment_method_1_qr_url ?? null });
-        }
-        if (prof.payment_method_2_type) {
-          methods.push({ type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name, qr_url: prof.payment_method_2_qr_url ?? null });
-        }
-        setPaymentBlock(formatPaymentBlock(methods, lang));
-      }
+      setPaymentPreviewBlock(await fetchFreshPaymentBlock(user.id, lang));
     })();
   }, [lang, user]);
 
@@ -214,7 +204,7 @@ function NewOrderPage() {
     return { id: inserted.id, code: inserted.code };
   };
 
-  const buildMessage = (code: string) => renderTemplate(getOrderTemplate(lang, customOrderTpl), {
+  const buildMessage = (code: string, paymentDetails = paymentPreviewBlock) => renderTemplate(getOrderTemplate(lang, customOrderTpl), {
     customer_name: form.customer_name || "Customer",
     code,
     product: form.product || "—",
@@ -222,7 +212,7 @@ function NewOrderPage() {
     amount: form.amount ? Number(form.amount).toFixed(2) : "0.00",
     status,
     notes: form.notes,
-    payment_details: status !== "Paid" ? paymentBlock : "",
+    payment_details: status !== "Paid" ? paymentDetails : "",
   }, lang);
 
   const livePreview = buildMessage("ORD-PREVIEW-001");
@@ -262,7 +252,7 @@ function NewOrderPage() {
     setSaving(false);
     if (!res) return;
     toast.success(t("order_saved"));
-    const msg = buildMessage(res.code);
+    const msg = buildMessage(res.code, user ? await fetchFreshPaymentBlock(user.id, lang) : "");
     if (user) {
       await createNotification({
         user_id: user.id, type: "new_order",

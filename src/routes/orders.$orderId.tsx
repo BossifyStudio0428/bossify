@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { renderTemplate, buildWhatsAppLink, getOrderTemplate, formatPaymentBlock } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
 
 export const Route = createFileRoute("/orders/$orderId")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -31,41 +31,31 @@ function OrderDetailPage() {
   const [editing, setEditing] = useState(edit);
   const [form, setForm] = useState<Partial<OrderRow>>({});
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
-  const [paymentBlock, setPaymentBlock] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
       if (!user) return;
-      const [{ data }, { data: pref }, { data: prof }] = await Promise.all([
+      const [{ data }, { data: pref }] = await Promise.all([
         supabase.from("orders").select("*").eq("id", orderId).maybeSingle(),
-        supabase.from("user_preferences").select("wa_order_template").maybeSingle(),
-        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url").eq("id", user.id).maybeSingle(),
+        supabase.from("user_preferences").select("wa_order_template").eq("user_id", user.id).maybeSingle(),
       ]);
       setOrder(data as OrderRow | null);
       setForm((data ?? {}) as Partial<OrderRow>);
       if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
-      if (prof) {
-        const methods = [];
-        if (prof.payment_method_1_type) {
-          methods.push({ type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name, qr_url: prof.payment_method_1_qr_url ?? null });
-        }
-        if (prof.payment_method_2_type) {
-          methods.push({ type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name, qr_url: prof.payment_method_2_qr_url ?? null });
-        }
-        setPaymentBlock(formatPaymentBlock(methods, lang));
-      }
       setLoading(false);
     })();
-  }, [orderId, lang, user]);
+  }, [orderId, user]);
 
-  const sendWA = () => {
+  const sendWA = async () => {
     if (!order?.phone) { alert(t("no_phone_for_wa")); return; }
+    if (!user) return;
+    const paymentDetails = order.status !== "Paid" ? await fetchFreshPaymentBlock(user.id, lang) : "";
     const msg = renderTemplate(getOrderTemplate(lang, customOrderTpl), {
       customer_name: order.customer_name, code: order.code, product: order.product,
       quantity: order.quantity, amount: Number(order.amount).toFixed(2),
       status: order.status, notes: order.notes ?? "",
-      payment_details: order.status !== "Paid" ? paymentBlock : "",
+      payment_details: paymentDetails,
     }, lang);
     window.open(buildWhatsAppLink(order.phone, msg), "_blank");
   };

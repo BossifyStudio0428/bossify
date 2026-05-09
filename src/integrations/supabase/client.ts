@@ -61,7 +61,9 @@ export type ProfileRow = {
   payment_method_1_type?: string | null;
   payment_method_1_number?: string | null;
   payment_method_1_name?: string | null;
+  payment_method_1_qr_url?: string | null;
   payment_method_2_type?: string | null;
   payment_method_2_number?: string | null;
   payment_method_2_name?: string | null;
+  payment_method_2_qr_url?: string | null;
 };

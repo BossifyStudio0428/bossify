@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,12 +10,19 @@ const PAYMENT_TYPES = ["DuitNow", "Bank Transfer", "TNG eWallet", "ShopeePay", "
 type Method = { type: string; number: string; name: string; qr_url: string };
 const empty: Method = { type: "", number: "", name: "", qr_url: "" };
 
+function hasMethod(m: Method) {
+  return !!(m.type || m.number || m.name || m.qr_url);
+}
+
 export default function PaymentDetailsSection() {
   const { user } = useAuth();
   const { t } = useI18n();
   const [m1, setM1] = useState<Method>(empty);
   const [m2, setM2] = useState<Method>(empty);
   const [show2, setShow2] = useState(false);
+  const [editingSlot, setEditingSlot] = useState<1 | 2 | null>(1);
+  const [menuSlot, setMenuSlot] = useState<1 | 2 | null>(null);
+  const [deleteSlot, setDeleteSlot] = useState<1 | 2 | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<1 | 2 | null>(null);
 
@@ -27,30 +35,67 @@ export default function PaymentDetailsSection() {
         .eq("id", user.id)
         .maybeSingle();
       if (data) {
-        setM1({ type: data.payment_method_1_type ?? "", number: data.payment_method_1_number ?? "", name: data.payment_method_1_name ?? "", qr_url: data.payment_method_1_qr_url ?? "" });
-        const has2 = !!(data.payment_method_2_type || data.payment_method_2_number || data.payment_method_2_qr_url);
-        setShow2(has2);
-        setM2({ type: data.payment_method_2_type ?? "", number: data.payment_method_2_number ?? "", name: data.payment_method_2_name ?? "", qr_url: data.payment_method_2_qr_url ?? "" });
+        const next1 = { type: data.payment_method_1_type ?? "", number: data.payment_method_1_number ?? "", name: data.payment_method_1_name ?? "", qr_url: data.payment_method_1_qr_url ?? "" };
+        const next2 = { type: data.payment_method_2_type ?? "", number: data.payment_method_2_number ?? "", name: data.payment_method_2_name ?? "", qr_url: data.payment_method_2_qr_url ?? "" };
+        setM1(next1);
+        setM2(next2);
+        setShow2(hasMethod(next2));
+        setEditingSlot(hasMethod(next1) || hasMethod(next2) ? null : 1);
       }
     })();
   }, [user]);
 
-  const save = async () => {
-    if (!user) return;
+  const persist = async (nextM1 = m1, nextM2 = m2, nextShow2 = show2) => {
+    if (!user) return false;
     setSaving(true);
     const { error } = await supabase.from("profiles").update({
-      payment_method_1_type: m1.type || null,
-      payment_method_1_number: m1.number || null,
-      payment_method_1_name: m1.name || null,
-      payment_method_1_qr_url: m1.qr_url || null,
-      payment_method_2_type: show2 ? (m2.type || null) : null,
-      payment_method_2_number: show2 ? (m2.number || null) : null,
-      payment_method_2_name: show2 ? (m2.name || null) : null,
-      payment_method_2_qr_url: show2 ? (m2.qr_url || null) : null,
+      payment_method_1_type: nextM1.type || null,
+      payment_method_1_number: nextM1.number || null,
+      payment_method_1_name: nextM1.name || null,
+      payment_method_1_qr_url: nextM1.qr_url || null,
+      payment_method_2_type: nextShow2 ? (nextM2.type || null) : null,
+      payment_method_2_number: nextShow2 ? (nextM2.number || null) : null,
+      payment_method_2_name: nextShow2 ? (nextM2.name || null) : null,
+      payment_method_2_qr_url: nextShow2 ? (nextM2.qr_url || null) : null,
     }).eq("id", user.id);
     setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success(t("pay_saved"));
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    return true;
+  };
+
+  const save = async () => {
+    const ok = await persist();
+    if (!ok) return;
+    const nextShow2 = hasMethod(m2);
+    setShow2(nextShow2);
+    setEditingSlot(hasMethod(m1) || nextShow2 ? null : 1);
+    toast.success(t("pay_saved"));
+  };
+
+  const startAdd = () => {
+    setShow2(true);
+    setM2(empty);
+    setEditingSlot(2);
+    setMenuSlot(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteSlot) return;
+    const nextM1 = deleteSlot === 1 && hasMethod(m2) ? m2 : deleteSlot === 1 ? empty : m1;
+    const nextM2 = deleteSlot === 1 ? empty : empty;
+    const nextShow2 = false;
+    const ok = await persist(nextM1, nextM2, nextShow2);
+    if (!ok) return;
+    setM1(nextM1);
+    setM2(nextM2);
+    setShow2(nextShow2);
+    setEditingSlot(hasMethod(nextM1) ? null : 1);
+    setMenuSlot(null);
+    setDeleteSlot(null);
+    toast.success(t("payment_deleted"));
   };
 
   const uploadQr = async (slot: 1 | 2, file: File, m: Method, set: (m: Method) => void) => {
@@ -63,7 +108,8 @@ export default function PaymentDetailsSection() {
     if (upErr) { toast.error(upErr.message); setUploading(null); return; }
     const { data: pub } = supabase.storage.from("payment-qr").getPublicUrl(path);
     const url = pub.publicUrl;
-    set({ ...m, qr_url: url });
+    const next = { ...m, qr_url: url };
+    set(next);
     const col = slot === 1 ? "payment_method_1_qr_url" : "payment_method_2_qr_url";
     await supabase.from("profiles").update({ [col]: url }).eq("id", user.id);
     setUploading(null);
@@ -77,7 +123,7 @@ export default function PaymentDetailsSection() {
     await supabase.from("profiles").update({ [col]: null }).eq("id", user.id);
   };
 
-  const renderMethod = (label: string, m: Method, set: (m: Method) => void) => (
+  const renderForm = (slot: 1 | 2, label: string, m: Method, set: (m: Method) => void) => (
     <div className="space-y-2">
       <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{label}</p>
       <select
@@ -102,36 +148,118 @@ export default function PaymentDetailsSection() {
       />
       <QrUploader
         value={m.qr_url}
-        uploading={uploading === (label.endsWith("1") ? 1 : 2)}
-        onPick={(file) => uploadQr(label.endsWith("1") ? 1 : 2, file, m, set)}
-        onRemove={() => removeQr(label.endsWith("1") ? 1 : 2, m, set)}
+        uploading={uploading === slot}
+        onPick={(file) => uploadQr(slot, file, m, set)}
+        onRemove={() => removeQr(slot, m, set)}
         t={t}
       />
+      <div className="flex gap-2 pt-2">
+        {(hasMethod(m1) || hasMethod(m2)) && (
+          <button
+            type="button"
+            onClick={() => {
+              if (slot === 2 && !hasMethod(m)) setShow2(false);
+              setEditingSlot(null);
+            }}
+            className="flex-1 py-3 rounded-2xl bg-muted text-muted-foreground font-bold text-sm"
+          >
+            {t("cancel")}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm disabled:opacity-60"
+        >
+          {saving ? t("saving") : t("save")}
+        </button>
+      </div>
     </div>
   );
+
+  const renderCard = (slot: 1 | 2, m: Method) => {
+    if (!hasMethod(m)) return null;
+    return (
+      <div className="relative rounded-2xl border border-border/60 bg-background/40 p-3 flex gap-3">
+        {m.qr_url ? <img src={m.qr_url} alt="QR" className="h-16 w-16 rounded-xl object-cover border border-border/60 shrink-0" /> : <div className="h-16 w-16 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">💳</div>}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-foreground truncate">{m.type || t("pay_method")}</p>
+          {m.number ? <p className="text-sm text-foreground mt-1 break-all">{m.number}</p> : null}
+          {m.name ? <p className="text-xs text-muted-foreground mt-1 truncate">{m.name}</p> : null}
+          {m.qr_url ? <p className="text-[10px] text-primary font-semibold mt-1">{t("qr_uploaded")}</p> : null}
+        </div>
+        <button
+          type="button"
+          onClick={() => setMenuSlot(menuSlot === slot ? null : slot)}
+          className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground active:bg-muted"
+          aria-label={t("payment_actions")}
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+        {menuSlot === slot && (
+          <div className="absolute right-3 top-11 z-10 w-40 rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
+            <button
+              type="button"
+              onClick={() => { setEditingSlot(slot); setMenuSlot(null); }}
+              className="w-full px-3 py-2.5 text-left text-sm font-medium flex items-center gap-2 active:bg-muted"
+            >
+              <Pencil className="h-4 w-4" /> {t("edit_payment")}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setDeleteSlot(slot); setMenuSlot(null); }}
+              className="w-full px-3 py-2.5 text-left text-sm font-medium text-destructive flex items-center gap-2 active:bg-muted"
+            >
+              <Trash2 className="h-4 w-4" /> {t("delete_payment")}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const hasAnyMethod = hasMethod(m1) || hasMethod(m2);
 
   return (
     <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-4">
       <h2 className="text-sm font-bold flex items-center gap-2">💳 {t("pay_details")}</h2>
-      {renderMethod(`${t("pay_method")} 1`, m1, setM1)}
-      {show2 ? (
-        renderMethod(`${t("pay_method")} 2`, m2, setM2)
-      ) : (
-        <button
-          type="button"
-          onClick={() => setShow2(true)}
-          className="w-full py-2.5 rounded-2xl border border-dashed border-border text-xs font-semibold text-muted-foreground"
-        >
-          + {t("pay_add_method")}
-        </button>
+
+      {editingSlot === 1 ? renderForm(1, `${t("pay_method")} 1`, m1, setM1) : null}
+      {editingSlot === 2 ? renderForm(2, `${t("pay_method")} 2`, m2, setM2) : null}
+
+      {!editingSlot && (
+        <div className="space-y-3">
+          {renderCard(1, m1)}
+          {show2 ? renderCard(2, m2) : null}
+          {!hasAnyMethod ? <p className="text-sm text-muted-foreground">{t("no_payment_methods")}</p> : null}
+          {!show2 ? (
+            <button
+              type="button"
+              onClick={hasMethod(m1) ? startAdd : () => setEditingSlot(1)}
+              className="w-full py-2.5 rounded-2xl border border-dashed border-border text-xs font-semibold text-muted-foreground"
+            >
+              + {t("pay_add_method")}
+            </button>
+          ) : null}
+        </div>
       )}
-      <button
-        onClick={save}
-        disabled={saving}
-        className="w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm disabled:opacity-60"
-      >
-        {saving ? t("saving") : t("save")}
-      </button>
+
+      {deleteSlot && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/70 backdrop-blur-sm" onClick={() => setDeleteSlot(null)}>
+          <div className="w-full max-w-[390px] rounded-t-3xl bg-card p-5 space-y-4 shadow-[var(--shadow-card)]" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto h-1 w-10 rounded-full bg-muted" />
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-foreground">{t("delete_payment")}</h3>
+              <p className="text-sm text-muted-foreground">{t("delete_payment_confirm")}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setDeleteSlot(null)} className="py-3 rounded-2xl bg-muted font-semibold text-sm">{t("cancel")}</button>
+              <button type="button" onClick={confirmDelete} disabled={saving} className="py-3 rounded-2xl bg-destructive text-destructive-foreground font-semibold text-sm disabled:opacity-60">{saving ? t("saving") : t("delete")}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

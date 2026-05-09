@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Home, ClipboardList, Plus, Package, Users, User } from "lucide-react";
+import { Home, ClipboardList, Plus, Package, User } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,7 +79,7 @@ if (typeof window !== "undefined") {
 const tabs = [
   { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
   { to: "/orders", labelKey: "nav_orders", icon: ClipboardList, id: "tour-tab-orders" },
-  { to: "/customers", labelKey: "nav_customers", icon: Users, id: "tour-tab-customers" },
+  { to: "/inventory", labelKey: "nav_inventory", icon: Package, id: "tour-tab-inventory" },
   { to: "/profile", labelKey: "nav_profile", icon: User, id: "tour-tab-profile" },
 ] as const;
 
