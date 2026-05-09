@@ -69,7 +69,9 @@ export default function PaymentDetailsSection() {
   const save = async () => {
     const ok = await persist();
     if (!ok) return;
-    setEditingSlot(null);
+    const nextShow2 = hasMethod(m2);
+    setShow2(nextShow2);
+    setEditingSlot(hasMethod(m1) || nextShow2 ? null : 1);
     toast.success(t("pay_saved"));
   };
 
@@ -228,10 +230,10 @@ export default function PaymentDetailsSection() {
           {renderCard(1, m1)}
           {show2 ? renderCard(2, m2) : null}
           {!hasAnyMethod ? <p className="text-sm text-muted-foreground">{t("no_payment_methods")}</p> : null}
-          {!show2 && hasMethod(m1) ? (
+          {!show2 ? (
             <button
               type="button"
-              onClick={startAdd}
+              onClick={hasMethod(m1) ? startAdd : () => setEditingSlot(1)}
               className="w-full py-2.5 rounded-2xl border border-dashed border-border text-xs font-semibold text-muted-foreground"
             >
               + {t("pay_add_method")}
