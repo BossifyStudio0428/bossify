@@ -157,7 +157,10 @@ export default function PaymentDetailsSection() {
         {(hasMethod(m1) || hasMethod(m2)) && (
           <button
             type="button"
-            onClick={() => setEditingSlot(null)}
+            onClick={() => {
+              if (slot === 2 && !hasMethod(m)) setShow2(false);
+              setEditingSlot(null);
+            }}
             className="flex-1 py-3 rounded-2xl bg-muted text-muted-foreground font-bold text-sm"
           >
             {t("cancel")}
