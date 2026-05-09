@@ -79,21 +79,26 @@ function NewOrderPage() {
 
   useEffect(() => {
     (async () => {
+      if (!user) return;
       const [{ data: inv }, { data: pref }, { data: prof }] = await Promise.all([
         supabase.from("inventory").select("*"),
         supabase.from("user_preferences").select("wa_order_template").maybeSingle(),
-        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url").maybeSingle(),
+        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url").eq("id", user.id).maybeSingle(),
       ]);
       setInventory((inv ?? []) as InventoryRow[]);
       if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
       if (prof) {
-        setPaymentBlock(formatPaymentBlock([
-          { type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name, qr_url: prof.payment_method_1_qr_url },
-          { type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name, qr_url: prof.payment_method_2_qr_url },
-        ], lang));
+        const methods = [];
+        if (prof.payment_method_1_type) {
+          methods.push({ type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name, qr_url: prof.payment_method_1_qr_url ?? null });
+        }
+        if (prof.payment_method_2_type) {
+          methods.push({ type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name, qr_url: prof.payment_method_2_qr_url ?? null });
+        }
+        setPaymentBlock(formatPaymentBlock(methods, lang));
       }
     })();
-  }, [lang]);
+  }, [lang, user]);
 
   const upd = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((p) => ({ ...p, [k]: e.target.value }));

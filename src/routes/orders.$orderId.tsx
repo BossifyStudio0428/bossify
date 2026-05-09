@@ -36,23 +36,28 @@ function OrderDetailPage() {
 
   useEffect(() => {
     (async () => {
+      if (!user) return;
       const [{ data }, { data: pref }, { data: prof }] = await Promise.all([
         supabase.from("orders").select("*").eq("id", orderId).maybeSingle(),
         supabase.from("user_preferences").select("wa_order_template").maybeSingle(),
-        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url").maybeSingle(),
+        supabase.from("profiles").select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url").eq("id", user.id).maybeSingle(),
       ]);
       setOrder(data as OrderRow | null);
       setForm((data ?? {}) as Partial<OrderRow>);
       if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
       if (prof) {
-        setPaymentBlock(formatPaymentBlock([
-          { type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name, qr_url: prof.payment_method_1_qr_url },
-          { type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name, qr_url: prof.payment_method_2_qr_url },
-        ], lang));
+        const methods = [];
+        if (prof.payment_method_1_type) {
+          methods.push({ type: prof.payment_method_1_type, number: prof.payment_method_1_number, name: prof.payment_method_1_name, qr_url: prof.payment_method_1_qr_url ?? null });
+        }
+        if (prof.payment_method_2_type) {
+          methods.push({ type: prof.payment_method_2_type, number: prof.payment_method_2_number, name: prof.payment_method_2_name, qr_url: prof.payment_method_2_qr_url ?? null });
+        }
+        setPaymentBlock(formatPaymentBlock(methods, lang));
       }
       setLoading(false);
     })();
-  }, [orderId, lang]);
+  }, [orderId, lang, user]);
 
   const sendWA = () => {
     if (!order?.phone) { alert(t("no_phone_for_wa")); return; }
