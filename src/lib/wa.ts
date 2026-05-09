@@ -1,5 +1,6 @@
 import type { Lang } from "@/contexts/I18nContext";
 import { safeLocalStorage } from "@/lib/safeStorage";
+import { supabase } from "@/integrations/supabase/client";
 
 // English templates remain the canonical "DEFAULT" exported for the
 // Profile template editor (so existing behaviour is preserved).
@@ -86,18 +87,46 @@ export function formatPaymentBlock(
   methods: PaymentMethod[],
   lang: Lang = getActiveLang(),
 ): string {
-  const valid = methods.filter((m) => m && m.type && m.number);
+  const valid = methods.filter((m) => m && m.type);
   if (valid.length === 0) return "";
   const sep = lang === "zh" ? "：" : ": ";
   const labels = PAYMENT_LABELS[lang];
   const lines: string[] = ["━━━━━━━━━━━━━━━", `💳 ${labels.header}${sep}`];
   for (const m of valid) {
-    lines.push(`${m.type}${sep}${m.number}`);
+    lines.push(m.number ? `${m.type}${sep}${m.number}` : String(m.type));
     if (m.name) lines.push(`${labels.name}${sep}${m.name}`);
     if (m.qr_url) lines.push(`📷 ${labels.qr}${sep}${m.qr_url}`);
   }
   lines.push("━━━━━━━━━━━━━━━");
   return lines.join("\n") + "\n\n";
+}
+
+export async function fetchFreshPaymentBlock(userId: string, lang: Lang = getActiveLang()): Promise<string> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url")
+    .eq("id", userId)
+    .single();
+
+  if (!profile?.payment_method_1_type) return "";
+
+  const methods: PaymentMethod[] = [{
+    type: profile.payment_method_1_type,
+    number: profile.payment_method_1_number,
+    name: profile.payment_method_1_name,
+    qr_url: profile.payment_method_1_qr_url ?? null,
+  }];
+
+  if (profile.payment_method_2_type) {
+    methods.push({
+      type: profile.payment_method_2_type,
+      number: profile.payment_method_2_number,
+      name: profile.payment_method_2_name,
+      qr_url: profile.payment_method_2_qr_url ?? null,
+    });
+  }
+
+  return formatPaymentBlock(methods, lang);
 }
 
 export function getActiveLang(): Lang {
