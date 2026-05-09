@@ -165,7 +165,11 @@ export function renderTemplate(tpl: string, vars: TplVars, lang: Lang = getActiv
   out = out.replace(/\[notes if not empty:[^\]]*\]/g, noteLine);
   out = out.replace(/\[notes\]/g, noteLine);
   const payBlock = vars.payment_details ?? "";
-  out = out.replace(/\[payment_details\]/g, payBlock);
+  if (out.includes("[payment_details]")) {
+    out = out.replace(/\[payment_details\]/g, payBlock);
+  } else if (payBlock) {
+    out = `${out.trim()}\n\n${payBlock}`;
+  }
   for (const [k, v] of Object.entries(vars)) {
     if (k === "notes" || k === "payment_details") continue;
     out = out.replace(new RegExp(`\\[${k}\\]`, "g"), String(v ?? ""));
