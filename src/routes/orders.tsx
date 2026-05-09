@@ -205,16 +205,18 @@ function OrdersPage() {
     if (!target) return;
     setDeletingId(id);
 
-    // Delete from DB FIRST through a security-definer RPC that enforces
-    // ownership with auth.uid().
-    const { data: deletedOrder, error } = await supabase.rpc("delete_own_order", { _order_id: id });
+    const { error, count } = await supabase
+      .from("orders")
+      .delete({ count: "exact" })
+      .eq("id", id)
+      .eq("user_id", user?.id ?? "");
 
     if (error) {
       setDeletingId(null);
       toast.error(error.message || t("update_failed"));
       return;
     }
-    if (!deletedOrder) {
+    if (!count) {
       setDeletingId(null);
       toast.error(t("failed_delete_perm"));
       return;
