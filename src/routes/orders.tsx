@@ -66,7 +66,7 @@ function OrdersPage() {
   useEffect(() => {
     (async () => {
       if (!user) return;
-      const { data } = await supabase.from("user_preferences").select("wa_reminder_template").maybeSingle();
+      const { data } = await supabase.from("user_preferences").select("wa_reminder_template").eq("user_id", user.id).maybeSingle();
       if (data?.wa_reminder_template) setCustomReminderTpl(data.wa_reminder_template);
     })();
   }, [user]);
