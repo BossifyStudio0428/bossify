@@ -79,7 +79,7 @@ if (typeof window !== "undefined") {
 const tabs = [
   { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
   { to: "/orders", labelKey: "nav_orders", icon: ClipboardList, id: "tour-tab-orders" },
-  { to: "/customers", labelKey: "nav_customers", icon: Users, id: "tour-tab-customers" },
+  { to: "/inventory", labelKey: "nav_inventory", icon: Package, id: "tour-tab-inventory" },
   { to: "/profile", labelKey: "nav_profile", icon: User, id: "tour-tab-profile" },
 ] as const;
 
