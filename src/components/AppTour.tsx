@@ -25,7 +25,7 @@ const STEPS: Step[] = [
   { targetId: "tour-stats", textKey: "tour_msg_1", padding: 8 },
   { targetId: "tour-new-order", textKey: "tour_msg_2", pulse: true, padding: 12 },
   { targetId: "tour-tab-orders", textKey: "tour_msg_3", padding: 8 },
-  { targetId: "tour-tab-customers", textKey: "tour_msg_5", padding: 8 },
+  { targetId: "tour-tab-inventory", textKey: "tour_msg_4", padding: 8 },
   { targetId: "tour-tab-profile", textKey: "tour_profile", padding: 8 },
   { textKey: "tour_msg_6" },
 ];
