@@ -60,8 +60,8 @@ export async function requestNotifPermission(): Promise<boolean> {
       // Permission permanently denied — bounce to the app's native
       // notification settings page so the user can toggle it.
       try {
-        const { NativeSettings, AndroidSettings } = await import("capacitor-native-settings");
-        await NativeSettings.openAndroid({ option: AndroidSettings.AppNotification });
+        const mod: any = await import(/* @vite-ignore */ "capacitor-native-settings");
+        await mod.NativeSettings.openAndroid({ option: mod.AndroidSettings.AppNotification });
       } catch {
         try {
           const { App } = await import("@capacitor/app");
