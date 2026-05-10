@@ -55,9 +55,15 @@ function InventoryPage() {
     } else {
       toast.success(t("stock_updated"));
       if (next <= 5 && next < it.stock) {
-        import("@/lib/notifications").then(({ notify }) =>
-          notify("Low Stock Alert 📦", `${it.name} is running low. Only ${next} left!`, { route: "/inventory" }),
-        ).catch(() => {});
+        Promise.all([
+          import("@/lib/notifications"),
+          import("@/lib/notifPrefs"),
+        ]).then(([{ notify }, { isPrefEnabled }]) => {
+          if (!isPrefEnabled("notif_inventory")) return;
+          const title = next === 0 ? "Out of Stock ❌" : "Low Stock Alert 📦";
+          const body = next === 0 ? `${it.name} is sold out. Restock now!` : `${it.name} is running low. Only ${next} left!`;
+          return notify(title, body, { route: "/inventory" });
+        }).catch(() => {});
       }
     }
   };
