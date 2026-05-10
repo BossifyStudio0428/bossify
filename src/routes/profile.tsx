@@ -40,6 +40,7 @@ function ProfilePage() {
     { icon: "📊", key: "analytics", label: t("analytics_label"), onClick: () => navigate({ to: "/analytics" }) },
     { icon: "📊", key: "rep", label: t("sales_reports"), onClick: () => navigate({ to: "/reports" }) },
     { icon: "🔔", key: "notif2", label: t("notifications"), onClick: () => navigate({ to: "/notifications" }) },
+    { icon: "⚙️", key: "notifsettings", label: t("notification_settings"), onClick: () => navigate({ to: "/notification-settings" }) },
     { icon: "🌐", key: "lang", label: t("language"), value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`, onClick: () => setLangOpen(true) },
     { icon: theme === "dark" ? "🌙" : "☀️", key: "theme", label: t("appearance"), value: theme === "dark" ? t("dark") : t("light"), onClick: toggleTheme },
     { icon: "💳", key: "sub", label: t("subscription"), value: isPro ? t("pro_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
