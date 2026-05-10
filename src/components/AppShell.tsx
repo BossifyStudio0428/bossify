@@ -14,7 +14,9 @@ import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splas
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { AppTour, hasCompletedTour } from "@/components/AppTour";
 import { NotifPermissionPrompt } from "@/components/NotifPermissionPrompt";
-import { isNotifGranted, runOverdueCheck, schedulePaymentReminder } from "@/lib/notifications";
+import { isNotifGranted } from "@/lib/notifications";
+import { loadPrefs } from "@/lib/notifPrefs";
+import { rescheduleAll, runUnpaidNotifyNow } from "@/lib/notifSchedule";
 
 // Session-level flag — true once we've shown the cold-start splash this app
 // launch. We use sessionStorage so the splash flow survives client-side
@@ -254,10 +256,13 @@ function ShellInner() {
     if (showTour) return;
     setNotifReady(true);
     if (isNotifGranted()) {
-      schedulePaymentReminder();
-      runOverdueCheck(session.user.id, t).catch(() => {});
+      const uid = session.user.id;
+      loadPrefs(uid)
+        .then(() => rescheduleAll(uid))
+        .then(() => runUnpaidNotifyNow(uid))
+        .catch(() => {});
     }
-  }, [session?.user?.id, onboardingChecked, needsOnboarding, showTour, t]);
+  }, [session?.user?.id, onboardingChecked, needsOnboarding, showTour]);
 
   // While first-time splash is queued (or navigation hasn't completed yet), render the
   // Bossify logo immediately so the user never sees the generic loading spinner.
