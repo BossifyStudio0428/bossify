@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Home, ClipboardList, Plus, Package, User } from "lucide-react";
+import { Home, ClipboardList, Plus, Package, User, Users } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,6 +80,7 @@ const tabs = [
   { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
   { to: "/orders", labelKey: "nav_orders", icon: ClipboardList, id: "tour-tab-orders" },
   { to: "/inventory", labelKey: "nav_inventory", icon: Package, id: "tour-tab-inventory" },
+  { to: "/customers", labelKey: "nav_customers", icon: Users, id: "tour-tab-customers" },
   { to: "/profile", labelKey: "nav_profile", icon: User, id: "tour-tab-profile" },
 ] as const;
 
@@ -314,7 +315,7 @@ const BottomNav = memo(function BottomNav() {
       style={{ bottom: "max(env(safe-area-inset-bottom), 0px)" }}
     >
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
-        <ul className="grid grid-cols-5 items-center h-16 px-2">
+        <ul className="grid grid-cols-6 items-center h-16 px-1">
           {tabs.slice(0, 2).map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
