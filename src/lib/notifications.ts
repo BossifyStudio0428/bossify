@@ -41,13 +41,37 @@ export async function requestNotifPermission(): Promise<boolean> {
     return false;
   }
   try {
-    const res = await plugin.requestPermissions();
+    // Check current state first — if previously denied, the native prompt
+    // will NOT re-appear. In that case open the system app settings so the
+    // user can flip the OS-level toggle themselves.
+    let current: { display?: string } = {};
+    try { current = await plugin.checkPermissions(); } catch {}
+    let res = current;
+    if (current.display !== "granted") {
+      try { res = await plugin.requestPermissions(); } catch {}
+    }
     const ok = res.display === "granted";
     if (ok) {
       try { localStorage.setItem(PERM_GRANTED_KEY, "1"); } catch {}
       await schedulePaymentReminder();
+      return true;
     }
-    return ok;
+    if (res.display === "denied") {
+      // Permission permanently denied — bounce to the app's native
+      // notification settings page so the user can toggle it.
+      try {
+        const { NativeSettings, AndroidSettings } = await import("capacitor-native-settings");
+        await NativeSettings.openAndroid({ option: AndroidSettings.AppNotification });
+      } catch {
+        try {
+          const { App } = await import("@capacitor/app");
+          // Fallback: best-effort open app info
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (App as any).openSettings?.();
+        } catch {}
+      }
+    }
+    return false;
   } catch { return false; }
 }
 
