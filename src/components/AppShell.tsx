@@ -353,11 +353,11 @@ function NavItem({
     <li id={id}>
       <Link
         to={to}
-        className="flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-muted-foreground relative"
+        className="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] leading-tight font-medium text-muted-foreground relative truncate"
         activeProps={{ className: "text-primary" }}
       >
-        <Icon className="h-5 w-5" />
-        <span>{label}</span>
+        <Icon className="h-[18px] w-[18px]" />
+        <span className="truncate max-w-[58px] text-center">{label}</span>
       </Link>
     </li>
   );
