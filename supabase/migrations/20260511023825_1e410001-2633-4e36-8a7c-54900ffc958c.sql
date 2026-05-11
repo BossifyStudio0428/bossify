@@ -1,0 +1,1 @@
+revoke execute on function public.trigger_push_kind(text) from public, anon, authenticated;

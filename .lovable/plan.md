@@ -1,77 +1,29 @@
-## Android FCM 推送通知方案（仅 Android）
+我会负责把这个构建问题修好，重点是切断客户端构建里错误引用 `client.server` 的导入链。
 
-### 你需要先做的两件事
+## 计划
 
-**1. 修复 build.gradle 拼写**（你已确认自己改）
-```gradle
-implementation("com.google.firebase:firebase-messaging")  // 不是 messasing
-```
+1. **移除当前错误导入链**
+   - 不再让 `/api/public/send-push` 路由在客户端路由树中间接导入 `src/integrations/supabase/client.server.ts` 或 `*.server.ts` 文件。
+   - 不手动编辑 `src/routeTree.gen.ts`，让路由插件重新生成。
 
-**2. 生成 FCM Service Account JSON**
-- Firebase Console → 项目设置（齿轮图标）→ **服务账号** 标签
-- 点 **"生成新的私钥"** → 下载 JSON 文件
-- 文件长这样：`{"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}`
-- 下载后我会让你通过 Lovable 安全地存为 secret `FCM_SERVICE_ACCOUNT_JSON`
+2. **重构推送发送端点**
+   - 将推送 API 的服务端逻辑改成不会被客户端 import graph 扫到的实现方式。
+   - 保留现有 `/api/public/send-push` 调用路径，避免破坏 `sendPushToSelf()` 和定时推送配置。
 
----
+3. **整理服务端 helper**
+   - 删除或停止使用当前 `sendPushHandler.ts` 里导致构建失败的 `createServerOnlyFn + dynamic import(client.server)` 组合。
+   - 避免再从客户端可达模块导入 `.server` 文件。
 
-### 我会做的事情
+4. **验证结果**
+   - 检查代码里不再存在从客户端路由链可达的 `client.server` / `fcm.server` 导入。
+   - 用构建/类型检查信号确认错误消失后再说完成。
 
-#### 1. 数据库（新增一张表）
-```
-device_tokens
-├─ id (uuid)
-├─ user_id (uuid, FK auth.users)
-├─ token (text, FCM device token)
-├─ platform (text: 'android')
-├─ updated_at (timestamptz)
-└─ unique(user_id, token)
-```
-+ RLS：用户只能读写自己的 token
+## 技术细节
 
-#### 2. App 端（Capacitor）
-- 安装 `@capacitor/push-notifications`
-- 新增 `src/lib/pushRegister.ts`：登录后注册 FCM token，存到 `device_tokens` 表
-- 在 `__root.tsx` 或 AuthContext 里挂载注册逻辑（仅 native 平台执行，浏览器跳过）
-- 处理 token 刷新事件
+当前问题不是你操作错了，是我之前把服务端推送逻辑放进了一个会被 TanStack 路由树导入的链路里。即使逻辑“理论上只在 server handler 里跑”，构建器还是会扫描完整导入图，所以看到 `client.server` 就直接失败。
 
-#### 3. 后端推送服务（TanStack server route）
-- 新增 `/api/public/send-push`（HMAC 验证 + Service Account JWT 签名）
-- 新增 `src/lib/fcm.ts`：用 Service Account 生成 OAuth2 access token，调用 FCM HTTP v1 API
-- 关键函数：`sendPushToUser(userId, title, body, link)`
+这次修复会把这个边界彻底拆干净，而不是继续在同一条导入链上打补丁。
 
-#### 4. 实时推送触发（事件驱动，无需 cron）
-- **新订单创建**：在 `new-order.tsx` 保存订单后调用 `sendPushToUser`
-- **低库存**：在 `inventory.tsx` 库存更新后检查并推送
-- **里程碑**：达成时推送
-
-#### 5. 定时推送（pg_cron）
-在数据库里创建 3 个定时任务，调用 `/api/public/send-push`：
-| 时间 | 内容 | 来源 |
-|------|------|------|
-| 09:00 | 早上摘要（昨日订单 + 今日待办） | 聚合查询 |
-| 10:00 | 未付款订单提醒 | `orders where status='Unpaid'` |
-| 21:00 | 收市报告（今日营收 + 订单数） | 聚合查询 |
-
-每个 cron 任务遵循用户的 `notif_prefs` 偏好（已经存在的表）。
-
-#### 6. Android 配置补丁
-更新 `scripts/patch-android.mjs`：
-- 自动复制 `android/app/google-services.json`（你已放好）
-- 确保 `POST_NOTIFICATIONS` 权限（已有）
-- 在 `build.gradle` 里强制保证 `firebase-messaging`（修复拼写）和 google-services plugin
-
-#### 7. 保留本地通知作为备份
-现有 `@capacitor/local-notifications` 不删，作为 FCM 失败时的 fallback。
-
----
-
-### 测试流程
-1. 你修拼写 + 生成 Service Account JSON
-2. 我把代码全部写好
-3. 你在 Android Studio 重新 build APK
-4. 安装到手机 → 登录 → 后台运行 app
-5. 用 Lovable 触发 `sendPushToUser` 测试 → 通知栏应该出现
-
-### iOS 暂不做
-代码会预留 platform 字段（'android'/'ios'），以后加 iOS 只需补 APNs 证书。
+<lov-actions>
+<lov-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</lov-link>
+</lov-actions>
