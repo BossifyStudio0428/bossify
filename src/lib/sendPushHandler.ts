@@ -40,6 +40,7 @@ async function resolveContent(
   kind: z.infer<typeof Schema>["kind"],
   override: { title?: string; body?: string; link?: string },
 ): Promise<{ title: string; body: string; link: string; allowed: boolean }> {
+  const supabaseAdmin = await getAdmin();
   const { data: prefs } = await supabaseAdmin
     .from("profiles")
     .select(
@@ -100,6 +101,8 @@ async function resolveContent(
 }
 
 async function dispatch(userId: string, content: { title: string; body: string; link: string }) {
+  const supabaseAdmin = await getAdmin();
+  const sendToTokens = await getSendToTokens();
   const { data: rows } = await supabaseAdmin
     .from("device_tokens").select("token").eq("user_id", userId);
   const tokens = (rows ?? []).map((r: { token: string }) => r.token);
@@ -113,6 +116,7 @@ async function dispatch(userId: string, content: { title: string; body: string; 
 }
 
 export async function handleSendPush(request: Request): Promise<Response> {
+  const supabaseAdmin = await getAdmin();
   let parsed: z.infer<typeof Schema>;
   try {
     parsed = Schema.parse(await request.json());
