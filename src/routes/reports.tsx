@@ -27,13 +27,32 @@ function ReportsPage() {
   const [to, setTo] = useState<string>(() => new Date().toISOString().slice(0, 10));
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data } = await supabase.from("orders").select("id,code,customer_name,product,quantity,amount,cost,gross_profit,status,created_at").order("created_at", { ascending: false });
+    if (!user?.id) return;
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase
+        .from("orders")
+        .select("id,code,customer_name,product,quantity,amount,cost,gross_profit,status,created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (cancelled) return;
       setOrders((data ?? []) as OrderRow[]);
       setLoading(false);
-    })();
-  }, []);
+    };
+    setLoading(true);
+    load();
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    const ch = supabase
+      .channel("reports-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, () => load())
+      .subscribe();
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(ch);
+    };
+  }, [user?.id]);
 
   const { fromDate, toDate, label } = useMemo(() => {
     const now = new Date();
