@@ -320,7 +320,7 @@ function OrdersPage() {
         </button>
       )}
 
-      <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
+      <div className="-mx-5 px-5 overflow-x-auto scrollbar-none" id="tour-orders-filters">
         <div className="flex gap-2 w-max">
           {filters.map((f) => {
             const isActive = active === f;
@@ -353,6 +353,7 @@ function OrdersPage() {
         {!loading && visible.map((o) => {
           const statusLabel = o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending");
           const removing = removingId === o.id;
+          const firstUnpaidId = visible.find((x) => x.status === "Unpaid")?.id;
           return (
             <article
               key={o.id}
@@ -424,6 +425,7 @@ function OrdersPage() {
                 {o.status === "Unpaid" && (
                   <button
                     onClick={(e) => { e.stopPropagation(); remind(o); }}
+                    id={o.id === firstUnpaidId ? "tour-orders-remind" : undefined}
                     className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500 text-white shadow-sm active:scale-95 transition-transform"
                   >
                     {t("remind")}

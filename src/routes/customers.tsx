@@ -107,7 +107,7 @@ function CustomersPage() {
         {!loading && customers.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_customers_create")}</p>
         )}
-        {!loading && customers.length > 0 && visible.map((c) => (
+        {!loading && customers.length > 0 && visible.map((c, idx) => (
           <div
             key={c.id}
             className={`rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] flex items-center gap-3 p-4 transition-all duration-200 ${removingId === c.id ? "opacity-0 scale-95" : "opacity-100"}`}
@@ -134,6 +134,7 @@ function CustomersPage() {
                   if (!c.phone) { toast.error(t("no_phone_for_wa")); return; }
                   window.open(buildWA(c.phone, `Hi ${c.name}! 👋 Thank you for being a valued customer! 😊`), "_blank");
                 }}
+                id={idx === 0 ? "tour-cust-wa" : undefined}
                 className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500 text-white active:scale-95 transition-transform"
               >
                 📲 WA

@@ -146,7 +146,7 @@ function Index() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("welcome")} 👋</h1>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <Link to="/analytics" aria-label={t("analytics_label")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
+          <Link to="/analytics" id="tour-analytics" aria-label={t("analytics_label")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
             <BarChart3 className="h-4 w-4 text-foreground" />
           </Link>
           <Link to="/search" aria-label={t("search")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
