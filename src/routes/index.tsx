@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, BarChart3, Sparkles, TrendingUp, CreditCard, X, ChevronRight, FileText } from "lucide-react";
+import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, Sparkles, TrendingUp, CreditCard, X, ChevronRight, FileText } from "lucide-react";
 import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
