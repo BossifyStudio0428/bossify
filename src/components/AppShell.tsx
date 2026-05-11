@@ -18,6 +18,7 @@ import { isNotifGranted } from "@/lib/notifications";
 import { loadPrefs } from "@/lib/notifPrefs";
 import { rescheduleAll, runUnpaidNotifyNow } from "@/lib/notifSchedule";
 import { initBilling } from "@/lib/billing";
+import { registerPushForUser } from "@/lib/pushRegister";
 
 // Session-level flag — true once we've shown the cold-start splash this app
 // launch. We use sessionStorage so the splash flow survives client-side
@@ -271,6 +272,8 @@ function ShellInner() {
         .then(() => runUnpaidNotifyNow(uid))
         .catch(() => {});
     }
+    // Register Android FCM token (no-op on web / preview)
+    registerPushForUser(session.user.id).catch(() => {});
   }, [session?.user?.id, onboardingChecked, needsOnboarding, showTour]);
 
   // While first-time splash is queued (or navigation hasn't completed yet), render the
