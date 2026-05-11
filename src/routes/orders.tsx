@@ -350,7 +350,6 @@ function OrdersPage() {
       <div className="space-y-3">
         {loading && <p className="text-center text-sm text-muted-foreground py-10">{t("loading")}</p>}
 
-        {(() => { return null; })()}
         {!loading && visible.map((o) => {
           const statusLabel = o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending");
           const removing = removingId === o.id;
