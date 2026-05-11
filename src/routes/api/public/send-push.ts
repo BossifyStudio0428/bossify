@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendToTokens } from "@/lib/fcm.server";
 
 const Schema = z.object({
   // Either targetUserId (single user) or broadcast=true (cron fan-out)
