@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { handleSendPush } from "@/lib/sendPushHandler";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -10,10 +11,7 @@ export const Route = createFileRoute("/api/public/send-push")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      POST: async ({ request }: { request: Request }) => {
-        const { handleSendPush } = await import("@/lib/sendPushHandler.server");
-        return handleSendPush(request);
-      },
+      POST: async ({ request }: { request: Request }) => handleSendPush(request),
     },
   },
 } as any);
