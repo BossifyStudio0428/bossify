@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, BarChart3, Sparkles, TrendingUp } from "lucide-react";
+import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, BarChart3, Sparkles, TrendingUp, CreditCard, X } from "lucide-react";
 import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { loadPaymentSummary, isPaymentBannerDismissed, dismissPaymentBanner } from "@/lib/paymentSetup";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -25,6 +26,14 @@ function Index() {
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [selectedWeeklyIndex, setSelectedWeeklyIndex] = useState<number>(6);
+  const [hasPayment, setHasPayment] = useState<boolean | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  useEffect(() => {
+    setBannerDismissed(isPaymentBannerDismissed());
+    if (!user?.id) return;
+    loadPaymentSummary(user.id).then((s) => setHasPayment(s.hasMethod)).catch(() => setHasPayment(true));
+  }, [user?.id]);
 
   const load = async () => {
     if (!user?.id) return;
@@ -177,6 +186,33 @@ function Index() {
         )}
       </div>
       <p className="-mt-3 text-xs font-medium text-primary/90">{motivMsg}</p>
+
+      {hasPayment === false && !bannerDismissed && (
+        <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-3 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+            <CreditCard className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] font-semibold text-amber-900 leading-snug">
+              {t("payment_setup_banner")}
+            </p>
+            <Link
+              to="/payment-details"
+              className="mt-1 inline-block text-[11px] font-bold text-amber-700 underline"
+            >
+              {t("set_up_arrow")} →
+            </Link>
+          </div>
+          <button
+            type="button"
+            aria-label="dismiss"
+            onClick={() => { dismissPaymentBanner(); setBannerDismissed(true); }}
+            className="h-7 w-7 rounded-full text-amber-700 active:bg-amber-100 flex items-center justify-center shrink-0"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       <section id="tour-stats" className="grid grid-cols-2 gap-3">
         {stats.map((s, i) => (

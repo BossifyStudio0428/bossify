@@ -158,7 +158,7 @@ function Onboarding() {
     if (!user || saving) return;
     setSaving(true);
     safeLocalStorage.setItem(`${ONBOARDING_DONE_KEY}:${user.id}`, "1");
-    navigate({ to: "/", replace: true });
+    navigate({ to: "/payment-setup", replace: true });
     try {
       const payload: Record<string, string | null> = {
         user_id: user.id,
