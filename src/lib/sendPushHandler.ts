@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+const getAdmin = async () =>
+  (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+const getSendToTokens = async () =>
+  (await import("@/lib/fcm.server")).sendToTokens;
+
 export const Schema = z.object({
   targetUserId: z.string().uuid().optional(),
   broadcast: z.boolean().optional(),
