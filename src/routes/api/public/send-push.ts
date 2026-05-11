@@ -115,7 +115,7 @@ export const Route = createFileRoute("/api/public/send-push")({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
 
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let parsed;
         try {
           parsed = Schema.parse(await request.json());
@@ -172,4 +172,4 @@ export const Route = createFileRoute("/api/public/send-push")({
       },
     },
   },
-});
+} as any);
