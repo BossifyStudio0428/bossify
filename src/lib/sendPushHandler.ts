@@ -1,3 +1,4 @@
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const getAdmin = async () =>
@@ -115,7 +116,7 @@ async function dispatch(userId: string, content: { title: string; body: string; 
   return { sent: results.filter((r) => r.ok).length, removed: dead.length };
 }
 
-export async function handleSendPush(request: Request): Promise<Response> {
+export const handleSendPush = createServerOnlyFn(async (request: Request): Promise<Response> => {
   const supabaseAdmin = await getAdmin();
   let parsed: z.infer<typeof Schema>;
   try {
@@ -169,6 +170,6 @@ export async function handleSendPush(request: Request): Promise<Response> {
     console.error("send-push failed", e);
     return json(500, { error: (e as Error).message });
   }
-}
+});
 
 export const CORS_HEADERS = CORS;
