@@ -1,99 +1,81 @@
 
-# Bossify 通知系统升级计划
+# 接入 Google Play Billing + 准备新 AAB
 
-目标：让通知不只是 app 内的小铃铛，而是真正会"叮"一声弹到手机锁屏 / 状态栏的系统通知（Android APK 上是真的 push）。
-
----
-
-## 现在有什么
-
-- ✅ 已经接入 `@capacitor/local-notifications`（OS 级本地通知）
-- ✅ 已经接入 `capacitor-native-settings`（被拒绝时跳到系统设置页）
-- ✅ Supabase `notifications` 表（app 内铃铛历史记录）
-- ⚠️ 但目前真正会"弹"的只有：低库存、3 天未付款的每日检查
+目标：让你下次上传到 Internal Testing 后，Play Console 能成功创建订阅 `bossify_pro`，并且 app 内会显示真·本地货币价格 + 真·能购买。
 
 ---
 
-## 推荐加 6 种真通知
+## 改动清单
 
-### 1. 💰 新订单确认 (instant)
-顾客下单后立刻弹一个 OS 通知给老板：
-> "新订单 #ORD-0123 — Ali 买了 2x 椰浆 = RM 24"
-点击 → 跳到该订单详情页。
+### 1. 安装插件
+- `cordova-plugin-purchase`（CC.Fovea，最成熟的 Capacitor 兼容 Google Play Billing 插件，免费开源）
 
-### 2. ⚠️ 未付款提醒 (1 天 / 3 天 / 7 天，自动)
-现在只有 3 天的每日检查。改成按订单各自计时：
-- 1 天：温馨提醒
-- 3 天：第二次提醒
-- 7 天：标记为可能坏账
-每个订单独立排程，到时间自动弹。
+### 2. AndroidManifest.xml
+- 加 `<uses-permission android:name="com.android.vending.BILLING" />`
+- 这是 Play Console 接受订阅产品的硬性条件，**没有这个权限上传几次都没用**
 
-### 3. 📦 低库存 + 缺货 (instant)
-已有低库存。增加：
-- 库存 = 0 → "❌ 椰浆已售完，请补货"
-- 库存 ≤ max_stock × 20% → "⚠️ 椰浆只剩 5 件"
+### 3. 改写 `src/lib/billing.ts`
+保留现有 API 形状（`purchasePlan` / `restorePurchases` / `queryProductDetails`），把 stub 替换成真实插件调用：
+- `queryProductDetails()` → 从 Play Store 拉 `bossify_pro` 的两个 base plan，返回每个用户**本地货币的格式化价格**（RM 49 / $11.99 / ₹999 / Rp 165.000…）
+- `tryNativePurchase()` → 调 `store.order()` 触发 Google Play 的购买弹窗
+- `tryNativeRestore()` → 调 `store.restorePurchases()` 拉历史订阅
+- 处理用户取消（`user_cancelled`）、网络错误、产品未配置等错误码
+- 监听 `approved` 事件 → 调 `transaction.finish()` 结清订单
 
-### 4. 🌅 每日早安总结 (每天 9:00am)
-> "早安老板！昨天 5 单 / RM 230 销售 / 还有 3 单未付款"
-鼓励老板每天打开 app。
+### 4. 在 app 启动时初始化插件
+- 在 `AppShell.tsx` 里 app 第一次挂载时调 `store.register()` + `store.initialize()`
+- 注册产品：`{ id: 'bossify_pro', type: 'PAID_SUBSCRIPTION' }` 带两个 offer (`monthly` / `annual`)
+- 这样 Plans 页面打开时 `queryProductDetails()` 立刻能拿到价格
 
-### 5. 🌙 每日晚间收盘 (每天 9:00pm)
-> "今天总结：12 单 / RM 580 / 利润 RM 210 🎉"
+### 5. Plans 页价格自动跟随
+现有 `storePrices` state 已经做好了，插件接好后会自动从 Play Store 拉到本地货币显示。无需改 UI。
 
-### 6. 🎯 里程碑 + 客户回归 (instant)
-- 第 100 单 / 第 1000 单 → 庆祝通知
-- 老顾客 30 天没回购 → "Siti 已经 30 天没下单了，要不要 WhatsApp 一下？"
+### 6. 写一份 `PLAY_CONSOLE_SETUP.md`
+逐步说明（带截图位置提示）：
+1. 在 Android Studio build signed AAB
+2. 上传到 Internal testing → Add release → Review → **Rollout to Internal testing**（必须 rollout，不只是 save）
+3. 等 Google review（通常几分钟）
+4. Setup → Internal testing → Testers → 加 license tester 邮箱
+5. Monetize → Subscriptions → Create subscription → ID 填 `bossify_pro`
+6. Add base plan #1：ID `monthly`，1 个月，auto-renewing，price RM 49
+7. Add base plan #2：ID `annual`，1 年，auto-renewing，price RM 399
+8. 两个 base plan 都 **Activate**
+9. 用 license tester 账号在测试设备上打开 app 即可看到价格 + 测试购买（不会真扣钱）
+
+### 7. 翻译补全
+加几个新错误信息的 EN/BM/ZH 翻译：
+- "Connecting to Google Play…"
+- "Subscription not yet approved by Google Play"
+- "Purchase pending verification"
 
 ---
 
-## 通知设置页 (新)
+## 文件改动
 
-在 Profile 里加一个"通知设置"页，每种通知都可独立开关 + 简短说明（参考 ReLife 那个截图的样式）：
-
+```text
+package.json              + cordova-plugin-purchase
+android/app/src/main/AndroidManifest.xml   + BILLING permission
+src/lib/billing.ts        重写 stub → 真实 cordova-plugin-purchase 调用
+src/components/AppShell.tsx   + store.initialize() on mount
+src/contexts/I18nContext.tsx  + 3 个新翻译 key
+PLAY_CONSOLE_SETUP.md     新文件，详细步骤
 ```
-├── 全部通知            [●]
-├── 其他
-│   ├── 🛍 新订单提醒    [●]   立即
-│   ├── 💰 未付款追讨    [●]   1/3/7 天
-│   ├── 📦 库存警报      [●]   低库存 + 缺货
-│   ├── 🌅 早安总结      [●]   每天 9:00am
-│   ├── 🌙 收盘报告      [○]   每天 9:00pm
-│   └── 🎯 里程碑庆祝    [●]   达成时
-└── [打开系统通知设置] →
-```
-
-每个开关存在 Supabase `profiles` 新栏位（`notif_*_enabled`），关掉后该类通知就不排程。
 
 ---
 
-## 技术细节（给开发参考）
+## 你需要做的（代码搞定后）
 
-- **真实推送来源**：全部走 `@capacitor/local-notifications`（Android 13+ 会弹真正的系统通知，锁屏可见，APK 上立即生效）。Web preview 用 `Notification` API 退化。
-- **定时类**（每日总结、未付款）：用 `LocalNotifications.schedule({ schedule: { on: { hour, minute }, repeats: true } })` 排程。
-- **即时类**（新订单、低库存）：在对应业务逻辑触发时直接 `notify()`。
-- **Supabase 表**：双写 — 既排 OS 通知（弹屏幕），也写 `notifications` 表（app 内历史）。
-- **多语言**：标题 / 内容用 `t()` 翻译，跟随 `bossify_lang`。
-- **新增数据库栏位**（需要新 migration）：
-  ```
-  alter table profiles add column notif_new_order boolean default true;
-  alter table profiles add column notif_unpaid boolean default true;
-  alter table profiles add column notif_inventory boolean default true;
-  alter table profiles add column notif_morning boolean default true;
-  alter table profiles add column notif_evening boolean default false;
-  alter table profiles add column notif_milestone boolean default true;
-  ```
-- **文件改动**：
-  - 新增 `src/lib/notifSchedule.ts`（排程 / 取消所有定时任务）
-  - 新增 `src/routes/notification-settings.tsx`（设置页）
-  - 编辑 `src/routes/new-order.tsx`、`orders.tsx`、`inventory.tsx`、`profile.tsx`
-  - 编辑 `src/lib/notifications.ts`（加每日 morning/evening 排程方法）
-  - 编辑 `src/contexts/I18nContext.tsx`（加翻译 key，EN/BM/ZH）
+1. Pull 代码 → `bun install` → `bun run build` → `npx cap sync android`
+2. Android Studio 打开 `android/` → Build → Generate Signed Bundle (AAB)
+3. 上传到 Play Console → Internal testing → **Rollout**（这一步昨天可能漏了）
+4. 等 review 完（看到绿色 ✓）
+5. 按 `PLAY_CONSOLE_SETUP.md` 第 5-9 步建订阅产品
+6. 用 license tester 账号装 app → 打开 Plans 页应该能看到本地货币价格 + 能点 Upgrade 触发 Google 购买弹窗
 
 ---
 
-## 建议分两步实施
+## 注意事项
 
-**第 1 步（核心 5 种 + 设置页）**：新订单、未付款、库存、早安、晚间 + 设置页 + DB migration  
-**第 2 步（进阶）**：里程碑、客户回归（需要更多业务逻辑）
-
-要我先做第 1 步吗？还是要全部一起做？
+- 第一次上传 AAB 后 Play Console 可能要 **几小时到 24 小时** 才允许你建订阅产品（Google 在后台索引你的 BILLING 权限）。**昨天叫你上传过的提示，很可能就是因为 AAB 没声明 BILLING 权限**——这次加上之后即可解决。
+- License tester 必须用 Gmail 账号，且要在 Play Store **登录这个账号** 才会看到测试价格。
+- 所有 base plan 必须 **Activate**，否则 `queryProductDetails()` 拉不到。

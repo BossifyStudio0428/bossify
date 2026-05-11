@@ -17,6 +17,7 @@ import { NotifPermissionPrompt } from "@/components/NotifPermissionPrompt";
 import { isNotifGranted } from "@/lib/notifications";
 import { loadPrefs } from "@/lib/notifPrefs";
 import { rescheduleAll, runUnpaidNotifyNow } from "@/lib/notifSchedule";
+import { initBilling } from "@/lib/billing";
 
 // Session-level flag — true once we've shown the cold-start splash this app
 // launch. We use sessionStorage so the splash flow survives client-side
@@ -26,6 +27,13 @@ const SPLASH_SESSION_KEY = "bossify_splash_done";
 const LANG_PICKED_PERSISTENT_KEY = "bossify_lang";
 const ONBOARDING_DONE_KEY = "bossify_onboarding_done_session";
 markBossifySplashStart();
+
+// Kick off Google Play Billing connection at app launch so prices and the
+// purchase flow are ready before the user opens the Plans page. No-op on
+// web / preview.
+if (typeof window !== "undefined") {
+  initBilling().catch(() => {});
+}
 
 // One-time cleanup: previous builds wrote a global "onboarding done" flag to
 // sessionStorage, which made brand-new signups skip onboarding because they
