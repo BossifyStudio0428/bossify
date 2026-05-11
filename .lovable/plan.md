@@ -1,29 +1,50 @@
-我会负责把这个构建问题修好，重点是切断客户端构建里错误引用 `client.server` 的导入链。
+把推送功能完整跑通的三件事我都规划好了。
 
-## 计划
+## 1. 让定时推送 work（修 cron 认证）
 
-1. **移除当前错误导入链**
-   - 不再让 `/api/public/send-push` 路由在客户端路由树中间接导入 `src/integrations/supabase/client.server.ts` 或 `*.server.ts` 文件。
-   - 不手动编辑 `src/routeTree.gen.ts`，让路由插件重新生成。
+**问题**：cron 用 `x-cron-secret` 认证，但数据库 `app.push_secret` 没设置，且 ALTER DATABASE 不允许。
 
-2. **重构推送发送端点**
-   - 将推送 API 的服务端逻辑改成不会被客户端 import graph 扫到的实现方式。
-   - 保留现有 `/api/public/send-push` 调用路径，避免破坏 `sendPushToSelf()` 和定时推送配置。
+**做法**：改用 Supabase 推荐的 `apikey` header 模式（用 anon key），不再依赖自定义 secret：
+- 修改 edge function `send-push`：当请求头 `apikey` 等于 `SUPABASE_ANON_KEY` 时，视为 cron 调用，允许 broadcast。
+- 修改数据库函数 `trigger_push_kind`：把请求头从 `x-cron-secret` 改成 `apikey: <anon_key>`。
+- 这样不需要在 DB 里存任何密钥，也不需要改 secrets。
 
-3. **整理服务端 helper**
-   - 删除或停止使用当前 `sendPushHandler.ts` 里导致构建失败的 `createServerOnlyFn + dynamic import(client.server)` 组合。
-   - 避免再从客户端可达模块导入 `.server` 文件。
+## 2. 加测试按钮（方便你在手机上验证）
 
-4. **验证结果**
-   - 检查代码里不再存在从客户端路由链可达的 `client.server` / `fcm.server` 导入。
-   - 用构建/类型检查信号确认错误消失后再说完成。
+在「通知设置」页面（`/notification-settings`）加一个 **"发送测试推送"** 按钮：
+- 点击后调用 `sendPushToSelf({ kind: "custom", title: "Test", body: "推送 work 啦 🎉" })`
+- 显示成功 / 失败 toast
+- 只在 Android 原生 app 里有意义，但在浏览器点也不会出错
+
+## 3. 检查 Capacitor / FCM 配置
+
+确认推送在 APK 里能正常注册：
+- ✅ `@capacitor/push-notifications` 已装
+- ✅ `pushRegister.ts` 已经在用户登录后调用
+- ⚠️ 你需要确认 `android/app/google-services.json` 已经从 Firebase Console 下载并放进去（Lovable 看不到 android 文件夹下用户本地放的文件）
+- 在 `ANDROID_BUILD.md` 末尾加一段「FCM 推送配置检查清单」，列出：
+  1. Firebase 项目里启用了 Cloud Messaging
+  2. `google-services.json` 放在 `android/app/`
+  3. `android/build.gradle` 和 `android/app/build.gradle` 已加 Google Services 插件
+  4. 重新 `npx cap sync android` 然后 build AAB
+
+## 流程
+
+```text
+手机 app 登录 → 注册 FCM token → 存进 device_tokens 表
+       ↓
+新订单 / 定时任务 → send-push edge function → FCM → 手机收到推送
+```
 
 ## 技术细节
 
-当前问题不是你操作错了，是我之前把服务端推送逻辑放进了一个会被 TanStack 路由树导入的链路里。即使逻辑“理论上只在 server handler 里跑”，构建器还是会扫描完整导入图，所以看到 `client.server` 就直接失败。
+- Cron 切到 anon key 模式后，`PUSH_WEBHOOK_SECRET` 就成了死代码，但保留它不影响功能（向后兼容）。
+- 测试按钮使用现有 `sendPushToSelf`，不需要新增任何后端。
+- google-services.json 是你本地操作，我没法替你做，但会写清楚步骤。
 
-这次修复会把这个边界彻底拆干净，而不是继续在同一条导入链上打补丁。
+做完之后，你只需要：
+1. 重新 `bun run build && npx cap sync android`
+2. 在 Android Studio build 新 AAB
+3. 装到手机 → 登录 → 点测试按钮 / 等定时任务
 
-<lov-actions>
-<lov-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</lov-link>
-</lov-actions>
+就能验证推送了。
