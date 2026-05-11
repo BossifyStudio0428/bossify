@@ -15,6 +15,7 @@ import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PlansRouteImport } from './routes/plans'
+import { Route as PaymentSetupRouteImport } from './routes/payment-setup'
 import { Route as PaymentDetailsRouteImport } from './routes/payment-details'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -63,6 +64,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PlansRoute = PlansRouteImport.update({
   id: '/plans',
   path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentSetupRoute = PaymentSetupRouteImport.update({
+  id: '/payment-setup',
+  path: '/payment-setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentDetailsRoute = PaymentDetailsRouteImport.update({
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRouteWithChildren
   '/payment-details': typeof PaymentDetailsRoute
+  '/payment-setup': typeof PaymentSetupRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRouteWithChildren
   '/payment-details': typeof PaymentDetailsRoute
+  '/payment-setup': typeof PaymentSetupRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRouteWithChildren
   '/payment-details': typeof PaymentDetailsRoute
+  '/payment-setup': typeof PaymentSetupRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/orders'
     | '/payment-details'
+    | '/payment-setup'
     | '/plans'
     | '/privacy'
     | '/profile'
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/orders'
     | '/payment-details'
+    | '/payment-setup'
     | '/plans'
     | '/privacy'
     | '/profile'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/orders'
     | '/payment-details'
+    | '/payment-setup'
     | '/plans'
     | '/privacy'
     | '/profile'
@@ -343,6 +355,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   OrdersRoute: typeof OrdersRouteWithChildren
   PaymentDetailsRoute: typeof PaymentDetailsRoute
+  PaymentSetupRoute: typeof PaymentSetupRoute
   PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
@@ -393,6 +406,13 @@ declare module '@tanstack/react-router' {
       path: '/plans'
       fullPath: '/plans'
       preLoaderRoute: typeof PlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment-setup': {
+      id: '/payment-setup'
+      path: '/payment-setup'
+      fullPath: '/payment-setup'
+      preLoaderRoute: typeof PaymentSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payment-details': {
@@ -584,6 +604,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   OrdersRoute: OrdersRouteWithChildren,
   PaymentDetailsRoute: PaymentDetailsRoute,
+  PaymentSetupRoute: PaymentSetupRoute,
   PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
