@@ -385,6 +385,7 @@ const dict = {
     nav_profile: "Profile",
     tour_profile: "Access your profile, payment details and settings here",
     nav_new_order: "New Order",
+    nav_reports: "Reports",
     // Day names (short)
     dow_sun: "Sun", dow_mon: "Mon", dow_tue: "Tue", dow_wed: "Wed",
     dow_thu: "Thu", dow_fri: "Fri", dow_sat: "Sat",

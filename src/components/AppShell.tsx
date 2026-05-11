@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Home, ClipboardList, Plus, Package, User, Users } from "lucide-react";
+import { Home, ClipboardList, Plus, Package, User, Users, BarChart3 } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,6 +81,7 @@ if (typeof window !== "undefined") {
 const tabs = [
   { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
   { to: "/orders", labelKey: "nav_orders", icon: ClipboardList, id: "tour-tab-orders" },
+  { to: "/reports", labelKey: "nav_reports", icon: BarChart3, id: "tour-tab-reports" },
   { to: "/inventory", labelKey: "nav_inventory", icon: Package, id: "tour-tab-inventory" },
   { to: "/customers", labelKey: "nav_customers", icon: Users, id: "tour-tab-customers" },
   { to: "/profile", labelKey: "nav_profile", icon: User, id: "tour-tab-profile" },
@@ -320,8 +321,8 @@ const BottomNav = memo(function BottomNav() {
       style={{ bottom: "max(env(safe-area-inset-bottom), 0px)" }}
     >
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
-        <ul className="grid grid-cols-6 items-center h-16 px-1">
-          {tabs.slice(0, 2).map((tab) => (
+        <ul className="grid grid-cols-7 items-center h-16 px-1">
+          {tabs.slice(0, 3).map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
           <li className="flex justify-center">
@@ -334,7 +335,7 @@ const BottomNav = memo(function BottomNav() {
               <Plus className="h-7 w-7" strokeWidth={2.5} />
             </Link>
           </li>
-          {tabs.slice(2).map((tab) => (
+          {tabs.slice(3).map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
         </ul>
