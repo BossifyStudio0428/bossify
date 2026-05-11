@@ -322,7 +322,7 @@ function NewOrderPage() {
           )}
         </div>
 
-        <div className="space-y-1.5 relative">
+        <div className="space-y-1.5 relative" id="tour-no-product">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("product")}</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🛍️</span>
@@ -377,7 +377,7 @@ function NewOrderPage() {
         <Field label={t("quantity")} icon="#" placeholder="1" value={form.quantity} onChange={upd("quantity")} type="number" error={errors.quantity} />
         <Field label={t("price")} icon="💰" placeholder="0.00" value={form.amount} onChange={upd("amount")} type="number" error={errors.amount} />
 
-        <div className="space-y-1.5">
+        <div className="space-y-1.5" id="tour-no-status">
           <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
             {t("payment_status")}
           </p>
@@ -425,6 +425,7 @@ function NewOrderPage() {
           <button
             type="button"
             onClick={saveAndWhatsApp}
+            id="tour-no-wa"
             disabled={saving}
             className="w-full py-4 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-sm active:scale-[0.99] transition-transform disabled:opacity-60"
           >
