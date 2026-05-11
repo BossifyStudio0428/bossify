@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Check, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -6,7 +6,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
-import { isNativeBillingAvailable, purchasePlan, restorePurchases, type BillingError } from "@/lib/billing";
+import {
+  isNativeBillingAvailable,
+  purchasePlan,
+  restorePurchases,
+  queryProductDetails,
+  FALLBACK_PRICES,
+  SUBSCRIPTION_ID,
+  BASE_PLAN_IDS,
+  type BillingError,
+  type ProductPrice,
+} from "@/lib/billing";
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
 
@@ -17,8 +27,28 @@ function PlansPage() {
   const { isPro, plan, ordersUsed, sub, refresh } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [submitting, setSubmitting] = useState(false);
+  const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual", string>>({
+    monthly: FALLBACK_PRICES.monthly,
+    annual: FALLBACK_PRICES.annual,
+  });
 
-  const price = billing === "monthly" ? "RM 49" : "RM 490";
+  // Pull each user's locally-formatted price from Google Play (MYR / USD /
+  // INR / IDR / etc.) so the UI matches what the store will charge.
+  useEffect(() => {
+    let cancelled = false;
+    queryProductDetails()
+      .then((prices: ProductPrice[]) => {
+        if (cancelled) return;
+        const next = { ...storePrices };
+        for (const p of prices) next[p.plan] = p.formattedPrice;
+        setStorePrices(next);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const price = storePrices[billing];
   const period = billing === "monthly" ? t("per_month") : t("per_year");
 
   const freeRows: { ok: boolean; label: string }[] = [
@@ -60,7 +90,7 @@ function PlansPage() {
           plan: "pro",
           status: "active",
           provider: "google_play",
-          provider_product_id: receipt.productId,
+          provider_product_id: receipt.productId || `${SUBSCRIPTION_ID}:${BASE_PLAN_IDS[billing]}`,
           provider_transaction_id: receipt.transactionId,
           provider_purchase_token: receipt.purchaseToken ?? null,
           current_period_end: expiresAt.toISOString(),
