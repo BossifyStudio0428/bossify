@@ -11,7 +11,8 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { resetTour } from "@/components/AppTour";
-import PaymentDetailsSection from "@/components/PaymentDetailsSection";
+import { CreditCard, AlertTriangle, CheckCircle2, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -34,6 +35,7 @@ function ProfilePage() {
   const [tplOpen, setTplOpen] = useState(false);
   const [orderTpl, setOrderTpl] = useState(DEFAULT_ORDER_TPL);
   const [reminderTpl, setReminderTpl] = useState(DEFAULT_REMINDER_TPL);
+  const [paySummary, setPaySummary] = useState<PaymentSummary | null>(null);
 
   const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
     { icon: "🏪", key: "biz", label: t("business_profile"), onClick: () => navigate({ to: "/business-profile" }) },
@@ -71,6 +73,10 @@ function ProfilePage() {
       setIsAdmin(!!(p as any)?.is_admin);
       if (pref?.wa_order_template) setOrderTpl(pref.wa_order_template);
       if (pref?.wa_reminder_template) setReminderTpl(pref.wa_reminder_template);
+      try {
+        const s = await loadPaymentSummary(user.id);
+        setPaySummary(s);
+      } catch { setPaySummary({ hasMethod: false, type: null, number: null }); }
     })();
   }, [user]);
 
@@ -137,6 +143,38 @@ function ProfilePage() {
         ))}
       </section>
 
+      {/* Payment Details status card — top of menu so it's hard to miss */}
+      <button
+        type="button"
+        onClick={() => navigate({ to: "/payment-details" })}
+        className={`w-full rounded-2xl border p-4 flex items-center gap-3 text-left active:scale-[0.99] transition ${
+          paySummary?.hasMethod
+            ? "bg-gradient-to-br from-emerald-50 to-emerald-50/40 border-emerald-200"
+            : "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200"
+        }`}
+      >
+        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
+          paySummary?.hasMethod ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+        }`}>
+          {paySummary?.hasMethod ? <CheckCircle2 className="h-6 w-6" /> : <AlertTriangle className="h-6 w-6" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className={`text-sm font-bold ${paySummary?.hasMethod ? "text-emerald-800" : "text-amber-900"}`}>
+            {paySummary?.hasMethod ? `✓ ${t("payment_active")}` : `⚠️ ${t("payment_not_setup")}`}
+          </p>
+          {paySummary?.hasMethod ? (
+            <p className="text-xs text-emerald-700/80 mt-0.5 truncate">
+              {paySummary.type ?? "—"} {paySummary.number ? `· ${paySummary.number}` : ""}
+            </p>
+          ) : (
+            <p className="text-[11px] text-amber-700 font-semibold mt-0.5">
+              {t("set_up_now")} →
+            </p>
+          )}
+        </div>
+        <ChevronRightIcon className={`h-4 w-4 ${paySummary?.hasMethod ? "text-emerald-700" : "text-amber-700"}`} />
+      </button>
+
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60 overflow-hidden">
         {menu.map((m) => (
           <button
@@ -152,8 +190,6 @@ function ProfilePage() {
           </button>
         ))}
       </section>
-
-      <PaymentDetailsSection />
 
       <button
         type="button"
