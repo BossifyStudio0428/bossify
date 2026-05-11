@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, Settings } from "lucide-react";
+import { ChevronLeft, Settings, Bell } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { DEFAULT_PREFS, loadPrefs, savePrefs, type NotifPrefs } from "@/lib/notifPrefs";
 import { rescheduleAll } from "@/lib/notifSchedule";
 import { isNotifGranted, requestNotifPermission } from "@/lib/notifications";
+import { sendPushToSelf } from "@/lib/sendPush";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/notification-settings")({ component: NotifSettingsPage });
@@ -36,6 +37,23 @@ function NotifSettingsPage() {
     const ok = await requestNotifPermission();
     setGranted(ok);
     if (ok && user) await rescheduleAll(user.id);
+  };
+
+  const [sending, setSending] = useState(false);
+  const sendTest = async () => {
+    setSending(true);
+    try {
+      await sendPushToSelf({
+        kind: "custom",
+        title: "Bossify 测试推送 🎉",
+        body: "如果你看到这条通知，推送已经 work 啦！",
+      });
+      toast.success("已发送，请查看手机通知栏");
+    } catch (e) {
+      toast.error("发送失败：" + (e as Error).message);
+    } finally {
+      setSending(false);
+    }
   };
 
   const items: { key: keyof NotifPrefs; icon: string; label: string; desc: string }[] = [
@@ -82,6 +100,14 @@ function NotifSettingsPage() {
         className="w-full h-12 rounded-2xl border border-border/60 bg-card flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99]"
       >
         <Settings className="h-4 w-4" /> {t("open_system_settings")}
+      </button>
+
+      <button
+        onClick={sendTest}
+        disabled={sending}
+        className="w-full h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99] disabled:opacity-60"
+      >
+        <Bell className="h-4 w-4" /> {sending ? "发送中…" : "发送测试推送"}
       </button>
     </div>
   );
