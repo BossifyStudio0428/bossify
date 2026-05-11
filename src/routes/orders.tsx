@@ -350,9 +350,11 @@ function OrdersPage() {
       <div className="space-y-3">
         {loading && <p className="text-center text-sm text-muted-foreground py-10">{t("loading")}</p>}
 
+        {(() => { return null; })()}
         {!loading && visible.map((o) => {
           const statusLabel = o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending");
           const removing = removingId === o.id;
+          const firstUnpaidId = visible.find((x) => x.status === "Unpaid")?.id;
           return (
             <article
               key={o.id}
@@ -424,6 +426,7 @@ function OrdersPage() {
                 {o.status === "Unpaid" && (
                   <button
                     onClick={(e) => { e.stopPropagation(); remind(o); }}
+                    id={o.id === firstUnpaidId ? "tour-orders-remind" : undefined}
                     className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500 text-white shadow-sm active:scale-95 transition-transform"
                   >
                     {t("remind")}
