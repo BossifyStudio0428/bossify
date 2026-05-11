@@ -320,7 +320,7 @@ function OrdersPage() {
         </button>
       )}
 
-      <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
+      <div className="-mx-5 px-5 overflow-x-auto scrollbar-none" id="tour-orders-filters">
         <div className="flex gap-2 w-max">
           {filters.map((f) => {
             const isActive = active === f;
