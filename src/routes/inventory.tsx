@@ -125,13 +125,14 @@ function InventoryPage() {
         {!loading && items.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_products_create")}</p>
         )}
-        {!loading && items.length > 0 && visible.map((it) => {
+        {!loading && items.length > 0 && visible.map((it, idx) => {
           const low = it.stock <= LOW_THRESHOLD;
           const pct = Math.min(100, Math.round((it.stock / Math.max(1, it.max_stock)) * 100));
           const isFirstLow = low && lowItems[0]?.id === it.id;
           return (
             <article
               key={it.id}
+              id={idx === 0 ? "tour-inv-card" : undefined}
               ref={isFirstLow ? (el) => { firstLowRef.current = el; } : undefined}
               className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3"
             >
@@ -193,6 +194,7 @@ function InventoryPage() {
 
       <button
         onClick={() => atLimit ? showUpgrade(t("limit_inventory")) : setSheet({ kind: "form" })}
+        id="tour-inv-add"
         aria-label={t("add_product")}
         title={atLimit ? t("limit_inventory") : t("add_product")}
         className={`fixed bottom-24 z-30 h-14 w-14 rounded-full text-primary-foreground shadow-[var(--shadow-soft)] flex items-center justify-center active:scale-95 transition-transform ${atLimit ? "bg-muted-foreground/60" : "bg-gradient-to-br from-primary to-primary/80"}`}
