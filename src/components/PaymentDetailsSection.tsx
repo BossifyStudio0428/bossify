@@ -90,6 +90,12 @@ export default function PaymentDetailsSection() {
   };
 
   const save = async () => {
+    const activeM = editingSlot === 2 ? m2 : m1;
+    const err = validateNumber(activeM.type, activeM.number);
+    if (err) {
+      toast.error(t(err as any));
+      return;
+    }
     const ok = await persist();
     if (!ok) return;
     const nextShow2 = hasMethod(m2);
@@ -146,7 +152,9 @@ export default function PaymentDetailsSection() {
     await supabase.from("profiles").update({ [col]: null }).eq("id", user.id);
   };
 
-  const renderForm = (slot: 1 | 2, label: string, m: Method, set: (m: Method) => void) => (
+  const renderForm = (slot: 1 | 2, label: string, m: Method, set: (m: Method) => void) => {
+    const numberError = validateNumber(m.type, m.number);
+    return (
     <div className="space-y-2">
       <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{label}</p>
       <select
@@ -161,8 +169,12 @@ export default function PaymentDetailsSection() {
         value={m.number}
         onChange={(e) => set({ ...m, number: e.target.value })}
         placeholder={t("pay_account_no")}
-        className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70"
+        inputMode={m.type === "Bank Transfer" ? "numeric" : "tel"}
+        className={`w-full rounded-2xl bg-card border px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 ${numberError ? "border-destructive" : "border-border/60"}`}
       />
+      {numberError ? (
+        <p className="text-[11px] text-destructive px-1">{t(numberError as any)}</p>
+      ) : null}
       <input
         value={m.name}
         onChange={(e) => set({ ...m, name: e.target.value })}
@@ -192,14 +204,15 @@ export default function PaymentDetailsSection() {
         <button
           type="button"
           onClick={save}
-          disabled={saving}
+          disabled={saving || !!numberError}
           className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm disabled:opacity-60"
         >
           {saving ? t("saving") : t("save")}
         </button>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderCard = (slot: 1 | 2, m: Method) => {
     if (!hasMethod(m)) return null;
