@@ -1,6 +1,5 @@
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendToTokens } from "@/lib/fcm.server";
 
 export const Schema = z.object({
   targetUserId: z.string().uuid().optional(),
@@ -109,7 +108,9 @@ async function dispatch(userId: string, content: { title: string; body: string; 
   return { sent: results.filter((r) => r.ok).length, removed: dead.length };
 }
 
-export async function handleSendPush(request: Request): Promise<Response> {
+export const handleSendPush = createServerOnlyFn(async (request: Request): Promise<Response> => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { sendToTokens } = await import("@/lib/fcm.server");
   let parsed: z.infer<typeof Schema>;
   try {
     parsed = Schema.parse(await request.json());
