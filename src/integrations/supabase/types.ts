@@ -20,7 +20,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      trigger_push_kind: { Args: { _kind: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
