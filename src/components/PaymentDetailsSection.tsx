@@ -14,6 +14,29 @@ function hasMethod(m: Method) {
   return !!(m.type || m.number || m.name || m.qr_url);
 }
 
+// Returns translation key of error, or "" if valid / empty
+function validateNumber(type: string, raw: string): string {
+  const v = (raw || "").replace(/[\s-]/g, "");
+  if (!v) return "";
+  const isPhone = /^(01\d{8,9})$/.test(v); // Malaysian mobile: 01X + 8-9 digits
+  const isIC = /^\d{12}$/.test(v);
+  switch (type) {
+    case "DuitNow":
+      // DuitNow accepts phone or IC (or business reg)
+      if (!isPhone && !isIC) return "pay_invalid_duitnow";
+      return "";
+    case "TNG eWallet":
+    case "ShopeePay":
+      if (!isPhone) return "pay_invalid_phone";
+      return "";
+    case "Bank Transfer":
+      if (!/^\d{6,20}$/.test(v)) return "pay_invalid_account";
+      return "";
+    default:
+      return "";
+  }
+}
+
 export default function PaymentDetailsSection() {
   const { user } = useAuth();
   const { t } = useI18n();
