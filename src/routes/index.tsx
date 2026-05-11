@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, BarChart3, Sparkles, TrendingUp, CreditCard, X } from "lucide-react";
+import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, BarChart3, Sparkles, TrendingUp, CreditCard, X, ChevronRight, FileText } from "lucide-react";
 import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -145,19 +145,25 @@ function Index() {
           <p className="text-sm text-muted-foreground">{greeting},</p>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("welcome")} 👋</h1>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <Link to="/analytics" id="tour-analytics" aria-label={t("analytics_label")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
-            <BarChart3 className="h-4 w-4 text-foreground" />
+        <div className="flex items-start gap-1.5 shrink-0">
+          <Link to="/search" aria-label={t("search")} className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform">
+            <span className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
+              <Search className="h-4 w-4 text-foreground" />
+            </span>
+            <span className="text-[9px] text-muted-foreground leading-none">{t("search")}</span>
           </Link>
-          <Link to="/search" aria-label={t("search")} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
-            <Search className="h-4 w-4 text-foreground" />
+          <Link to="/notifications" aria-label={t("notifications")} className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform">
+            <span className="relative h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
+              <Bell className="h-4 w-4 text-foreground" />
+              {unreadNotif > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full" />}
+            </span>
+            <span className="text-[9px] text-muted-foreground leading-none">{t("alerts_label")}</span>
           </Link>
-          <Link to="/notifications" aria-label={t("notifications")} className="relative h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform">
-            <Bell className="h-4 w-4 text-foreground" />
-            {unreadNotif > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full" />}
-          </Link>
-          <Link to="/profile" aria-label={t("profile")} className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold shadow-[var(--shadow-soft)] active:scale-95 overflow-hidden">
-            {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
+          <Link to="/profile" aria-label={t("profile")} className="flex flex-col items-center gap-0.5 active:scale-95">
+            <span className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold shadow-[var(--shadow-soft)] overflow-hidden">
+              {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
+            </span>
+            <span className="text-[9px] text-muted-foreground leading-none">{t("profile")}</span>
           </Link>
         </div>
       </header>
@@ -279,6 +285,35 @@ function Index() {
             );
           })}
         </div>
+      </section>
+
+      <section id="tour-analytics" className="grid grid-cols-2 gap-3">
+        <Link
+          to="/reports"
+          className="rounded-2xl bg-card border-2 border-primary/30 p-3 flex flex-col gap-1.5 active:scale-[0.98] transition-transform shadow-[var(--shadow-card)]"
+        >
+          <div className="flex items-center justify-between">
+            <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <FileText className="h-5 w-5" />
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="text-sm font-bold text-foreground leading-tight">{t("view_sales_report")}</p>
+          <p className="text-[10px] text-muted-foreground leading-snug">{t("daily_weekly_monthly")}</p>
+        </Link>
+        <Link
+          to="/analytics"
+          className="rounded-2xl bg-card border-2 border-primary/30 p-3 flex flex-col gap-1.5 active:scale-[0.98] transition-transform shadow-[var(--shadow-card)]"
+        >
+          <div className="flex items-center justify-between">
+            <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <TrendingUp className="h-5 w-5" />
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="text-sm font-bold text-foreground leading-tight">{t("view_analytics")}</p>
+          <p className="text-[10px] text-muted-foreground leading-snug">{t("top_products_customers")}</p>
+        </Link>
       </section>
 
       <section>
