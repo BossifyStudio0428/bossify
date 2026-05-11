@@ -48,7 +48,7 @@ function ProfilePage() {
     { icon: "💳", key: "sub", label: t("subscription"), value: isPro ? t("pro_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
     { icon: "📲", key: "wa", label: t("wa_template"), value: isPro ? undefined : "🔒", onClick: () => isPro ? setTplOpen(true) : showUpgrade(t("wa_template")) },
     { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
-    { icon: "🎓", key: "tour", label: t("tour_restart"), onClick: () => {
+    { icon: "🎓", key: "tour", label: t("restart_tour"), onClick: () => {
         resetTour();
         navigate({ to: "/" });
         setTimeout(() => window.dispatchEvent(new Event("bossify:start-tour")), 400);
@@ -147,6 +147,7 @@ function ProfilePage() {
       <button
         type="button"
         onClick={() => navigate({ to: "/payment-details" })}
+        id="tour-payment-card"
         className={`w-full rounded-2xl border p-4 flex items-center gap-3 text-left active:scale-[0.99] transition ${
           paySummary?.hasMethod
             ? "bg-gradient-to-br from-emerald-50 to-emerald-50/40 border-emerald-200"
@@ -179,6 +180,7 @@ function ProfilePage() {
         {menu.map((m) => (
           <button
             key={m.key}
+            id={`tour-menu-${m.key}`}
             type="button"
             onClick={m.onClick}
             className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
