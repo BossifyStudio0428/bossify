@@ -1,10 +1,12 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-const getAdmin = async () =>
-  (await import("@/integrations/supabase/client.server")).supabaseAdmin;
-const getSendToTokens = async () =>
-  (await import("@/lib/fcm.server")).sendToTokens;
+const getAdmin = createServerOnlyFn(async () =>
+  (await import("@/integrations/supabase/client.server")).supabaseAdmin,
+);
+const getSendToTokens = createServerOnlyFn(async () =>
+  (await import("@/lib/fcm.server")).sendToTokens,
+);
 
 export const Schema = z.object({
   targetUserId: z.string().uuid().optional(),
