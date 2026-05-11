@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendToTokens } from "@/lib/fcm.server";
 
 export const Schema = z.object({
   targetUserId: z.string().uuid().optional(),
