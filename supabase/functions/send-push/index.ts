@@ -6,6 +6,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FCM_SERVICE_ACCOUNT_JSON = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON");
 const PUSH_WEBHOOK_SECRET = Deno.env.get("PUSH_WEBHOOK_SECRET");
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -226,7 +227,10 @@ Deno.serve(async (req) => {
   }
 
   const cronSecret = req.headers.get("x-cron-secret");
-  const isCron = !!PUSH_WEBHOOK_SECRET && cronSecret === PUSH_WEBHOOK_SECRET;
+  const apiKey = req.headers.get("apikey");
+  const isCron =
+    (!!PUSH_WEBHOOK_SECRET && cronSecret === PUSH_WEBHOOK_SECRET) ||
+    (!!ANON_KEY && apiKey === ANON_KEY);
 
   let callerId: string | null = null;
   if (!isCron) {

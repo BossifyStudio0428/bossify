@@ -151,3 +151,50 @@ npm run android:logcat
 
 - `android-crash-summary.txt`：优先看这个，复制内容回来
 - `android-crash-log.txt`：完整原始日志
+---
+
+## 🔔 FCM 推送配置检查清单（重要）
+
+推送只在原生 Android app 里 work，浏览器/Lovable 预览里收不到。打包前确认：
+
+### 一次性设置
+
+1. **Firebase Console**（https://console.firebase.google.com）
+   - 创建项目 → 加 Android app，package name 必须是 `com.zhstudio.bossify`
+   - 启用 **Cloud Messaging**
+   - 下载 `google-services.json`，放到 `android/app/google-services.json`
+
+2. **Gradle 配置**（`npx cap sync android` 后通常已自动加，确认一下）
+
+   `android/build.gradle`（项目级）的 `dependencies` 里要有：
+   ```
+   classpath 'com.google.gms:google-services:4.4.2'
+   ```
+
+   `android/app/build.gradle`（模块级）**末尾**要有：
+   ```
+   apply plugin: 'com.google.gms.google-services'
+   ```
+
+3. **Service Account（Lovable 后端用）** — 已设置 ✅
+   - Firebase Console → 项目设置 → 服务账号 → 生成新私钥
+   - 整个 JSON 粘贴到 Lovable 的 `FCM_SERVICE_ACCOUNT_JSON` secret
+
+### 每次重新 build
+
+```bash
+bun run build
+npx cap sync android
+npx cap open android
+# 然后在 Android Studio Build → Generate Signed App Bundle
+```
+
+### 测试推送是否 work
+
+1. 装新版 app 到手机 → 登录
+2. 打开 **设置 → 通知设置** → 点 **「发送测试推送」**
+3. 几秒内手机通知栏应该出现 "Bossify 测试推送 🎉"
+4. 收不到的话：
+   - 确认手机系统通知权限已开
+   - 确认 `google-services.json` 真的在 `android/app/` 而不是其他位置
+   - 在 Lovable 看后端日志（send-push edge function logs）
