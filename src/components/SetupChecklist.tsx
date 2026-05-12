@@ -7,7 +7,11 @@ import { safeLocalStorage } from "@/lib/safeStorage";
 import { loadPaymentSummary } from "@/lib/paymentSetup";
 import { useI18n } from "@/contexts/I18nContext";
 
-const DISMISS_KEY = "bossify_setup_checklist_dismissed";
+// Stores the keys that were already complete at the moment the user
+// dismissed the card. We use this snapshot to re-show the card if any of
+// those items later becomes incomplete (e.g. user deletes their only
+// product, removes their payment method, etc.).
+const DISMISS_SNAPSHOT_KEY = "bossify_setup_checklist_dismissed_keys";
 
 type Item = {
   key: string;
@@ -20,11 +24,13 @@ export function SetupChecklist() {
   const { user } = useAuth();
   const { t } = useI18n();
   const [items, setItems] = useState<Item[] | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissedKeys, setDismissedKeys] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    setDismissed(safeLocalStorage.getItem(`${DISMISS_KEY}:${user.id}`) === "1");
+    const raw = safeLocalStorage.getItem(`${DISMISS_SNAPSHOT_KEY}:${user.id}`);
+    if (!raw) { setDismissedKeys(null); return; }
+    try { setDismissedKeys(JSON.parse(raw) as string[]); } catch { setDismissedKeys(null); }
   }, [user?.id]);
 
   const load = async () => {
@@ -96,16 +102,34 @@ export function SetupChecklist() {
   }, [user?.id]);
 
   const dismiss = () => {
-    if (!user) return;
-    safeLocalStorage.setItem(`${DISMISS_KEY}:${user.id}`, "1");
-    setDismissed(true);
+    if (!user || !items) return;
+    const snapshot = items.filter((i) => i.done).map((i) => i.key);
+    safeLocalStorage.setItem(`${DISMISS_SNAPSHOT_KEY}:${user.id}`, JSON.stringify(snapshot));
+    setDismissedKeys(snapshot);
   };
 
-  if (dismissed || !items) return null;
+  if (!items) return null;
   const total = items.length;
   const done = items.filter((i) => i.done).length;
   const pct = Math.round((done / total) * 100);
   const allDone = done === total;
+
+  // Auto-hide silently once everything is done — no message, no button.
+  if (allDone) return null;
+
+  // If a previous dismiss snapshot exists and ALL of its previously-done
+  // items are still done, honor the dismiss. As soon as one of them
+  // becomes undone (e.g. user deleted their only product), drop the
+  // snapshot so the card reappears automatically.
+  if (dismissedKeys && dismissedKeys.length > 0) {
+    const stillAllDone = dismissedKeys.every((k) => items.find((i) => i.key === k)?.done);
+    if (stillAllDone) return null;
+    // Real-data regression — clear the stored snapshot so this doesn't
+    // need to be re-evaluated on every render.
+    if (user) {
+      safeLocalStorage.removeItem(`${DISMISS_SNAPSHOT_KEY}:${user.id}`);
+    }
+  }
 
   return (
     <section className="rounded-2xl bg-gradient-to-br from-primary/10 via-card to-card border border-primary/30 shadow-[var(--shadow-card)] p-3">
@@ -136,42 +160,36 @@ export function SetupChecklist() {
         />
       </div>
 
-      {allDone ? (
-        <p className="mt-2 text-[11px] font-semibold text-emerald-700 bg-emerald-50 rounded-lg px-2 py-1.5 text-center">
-          {t("setup_all_done")}
-        </p>
-      ) : (
-        <ul className="mt-2 space-y-0.5">
-          {items.map((item) => (
-            <li key={item.key}>
-              <Link
-                to={item.to}
-                className="flex items-center gap-2 px-1.5 py-1 rounded-lg active:bg-muted transition"
+      <ul className="mt-2 space-y-0.5">
+        {items.map((item) => (
+          <li key={item.key}>
+            <Link
+              to={item.to}
+              className="flex items-center gap-2 px-1.5 py-1 rounded-lg active:bg-muted transition"
+            >
+              <span
+                className={`h-4 w-4 rounded flex items-center justify-center shrink-0 ${
+                  item.done
+                    ? "bg-emerald-500 text-white"
+                    : "border border-muted-foreground/40"
+                }`}
               >
-                <span
-                  className={`h-4 w-4 rounded flex items-center justify-center shrink-0 ${
-                    item.done
-                      ? "bg-emerald-500 text-white"
-                      : "border border-muted-foreground/40"
-                  }`}
-                >
-                  {item.done && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
-                </span>
-                <span
-                  className={`flex-1 text-[11.5px] ${
-                    item.done
-                      ? "text-muted-foreground line-through"
-                      : "text-foreground font-medium"
-                  }`}
-                >
-                  {item.label}
-                </span>
-                {!item.done && <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+                {item.done && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+              </span>
+              <span
+                className={`flex-1 text-[11.5px] ${
+                  item.done
+                    ? "text-muted-foreground line-through"
+                    : "text-foreground font-medium"
+                }`}
+              >
+                {item.label}
+              </span>
+              {!item.done && <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
