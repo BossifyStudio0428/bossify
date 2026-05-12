@@ -207,48 +207,49 @@ async function tryNativePurchase(_subscriptionId: string, basePlanId: string): P
     throw { code: "item_unavailable", message: "Base plan not configured" } as BillingError;
   }
   return await new Promise<PurchaseReceipt>((resolve, reject) => {
-    const unsub = onPurchaseApproved((r) => { unsub(); resolve(r); });
+    let settled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const done = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+      unsub();
+      fn();
+    };
+    const unsub = onPurchaseApproved((r) => done(() => resolve(r)));
     // Safety timeout — if Google Play accepts the order but the `approved`
-     // event never fires (cached purchase, slow propagation, plugin quirk),
-     // re-check ownership after 45s and resolve from that. Prevents the
-     // Plans button from being stuck on "..." forever.
-    const timeoutId = setTimeout(async () => {
+    // event never fires (cached purchase, slow propagation, plugin quirk),
+    // re-check ownership after 45s and resolve/reject based on real state.
+    // Prevents the Plans button from being stuck on "..." forever.
+    timeoutId = setTimeout(async () => {
       try {
         await store.update?.();
         const fresh = store.get(_subscriptionId);
         const owned: boolean = !!(fresh?.owned || fresh?.offers?.some?.((o: AnyStore) => o?.owned));
         if (owned) {
-          unsub();
           const tx = fresh.transaction ?? {};
-          resolve({
+          done(() => resolve({
             productId: _subscriptionId,
             transactionId: tx.id ?? tx.transactionId ?? "",
             purchaseToken: tx.purchaseToken,
-          });
+          }));
           return;
         }
       } catch {}
-      unsub();
-      reject({ code: "unknown", message: "Purchase timed out" } as BillingError);
+      done(() => reject({ code: "unknown", message: "Purchase timed out" } as BillingError));
     }, 45000);
-    const wrapResolve = resolve;
-    const wrapReject = reject;
-    resolve = ((v: PurchaseReceipt) => { clearTimeout(timeoutId); wrapResolve(v); }) as typeof resolve;
-    reject = ((e: unknown) => { clearTimeout(timeoutId); wrapReject(e); }) as typeof reject;
     try {
       const orderResult = offer.order ? offer.order() : store.order(offer);
       Promise.resolve(orderResult).catch((err: AnyStore) => {
-        unsub();
         const code: string | undefined = err?.code;
         if (code === "PaymentCancelled" || /cancel/i.test(err?.message ?? "")) {
-          reject({ code: "user_cancelled", message: "Cancelled" } as BillingError);
+          done(() => reject({ code: "user_cancelled", message: "Cancelled" } as BillingError));
         } else {
-          reject({ code: "unknown", message: err?.message ?? "Purchase failed" } as BillingError);
+          done(() => reject({ code: "unknown", message: err?.message ?? "Purchase failed" } as BillingError));
         }
       });
     } catch (err) {
-      unsub();
-      reject({ code: "unknown", message: (err as Error)?.message ?? "Purchase failed" } as BillingError);
+      done(() => reject({ code: "unknown", message: (err as Error)?.message ?? "Purchase failed" } as BillingError));
     }
   });
 }
