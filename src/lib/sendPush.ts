@@ -6,11 +6,12 @@ const PUSH_PUBLIC_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 async function callPushFunction(body: Record<string, unknown>) {
   const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+  const session = data.session;
+  const token = session?.access_token;
   if (!token) return { data: null, error: new Error("Not signed in") };
-  const payload = body.kind === "register_device" || body.targetUserId
+  const requestBody = body.kind === "register_device" || body.targetUserId
     ? body
-    : { ...body, targetUserId: data.session.user.id };
+    : { ...body, targetUserId: session.user.id };
 
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 15000);
@@ -22,14 +23,14 @@ async function callPushFunction(body: Record<string, unknown>) {
         apikey: PUSH_PUBLIC_KEY,
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
-    const payload = await res.json().catch(() => ({}));
-    if (!res.ok || payload?.error) {
-      return { data: payload, error: new Error(payload?.error || `Push request failed (${res.status})`) };
+    const responseBody = await res.json().catch(() => ({})) as { error?: string; [key: string]: unknown };
+    if (!res.ok || responseBody.error) {
+      return { data: responseBody, error: new Error(responseBody.error || `Push request failed (${res.status})`) };
     }
-    return { data: payload, error: null };
+    return { data: responseBody, error: null };
   } catch (e) {
     return { data: null, error: e instanceof Error ? e : new Error(String(e)) };
   } finally {
