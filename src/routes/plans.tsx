@@ -24,7 +24,7 @@ function PlansPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isPro, plan, ordersUsed, sub, refresh } = useSubscription();
+  const { isPro, plan, ordersUsed, sub, refresh, syncFromStore } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [submitting, setSubmitting] = useState(false);
   const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual", string>>({
@@ -79,33 +79,40 @@ function PlansPage() {
       return;
     }
     setSubmitting(true);
-    await purchasePlan(
-      billing,
-      async (receipt) => {
-        const expiresAt = new Date();
-        if (billing === "monthly") expiresAt.setMonth(expiresAt.getMonth() + 1);
-        else expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-        await supabase.from("subscriptions").upsert({
-          user_id: user.id,
-          plan: "pro",
-          status: "active",
-          provider: "google_play",
-          provider_product_id: receipt.productId || `${SUBSCRIPTION_ID}:${BASE_PLAN_IDS[billing]}`,
-          provider_transaction_id: receipt.transactionId,
-          provider_purchase_token: receipt.purchaseToken ?? null,
-          current_period_end: expiresAt.toISOString(),
-        }, { onConflict: "user_id" });
-        toast.success(t("welcome_to_pro"));
-        await refresh();
-      },
-      (err: BillingError) => {
-        if (err.code === "item_unavailable") toast.message(t("billing_item_unavailable"));
-        else if (err.code === "user_cancelled") toast.message(t("billing_user_cancelled"));
-        else if (err.code === "not_android") toast.message(t("google_play_only_android"));
-        else toast.error(t("billing_unknown_error"));
-      },
-    );
-    setSubmitting(false);
+    try {
+      await purchasePlan(
+        billing,
+        async (receipt) => {
+          const expiresAt = new Date();
+          if (billing === "monthly") expiresAt.setMonth(expiresAt.getMonth() + 1);
+          else expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+          await supabase.from("subscriptions").upsert({
+            user_id: user.id,
+            plan: "pro",
+            status: "active",
+            provider: "google_play",
+            provider_product_id: receipt.productId || `${SUBSCRIPTION_ID}:${BASE_PLAN_IDS[billing]}`,
+            provider_transaction_id: receipt.transactionId,
+            provider_purchase_token: receipt.purchaseToken ?? null,
+            current_period_end: expiresAt.toISOString(),
+          }, { onConflict: "user_id" });
+          toast.success(t("welcome_to_pro"));
+        },
+        (err: BillingError) => {
+          if (err.code === "item_unavailable") toast.message(t("billing_item_unavailable"));
+          else if (err.code === "user_cancelled") toast.message(t("billing_user_cancelled"));
+          else if (err.code === "not_android") toast.message(t("google_play_only_android"));
+          else toast.error(t("billing_unknown_error"));
+        },
+      );
+    } finally {
+      // Always reconcile with Play and reset the button — whether the user
+      // completed, cancelled, or hit an error. This prevents the UI from
+      // getting stuck on "..." after a cancelled purchase.
+      try { await syncFromStore(); } catch {}
+      try { await refresh(); } catch {}
+      setSubmitting(false);
+    }
   };
 
   return (
