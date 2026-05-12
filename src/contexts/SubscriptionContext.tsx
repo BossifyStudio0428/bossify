@@ -154,21 +154,17 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           provider_transaction_id: receipt.transactionId,
           provider_purchase_token: receipt.purchaseToken ?? null,
         }, { onConflict: "user_id" });
-      } else {
-        // No active entitlement on Google Play. If our DB still says pro,
-        // demote to free so the UI matches reality.
-        if (sub?.plan === "pro") {
-          await supabase.from("subscriptions").update({
-            plan: "free",
-            status: "active",
-          }).eq("user_id", user.id);
-        }
       }
+      // Note: we intentionally do NOT auto-demote pro→free here. Right after
+      // a successful purchase the store cache often hasn't refreshed to
+      // owned=true yet, and demoting would wipe the freshly-upserted pro
+      // record. Cancellations should flow through Play's RTDN webhook or
+      // via expires_at instead.
       await refresh();
     } catch (e) {
       console.error("syncFromStore failed", e);
     }
-  }, [user, sub?.plan, refresh]);
+  }, [user, refresh]);
 
   // On first launch (after user is known): verify with Google Play so an
   // existing subscriber automatically lands as Pro.
