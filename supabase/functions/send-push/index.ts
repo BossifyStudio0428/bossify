@@ -231,14 +231,15 @@ Deno.serve(async (req) => {
 
   const cronSecret = req.headers.get("x-cron-secret");
   const apiKey = req.headers.get("apikey");
+  const auth = req.headers.get("Authorization");
+  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+  const hasUserBearer = !!token && token !== ANON_KEY;
   const isCron =
     (!!PUSH_WEBHOOK_SECRET && cronSecret === PUSH_WEBHOOK_SECRET) ||
-    (!!ANON_KEY && apiKey === ANON_KEY);
+    (!!ANON_KEY && apiKey === ANON_KEY && !hasUserBearer);
 
   let callerId: string | null = null;
   if (!isCron) {
-    const auth = req.headers.get("Authorization");
-    const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
     if (!token) return json(401, { error: "Unauthorized" });
     const { data, error } = await admin.auth.getUser(token);
     if (error || !data.user) return json(401, { error: "Invalid token" });
