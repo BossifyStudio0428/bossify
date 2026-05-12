@@ -35,23 +35,21 @@ function NotifSettingsPage() {
 
   const sendTest = async () => {
     setSending(true);
-    const title = "Bossify 测试推送 🎉";
-    const body = "如果你看到这条通知，推送已经 work 啦！";
+    const title = t("notif_test_title");
+    const body = t("notif_test_body");
     try {
       const res: any = await sendPushToSelf({ kind: "custom", title, body });
       const sent = res?.data?.sent ?? res?.sent ?? null;
-      // Always also fire a local notification so the user sees something even
-      // if they have no FCM device token registered yet (e.g. on web preview).
       await notify(title, body);
       if (sent === 0) {
-        toast.warning("没有已注册的设备 token — 已显示本地通知作为示范");
+        toast.warning(t("notif_no_device"));
       } else if (typeof sent === "number") {
-        toast.success(`已发送到 ${sent} 台设备，请查看通知栏`);
+        toast.success(t("notif_sent_to").replace("{n}", String(sent)));
       } else {
-        toast.success("已发送，请查看手机通知栏");
+        toast.success(t("notif_sent_check"));
       }
     } catch (e) {
-      toast.error("发送失败：" + (e as Error).message);
+      toast.error(t("notif_send_failed") + (e as Error).message);
     } finally {
       setSending(false);
     }
@@ -86,7 +84,7 @@ function NotifSettingsPage() {
       <div className="flex items-start gap-2 rounded-2xl bg-muted/60 p-3">
         <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          通知开关请在手机系统设置里管理。下面只是列出 Bossify 会发送哪些通知。
+          {t("notif_info_banner")}
         </p>
       </div>
 
@@ -109,13 +107,28 @@ function NotifSettingsPage() {
         <Settings className="h-4 w-4" /> {t("open_system_settings")}
       </button>
 
+      <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-2">
+        <p className="text-sm font-bold">{t("notif_when_title")}</p>
+        <ul className="space-y-1.5 text-xs text-muted-foreground leading-relaxed">
+          <li>• {t("notif_when_new_order")}</li>
+          <li>• {t("notif_when_unpaid")}</li>
+          <li>• {t("notif_when_inventory")}</li>
+          <li>• {t("notif_when_morning")}</li>
+          <li>• {t("notif_when_evening")}</li>
+          <li>• {t("notif_when_milestone")}</li>
+        </ul>
+        <p className="text-[11px] text-amber-700 dark:text-amber-400 pt-1 leading-relaxed">
+          {t("notif_only_native")}
+        </p>
+      </div>
+
       {isAdmin && (
         <button
           onClick={sendTest}
           disabled={sending}
           className="w-full h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99] disabled:opacity-60"
         >
-          <Bell className="h-4 w-4" /> {sending ? "发送中…" : "👑 发送测试推送 (Admin)"}
+          <Bell className="h-4 w-4" /> {sending ? t("notif_test_sending") : t("notif_test_push")}
         </button>
       )}
     </div>
