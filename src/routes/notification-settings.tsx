@@ -107,21 +107,6 @@ function NotifSettingsPage() {
         <Settings className="h-4 w-4" /> {t("open_system_settings")}
       </button>
 
-      <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-2">
-        <p className="text-sm font-bold">{t("notif_when_title")}</p>
-        <ul className="space-y-1.5 text-xs text-muted-foreground leading-relaxed">
-          <li>• {t("notif_when_new_order")}</li>
-          <li>• {t("notif_when_unpaid")}</li>
-          <li>• {t("notif_when_inventory")}</li>
-          <li>• {t("notif_when_morning")}</li>
-          <li>• {t("notif_when_evening")}</li>
-          <li>• {t("notif_when_milestone")}</li>
-        </ul>
-        <p className="text-[11px] text-amber-700 dark:text-amber-400 pt-1 leading-relaxed">
-          {t("notif_only_native")}
-        </p>
-      </div>
-
       {isAdmin && (
         <button
           onClick={sendTest}
