@@ -7,6 +7,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
+import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
@@ -150,12 +151,21 @@ function OrdersPage() {
       toast.error(t("update_failed"));
     } else {
       toast.success(t("order_updated"));
-      if (next === "Paid" && target && user) {
+      if (next === "Paid" && target && target.status !== "Paid" && user) {
+        const title = t("notif_paid").replace("{name}", target.customer_name).replace("{amount}", Number(target.amount).toFixed(2));
         createNotification({
           user_id: user.id, type: "paid",
-          title: t("notif_paid").replace("{name}", target.customer_name).replace("{amount}", Number(target.amount).toFixed(2)),
+          title,
           message: target.code, link: "/orders",
         });
+        notifySituation({
+          kind: "custom",
+          title: "Payment Received ✅",
+          body: `${target.customer_name} paid RM ${Number(target.amount).toFixed(2)}`,
+          link: "/orders",
+          prefKey: "notif_unpaid",
+          dedupeKey: `paid_${target.id}`,
+        }).catch(() => {});
       }
     }
   };
@@ -289,6 +299,16 @@ function OrdersPage() {
     const next = { ...editingOrder, ...updates } as OrderRow;
     setOrders((prev) => prev.map((order) => (order.id === editingOrder.id ? next : order)));
     if (detail?.id === editingOrder.id) setDetail(next);
+    if (editingOrder.status !== "Paid" && updates.status === "Paid") {
+      notifySituation({
+        kind: "custom",
+        title: "Payment Received ✅",
+        body: `${editingOrder.customer_name} paid RM ${Number(updates.amount).toFixed(2)}`,
+        link: "/orders",
+        prefKey: "notif_unpaid",
+        dedupeKey: `paid_${editingOrder.id}`,
+      }).catch(() => {});
+    }
     setEditingOrder(null);
     setEditForm({});
     toast.success(t("order_updated"));
