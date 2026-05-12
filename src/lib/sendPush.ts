@@ -8,6 +8,9 @@ async function callPushFunction(body: Record<string, unknown>) {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) return { data: null, error: new Error("Not signed in") };
+  const payload = body.kind === "register_device" || body.targetUserId
+    ? body
+    : { ...body, targetUserId: data.session.user.id };
 
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 15000);
@@ -19,7 +22,7 @@ async function callPushFunction(body: Record<string, unknown>) {
         apikey: PUSH_PUBLIC_KEY,
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     });
     const payload = await res.json().catch(() => ({}));
