@@ -267,9 +267,17 @@ async function tryNativePurchase(_subscriptionId: string, basePlanId: string): P
     }, 45000);
     try {
       const orderResult = offer.order ? offer.order() : store.order(offer);
-      Promise.resolve(orderResult).catch((err: AnyStore) => {
+      Promise.resolve(orderResult).then((err: AnyStore) => {
+        if (!err) return;
         const code: string | undefined = err?.code;
-        if (code === "PaymentCancelled" || /cancel/i.test(err?.message ?? "")) {
+        if (code === "PaymentCancelled" || code === "PAYMENT_CANCELLED" || /cancel/i.test(err?.message ?? "")) {
+          done(() => reject({ code: "user_cancelled", message: "Cancelled" } as BillingError));
+        } else {
+          done(() => reject({ code: "unknown", message: err?.message ?? "Purchase failed" } as BillingError));
+        }
+      }).catch((err: AnyStore) => {
+        const code: string | undefined = err?.code;
+        if (code === "PaymentCancelled" || code === "PAYMENT_CANCELLED" || /cancel/i.test(err?.message ?? "")) {
           done(() => reject({ code: "user_cancelled", message: "Cancelled" } as BillingError));
         } else {
           done(() => reject({ code: "unknown", message: err?.message ?? "Purchase failed" } as BillingError));
