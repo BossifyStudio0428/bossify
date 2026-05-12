@@ -25,7 +25,7 @@ function PlansPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isPro, plan, ordersUsed, sub, refresh, syncFromStore } = useSubscription();
+  const { isPro, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [submitting, setSubmitting] = useState(false);
   const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual", string>>({
@@ -93,10 +93,10 @@ function PlansPage() {
             plan: "pro",
             status: "active",
             provider: "google_play",
-            provider_product_id: receipt.productId || `${SUBSCRIPTION_ID}:${BASE_PLAN_IDS[billing]}`,
+            provider_product_id: `${receipt.productId || SUBSCRIPTION_ID}:${receipt.basePlanId ?? BASE_PLAN_IDS[billing]}`,
             provider_transaction_id: receipt.transactionId,
             provider_purchase_token: receipt.purchaseToken ?? null,
-            current_period_end: expiresAt.toISOString(),
+            current_period_end: receipt.currentPeriodEnd ?? expiresAt.toISOString(),
           }, { onConflict: "user_id" }).select("*").maybeSingle();
           console.log("[billing] Upsert result:", { upserted, upsertError });
           if (upsertError) {
@@ -218,7 +218,7 @@ function PlansPage() {
               </li>
             ))}
           </ul>
-          {isPro ? (
+          {isPro && activeBillingPlan === billing ? (
             <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-100 text-emerald-700 font-semibold text-sm">
               {t("current_plan")} ✓
             </button>
