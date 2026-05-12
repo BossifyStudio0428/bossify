@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { loadPaymentSummary } from "@/lib/paymentSetup";
+import { useI18n } from "@/contexts/I18nContext";
 
 const DISMISS_KEY = "bossify_setup_checklist_dismissed";
 
@@ -17,6 +18,7 @@ type Item = {
 
 export function SetupChecklist() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [items, setItems] = useState<Item[] | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
@@ -38,31 +40,31 @@ export function SetupChecklist() {
       setItems([
         {
           key: "biz",
-          label: "Lengkapkan profil perniagaan",
+          label: t("setup_step_biz"),
           to: "/business-profile",
           done: !!(profileRes.data as any)?.business_name?.trim(),
         },
         {
           key: "inv",
-          label: "Tambah produk pertama",
+          label: t("setup_step_inv"),
           to: "/inventory",
           done: (invRes.count ?? 0) > 0,
         },
         {
           key: "pay",
-          label: "Tetapkan kaedah pembayaran",
+          label: t("setup_step_pay"),
           to: "/payment-details",
           done: paySummary.hasMethod,
         },
         {
           key: "ord",
-          label: "Cipta pesanan pertama",
+          label: t("setup_step_order"),
           to: "/new-order",
           done: (ordersRes.count ?? 0) > 0,
         },
         {
           key: "cust",
-          label: "Jemput pelanggan pertama",
+          label: t("setup_step_cust"),
           to: "/customers",
           done: (custRes.count ?? 0) > 0,
         },
@@ -112,8 +114,10 @@ export function SetupChecklist() {
           <Rocket className="h-3.5 w-3.5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-bold text-foreground leading-tight">🚀 Mulakan Perniagaan Anda</p>
-          <p className="text-[10px] text-muted-foreground leading-tight">{done} / {total} selesai</p>
+          <p className="text-[12px] font-bold text-foreground leading-tight">{t("setup_title")}</p>
+          <p className="text-[10px] text-muted-foreground leading-tight">
+            {t("setup_progress").replace("{done}", String(done)).replace("{total}", String(total))}
+          </p>
         </div>
         <button
           type="button"
@@ -134,7 +138,7 @@ export function SetupChecklist() {
 
       {allDone ? (
         <p className="mt-2 text-[11px] font-semibold text-emerald-700 bg-emerald-50 rounded-lg px-2 py-1.5 text-center">
-          ✅ Anda sudah bersedia! Semua telah disediakan 🎉
+          {t("setup_all_done")}
         </p>
       ) : (
         <ul className="mt-2 space-y-0.5">
