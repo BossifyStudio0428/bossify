@@ -324,6 +324,8 @@ export async function verifyActiveSubscription(): Promise<PurchaseReceipt | null
       productId: SUBSCRIPTION_ID,
       transactionId: tx.id ?? tx.transactionId ?? "",
       purchaseToken: tx.purchaseToken,
+      basePlanId: inferOwnedPlan(product),
+      currentPeriodEnd: isoFromDate(tx.expirationDate),
     };
   } catch {
     return null;
