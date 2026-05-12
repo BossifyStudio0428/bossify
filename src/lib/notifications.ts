@@ -9,7 +9,9 @@ export function hasAskedNotifPermission(): boolean {
   return localStorage.getItem(PERM_ASKED_KEY) === "1";
 }
 export function markNotifAsked() {
-  try { localStorage.setItem(PERM_ASKED_KEY, "1"); } catch {}
+  try {
+    localStorage.setItem(PERM_ASKED_KEY, "1");
+  } catch {}
 }
 export function isNotifGranted(): boolean {
   if (typeof window === "undefined") return false;
@@ -56,7 +58,9 @@ export async function openAppNotificationSettings(): Promise<boolean> {
       const ok = res === "granted";
       if (ok) localStorage.setItem(PERM_GRANTED_KEY, "1");
       return ok;
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
   return false;
 }
@@ -69,7 +73,9 @@ async function getPlugin() {
     try {
       const { Capacitor } = await import("@capacitor/core");
       if (!Capacitor.isNativePlatform()) return null;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   } else {
     return null;
   }
@@ -92,7 +98,9 @@ export async function requestNotifPermission(): Promise<boolean> {
         const ok = res === "granted";
         if (ok) localStorage.setItem(PERM_GRANTED_KEY, "1");
         return ok;
-      } catch { return false; }
+      } catch {
+        return false;
+      }
     }
     return false;
   }
@@ -101,14 +109,20 @@ export async function requestNotifPermission(): Promise<boolean> {
     // will NOT re-appear. In that case open the system app settings so the
     // user can flip the OS-level toggle themselves.
     let current: { display?: string } = {};
-    try { current = await plugin.checkPermissions(); } catch {}
+    try {
+      current = await plugin.checkPermissions();
+    } catch {}
     let res = current;
     if (current.display !== "granted") {
-      try { res = await plugin.requestPermissions(); } catch {}
+      try {
+        res = await plugin.requestPermissions();
+      } catch {}
     }
     const ok = res.display === "granted";
     if (ok) {
-      try { localStorage.setItem(PERM_GRANTED_KEY, "1"); } catch {}
+      try {
+        localStorage.setItem(PERM_GRANTED_KEY, "1");
+      } catch {}
       await schedulePaymentReminder();
       return true;
     }
@@ -128,7 +142,9 @@ export async function requestNotifPermission(): Promise<boolean> {
       }
     }
     return false;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 export async function notify(title: string, body: string, extra?: Record<string, unknown>) {
@@ -137,22 +153,35 @@ export async function notify(title: string, body: string, extra?: Record<string,
     try {
       const current = (await plugin.checkPermissions().catch(() => ({}))) as { display?: string };
       if (current.display !== "granted") {
-        const requested = (await plugin.requestPermissions().catch(() => ({}))) as { display?: string };
+        const requested = (await plugin.requestPermissions().catch(() => ({}))) as {
+          display?: string;
+        };
         if (requested.display !== "granted") return;
       }
       await plugin.schedule({
-        notifications: [{
-          id: Math.floor(Math.random() * 2_000_000_000),
-          title, body,
-          extra,
-        }],
+        notifications: [
+          {
+            id: Math.floor(Math.random() * 2_000_000_000),
+            title,
+            body,
+            extra,
+          },
+        ],
       });
       return;
-    } catch (e) { console.warn("notify failed", e); }
+    } catch (e) {
+      console.warn("notify failed", e);
+    }
   }
   // Web fallback
-  if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-    try { new Notification(title, { body }); } catch {}
+  if (
+    typeof window !== "undefined" &&
+    "Notification" in window &&
+    Notification.permission === "granted"
+  ) {
+    try {
+      new Notification(title, { body });
+    } catch {}
   }
 }
 
@@ -165,16 +194,22 @@ export async function schedulePaymentReminder() {
     await plugin.cancel({ notifications: [{ id: REMINDER_ID }] }).catch(() => {});
     // Schedule daily 9am check trigger; the actual filter happens in handler below.
     await plugin.schedule({
-      notifications: [{
-        id: REMINDER_ID,
-        title: "Bossify",
-        body: "Checking your unpaid orders...",
-        schedule: { on: { hour: 9, minute: 0 }, allowWhileIdle: true, repeats: true },
-        extra: { kind: "daily_unpaid_check" },
-      }],
+      notifications: [
+        {
+          id: REMINDER_ID,
+          title: "Bossify",
+          body: "Checking your unpaid orders...",
+          schedule: { on: { hour: 9, minute: 0 }, allowWhileIdle: true, repeats: true },
+          extra: { kind: "daily_unpaid_check" },
+        },
+      ],
     });
-    try { localStorage.setItem(REMINDER_SCHEDULED_KEY, "1"); } catch {}
-  } catch (e) { console.warn("schedule reminder failed", e); }
+    try {
+      localStorage.setItem(REMINDER_SCHEDULED_KEY, "1");
+    } catch {}
+  } catch (e) {
+    console.warn("schedule reminder failed", e);
+  }
 }
 
 /** Run an in-app check for overdue unpaid orders and notify if any. */
@@ -188,9 +223,8 @@ export async function runOverdueCheck(userId: string, t: (k: any) => string) {
     .eq("status", "Unpaid")
     .lte("created_at", cutoff);
   if (error || !data || data.length === 0) return;
-  await notify(
-    "Payment Reminder ⚠️",
-    `${t("you_have")} ${data.length} ${t("payment_overdue")}`,
-    { route: "/orders", filter: "Unpaid" },
-  );
+  await notify("Payment Reminder ⚠️", `${t("you_have")} ${data.length} ${t("payment_overdue")}`, {
+    route: "/orders",
+    filter: "Unpaid",
+  });
 }
