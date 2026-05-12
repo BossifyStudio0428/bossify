@@ -35,6 +35,8 @@ export type PurchaseReceipt = {
   productId: string;
   transactionId: string;
   purchaseToken?: string;
+  basePlanId?: BillingPlan;
+  currentPeriodEnd?: string;
 };
 
 export type BillingErrorCode =
@@ -81,6 +83,38 @@ type AnyStore = any;
 
 let _initPromise: Promise<AnyStore | null> | null = null;
 let _approvedHandlers: Array<(r: PurchaseReceipt) => void> = [];
+
+function planFromText(value?: string | null): BillingPlan | undefined {
+  if (!value) return undefined;
+  if (value.includes(BASE_PLAN_IDS.annual)) return "annual";
+  if (value.includes(BASE_PLAN_IDS.monthly)) return "monthly";
+  return undefined;
+}
+
+function isoFromDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  const date = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+function receiptFromTransaction(transaction: AnyStore, fallbackPlan?: BillingPlan): PurchaseReceipt {
+  const product = transaction?.products?.[0] ?? {};
+  const basePlanId = planFromText(product.offerId) ?? fallbackPlan;
+  return {
+    productId: product.id ?? SUBSCRIPTION_ID,
+    transactionId: transaction?.id ?? transaction?.transactionId ?? transaction?.purchaseId ?? "",
+    purchaseToken: transaction?.purchaseToken,
+    basePlanId,
+    currentPeriodEnd: isoFromDate(transaction?.expirationDate),
+  };
+}
+
+function inferOwnedPlan(product: AnyStore): BillingPlan | undefined {
+  const txPlan = planFromText(product?.transaction?.products?.[0]?.offerId);
+  if (txPlan) return txPlan;
+  const ownedOffer = product?.offers?.find?.((offer: AnyStore) => offer?.owned);
+  return planFromText(ownedOffer?.id ?? ownedOffer?.basePlanId);
+}
 
 function getStore(): AnyStore | null {
   if (typeof window === "undefined") return null;
