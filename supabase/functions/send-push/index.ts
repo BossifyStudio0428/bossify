@@ -115,7 +115,7 @@ async function sendToTokens(
         data: { link: payload.link ?? "/" },
         android: {
           priority: "HIGH",
-          notification: { sound: "default", channel_id: "bossify_default" },
+          notification: { sound: "default" },
         },
       },
     };
