@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { loadPaymentSummary, isPaymentBannerDismissed, dismissPaymentBanner } from "@/lib/paymentSetup";
+import { SetupChecklist } from "@/components/SetupChecklist";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -219,6 +220,8 @@ function Index() {
           </button>
         </div>
       )}
+
+      <SetupChecklist />
 
       <section id="tour-stats" className="grid grid-cols-2 gap-3">
         {stats.map((s, i) => (
