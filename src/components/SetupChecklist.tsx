@@ -37,18 +37,23 @@ export function SetupChecklist() {
     if (!user) return;
     try {
       const [profileRes, invRes, ordersRes, custRes, paySummary] = await Promise.all([
-        supabase.from("profiles").select("business_name").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("business_name,business_type,whatsapp_number").eq("id", user.id).maybeSingle(),
         supabase.from("inventory").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("customers").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         loadPaymentSummary(user.id).catch(() => ({ hasMethod: false, type: null, number: null })),
       ]);
+      const p: any = profileRes.data ?? {};
+      const bizDone =
+        !!p.business_name?.trim() &&
+        !!p.business_type?.trim() &&
+        !!p.whatsapp_number?.trim();
       setItems([
         {
           key: "biz",
           label: t("setup_step_biz"),
           to: "/business-profile",
-          done: !!(profileRes.data as any)?.business_name?.trim(),
+          done: bizDone,
         },
         {
           key: "inv",
