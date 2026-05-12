@@ -11,7 +11,7 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUB
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-cron-secret",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-cron-secret",
 };
 
 function json(status: number, body: unknown): Response {
@@ -54,7 +54,10 @@ function b64url(input: ArrayBuffer | Uint8Array | string): string {
 }
 
 function pemToArrayBuffer(pem: string): ArrayBuffer {
-  const b64 = pem.replace(/-----BEGIN [^-]+-----/g, "").replace(/-----END [^-]+-----/g, "").replace(/\s+/g, "");
+  const b64 = pem
+    .replace(/-----BEGIN [^-]+-----/g, "")
+    .replace(/-----END [^-]+-----/g, "")
+    .replace(/\s+/g, "");
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -81,7 +84,11 @@ async function getAccessToken(): Promise<string> {
     false,
     ["sign"],
   );
-  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(unsigned));
+  const sig = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    new TextEncoder().encode(unsigned),
+  );
   const jwt = `${unsigned}.${b64url(sig)}`;
   const res = await fetch(acc.token_uri || "https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -92,7 +99,7 @@ async function getAccessToken(): Promise<string> {
     }),
   });
   if (!res.ok) throw new Error(`FCM token error ${res.status}: ${await res.text()}`);
-  const j = await res.json() as { access_token: string; expires_in: number };
+  const j = (await res.json()) as { access_token: string; expires_in: number };
   cachedToken = { token: j.access_token, exp: now + j.expires_in };
   return j.access_token;
 }
@@ -107,38 +114,46 @@ async function sendToTokens(
   const acc = getAccount();
   const at = await getAccessToken();
   const url = `https://fcm.googleapis.com/v1/projects/${acc.project_id}/messages:send`;
-  return await Promise.all(tokens.map(async (token) => {
-    const message = {
-      message: {
-        token,
-        notification: { title: payload.title, body: payload.body },
-        data: { link: payload.link ?? "/" },
-        android: {
-          priority: "HIGH",
-          notification: { sound: "default", channel_id: "bossify_default" },
+  return await Promise.all(
+    tokens.map(async (token) => {
+      const message = {
+        message: {
+          token,
+          notification: { title: payload.title, body: payload.body },
+          data: { link: payload.link ?? "/" },
+          android: {
+            priority: "HIGH",
+            notification: { sound: "default" },
+          },
         },
-      },
-    };
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${at}`, "Content-Type": "application/json" },
-        body: JSON.stringify(message),
-      });
-      if (res.ok) return { token, ok: true };
-      const text = await res.text();
-      const invalid = res.status === 404 || /UNREGISTERED|INVALID_ARGUMENT/.test(text);
-      return { token, ok: false, error: text.slice(0, 200), invalid };
-    } catch (e) {
-      return { token, ok: false, error: (e as Error).message };
-    }
-  }));
+      };
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${at}`, "Content-Type": "application/json" },
+          body: JSON.stringify(message),
+        });
+        if (res.ok) return { token, ok: true };
+        const text = await res.text();
+        const invalid = res.status === 404 || /UNREGISTERED|INVALID_ARGUMENT/.test(text);
+        return { token, ok: false, error: text.slice(0, 200), invalid };
+      } catch (e) {
+        return { token, ok: false, error: (e as Error).message };
+      }
+    }),
+  );
 }
 
 // ---------- Content resolution ----------
 type Kind =
-  | "new_order" | "low_stock" | "milestone" | "morning_summary"
-  | "unpaid_reminder" | "closing_report" | "custom" | "register_device";
+  | "new_order"
+  | "low_stock"
+  | "milestone"
+  | "morning_summary"
+  | "unpaid_reminder"
+  | "closing_report"
+  | "custom"
+  | "register_device";
 
 async function resolveContent(
   userId: string,
@@ -147,19 +162,28 @@ async function resolveContent(
 ) {
   const { data: prefs } = await admin
     .from("profiles")
-    .select("notif_new_order,notif_unpaid,notif_inventory,notif_morning,notif_evening,notif_milestone")
+    .select(
+      "notif_new_order,notif_unpaid,notif_inventory,notif_morning,notif_evening,notif_milestone",
+    )
     .eq("id", userId)
     .maybeSingle();
   const p = (prefs ?? {}) as Record<string, boolean | null>;
   const allowed = (() => {
     switch (kind) {
-      case "new_order": return p.notif_new_order !== false;
-      case "unpaid_reminder": return p.notif_unpaid !== false;
-      case "low_stock": return p.notif_inventory !== false;
-      case "morning_summary": return p.notif_morning !== false;
-      case "closing_report": return p.notif_evening !== false;
-      case "milestone": return p.notif_milestone !== false;
-      default: return true;
+      case "new_order":
+        return p.notif_new_order !== false;
+      case "unpaid_reminder":
+        return p.notif_unpaid !== false;
+      case "low_stock":
+        return p.notif_inventory !== false;
+      case "morning_summary":
+        return p.notif_morning !== false;
+      case "closing_report":
+        return p.notif_evening !== false;
+      case "milestone":
+        return p.notif_milestone !== false;
+      default:
+        return true;
     }
   })();
 
@@ -170,22 +194,35 @@ async function resolveContent(
   if (!override.title || !override.body) {
     if (kind === "morning_summary") {
       const since = new Date(Date.now() - 86400000).toISOString();
-      const { count } = await admin.from("orders").select("id", { count: "exact", head: true })
-        .eq("user_id", userId).gte("created_at", since);
+      const { count } = await admin
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("created_at", since);
       title = "Good morning, Boss! ☀️";
       body = `You had ${count ?? 0} orders yesterday. Let's smash today!`;
       link = "/";
     } else if (kind === "unpaid_reminder") {
-      const { count } = await admin.from("orders").select("id", { count: "exact", head: true })
-        .eq("user_id", userId).eq("status", "Unpaid");
+      const { count } = await admin
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("status", "Unpaid");
       title = "Payment Reminder ⚠️";
       body = `You have ${count ?? 0} unpaid orders to follow up.`;
       link = "/orders";
     } else if (kind === "closing_report") {
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const { data: rows } = await admin.from("orders").select("amount")
-        .eq("user_id", userId).gte("created_at", today.toISOString());
-      const total = (rows ?? []).reduce((s: number, r: { amount?: number | null }) => s + Number(r.amount ?? 0), 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { data: rows } = await admin
+        .from("orders")
+        .select("amount")
+        .eq("user_id", userId)
+        .gte("created_at", today.toISOString());
+      const total = (rows ?? []).reduce(
+        (s: number, r: { amount?: number | null }) => s + Number(r.amount ?? 0),
+        0,
+      );
       title = "Closing Report 🌙";
       body = `Today: ${rows?.length ?? 0} orders · RM ${total.toFixed(2)}`;
       link = "/reports";
@@ -253,14 +290,17 @@ Deno.serve(async (req) => {
     if (parsed.kind === "register_device") {
       const ownerId = callerId ?? parsed.userId;
       if (!ownerId) return json(401, { error: "Unauthorized" });
-      if (callerId && parsed.userId !== callerId) return json(403, { error: "Can only register own device" });
+      if (callerId && parsed.userId !== callerId)
+        return json(403, { error: "Can only register own device" });
       const token = typeof parsed.token === "string" ? parsed.token.trim() : "";
       if (!token || token.length > 4096) return json(400, { error: "Invalid device token" });
       const platform = parsed.platform === "ios" ? "ios" : "android";
-      const { error } = await admin.from("device_tokens").upsert(
-        { user_id: ownerId, token, platform, updated_at: new Date().toISOString() },
-        { onConflict: "user_id,token" },
-      );
+      const { error } = await admin
+        .from("device_tokens")
+        .upsert(
+          { user_id: ownerId, token, platform, updated_at: new Date().toISOString() },
+          { onConflict: "user_id,token" },
+        );
       if (error) throw error;
       return json(200, { ok: true, registered: true });
     }
@@ -268,15 +308,29 @@ Deno.serve(async (req) => {
     if (parsed.broadcast) {
       if (!isCron) return json(403, { error: "Broadcast requires cron secret" });
       const { data: users } = await admin.from("device_tokens").select("user_id");
-      const uniq = Array.from(new Set((users ?? []).map((r: { user_id: string }) => r.user_id))) as string[];
-      let totalSent = 0, totalRemoved = 0, skipped = 0;
+      const uniq = Array.from(
+        new Set((users ?? []).map((r: { user_id: string }) => r.user_id)),
+      ) as string[];
+      let totalSent = 0,
+        totalRemoved = 0,
+        skipped = 0;
       for (const uid of uniq) {
         const c = await resolveContent(uid, parsed.kind, parsed);
-        if (!c.allowed) { skipped++; continue; }
+        if (!c.allowed) {
+          skipped++;
+          continue;
+        }
         const r = await dispatch(uid, c);
-        totalSent += r.sent; totalRemoved += r.removed;
+        totalSent += r.sent;
+        totalRemoved += r.removed;
       }
-      return json(200, { ok: true, users: uniq.length, sent: totalSent, removed: totalRemoved, skipped });
+      return json(200, {
+        ok: true,
+        users: uniq.length,
+        sent: totalSent,
+        removed: totalRemoved,
+        skipped,
+      });
     }
 
     const userId = parsed.targetUserId ?? callerId!;
