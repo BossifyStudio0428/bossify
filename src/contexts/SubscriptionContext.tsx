@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { verifyActiveSubscription, isNativeBillingAvailable } from "@/lib/billing";
+import { verifyActiveSubscription, isNativeBillingAvailable, type BillingPlan } from "@/lib/billing";
 
 export type Plan = "free" | "pro";
 
@@ -15,6 +15,9 @@ export type SubscriptionRow = {
   order_count: number;
   count_period_start: string | null;
   last_reset_at: string | null;
+  provider?: string | null;
+  provider_product_id?: string | null;
+  current_period_end?: string | null;
 };
 
 export const FREE_LIMITS = {
@@ -31,6 +34,7 @@ type Ctx = {
   ordersUsed: number;
   ordersLimit: number;
   ordersRemaining: number;
+  activeBillingPlan: BillingPlan | null;
   refresh: () => Promise<void>;
   /**
    * Re-query Google Play for the current user's owned Pro subscription and
@@ -76,6 +80,23 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         const period = data.count_period_start ? new Date(data.count_period_start) : null;
         const now = new Date();
         const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        if (
+          data.plan === "pro" &&
+          data.current_period_end &&
+          new Date(data.current_period_end).getTime() <= now.getTime()
+        ) {
+          const { error: expireError } = await supabase
+            .from("subscriptions")
+            .update({ plan: "free", status: "active", provider_product_id: null, current_period_end: null })
+            .eq("user_id", user.id);
+          if (expireError) console.error("subscription expiry sync failed", expireError);
+          else {
+            data.plan = "free";
+            data.status = "active";
+            data.provider_product_id = null;
+            data.current_period_end = null;
+          }
+        }
         if (!period || period < curMonthStart) {
           const { error: resetError } = await supabase
             .from("subscriptions")
@@ -150,10 +171,18 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           plan: "pro",
           status: "active",
           provider: "google_play",
-          provider_product_id: receipt.productId,
+          provider_product_id: `${receipt.productId}:${receipt.basePlanId ?? "monthly"}`,
           provider_transaction_id: receipt.transactionId,
           provider_purchase_token: receipt.purchaseToken ?? null,
+          current_period_end: receipt.currentPeriodEnd ?? null,
         }, { onConflict: "user_id" });
+      } else if (sub?.plan === "pro" && sub?.provider === "google_play") {
+        await supabase.from("subscriptions").update({
+          plan: "free",
+          status: "active",
+          provider_product_id: null,
+          current_period_end: null,
+        }).eq("user_id", user.id);
       }
       // Note: we intentionally do NOT auto-demote pro→free here. Right after
       // a successful purchase the store cache often hasn't refreshed to
@@ -164,7 +193,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("syncFromStore failed", e);
     }
-  }, [user, refresh]);
+  }, [user, refresh, sub?.plan, sub?.provider]);
 
   // On first launch (after user is known): verify with Google Play so an
   // existing subscriber automatically lands as Pro.
@@ -204,7 +233,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   const plan: Plan = (sub?.plan as Plan) ?? "free";
-  const isPro = plan === "pro" && (sub?.status ?? "active") === "active";
+  const activeBillingPlan: BillingPlan | null = sub?.provider_product_id?.includes("annual")
+    ? "annual"
+    : sub?.provider_product_id?.includes("monthly")
+      ? "monthly"
+      : null;
+  const isPeriodActive = !sub?.current_period_end || new Date(sub.current_period_end).getTime() > Date.now();
+  const isPro = plan === "pro" && (sub?.status ?? "active") === "active" && isPeriodActive;
   const ordersUsed = sub?.order_count ?? 0;
   const ordersLimit = FREE_LIMITS.ordersPerMonth;
   const ordersRemaining = Math.max(0, ordersLimit - ordersUsed);
@@ -217,7 +252,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SubCtx.Provider value={{
-      sub, plan, isPro, loading, ordersUsed, ordersLimit, ordersRemaining,
+      sub, plan, isPro, loading, ordersUsed, ordersLimit, ordersRemaining, activeBillingPlan,
       refresh, syncFromStore, showUpgrade, hideUpgrade, upgradeOpen, upgradeReason,
     }}>
       {children}

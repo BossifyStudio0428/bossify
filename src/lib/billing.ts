@@ -35,6 +35,8 @@ export type PurchaseReceipt = {
   productId: string;
   transactionId: string;
   purchaseToken?: string;
+  basePlanId?: BillingPlan;
+  currentPeriodEnd?: string;
 };
 
 export type BillingErrorCode =
@@ -82,6 +84,38 @@ type AnyStore = any;
 let _initPromise: Promise<AnyStore | null> | null = null;
 let _approvedHandlers: Array<(r: PurchaseReceipt) => void> = [];
 
+function planFromText(value?: string | null): BillingPlan | undefined {
+  if (!value) return undefined;
+  if (value.includes(BASE_PLAN_IDS.annual)) return "annual";
+  if (value.includes(BASE_PLAN_IDS.monthly)) return "monthly";
+  return undefined;
+}
+
+function isoFromDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  const date = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+function receiptFromTransaction(transaction: AnyStore, fallbackPlan?: BillingPlan): PurchaseReceipt {
+  const product = transaction?.products?.[0] ?? {};
+  const basePlanId = planFromText(product.offerId) ?? fallbackPlan;
+  return {
+    productId: product.id ?? SUBSCRIPTION_ID,
+    transactionId: transaction?.id ?? transaction?.transactionId ?? transaction?.purchaseId ?? "",
+    purchaseToken: transaction?.purchaseToken,
+    basePlanId,
+    currentPeriodEnd: isoFromDate(transaction?.expirationDate),
+  };
+}
+
+function inferOwnedPlan(product: AnyStore): BillingPlan | undefined {
+  const txPlan = planFromText(product?.transaction?.products?.[0]?.offerId);
+  if (txPlan) return txPlan;
+  const ownedOffer = product?.offers?.find?.((offer: AnyStore) => offer?.owned);
+  return planFromText(ownedOffer?.id ?? ownedOffer?.basePlanId);
+}
+
 function getStore(): AnyStore | null {
   if (typeof window === "undefined") return null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,10 +150,7 @@ export function initBilling(): Promise<AnyStore | null> {
       // acknowledged. Listeners can react via onPurchaseApproved().
       store.when().approved((transaction: AnyStore) => {
         try {
-          const productId: string = transaction?.products?.[0]?.id ?? SUBSCRIPTION_ID;
-          const transactionId: string = transaction?.transactionId ?? "";
-          const purchaseToken: string | undefined = transaction?.purchaseToken;
-          const receipt: PurchaseReceipt = { productId, transactionId, purchaseToken };
+          const receipt = receiptFromTransaction(transaction);
           for (const h of _approvedHandlers) { try { h(receipt); } catch {} }
           transaction.finish?.();
         } catch (e) { console.warn("approved handler failed", e); }
@@ -228,11 +259,7 @@ async function tryNativePurchase(_subscriptionId: string, basePlanId: string): P
         const owned: boolean = !!(fresh?.owned || fresh?.offers?.some?.((o: AnyStore) => o?.owned));
         if (owned) {
           const tx = fresh.transaction ?? {};
-          done(() => resolve({
-            productId: _subscriptionId,
-            transactionId: tx.id ?? tx.transactionId ?? "",
-            purchaseToken: tx.purchaseToken,
-          }));
+          done(() => resolve(receiptFromTransaction(tx, planFromText(basePlanId))));
           return;
         }
       } catch {}
@@ -240,9 +267,17 @@ async function tryNativePurchase(_subscriptionId: string, basePlanId: string): P
     }, 45000);
     try {
       const orderResult = offer.order ? offer.order() : store.order(offer);
-      Promise.resolve(orderResult).catch((err: AnyStore) => {
+      Promise.resolve(orderResult).then((err: AnyStore) => {
+        if (!err) return;
         const code: string | undefined = err?.code;
-        if (code === "PaymentCancelled" || /cancel/i.test(err?.message ?? "")) {
+        if (code === "PaymentCancelled" || code === "PAYMENT_CANCELLED" || /cancel/i.test(err?.message ?? "")) {
+          done(() => reject({ code: "user_cancelled", message: "Cancelled" } as BillingError));
+        } else {
+          done(() => reject({ code: "unknown", message: err?.message ?? "Purchase failed" } as BillingError));
+        }
+      }).catch((err: AnyStore) => {
+        const code: string | undefined = err?.code;
+        if (code === "PaymentCancelled" || code === "PAYMENT_CANCELLED" || /cancel/i.test(err?.message ?? "")) {
           done(() => reject({ code: "user_cancelled", message: "Cancelled" } as BillingError));
         } else {
           done(() => reject({ code: "unknown", message: err?.message ?? "Purchase failed" } as BillingError));
@@ -264,6 +299,8 @@ async function tryNativeRestore(): Promise<PurchaseReceipt[]> {
       productId: SUBSCRIPTION_ID,
       transactionId: product.transaction?.id ?? "",
       purchaseToken: product.transaction?.purchaseToken,
+      basePlanId: inferOwnedPlan(product),
+      currentPeriodEnd: isoFromDate(product.transaction?.expirationDate),
     }] : [];
     return owned;
   } catch {
@@ -295,6 +332,8 @@ export async function verifyActiveSubscription(): Promise<PurchaseReceipt | null
       productId: SUBSCRIPTION_ID,
       transactionId: tx.id ?? tx.transactionId ?? "",
       purchaseToken: tx.purchaseToken,
+      basePlanId: inferOwnedPlan(product),
+      currentPeriodEnd: isoFromDate(tx.expirationDate),
     };
   } catch {
     return null;
