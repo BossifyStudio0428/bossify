@@ -83,10 +83,11 @@ function PlansPage() {
       await purchasePlan(
         billing,
         async (receipt) => {
+          console.log("[billing] Purchase approved, receipt:", JSON.stringify(receipt));
           const expiresAt = new Date();
           if (billing === "monthly") expiresAt.setMonth(expiresAt.getMonth() + 1);
           else expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-          await supabase.from("subscriptions").upsert({
+          const { data: upserted, error: upsertError } = await supabase.from("subscriptions").upsert({
             user_id: user.id,
             plan: "pro",
             status: "active",
@@ -95,8 +96,17 @@ function PlansPage() {
             provider_transaction_id: receipt.transactionId,
             provider_purchase_token: receipt.purchaseToken ?? null,
             current_period_end: expiresAt.toISOString(),
-          }, { onConflict: "user_id" });
+          }, { onConflict: "user_id" }).select("*").maybeSingle();
+          console.log("[billing] Upsert result:", { upserted, upsertError });
+          if (upsertError) {
+            console.error("[billing] Failed to persist Pro plan:", upsertError);
+            toast.error(`${t("billing_unknown_error")}: ${upsertError.message}`);
+            return;
+          }
+          // Pull the freshly written row so isPro flips before we toast.
+          await refresh();
           toast.success(t("welcome_to_pro"));
+          console.log("[billing] Plan upgrade complete");
         },
         (err: BillingError) => {
           if (err.code === "item_unavailable") toast.message(t("billing_item_unavailable"));
@@ -229,7 +239,7 @@ function PlansPage() {
               }
               if (user) {
                 const r = receipts[0];
-                await supabase.from("subscriptions").upsert({
+                const { error: restoreError } = await supabase.from("subscriptions").upsert({
                   user_id: user.id,
                   plan: "pro",
                   status: "active",
@@ -238,6 +248,11 @@ function PlansPage() {
                   provider_transaction_id: r.transactionId,
                   provider_purchase_token: r.purchaseToken ?? null,
                 }, { onConflict: "user_id" });
+                if (restoreError) {
+                  console.error("[billing] Restore upsert failed:", restoreError);
+                  toast.error(`${t("billing_unknown_error")}: ${restoreError.message}`);
+                  return;
+                }
               }
               await refresh();
               toast.success(t("pro_restored"));
