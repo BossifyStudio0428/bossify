@@ -148,9 +148,7 @@ function PaymentSetupPage() {
           </div>
         </div>
 
-        <div className="flex-1" />
-
-        <div className="space-y-2 pt-6">
+        <div className="space-y-2 pt-6 pb-4">
           <button
             type="button"
             onClick={handleSave}
