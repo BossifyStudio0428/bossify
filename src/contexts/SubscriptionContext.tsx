@@ -15,6 +15,7 @@ export type SubscriptionRow = {
   order_count: number;
   count_period_start: string | null;
   last_reset_at: string | null;
+  provider?: string | null;
   provider_product_id?: string | null;
   current_period_end?: string | null;
 };
@@ -175,7 +176,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           provider_purchase_token: receipt.purchaseToken ?? null,
           current_period_end: receipt.currentPeriodEnd ?? null,
         }, { onConflict: "user_id" });
-      } else if (sub?.plan === "pro" && sub?.provider_product_id?.includes("google") !== false) {
+      } else if (sub?.plan === "pro" && sub?.provider === "google_play") {
         await supabase.from("subscriptions").update({
           plan: "free",
           status: "active",
@@ -192,7 +193,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("syncFromStore failed", e);
     }
-  }, [user, refresh]);
+  }, [user, refresh, sub?.plan, sub?.provider]);
 
   // On first launch (after user is known): verify with Google Play so an
   // existing subscriber automatically lands as Pro.
