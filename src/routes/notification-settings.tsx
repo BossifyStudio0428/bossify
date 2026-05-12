@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { isNotifGranted, openAppNotificationSettings, notify } from "@/lib/notifications";
 import { sendPushToSelf } from "@/lib/sendPush";
+import { registerPushForUser } from "@/lib/pushRegister";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -34,11 +35,14 @@ function NotifSettingsPage() {
   };
 
   const sendTest = async () => {
+    if (!user) return;
     setSending(true);
     const title = t("notif_test_title");
     const body = t("notif_test_body");
     try {
+      await registerPushForUser(user.id);
       const res: any = await sendPushToSelf({ kind: "custom", title, body });
+      if (res?.error) throw res.error;
       const sent = res?.data?.sent ?? res?.sent ?? null;
       await notify(title, body);
       if (sent === 0) {
