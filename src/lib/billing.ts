@@ -150,10 +150,7 @@ export function initBilling(): Promise<AnyStore | null> {
       // acknowledged. Listeners can react via onPurchaseApproved().
       store.when().approved((transaction: AnyStore) => {
         try {
-          const productId: string = transaction?.products?.[0]?.id ?? SUBSCRIPTION_ID;
-          const transactionId: string = transaction?.transactionId ?? "";
-          const purchaseToken: string | undefined = transaction?.purchaseToken;
-          const receipt: PurchaseReceipt = { productId, transactionId, purchaseToken };
+          const receipt = receiptFromTransaction(transaction);
           for (const h of _approvedHandlers) { try { h(receipt); } catch {} }
           transaction.finish?.();
         } catch (e) { console.warn("approved handler failed", e); }
@@ -262,11 +259,7 @@ async function tryNativePurchase(_subscriptionId: string, basePlanId: string): P
         const owned: boolean = !!(fresh?.owned || fresh?.offers?.some?.((o: AnyStore) => o?.owned));
         if (owned) {
           const tx = fresh.transaction ?? {};
-          done(() => resolve({
-            productId: _subscriptionId,
-            transactionId: tx.id ?? tx.transactionId ?? "",
-            purchaseToken: tx.purchaseToken,
-          }));
+          done(() => resolve(receiptFromTransaction(tx, planFromText(basePlanId))));
           return;
         }
       } catch {}
@@ -298,6 +291,8 @@ async function tryNativeRestore(): Promise<PurchaseReceipt[]> {
       productId: SUBSCRIPTION_ID,
       transactionId: product.transaction?.id ?? "",
       purchaseToken: product.transaction?.purchaseToken,
+      basePlanId: inferOwnedPlan(product),
+      currentPeriodEnd: isoFromDate(product.transaction?.expirationDate),
     }] : [];
     return owned;
   } catch {
