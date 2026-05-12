@@ -9,6 +9,7 @@ import { createNotification } from "@/lib/notify";
 import { notify as deviceNotify } from "@/lib/notifications";
 import { isPrefEnabled } from "@/lib/notifPrefs";
 import { sendPushToSelf } from "@/lib/sendPush";
+import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
@@ -173,6 +174,16 @@ function NewOrderPage() {
     if (matchedItem) {
       const newStock = Math.max(0, Number(matchedItem.stock ?? 0) - quantity);
       await supabase.from("inventory").update({ stock: newStock }).eq("id", matchedItem.id);
+      if (newStock <= 5 && newStock < Number(matchedItem.stock ?? 0)) {
+        notifySituation({
+          kind: "low_stock",
+          title: newStock === 0 ? "Out of Stock ❌" : "Low Stock Alert 📦",
+          body: newStock === 0 ? `${matchedItem.name} is sold out. Restock now!` : `${matchedItem.name} is running low. Only ${newStock} left!`,
+          link: "/inventory",
+          prefKey: "notif_inventory",
+          dedupeKey: `stock_${matchedItem.id}_${newStock}`,
+        }).catch(() => {});
+      }
     }
 
     // Upsert customer by phone (only if phone provided)
