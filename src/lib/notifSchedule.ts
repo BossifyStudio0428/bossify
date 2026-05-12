@@ -6,6 +6,11 @@ const ID_EVENING = 9102;
 const ID_UNPAID_DAILY = 9103;
 
 async function getPlugin() {
+  if (typeof window === "undefined") return null;
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (!Capacitor.isNativePlatform()) return null;
+  } catch { return null; }
   try {
     const { LocalNotifications } = await import("@capacitor/local-notifications");
     return LocalNotifications;
