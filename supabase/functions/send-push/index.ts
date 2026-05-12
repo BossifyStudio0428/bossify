@@ -7,6 +7,10 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FCM_SERVICE_ACCOUNT_JSON = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON");
 const PUSH_WEBHOOK_SECRET = Deno.env.get("PUSH_WEBHOOK_SECRET");
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+const APP_SUPABASE_URL = Deno.env.get("APP_SUPABASE_URL") ?? "https://knouahqwazerjiyiqgmh.supabase.co";
+const APP_SUPABASE_ANON_KEY =
+  Deno.env.get("APP_SUPABASE_ANON_KEY") ??
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +28,41 @@ function json(status: number, body: unknown): Response {
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
+
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const payload = token.split(".")[1];
+  if (!payload) return null;
+  try {
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    return JSON.parse(atob(padded)) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function supabaseUrlFromIssuer(issuer: unknown): string | null {
+  if (typeof issuer !== "string") return null;
+  const match = issuer.match(/^(https:\/\/[a-z0-9-]+\.supabase\.co)\/auth\/v1\/?$/i);
+  return match?.[1] ?? null;
+}
+
+async function getCallerIdFromBearer(token: string): Promise<string | null> {
+  const local = await admin.auth.getUser(token);
+  if (!local.error && local.data.user) return local.data.user.id;
+
+  const issuerUrl = supabaseUrlFromIssuer(decodeJwtPayload(token)?.iss);
+  const issuerAnonKey = issuerUrl === APP_SUPABASE_URL ? APP_SUPABASE_ANON_KEY : null;
+  if (!issuerUrl || !issuerAnonKey) return null;
+
+  const authClient = createClient(issuerUrl, issuerAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data, error } = await authClient.auth.getUser(token);
+  if (error || !data.user) return null;
+  return data.user.id;
+}
 
 // ---------- FCM HTTP v1 ----------
 type ServiceAccount = {
@@ -279,9 +318,8 @@ Deno.serve(async (req) => {
   let callerId: string | null = null;
   if (!isCron && hasUserBearer) {
     if (!token) return json(401, { error: "Unauthorized" });
-    const { data, error } = await admin.auth.getUser(token);
-    if (error || !data.user) return json(401, { error: "Invalid token" });
-    callerId = data.user.id;
+    callerId = await getCallerIdFromBearer(token);
+    if (!callerId) return json(401, { error: "Invalid token" });
   } else if (!isCron && !hasPublicKey) {
     return json(401, { error: "Unauthorized" });
   }

@@ -3,7 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 type Kind = "new_order" | "low_stock" | "milestone" | "custom";
 const PUSH_FUNCTION_URL = "https://utqlrdbhvnugqvemjegi.supabase.co/functions/v1/send-push";
 
-async function callPushFunction(body: Record<string, unknown>) {
+async function callPushFunction(body: Record<string, unknown>, didRefresh = false): Promise<{
+  data: Record<string, unknown> | null;
+  error: Error | null;
+}> {
   const { data } = await supabase.auth.getSession();
   const session = data.session;
   const token = session?.access_token;
@@ -29,6 +32,15 @@ async function callPushFunction(body: Record<string, unknown>) {
       error?: string;
       [key: string]: unknown;
     };
+    if (
+      !didRefresh &&
+      res.status === 401 &&
+      typeof responseBody.error === "string" &&
+      /invalid token|unauthorized/i.test(responseBody.error)
+    ) {
+      await supabase.auth.refreshSession().catch(() => null);
+      return callPushFunction(body, true);
+    }
     if (!res.ok || responseBody.error) {
       return {
         data: responseBody,
