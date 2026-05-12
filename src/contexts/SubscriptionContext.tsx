@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { verifyActiveSubscription, isNativeBillingAvailable } from "@/lib/billing";
 
 export type Plan = "free" | "pro";
 
@@ -31,6 +32,12 @@ type Ctx = {
   ordersLimit: number;
   ordersRemaining: number;
   refresh: () => Promise<void>;
+  /**
+   * Re-query Google Play for the current user's owned Pro subscription and
+   * upsert the result into Supabase. Safe to call any time — on app launch,
+   * on app resume, after a purchase attempt (success OR cancel), etc.
+   */
+  syncFromStore: () => Promise<void>;
   showUpgrade: (reason?: string) => void;
   hideUpgrade: () => void;
   upgradeOpen: boolean;
@@ -128,6 +135,67 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // Re-query Google Play for the user's actual entitlement and reconcile
+  // it with Supabase. The native store is the source of truth — if the
+  // user cancelled in Play Store, refunded, or restored on a new device,
+  // this is what catches it.
+  const syncFromStore = useCallback(async () => {
+    if (!user) return;
+    if (!isNativeBillingAvailable()) return;
+    try {
+      const receipt = await verifyActiveSubscription();
+      if (receipt) {
+        await supabase.from("subscriptions").upsert({
+          user_id: user.id,
+          plan: "pro",
+          status: "active",
+          provider: "google_play",
+          provider_product_id: receipt.productId,
+          provider_transaction_id: receipt.transactionId,
+          provider_purchase_token: receipt.purchaseToken ?? null,
+        }, { onConflict: "user_id" });
+      } else {
+        // No active entitlement on Google Play. If our DB still says pro,
+        // demote to free so the UI matches reality.
+        if (sub?.plan === "pro") {
+          await supabase.from("subscriptions").update({
+            plan: "free",
+            status: "active",
+          }).eq("user_id", user.id);
+        }
+      }
+      await refresh();
+    } catch (e) {
+      console.error("syncFromStore failed", e);
+    }
+  }, [user, sub?.plan, refresh]);
+
+  // On first launch (after user is known): verify with Google Play so an
+  // existing subscriber automatically lands as Pro.
+  useEffect(() => {
+    if (!user) return;
+    syncFromStore();
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // On app resume (foregrounding the Android app): re-verify so cancellations
+  // / new purchases made outside the app are reflected immediately.
+  useEffect(() => {
+    if (!user) return;
+    let unsub: (() => void) | null = null;
+    (async () => {
+      try {
+        const { App } = await import("@capacitor/app");
+        const handle = await App.addListener("appStateChange", ({ isActive }) => {
+          if (isActive) syncFromStore();
+        });
+        unsub = () => { handle.remove?.(); };
+      } catch {
+        // Not running inside Capacitor — ignore.
+      }
+    })();
+    return () => { unsub?.(); };
+  }, [user?.id, syncFromStore]);
+
   // Realtime: keep order_count in sync after inserts
   useEffect(() => {
     if (!user) return;
@@ -154,7 +222,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   return (
     <SubCtx.Provider value={{
       sub, plan, isPro, loading, ordersUsed, ordersLimit, ordersRemaining,
-      refresh, showUpgrade, hideUpgrade, upgradeOpen, upgradeReason,
+      refresh, syncFromStore, showUpgrade, hideUpgrade, upgradeOpen, upgradeReason,
     }}>
       {children}
     </SubCtx.Provider>
