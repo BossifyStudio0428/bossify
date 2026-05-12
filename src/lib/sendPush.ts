@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-type Kind = "new_order" | "low_stock" | "milestone" | "custom";
+export type PushKind = "new_order" | "low_stock" | "milestone" | "custom";
 const PUSH_FUNCTION_URL = "https://utqlrdbhvnugqvemjegi.supabase.co/functions/v1/send-push";
 
 async function callPushFunction(body: Record<string, unknown>, didRefresh = false): Promise<{
@@ -64,7 +64,7 @@ async function callPushFunction(body: Record<string, unknown>, didRefresh = fals
  * `send-push` edge function. Silently no-ops on failure.
  */
 export async function sendPushToSelf(params: {
-  kind: Kind;
+  kind: PushKind;
   title: string;
   body: string;
   link?: string;
