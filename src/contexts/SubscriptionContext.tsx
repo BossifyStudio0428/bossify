@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { verifyActiveSubscription, isNativeBillingAvailable } from "@/lib/billing";
+import { verifyActiveSubscription, isNativeBillingAvailable, type BillingPlan } from "@/lib/billing";
 
 export type Plan = "free" | "pro";
 
@@ -15,6 +15,8 @@ export type SubscriptionRow = {
   order_count: number;
   count_period_start: string | null;
   last_reset_at: string | null;
+  provider_product_id?: string | null;
+  current_period_end?: string | null;
 };
 
 export const FREE_LIMITS = {
@@ -31,6 +33,7 @@ type Ctx = {
   ordersUsed: number;
   ordersLimit: number;
   ordersRemaining: number;
+  activeBillingPlan: BillingPlan | null;
   refresh: () => Promise<void>;
   /**
    * Re-query Google Play for the current user's owned Pro subscription and
