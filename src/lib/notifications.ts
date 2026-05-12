@@ -17,6 +17,17 @@ export function isNotifGranted(): boolean {
 }
 
 async function getPlugin() {
+  // The Capacitor LocalNotifications web proxy is a thenable that throws
+  // "not implemented on web" the moment an async return tries to unwrap it.
+  // Skip the import entirely outside of native platforms.
+  if (typeof window !== "undefined") {
+    try {
+      const { Capacitor } = await import("@capacitor/core");
+      if (!Capacitor.isNativePlatform()) return null;
+    } catch { return null; }
+  } else {
+    return null;
+  }
   try {
     const { LocalNotifications } = await import("@capacitor/local-notifications");
     return LocalNotifications;
