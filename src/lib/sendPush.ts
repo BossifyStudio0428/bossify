@@ -21,7 +21,6 @@ async function callPushFunction(body: Record<string, unknown>) {
       headers: {
         "Content-Type": "application/json",
         apikey: PUSH_PUBLIC_KEY,
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(requestBody),
       signal: controller.signal,
