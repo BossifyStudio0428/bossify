@@ -138,7 +138,7 @@ async function sendToTokens(
 // ---------- Content resolution ----------
 type Kind =
   | "new_order" | "low_stock" | "milestone" | "morning_summary"
-  | "unpaid_reminder" | "closing_report" | "custom";
+  | "unpaid_reminder" | "closing_report" | "custom" | "register_device";
 
 async function resolveContent(
   userId: string,
@@ -218,6 +218,9 @@ Deno.serve(async (req) => {
     title?: string;
     body?: string;
     link?: string;
+    userId?: string;
+    token?: string;
+    platform?: string;
   };
   try {
     parsed = await req.json();
@@ -228,21 +231,40 @@ Deno.serve(async (req) => {
 
   const cronSecret = req.headers.get("x-cron-secret");
   const apiKey = req.headers.get("apikey");
+  const auth = req.headers.get("Authorization");
+  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+  const hasUserBearer = !!token && token !== ANON_KEY;
+  const hasPublicKey = !!ANON_KEY && apiKey === ANON_KEY;
   const isCron =
     (!!PUSH_WEBHOOK_SECRET && cronSecret === PUSH_WEBHOOK_SECRET) ||
-    (!!ANON_KEY && apiKey === ANON_KEY);
+    (!!ANON_KEY && apiKey === ANON_KEY && !hasUserBearer);
 
   let callerId: string | null = null;
-  if (!isCron) {
-    const auth = req.headers.get("Authorization");
-    const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+  if (!isCron && hasUserBearer) {
     if (!token) return json(401, { error: "Unauthorized" });
     const { data, error } = await admin.auth.getUser(token);
     if (error || !data.user) return json(401, { error: "Invalid token" });
     callerId = data.user.id;
+  } else if (!isCron && !hasPublicKey) {
+    return json(401, { error: "Unauthorized" });
   }
 
   try {
+    if (parsed.kind === "register_device") {
+      const ownerId = callerId ?? parsed.userId;
+      if (!ownerId) return json(401, { error: "Unauthorized" });
+      if (callerId && parsed.userId !== callerId) return json(403, { error: "Can only register own device" });
+      const token = typeof parsed.token === "string" ? parsed.token.trim() : "";
+      if (!token || token.length > 4096) return json(400, { error: "Invalid device token" });
+      const platform = parsed.platform === "ios" ? "ios" : "android";
+      const { error } = await admin.from("device_tokens").upsert(
+        { user_id: ownerId, token, platform, updated_at: new Date().toISOString() },
+        { onConflict: "user_id,token" },
+      );
+      if (error) throw error;
+      return json(200, { ok: true, registered: true });
+    }
+
     if (parsed.broadcast) {
       if (!isCron) return json(403, { error: "Broadcast requires cron secret" });
       const { data: users } = await admin.from("device_tokens").select("user_id");
