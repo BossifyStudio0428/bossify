@@ -243,6 +243,36 @@ async function tryNativeRestore(): Promise<PurchaseReceipt[]> {
   }
 }
 
+/**
+ * Re-query Google Play for the user's owned subscriptions WITHOUT prompting
+ * the user. Safe to call on app launch, on app resume, and after a purchase
+ * attempt (whether it succeeded or was cancelled). Returns the active
+ * subscription receipt or `null` if the user does not currently own Pro.
+ */
+export async function verifyActiveSubscription(): Promise<PurchaseReceipt | null> {
+  if (!isNativeBillingAvailable()) return null;
+  const store = await initBilling();
+  if (!store) return null;
+  try {
+    // Pull fresh owned-product state from Google Play.
+    try { await store.restorePurchases(); } catch {}
+    try { await store.update(); } catch {}
+    const product = store.get(SUBSCRIPTION_ID);
+    if (!product) return null;
+    // Plugin exposes either `.owned` (boolean) or per-offer ownership.
+    const owned: boolean = !!(product.owned || product.offers?.some?.((o: AnyStore) => o?.owned));
+    if (!owned) return null;
+    const tx = product.transaction ?? {};
+    return {
+      productId: SUBSCRIPTION_ID,
+      transactionId: tx.id ?? tx.transactionId ?? "",
+      purchaseToken: tx.purchaseToken,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // --- Public API ------------------------------------------------------------
 
 export async function purchasePlan(
