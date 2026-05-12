@@ -170,7 +170,7 @@ export function SetupChecklist() {
               <span
                 className={`h-4 w-4 rounded flex items-center justify-center shrink-0 ${
                   item.done
-                    ? "bg-emerald-500 text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "border border-muted-foreground/40"
                 }`}
               >
@@ -179,7 +179,7 @@ export function SetupChecklist() {
               <span
                 className={`flex-1 text-[11.5px] ${
                   item.done
-                    ? "text-muted-foreground line-through"
+                    ? "text-muted-foreground"
                     : "text-foreground font-medium"
                 }`}
               >
