@@ -16,6 +16,51 @@ export function isNotifGranted(): boolean {
   return localStorage.getItem(PERM_GRANTED_KEY) === "1";
 }
 
+/**
+ * Opens the OS-level app notification settings page for Bossify so the user
+ * can flip the system toggle (channels, sounds, allow / block). On web this
+ * falls back to the browser permission prompt — there is no equivalent OS
+ * page in a browser.
+ */
+export async function openAppNotificationSettings(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  let isNative = false;
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    isNative = Capacitor.isNativePlatform();
+  } catch {}
+  if (isNative) {
+    try {
+      const mod: any = await import(/* @vite-ignore */ "capacitor-native-settings");
+      const platform = (await import("@capacitor/core")).Capacitor.getPlatform();
+      if (platform === "ios") {
+        await mod.NativeSettings.openIOS({ option: mod.IOSSettings.App });
+      } else {
+        await mod.NativeSettings.openAndroid({ option: mod.AndroidSettings.AppNotification });
+      }
+      return true;
+    } catch (e) {
+      console.warn("openAppNotificationSettings failed", e);
+      try {
+        const { App } = await import("@capacitor/app");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (App as any).openSettings?.();
+      } catch {}
+      return false;
+    }
+  }
+  // Web fallback — there is no system app settings page in a browser.
+  if ("Notification" in window) {
+    try {
+      const res = await Notification.requestPermission();
+      const ok = res === "granted";
+      if (ok) localStorage.setItem(PERM_GRANTED_KEY, "1");
+      return ok;
+    } catch { return false; }
+  }
+  return false;
+}
+
 async function getPlugin() {
   // The Capacitor LocalNotifications web proxy is a thenable that throws
   // "not implemented on web" the moment an async return tries to unwrap it.

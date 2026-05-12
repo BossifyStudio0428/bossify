@@ -13,8 +13,9 @@ export async function sendPushToSelf(params: {
   link?: string;
 }) {
   try {
-    await supabase.functions.invoke("send-push", { body: params });
+    return await supabase.functions.invoke("send-push", { body: params });
   } catch (e) {
     console.warn("sendPushToSelf failed", e);
+    return null;
   }
 }

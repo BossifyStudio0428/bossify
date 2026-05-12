@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Settings, Bell, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { isNotifGranted, requestNotifPermission } from "@/lib/notifications";
+import { isNotifGranted, openAppNotificationSettings, notify } from "@/lib/notifications";
 import { sendPushToSelf } from "@/lib/sendPush";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -28,20 +28,28 @@ function NotifSettingsPage() {
       .then(({ data }) => setIsAdmin(!!data?.is_admin));
   }, [user]);
 
-  const askPermission = async () => {
-    const ok = await requestNotifPermission();
-    setGranted(ok);
+  const openSysSettings = async () => {
+    const ok = await openAppNotificationSettings();
+    setGranted(ok || isNotifGranted());
   };
 
   const sendTest = async () => {
     setSending(true);
+    const title = "Bossify 测试推送 🎉";
+    const body = "如果你看到这条通知，推送已经 work 啦！";
     try {
-      await sendPushToSelf({
-        kind: "custom",
-        title: "Bossify 测试推送 🎉",
-        body: "如果你看到这条通知，推送已经 work 啦！",
-      });
-      toast.success("已发送，请查看手机通知栏");
+      const res: any = await sendPushToSelf({ kind: "custom", title, body });
+      const sent = res?.data?.sent ?? res?.sent ?? null;
+      // Always also fire a local notification so the user sees something even
+      // if they have no FCM device token registered yet (e.g. on web preview).
+      await notify(title, body);
+      if (sent === 0) {
+        toast.warning("没有已注册的设备 token — 已显示本地通知作为示范");
+      } else if (typeof sent === "number") {
+        toast.success(`已发送到 ${sent} 台设备，请查看通知栏`);
+      } else {
+        toast.success("已发送，请查看手机通知栏");
+      }
     } catch (e) {
       toast.error("发送失败：" + (e as Error).message);
     } finally {
@@ -69,7 +77,7 @@ function NotifSettingsPage() {
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
           <p className="text-sm font-semibold text-amber-900">{t("notif_perm_off_title")}</p>
           <p className="text-xs text-amber-800 mt-1">{t("notif_perm_off_desc")}</p>
-          <button onClick={askPermission} className="mt-3 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[.98]">
+          <button onClick={openSysSettings} className="mt-3 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[.98]">
             {t("allow_notifications")}
           </button>
         </div>
@@ -95,7 +103,7 @@ function NotifSettingsPage() {
       </div>
 
       <button
-        onClick={askPermission}
+        onClick={openSysSettings}
         className="w-full h-12 rounded-2xl border border-border/60 bg-card flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99]"
       >
         <Settings className="h-4 w-4" /> {t("open_system_settings")}
