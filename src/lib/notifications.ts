@@ -135,9 +135,9 @@ export async function notify(title: string, body: string, extra?: Record<string,
   const plugin = await getPlugin();
   if (plugin) {
     try {
-      const current = await plugin.checkPermissions().catch(() => ({}));
+      const current = (await plugin.checkPermissions().catch(() => ({}))) as { display?: string };
       if (current.display !== "granted") {
-        const requested = await plugin.requestPermissions().catch(() => ({}));
+        const requested = (await plugin.requestPermissions().catch(() => ({}))) as { display?: string };
         if (requested.display !== "granted") return;
       }
       await plugin.schedule({
