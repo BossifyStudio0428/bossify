@@ -208,6 +208,33 @@ async function tryNativePurchase(_subscriptionId: string, basePlanId: string): P
   }
   return await new Promise<PurchaseReceipt>((resolve, reject) => {
     const unsub = onPurchaseApproved((r) => { unsub(); resolve(r); });
+    // Safety timeout — if Google Play accepts the order but the `approved`
+     // event never fires (cached purchase, slow propagation, plugin quirk),
+     // re-check ownership after 45s and resolve from that. Prevents the
+     // Plans button from being stuck on "..." forever.
+    const timeoutId = setTimeout(async () => {
+      try {
+        await store.update?.();
+        const fresh = store.get(_subscriptionId);
+        const owned: boolean = !!(fresh?.owned || fresh?.offers?.some?.((o: AnyStore) => o?.owned));
+        if (owned) {
+          unsub();
+          const tx = fresh.transaction ?? {};
+          resolve({
+            productId: _subscriptionId,
+            transactionId: tx.id ?? tx.transactionId ?? "",
+            purchaseToken: tx.purchaseToken,
+          });
+          return;
+        }
+      } catch {}
+      unsub();
+      reject({ code: "unknown", message: "Purchase timed out" } as BillingError);
+    }, 45000);
+    const wrapResolve = resolve;
+    const wrapReject = reject;
+    resolve = ((v: PurchaseReceipt) => { clearTimeout(timeoutId); wrapResolve(v); }) as typeof resolve;
+    reject = ((e: unknown) => { clearTimeout(timeoutId); wrapReject(e); }) as typeof reject;
     try {
       const orderResult = offer.order ? offer.order() : store.order(offer);
       Promise.resolve(orderResult).catch((err: AnyStore) => {
