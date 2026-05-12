@@ -79,6 +79,23 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         const period = data.count_period_start ? new Date(data.count_period_start) : null;
         const now = new Date();
         const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        if (
+          data.plan === "pro" &&
+          data.current_period_end &&
+          new Date(data.current_period_end).getTime() <= now.getTime()
+        ) {
+          const { error: expireError } = await supabase
+            .from("subscriptions")
+            .update({ plan: "free", status: "active", provider_product_id: null, current_period_end: null })
+            .eq("user_id", user.id);
+          if (expireError) console.error("subscription expiry sync failed", expireError);
+          else {
+            data.plan = "free";
+            data.status = "active";
+            data.provider_product_id = null;
+            data.current_period_end = null;
+          }
+        }
         if (!period || period < curMonthStart) {
           const { error: resetError } = await supabase
             .from("subscriptions")
@@ -153,10 +170,18 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           plan: "pro",
           status: "active",
           provider: "google_play",
-          provider_product_id: receipt.productId,
+          provider_product_id: `${receipt.productId}:${receipt.basePlanId ?? "monthly"}`,
           provider_transaction_id: receipt.transactionId,
           provider_purchase_token: receipt.purchaseToken ?? null,
+          current_period_end: receipt.currentPeriodEnd ?? null,
         }, { onConflict: "user_id" });
+      } else if (sub?.plan === "pro" && sub?.provider_product_id?.includes("google") !== false) {
+        await supabase.from("subscriptions").update({
+          plan: "free",
+          status: "active",
+          provider_product_id: null,
+          current_period_end: null,
+        }).eq("user_id", user.id);
       }
       // Note: we intentionally do NOT auto-demote pro→free here. Right after
       // a successful purchase the store cache often hasn't refreshed to
