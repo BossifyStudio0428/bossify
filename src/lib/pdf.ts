@@ -1,5 +1,33 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
+
+async function savePdf(doc: jsPDF, filename: string) {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const dataUri = doc.output("datauristring");
+      const base64 = dataUri.split(",")[1];
+      const res = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Cache,
+      });
+      await Share.share({
+        title: filename,
+        url: res.uri,
+        dialogTitle: filename,
+      });
+      return;
+    } catch (e) {
+      console.error("[pdf] native save failed", e);
+      try { doc.save(filename); } catch {}
+      return;
+    }
+  }
+  doc.save(filename);
+}
 
 export type ReportData = {
   businessName: string;
@@ -87,7 +115,7 @@ export function exportSalesReportPDF(d: ReportData) {
   }
 
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  doc.save(`Bossify_Report_${ymd}.pdf`);
+  void savePdf(doc, `Bossify_Report_${ymd}.pdf`);
 }
 
 export function exportOrdersListPDF(opts: {
@@ -122,5 +150,5 @@ export function exportOrdersListPDF(opts: {
   });
 
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  doc.save(`Bossify_Orders_${opts.statusLabel}_${ymd}.pdf`);
+  void savePdf(doc, `Bossify_Orders_${opts.statusLabel}_${ymd}.pdf`);
 }
