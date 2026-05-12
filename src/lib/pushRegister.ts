@@ -15,7 +15,7 @@ let resolveRegistration: ((ok: boolean) => void) | null = null;
 export async function registerPushForUser(userId: string): Promise<boolean> {
   currentUserId = userId;
   if (tokenRegistered) return true;
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return false;
   if (registrationPromise) return registrationPromise;
 
   registrationPromise = registerPushForUserOnce().finally(() => {
