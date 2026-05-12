@@ -318,9 +318,8 @@ Deno.serve(async (req) => {
   let callerId: string | null = null;
   if (!isCron && hasUserBearer) {
     if (!token) return json(401, { error: "Unauthorized" });
-    const { data, error } = await admin.auth.getUser(token);
-    if (error || !data.user) return json(401, { error: "Invalid token" });
-    callerId = data.user.id;
+    callerId = await getCallerIdFromBearer(token);
+    if (!callerId) return json(401, { error: "Invalid token" });
   } else if (!isCron && !hasPublicKey) {
     return json(401, { error: "Unauthorized" });
   }
