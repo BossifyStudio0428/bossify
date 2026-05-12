@@ -135,6 +135,11 @@ export async function notify(title: string, body: string, extra?: Record<string,
   const plugin = await getPlugin();
   if (plugin) {
     try {
+      const current = await plugin.checkPermissions().catch(() => ({}));
+      if (current.display !== "granted") {
+        const requested = await plugin.requestPermissions().catch(() => ({}));
+        if (requested.display !== "granted") return;
+      }
       await plugin.schedule({
         notifications: [{
           id: Math.floor(Math.random() * 2_000_000_000),
