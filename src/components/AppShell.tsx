@@ -12,7 +12,6 @@ import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { BossifySplash } from "@/components/BossifySplash";
 import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splashTiming";
 import bossifyLogo from "@/assets/bossify-logo.png";
-import { AppTour, hasCompletedTour } from "@/components/AppTour";
 import { NotifPermissionPrompt } from "@/components/NotifPermissionPrompt";
 import { isNotifGranted } from "@/lib/notifications";
 import { loadPrefs } from "@/lib/notifPrefs";
@@ -94,6 +93,16 @@ const tabs = [
   { to: "/customers", labelKey: "nav_customers", icon: Users, id: "tour-tab-customers" },
 ] as const;
 
+// Routes that are part of the first-time setup / onboarding flow. The
+// bottom navigation bar is hidden while the user is on any of these pages
+// so they focus on completing setup before exploring the rest of the app.
+const ONBOARDING_SETUP_ROUTES: readonly string[] = [
+  "/onboarding",
+  "/business-profile",
+  "/payment-details",
+  "/payment-setup",
+];
+
 export function AppShell() {
   // BootSplash removed entirely — splash route handles the intro.
   return (
@@ -129,6 +138,9 @@ function ShellInner() {
     locationPathname === "/reset-password" ||
     locationPathname.startsWith("/forgot-password");
   const isOnboardingRoute = locationPathname === "/onboarding";
+  const isSetupFlowRoute = ONBOARDING_SETUP_ROUTES.some(
+    (r) => locationPathname === r || locationPathname.startsWith(r + "/"),
+  );
   const isSplashRoute = locationPathname === "/splash";
   const isLanguageRoute = locationPathname === "/language";
   // Only /language is a true "public bypass" for the language guard.
@@ -137,7 +149,6 @@ function ShellInner() {
   const isPublicFlow = isSplashRoute || isLanguageRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
-  const [showTour, setShowTour] = useState(false);
   const [notifReady, setNotifReady] = useState(false);
 
   // Start with the Bossify splash on the first frame of every cold start.
@@ -242,26 +253,10 @@ function ShellInner() {
     }
   }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, isLanguageRoute, onboardingChecked, needsOnboarding, navigate]);
 
-  useEffect(() => {
-    if (!session?.user) return;
-    if (!onboardingChecked || needsOnboarding) return;
-    if (locationPathname !== "/") return;
-    if (hasCompletedTour()) return;
-    const t = window.setTimeout(() => setShowTour(true), 600);
-    return () => window.clearTimeout(t);
-  }, [session?.user?.id, onboardingChecked, needsOnboarding, locationPathname]);
-
-  useEffect(() => {
-    const handler = () => setShowTour(true);
-    window.addEventListener("bossify:start-tour", handler);
-    return () => window.removeEventListener("bossify:start-tour", handler);
-  }, []);
-
-  // Once tour is complete (or already done) and user is signed in past onboarding,
-  // arm the notification permission prompt and run overdue check if granted.
+  // Once user is signed in past onboarding, arm the notification permission
+  // prompt and run overdue check if granted.
   useEffect(() => {
     if (!session?.user || !onboardingChecked || needsOnboarding) return;
-    if (showTour) return;
     setNotifReady(true);
     if (isNotifGranted()) {
       const uid = session.user.id;
@@ -272,7 +267,7 @@ function ShellInner() {
     }
     // Register Android FCM token (no-op on web / preview)
     registerPushForUser(session.user.id).catch(() => {});
-  }, [session?.user?.id, onboardingChecked, needsOnboarding, showTour]);
+  }, [session?.user?.id, onboardingChecked, needsOnboarding]);
 
   // While first-time splash is queued (or navigation hasn't completed yet), render the
   // Bossify logo immediately so the user never sees the generic loading spinner.
@@ -314,9 +309,8 @@ function ShellInner() {
           <Outlet />
         </main>
 
-        <BottomNav />
-        {showTour && <AppTour onClose={() => setShowTour(false)} />}
-        <NotifPermissionPrompt enabled={notifReady && !showTour} />
+        {!isSetupFlowRoute && <BottomNav />}
+        <NotifPermissionPrompt enabled={notifReady && !isSetupFlowRoute} />
       </div>
     </div>
   );
