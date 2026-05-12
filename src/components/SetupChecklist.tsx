@@ -106,26 +106,26 @@ export function SetupChecklist() {
   const allDone = done === total;
 
   return (
-    <section className="rounded-3xl bg-gradient-to-br from-primary/10 via-card to-card border border-primary/30 shadow-[var(--shadow-card)] p-4">
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center shrink-0 shadow-[var(--shadow-soft)]">
-          <Rocket className="h-5 w-5" />
+    <section className="rounded-2xl bg-gradient-to-br from-primary/10 via-card to-card border border-primary/30 shadow-[var(--shadow-card)] p-3">
+      <div className="flex items-center gap-2">
+        <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center shrink-0">
+          <Rocket className="h-3.5 w-3.5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-foreground">🚀 Mulakan Perniagaan Anda</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{done} / {total} selesai</p>
+          <p className="text-[12px] font-bold text-foreground leading-tight">🚀 Mulakan Perniagaan Anda</p>
+          <p className="text-[10px] text-muted-foreground leading-tight">{done} / {total} selesai</p>
         </div>
         <button
           type="button"
           aria-label="dismiss"
           onClick={dismiss}
-          className="h-7 w-7 rounded-full text-muted-foreground active:bg-muted flex items-center justify-center shrink-0"
+          className="h-6 w-6 rounded-full text-muted-foreground active:bg-muted flex items-center justify-center shrink-0"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+      <div className="mt-2 h-1 w-full rounded-full bg-muted overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-500"
           style={{ width: `${pct}%` }}
@@ -133,28 +133,28 @@ export function SetupChecklist() {
       </div>
 
       {allDone ? (
-        <p className="mt-3 text-[12px] font-semibold text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2 text-center">
+        <p className="mt-2 text-[11px] font-semibold text-emerald-700 bg-emerald-50 rounded-lg px-2 py-1.5 text-center">
           ✅ Anda sudah bersedia! Semua telah disediakan 🎉
         </p>
       ) : (
-        <ul className="mt-3 space-y-1.5">
+        <ul className="mt-2 space-y-0.5">
           {items.map((item) => (
             <li key={item.key}>
               <Link
                 to={item.to}
-                className="flex items-center gap-3 px-2 py-2 rounded-xl active:bg-muted transition"
+                className="flex items-center gap-2 px-1.5 py-1 rounded-lg active:bg-muted transition"
               >
                 <span
-                  className={`h-5 w-5 rounded-md flex items-center justify-center shrink-0 ${
+                  className={`h-4 w-4 rounded flex items-center justify-center shrink-0 ${
                     item.done
                       ? "bg-emerald-500 text-white"
-                      : "border-2 border-muted-foreground/40"
+                      : "border border-muted-foreground/40"
                   }`}
                 >
-                  {item.done && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                  {item.done && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
                 </span>
                 <span
-                  className={`flex-1 text-[13px] ${
+                  className={`flex-1 text-[11.5px] ${
                     item.done
                       ? "text-muted-foreground line-through"
                       : "text-foreground font-medium"
@@ -162,7 +162,7 @@ export function SetupChecklist() {
                 >
                   {item.label}
                 </span>
-                {!item.done && <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+                {!item.done && <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />}
               </Link>
             </li>
           ))}
