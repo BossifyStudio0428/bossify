@@ -12,7 +12,6 @@ import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { BossifySplash } from "@/components/BossifySplash";
 import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splashTiming";
 import bossifyLogo from "@/assets/bossify-logo.png";
-import { NotifPermissionPrompt } from "@/components/NotifPermissionPrompt";
 import { isNotifGranted } from "@/lib/notifications";
 import { loadPrefs } from "@/lib/notifPrefs";
 import { rescheduleAll, runUnpaidNotifyNow } from "@/lib/notifSchedule";
@@ -310,7 +309,6 @@ function ShellInner() {
         </main>
 
         {!isSetupFlowRoute && <BottomNav />}
-        <NotifPermissionPrompt enabled={notifReady && !isSetupFlowRoute} />
       </div>
     </div>
   );
