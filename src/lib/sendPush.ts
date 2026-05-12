@@ -8,9 +8,10 @@ async function callPushFunction(body: Record<string, unknown>) {
   const session = data.session;
   const token = session?.access_token;
   if (!token) return { data: null, error: new Error("Not signed in") };
-  const requestBody = body.kind === "register_device" || body.targetUserId
-    ? body
-    : { ...body, targetUserId: session.user.id };
+  const requestBody =
+    body.kind === "register_device" || body.targetUserId
+      ? body
+      : { ...body, targetUserId: session.user.id };
 
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 10000);
@@ -24,9 +25,15 @@ async function callPushFunction(body: Record<string, unknown>) {
       body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
-    const responseBody = await res.json().catch(() => ({})) as { error?: string; [key: string]: unknown };
+    const responseBody = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      [key: string]: unknown;
+    };
     if (!res.ok || responseBody.error) {
-      return { data: responseBody, error: new Error(responseBody.error || `Push request failed (${res.status})`) };
+      return {
+        data: responseBody,
+        error: new Error(responseBody.error || `Push request failed (${res.status})`),
+      };
     }
     return { data: responseBody, error: null };
   } catch (e) {

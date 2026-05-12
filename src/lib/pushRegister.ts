@@ -36,7 +36,11 @@ async function registerPushForUserOnce(): Promise<boolean> {
         try {
           if (!currentUserId) throw new Error("Missing signed-in user");
           const platform = Capacitor.getPlatform() === "ios" ? "ios" : "android";
-          const res = await registerDeviceForPush({ userId: currentUserId, token: token.value, platform });
+          const res = await registerDeviceForPush({
+            userId: currentUserId,
+            token: token.value,
+            platform,
+          });
           if (res.error) throw res.error;
           tokenRegistered = true;
           resolveRegistration?.(true);
@@ -54,7 +58,9 @@ async function registerPushForUserOnce(): Promise<boolean> {
       });
 
       PushNotifications.addListener("pushNotificationReceived", (notification) => {
-        notify(notification.title || "Bossify", notification.body || "", notification.data).catch(() => {});
+        notify(notification.title || "Bossify", notification.body || "", notification.data).catch(
+          () => {},
+        );
       });
 
       listenersAdded = true;

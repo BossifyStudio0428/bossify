@@ -71,7 +71,9 @@ function NotifSettingsPage() {
   return (
     <div className="px-5 pt-10 pb-6 space-y-4">
       <header className="flex items-center gap-2">
-        <Link to="/profile" className="-ml-2 p-2 rounded-full active:bg-muted"><ChevronLeft className="h-5 w-5" /></Link>
+        <Link to="/profile" className="-ml-2 p-2 rounded-full active:bg-muted">
+          <ChevronLeft className="h-5 w-5" />
+        </Link>
         <h1 className="text-2xl font-bold">{t("notification_settings")}</h1>
       </header>
 
@@ -79,7 +81,10 @@ function NotifSettingsPage() {
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
           <p className="text-sm font-semibold text-amber-900">{t("notif_perm_off_title")}</p>
           <p className="text-xs text-amber-800 mt-1">{t("notif_perm_off_desc")}</p>
-          <button onClick={openSysSettings} className="mt-3 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[.98]">
+          <button
+            onClick={openSysSettings}
+            className="mt-3 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[.98]"
+          >
             {t("allow_notifications")}
           </button>
         </div>
@@ -87,9 +92,7 @@ function NotifSettingsPage() {
 
       <div className="flex items-start gap-2 rounded-2xl bg-muted/60 p-3">
         <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {t("notif_info_banner")}
-        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed">{t("notif_info_banner")}</p>
       </div>
 
       <div className="rounded-2xl border border-border/60 bg-card divide-y divide-border/40">
