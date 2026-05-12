@@ -253,9 +253,10 @@ function PlansPage() {
                   plan: "pro",
                   status: "active",
                   provider: "google_play",
-                  provider_product_id: r.productId,
+                  provider_product_id: `${r.productId}:${r.basePlanId ?? "monthly"}`,
                   provider_transaction_id: r.transactionId,
                   provider_purchase_token: r.purchaseToken ?? null,
+                  current_period_end: r.currentPeriodEnd ?? null,
                 }, { onConflict: "user_id" });
                 if (restoreError) {
                   console.error("[billing] Restore upsert failed:", restoreError);
