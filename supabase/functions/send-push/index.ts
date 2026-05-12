@@ -234,27 +234,31 @@ Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization");
   const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
   const hasUserBearer = !!token && token !== ANON_KEY;
+  const hasPublicKey = !!ANON_KEY && apiKey === ANON_KEY;
   const isCron =
     (!!PUSH_WEBHOOK_SECRET && cronSecret === PUSH_WEBHOOK_SECRET) ||
     (!!ANON_KEY && apiKey === ANON_KEY && !hasUserBearer);
 
   let callerId: string | null = null;
-  if (!isCron) {
+  if (!isCron && hasUserBearer) {
     if (!token) return json(401, { error: "Unauthorized" });
     const { data, error } = await admin.auth.getUser(token);
     if (error || !data.user) return json(401, { error: "Invalid token" });
     callerId = data.user.id;
+  } else if (!isCron && !hasPublicKey) {
+    return json(401, { error: "Unauthorized" });
   }
 
   try {
     if (parsed.kind === "register_device") {
-      if (isCron || !callerId) return json(401, { error: "Unauthorized" });
-      if (parsed.userId !== callerId) return json(403, { error: "Can only register own device" });
+      const ownerId = callerId ?? parsed.userId;
+      if (!ownerId) return json(401, { error: "Unauthorized" });
+      if (callerId && parsed.userId !== callerId) return json(403, { error: "Can only register own device" });
       const token = typeof parsed.token === "string" ? parsed.token.trim() : "";
       if (!token || token.length > 4096) return json(400, { error: "Invalid device token" });
       const platform = parsed.platform === "ios" ? "ios" : "android";
       const { error } = await admin.from("device_tokens").upsert(
-        { user_id: callerId, token, platform, updated_at: new Date().toISOString() },
+        { user_id: ownerId, token, platform, updated_at: new Date().toISOString() },
         { onConflict: "user_id,token" },
       );
       if (error) throw error;
