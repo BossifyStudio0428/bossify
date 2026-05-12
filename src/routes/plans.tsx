@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
+import { notifySituation } from "@/lib/autoNotify";
 import {
   isNativeBillingAvailable,
   purchasePlan,
@@ -106,6 +107,14 @@ function PlansPage() {
           // Pull the freshly written row so isPro flips before we toast.
           await refresh();
           toast.success(t("welcome_to_pro"));
+          notifySituation({
+            kind: "milestone",
+            title: "Welcome to Pro ✦",
+            body: "Your Bossify Pro is active now.",
+            link: "/plans",
+            prefKey: "notif_milestone",
+            dedupeKey: `pro_${receipt.transactionId || receipt.purchaseToken || billing}`,
+          }).catch(() => {});
           console.log("[billing] Plan upgrade complete");
         },
         (err: BillingError) => {
@@ -256,6 +265,14 @@ function PlansPage() {
               }
               await refresh();
               toast.success(t("pro_restored"));
+              notifySituation({
+                kind: "milestone",
+                title: "Pro Restored ✦",
+                body: "Your Bossify Pro access is active.",
+                link: "/plans",
+                prefKey: "notif_milestone",
+                dedupeKey: `pro_${receipts[0]?.transactionId || receipts[0]?.purchaseToken || "restored"}`,
+              }).catch(() => {});
             },
             (err) => {
               if (err.code === "item_unavailable") toast.message(t("no_purchase_found"));

@@ -6,6 +6,7 @@ import { supabase, type InventoryRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
+import { notifySituation } from "@/lib/autoNotify";
 
 export const Route = createFileRoute("/inventory")({ component: InventoryPage });
 
@@ -55,14 +56,13 @@ function InventoryPage() {
     } else {
       toast.success(t("stock_updated"));
       if (next <= 5 && next < it.stock) {
-        Promise.all([
-          import("@/lib/notifications"),
-          import("@/lib/notifPrefs"),
-        ]).then(([{ notify }, { isPrefEnabled }]) => {
-          if (!isPrefEnabled("notif_inventory")) return;
-          const title = next === 0 ? "Out of Stock ❌" : "Low Stock Alert 📦";
-          const body = next === 0 ? `${it.name} is sold out. Restock now!` : `${it.name} is running low. Only ${next} left!`;
-          return notify(title, body, { route: "/inventory" });
+        notifySituation({
+          kind: "low_stock",
+          title: next === 0 ? "Out of Stock ❌" : "Low Stock Alert 📦",
+          body: next === 0 ? `${it.name} is sold out. Restock now!` : `${it.name} is running low. Only ${next} left!`,
+          link: "/inventory",
+          prefKey: "notif_inventory",
+          dedupeKey: `stock_${it.id}_${next}`,
         }).catch(() => {});
       }
     }
