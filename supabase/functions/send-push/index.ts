@@ -11,7 +11,7 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUB
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-cron-secret",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-cron-secret",
 };
 
 function json(status: number, body: unknown): Response {
