@@ -3,7 +3,7 @@
  * and stores the resulting token in `device_tokens`.
  * Safe no-op on web / preview.
  */
-import { supabase } from "@/integrations/supabase/client";
+import { registerDeviceForPush } from "@/lib/sendPush";
 
 let registered = false;
 
@@ -23,12 +23,10 @@ export async function registerPushForUser(userId: string) {
 
     PushNotifications.addListener("registration", async (token) => {
       try {
-        await supabase.from("device_tokens").upsert(
-          { user_id: userId, token: token.value, platform: "android", updated_at: new Date().toISOString() },
-          { onConflict: "user_id,token" },
-        );
+        const res = await registerDeviceForPush({ userId, token: token.value, platform: "android" });
+        if (res.error) console.warn("device token registration failed", res.error);
       } catch (e) {
-        console.warn("device_tokens upsert failed", e);
+        console.warn("device token registration failed", e);
       }
     });
 
