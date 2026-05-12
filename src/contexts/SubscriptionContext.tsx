@@ -207,7 +207,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   const plan: Plan = (sub?.plan as Plan) ?? "free";
-  const isPro = plan === "pro" && (sub?.status ?? "active") === "active";
+  const activeBillingPlan: BillingPlan | null = sub?.provider_product_id?.includes("annual")
+    ? "annual"
+    : sub?.provider_product_id?.includes("monthly")
+      ? "monthly"
+      : null;
+  const isPeriodActive = !sub?.current_period_end || new Date(sub.current_period_end).getTime() > Date.now();
+  const isPro = plan === "pro" && (sub?.status ?? "active") === "active" && isPeriodActive;
   const ordersUsed = sub?.order_count ?? 0;
   const ordersLimit = FREE_LIMITS.ordersPerMonth;
   const ordersRemaining = Math.max(0, ordersLimit - ordersUsed);
@@ -220,7 +226,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SubCtx.Provider value={{
-      sub, plan, isPro, loading, ordersUsed, ordersLimit, ordersRemaining,
+      sub, plan, isPro, loading, ordersUsed, ordersLimit, ordersRemaining, activeBillingPlan,
       refresh, syncFromStore, showUpgrade, hideUpgrade, upgradeOpen, upgradeReason,
     }}>
       {children}
