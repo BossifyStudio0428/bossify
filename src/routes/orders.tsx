@@ -11,6 +11,7 @@ import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { MoreVertical, Pencil, Trash2, Check } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
+import { PhoneInput } from "@/components/PhoneInput";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
@@ -598,7 +599,7 @@ function OrdersPage() {
               <button onClick={() => setEditingOrder(null)} className="h-9 w-9 rounded-full bg-muted text-muted-foreground text-xl leading-none">×</button>
             </div>
             <EditInput label={t("customer_name")} value={editForm.customer_name ?? ""} onChange={(v) => setEditForm((p) => ({ ...p, customer_name: v }))} />
-            <EditInput label={t("phone_number")} value={(editForm.phone as string) ?? ""} onChange={(v) => setEditForm((p) => ({ ...p, phone: v }))} />
+            <PhoneInput label={t("phone_number")} value={(editForm.phone as string) ?? ""} onChange={(v) => setEditForm((p) => ({ ...p, phone: v }))} />
             <EditInput label={t("product")} value={editForm.product ?? ""} onChange={(v) => setEditForm((p) => ({ ...p, product: v }))} />
             <EditInput label={t("quantity")} type="number" value={String(editForm.quantity ?? 1)} onChange={(v) => setEditForm((p) => ({ ...p, quantity: Number(v) }))} />
             <EditInput label={t("price")} type="number" value={String(editForm.amount ?? 0)} onChange={(v) => setEditForm((p) => ({ ...p, amount: Number(v) }))} />
