@@ -1,35 +1,55 @@
-问题原因已经定位：不是 admin 权限问题，也不是设备 token 没注册。
+## 为什么 APK 图标没变
 
-`send-push` 后端函数在读取 `FCM_SERVICE_ACCOUNT_JSON` 时执行 `JSON.parse(...)`，但当前这个 secret 的值是普通字符串 `json`，不是 Firebase service account 的完整 JSON，所以函数报错：
+你改的 `src/assets/...` 只在网页/H5 里生效。APK 桌面上的 launcher icon 是 **Android 原生资源**，存在你本地 `C:\dev\bossify\android\app\src\main\res\` 下面这些文件夹里：
 
 ```text
-Unexpected token 'j', "json" is not valid JSON
+mipmap-mdpi/ic_launcher.png
+mipmap-hdpi/ic_launcher.png
+mipmap-xhdpi/ic_launcher.png
+mipmap-xxhdpi/ic_launcher.png
+mipmap-xxxhdpi/ic_launcher.png
+mipmap-anydpi-v26/ic_launcher.xml  (Adaptive Icon)
+drawable*/splash.png  (启动画面)
 ```
 
-我会按这个方案修：
+每次 `npx cap sync` 都**不会**自动覆盖这些 native 图。
 
-1. **修正错误提示**
-   - 在 `supabase/functions/send-push/index.ts` 里加强 `FCM_SERVICE_ACCOUNT_JSON` 解析逻辑。
-   - 如果 secret 不是合法 JSON，返回清楚的错误，例如 `FCM_SERVICE_ACCOUNT_JSON is not valid service account JSON`，避免以后只看到很迷惑的 `Unexpected token 'j'`。
+---
 
-2. **保留现有推送流程**
-   - 不改前端按钮、不改 admin 判断、不改设备注册流程。
-   - 现有 `Send Test Push (Admin)` 仍然会调用 `registerPushForUser` 后再调用 `send-push`。
+## 一次性解决方案：用 `@capacitor/assets` 自动生成
 
-3. **重新部署并测试后端函数**
-   - 部署 `send-push`。
-   - 调用测试接口确认错误变成可诊断的配置错误，或在 secret 正确后确认可以发送。
+这是 Capacitor 官方工具，从一张高清原图自动生成所有尺寸 + Adaptive Icon + Splash。
 
-4. **你需要做的一件事**
-   - 把 Lovable Cloud 里的 `FCM_SERVICE_ACCOUNT_JSON` secret 更新成 Firebase service account 的完整 JSON 内容，不是填 `json` 这个字。
-   - 必须包含这些字段：`project_id`, `private_key_id`, `private_key`, `client_email`, `token_uri`。
+### 步骤 (在你本地 `C:\dev\bossify` 跑)
 
-Do I know what the issue is? 是的：当前推送失败的直接原因是 `FCM_SERVICE_ACCOUNT_JSON` secret 内容填错了，值现在是 `json`，导致后端函数无法解析 Firebase 凭证。
+1. 准备 3 张图，放到一个新文件夹 `assets/`（项目根目录，不是 `src/assets`）：
+   - `assets/icon.png` — 至少 **1024×1024**，正方形，PNG
+   - `assets/icon-foreground.png` — 1024×1024，**主图标内容居中，四周留 ~25% 透明边距**（Adaptive Icon 前景）
+   - `assets/icon-background.png` — 1024×1024，纯色或简单背景（Adaptive Icon 背景）
+   - 可选：`assets/splash.png` — 2732×2732，logo 居中
 
-<lov-actions>
-  <lov-open-history>View History</lov-open-history>
-</lov-actions>
+2. 安装并运行：
+   ```powershell
+   cd C:\dev\bossify
+   npm install -D @capacitor/assets
+   npx capacitor-assets generate --android
+   npx cap sync android
+   ```
 
-<lov-actions>
-<lov-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</lov-link>
-</lov-actions>
+3. 在 Android Studio：**Build → Clean Project → Rebuild Project → Build APK**
+
+4. 卸载手机上旧的 Bossify，再装新 APK（Android 会缓存图标，覆盖安装有时不刷新）。
+
+---
+
+## 我会做的部分
+
+我没法替你跑本地命令，但我可以：
+
+1. 检查/告诉你你 Lovable 项目里现成可以用作图标的高清原图（看到有 `public/bossify-logo.png` 和 `public/assets/...`）。
+2. 如果你 Lovable 项目里**没有**够大的图源，我把你现在这张 logo 升级一份 1024×1024 的版本放进 `public/app-icon.png`，你下次 `git pull` 拉到本地后直接当 `assets/icon.png` 用。
+
+确认两件事我就能继续：
+
+1. 你想我帮你**在 Lovable 项目里准备一张 1024×1024 的图标源文件**吗？（要的话告诉我用现有 logo 就行，还是要重新设计风格）
+2. 你已经在本地装好 Node + Android Studio，能跑 `npx capacitor-assets generate` 吗？还是要我把命令写成一个 `.bat` 一键脚本给你？
