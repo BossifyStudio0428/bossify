@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, X, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type InventoryRow } from "@/integrations/supabase/client";
@@ -93,9 +93,12 @@ function InventoryPage() {
           {items.length} {t("items")}
         </span>
         {!isPro && (
-          <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+          <Link
+            to="/plans"
+            className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 active:scale-95 transition"
+          >
             {productsUsed}/{productsLimit} used
-          </span>
+          </Link>
         )}
       </header>
 
