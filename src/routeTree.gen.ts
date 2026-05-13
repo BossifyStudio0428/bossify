@@ -25,16 +25,16 @@ import { Route as NewOrderRouteImport } from './routes/new-order'
 import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as BusinessProfileRouteImport } from './routes/business-profile'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CustomersIndexRouteImport } from './routes/customers.index'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
-import { Route as CustomersCustomerIdRouteImport } from './routes/customers.$customerId'
+import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 
 const SplashRoute = SplashRouteImport.update({
   id: '/splash',
@@ -116,6 +116,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomersRoute = CustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BusinessProfileRoute = BusinessProfileRouteImport.update({
   id: '/business-profile',
   path: '/business-profile',
@@ -141,11 +146,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CustomersIndexRoute = CustomersIndexRouteImport.update({
-  id: '/customers/',
-  path: '/customers/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
   id: '/$orderId',
   path: '/$orderId',
@@ -161,10 +161,10 @@ const ForgotPasswordResetRoute = ForgotPasswordResetRouteImport.update({
   path: '/reset',
   getParentRoute: () => ForgotPasswordRoute,
 } as any)
-const CustomersCustomerIdRoute = CustomersCustomerIdRouteImport.update({
-  id: '/$customerId',
-  path: '/$customerId',
-  getParentRoute: () => CustomersRoute,
+const CustomerCustomerIdRoute = CustomerCustomerIdRouteImport.update({
+  id: '/customer/$customerId',
+  path: '/customer/$customerId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -173,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
+  '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
@@ -189,11 +190,10 @@ export interface FileRoutesByFullPath {
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/splash': typeof SplashRoute
-  '/customers/$customerId': typeof CustomersCustomerIdRoute
+  '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
-  '/customers/': typeof CustomersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -201,6 +201,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
+  '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
@@ -217,11 +218,10 @@ export interface FileRoutesByTo {
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/splash': typeof SplashRoute
-  '/customers/$customerId': typeof CustomersCustomerIdRoute
+  '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
-  '/customers': typeof CustomersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -230,6 +230,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
+  '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
@@ -246,11 +247,10 @@ export interface FileRoutesById {
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/splash': typeof SplashRoute
-  '/customers/$customerId': typeof CustomersCustomerIdRoute
+  '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
-  '/customers/': typeof CustomersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -260,6 +260,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/business-profile'
+    | '/customers'
     | '/forgot-password'
     | '/inventory'
     | '/language'
@@ -276,11 +277,10 @@ export interface FileRouteTypes {
     | '/reports'
     | '/search'
     | '/splash'
-    | '/customers/$customerId'
+    | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/orders/$orderId'
-    | '/customers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -288,6 +288,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/business-profile'
+    | '/customers'
     | '/forgot-password'
     | '/inventory'
     | '/language'
@@ -304,11 +305,10 @@ export interface FileRouteTypes {
     | '/reports'
     | '/search'
     | '/splash'
-    | '/customers/$customerId'
+    | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/orders/$orderId'
-    | '/customers'
   id:
     | '__root__'
     | '/'
@@ -316,6 +316,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/business-profile'
+    | '/customers'
     | '/forgot-password'
     | '/inventory'
     | '/language'
@@ -332,11 +333,10 @@ export interface FileRouteTypes {
     | '/reports'
     | '/search'
     | '/splash'
-    | '/customers/$customerId'
+    | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/orders/$orderId'
-    | '/customers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -345,6 +345,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
   BusinessProfileRoute: typeof BusinessProfileRoute
+  CustomersRoute: typeof CustomersRoute
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
   InventoryRoute: typeof InventoryRoute
   LanguageRoute: typeof LanguageRoute
@@ -361,7 +362,7 @@ export interface RootRouteChildren {
   ReportsRoute: typeof ReportsRoute
   SearchRoute: typeof SearchRoute
   SplashRoute: typeof SplashRoute
-  CustomersIndexRoute: typeof CustomersIndexRoute
+  CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -478,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/customers': {
+      id: '/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof CustomersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/business-profile': {
       id: '/business-profile'
       path: '/business-profile'
@@ -513,13 +521,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/customers/': {
-      id: '/customers/'
-      path: '/customers'
-      fullPath: '/customers/'
-      preLoaderRoute: typeof CustomersIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/orders/$orderId': {
       id: '/orders/$orderId'
       path: '/$orderId'
@@ -541,12 +542,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordResetRouteImport
       parentRoute: typeof ForgotPasswordRoute
     }
-    '/customers/$customerId': {
-      id: '/customers/$customerId'
-      path: '/$customerId'
-      fullPath: '/customers/$customerId'
-      preLoaderRoute: typeof CustomersCustomerIdRouteImport
-      parentRoute: typeof CustomersRoute
+    '/customer/$customerId': {
+      id: '/customer/$customerId'
+      path: '/customer/$customerId'
+      fullPath: '/customer/$customerId'
+      preLoaderRoute: typeof CustomerCustomerIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -582,6 +583,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
   BusinessProfileRoute: BusinessProfileRoute,
+  CustomersRoute: CustomersRoute,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
   InventoryRoute: InventoryRoute,
   LanguageRoute: LanguageRoute,
@@ -598,17 +600,8 @@ const rootRouteChildren: RootRouteChildren = {
   ReportsRoute: ReportsRoute,
   SearchRoute: SearchRoute,
   SplashRoute: SplashRoute,
-  CustomersIndexRoute: CustomersIndexRoute,
+  CustomerCustomerIdRoute: CustomerCustomerIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

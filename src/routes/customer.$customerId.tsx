@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase, type CustomerRow, type OrderRow } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
 
-export const Route = createFileRoute("/customers/$customerId")({ component: CustomerDetail });
+export const Route = createFileRoute("/customer/$customerId")({ component: CustomerDetail });
 
 const statusStyles: Record<string, string> = {
   Paid: "bg-emerald-100 text-emerald-700",
