@@ -28,10 +28,13 @@ async function callPushFunction(body: Record<string, unknown>, didRefresh = fals
       body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
-    const responseBody = (await res.json().catch(() => ({}))) as {
-      error?: string;
-      [key: string]: unknown;
-    };
+    const rawText = await res.text().catch(() => "");
+    let responseBody: { error?: string; [key: string]: unknown } = {};
+    try {
+      responseBody = rawText ? JSON.parse(rawText) : {};
+    } catch {
+      responseBody = { error: rawText.slice(0, 200) || `HTTP ${res.status}` };
+    }
     if (
       !didRefresh &&
       res.status === 401 &&
