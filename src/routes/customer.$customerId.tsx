@@ -4,6 +4,7 @@ import { ArrowLeft, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type OrderRow } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
+import { PhoneInput } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/customer/$customerId")({ component: CustomerDetail });
 
@@ -212,11 +213,7 @@ function EditSheet({
           <input value={name} onChange={(e) => setName(e.target.value)}
             className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15" />
         </div>
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("phone_number")}</label>
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel"
-            className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15" />
-        </div>
+        <PhoneInput label={t("phone_number")} value={phone} onChange={setPhone} />
         <button
           onClick={save} disabled={saving}
           className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60"
