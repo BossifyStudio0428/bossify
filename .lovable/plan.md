@@ -1,55 +1,125 @@
-## 为什么 APK 图标没变
+## 现在真正的问题
 
-你改的 `src/assets/...` 只在网页/H5 里生效。APK 桌面上的 launcher icon 是 **Android 原生资源**，存在你本地 `C:\dev\bossify\android\app\src\main\res\` 下面这些文件夹里：
+你截图里有 3 个独立问题：
 
-```text
-mipmap-mdpi/ic_launcher.png
-mipmap-hdpi/ic_launcher.png
-mipmap-xhdpi/ic_launcher.png
-mipmap-xxhdpi/ic_launcher.png
-mipmap-xxxhdpi/ic_launcher.png
-mipmap-anydpi-v26/ic_launcher.xml  (Adaptive Icon)
-drawable*/splash.png  (启动画面)
+1. **`git pull` 拉不到**
+   - 终端写得很清楚：
+     ```text
+     Your local changes to the following files would be overwritten by merge:
+       src/routeTree.gen.ts
+     ```
+   - `src/routeTree.gen.ts` 是 TanStack Router 自动生成文件，不应该手动改，也不需要保留。
+
+2. **Admin push notification 还是失败**
+   - 现在错误已经变清楚了：
+     ```text
+     FCM_SERVICE_ACCOUNT_JSON is missing required fields
+     (project_id, private_key, client_email)
+     ```
+   - 说明你刚才填的 `FCM_SERVICE_ACCOUNT_JSON` 不是 Firebase **service account private key JSON**。
+   - 很多人会误填 `google-services.json`，但那个不是同一个东西，里面通常没有 `private_key` / `client_email`。
+
+3. **APK logo 还是 Android 默认图标**
+   - 因为你还没成功 `git pull`，所以我准备的 `public/app-icons/` 和 `generate-icons.bat` 还没到你本地。
+   - 另外，即使拉到了，也必须运行生成脚本，把图标写进 `android/app/src/main/res/mipmap-*`，只改图片文件不会自动变 APK logo。
+
+---
+
+## 你本地现在按这个顺序做
+
+### 第 1 步：先解决 git pull
+
+在 Android Studio Terminal 里跑：
+
+```powershell
+git restore src/routeTree.gen.ts
+git pull
 ```
 
-每次 `npx cap sync` 都**不会**自动覆盖这些 native 图。
+如果你的 Git 比较旧，不支持 `git restore`，就用：
+
+```powershell
+git checkout -- src/routeTree.gen.ts
+git pull
+```
+
+> 这只会丢掉 `src/routeTree.gen.ts` 这个自动生成文件的本地改动，不会删你的订单、图片、Android 项目。
 
 ---
 
-## 一次性解决方案：用 `@capacitor/assets` 自动生成
+### 第 2 步：更新 APK logo
 
-这是 Capacitor 官方工具，从一张高清原图自动生成所有尺寸 + Adaptive Icon + Splash。
+`git pull` 成功后，运行我放进去的一键脚本：
 
-### 步骤 (在你本地 `C:\dev\bossify` 跑)
+```powershell
+public\app-icons\generate-icons.bat
+```
 
-1. 准备 3 张图，放到一个新文件夹 `assets/`（项目根目录，不是 `src/assets`）：
-   - `assets/icon.png` — 至少 **1024×1024**，正方形，PNG
-   - `assets/icon-foreground.png` — 1024×1024，**主图标内容居中，四周留 ~25% 透明边距**（Adaptive Icon 前景）
-   - `assets/icon-background.png` — 1024×1024，纯色或简单背景（Adaptive Icon 背景）
-   - 可选：`assets/splash.png` — 2732×2732，logo 居中
+它会自动做这些事：
 
-2. 安装并运行：
-   ```powershell
-   cd C:\dev\bossify
-   npm install -D @capacitor/assets
-   npx capacitor-assets generate --android
-   npx cap sync android
-   ```
+```text
+copy public/app-icons/*.png → assets/
+npm install -D @capacitor/assets
+npx capacitor-assets generate --android
+npx cap sync android
+```
 
-3. 在 Android Studio：**Build → Clean Project → Rebuild Project → Build APK**
+然后在 Android Studio：
 
-4. 卸载手机上旧的 Bossify，再装新 APK（Android 会缓存图标，覆盖安装有时不刷新）。
+```text
+Build > Clean Project
+Build > Rebuild Project
+Build > Build APK
+```
+
+最后手机上一定要：
+
+```text
+卸载旧 Bossify app → 再安装新 APK
+```
+
+Android 会缓存旧 launcher icon，覆盖安装经常还是旧图标。
 
 ---
 
-## 我会做的部分
+### 第 3 步：修 push notification secret
 
-我没法替你跑本地命令，但我可以：
+你需要重新拿 Firebase 的 **Service Account Private Key**，不是 `google-services.json`。
 
-1. 检查/告诉你你 Lovable 项目里现成可以用作图标的高清原图（看到有 `public/bossify-logo.png` 和 `public/assets/...`）。
-2. 如果你 Lovable 项目里**没有**够大的图源，我把你现在这张 logo 升级一份 1024×1024 的版本放进 `public/app-icon.png`，你下次 `git pull` 拉到本地后直接当 `assets/icon.png` 用。
+路径：
 
-确认两件事我就能继续：
+```text
+Firebase Console
+→ Project settings
+→ Service accounts
+→ Firebase Admin SDK
+→ Generate new private key
+```
 
-1. 你想我帮你**在 Lovable 项目里准备一张 1024×1024 的图标源文件**吗？（要的话告诉我用现有 logo 就行，还是要重新设计风格）
-2. 你已经在本地装好 Node + Android Studio，能跑 `npx capacitor-assets generate` 吗？还是要我把命令写成一个 `.bat` 一键脚本给你？
+下载出来的 JSON 应该长这样，必须有这些字段：
+
+```json
+{
+  "type": "service_account",
+  "project_id": "...",
+  "private_key_id": "...",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-...@....iam.gserviceaccount.com",
+  "client_id": "...",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token"
+}
+```
+
+然后把**整个 JSON 文件内容**重新填进 Lovable 的 `FCM_SERVICE_ACCOUNT_JSON` secret。
+
+---
+
+## 判断是否成功
+
+成功后：
+
+1. `git pull` 不再报 `routeTree.gen.ts`。
+2. Android Studio 里 `res/mipmap-*` 的 `ic_launcher` 会变成 Bossify 图标。
+3. 新 APK 必须卸载旧 app 后安装，桌面图标才会刷新。
+4. 点击 `Send Test Push (Admin)` 不应该再出现 `missing required fields`。
