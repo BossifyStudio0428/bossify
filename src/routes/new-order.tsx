@@ -12,32 +12,9 @@ import { sendPushToSelf } from "@/lib/sendPush";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
 import { safeLocalStorage } from "@/lib/safeStorage";
+import { PhoneInput, buildFullPhone } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
-
-const COUNTRIES: { code: string; flag: string; name: string }[] = [
-  { code: "60", flag: "🇲🇾", name: "Malaysia" },
-  { code: "65", flag: "🇸🇬", name: "Singapore" },
-  { code: "62", flag: "🇮🇩", name: "Indonesia" },
-  { code: "66", flag: "🇹🇭", name: "Thailand" },
-  { code: "84", flag: "🇻🇳", name: "Vietnam" },
-  { code: "63", flag: "🇵🇭", name: "Philippines" },
-  { code: "673", flag: "🇧🇳", name: "Brunei" },
-  { code: "86", flag: "🇨🇳", name: "China" },
-  { code: "852", flag: "🇭🇰", name: "Hong Kong" },
-  { code: "886", flag: "🇹🇼", name: "Taiwan" },
-  { code: "91", flag: "🇮🇳", name: "India" },
-  { code: "1", flag: "🇺🇸", name: "USA" },
-  { code: "44", flag: "🇬🇧", name: "UK" },
-  { code: "61", flag: "🇦🇺", name: "Australia" },
-];
-
-function buildFullPhone(countryCode: string, local: string): string {
-  // Strip non-digits, drop leading 0
-  const digits = local.replace(/\D/g, "").replace(/^0+/, "");
-  if (!digits) return "";
-  return countryCode + digits;
-}
 
 const statuses: { key: OrderStatus; bg: string; text: string; ring: string }[] = [
   { key: "Paid", bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-500" },
@@ -66,13 +43,6 @@ function NewOrderPage() {
   const [form, setForm] = useState({
     customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "",
   });
-  const [countryCode, setCountryCode] = useState<string>(() => {
-    if (typeof window === "undefined") return "60";
-    return safeLocalStorage.getItem("bossify_country_code") || "60";
-  });
-  useEffect(() => {
-    if (typeof window !== "undefined") safeLocalStorage.setItem("bossify_country_code", countryCode);
-  }, [countryCode]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
