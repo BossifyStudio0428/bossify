@@ -25,12 +25,12 @@ import { Route as NewOrderRouteImport } from './routes/new-order'
 import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as BusinessProfileRouteImport } from './routes/business-profile'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CustomersIndexRouteImport } from './routes/customers.index'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
@@ -116,11 +116,6 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CustomersRoute = CustomersRouteImport.update({
-  id: '/customers',
-  path: '/customers',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const BusinessProfileRoute = BusinessProfileRouteImport.update({
   id: '/business-profile',
   path: '/business-profile',
@@ -144,6 +139,11 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomersIndexRoute = CustomersIndexRouteImport.update({
+  id: '/customers/',
+  path: '/customers/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
@@ -173,7 +173,6 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
-  '/customers': typeof CustomersRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
@@ -194,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/customers/': typeof CustomersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -201,7 +201,6 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
-  '/customers': typeof CustomersRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
@@ -222,6 +221,7 @@ export interface FileRoutesByTo {
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/customers': typeof CustomersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -230,7 +230,6 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
-  '/customers': typeof CustomersRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
@@ -251,6 +250,7 @@ export interface FileRoutesById {
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/customers/': typeof CustomersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -260,7 +260,6 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/business-profile'
-    | '/customers'
     | '/forgot-password'
     | '/inventory'
     | '/language'
@@ -281,6 +280,7 @@ export interface FileRouteTypes {
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/orders/$orderId'
+    | '/customers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -288,7 +288,6 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/business-profile'
-    | '/customers'
     | '/forgot-password'
     | '/inventory'
     | '/language'
@@ -309,6 +308,7 @@ export interface FileRouteTypes {
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/orders/$orderId'
+    | '/customers'
   id:
     | '__root__'
     | '/'
@@ -316,7 +316,6 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/business-profile'
-    | '/customers'
     | '/forgot-password'
     | '/inventory'
     | '/language'
@@ -337,6 +336,7 @@ export interface FileRouteTypes {
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/orders/$orderId'
+    | '/customers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -345,7 +345,6 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
   BusinessProfileRoute: typeof BusinessProfileRoute
-  CustomersRoute: typeof CustomersRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
   InventoryRoute: typeof InventoryRoute
   LanguageRoute: typeof LanguageRoute
@@ -362,6 +361,7 @@ export interface RootRouteChildren {
   ReportsRoute: typeof ReportsRoute
   SearchRoute: typeof SearchRoute
   SplashRoute: typeof SplashRoute
+  CustomersIndexRoute: typeof CustomersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -478,13 +478,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/customers': {
-      id: '/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof CustomersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/business-profile': {
       id: '/business-profile'
       path: '/business-profile'
@@ -520,6 +513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/customers/': {
+      id: '/customers/'
+      path: '/customers'
+      fullPath: '/customers/'
+      preLoaderRoute: typeof CustomersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders/$orderId': {
       id: '/orders/$orderId'
       path: '/$orderId'
@@ -550,18 +550,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface CustomersRouteChildren {
-  CustomersCustomerIdRoute: typeof CustomersCustomerIdRoute
-}
-
-const CustomersRouteChildren: CustomersRouteChildren = {
-  CustomersCustomerIdRoute: CustomersCustomerIdRoute,
-}
-
-const CustomersRouteWithChildren = CustomersRoute._addFileChildren(
-  CustomersRouteChildren,
-)
 
 interface ForgotPasswordRouteChildren {
   ForgotPasswordResetRoute: typeof ForgotPasswordResetRoute
@@ -594,7 +582,6 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
   BusinessProfileRoute: BusinessProfileRoute,
-  CustomersRoute: CustomersRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
   InventoryRoute: InventoryRoute,
   LanguageRoute: LanguageRoute,
@@ -611,6 +598,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReportsRoute: ReportsRoute,
   SearchRoute: SearchRoute,
   SplashRoute: SplashRoute,
+  CustomersIndexRoute: CustomersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
