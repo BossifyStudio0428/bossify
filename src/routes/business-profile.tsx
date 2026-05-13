@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { PhoneInput } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/business-profile")({ component: BusinessProfilePage });
 
@@ -128,7 +129,11 @@ function BusinessProfilePage() {
           </select>
         </div>
 
-        <Field label={`WhatsApp ${t("phone_number")}`} value={form.whatsapp_number} onChange={(v) => setForm((p) => ({ ...p, whatsapp_number: v }))} type="tel" placeholder="60123456789" />
+        <PhoneInput
+          label={`WhatsApp ${t("phone_number")}`}
+          value={form.whatsapp_number}
+          onChange={(v) => setForm((p) => ({ ...p, whatsapp_number: v }))}
+        />
       </div>
 
       <button
