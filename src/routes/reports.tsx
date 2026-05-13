@@ -25,6 +25,7 @@ function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState<string>(() => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   const [to, setTo] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -138,10 +139,14 @@ function ReportsPage() {
       .slice(0, 5);
   }, [inRange]);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!isPro) { showUpgrade(t("export_pdf")); return; }
+    if (exporting) return;
+    setExporting(true);
+    // Yield so the button shows its loading state before heavy PDF work runs.
+    await new Promise((r) => setTimeout(r, 30));
     try {
-      exportSalesReportPDF({
+      await exportSalesReportPDF({
         businessName: user?.email?.split("@")[0] ?? "My Store",
         rangeLabel: label,
         totalRevenue, totalOrders, paidOrders, unpaidAmount,
@@ -152,8 +157,11 @@ function ReportsPage() {
           qty: Number(o.quantity), amount: Number(o.amount), status: o.status,
         })),
       });
-    } catch {
+    } catch (e) {
+      console.error("[reports] export failed", e);
       toast.error(t("pdf_failed"));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -279,9 +287,9 @@ function ReportsPage() {
         </section>
       )}
 
-      <button onClick={handleExport}
-        className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)]">
-        📄 {t("export_pdf")}
+      <button onClick={handleExport} disabled={exporting}
+        className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.98] transition disabled:opacity-60">
+        {exporting ? "…" : `📄 ${t("export_pdf")}`}
       </button>
     </div>
   );

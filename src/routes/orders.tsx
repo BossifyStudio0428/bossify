@@ -195,19 +195,28 @@ function OrdersPage() {
     setBulkProgress(null);
   };
 
-  const exportPDF = () => {
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const exportPDF = async () => {
     if (!isPro) { showUpgrade(t("export_pdf")); return; }
+    if (exportingPdf) return;
+    setExportingPdf(true);
+    await new Promise((r) => setTimeout(r, 30));
     try {
       const rows = visible.map((o) => ({
         date: new Date(o.created_at).toLocaleDateString("en-MY"),
         code: o.code, customer: o.customer_name, product: o.product,
         amount: Number(o.amount), status: o.status,
       }));
-      exportOrdersListPDF({
+      await exportOrdersListPDF({
         businessName: user?.email?.split("@")[0] ?? "My Store",
         statusLabel: active, orders: rows,
       });
-    } catch { toast.error(t("pdf_failed")); }
+    } catch (e) {
+      console.error("[orders] export failed", e);
+      toast.error(t("pdf_failed"));
+    } finally {
+      setExportingPdf(false);
+    }
   };
 
   const remove = async (id: string) => {
@@ -326,8 +335,8 @@ function OrdersPage() {
           {todayCount} {t("today_count")}
         </span>
         {refreshing && <span className="text-[10px] text-muted-foreground">↻</span>}
-        <button onClick={exportPDF} className="ml-auto p-2 rounded-full bg-card border border-border/60 active:scale-95" aria-label={t("export_pdf")}>
-          📄
+        <button onClick={exportPDF} disabled={exportingPdf} className="ml-auto p-2 rounded-full bg-card border border-border/60 active:scale-95 disabled:opacity-60" aria-label={t("export_pdf")}>
+          {exportingPdf ? "…" : "📄"}
         </button>
       </header>
 
