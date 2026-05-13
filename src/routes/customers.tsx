@@ -6,7 +6,7 @@ import { supabase, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 
-export const Route = createFileRoute("/customers/")({ component: CustomersPage });
+export const Route = createFileRoute("/customers")({ component: CustomersPage });
 
 function relTime(iso: string | null, t: (k: any) => string) {
   if (!iso) return t("never");
