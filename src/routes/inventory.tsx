@@ -97,7 +97,7 @@ function InventoryPage() {
             to="/plans"
             className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 active:scale-95 transition"
           >
-            {productsUsed}/{productsLimit} used
+            Free plan {productsUsed}/{productsLimit}
           </Link>
         )}
       </header>
@@ -171,6 +171,11 @@ function InventoryPage() {
               <div className="flex items-baseline gap-1.5">
                 <span className={`text-2xl font-bold ${low ? "text-red-500" : "text-foreground"}`}>{it.stock}</span>
                 <span className="text-xs text-muted-foreground">{it.unit} {t("left")}</span>
+                {it.price ? (
+                  <span className="ml-auto text-xs font-semibold text-primary">
+                    RM {Number(it.price).toFixed(2)}<span className="text-muted-foreground font-normal"> / {it.unit}</span>
+                  </span>
+                ) : null}
               </div>
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
