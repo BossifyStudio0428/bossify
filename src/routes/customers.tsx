@@ -113,7 +113,7 @@ function CustomersPage() {
             className={`rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] flex items-center gap-3 p-4 transition-all duration-200 ${removingId === c.id ? "opacity-0 scale-95" : "opacity-100"}`}
           >
             <Link
-              to="/customers/$customerId"
+              to="/customer/$customerId"
               params={{ customerId: c.id }}
               className="flex items-center gap-3 flex-1 min-w-0"
             >
@@ -159,7 +159,7 @@ function CustomersPage() {
           <div className="w-full max-w-[420px] bg-card rounded-t-3xl p-3 space-y-1 animate-slide-up" onClick={(e) => e.stopPropagation()}>
             <p className="text-xs font-semibold text-muted-foreground px-3 py-2 truncate">{menuFor.name}</p>
             <button
-              onClick={() => { const c = menuFor; setMenuFor(null); navigate({ to: "/customers/$customerId", params: { customerId: c.id } }); }}
+              onClick={() => { const c = menuFor; setMenuFor(null); navigate({ to: "/customer/$customerId", params: { customerId: c.id } }); }}
               className="w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold hover:bg-muted"
             >
               ✏️ {t("edit_customer")}
