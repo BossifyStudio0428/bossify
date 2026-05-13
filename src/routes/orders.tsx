@@ -9,7 +9,7 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -414,7 +414,7 @@ function OrdersPage() {
                   <DropdownMenuTrigger asChild>
                     <button
                       onClick={(e) => e.stopPropagation()}
-                      aria-label={t("status")}
+                      aria-label={t("paid")}
                       className={`text-[10px] font-semibold px-2 py-0.5 rounded-full active:scale-95 transition ${statusStyles[o.status]}`}
                     >
                       {statusLabel} ▾
