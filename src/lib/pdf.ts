@@ -5,38 +5,44 @@ import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { FileOpener } from "@capacitor-community/file-opener";
 
-async function savePdf(doc: jsPDF, filename: string) {
+async function savePdf(doc: jsPDF, filename: string): Promise<void> {
   if (Capacitor.isNativePlatform()) {
+    const dataUri = doc.output("datauristring");
+    const base64 = dataUri.split(",")[1];
+    // Write to Documents so the file is also accessible via the device file manager.
+    const res = await Filesystem.writeFile({
+      path: filename,
+      data: base64,
+      directory: Directory.Documents,
+      recursive: true,
+    });
     try {
-      const dataUri = doc.output("datauristring");
-      const base64 = dataUri.split(",")[1];
-      const res = await Filesystem.writeFile({
-        path: filename,
-        data: base64,
-        directory: Directory.Cache,
+      await FileOpener.open({
+        filePath: res.uri,
+        contentType: "application/pdf",
+        openWithDefault: true,
       });
-      try {
-        await FileOpener.open({
-          filePath: res.uri,
-          contentType: "application/pdf",
-          openWithDefault: true,
-        });
-      } catch (openErr) {
-        console.error("[pdf] open failed, falling back to share", openErr);
-        await Share.share({
-          title: filename,
-          url: res.uri,
-          dialogTitle: filename,
-        });
-      }
       return;
-    } catch (e) {
-      console.error("[pdf] native save failed", e);
-      try { doc.save(filename); } catch {}
+    } catch (openErr) {
+      console.error("[pdf] open failed, falling back to share", openErr);
+      await Share.share({
+        title: filename,
+        url: res.uri,
+        dialogTitle: filename,
+      });
       return;
     }
   }
-  doc.save(filename);
+  // Web: open in a new tab so the user can preview before downloading.
+  try {
+    const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, "_blank");
+    if (!win) doc.save(filename);
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch {
+    doc.save(filename);
+  }
 }
 
 export type ReportData = {
@@ -51,7 +57,7 @@ export type ReportData = {
   orders: { date: string; code: string; customer: string; product: string; qty: number; amount: number; status: string }[];
 };
 
-export function exportSalesReportPDF(d: ReportData) {
+export async function exportSalesReportPDF(d: ReportData): Promise<void> {
   const doc = new jsPDF();
   const purple: [number, number, number] = [124, 58, 237];
   doc.setFillColor(...purple);
@@ -125,14 +131,14 @@ export function exportSalesReportPDF(d: ReportData) {
   }
 
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  void savePdf(doc, `Bossify_Report_${ymd}.pdf`);
+  await savePdf(doc, `Bossify_Report_${ymd}.pdf`);
 }
 
-export function exportOrdersListPDF(opts: {
+export async function exportOrdersListPDF(opts: {
   businessName: string;
   statusLabel: string;
   orders: { date: string; code: string; customer: string; product: string; amount: number; status: string }[];
-}) {
+}): Promise<void> {
   const doc = new jsPDF();
   const purple: [number, number, number] = [124, 58, 237];
   doc.setFillColor(...purple);
@@ -160,5 +166,5 @@ export function exportOrdersListPDF(opts: {
   });
 
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  void savePdf(doc, `Bossify_Orders_${opts.statusLabel}_${ymd}.pdf`);
+  await savePdf(doc, `Bossify_Orders_${opts.statusLabel}_${ymd}.pdf`);
 }
