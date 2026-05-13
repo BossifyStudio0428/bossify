@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { FileOpener } from "@capacitor-community/file-opener";
 
 async function savePdf(doc: jsPDF, filename: string) {
   if (Capacitor.isNativePlatform()) {
@@ -14,11 +15,20 @@ async function savePdf(doc: jsPDF, filename: string) {
         data: base64,
         directory: Directory.Cache,
       });
-      await Share.share({
-        title: filename,
-        url: res.uri,
-        dialogTitle: filename,
-      });
+      try {
+        await FileOpener.open({
+          filePath: res.uri,
+          contentType: "application/pdf",
+          openWithDefault: true,
+        });
+      } catch (openErr) {
+        console.error("[pdf] open failed, falling back to share", openErr);
+        await Share.share({
+          title: filename,
+          url: res.uri,
+          dialogTitle: filename,
+        });
+      }
       return;
     } catch (e) {
       console.error("[pdf] native save failed", e);
