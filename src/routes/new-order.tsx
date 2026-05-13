@@ -46,6 +46,7 @@ function NewOrderPage() {
   const [saving, setSaving] = useState(false);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
+  const [unitPrice, setUnitPrice] = useState<number | null>(null);
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
   const [paymentPreviewBlock, setPaymentPreviewBlock] = useState<string>("");
 
@@ -67,17 +68,48 @@ function NewOrderPage() {
     if (errors[k]) setErrors((p) => ({ ...p, [k]: "" }));
   };
 
+  // Quantity: if unit price locked from inventory, auto-recompute amount.
+  const onQuantityChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    setForm((p) => {
+      const next = { ...p, quantity: v };
+      if (unitPrice != null) {
+        const q = Number(v) || 0;
+        next.amount = (unitPrice * q).toFixed(2);
+      }
+      return next;
+    });
+    if (errors.quantity) setErrors((p) => ({ ...p, quantity: "" }));
+  };
+
+  // Amount: manual edit means custom price → unlock auto-calc.
+  const onAmountChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm((p) => ({ ...p, amount: e.target.value }));
+    if (unitPrice != null) setUnitPrice(null);
+    if (errors.amount) setErrors((p) => ({ ...p, amount: "" }));
+  };
+
+  // Product text edit: if it no longer matches the locked inventory item, drop the unit price lock.
+  const onProductChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    upd("product")(e);
+    setShowSuggest(true);
+    setUnitPrice(null);
+  };
+
   // Find inventory match for the currently-typed product (case-insensitive exact match)
   const matchedInventory = inventory.find(
     (i) => i.name.trim().toLowerCase() === form.product.trim().toLowerCase(),
   );
 
   const selectInventoryProduct = (item: InventoryRow) => {
+    const price = item.price ? Number(item.price) : null;
+    const q = Number(form.quantity) || 1;
     setForm((p) => ({
       ...p,
       product: item.name,
-      amount: item.price ? String(item.price) : p.amount,
+      amount: price != null ? (price * q).toFixed(2) : p.amount,
     }));
+    setUnitPrice(price);
     setShowSuggest(false);
     if (errors.product) setErrors((p) => ({ ...p, product: "" }));
   };
@@ -292,7 +324,7 @@ function NewOrderPage() {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🛍️</span>
             <input
               value={form.product}
-              onChange={(e) => { upd("product")(e); setShowSuggest(true); }}
+              onChange={onProductChange}
               onFocus={() => setShowSuggest(true)}
               onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
               placeholder={t("select_product")}
@@ -338,8 +370,17 @@ function NewOrderPage() {
           )}
         </div>
 
-        <Field label={t("quantity")} icon="#" placeholder="1" value={form.quantity} onChange={upd("quantity")} type="number" error={errors.quantity} />
-        <Field label={t("price")} icon="💰" placeholder="0.00" value={form.amount} onChange={upd("amount")} type="number" error={errors.amount} />
+        <Field label={t("quantity")} icon="#" placeholder="1" value={form.quantity} onChange={onQuantityChange} type="number" error={errors.quantity} />
+        <Field
+          label={t("price")}
+          icon="💰"
+          placeholder="0.00"
+          value={form.amount}
+          onChange={onAmountChange}
+          type="number"
+          error={errors.amount}
+          hint={unitPrice != null ? `Auto: RM ${unitPrice.toFixed(2)} × ${Number(form.quantity) || 0}` : undefined}
+        />
 
         <div className="space-y-1.5" id="tour-no-status">
           <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
