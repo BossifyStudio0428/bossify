@@ -1,49 +1,35 @@
-在 PowerShell 里跑 git 命令前，必须先进入项目文件夹。从你之前截图看，项目路径是 `C:\dev\bossify`。
+问题原因已经定位：不是 admin 权限问题，也不是设备 token 没注册。
 
-完整步骤（一行一行复制到 PowerShell）：
+`send-push` 后端函数在读取 `FCM_SERVICE_ACCOUNT_JSON` 时执行 `JSON.parse(...)`，但当前这个 secret 的值是普通字符串 `json`，不是 Firebase service account 的完整 JSON，所以函数报错：
 
-1. 进入项目文件夹
-
-```powershell
-cd C:\dev\bossify
+```text
+Unexpected token 'j', "json" is not valid JSON
 ```
 
-进去之后提示符会变成：
+我会按这个方案修：
 
-```
-PS C:\dev\bossify>
-```
+1. **修正错误提示**
+   - 在 `supabase/functions/send-push/index.ts` 里加强 `FCM_SERVICE_ACCOUNT_JSON` 解析逻辑。
+   - 如果 secret 不是合法 JSON，返回清楚的错误，例如 `FCM_SERVICE_ACCOUNT_JSON is not valid service account JSON`，避免以后只看到很迷惑的 `Unexpected token 'j'`。
 
-看到这个才是对的。如果显示 `路径不存在`，说明你的项目放在别的地方，需要找到正确路径再 `cd`。
+2. **保留现有推送流程**
+   - 不改前端按钮、不改 admin 判断、不改设备注册流程。
+   - 现有 `Send Test Push (Admin)` 仍然会调用 `registerPushForUser` 后再调用 `send-push`。
 
-2. 停掉所有正在跑的 dev server（VS Code / Android Studio 里的终端按 `Ctrl + C`）
+3. **重新部署并测试后端函数**
+   - 部署 `send-push`。
+   - 调用测试接口确认错误变成可诊断的配置错误，或在 secret 正确后确认可以发送。
 
-3. 丢弃自动生成文件的本地改动
+4. **你需要做的一件事**
+   - 把 Lovable Cloud 里的 `FCM_SERVICE_ACCOUNT_JSON` secret 更新成 Firebase service account 的完整 JSON 内容，不是填 `json` 这个字。
+   - 必须包含这些字段：`project_id`, `private_key_id`, `private_key`, `client_email`, `token_uri`。
 
-```powershell
-git checkout -- src/routeTree.gen.ts
-```
+Do I know what the issue is? 是的：当前推送失败的直接原因是 `FCM_SERVICE_ACCOUNT_JSON` secret 内容填错了，值现在是 `json`，导致后端函数无法解析 Firebase 凭证。
 
-4. 拉取
+<lov-actions>
+  <lov-open-history>View History</lov-open-history>
+</lov-actions>
 
-```powershell
-git pull
-```
-
-5. 永久解决（pull 成功后再做）
-
-```powershell
-git rm --cached src/routeTree.gen.ts
-git add .gitignore
-git commit -m "Stop tracking generated route tree"
-git push
-```
-
-如果第 3 步还是报错，把这两条命令的输出截图发我：
-
-```powershell
-git status --short
-git ls-files -s src/routeTree.gen.ts
-```
-
-小贴士：以后在 VS Code 里直接 `Ctrl + ~` 打开的终端，会自动在项目文件夹里，不用再 `cd`。
+<lov-actions>
+<lov-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</lov-link>
+</lov-actions>
