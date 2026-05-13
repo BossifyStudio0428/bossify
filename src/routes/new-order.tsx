@@ -450,8 +450,8 @@ function NewOrderPage() {
 }
 
 function Field({
-  label, icon, error, ...rest
-}: { label: string; icon: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  label, icon, error, hint, ...rest
+}: { label: string; icon: string; error?: string; hint?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div className="space-y-1.5">
       <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{label}</label>
@@ -463,6 +463,7 @@ function Field({
         />
       </div>
       {error && <p className="text-[11px] text-red-500 px-1">{error}</p>}
+      {!error && hint && <p className="text-[11px] text-emerald-600 px-1">{hint}</p>}
     </div>
   );
 }
