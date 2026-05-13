@@ -35,6 +35,34 @@ npx cap add android
 Write-Host "Syncing Capacitor config..." -ForegroundColor Yellow
 npx cap sync android
 
+Write-Host "Preparing Bossify icon/splash source images..." -ForegroundColor Yellow
+if (-not (Test-Path ".\assets")) {
+  New-Item -ItemType Directory -Path ".\assets" | Out-Null
+}
+$iconSources = @(
+  @{ src = "public\app-icons\icon.png";            dst = "assets\icon.png" },
+  @{ src = "public\app-icons\icon-foreground.png"; dst = "assets\icon-foreground.png" },
+  @{ src = "public\app-icons\icon-background.png"; dst = "assets\icon-background.png" },
+  @{ src = "public\app-icons\splash.png";          dst = "assets\splash.png" },
+  @{ src = "public\app-icons\splash-dark.png";     dst = "assets\splash-dark.png" }
+)
+foreach ($pair in $iconSources) {
+  if (Test-Path $pair.src) {
+    Copy-Item -Path $pair.src -Destination $pair.dst -Force
+  }
+}
+
+Write-Host "Generating native Android icons via @capacitor/assets..." -ForegroundColor Yellow
+try {
+  npx --yes @capacitor/assets generate --android
+} catch {
+  Write-Host "capacitor-assets generation failed: $_" -ForegroundColor Red
+  Write-Host "Continuing — patch step will still dedupe duplicate launcher resources." -ForegroundColor Yellow
+}
+
+Write-Host "Re-syncing Capacitor after icon generation..." -ForegroundColor Yellow
+npx cap sync android
+
 Write-Host "Applying Bossify Android safety patch..." -ForegroundColor Yellow
 node scripts/patch-android.mjs
 
