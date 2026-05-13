@@ -74,11 +74,13 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
   doc.setFontSize(10);
   doc.setTextColor(110, 110, 110);
   doc.text(d.rangeLabel, 14, 38);
+  doc.setFontSize(9);
+  doc.text(`Generated: ${new Date().toLocaleString("en-MY")}`, 14, 43);
 
   // Summary
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(11);
-  let y = 48;
+  let y = 52;
   const summary = [
     ["Total Revenue", `RM ${d.totalRevenue.toFixed(2)}`],
     ["Total Orders", String(d.totalOrders)],
