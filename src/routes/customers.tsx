@@ -122,6 +122,9 @@ function CustomersPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                {c.phone && (
+                  <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>
+                )}
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   {c.total_orders} {t("orders_word")} · {t("last")}: {relTime(c.last_order_at, t)}
                 </p>
