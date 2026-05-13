@@ -369,7 +369,7 @@ function Index() {
             {topCustomers.map((c) => (
               <Link
                 key={c.id}
-                to="/customers/$customerId"
+                to="/customer/$customerId"
                 params={{ customerId: c.id }}
                 className="flex items-center gap-3 p-4"
               >

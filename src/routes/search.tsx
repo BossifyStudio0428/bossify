@@ -72,7 +72,7 @@ function SearchPage() {
             <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2">{t("customers")}</p>
             <div className="space-y-2">
               {results.customers.map((c) => (
-                <Link key={c.id} to="/customers/$customerId" params={{ customerId: c.id }} onClick={close} className="block p-3 rounded-xl bg-card border border-border/60">
+                <Link key={c.id} to="/customer/$customerId" params={{ customerId: c.id }} onClick={close} className="block p-3 rounded-xl bg-card border border-border/60">
                   <p className="text-sm font-medium">{c.name}</p>
                   <p className="text-xs text-muted-foreground">{c.phone || "—"} · {c.total_orders} {t("orders_word")}</p>
                 </Link>
