@@ -52,14 +52,15 @@ function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      const [{ data: o }, { count: cust }, { data: p }, { data: pref }, { data: adminCheck }] = await Promise.all([
-        supabase.from("orders").select("amount,status"),
-        supabase.from("customers").select("*", { count: "exact", head: true }),
+    let cancelled = false;
+    const load = async () => {
+      const [{ data: o }, { count: cust }, { data: p }, { data: pref }] = await Promise.all([
+        supabase.from("orders").select("amount,status").eq("user_id", user.id),
+        supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("profiles").select("business_name,plan,created_at,is_admin,avatar_url").eq("id", user.id).maybeSingle(),
-        supabase.from("user_preferences").select("wa_order_template,wa_reminder_template").maybeSingle(),
-        supabase.from("profiles").select("is_admin").eq("id", user.id).maybeSingle(),
+        supabase.from("user_preferences").select("wa_order_template,wa_reminder_template").eq("user_id", user.id).maybeSingle(),
       ]);
+      if (cancelled) return;
       const orders = o ?? [];
       const revenue = orders.filter((x: any) => x.status === "Paid").reduce((s: number, x: any) => s + Number(x.amount), 0);
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
@@ -69,9 +70,22 @@ function ProfilePage() {
       if (pref?.wa_reminder_template) setReminderTpl(pref.wa_reminder_template);
       try {
         const s = await loadPaymentSummary(user.id);
-        setPaySummary(s);
-      } catch { setPaySummary({ hasMethod: false, type: null, number: null }); }
-    })();
+        if (!cancelled) setPaySummary(s);
+      } catch { if (!cancelled) setPaySummary({ hasMethod: false, type: null, number: null }); }
+    };
+    load();
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    const ch = supabase
+      .channel("profile-stats-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers", filter: `user_id=eq.${user.id}` }, () => load())
+      .subscribe();
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(ch);
+    };
   }, [user]);
 
   const saveTemplates = async () => {
