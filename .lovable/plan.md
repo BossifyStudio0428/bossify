@@ -1,32 +1,36 @@
-问题不是你打错命令，而是 `src/routeTree.gen.ts` 是自动生成文件；如果 Android Studio / VS Code / Lovable dev server 还在跑，它会在你 restore/delete 后马上重新生成，导致 `git pull` 仍然失败。
+在 PowerShell 里跑 git 命令前，必须先进入项目文件夹。从你之前截图看，项目路径是 `C:\dev\bossify`。
 
-执行步骤：
+完整步骤（一行一行复制到 PowerShell）：
 
-1. 先停掉正在跑的开发服务
-   - 在终端按 `Ctrl + C`
-   - 如果有多个 terminal，都停掉
-   - 关闭正在跑 `npm run dev` / `bun dev` / `vite` 的窗口
+1. 进入项目文件夹
 
-2. 在 PowerShell 执行强制丢弃这个生成文件的本地改动
+```powershell
+cd C:\dev\bossify
+```
+
+进去之后提示符会变成：
+
+```
+PS C:\dev\bossify>
+```
+
+看到这个才是对的。如果显示 `路径不存在`，说明你的项目放在别的地方，需要找到正确路径再 `cd`。
+
+2. 停掉所有正在跑的 dev server（VS Code / Android Studio 里的终端按 `Ctrl + C`）
+
+3. 丢弃自动生成文件的本地改动
 
 ```powershell
 git checkout -- src/routeTree.gen.ts
 ```
 
-如果上面还是不行，执行：
-
-```powershell
-git update-index --no-skip-worktree --no-assume-unchanged src/routeTree.gen.ts
-git checkout -- src/routeTree.gen.ts
-```
-
-3. 再执行拉取
+4. 拉取
 
 ```powershell
 git pull
 ```
 
-4. pull 成功后，永久解决这个文件以后反复冲突的问题
+5. 永久解决（pull 成功后再做）
 
 ```powershell
 git rm --cached src/routeTree.gen.ts
@@ -35,17 +39,11 @@ git commit -m "Stop tracking generated route tree"
 git push
 ```
 
-5. 最后再重新启动项目
-
-```powershell
-npm run dev
-```
-
-或你平时用的启动命令。
-
-如果第 2 步还是失败，把下面两条命令的输出发我，我再按你的真实 Git 状态给你一条准确命令：
+如果第 3 步还是报错，把这两条命令的输出截图发我：
 
 ```powershell
 git status --short
 git ls-files -s src/routeTree.gen.ts
 ```
+
+小贴士：以后在 VS Code 里直接 `Ctrl + ~` 打开的终端，会自动在项目文件夹里，不用再 `cd`。
