@@ -9,7 +9,7 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -410,9 +410,30 @@ function OrdersPage() {
                     {o.code} · <span suppressHydrationWarning>{hydrated ? formatTime(o.created_at) : ""}</span>
                   </p>
                 </div>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}>
-                  {statusLabel}
-                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={t("paid")}
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full active:scale-95 transition ${statusStyles[o.status]}`}
+                    >
+                      {statusLabel} ▾
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                    {(["Paid", "Unpaid", "Pending"] as OrderStatus[]).map((s) => (
+                      <DropdownMenuItem
+                        key={s}
+                        disabled={s === o.status}
+                        onSelect={(e) => { e.preventDefault(); if (s !== o.status) updateStatus(o.id, s); }}
+                      >
+                        <span className={`inline-block h-2 w-2 rounded-full mr-2 ${s === "Paid" ? "bg-emerald-500" : s === "Unpaid" ? "bg-red-500" : "bg-amber-500"}`} />
+                        {s === "Paid" ? t("paid") : s === "Unpaid" ? t("unpaid") : t("pending")}
+                        {s === o.status && <Check className="h-3.5 w-3.5 ml-auto" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
