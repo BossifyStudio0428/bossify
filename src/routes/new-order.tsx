@@ -11,8 +11,7 @@ import { isPrefEnabled } from "@/lib/notifPrefs";
 import { sendPushToSelf } from "@/lib/sendPush";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
-import { safeLocalStorage } from "@/lib/safeStorage";
-import { PhoneInput, buildFullPhone } from "@/components/PhoneInput";
+import { PhoneInput } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
