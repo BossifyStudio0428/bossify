@@ -78,7 +78,20 @@ let cachedToken: { token: string; exp: number } | null = null;
 function getAccount(): ServiceAccount {
   if (cachedAccount) return cachedAccount;
   if (!FCM_SERVICE_ACCOUNT_JSON) throw new Error("FCM_SERVICE_ACCOUNT_JSON not set");
-  cachedAccount = JSON.parse(FCM_SERVICE_ACCOUNT_JSON) as ServiceAccount;
+  let parsed: ServiceAccount;
+  try {
+    parsed = JSON.parse(FCM_SERVICE_ACCOUNT_JSON) as ServiceAccount;
+  } catch {
+    throw new Error(
+      "FCM_SERVICE_ACCOUNT_JSON is not valid JSON. Paste the full Firebase service account JSON file contents (starts with '{' and includes project_id, private_key, client_email).",
+    );
+  }
+  if (!parsed || typeof parsed !== "object" || !parsed.project_id || !parsed.private_key || !parsed.client_email) {
+    throw new Error(
+      "FCM_SERVICE_ACCOUNT_JSON is missing required fields (project_id, private_key, client_email). Paste the complete Firebase service account JSON.",
+    );
+  }
+  cachedAccount = parsed;
   return cachedAccount;
 }
 
