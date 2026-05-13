@@ -6,6 +6,7 @@ import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supaba
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
+import { PhoneInput } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/orders/$orderId")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -149,7 +150,7 @@ function OrderDetailPage() {
       ) : (
         <div className="px-5 space-y-3">
           <Input label={t("customer_name")} value={form.customer_name ?? ""} onChange={(v) => setForm((p) => ({ ...p, customer_name: v }))} />
-          <Input label={t("phone_number")} value={(form.phone as string) ?? ""} onChange={(v) => setForm((p) => ({ ...p, phone: v }))} />
+          <PhoneInput label={t("phone_number")} value={(form.phone as string) ?? ""} onChange={(v) => setForm((p) => ({ ...p, phone: v }))} />
           <Input label={t("product")} value={form.product ?? ""} onChange={(v) => setForm((p) => ({ ...p, product: v }))} />
           <Input label={t("quantity")} type="number" value={String(form.quantity ?? 1)} onChange={(v) => setForm((p) => ({ ...p, quantity: Number(v) }))} />
           <Input label={t("price")} type="number" value={String(form.amount ?? 0)} onChange={(v) => setForm((p) => ({ ...p, amount: Number(v) }))} />
