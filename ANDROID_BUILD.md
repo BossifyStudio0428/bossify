@@ -112,6 +112,22 @@ webDir: 'dist/client'
 ## ⚠️ APK 一打开闪退时先用安全启动配置
 
 不要手动加 `android:screenOrientation="portrait"`。部分 Android 设备会因为这个 Manifest 设置在启动阶段直接闪退。
+
+## 应用图标 (Launcher Icon)
+
+如果 Build 报 `Duplicate resources` 并指向 `mipmap-*/ic_launcher.png` 和 `ic_launcher.webp`，意思是同一个目录里 `.png` 和 `.webp` 同时存在，Android 把它们视为同名资源。
+
+正确流程：
+
+1. 源图标放在 `public/app-icons/`（已经在仓库里）。
+2. 跑 `npm run android:fresh`，脚本会：
+   - 复制源图标到 `assets/`
+   - 用 `@capacitor/assets` 重新生成 Android launcher icon
+   - 跑 `npm run android:patch`，自动删除 `mipmap-*` 里重复的 `.png`，保留 `.webp`
+3. 在 Android Studio 里 Build > Clean Project > Rebuild > Build APK。
+4. 安装新 APK 之前**先卸载旧 Bossify**，否则 Android launcher 会缓存旧图标。
+
+不要再用 Android Studio 的 "Image Asset" 向导手动生成 launcher icon，会和 `@capacitor/assets` 生成的 `.webp` 冲突。
 另外，部分 Oppo/OnePlus/Android 12 系设备会因为 Android 12 Splash Screen 退出动画在启动阶段直接闪退；当前补丁会关闭这段启动动画，并把启动主题改回更保守的 `AppTheme.NoActionBar`。
 每次 `npx cap sync android` 之后运行：
 
