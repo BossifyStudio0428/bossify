@@ -18,11 +18,21 @@ export async function registerPushForUser(userId: string): Promise<boolean> {
   if (typeof window === "undefined") return false;
   if (registrationPromise) return registrationPromise;
 
-  registrationPromise = registerPushForUserOnce().finally(() => {
+  registrationPromise = withTimeout(registerPushForUserOnce(), 9000, false).finally(() => {
     if (!tokenRegistered) registrationPromise = null;
     resolveRegistration = null;
   });
   return registrationPromise;
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = window.setTimeout(() => resolve(fallback), ms);
+    promise
+      .then(resolve)
+      .catch(() => resolve(fallback))
+      .finally(() => window.clearTimeout(timer));
+  });
 }
 
 async function registerPushForUserOnce(): Promise<boolean> {
@@ -77,7 +87,11 @@ async function registerPushForUserOnce(): Promise<boolean> {
       window.setTimeout(() => resolve(tokenRegistered), 8000);
     });
 
-    await PushNotifications.register();
+    PushNotifications.register().catch((e) => {
+      tokenRegistered = false;
+      console.warn("FCM register call failed", e);
+      resolveRegistration?.(false);
+    });
     return await result;
   } catch (e) {
     console.warn("registerPushForUser failed", e);
