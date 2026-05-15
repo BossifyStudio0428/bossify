@@ -21,6 +21,8 @@ function NotifSettingsPage() {
   useEffect(() => {
     if (!user) return;
     setGranted(isNotifGranted());
+    // Fire-and-forget device registration so the button doesn't have to wait.
+    registerPushForUser(user.id).catch(() => {});
     supabase
       .from("profiles")
       .select("is_admin")
@@ -40,8 +42,12 @@ function NotifSettingsPage() {
     const title = t("notif_test_title");
     const body = t("notif_test_body");
     try {
-      await registerPushForUser(user.id);
-      const res: any = await sendPushToSelf({ kind: "custom", title, body });
+      const res: any = await Promise.race([
+        sendPushToSelf({ kind: "custom", title, body }),
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ error: new Error("Request timed out") }), 12000),
+        ),
+      ]);
       if (res?.error) throw res.error;
       const sent = res?.data?.sent ?? res?.sent ?? null;
       await notify(title, body);
