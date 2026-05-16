@@ -46,7 +46,7 @@ function OrdersPage() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
   const navigate = useNavigate();
-  const { isPro, showUpgrade } = useSubscription();
+  const { hasFullAccess, showUpgrade } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -198,7 +198,7 @@ function OrdersPage() {
 
   const [exportingPdf, setExportingPdf] = useState(false);
   const exportPDF = async () => {
-    if (!isPro) { showUpgrade(t("export_pdf")); return; }
+    if (!hasFullAccess) { showUpgrade(t("export_pdf")); return; }
     if (exportingPdf) return;
     setExportingPdf(true);
     await new Promise((r) => setTimeout(r, 30));
@@ -342,11 +342,11 @@ function OrdersPage() {
       </header>
 
       {active === "Unpaid" && unpaidCount > 0 && (
-        <button onClick={isPro ? remindAllUnpaid : () => showUpgrade(t("remind_all_unpaid"))} disabled={!!bulkProgress}
+        <button onClick={hasFullAccess ? remindAllUnpaid : () => showUpgrade(t("remind_all_unpaid"))} disabled={!!bulkProgress}
           className="w-full py-3 rounded-2xl bg-orange-500 text-white font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60">
           {bulkProgress
             ? t("sending_progress").replace("{i}", String(bulkProgress.i)).replace("{n}", String(bulkProgress.n))
-            : `${isPro ? "📲" : "🔒"} ${t("remind_all_unpaid")} (${orders.filter((o) => o.status === "Unpaid" && o.phone).length})`}
+            : `${hasFullAccess ? "📲" : "🔒"} ${t("remind_all_unpaid")} (${orders.filter((o) => o.status === "Unpaid" && o.phone).length})`}
         </button>
       )}
 

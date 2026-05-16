@@ -19,7 +19,7 @@ const statusStyles: Record<string, string> = {
 function Index() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
-  const { isPro, ordersUsed, ordersLimit } = useSubscription();
+  const { hasFullAccess, ordersUsed, ordersLimit } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
@@ -171,7 +171,7 @@ function Index() {
 
       <div className="flex items-center justify-between gap-3 -mt-3">
         <p className="text-xs text-muted-foreground truncate">{today}</p>
-        {!isPro ? (
+        {!hasFullAccess ? (
           <Link
             to="/plans"
             aria-label={t("upgrade_to_pro")}
