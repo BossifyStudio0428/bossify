@@ -11,6 +11,16 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/notification-settings")({ component: NotifSettingsPage });
 
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = window.setTimeout(() => resolve(fallback), ms);
+    promise
+      .then(resolve)
+      .catch(() => resolve(fallback))
+      .finally(() => window.clearTimeout(timer));
+  });
+}
+
 function NotifSettingsPage() {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -37,20 +47,20 @@ function NotifSettingsPage() {
   };
 
   const sendTest = async () => {
-    if (!user) return;
+    if (!user || sending) return;
     setSending(true);
+    const failSafeTimer = window.setTimeout(() => setSending(false), 15000);
     const title = t("notif_test_title");
     const body = t("notif_test_body");
     try {
-      const res: any = await Promise.race([
+      const res: any = await withTimeout(
         sendPushToSelf({ kind: "custom", title, body }),
-        new Promise((resolve) =>
-          setTimeout(() => resolve({ error: new Error("Request timed out") }), 12000),
-        ),
-      ]);
+        12000,
+        { error: new Error("Request timed out") },
+      );
       if (res?.error) throw res.error;
       const sent = res?.data?.sent ?? res?.sent ?? null;
-      await notify(title, body);
+      void withTimeout(notify(title, body), 2000, undefined);
       if (sent === 0) {
         toast.warning(t("notif_no_device"));
       } else if (typeof sent === "number") {
@@ -61,6 +71,7 @@ function NotifSettingsPage() {
     } catch (e) {
       toast.error(t("notif_send_failed") + (e as Error).message);
     } finally {
+      window.clearTimeout(failSafeTimer);
       setSending(false);
     }
   };
