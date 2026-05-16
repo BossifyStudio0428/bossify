@@ -31,6 +31,10 @@ export const FALLBACK_PRICES: Record<BillingPlan, string> = {
   annual: "RM 399",
 };
 
+/** One-time, non-consumable Lifetime product. */
+export const LIFETIME_PRODUCT_ID = "bossify_lifetime";
+export const LIFETIME_FALLBACK_PRICE = "RM 1,499";
+
 export type PurchaseReceipt = {
   productId: string;
   transactionId: string;
@@ -67,7 +71,8 @@ export function isNativeBillingAvailable(): boolean {
 
 /** Localized price string for a base plan, as returned by Google Play. */
 export type ProductPrice = {
-  plan: BillingPlan;
+  /** "monthly" / "annual" for the Pro subscription, "lifetime" for the one-time product. */
+  plan: BillingPlan | "lifetime";
   /** e.g. "RM 49.00", "$11.99", "₹999" — already formatted by the store. */
   formattedPrice: string;
   /** ISO 4217 currency code, e.g. "MYR", "USD". */
@@ -144,6 +149,11 @@ export function initBilling(): Promise<AnyStore | null> {
           type: cdv.ProductType.PAID_SUBSCRIPTION,
           platform: cdv.Platform.GOOGLE_PLAY,
         },
+        {
+          id: LIFETIME_PRODUCT_ID,
+          type: cdv.ProductType.NON_CONSUMABLE,
+          platform: cdv.Platform.GOOGLE_PLAY,
+        },
       ]);
 
       // Approved → collect receipt → finish so Google marks the order
@@ -183,9 +193,8 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
   if (!store) return fallbackPrices();
   try {
     const product = store.get(SUBSCRIPTION_ID);
-    if (!product?.offers?.length) return fallbackPrices();
     const out: ProductPrice[] = [];
-    for (const offer of product.offers) {
+    for (const offer of product?.offers ?? []) {
       // Match the Play Console base plan id to our local BillingPlan key.
       const offerId: string | undefined = offer.id || offer.basePlanId;
       let plan: BillingPlan | null = null;
@@ -200,11 +209,27 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
         currency: (phase.currency as string) ?? "MYR",
       });
     }
+    // Lifetime one-time product price.
+    try {
+      const lifetime = store.get(LIFETIME_PRODUCT_ID);
+      const lifetimeOffer = lifetime?.offers?.[0];
+      const lifetimePhase = lifetimeOffer?.pricingPhases?.[0];
+      if (lifetimePhase?.price) {
+        out.push({
+          plan: "lifetime",
+          formattedPrice: lifetimePhase.price as string,
+          currency: (lifetimePhase.currency as string) ?? "MYR",
+        });
+      }
+    } catch {}
     // Backfill any missing plan with the fallback so the UI never shows blank.
     for (const p of Object.keys(BASE_PLAN_IDS) as BillingPlan[]) {
       if (!out.find((x) => x.plan === p)) {
         out.push({ plan: p, formattedPrice: FALLBACK_PRICES[p], currency: "MYR" });
       }
+    }
+    if (!out.find((x) => x.plan === "lifetime")) {
+      out.push({ plan: "lifetime", formattedPrice: LIFETIME_FALLBACK_PRICE, currency: "MYR" });
     }
     return out;
   } catch (e) {
@@ -214,11 +239,13 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
 }
 
 function fallbackPrices(): ProductPrice[] {
-  return (Object.keys(BASE_PLAN_IDS) as BillingPlan[]).map((plan) => ({
+  const subs = (Object.keys(BASE_PLAN_IDS) as BillingPlan[]).map((plan) => ({
     plan,
     formattedPrice: FALLBACK_PRICES[plan],
     currency: "MYR",
-  }));
+  } as ProductPrice));
+  subs.push({ plan: "lifetime", formattedPrice: LIFETIME_FALLBACK_PRICE, currency: "MYR" });
+  return subs;
 }
 
 async function tryNativePurchase(_subscriptionId: string, basePlanId: string): Promise<PurchaseReceipt> {
@@ -294,15 +321,26 @@ async function tryNativeRestore(): Promise<PurchaseReceipt[]> {
   if (!store) return [];
   try {
     await store.restorePurchases();
-    const product = store.get(SUBSCRIPTION_ID);
-    const owned = product?.owned ? [{
-      productId: SUBSCRIPTION_ID,
-      transactionId: product.transaction?.id ?? "",
-      purchaseToken: product.transaction?.purchaseToken,
-      basePlanId: inferOwnedPlan(product),
-      currentPeriodEnd: isoFromDate(product.transaction?.expirationDate),
-    }] : [];
-    return owned;
+    const out: PurchaseReceipt[] = [];
+    const sub = store.get(SUBSCRIPTION_ID);
+    if (sub?.owned || sub?.offers?.some?.((o: AnyStore) => o?.owned)) {
+      out.push({
+        productId: SUBSCRIPTION_ID,
+        transactionId: sub.transaction?.id ?? "",
+        purchaseToken: sub.transaction?.purchaseToken,
+        basePlanId: inferOwnedPlan(sub),
+        currentPeriodEnd: isoFromDate(sub.transaction?.expirationDate),
+      });
+    }
+    const lifetime = store.get(LIFETIME_PRODUCT_ID);
+    if (lifetime?.owned) {
+      out.push({
+        productId: LIFETIME_PRODUCT_ID,
+        transactionId: lifetime.transaction?.id ?? "",
+        purchaseToken: lifetime.transaction?.purchaseToken,
+      });
+    }
+    return out;
   } catch {
     return [];
   }
@@ -340,6 +378,30 @@ export async function verifyActiveSubscription(): Promise<PurchaseReceipt | null
   }
 }
 
+/**
+ * Check whether the user owns the one-time Lifetime product. Safe to call
+ * silently on app launch / resume.
+ */
+export async function verifyLifetimeOwnership(): Promise<PurchaseReceipt | null> {
+  if (!isNativeBillingAvailable()) return null;
+  const store = await initBilling();
+  if (!store) return null;
+  try {
+    try { await store.restorePurchases(); } catch {}
+    try { await store.update(); } catch {}
+    const product = store.get(LIFETIME_PRODUCT_ID);
+    if (!product?.owned) return null;
+    const tx = product.transaction ?? {};
+    return {
+      productId: LIFETIME_PRODUCT_ID,
+      transactionId: tx.id ?? tx.transactionId ?? "",
+      purchaseToken: tx.purchaseToken,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // --- Public API ------------------------------------------------------------
 
 export async function purchasePlan(
@@ -359,6 +421,92 @@ export async function purchasePlan(
     const err = e as Partial<BillingError> | undefined;
     const code: BillingErrorCode = err?.code ?? "unknown";
     onError({ code, message: err?.message ?? "Purchase failed" });
+  }
+}
+
+/**
+ * Purchase the one-time Lifetime (non-consumable) product. Mirrors
+ * `purchasePlan` for subscriptions but targets the lifetime SKU.
+ */
+export async function purchaseLifetime(
+  onSuccess: (receipt: PurchaseReceipt) => Promise<void> | void,
+  onError: (err: BillingError) => void,
+): Promise<void> {
+  if (!isNativeBillingAvailable()) {
+    onError({ code: "not_android", message: "Not running inside Android app" });
+    return;
+  }
+  const store = await initBilling();
+  if (!store) {
+    onError({ code: "item_unavailable", message: "Google Play Billing not available" });
+    return;
+  }
+  const product = store.get(LIFETIME_PRODUCT_ID);
+  if (!product) {
+    onError({ code: "item_unavailable", message: "Lifetime product not yet approved by Google Play" });
+    return;
+  }
+  const offer = product.offers?.[0];
+  if (!offer) {
+    onError({ code: "item_unavailable", message: "Lifetime offer not configured" });
+    return;
+  }
+  try {
+    const receipt = await new Promise<PurchaseReceipt>((resolve, reject) => {
+      let settled = false;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      const done = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        if (timeoutId) clearTimeout(timeoutId);
+        unsub();
+        fn();
+      };
+      const unsub = onPurchaseApproved((r) => {
+        if (r.productId === LIFETIME_PRODUCT_ID) done(() => resolve(r));
+      });
+      timeoutId = setTimeout(async () => {
+        try {
+          await store.update?.();
+          const fresh = store.get(LIFETIME_PRODUCT_ID);
+          if (fresh?.owned) {
+            const tx = fresh.transaction ?? {};
+            done(() => resolve({
+              productId: LIFETIME_PRODUCT_ID,
+              transactionId: tx.id ?? tx.transactionId ?? "",
+              purchaseToken: tx.purchaseToken,
+            }));
+            return;
+          }
+        } catch {}
+        done(() => reject({ code: "unknown", message: "Purchase timed out" } as BillingError));
+      }, 45000);
+      try {
+        const orderResult = offer.order ? offer.order() : store.order(offer);
+        Promise.resolve(orderResult).then((err: AnyStore) => {
+          if (!err) return;
+          const code: string | undefined = err?.code;
+          if (code === "PaymentCancelled" || code === "PAYMENT_CANCELLED" || /cancel/i.test(err?.message ?? "")) {
+            done(() => reject({ code: "user_cancelled", message: "Cancelled" } as BillingError));
+          } else {
+            done(() => reject({ code: "unknown", message: err?.message ?? "Purchase failed" } as BillingError));
+          }
+        }).catch((err: AnyStore) => {
+          const code: string | undefined = err?.code;
+          if (code === "PaymentCancelled" || code === "PAYMENT_CANCELLED" || /cancel/i.test(err?.message ?? "")) {
+            done(() => reject({ code: "user_cancelled", message: "Cancelled" } as BillingError));
+          } else {
+            done(() => reject({ code: "unknown", message: err?.message ?? "Purchase failed" } as BillingError));
+          }
+        });
+      } catch (err) {
+        done(() => reject({ code: "unknown", message: (err as Error)?.message ?? "Purchase failed" } as BillingError));
+      }
+    });
+    await onSuccess(receipt);
+  } catch (e) {
+    const err = e as Partial<BillingError> | undefined;
+    onError({ code: err?.code ?? "unknown", message: err?.message ?? "Purchase failed" });
   }
 }
 
