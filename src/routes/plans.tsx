@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Check, X, Sparkles } from "lucide-react";
+import { ChevronLeft, Check, X, Sparkles, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,9 +10,12 @@ import { notifySituation } from "@/lib/autoNotify";
 import {
   isNativeBillingAvailable,
   purchasePlan,
+  purchaseLifetime,
   restorePurchases,
   queryProductDetails,
   FALLBACK_PRICES,
+  LIFETIME_FALLBACK_PRICE,
+  LIFETIME_PRODUCT_ID,
   SUBSCRIPTION_ID,
   BASE_PLAN_IDS,
   type BillingError,
@@ -25,12 +28,13 @@ function PlansPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isPro, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
+  const { isPro, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
-  const [submitting, setSubmitting] = useState(false);
-  const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual", string>>({
+  const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | null>(null);
+  const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual" | "lifetime", string>>({
     monthly: FALLBACK_PRICES.monthly,
     annual: FALLBACK_PRICES.annual,
+    lifetime: LIFETIME_FALLBACK_PRICE,
   });
 
   // Pull each user's locally-formatted price from Google Play (MYR / USD /
@@ -50,6 +54,7 @@ function PlansPage() {
   }, []);
 
   const price = storePrices[billing];
+  const lifetimePrice = storePrices.lifetime;
   const period = billing === "monthly" ? t("per_month") : t("per_year");
 
   const freeRows: { ok: boolean; label: string }[] = [
@@ -79,7 +84,7 @@ function PlansPage() {
       toast.message(t("google_play_only_android"));
       return;
     }
-    setSubmitting(true);
+    setSubmittingPlan("pro");
     try {
       await purchasePlan(
         billing,
@@ -130,7 +135,59 @@ function PlansPage() {
       // getting stuck on "..." after a cancelled purchase.
       try { await syncFromStore(); } catch {}
       try { await refresh(); } catch {}
-      setSubmitting(false);
+      setSubmittingPlan(null);
+    }
+  };
+
+  const handleLifetimePurchase = async () => {
+    if (!user) return;
+    if (!isNativeBillingAvailable()) {
+      toast.message(t("google_play_only_android"));
+      return;
+    }
+    setSubmittingPlan("lifetime");
+    try {
+      await purchaseLifetime(
+        async (receipt) => {
+          const { error: upsertError } = await supabase.from("subscriptions").upsert({
+            user_id: user.id,
+            plan: "lifetime",
+            status: "active",
+            provider: "google_play",
+            provider_product_id: LIFETIME_PRODUCT_ID,
+            provider_transaction_id: receipt.transactionId,
+            provider_purchase_token: receipt.purchaseToken ?? null,
+            lifetime_purchase_date: new Date().toISOString(),
+            lifetime_google_token: receipt.purchaseToken ?? null,
+            current_period_end: null,
+          }, { onConflict: "user_id" });
+          if (upsertError) {
+            console.error("[billing] Failed to persist Lifetime plan:", upsertError);
+            toast.error(`${t("billing_unknown_error")}: ${upsertError.message}`);
+            return;
+          }
+          await refresh();
+          toast.success(t("welcome_to_lifetime"));
+          notifySituation({
+            kind: "milestone",
+            title: t("welcome_to_lifetime"),
+            body: t("never_pay_again"),
+            link: "/plans",
+            prefKey: "notif_milestone",
+            dedupeKey: `lifetime_${receipt.transactionId || receipt.purchaseToken || "owned"}`,
+          }).catch(() => {});
+        },
+        (err: BillingError) => {
+          if (err.code === "item_unavailable") toast.message(t("billing_item_unavailable"));
+          else if (err.code === "user_cancelled") toast.message(t("billing_user_cancelled"));
+          else if (err.code === "not_android") toast.message(t("google_play_only_android"));
+          else toast.error(t("billing_unknown_error"));
+        },
+      );
+    } finally {
+      try { await syncFromStore(); } catch {}
+      try { await refresh(); } catch {}
+      setSubmittingPlan(null);
     }
   };
 
@@ -147,15 +204,19 @@ function PlansPage() {
       </header>
 
       {/* Current plan banner */}
-      <div className={`rounded-2xl p-4 border ${isPro ? "bg-gradient-to-br from-primary/15 to-primary/5 border-primary/40" : "bg-card border-border/60"}`}>
+      <div className={`rounded-2xl p-4 border ${isLifetime ? "bg-gradient-to-br from-amber-200/40 to-yellow-100/30 border-amber-400/60" : isPro ? "bg-gradient-to-br from-primary/15 to-primary/5 border-primary/40" : "bg-card border-border/60"}`}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] uppercase font-semibold text-muted-foreground">{t("current_plan")}</p>
             <p className="text-lg font-bold mt-0.5 flex items-center gap-2">
-              {isPro ? (<>{t("pro_plan")} <Sparkles className="h-4 w-4 text-primary" /></>) : t("free_plan")}
+              {isLifetime ? (<>{t("plan_badge_lifetime")} <Crown className="h-4 w-4 text-amber-500" /></>)
+                : isPro ? (<>{t("pro_plan")} <Sparkles className="h-4 w-4 text-primary" /></>)
+                : t("free_plan")}
             </p>
           </div>
-          {isPro ? (
+          {isLifetime ? (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">{t("active_badge")}</span>
+          ) : isPro ? (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">{t("active_badge")}</span>
           ) : (
             <div className="text-right">
@@ -218,17 +279,59 @@ function PlansPage() {
               </li>
             ))}
           </ul>
-          {isPro && activeBillingPlan === billing ? (
+          {isLifetime ? (
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-100 text-amber-700 font-semibold text-sm">
+              {t("plan_badge_lifetime")} ✓
+            </button>
+          ) : isPro && activeBillingPlan === billing ? (
             <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-100 text-emerald-700 font-semibold text-sm">
               {t("current_plan")} ✓
             </button>
           ) : (
             <button
               onClick={handleGooglePlayPurchase}
-              disabled={submitting}
+              disabled={submittingPlan !== null}
               className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
-              {submitting ? "..." : `${t("upgrade_to_pro")} — ${price}`}
+              {submittingPlan === "pro" ? "..." : `${t("upgrade_to_pro")} — ${price}`}
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* Lifetime card */}
+      <section className="relative rounded-3xl p-[2px] bg-gradient-to-br from-amber-400 via-amber-300 to-yellow-500">
+        <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
+          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow">
+            {t("best_value")}
+          </span>
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-lg font-bold flex items-center gap-1">{t("lifetime_plan")} <Crown className="h-4 w-4 text-amber-500" /></h2>
+            <p className="text-xl font-bold text-amber-600">{lifetimePrice}<span className="text-xs text-muted-foreground font-normal"> · {t("one_time_payment")}</span></p>
+          </div>
+          <ul className="mt-4 space-y-2">
+            {proRows.map((r, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm">
+                <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                <span className="text-foreground">{r}</span>
+              </li>
+            ))}
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+              <span className="text-foreground font-semibold">{t("never_pay_again")}</span>
+            </li>
+          </ul>
+          {isLifetime ? (
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-100 text-amber-700 font-semibold text-sm">
+              ✓ {t("already_active")}
+            </button>
+          ) : (
+            <button
+              onClick={handleLifetimePurchase}
+              disabled={submittingPlan !== null}
+              className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
+            >
+              {submittingPlan === "lifetime" ? "..." : `${t("get_lifetime_access")} — ${lifetimePrice}`}
             </button>
           )}
         </div>
@@ -247,33 +350,67 @@ function PlansPage() {
                 return;
               }
               if (user) {
-                const r = receipts[0];
-                const { error: restoreError } = await supabase.from("subscriptions").upsert({
-                  user_id: user.id,
-                  plan: "pro",
-                  status: "active",
-                  provider: "google_play",
-                  provider_product_id: `${r.productId}:${r.basePlanId ?? "monthly"}`,
-                  provider_transaction_id: r.transactionId,
-                  provider_purchase_token: r.purchaseToken ?? null,
-                  current_period_end: r.currentPeriodEnd ?? null,
-                }, { onConflict: "user_id" });
-                if (restoreError) {
-                  console.error("[billing] Restore upsert failed:", restoreError);
-                  toast.error(`${t("billing_unknown_error")}: ${restoreError.message}`);
+                // Lifetime wins — it's a stronger entitlement than a subscription.
+                const lifetimeR = receipts.find((r) => r.productId === LIFETIME_PRODUCT_ID);
+                const proR = receipts.find((r) => r.productId !== LIFETIME_PRODUCT_ID);
+                if (lifetimeR) {
+                  const { error: restoreError } = await supabase.from("subscriptions").upsert({
+                    user_id: user.id,
+                    plan: "lifetime",
+                    status: "active",
+                    provider: "google_play",
+                    provider_product_id: LIFETIME_PRODUCT_ID,
+                    provider_transaction_id: lifetimeR.transactionId,
+                    provider_purchase_token: lifetimeR.purchaseToken ?? null,
+                    lifetime_purchase_date: sub?.lifetime_purchase_date ?? new Date().toISOString(),
+                    lifetime_google_token: lifetimeR.purchaseToken ?? null,
+                    current_period_end: null,
+                  }, { onConflict: "user_id" });
+                  if (restoreError) {
+                    console.error("[billing] Restore upsert failed:", restoreError);
+                    toast.error(`${t("billing_unknown_error")}: ${restoreError.message}`);
+                    return;
+                  }
+                  await refresh();
+                  toast.success(t("lifetime_restored"));
+                  notifySituation({
+                    kind: "milestone",
+                    title: t("welcome_to_lifetime"),
+                    body: t("lifetime_restored"),
+                    link: "/plans",
+                    prefKey: "notif_milestone",
+                    dedupeKey: `lifetime_${lifetimeR.transactionId || lifetimeR.purchaseToken || "restored"}`,
+                  }).catch(() => {});
                   return;
                 }
+                if (proR) {
+                  const { error: restoreError } = await supabase.from("subscriptions").upsert({
+                    user_id: user.id,
+                    plan: "pro",
+                    status: "active",
+                    provider: "google_play",
+                    provider_product_id: `${proR.productId}:${proR.basePlanId ?? "monthly"}`,
+                    provider_transaction_id: proR.transactionId,
+                    provider_purchase_token: proR.purchaseToken ?? null,
+                    current_period_end: proR.currentPeriodEnd ?? null,
+                  }, { onConflict: "user_id" });
+                  if (restoreError) {
+                    console.error("[billing] Restore upsert failed:", restoreError);
+                    toast.error(`${t("billing_unknown_error")}: ${restoreError.message}`);
+                    return;
+                  }
+                  await refresh();
+                  toast.success(t("pro_restored"));
+                  notifySituation({
+                    kind: "milestone",
+                    title: "Pro Restored ✦",
+                    body: "Your Bossify Pro access is active.",
+                    link: "/plans",
+                    prefKey: "notif_milestone",
+                    dedupeKey: `pro_${proR.transactionId || proR.purchaseToken || "restored"}`,
+                  }).catch(() => {});
+                }
               }
-              await refresh();
-              toast.success(t("pro_restored"));
-              notifySituation({
-                kind: "milestone",
-                title: "Pro Restored ✦",
-                body: "Your Bossify Pro access is active.",
-                link: "/plans",
-                prefKey: "notif_milestone",
-                dedupeKey: `pro_${receipts[0]?.transactionId || receipts[0]?.purchaseToken || "restored"}`,
-              }).catch(() => {});
             },
             (err) => {
               if (err.code === "item_unavailable") toast.message(t("no_purchase_found"));
