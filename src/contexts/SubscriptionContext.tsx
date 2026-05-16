@@ -1,9 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { verifyActiveSubscription, isNativeBillingAvailable, type BillingPlan } from "@/lib/billing";
+import {
+  verifyActiveSubscription,
+  verifyLifetimeOwnership,
+  isNativeBillingAvailable,
+  LIFETIME_PRODUCT_ID,
+  type BillingPlan,
+} from "@/lib/billing";
 
-export type Plan = "free" | "pro";
+export type Plan = "free" | "pro" | "lifetime";
 
 export type SubscriptionRow = {
   id: string;
@@ -19,6 +25,8 @@ export type SubscriptionRow = {
   provider?: string | null;
   provider_product_id?: string | null;
   current_period_end?: string | null;
+  lifetime_purchase_date?: string | null;
+  lifetime_google_token?: string | null;
 };
 
 export const FREE_LIMITS = {
@@ -31,6 +39,9 @@ type Ctx = {
   sub: SubscriptionRow | null;
   plan: Plan;
   isPro: boolean;
+  isLifetime: boolean;
+  /** True for both Pro subscribers and Lifetime owners. Use this for feature gates. */
+  hasFullAccess: boolean;
   loading: boolean;
   ordersUsed: number;
   ordersLimit: number;
@@ -147,6 +158,31 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     if (!isNativeBillingAvailable()) return;
     try {
+      // Lifetime is the strongest entitlement — check it first and never
+      // downgrade away from it.
+      const lifetimeReceipt = await verifyLifetimeOwnership();
+      if (lifetimeReceipt) {
+        await supabase.from("subscriptions").upsert({
+          user_id: user.id,
+          plan: "lifetime",
+          status: "active",
+          provider: "google_play",
+          provider_product_id: LIFETIME_PRODUCT_ID,
+          provider_transaction_id: lifetimeReceipt.transactionId,
+          provider_purchase_token: lifetimeReceipt.purchaseToken ?? null,
+          lifetime_purchase_date: sub?.lifetime_purchase_date ?? new Date().toISOString(),
+          lifetime_google_token: lifetimeReceipt.purchaseToken ?? null,
+          current_period_end: null,
+        }, { onConflict: "user_id" });
+        await refresh();
+        return;
+      }
+      // Never auto-downgrade an existing lifetime row just because the
+      // store cache hasn't refreshed yet.
+      if (sub?.plan === "lifetime") {
+        await refresh();
+        return;
+      }
       const receipt = await verifyActiveSubscription();
       if (receipt) {
         await supabase.from("subscriptions").upsert({
@@ -223,6 +259,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       : null;
   const isPeriodActive = !sub?.current_period_end || new Date(sub.current_period_end).getTime() > Date.now();
   const isPro = plan === "pro" && (sub?.status ?? "active") === "active" && isPeriodActive;
+  // Lifetime never expires — no period check.
+  const isLifetime = plan === "lifetime" && (sub?.status ?? "active") === "active";
+  const hasFullAccess = isPro || isLifetime;
   const ordersUsed = sub?.order_count ?? 0;
   const ordersLimit = FREE_LIMITS.ordersPerMonth;
   const ordersRemaining = Math.max(0, ordersLimit - ordersUsed);
@@ -238,7 +277,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SubCtx.Provider value={{
-      sub, plan, isPro, loading,
+      sub, plan, isPro, isLifetime, hasFullAccess, loading,
       ordersUsed, ordersLimit, ordersRemaining,
       productsUsed, productsLimit, productsRemaining,
       activeBillingPlan,
