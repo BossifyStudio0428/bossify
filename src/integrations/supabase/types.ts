@@ -38,6 +38,72 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          count_period_start: string | null
+          created_at: string
+          current_period_end: string | null
+          expires_at: string | null
+          id: string
+          inventory_created_total: number
+          last_reset_at: string | null
+          lifetime_google_token: string | null
+          lifetime_purchase_date: string | null
+          order_count: number
+          plan: string
+          provider: string | null
+          provider_product_id: string | null
+          provider_purchase_token: string | null
+          provider_transaction_id: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count_period_start?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          expires_at?: string | null
+          id?: string
+          inventory_created_total?: number
+          last_reset_at?: string | null
+          lifetime_google_token?: string | null
+          lifetime_purchase_date?: string | null
+          order_count?: number
+          plan?: string
+          provider?: string | null
+          provider_product_id?: string | null
+          provider_purchase_token?: string | null
+          provider_transaction_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count_period_start?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          expires_at?: string | null
+          id?: string
+          inventory_created_total?: number
+          last_reset_at?: string | null
+          lifetime_google_token?: string | null
+          lifetime_purchase_date?: string | null
+          order_count?: number
+          plan?: string
+          provider?: string | null
+          provider_product_id?: string | null
+          provider_purchase_token?: string | null
+          provider_transaction_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

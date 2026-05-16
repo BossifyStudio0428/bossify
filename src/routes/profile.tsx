@@ -25,7 +25,7 @@ function ProfilePage() {
   const { user, signOut } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
-  const { isPro, ordersUsed, showUpgrade } = useSubscription();
+  const { isPro, isLifetime, hasFullAccess, ordersUsed, showUpgrade } = useSubscription();
   const { theme, toggle: toggleTheme } = useTheme();
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
@@ -44,8 +44,8 @@ function ProfilePage() {
     { icon: "⚙️", key: "notifsettings", label: t("notification_settings"), onClick: () => navigate({ to: "/notification-settings" }) },
     { icon: "🌐", key: "lang", label: t("language"), value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`, onClick: () => setLangOpen(true) },
     { icon: theme === "dark" ? "🌙" : "☀️", key: "theme", label: t("appearance"), value: theme === "dark" ? t("dark") : t("light"), onClick: toggleTheme },
-    { icon: "💳", key: "sub", label: t("subscription"), value: isPro ? t("pro_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
-    { icon: "📲", key: "wa", label: t("wa_template"), value: isPro ? undefined : "🔒", onClick: () => isPro ? setTplOpen(true) : showUpgrade(t("wa_template")) },
+    { icon: "💳", key: "sub", label: t("subscription"), value: isLifetime ? t("plan_badge_lifetime") : isPro ? t("pro_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
+    { icon: "📲", key: "wa", label: t("wa_template"), value: hasFullAccess ? undefined : "🔒", onClick: () => hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template")) },
     { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
     ...(isAdmin ? [{ icon: "⚙️", key: "admin", label: t("admin_panel"), value: "PRO", onClick: () => navigate({ to: "/admin" }) }] : []),
   ];
@@ -127,10 +127,10 @@ function ProfilePage() {
           {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : initials}
         </div>
         <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">{businessName}</h1>
-        <span className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-          {isPro ? <>{t("pro_plan")} <Sparkles className="h-3 w-3" /></> : t("free_plan")}
+        <span className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isLifetime ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white" : isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+          {isLifetime ? t("plan_badge_lifetime") : isPro ? <>{t("pro_plan")} <Sparkles className="h-3 w-3" /></> : t("free_plan")}
         </span>
-        {!isPro && (
+        {!hasFullAccess && (
           <button
             onClick={() => navigate({ to: "/plans" })}
             className="mt-2 text-[11px] text-primary font-semibold underline"

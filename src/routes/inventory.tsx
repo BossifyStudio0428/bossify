@@ -22,7 +22,7 @@ type Sheet =
 function InventoryPage() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const { isPro, showUpgrade, productsUsed, productsLimit } = useSubscription();
+  const { hasFullAccess, showUpgrade, productsUsed, productsLimit } = useSubscription();
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<InventoryRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +83,7 @@ function InventoryPage() {
 
   const visible = items.filter((i) => i.name.toLowerCase().includes(query.toLowerCase()));
   const lowItems = items.filter((i) => i.stock <= LOW_THRESHOLD);
-  const atLimit = !isPro && productsUsed >= FREE_LIMITS.inventory;
+  const atLimit = !hasFullAccess && productsUsed >= FREE_LIMITS.inventory;
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-5 relative">
@@ -92,7 +92,7 @@ function InventoryPage() {
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {items.length} {t("items")}
         </span>
-        {!isPro && (
+        {!hasFullAccess && (
           <Link
             to="/plans"
             className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 active:scale-95 transition"

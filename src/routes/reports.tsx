@@ -19,7 +19,7 @@ function endOfDay(d: Date) { const x = new Date(d); x.setHours(23,59,59,999); re
 function ReportsPage() {
   const { user } = useAuth();
   const { t } = useI18n();
-  const { isPro, showUpgrade } = useSubscription();
+  const { hasFullAccess, showUpgrade } = useSubscription();
   const [range, setRange] = useState<Range>("month");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,7 +140,7 @@ function ReportsPage() {
   }, [inRange]);
 
   const handleExport = async () => {
-    if (!isPro) { showUpgrade(t("export_pdf")); return; }
+    if (!hasFullAccess) { showUpgrade(t("export_pdf")); return; }
     if (exporting) return;
     setExporting(true);
     // Yield so the button shows its loading state before heavy PDF work runs.
@@ -177,7 +177,7 @@ function ReportsPage() {
 
   return (
     <div className="px-5 pt-10 pb-6 space-y-5">
-      {!isPro && (
+      {!hasFullAccess && (
         <div className="rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/40 p-4 flex items-center gap-3">
           <span className="text-2xl">🔒</span>
           <div className="flex-1">

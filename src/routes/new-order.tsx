@@ -32,7 +32,7 @@ function NewOrderPage() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
   const navigate = useNavigate();
-  const { isPro, ordersUsed, ordersLimit, ordersRemaining, showUpgrade } = useSubscription();
+  const { hasFullAccess, ordersUsed, ordersLimit, ordersRemaining, showUpgrade } = useSubscription();
   const statusLabels: Record<OrderStatus, string> = {
     Paid: `${t("paid")} ✓`,
     Unpaid: t("unpaid"),
@@ -125,7 +125,7 @@ function NewOrderPage() {
   };
 
   const checkLimit = () => {
-    if (!isPro && ordersUsed >= FREE_LIMITS.ordersPerMonth) {
+    if (!hasFullAccess && ordersUsed >= FREE_LIMITS.ordersPerMonth) {
       showUpgrade(t("upgrade_message"));
       return false;
     }
@@ -419,7 +419,7 @@ function NewOrderPage() {
           >
             {saving ? t("saving") : t("save_order")}
           </button>
-          {!isPro && (
+          {!hasFullAccess && (
             <p className="text-center text-[11px] text-muted-foreground">
               {t("orders_used").replace("{x}", String(ordersUsed))}
               {ordersRemaining <= 5 && ordersRemaining > 0 && (
