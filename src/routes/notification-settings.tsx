@@ -56,7 +56,7 @@ function NotifSettingsPage() {
       const res: any = await withTimeout(
         sendPushToSelf({ kind: "custom", title, body }),
         12000,
-        { error: new Error("Request timed out") },
+        { data: null, error: new Error("Request timed out") },
       );
       if (res?.error) throw res.error;
       const sent = res?.data?.sent ?? res?.sent ?? null;
