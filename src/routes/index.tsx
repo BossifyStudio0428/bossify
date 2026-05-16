@@ -19,7 +19,7 @@ const statusStyles: Record<string, string> = {
 function Index() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
-  const { hasFullAccess, ordersUsed, ordersLimit } = useSubscription();
+  const { hasFullAccess, isLifetime, ordersUsed, ordersLimit } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
@@ -180,6 +180,14 @@ function Index() {
             <span className="text-[10px] font-semibold text-muted-foreground leading-none">
               {t("free_plan_badge")} · {ordersUsed}/{ordersLimit}
             </span>
+          </Link>
+        ) : isLifetime ? (
+          <Link
+            to="/plans"
+            aria-label={t("plan_badge_lifetime")}
+            className="h-6 px-2.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white inline-flex items-center gap-1 shadow-[var(--shadow-soft)] active:scale-95 transition-transform shrink-0"
+          >
+            <span className="text-[10px] font-bold leading-none">{t("plan_badge_lifetime")}</span>
           </Link>
         ) : (
           <Link
