@@ -25,6 +25,7 @@ import { Route as NotificationSettingsRouteImport } from './routes/notification-
 import { Route as NewOrderRouteImport } from './routes/new-order'
 import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as ImportOrdersRouteImport } from './routes/import-orders'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as BusinessProfileRouteImport } from './routes/business-profile'
@@ -117,6 +118,11 @@ const InventoryRoute = InventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImportOrdersRoute = ImportOrdersRouteImport.update({
+  id: '/import-orders',
+  path: '/import-orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/business-profile': typeof BusinessProfileRoute
   '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
+  '/import-orders': typeof ImportOrdersRoute
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/business-profile': typeof BusinessProfileRoute
   '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
+  '/import-orders': typeof ImportOrdersRoute
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
@@ -240,6 +248,7 @@ export interface FileRoutesById {
   '/business-profile': typeof BusinessProfileRoute
   '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
+  '/import-orders': typeof ImportOrdersRoute
   '/inventory': typeof InventoryRoute
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/business-profile'
     | '/customers'
     | '/forgot-password'
+    | '/import-orders'
     | '/inventory'
     | '/language'
     | '/new-order'
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/business-profile'
     | '/customers'
     | '/forgot-password'
+    | '/import-orders'
     | '/inventory'
     | '/language'
     | '/new-order'
@@ -329,6 +340,7 @@ export interface FileRouteTypes {
     | '/business-profile'
     | '/customers'
     | '/forgot-password'
+    | '/import-orders'
     | '/inventory'
     | '/language'
     | '/new-order'
@@ -359,6 +371,7 @@ export interface RootRouteChildren {
   BusinessProfileRoute: typeof BusinessProfileRoute
   CustomersRoute: typeof CustomersRoute
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
+  ImportOrdersRoute: typeof ImportOrdersRoute
   InventoryRoute: typeof InventoryRoute
   LanguageRoute: typeof LanguageRoute
   NewOrderRoute: typeof NewOrderRoute
@@ -492,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/import-orders': {
+      id: '/import-orders'
+      path: '/import-orders'
+      fullPath: '/import-orders'
+      preLoaderRoute: typeof ImportOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
@@ -605,6 +625,7 @@ const rootRouteChildren: RootRouteChildren = {
   BusinessProfileRoute: BusinessProfileRoute,
   CustomersRoute: CustomersRoute,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
+  ImportOrdersRoute: ImportOrdersRoute,
   InventoryRoute: InventoryRoute,
   LanguageRoute: LanguageRoute,
   NewOrderRoute: NewOrderRoute,
@@ -626,3 +647,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

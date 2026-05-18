@@ -45,11 +45,11 @@ function ImportOrdersPage() {
       setFileName(file.name);
       const p = await parseSpreadsheet(file);
       if (p.rows.length === 0) {
-        toast.error(t("import_empty") || "File is empty");
+        toast.error("File is empty");
         return;
       }
       if (p.rows.length > 1000) {
-        toast.error((t("import_too_many") || "Max 1000 rows per import. Got {n}.").replace("{n}", String(p.rows.length)));
+        toast.error(("Max 1000 rows per import. Got {n}.").replace("{n}", String(p.rows.length)));
         return;
       }
       setParsed(p);
@@ -140,14 +140,14 @@ function ImportOrdersPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          {t("import_orders") || "Import Orders"}
+          {"Import Orders"}
         </h1>
       </header>
 
       {step === "upload" && (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {t("import_intro") || "Upload your Excel or CSV file. The app will auto-detect columns."}
+            {"Upload your Excel or CSV file. The app will auto-detect columns."}
           </p>
           <button
             onClick={() => fileRef.current?.click()}
@@ -155,7 +155,7 @@ function ImportOrdersPage() {
           >
             <Upload className="h-10 w-10 text-primary" />
             <p className="text-sm font-semibold text-foreground">
-              {t("import_pick_file") || "Tap to choose file"}
+              {"Tap to choose file"}
             </p>
             <p className="text-xs text-muted-foreground">.xlsx · .xls · .csv</p>
           </button>
@@ -166,13 +166,13 @@ function ImportOrdersPage() {
           />
           <div className="rounded-2xl bg-muted/40 border border-border/60 p-4 space-y-2">
             <p className="text-xs font-semibold text-foreground">
-              {t("import_tips_title") || "Tips"}
+              {"Tips"}
             </p>
             <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
-              <li>{t("import_tip_header") || "First row should be column names (Customer, Product, Amount...)"}</li>
-              <li>{t("import_tip_required") || "Required: Customer Name, Product, Amount"}</li>
-              <li>{t("import_tip_dup") || "Orders with the same Order Code will be overwritten."}</li>
-              <li>{t("import_tip_limit") || "Up to 1000 rows per import."}</li>
+              <li>{"First row should be column names (Customer, Product, Amount...)"}</li>
+              <li>{"Required: Customer Name, Product, Amount"}</li>
+              <li>{"Orders with the same Order Code will be overwritten."}</li>
+              <li>{"Up to 1000 rows per import."}</li>
             </ul>
           </div>
         </div>
@@ -184,15 +184,15 @@ function ImportOrdersPage() {
             <FileSpreadsheet className="h-4 w-4" />
             <span className="truncate">{fileName}</span>
             <span>·</span>
-            <span>{parsed.rows.length} {t("rows") || "rows"}</span>
+            <span>{parsed.rows.length} {"rows"}</span>
           </div>
 
           <section className="space-y-2">
             <h2 className="text-sm font-semibold text-foreground">
-              {t("import_map_columns") || "Match your columns"}
+              {"Match your columns"}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {t("import_map_hint") || "We've guessed — adjust any that look wrong."}
+              {"We've guessed — adjust any that look wrong."}
             </p>
             <div className="space-y-2">
               {parsed.headers.map((h) => (
@@ -215,15 +215,15 @@ function ImportOrdersPage() {
 
           <section className="space-y-2">
             <h2 className="text-sm font-semibold text-foreground">
-              {t("import_preview") || "Preview"}
+              {"Preview"}
             </h2>
             <div className="flex gap-2 text-xs">
               <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
-                ✓ {validCount} {t("import_ok") || "ready"}
+                ✓ {validCount} {"ready"}
               </span>
               {invalidCount > 0 && (
                 <span className="px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">
-                  ⚠ {invalidCount} {t("import_skip") || "will skip"}
+                  ⚠ {invalidCount} {"will skip"}
                 </span>
               )}
             </div>
@@ -264,7 +264,7 @@ function ImportOrdersPage() {
               </table>
               {mapped.length > 10 && (
                 <p className="text-[11px] text-muted-foreground pt-2">
-                  + {mapped.length - 10} {t("more_rows") || "more rows"}
+                  + {mapped.length - 10} {"more rows"}
                 </p>
               )}
             </div>
@@ -276,7 +276,7 @@ function ImportOrdersPage() {
               className="flex-1 py-3 rounded-2xl bg-muted text-foreground font-semibold text-sm active:scale-[0.99]"
               disabled={importing}
             >
-              {t("cancel") || "Cancel"}
+              {t("cancel")}
             </button>
             <button
               onClick={runImport}
@@ -284,8 +284,8 @@ function ImportOrdersPage() {
               className="flex-[2] py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60"
             >
               {importing
-                ? (t("importing") || "Importing...")
-                : `${t("import_now") || "Import"} ${validCount}`}
+                ? ("Importing...")
+                : `${"Import"} ${validCount}`}
             </button>
           </div>
         </div>
@@ -296,18 +296,18 @@ function ImportOrdersPage() {
           <div className="rounded-2xl bg-card border border-border/60 p-6 text-center space-y-3">
             <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
             <h2 className="text-xl font-bold text-foreground">
-              {t("import_done") || "Import complete"}
+              {"Import complete"}
             </h2>
             <div className="flex justify-center gap-4 text-sm pt-2">
-              <div><span className="font-bold text-foreground">{result.inserted}</span> <span className="text-muted-foreground">{t("import_new") || "new"}</span></div>
-              <div><span className="font-bold text-foreground">{result.updated}</span> <span className="text-muted-foreground">{t("import_updated") || "updated"}</span></div>
-              <div><span className="font-bold text-foreground">{result.skipped}</span> <span className="text-muted-foreground">{t("import_skipped") || "skipped"}</span></div>
+              <div><span className="font-bold text-foreground">{result.inserted}</span> <span className="text-muted-foreground">{"new"}</span></div>
+              <div><span className="font-bold text-foreground">{result.updated}</span> <span className="text-muted-foreground">{"updated"}</span></div>
+              <div><span className="font-bold text-foreground">{result.skipped}</span> <span className="text-muted-foreground">{"skipped"}</span></div>
             </div>
           </div>
           {result.errors.length > 0 && (
             <div className="rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 p-4 space-y-2">
               <p className="text-xs font-semibold text-red-700 dark:text-red-400">
-                {t("import_errors") || "Some rows had errors:"}
+                {"Some rows had errors:"}
               </p>
               <ul className="text-xs text-red-700 dark:text-red-400 space-y-1">
                 {result.errors.map((e, i) => <li key={i}>• {e}</li>)}
@@ -318,7 +318,7 @@ function ImportOrdersPage() {
             onClick={() => navigate({ to: "/orders" })}
             className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-sm active:scale-[0.99]"
           >
-            {t("back_to_orders") || "Back to Orders"}
+            {"Back to Orders"}
           </button>
         </div>
       )}
