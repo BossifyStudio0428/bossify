@@ -389,6 +389,19 @@ async function tryNativeRestore(): Promise<PurchaseReceipt[]> {
         purchaseToken: lifetime.transaction?.purchaseToken,
       });
     }
+    for (const billing of ["monthly", "annual"] as BillingPlan[]) {
+      const id = STARTER_PRODUCT_IDS[billing];
+      const s = store.get(id);
+      if (s?.owned || s?.offers?.some?.((o: AnyStore) => o?.owned)) {
+        out.push({
+          productId: id,
+          transactionId: s.transaction?.id ?? "",
+          purchaseToken: s.transaction?.purchaseToken,
+          basePlanId: billing,
+          currentPeriodEnd: isoFromDate(s.transaction?.expirationDate),
+        });
+      }
+    }
     return out;
   } catch {
     return [];
@@ -446,6 +459,37 @@ export async function verifyLifetimeOwnership(): Promise<PurchaseReceipt | null>
       transactionId: tx.id ?? tx.transactionId ?? "",
       purchaseToken: tx.purchaseToken,
     };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check whether the user owns either Starter subscription (monthly or annual).
+ */
+export async function verifyActiveStarter(): Promise<PurchaseReceipt | null> {
+  if (!isNativeBillingAvailable()) return null;
+  const store = await initBilling();
+  if (!store) return null;
+  try {
+    try { await store.restorePurchases(); } catch {}
+    try { await store.update(); } catch {}
+    for (const billing of ["annual", "monthly"] as BillingPlan[]) {
+      const id = STARTER_PRODUCT_IDS[billing];
+      const product = store.get(id);
+      if (!product) continue;
+      const owned: boolean = !!(product.owned || product.offers?.some?.((o: AnyStore) => o?.owned));
+      if (!owned) continue;
+      const tx = product.transaction ?? {};
+      return {
+        productId: id,
+        transactionId: tx.id ?? tx.transactionId ?? "",
+        purchaseToken: tx.purchaseToken,
+        basePlanId: billing,
+        currentPeriodEnd: isoFromDate(tx.expirationDate),
+      };
+    }
+    return null;
   } catch {
     return null;
   }
