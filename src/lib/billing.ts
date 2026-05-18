@@ -295,6 +295,16 @@ export function initBilling(): Promise<AnyStore | null> {
       return null;
     }
   })();
+  _initPromise = _initPromise.then(
+    (store) => {
+      if (!store) _initPromise = null;
+      return store;
+    },
+    (error) => {
+      _initPromise = null;
+      throw error;
+    },
+  );
   return _initPromise;
 }
 
