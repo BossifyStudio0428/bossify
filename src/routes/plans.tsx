@@ -356,6 +356,28 @@ function PlansPage() {
         ))}
       </div>
 
+      {/* Price sync banner — only shown while we still don't have any real
+          formatted price from Google Play. Gives the user clear feedback
+          (instead of a bare "—") and a manual Retry button. */}
+      {(isPlaceholder(price) || isPlaceholder(lifetimePrice) || isPlaceholder(starterPrice)) && (
+        <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/40 px-3 py-2.5 text-xs">
+          {pricesLoading ? (
+            <span className="h-3.5 w-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" aria-hidden />
+          ) : (
+            <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" aria-hidden />
+          )}
+          <span className="flex-1 text-muted-foreground">{t("fetching_price_hint")}</span>
+          <button
+            type="button"
+            onClick={() => void loadPrices()}
+            disabled={pricesLoading}
+            className="font-semibold text-primary disabled:opacity-50"
+          >
+            {t("retry_price")}
+          </button>
+        </div>
+      )}
+
       {/* Free card */}
       <section className="rounded-3xl bg-card border border-border/60 p-5">
         <div className="flex items-baseline justify-between">
