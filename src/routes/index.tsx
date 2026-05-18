@@ -19,7 +19,7 @@ const statusStyles: Record<string, string> = {
 function Index() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
-  const { hasFullAccess, isLifetime, ordersUsed, ordersLimit } = useSubscription();
+  const { hasFullAccess, isLifetime, isStarter, ordersUsed, ordersLimit } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
