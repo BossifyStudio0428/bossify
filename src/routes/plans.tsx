@@ -61,8 +61,9 @@ function PlansPage() {
         // We consider prices "loaded" only if at least one is a real
         // store-formatted price (not the "—" placeholder).
         const hasReal = result.prices.some((p) => p.formattedPrice && p.formattedPrice !== "—");
+        const hasMissing = result.prices.some((p) => !p.formattedPrice || p.formattedPrice === "—");
         if (hasReal && !result.stale) setPricesLoading(false);
-        if (result.nativeAvailable && (result.fallback || result.stale || !hasReal)) setPriceRetryTick((n) => n + 1);
+        if (result.nativeAvailable && (result.fallback || result.stale || !hasReal || hasMissing)) setPriceRetryTick((n) => n + 1);
       })
       .catch((error) => {
         console.error("[billing] plans price fetch failed", error);
