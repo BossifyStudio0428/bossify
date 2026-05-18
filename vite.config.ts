@@ -16,6 +16,9 @@ export default defineLovableConfig({
     },
   },
   vite: {
+    ssr: {
+      noExternal: ["h3-v2", "h3"],
+    },
     environments: {
       server: {
         build: {
