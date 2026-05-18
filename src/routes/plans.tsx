@@ -13,7 +13,7 @@ import {
   purchaseLifetime,
   purchaseStarter,
   restorePurchases,
-  queryProductDetails,
+  queryProductDetailsSafe,
   FALLBACK_PRICES,
   LIFETIME_FALLBACK_PRICE,
   LIFETIME_PRODUCT_ID,
@@ -22,7 +22,6 @@ import {
   STARTER_PRODUCT_IDS,
   STARTER_FALLBACK_PRICES,
   type BillingError,
-  type ProductPrice,
 } from "@/lib/billing";
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
@@ -45,24 +44,30 @@ function PlansPage() {
   // in flight; flips to `false` once we get a real (non-placeholder) price
   // back. Drives the "Fetching price…" hint and the Retry button.
   const [pricesLoading, setPricesLoading] = useState(true);
+  const [priceRetryTick, setPriceRetryTick] = useState(0);
 
   // Pull each user's locally-formatted price from Google Play (MYR / USD /
   // INR / IDR / etc.) so the UI matches what the store will charge.
   const loadPrices = (): Promise<void> => {
     setPricesLoading(true);
-    return queryProductDetails()
-      .then((prices: ProductPrice[]) => {
+    return queryProductDetailsSafe()
+      .then((result) => {
+        console.info("[billing] plans price result", result);
         setStorePrices((prev) => {
           const next = { ...prev };
-          for (const p of prices) next[p.plan] = p.formattedPrice;
+          for (const p of result.prices) next[p.plan] = p.formattedPrice;
           return next;
         });
         // We consider prices "loaded" only if at least one is a real
         // store-formatted price (not the "—" placeholder).
-        const hasReal = prices.some((p) => p.formattedPrice && p.formattedPrice !== "—");
-        if (hasReal) setPricesLoading(false);
+        const hasReal = result.prices.some((p) => p.formattedPrice && p.formattedPrice !== "—");
+        if (hasReal && !result.stale) setPricesLoading(false);
+        if (result.fallback || result.stale || !hasReal) setPriceRetryTick((n) => n + 1);
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.error("[billing] plans price fetch failed", error);
+        setPriceRetryTick((n) => n + 1);
+      });
   };
 
   useEffect(() => {
