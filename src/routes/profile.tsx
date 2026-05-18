@@ -25,7 +25,7 @@ function ProfilePage() {
   const { user, signOut } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
-  const { isPro, isLifetime, hasFullAccess, ordersUsed, showUpgrade } = useSubscription();
+  const { isPro, isStarter, isLifetime, hasFullAccess, ordersUsed, showUpgrade } = useSubscription();
   const { theme, toggle: toggleTheme } = useTheme();
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
