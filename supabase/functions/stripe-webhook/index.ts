@@ -11,11 +11,11 @@ const stripe = new Stripe(stripeSecret, { apiVersion: "2024-11-20.acacia" });
 
 function priceToPlan(priceId: string | null | undefined): { plan: "starter" | "pro" | "lifetime"; cycle: "monthly" | "yearly" | "one" } | null {
   const map: Record<string, { plan: "starter" | "pro" | "lifetime"; cycle: "monthly" | "yearly" | "one" }> = {
-    "price_1TYQzgHkpW03osRD7GNJFs4D": { plan: "starter", cycle: "monthly" },
-    "price_1TYR0LHkpW03osRDPHKAU9BF": { plan: "starter", cycle: "yearly"  },
-    "price_1TYR0xHkpW03osRD8sRq0tO2": { plan: "pro",     cycle: "monthly" },
-    "price_1TYR1LHkpW03osRDJrShdU7c": { plan: "pro",     cycle: "yearly"  },
-    "price_1TYR1lHkpW03osRD3sRkqZcL": { plan: "lifetime", cycle: "one"    },
+    "price_1TYSTPHkpW03osRD2lLt5I94": { plan: "starter", cycle: "monthly" },
+    "price_1TYSTkHkpW03osRDr5iE5FPl": { plan: "starter", cycle: "yearly"  },
+    "price_1TYSU2HkpW03osRDCr8VGM8f": { plan: "pro",     cycle: "monthly" },
+    "price_1TYSUMHkpW03osRDk0i30nI3": { plan: "pro",     cycle: "yearly"  },
+    "price_1TYSUlHkpW03osRD7jXc7ZAj": { plan: "lifetime", cycle: "one"    },
   };
   return priceId ? map[priceId] ?? null : null;
 }
