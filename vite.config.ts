@@ -6,32 +6,13 @@
 // You can pass additional config via defineConfig({ vite: { ... } }) if needed.
 import { defineConfig as defineLovableConfig } from "@lovable.dev/vite-tanstack-config";
 
-export default (env: { command: "build" | "serve"; mode: string }) =>
-  defineLovableConfig({
-    vite: {
-      base: "./",
-      ...(env.command === "build"
-        ? {
-            environments: {
-              ssr: {
-                resolve: {
-                  // Bundle EVERYTHING into the Worker for production. The
-                  // Cloudflare Worker has no runtime module resolution, so
-                  // any externalized dep (e.g. `assets/react`) becomes a
-                  // 500 at request time. Applying this in dev breaks SSR.
-                  noExternal: true,
-                },
-              },
-            },
-          }
-        : {}),
-    },
-    tanstackStart: {
-      spa: {
-        enabled: true,
-        prerender: {
-          outputPath: "/index",
-        },
+export default defineLovableConfig({
+  tanstackStart: {
+    spa: {
+      enabled: true,
+      prerender: {
+        outputPath: "/",
       },
     },
-  })(env);
+  },
+});
