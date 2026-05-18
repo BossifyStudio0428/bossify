@@ -213,6 +213,22 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           provider_purchase_token: receipt.purchaseToken ?? null,
           current_period_end: receipt.currentPeriodEnd ?? null,
         }, { onConflict: "user_id" });
+        await refresh();
+        return;
+      }
+      // Check Starter subscription next.
+      const starterReceipt = await verifyActiveStarter();
+      if (starterReceipt) {
+        await supabase.from("subscriptions").upsert({
+          user_id: user.id,
+          plan: "starter",
+          status: "active",
+          provider: "google_play",
+          provider_product_id: `${starterReceipt.productId}:${starterReceipt.basePlanId ?? "monthly"}`,
+          provider_transaction_id: starterReceipt.transactionId,
+          provider_purchase_token: starterReceipt.purchaseToken ?? null,
+          current_period_end: starterReceipt.currentPeriodEnd ?? null,
+        }, { onConflict: "user_id" });
       } else if (sub?.plan === "pro" && sub?.provider === "google_play") {
         await supabase.from("subscriptions").update({
           plan: "free",
