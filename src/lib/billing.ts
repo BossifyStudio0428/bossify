@@ -292,6 +292,8 @@ function fallbackPrices(): ProductPrice[] {
     currency: "MYR",
   } as ProductPrice));
   subs.push({ plan: "lifetime", formattedPrice: LIFETIME_FALLBACK_PRICE, currency: "MYR" });
+  subs.push({ plan: "starter_monthly", formattedPrice: STARTER_FALLBACK_PRICES.monthly, currency: "MYR" });
+  subs.push({ plan: "starter_annual", formattedPrice: STARTER_FALLBACK_PRICES.annual, currency: "MYR" });
   return subs;
 }
 
