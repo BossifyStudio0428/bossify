@@ -8,9 +8,6 @@ import { defineConfig as defineLovableConfig } from "@lovable.dev/vite-tanstack-
 
 export default defineLovableConfig({
   tanstackStart: {
-    server: {
-      entry: "server",
-    },
     spa: {
       enabled: true,
       prerender: {
