@@ -330,7 +330,6 @@ const dict = {
     start_starter_plan: "Start Starter Plan",
     starter_orders_per_month: "40 orders/month",
     starter_products_count: "25 products",
-    save_30: "Save 30%",
     basic_sales_reports: "Basic sales reports",
     plan_badge_starter: "Starter Plan 🚀",
     welcome_to_starter: "Welcome to Starter 🚀",
