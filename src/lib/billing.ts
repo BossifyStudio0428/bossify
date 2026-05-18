@@ -219,6 +219,27 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
   const store = await initBilling();
   if (!store) return fallbackPrices();
   try {
+    // Force a fresh fetch from Google Play so we always reflect the latest
+    // Play Console prices (not a stale plugin cache). Safe to call often.
+    try { await store.update(); } catch {}
+
+    // Pull a localized price string from whichever shape the plugin exposes
+    // for a given product type. Subscriptions usually expose
+    // `offers[].pricingPhases[].price`, while one-time/non-consumable
+    // products in cordova-plugin-purchase v13 sometimes expose
+    // `pricing.price` directly on the product, or `offers[0].pricingPhases`
+    // with a single phase. We try all of them.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const readPrice = (product: any, offer?: any): { price?: string; currency?: string } => {
+      const phase = offer?.pricingPhases?.[0];
+      if (phase?.price) return { price: phase.price, currency: phase.currency };
+      if (offer?.price) return { price: offer.price, currency: offer.currency };
+      if (offer?.formattedPrice) return { price: offer.formattedPrice, currency: offer.priceCurrencyCode };
+      const p = product?.pricing;
+      if (p?.price) return { price: p.price, currency: p.currency };
+      return {};
+    };
+
     const product = store.get(SUBSCRIPTION_ID);
     const out: ProductPrice[] = [];
     for (const offer of product?.offers ?? []) {
@@ -228,24 +249,24 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
       if (offerId?.includes(BASE_PLAN_IDS.monthly)) plan = "monthly";
       else if (offerId?.includes(BASE_PLAN_IDS.annual)) plan = "annual";
       if (!plan) continue;
-      const phase = offer.pricingPhases?.[0];
-      if (!phase?.price) continue;
+      const { price, currency } = readPrice(product, offer);
+      if (!price) continue;
       out.push({
         plan,
-        formattedPrice: phase.price as string,
-        currency: (phase.currency as string) ?? "MYR",
+        formattedPrice: price,
+        currency: currency ?? "MYR",
       });
     }
     // Lifetime one-time product price.
     try {
       const lifetime = store.get(LIFETIME_PRODUCT_ID);
       const lifetimeOffer = lifetime?.offers?.[0];
-      const lifetimePhase = lifetimeOffer?.pricingPhases?.[0];
-      if (lifetimePhase?.price) {
+      const { price, currency } = readPrice(lifetime, lifetimeOffer);
+      if (price) {
         out.push({
           plan: "lifetime",
-          formattedPrice: lifetimePhase.price as string,
-          currency: (lifetimePhase.currency as string) ?? "MYR",
+          formattedPrice: price,
+          currency: currency ?? "MYR",
         });
       }
     } catch {}
@@ -266,12 +287,12 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
       try {
         const starter = store.get(STARTER_PRODUCT_IDS[billing]);
         const starterOffer = starter?.offers?.[0];
-        const starterPhase = starterOffer?.pricingPhases?.[0];
-        if (starterPhase?.price) {
+        const { price, currency } = readPrice(starter, starterOffer);
+        if (price) {
           out.push({
             plan: key,
-            formattedPrice: starterPhase.price as string,
-            currency: (starterPhase.currency as string) ?? "MYR",
+            formattedPrice: price,
+            currency: currency ?? "MYR",
           });
           continue;
         }
