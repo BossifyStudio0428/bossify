@@ -13,7 +13,7 @@ export default defineLovableConfig({
     spa: {
       enabled: true,
       prerender: {
-        outputPath: "/",
+        outputPath: "/index.html",
       },
     },
   },
