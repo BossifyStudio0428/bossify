@@ -518,6 +518,31 @@ export async function purchasePlan(
 }
 
 /**
+ * Purchase a Starter Plan subscription. Each Starter billing cycle is a
+ * SEPARATE Google Play product (unlike Pro, which uses base plans), so we
+ * order the matching SKU directly.
+ */
+export async function purchaseStarter(
+  billing: BillingPlan,
+  onSuccess: (receipt: PurchaseReceipt) => Promise<void> | void,
+  onError: (err: BillingError) => void,
+): Promise<void> {
+  if (!isNativeBillingAvailable()) {
+    onError({ code: "not_android", message: "Not running inside Android app" });
+    return;
+  }
+  const productId = STARTER_PRODUCT_IDS[billing];
+  try {
+    const receipt = await tryNativePurchase(productId, "");
+    // Tag with billing cycle so the caller can persist it as plan_billing_cycle.
+    await onSuccess({ ...receipt, productId, basePlanId: billing });
+  } catch (e) {
+    const err = e as Partial<BillingError> | undefined;
+    onError({ code: err?.code ?? "unknown", message: err?.message ?? "Purchase failed" });
+  }
+}
+
+/**
  * Purchase the one-time Lifetime (non-consumable) product. Mirrors
  * `purchasePlan` for subscriptions but targets the lifetime SKU.
  */
