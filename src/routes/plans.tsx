@@ -111,7 +111,13 @@ function PlansPage() {
   const handleGooglePlayPurchase = async () => {
     if (!user) return;
     if (!isNativeBillingAvailable()) {
-      toast.message(t("google_play_only_android"));
+      setSubmittingPlan("pro");
+      try {
+        await startStripeCheckout({ userId: user.id, planType: "pro", billingCycle: billing });
+      } catch (e) {
+        toast.error((e as Error).message);
+        setSubmittingPlan(null);
+      }
       return;
     }
     setSubmittingPlan("pro");
@@ -172,7 +178,13 @@ function PlansPage() {
   const handleLifetimePurchase = async () => {
     if (!user) return;
     if (!isNativeBillingAvailable()) {
-      toast.message(t("google_play_only_android"));
+      setSubmittingPlan("lifetime");
+      try {
+        await startStripeCheckout({ userId: user.id, planType: "lifetime", billingCycle: "one" });
+      } catch (e) {
+        toast.error((e as Error).message);
+        setSubmittingPlan(null);
+      }
       return;
     }
     setSubmittingPlan("lifetime");
@@ -224,7 +236,13 @@ function PlansPage() {
   const handleStarterPurchase = async () => {
     if (!user) return;
     if (!isNativeBillingAvailable()) {
-      toast.message(t("google_play_only_android"));
+      setSubmittingPlan("starter");
+      try {
+        await startStripeCheckout({ userId: user.id, planType: "starter", billingCycle: billing });
+      } catch (e) {
+        toast.error((e as Error).message);
+        setSubmittingPlan(null);
+      }
       return;
     }
     setSubmittingPlan("starter");
