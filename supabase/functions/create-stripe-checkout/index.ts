@@ -8,11 +8,11 @@ const corsHeaders = {
 
 // Stripe Price IDs (provided by project owner).
 const PRICE_IDS: Record<string, string> = {
-  "starter:monthly": "price_1TYQzgHkpW03osRD7GNJFs4D",
-  "starter:yearly":  "price_1TYR0LHkpW03osRDPHKAU9BF",
-  "pro:monthly":     "price_1TYR0xHkpW03osRD8sRq0tO2",
-  "pro:yearly":      "price_1TYR1LHkpW03osRDJrShdU7c",
-  "lifetime:one":    "price_1TYR1lHkpW03osRD3sRkqZcL",
+  "starter:monthly": "price_1TYSTPHkpW03osRD2lLt5I94",
+  "starter:yearly":  "price_1TYSTkHkpW03osRDr5iE5FPl",
+  "pro:monthly":     "price_1TYSU2HkpW03osRDCr8VGM8f",
+  "pro:yearly":      "price_1TYSUMHkpW03osRDk0i30nI3",
+  "lifetime:one":    "price_1TYSUlHkpW03osRD7jXc7ZAj",
 };
 
 Deno.serve(async (req) => {
