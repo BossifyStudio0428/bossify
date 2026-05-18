@@ -41,7 +41,7 @@ function LanguagePage() {
         <p>选择您的语言</p>
       </div>
 
-      <div className="mt-6 space-y-2.5 flex-1">
+      <div className="mt-6 space-y-2.5">
         {LANGS.map((l) => {
           const sel = selected === l.code;
           return (
@@ -75,7 +75,7 @@ function LanguagePage() {
       <button
         type="button"
         onClick={onContinue}
-        className="w-full text-white font-bold text-sm active:scale-[0.99] transition-transform"
+        className="w-full text-white font-bold text-sm active:scale-[0.99] transition-transform mt-6"
         style={{ background: "#7C3AED", borderRadius: 12, padding: 14 }}
       >
         Continue / Teruskan / 继续 →
