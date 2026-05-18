@@ -1,19 +1,55 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 
-export const Route = createFileRoute("/payment-success")({ component: PaymentSuccessPage });
+export const Route = createFileRoute("/payment-success")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    session_id: typeof search.session_id === "string" ? search.session_id : "",
+  }),
+  component: PaymentSuccessPage,
+});
+
+async function activateStripeSession(sessionId: string) {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(`${supabaseUrl}/functions/v1/activate-stripe-session`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: anonKey,
+      Authorization: `Bearer ${session?.access_token ?? anonKey}`,
+    },
+    body: JSON.stringify({ sessionId }),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || `Activation failed (${res.status})`);
+  return JSON.parse(text) as Promise<{ activated?: boolean; plan?: string }>;
+}
 
 function PaymentSuccessPage() {
   const navigate = useNavigate();
+  const { session_id: sessionId } = Route.useSearch();
   const { plan, refresh } = useSubscription();
   const [polled, setPolled] = useState(0);
+  const [activationTried, setActivationTried] = useState(false);
 
-  // Poll subscription up to ~12s so the webhook has time to land.
+  useEffect(() => {
+    if (!sessionId || activationTried) return;
+    setActivationTried(true);
+    activateStripeSession(sessionId)
+      .then(() => refresh())
+      .catch((error) => {
+        console.error("stripe session activation failed", error);
+      });
+  }, [sessionId, activationTried, refresh]);
+
+  // Poll subscription up to ~20s so the direct activation/webhook has time to land.
   useEffect(() => {
     if (plan !== "free") return;
-    if (polled >= 12) return;
+    if (polled >= 20) return;
     const t = setTimeout(() => { refresh(); setPolled((n) => n + 1); }, 1000);
     return () => clearTimeout(t);
   }, [plan, polled, refresh]);
