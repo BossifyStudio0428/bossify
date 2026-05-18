@@ -68,7 +68,7 @@ type Ctx = {
   productsLimit: number;
   productsRemaining: number;
   activeBillingPlan: BillingPlan | null;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<SubscriptionRow | null>;
   /**
    * Re-query Google Play for the current user's owned Pro subscription and
    * upsert the result into Supabase. Safe to call any time — on app launch,
@@ -94,7 +94,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setSub(null);
       setLoading(false);
-      return;
+      return null;
     }
     setLoading(true);
     try {
@@ -106,7 +106,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error("subscription load failed", error);
         setSub(null);
-        return;
+        return null;
       }
       if (data) {
         // Client-side monthly reset safety net
@@ -146,8 +146,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
             data.last_reset_at = now.toISOString();
           }
         }
-
-        setSub(data as SubscriptionRow);
+        const nextSub = data as SubscriptionRow;
+        setSub(nextSub);
+        return nextSub;
       } else {
         // Auto-create on first access (covers users created before trigger)
         const { data: created, error: createError } = await supabase
@@ -156,11 +157,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           .select("*")
           .maybeSingle();
         if (createError) console.error("subscription create failed", createError);
-        setSub((created as SubscriptionRow) ?? null);
+        const nextSub = (created as SubscriptionRow) ?? null;
+        setSub(nextSub);
+        return nextSub;
       }
     } catch (error) {
       console.error("subscription refresh failed", error);
       setSub(null);
+      return null;
     } finally {
       setLoading(false);
     }
