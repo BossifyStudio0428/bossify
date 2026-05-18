@@ -3,10 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY")!;
 const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-);
+const APP_SUPABASE_URL = Deno.env.get("APP_SUPABASE_URL") ?? "https://knouahqwazerjiyiqgmh.supabase.co";
+const APP_SERVICE_ROLE_KEY =
+  Deno.env.get("APP_SUPABASE_SERVICE_ROLE_KEY") ??
+  Deno.env.get("SUPABASE_SECRET_KEYS") ??
+  Deno.env.get("Secret_Key") ??
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabase = createClient(APP_SUPABASE_URL, APP_SERVICE_ROLE_KEY);
 const stripe = new Stripe(stripeSecret, { apiVersion: "2024-11-20.acacia" });
 
 function priceToPlan(priceId: string | null | undefined): { plan: "starter" | "pro" | "lifetime"; cycle: "monthly" | "yearly" | "one" } | null {
