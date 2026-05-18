@@ -9,7 +9,18 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 export default defineConfig({
   vite: {
     base: "./",
-    resolve: {
+    environments: {
+      ssr: {
+        optimizeDeps: {
+          include: [
+            "react",
+            "react-dom",
+            "react/jsx-runtime",
+            "react/jsx-dev-runtime",
+            "react-dom/server",
+          ],
+        },
+        resolve: {
       // The published/mobile runtime cannot resolve these runtime modules at
       // request time. Use Vite's environment-aware `resolve.noExternal` instead
       // of legacy `ssr.noExternal`; the legacy option makes dev/prerender SSR
@@ -45,6 +56,8 @@ export default defineConfig({
         "seroval-plugins",
         "srvx",
       ],
+        },
+      },
     },
   },
   tanstackStart: {
