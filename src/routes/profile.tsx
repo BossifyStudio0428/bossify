@@ -127,8 +127,8 @@ function ProfilePage() {
           {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : initials}
         </div>
         <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">{businessName}</h1>
-        <span className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isLifetime ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white" : isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-          {isLifetime ? t("plan_badge_lifetime") : isPro ? <>{t("pro_plan")} <Sparkles className="h-3 w-3" /></> : t("free_plan")}
+        <span className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isLifetime ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white" : isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : isStarter ? "bg-gradient-to-r from-sky-500 to-teal-500 text-white" : "bg-muted text-muted-foreground"}`}>
+          {isLifetime ? t("plan_badge_lifetime") : isPro ? <>{t("pro_plan")} <Sparkles className="h-3 w-3" /></> : isStarter ? t("plan_badge_starter") : t("free_plan")}
         </span>
         {!hasFullAccess && (
           <button
