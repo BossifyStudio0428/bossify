@@ -19,7 +19,7 @@ const statusStyles: Record<string, string> = {
 function Index() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
-  const { hasFullAccess, isLifetime, isStarter, ordersUsed, ordersLimit } = useSubscription();
+  const { hasFullAccess, isLifetime, isStarter, ordersUsed, ordersLimit, refresh: refreshSubscription } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
@@ -67,11 +67,12 @@ function Index() {
   useEffect(() => {
     if (!user?.id) return;
     setHydrated(true);
+    refreshSubscription();
     load();
-    const onFocus = () => load();
+    const onFocus = () => { refreshSubscription(); load(); };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [user?.id]);
+  }, [user?.id, refreshSubscription]);
 
   useEffect(() => {
     if (!user) return;
