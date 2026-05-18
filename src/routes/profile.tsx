@@ -44,7 +44,7 @@ function ProfilePage() {
     { icon: "⚙️", key: "notifsettings", label: t("notification_settings"), onClick: () => navigate({ to: "/notification-settings" }) },
     { icon: "🌐", key: "lang", label: t("language"), value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`, onClick: () => setLangOpen(true) },
     { icon: theme === "dark" ? "🌙" : "☀️", key: "theme", label: t("appearance"), value: theme === "dark" ? t("dark") : t("light"), onClick: toggleTheme },
-    { icon: "💳", key: "sub", label: t("subscription"), value: isLifetime ? t("plan_badge_lifetime") : isPro ? t("pro_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
+    { icon: "💳", key: "sub", label: t("subscription"), value: isLifetime ? t("plan_badge_lifetime") : isPro ? t("pro_plan") : isStarter ? t("starter_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
     { icon: "📲", key: "wa", label: t("wa_template"), value: hasFullAccess ? undefined : "🔒", onClick: () => hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template")) },
     { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
     ...(isAdmin ? [{ icon: "⚙️", key: "admin", label: t("admin_panel"), value: "PRO", onClick: () => navigate({ to: "/admin" }) }] : []),
