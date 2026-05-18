@@ -27,6 +27,11 @@ export default defineLovableConfig({
             },
           },
         },
+        resolve: {
+          // h3-v2 is an npm alias (npm:h3@...) that the default SSR
+          // externalizer doesn't bundle into the worker. Force it inline.
+          noExternal: ["h3-v2", "h3"],
+        },
       },
     },
   },
