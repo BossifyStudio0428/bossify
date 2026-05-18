@@ -4,12 +4,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   verifyActiveSubscription,
   verifyLifetimeOwnership,
+  verifyActiveStarter,
   isNativeBillingAvailable,
   LIFETIME_PRODUCT_ID,
+  STARTER_PRODUCT_IDS,
   type BillingPlan,
 } from "@/lib/billing";
 
-export type Plan = "free" | "pro" | "lifetime";
+export type Plan = "free" | "starter" | "pro" | "lifetime";
 
 export type SubscriptionRow = {
   id: string;
@@ -35,10 +37,26 @@ export const FREE_LIMITS = {
   customers: 50,
 } as const;
 
+export const STARTER_LIMITS = {
+  ordersPerMonth: 40,
+  inventory: 25,
+  customers: 200,
+} as const;
+
+/** Per-plan caps used by gates across the app. Infinity = no limit. */
+export function getPlanLimits(plan: Plan) {
+  if (plan === "pro" || plan === "lifetime") {
+    return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity };
+  }
+  if (plan === "starter") return STARTER_LIMITS;
+  return FREE_LIMITS;
+}
+
 type Ctx = {
   sub: SubscriptionRow | null;
   plan: Plan;
   isPro: boolean;
+  isStarter: boolean;
   isLifetime: boolean;
   /** True for both Pro subscribers and Lifetime owners. Use this for feature gates. */
   hasFullAccess: boolean;
@@ -96,7 +114,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         const now = new Date();
         const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         if (
-          data.plan === "pro" &&
+          (data.plan === "pro" || data.plan === "starter") &&
           data.current_period_end &&
           new Date(data.current_period_end).getTime() <= now.getTime()
         ) {
@@ -195,6 +213,22 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           provider_purchase_token: receipt.purchaseToken ?? null,
           current_period_end: receipt.currentPeriodEnd ?? null,
         }, { onConflict: "user_id" });
+        await refresh();
+        return;
+      }
+      // Check Starter subscription next.
+      const starterReceipt = await verifyActiveStarter();
+      if (starterReceipt) {
+        await supabase.from("subscriptions").upsert({
+          user_id: user.id,
+          plan: "starter",
+          status: "active",
+          provider: "google_play",
+          provider_product_id: `${starterReceipt.productId}:${starterReceipt.basePlanId ?? "monthly"}`,
+          provider_transaction_id: starterReceipt.transactionId,
+          provider_purchase_token: starterReceipt.purchaseToken ?? null,
+          current_period_end: starterReceipt.currentPeriodEnd ?? null,
+        }, { onConflict: "user_id" });
       } else if (sub?.plan === "pro" && sub?.provider === "google_play") {
         await supabase.from("subscriptions").update({
           plan: "free",
@@ -254,19 +288,21 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const plan: Plan = (sub?.plan as Plan) ?? "free";
   const activeBillingPlan: BillingPlan | null = sub?.provider_product_id?.includes("annual")
     ? "annual"
-    : sub?.provider_product_id?.includes("monthly")
+    : sub?.provider_product_id?.includes("monthly") || sub?.provider_product_id?.includes("yearly")
       ? "monthly"
       : null;
   const isPeriodActive = !sub?.current_period_end || new Date(sub.current_period_end).getTime() > Date.now();
   const isPro = plan === "pro" && (sub?.status ?? "active") === "active" && isPeriodActive;
   // Lifetime never expires — no period check.
   const isLifetime = plan === "lifetime" && (sub?.status ?? "active") === "active";
+  const isStarter = plan === "starter" && (sub?.status ?? "active") === "active" && isPeriodActive;
   const hasFullAccess = isPro || isLifetime;
+  const limits = getPlanLimits(isStarter ? "starter" : isPro ? "pro" : isLifetime ? "lifetime" : "free");
   const ordersUsed = sub?.order_count ?? 0;
-  const ordersLimit = FREE_LIMITS.ordersPerMonth;
+  const ordersLimit = limits.ordersPerMonth;
   const ordersRemaining = Math.max(0, ordersLimit - ordersUsed);
   const productsUsed = sub?.inventory_created_total ?? 0;
-  const productsLimit = FREE_LIMITS.inventory;
+  const productsLimit = limits.inventory;
   const productsRemaining = Math.max(0, productsLimit - productsUsed);
 
   const showUpgrade = (reason?: string) => {
@@ -277,7 +313,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SubCtx.Provider value={{
-      sub, plan, isPro, isLifetime, hasFullAccess, loading,
+      sub, plan, isPro, isStarter, isLifetime, hasFullAccess, loading,
       ordersUsed, ordersLimit, ordersRemaining,
       productsUsed, productsLimit, productsRemaining,
       activeBillingPlan,

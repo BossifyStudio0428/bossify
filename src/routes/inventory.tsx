@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase, type InventoryRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { notifySituation } from "@/lib/autoNotify";
 
 export const Route = createFileRoute("/inventory")({ component: InventoryPage });
@@ -83,7 +83,7 @@ function InventoryPage() {
 
   const visible = items.filter((i) => i.name.toLowerCase().includes(query.toLowerCase()));
   const lowItems = items.filter((i) => i.stock <= LOW_THRESHOLD);
-  const atLimit = !hasFullAccess && productsUsed >= FREE_LIMITS.inventory;
+  const atLimit = !hasFullAccess && productsUsed >= productsLimit;
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-5 relative">

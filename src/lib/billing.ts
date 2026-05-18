@@ -35,6 +35,19 @@ export const FALLBACK_PRICES: Record<BillingPlan, string> = {
 export const LIFETIME_PRODUCT_ID = "bossify_lifetime";
 export const LIFETIME_FALLBACK_PRICE = "RM 1,499";
 
+/**
+ * Starter Plan — separate subscription SKUs (not base plans of `bossify_pro`).
+ * Limits: 40 orders / month, 25 products.
+ */
+export const STARTER_PRODUCT_IDS: Record<BillingPlan, string> = {
+  monthly: "bossify_starter_monthly",
+  annual: "bossify_starter_yearly",
+};
+export const STARTER_FALLBACK_PRICES: Record<BillingPlan, string> = {
+  monthly: "RM 19",
+  annual: "RM 159",
+};
+
 export type PurchaseReceipt = {
   productId: string;
   transactionId: string;
@@ -71,8 +84,12 @@ export function isNativeBillingAvailable(): boolean {
 
 /** Localized price string for a base plan, as returned by Google Play. */
 export type ProductPrice = {
-  /** "monthly" / "annual" for the Pro subscription, "lifetime" for the one-time product. */
-  plan: BillingPlan | "lifetime";
+  /**
+   * "monthly" / "annual" → Pro subscription base plans.
+   * "lifetime" → one-time Lifetime product.
+   * "starter_monthly" / "starter_annual" → Starter subscription SKUs.
+   */
+  plan: BillingPlan | "lifetime" | "starter_monthly" | "starter_annual";
   /** e.g. "RM 49.00", "$11.99", "₹999" — already formatted by the store. */
   formattedPrice: string;
   /** ISO 4217 currency code, e.g. "MYR", "USD". */
@@ -154,6 +171,16 @@ export function initBilling(): Promise<AnyStore | null> {
           type: cdv.ProductType.NON_CONSUMABLE,
           platform: cdv.Platform.GOOGLE_PLAY,
         },
+        {
+          id: STARTER_PRODUCT_IDS.monthly,
+          type: cdv.ProductType.PAID_SUBSCRIPTION,
+          platform: cdv.Platform.GOOGLE_PLAY,
+        },
+        {
+          id: STARTER_PRODUCT_IDS.annual,
+          type: cdv.ProductType.PAID_SUBSCRIPTION,
+          platform: cdv.Platform.GOOGLE_PLAY,
+        },
       ]);
 
       // Approved → collect receipt → finish so Google marks the order
@@ -231,6 +258,26 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
     if (!out.find((x) => x.plan === "lifetime")) {
       out.push({ plan: "lifetime", formattedPrice: LIFETIME_FALLBACK_PRICE, currency: "MYR" });
     }
+    // Starter subscription SKUs (separate products, one base plan each).
+    for (const billing of ["monthly", "annual"] as BillingPlan[]) {
+      const key = (billing === "monthly" ? "starter_monthly" : "starter_annual") as
+        | "starter_monthly"
+        | "starter_annual";
+      try {
+        const starter = store.get(STARTER_PRODUCT_IDS[billing]);
+        const starterOffer = starter?.offers?.[0];
+        const starterPhase = starterOffer?.pricingPhases?.[0];
+        if (starterPhase?.price) {
+          out.push({
+            plan: key,
+            formattedPrice: starterPhase.price as string,
+            currency: (starterPhase.currency as string) ?? "MYR",
+          });
+          continue;
+        }
+      } catch {}
+      out.push({ plan: key, formattedPrice: STARTER_FALLBACK_PRICES[billing], currency: "MYR" });
+    }
     return out;
   } catch (e) {
     console.warn("queryProductDetails failed", e);
@@ -245,6 +292,8 @@ function fallbackPrices(): ProductPrice[] {
     currency: "MYR",
   } as ProductPrice));
   subs.push({ plan: "lifetime", formattedPrice: LIFETIME_FALLBACK_PRICE, currency: "MYR" });
+  subs.push({ plan: "starter_monthly", formattedPrice: STARTER_FALLBACK_PRICES.monthly, currency: "MYR" });
+  subs.push({ plan: "starter_annual", formattedPrice: STARTER_FALLBACK_PRICES.annual, currency: "MYR" });
   return subs;
 }
 
@@ -340,6 +389,19 @@ async function tryNativeRestore(): Promise<PurchaseReceipt[]> {
         purchaseToken: lifetime.transaction?.purchaseToken,
       });
     }
+    for (const billing of ["monthly", "annual"] as BillingPlan[]) {
+      const id = STARTER_PRODUCT_IDS[billing];
+      const s = store.get(id);
+      if (s?.owned || s?.offers?.some?.((o: AnyStore) => o?.owned)) {
+        out.push({
+          productId: id,
+          transactionId: s.transaction?.id ?? "",
+          purchaseToken: s.transaction?.purchaseToken,
+          basePlanId: billing,
+          currentPeriodEnd: isoFromDate(s.transaction?.expirationDate),
+        });
+      }
+    }
     return out;
   } catch {
     return [];
@@ -402,6 +464,37 @@ export async function verifyLifetimeOwnership(): Promise<PurchaseReceipt | null>
   }
 }
 
+/**
+ * Check whether the user owns either Starter subscription (monthly or annual).
+ */
+export async function verifyActiveStarter(): Promise<PurchaseReceipt | null> {
+  if (!isNativeBillingAvailable()) return null;
+  const store = await initBilling();
+  if (!store) return null;
+  try {
+    try { await store.restorePurchases(); } catch {}
+    try { await store.update(); } catch {}
+    for (const billing of ["annual", "monthly"] as BillingPlan[]) {
+      const id = STARTER_PRODUCT_IDS[billing];
+      const product = store.get(id);
+      if (!product) continue;
+      const owned: boolean = !!(product.owned || product.offers?.some?.((o: AnyStore) => o?.owned));
+      if (!owned) continue;
+      const tx = product.transaction ?? {};
+      return {
+        productId: id,
+        transactionId: tx.id ?? tx.transactionId ?? "",
+        purchaseToken: tx.purchaseToken,
+        basePlanId: billing,
+        currentPeriodEnd: isoFromDate(tx.expirationDate),
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // --- Public API ------------------------------------------------------------
 
 export async function purchasePlan(
@@ -421,6 +514,31 @@ export async function purchasePlan(
     const err = e as Partial<BillingError> | undefined;
     const code: BillingErrorCode = err?.code ?? "unknown";
     onError({ code, message: err?.message ?? "Purchase failed" });
+  }
+}
+
+/**
+ * Purchase a Starter Plan subscription. Each Starter billing cycle is a
+ * SEPARATE Google Play product (unlike Pro, which uses base plans), so we
+ * order the matching SKU directly.
+ */
+export async function purchaseStarter(
+  billing: BillingPlan,
+  onSuccess: (receipt: PurchaseReceipt) => Promise<void> | void,
+  onError: (err: BillingError) => void,
+): Promise<void> {
+  if (!isNativeBillingAvailable()) {
+    onError({ code: "not_android", message: "Not running inside Android app" });
+    return;
+  }
+  const productId = STARTER_PRODUCT_IDS[billing];
+  try {
+    const receipt = await tryNativePurchase(productId, "");
+    // Tag with billing cycle so the caller can persist it as plan_billing_cycle.
+    await onSuccess({ ...receipt, productId, basePlanId: billing });
+  } catch (e) {
+    const err = e as Partial<BillingError> | undefined;
+    onError({ code: err?.code ?? "unknown", message: err?.message ?? "Purchase failed" });
   }
 }
 
