@@ -31,13 +31,25 @@ async function startStripeCheckout(opts: {
   planType: "starter" | "pro" | "lifetime";
   billingCycle: "monthly" | "annual" | "one";
 }) {
-  const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
-    body: opts,
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(`${supabaseUrl}/functions/v1/create-stripe-checkout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: anonKey,
+      Authorization: `Bearer ${session?.access_token ?? anonKey}`,
+    },
+    body: JSON.stringify(opts),
   });
-  if (error) throw new Error(error.message);
-  const url = (data as { url?: string } | null)?.url;
-  if (!url) throw new Error("No checkout URL returned");
-  window.location.href = url;
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Checkout failed (${res.status}): ${text.slice(0, 200)}`);
+  let payload: { url?: string; error?: string };
+  try { payload = JSON.parse(text); } catch { throw new Error(`Invalid response: ${text.slice(0, 200)}`); }
+  if (payload.error) throw new Error(payload.error);
+  if (!payload.url) throw new Error("No checkout URL returned");
+  window.location.href = payload.url;
 }
 
 function PlansPage() {
