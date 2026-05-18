@@ -325,6 +325,16 @@ const dict = {
     plan_badge_lifetime: "Lifetime ⚡",
     welcome_to_lifetime: "Welcome to Lifetime ✦",
     lifetime_restored: "Lifetime access restored",
+    // Starter plan
+    starter_plan: "Starter Plan",
+    start_starter_plan: "Start Starter Plan",
+    starter_orders_per_month: "40 orders/month",
+    starter_products_count: "25 products",
+    save_30: "Save 30%",
+    basic_sales_reports: "Basic sales reports",
+    plan_badge_starter: "Starter Plan 🚀",
+    welcome_to_starter: "Welcome to Starter 🚀",
+    starter_restored: "Starter access restored",
     // Business Profile
     photo_max_5mb: "Max 5MB",
     photo_updated: "Photo updated!",
