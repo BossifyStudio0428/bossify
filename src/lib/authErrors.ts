@@ -5,11 +5,11 @@ export function mapAuthError(message: string | undefined | null): TKey {
   if (!m) return "err_network";
   if (m.includes("invalid login") || m.includes("invalid_credentials") || m.includes("invalid email or password")) return "err_invalid_creds";
   if (m.includes("email not confirmed") || m.includes("not confirmed")) return "err_email_not_confirmed";
-  if (m.includes("already registered") || m.includes("user already") || m.includes("already exists")) return "err_user_exists";
+  if (m.includes("already registered") || m.includes("user already") || m.includes("already exists") || m.includes("signups not allowed")) return "err_user_exists";
   if (m.includes("password") && (m.includes("weak") || m.includes("short") || m.includes("least"))) return "err_weak_pw";
-  if (m.includes("network") || m.includes("fetch")) return "err_network";
+  if (m.includes("network") || m.includes("fetch") || m.includes("rate") || m.includes("smtp")) return "err_network";
   if (m.includes("otp") || m.includes("token")) return "invalid_code";
-  return "err_invalid_creds";
+  return "err_generic";
 }
 
 export function isValidEmail(email: string): boolean {
