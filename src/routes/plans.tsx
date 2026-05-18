@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Check, X, Sparkles, Crown, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +29,6 @@ export const Route = createFileRoute("/plans")({ component: PlansPage });
 function PlansPage() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | null>(null);
