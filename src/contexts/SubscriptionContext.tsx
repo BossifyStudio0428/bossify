@@ -4,12 +4,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   verifyActiveSubscription,
   verifyLifetimeOwnership,
+  verifyActiveStarter,
   isNativeBillingAvailable,
   LIFETIME_PRODUCT_ID,
+  STARTER_PRODUCT_IDS,
   type BillingPlan,
 } from "@/lib/billing";
 
-export type Plan = "free" | "pro" | "lifetime";
+export type Plan = "free" | "starter" | "pro" | "lifetime";
 
 export type SubscriptionRow = {
   id: string;
@@ -35,10 +37,26 @@ export const FREE_LIMITS = {
   customers: 50,
 } as const;
 
+export const STARTER_LIMITS = {
+  ordersPerMonth: 40,
+  inventory: 25,
+  customers: 200,
+} as const;
+
+/** Per-plan caps used by gates across the app. Infinity = no limit. */
+export function getPlanLimits(plan: Plan) {
+  if (plan === "pro" || plan === "lifetime") {
+    return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity };
+  }
+  if (plan === "starter") return STARTER_LIMITS;
+  return FREE_LIMITS;
+}
+
 type Ctx = {
   sub: SubscriptionRow | null;
   plan: Plan;
   isPro: boolean;
+  isStarter: boolean;
   isLifetime: boolean;
   /** True for both Pro subscribers and Lifetime owners. Use this for feature gates. */
   hasFullAccess: boolean;
