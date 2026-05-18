@@ -35,6 +35,19 @@ export const FALLBACK_PRICES: Record<BillingPlan, string> = {
 export const LIFETIME_PRODUCT_ID = "bossify_lifetime";
 export const LIFETIME_FALLBACK_PRICE = "RM 1,499";
 
+/**
+ * Starter Plan — separate subscription SKUs (not base plans of `bossify_pro`).
+ * Limits: 40 orders / month, 25 products.
+ */
+export const STARTER_PRODUCT_IDS: Record<BillingPlan, string> = {
+  monthly: "bossify_starter_monthly",
+  annual: "bossify_starter_yearly",
+};
+export const STARTER_FALLBACK_PRICES: Record<BillingPlan, string> = {
+  monthly: "RM 19",
+  annual: "RM 159",
+};
+
 export type PurchaseReceipt = {
   productId: string;
   transactionId: string;
