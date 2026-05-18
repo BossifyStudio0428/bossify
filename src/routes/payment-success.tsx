@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useSubscription, type Plan } from "@/contexts/SubscriptionContext";
 
 export const Route = createFileRoute("/payment-success")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -14,13 +14,14 @@ export const Route = createFileRoute("/payment-success")({
 async function activateStripeSession(sessionId: string) {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session?.access_token) throw new Error("Please sign in again to activate your plan.");
   const res = await fetch(`${supabaseUrl}/functions/v1/activate-stripe-session`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       apikey: anonKey,
-      Authorization: `Bearer ${session?.access_token ?? anonKey}`,
+      Authorization: `Bearer ${session.access_token}`,
     },
     body: JSON.stringify({ sessionId }),
   });
@@ -29,51 +30,67 @@ async function activateStripeSession(sessionId: string) {
   return JSON.parse(text) as Promise<{ activated?: boolean; plan?: string }>;
 }
 
+function isPaidPlan(plan: Plan | undefined) {
+  return plan === "starter" || plan === "pro" || plan === "lifetime";
+}
+
 function PaymentSuccessPage() {
   const navigate = useNavigate();
   const { session_id: sessionId } = Route.useSearch();
   const { plan, refresh } = useSubscription();
-  const [polled, setPolled] = useState(0);
-  const [activationTried, setActivationTried] = useState(false);
+  const [confirmedPlan, setConfirmedPlan] = useState<Plan | null>(isPaidPlan(plan) ? plan : null);
+  const [activationError, setActivationError] = useState("");
 
   useEffect(() => {
-    if (!sessionId || activationTried) return;
-    setActivationTried(true);
-    activateStripeSession(sessionId)
-      .then(() => refresh())
-      .catch((error) => {
-        console.error("stripe session activation failed", error);
-      });
-  }, [sessionId, activationTried, refresh]);
+    if (isPaidPlan(plan)) setConfirmedPlan(plan);
+  }, [plan]);
 
-  // Poll subscription up to ~20s so the direct activation/webhook has time to land.
   useEffect(() => {
-    if (plan !== "free") return;
-    if (polled >= 20) return;
-    const t = setTimeout(() => { refresh(); setPolled((n) => n + 1); }, 1000);
-    return () => clearTimeout(t);
-  }, [plan, polled, refresh]);
+    let cancelled = false;
+    const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+    async function confirmPayment() {
+      setActivationError("");
+      for (let attempt = 0; attempt < 30 && !cancelled; attempt += 1) {
+        try {
+          if (sessionId) await activateStripeSession(sessionId);
+          const latest = await refresh();
+          if (isPaidPlan(latest?.plan)) {
+            if (!cancelled) setConfirmedPlan(latest.plan);
+            return;
+          }
+        } catch (error) {
+          console.error("stripe session activation failed", error);
+          if (!cancelled) setActivationError((error as Error).message);
+        }
+        await wait(1500);
+      }
+    }
+
+    if (!confirmedPlan) confirmPayment();
+    return () => { cancelled = true; };
+  }, [sessionId, confirmedPlan, refresh]);
 
   // Once we have a paid plan, redirect home after 3s.
   useEffect(() => {
-    if (plan === "free") return;
+    if (!confirmedPlan) return;
     const t = setTimeout(() => navigate({ to: "/" }), 3000);
     return () => clearTimeout(t);
-  }, [plan, navigate]);
+  }, [confirmedPlan, navigate]);
 
-  const planName = plan === "pro" ? "Pro" : plan === "lifetime" ? "Lifetime" : plan === "starter" ? "Starter" : "";
+  const planName = confirmedPlan === "pro" ? "Pro" : confirmedPlan === "lifetime" ? "Lifetime" : confirmedPlan === "starter" ? "Starter" : "";
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="text-center max-w-sm">
         <div className="mx-auto h-20 w-20 rounded-full bg-emerald-100 flex items-center justify-center">
-          <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+          {confirmedPlan ? <CheckCircle2 className="h-10 w-10 text-emerald-600" /> : <Loader2 className="h-10 w-10 text-emerald-600 animate-spin" />}
         </div>
         <h1 className="mt-5 text-2xl font-bold">
-          {plan === "free" ? "Activating your plan…" : `Payment successful! Welcome to ${planName}!`}
+          {confirmedPlan ? `Payment successful! Welcome to ${planName}!` : "Activating your plan…"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {plan === "free" ? "This usually takes a few seconds." : "Redirecting you to Home…"}
+          {confirmedPlan ? "Redirecting you to Home…" : (activationError ? "Still syncing your payment. Please wait here." : "This usually takes a few seconds.")}
         </p>
       </div>
     </div>
