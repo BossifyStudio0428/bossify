@@ -3,26 +3,35 @@ import { Lock } from "lucide-react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useEffect, useState } from "react";
-import { queryProductDetails, FALLBACK_PRICES } from "@/lib/billing";
+import { queryProductDetailsSafe, FALLBACK_PRICES, isNativeBillingAvailable } from "@/lib/billing";
 
 export function UpgradeModal() {
   const { upgradeOpen, hideUpgrade, upgradeReason } = useSubscription();
   const { t } = useI18n();
   const navigate = useNavigate();
   const [proMonthlyPrice, setProMonthlyPrice] = useState<string>(FALLBACK_PRICES.monthly);
+  const [retryTick, setRetryTick] = useState(0);
 
   useEffect(() => {
     if (!upgradeOpen) return;
     let cancelled = false;
-    queryProductDetails()
-      .then((prices) => {
+    queryProductDetailsSafe()
+      .then((result) => {
         if (cancelled) return;
-        const monthly = prices.find((p) => p.plan === "monthly");
+        console.info("[billing] upgrade modal price result", result);
+        const monthly = result.prices.find((p) => p.plan === "monthly");
         if (monthly?.formattedPrice) setProMonthlyPrice(monthly.formattedPrice);
+        if (result.nativeAvailable && (result.fallback || result.stale || !monthly?.formattedPrice || monthly.formattedPrice === "—")) {
+          const retry = setTimeout(() => { if (!cancelled) setRetryTick((n) => n + 1); }, Math.min(30000, 2500 * (retryTick + 1)));
+          return () => clearTimeout(retry);
+        }
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.error("[billing] upgrade modal price fetch failed", error);
+        if (!cancelled && isNativeBillingAvailable()) setRetryTick((n) => n + 1);
+      });
     return () => { cancelled = true; };
-  }, [upgradeOpen]);
+  }, [upgradeOpen, retryTick]);
 
   if (!upgradeOpen) return null;
 
@@ -52,7 +61,7 @@ export function UpgradeModal() {
           onClick={() => { hideUpgrade(); navigate({ to: "/plans" }); }}
           className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition"
         >
-          {t("upgrade_to_pro")} → {proMonthlyPrice}/{t("per_month").replace(/^\s*\/\s*/, "")}
+          {t("upgrade_to_pro")} → {proMonthlyPrice === "—" ? t("fetching_price") : proMonthlyPrice}/{t("per_month").replace(/^\s*\/\s*/, "")}
         </button>
         <button
           onClick={hideUpgrade}
