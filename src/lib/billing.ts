@@ -231,12 +231,25 @@ function getStore(): AnyStore | null {
 export function initBilling(): Promise<AnyStore | null> {
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
-    if (!isNativeBillingAvailable()) return null;
+    const attemptId = createBillingAttemptId("init");
+    const nativeAvailable = isNativeBillingAvailable();
+    billingLog("info", "init start", { attemptId, nativeAvailable });
+    if (!nativeAvailable) {
+      billingLog("warn", "init skipped: native Android billing unavailable", { attemptId });
+      return null;
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cdv = (window as any).CdvPurchase;
-    if (!cdv?.store) return null;
+    if (!cdv?.store) {
+      billingLog("warn", "init skipped: CdvPurchase store missing", { attemptId, cdvKeys: cdv ? Object.keys(cdv) : [] });
+      return null;
+    }
     const store = cdv.store as AnyStore;
     try {
+      billingLog("info", "registering products", {
+        attemptId,
+        products: [SUBSCRIPTION_ID, LIFETIME_PRODUCT_ID, STARTER_PRODUCT_IDS.monthly, STARTER_PRODUCT_IDS.annual],
+      });
       store.register([
         {
           id: SUBSCRIPTION_ID,
@@ -272,9 +285,10 @@ export function initBilling(): Promise<AnyStore | null> {
 
       await store.initialize([cdv.Platform.GOOGLE_PLAY]);
       await store.update();
+      billingLog("info", "init complete", { attemptId });
       return store;
     } catch (e) {
-      console.warn("billing init failed", e);
+      billingLog("error", "init failed", { attemptId, error: serializeBillingError(e) });
       return null;
     }
   })();
