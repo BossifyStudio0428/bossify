@@ -14,8 +14,12 @@ export const Route = createFileRoute("/payment-success")({
 async function activateStripeSession(sessionId: string) {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error || !session?.access_token) throw new Error("Please sign in again to activate your plan.");
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+  if (error || !session?.access_token)
+    throw new Error("Please sign in again to activate your plan.");
   const res = await fetch(`${supabaseUrl}/functions/v1/activate-stripe-session`, {
     method: "POST",
     headers: {
@@ -68,7 +72,9 @@ function PaymentSuccessPage() {
     }
 
     if (!confirmedPlan) confirmPayment();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [sessionId, confirmedPlan, refresh]);
 
   // Once we have a paid plan, redirect home after 3s.
@@ -78,19 +84,34 @@ function PaymentSuccessPage() {
     return () => clearTimeout(t);
   }, [confirmedPlan, navigate]);
 
-  const planName = confirmedPlan === "pro" ? "Pro" : confirmedPlan === "lifetime" ? "Lifetime" : confirmedPlan === "starter" ? "Starter" : "";
+  const planName =
+    confirmedPlan === "pro"
+      ? "Pro"
+      : confirmedPlan === "lifetime"
+        ? "Lifetime"
+        : confirmedPlan === "starter"
+          ? "Starter"
+          : "";
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="text-center max-w-sm">
         <div className="mx-auto h-20 w-20 rounded-full bg-emerald-100 flex items-center justify-center">
-          {confirmedPlan ? <CheckCircle2 className="h-10 w-10 text-emerald-600" /> : <Loader2 className="h-10 w-10 text-emerald-600 animate-spin" />}
+          {confirmedPlan ? (
+            <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+          ) : (
+            <Loader2 className="h-10 w-10 text-emerald-600 animate-spin" />
+          )}
         </div>
         <h1 className="mt-5 text-2xl font-bold">
           {confirmedPlan ? `Payment successful! Welcome to ${planName}!` : "Activating your plan…"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {confirmedPlan ? "Redirecting you to Home…" : (activationError ? "Still syncing your payment. Please wait here." : "This usually takes a few seconds.")}
+          {confirmedPlan
+            ? "Redirecting you to Home…"
+            : activationError
+              ? "Still syncing your payment. Please wait here."
+              : "This usually takes a few seconds."}
         </p>
       </div>
     </div>
