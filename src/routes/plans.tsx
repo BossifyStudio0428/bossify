@@ -49,7 +49,17 @@ async function startStripeCheckout(opts: {
   try { payload = JSON.parse(text); } catch { throw new Error(`Invalid response: ${text.slice(0, 200)}`); }
   if (payload.error) throw new Error(payload.error);
   if (!payload.url) throw new Error("No checkout URL returned");
-  window.location.href = payload.url;
+  // Stripe Checkout refuses to render inside iframes (preview/embeds),
+  // so open the hosted page in the top-level window / new tab.
+  const opened = window.open(payload.url, "_blank", "noopener,noreferrer");
+  if (!opened) {
+    // Popup blocked — fall back to top-frame navigation.
+    if (window.top && window.top !== window.self) {
+      window.top.location.href = payload.url;
+    } else {
+      window.location.href = payload.url;
+    }
+  }
 }
 
 function PlansPage() {
