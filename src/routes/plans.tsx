@@ -313,28 +313,6 @@ function PlansPage() {
         ))}
       </div>
 
-      {/* Price sync banner — only shown while we still don't have any real
-          formatted price from Google Play. Gives the user clear feedback
-          (instead of a bare "—") and a manual Retry button. */}
-      {(isPlaceholder(price) || isPlaceholder(lifetimePrice) || isPlaceholder(starterPrice)) && (
-        <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/40 px-3 py-2.5 text-xs">
-          {pricesLoading ? (
-            <span className="h-3.5 w-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" aria-hidden />
-          ) : (
-            <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" aria-hidden />
-          )}
-          <span className="flex-1 text-muted-foreground">{t("fetching_price_hint")}</span>
-          <button
-            type="button"
-            onClick={() => void loadPrices()}
-            disabled={pricesLoading}
-            className="font-semibold text-primary disabled:opacity-50"
-          >
-            {t("retry_price")}
-          </button>
-        </div>
-      )}
-
       {/* Free card */}
       <section className="rounded-3xl bg-card border border-border/60 p-5">
         <div className="flex items-baseline justify-between">
@@ -362,10 +340,8 @@ function PlansPage() {
           <div className="flex items-baseline justify-between">
             <h2 className="text-lg font-bold flex items-center gap-1">{t("starter_plan")} <Rocket className="h-4 w-4 text-sky-500" /></h2>
             <p className="text-xl font-bold text-sky-600">
-              {renderPrice(starterPrice, "text-sky-600")}
-              {!isPlaceholder(starterPrice) && (
-                <span className="text-xs text-muted-foreground font-normal"> {period}</span>
-              )}
+              <span className="text-sky-600">{starterPrice}</span>
+              <span className="text-xs text-muted-foreground font-normal"> {period}</span>
             </p>
           </div>
           <ul className="mt-4 space-y-2">
@@ -392,10 +368,10 @@ function PlansPage() {
           ) : (
             <button
               onClick={handleStarterPurchase}
-              disabled={submittingPlan !== null || isPlaceholder(starterPrice)}
+              disabled={submittingPlan !== null}
               className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-teal-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
-              {submittingPlan === "starter" ? "..." : `${t("start_starter_plan")}${buttonPriceTail(starterPrice)}`}
+              {submittingPlan === "starter" ? "..." : `${t("start_starter_plan")} — ${starterPrice}`}
             </button>
           )}
         </div>
@@ -410,10 +386,8 @@ function PlansPage() {
           <div className="flex items-baseline justify-between">
             <h2 className="text-lg font-bold flex items-center gap-1">{t("pro_plan")} <Sparkles className="h-4 w-4 text-primary" /></h2>
             <p className="text-xl font-bold text-primary">
-              {renderPrice(price, "text-primary")}
-              {!isPlaceholder(price) && (
-                <span className="text-xs text-muted-foreground font-normal"> {period}</span>
-              )}
+              <span className="text-primary">{price}</span>
+              <span className="text-xs text-muted-foreground font-normal"> {period}</span>
             </p>
           </div>
           <ul className="mt-4 space-y-2">
@@ -435,10 +409,10 @@ function PlansPage() {
           ) : (
             <button
               onClick={handleGooglePlayPurchase}
-              disabled={submittingPlan !== null || isPlaceholder(price)}
+              disabled={submittingPlan !== null}
               className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
-              {submittingPlan === "pro" ? "..." : `${t("upgrade_to_pro")}${buttonPriceTail(price)}`}
+              {submittingPlan === "pro" ? "..." : `${t("upgrade_to_pro")} — ${price}`}
             </button>
           )}
         </div>
@@ -453,10 +427,8 @@ function PlansPage() {
           <div className="flex items-baseline justify-between">
             <h2 className="text-lg font-bold flex items-center gap-1">{t("lifetime_plan")} <Crown className="h-4 w-4 text-amber-500" /></h2>
             <p className="text-xl font-bold text-amber-600">
-              {renderPrice(lifetimePrice, "text-amber-600")}
-              {!isPlaceholder(lifetimePrice) && (
-                <span className="text-xs text-muted-foreground font-normal"> · {t("one_time_payment")}</span>
-              )}
+              <span className="text-amber-600">{lifetimePrice}</span>
+              <span className="text-xs text-muted-foreground font-normal"> · {t("one_time_payment")}</span>
             </p>
           </div>
           <ul className="mt-4 space-y-2">
@@ -478,10 +450,10 @@ function PlansPage() {
           ) : (
             <button
               onClick={handleLifetimePurchase}
-              disabled={submittingPlan !== null || isPlaceholder(lifetimePrice)}
+              disabled={submittingPlan !== null}
               className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
-              {submittingPlan === "lifetime" ? "..." : `${t("get_lifetime_access")}${buttonPriceTail(lifetimePrice)}`}
+              {submittingPlan === "lifetime" ? "..." : `${t("get_lifetime_access")} — ${lifetimePrice}`}
             </button>
           )}
         </div>
