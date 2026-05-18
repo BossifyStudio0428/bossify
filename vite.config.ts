@@ -15,4 +15,19 @@ export default defineLovableConfig({
       },
     },
   },
+  vite: {
+    environments: {
+      server: {
+        build: {
+          rollupOptions: {
+            output: {
+              // Cloudflare Worker has no runtime module resolution — keep
+              // the worker as a single file by disabling code-splitting.
+              inlineDynamicImports: true,
+            },
+          },
+        },
+      },
+    },
+  },
 });
