@@ -41,28 +41,43 @@ function PlansPage() {
     starter_monthly: STARTER_FALLBACK_PRICES.monthly,
     starter_annual: STARTER_FALLBACK_PRICES.annual,
   });
+  // Loading state for the Google Play price sync. `true` while a fetch is
+  // in flight; flips to `false` once we get a real (non-placeholder) price
+  // back. Drives the "Fetching price…" hint and the Retry button.
+  const [pricesLoading, setPricesLoading] = useState(true);
 
   // Pull each user's locally-formatted price from Google Play (MYR / USD /
   // INR / IDR / etc.) so the UI matches what the store will charge.
+  const loadPrices = (): Promise<void> => {
+    setPricesLoading(true);
+    return queryProductDetails()
+      .then((prices: ProductPrice[]) => {
+        setStorePrices((prev) => {
+          const next = { ...prev };
+          for (const p of prices) next[p.plan] = p.formattedPrice;
+          return next;
+        });
+        // We consider prices "loaded" only if at least one is a real
+        // store-formatted price (not the "—" placeholder).
+        const hasReal = prices.some((p) => p.formattedPrice && p.formattedPrice !== "—");
+        if (hasReal) setPricesLoading(false);
+      })
+      .catch(() => {});
+  };
+
   useEffect(() => {
     let cancelled = false;
-    const load = () =>
-      queryProductDetails()
-        .then((prices: ProductPrice[]) => {
-          if (cancelled) return;
-          setStorePrices((prev) => {
-            const next = { ...prev };
-            for (const p of prices) next[p.plan] = p.formattedPrice;
-            return next;
-          });
-        })
-        .catch(() => {});
+    const load = () => { if (!cancelled) void loadPrices(); };
     // Fetch immediately, then again after the store has had time to finish
     // its first sync with Google Play (cold start can take a few seconds
     // before localized prices are available).
     load();
     const t1 = setTimeout(load, 1500);
     const t2 = setTimeout(load, 4000);
+    // Stop the spinner after a reasonable window even if nothing came back
+    // (e.g. running on web preview / plugin missing) so the Retry button
+    // becomes available instead of spinning forever.
+    const tStop = setTimeout(() => { if (!cancelled) setPricesLoading(false); }, 6000);
     // Also refresh when the user brings the app back to the foreground —
     // catches the case where they changed the price in Play Console
     // moments earlier.
@@ -72,6 +87,7 @@ function PlansPage() {
       cancelled = true;
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(tStop);
       document.removeEventListener("visibilitychange", onVisible);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,6 +97,24 @@ function PlansPage() {
   const lifetimePrice = storePrices.lifetime;
   const starterPrice = billing === "monthly" ? storePrices.starter_monthly : storePrices.starter_annual;
   const period = billing === "monthly" ? t("per_month") : t("per_year");
+  // True when a given displayed price is still the "—" placeholder (i.e.
+  // Google Play hasn't returned a real formatted price yet).
+  const isPlaceholder = (p: string) => !p || p === "—";
+  const fetchingLabel = t("fetching_price");
+  // Renders price text OR an inline loading pill, so users never see a bare
+  // "—" without explanation.
+  const renderPrice = (p: string, className: string) =>
+    isPlaceholder(p) ? (
+      <span className={`${className} inline-flex items-center gap-1.5 text-muted-foreground`}>
+        <span className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" aria-hidden />
+        <span className="text-sm font-medium">{fetchingLabel}</span>
+      </span>
+    ) : (
+      <span className={className}>{p}</span>
+    );
+  // Button label that swaps the "— price" tail for the loading hint when
+  // the price isn't ready, so CTAs don't read "Upgrade to Pro — —".
+  const buttonPriceTail = (p: string) => (isPlaceholder(p) ? ` — ${fetchingLabel}` : ` — ${p}`);
 
   const freeRows: { ok: boolean; label: string }[] = [
     { ok: true, label: t("free_orders_per_month") },
