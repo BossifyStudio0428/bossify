@@ -73,7 +73,7 @@ function PaymentSuccessPage() {
         try {
           if (sessionId) await activateStripeSession(sessionId);
           const latest = await refresh();
-          const currentPlan = isPaidPlan(latest?.plan) ? latest?.plan : await fetchCurrentPlan();
+          const currentPlan = (isPaidPlan(latest?.plan) ? latest?.plan : await fetchCurrentPlan()) ?? undefined;
           if (isPaidPlan(currentPlan)) {
             if (!cancelled) setConfirmedPlan(currentPlan);
             return;
