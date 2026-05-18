@@ -33,7 +33,7 @@ export const FALLBACK_PRICES: Record<BillingPlan, string> = {
 
 /** One-time, non-consumable Lifetime product. */
 export const LIFETIME_PRODUCT_ID = "bossify_lifetime";
-export const LIFETIME_FALLBACK_PRICE = "RM 1,499";
+export const LIFETIME_FALLBACK_PRICE = "RM 2,999";
 
 /**
  * Starter Plan — separate subscription SKUs (not base plans of `bossify_pro`).
