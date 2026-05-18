@@ -9,7 +9,7 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2, Check } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check, Upload } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import {
@@ -336,7 +336,15 @@ function OrdersPage() {
           {todayCount} {t("today_count")}
         </span>
         {refreshing && <span className="text-[10px] text-muted-foreground">↻</span>}
-        <button onClick={exportPDF} disabled={exportingPdf} className="ml-auto p-2 rounded-full bg-card border border-border/60 active:scale-95 disabled:opacity-60" aria-label={t("export_pdf")}>
+        <button
+          onClick={() => navigate({ to: "/import-orders" })}
+          className="ml-auto p-2 rounded-full bg-card border border-border/60 active:scale-95"
+          aria-label="Import"
+          title="Import Excel/CSV"
+        >
+          <Upload className="h-4 w-4" />
+        </button>
+        <button onClick={exportPDF} disabled={exportingPdf} className="p-2 rounded-full bg-card border border-border/60 active:scale-95 disabled:opacity-60" aria-label={t("export_pdf")}>
           {exportingPdf ? "…" : "📄"}
         </button>
       </header>
