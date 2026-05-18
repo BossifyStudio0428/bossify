@@ -9,10 +9,11 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 export default defineConfig({
   vite: {
     base: "./",
-    ssr: {
+    resolve: {
       // The published/mobile runtime cannot resolve these runtime modules at
-      // request time. Bundle TanStack's server/runtime deps so missing imports
-      // like `seroval` cannot crash the app with only "Internal server error".
+      // request time. Use Vite's environment-aware `resolve.noExternal` instead
+      // of legacy `ssr.noExternal`; the legacy option makes dev/prerender SSR
+      // execute React's CommonJS entry without a `module` object.
       noExternal: [
         "react",
         "react-dom",
