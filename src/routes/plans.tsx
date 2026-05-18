@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Check, X, Sparkles, Crown } from "lucide-react";
+import { ChevronLeft, Check, X, Sparkles, Crown, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,7 @@ import {
   isNativeBillingAvailable,
   purchasePlan,
   purchaseLifetime,
+  purchaseStarter,
   restorePurchases,
   queryProductDetails,
   FALLBACK_PRICES,
@@ -18,6 +19,8 @@ import {
   LIFETIME_PRODUCT_ID,
   SUBSCRIPTION_ID,
   BASE_PLAN_IDS,
+  STARTER_PRODUCT_IDS,
+  STARTER_FALLBACK_PRICES,
   type BillingError,
   type ProductPrice,
 } from "@/lib/billing";
@@ -28,13 +31,15 @@ function PlansPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isPro, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
+  const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
-  const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | null>(null);
-  const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual" | "lifetime", string>>({
+  const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | null>(null);
+  const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual" | "lifetime" | "starter_monthly" | "starter_annual", string>>({
     monthly: FALLBACK_PRICES.monthly,
     annual: FALLBACK_PRICES.annual,
     lifetime: LIFETIME_FALLBACK_PRICE,
+    starter_monthly: STARTER_FALLBACK_PRICES.monthly,
+    starter_annual: STARTER_FALLBACK_PRICES.annual,
   });
 
   // Pull each user's locally-formatted price from Google Play (MYR / USD /
@@ -55,6 +60,7 @@ function PlansPage() {
 
   const price = storePrices[billing];
   const lifetimePrice = storePrices.lifetime;
+  const starterPrice = billing === "monthly" ? storePrices.starter_monthly : storePrices.starter_annual;
   const period = billing === "monthly" ? t("per_month") : t("per_year");
 
   const freeRows: { ok: boolean; label: string }[] = [
