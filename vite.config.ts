@@ -6,6 +6,8 @@
 // You can pass additional config via defineConfig({ vite: { ... } }) if needed.
 import { defineConfig as defineLovableConfig } from "@lovable.dev/vite-tanstack-config";
 
+const isBuildCommand = process.argv.slice(2).includes("build");
+
 export default defineLovableConfig({
   tanstackStart: {
     spa: {
@@ -21,7 +23,10 @@ export default defineLovableConfig({
       // SSR deps into the worker. The package.json uses npm: aliases
       // (h3-v2, rou3, etc.) that the default externalizer can't resolve
       // at runtime, so we must inline everything.
-      noExternal: true,
+      // Do this only for builds: Vite's live preview SSR runner must keep
+      // React externalized, otherwise React's CommonJS entry crashes with
+      // `ReferenceError: module is not defined` before the app can render.
+      noExternal: isBuildCommand ? true : undefined,
     },
     environments: {
       server: {
