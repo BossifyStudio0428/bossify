@@ -354,6 +354,7 @@ export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult
       starterAnnual: compactProductSnapshot(store.get(STARTER_PRODUCT_IDS.annual)),
     });
     const out: ProductPrice[] = [];
+    let stale = false;
     for (const offer of product?.offers ?? []) {
       // Match the Play Console base plan id to our local BillingPlan key.
       const offerId: string | undefined = offer.id || offer.basePlanId;
@@ -379,6 +380,7 @@ export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult
       const { price, currency } = readPrice(lifetime, lifetimeOffer);
       if (price) {
         if (isLegacyLifetimePrice(price)) {
+          stale = true;
           billingLog("warn", "Google Play returned legacy lifetime price; keeping loading state instead of showing stale 1499", {
             attemptId,
             productId: LIFETIME_PRODUCT_ID,
@@ -386,11 +388,11 @@ export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult
             product: compactProductSnapshot(lifetime),
           });
         } else {
-        out.push({
-          plan: "lifetime",
-          formattedPrice: price,
-          currency: currency ?? "MYR",
-        });
+          out.push({
+            plan: "lifetime",
+            formattedPrice: price,
+            currency: currency ?? "MYR",
+          });
         }
       }
     } catch {}
@@ -425,8 +427,8 @@ export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult
     }
     const hasRealPrice = out.some((p) => p.formattedPrice && p.formattedPrice !== "—");
     const isFallback = !hasRealPrice;
-    billingLog(isFallback ? "warn" : "info", "price fetch complete", { attemptId, fallback: isFallback, prices: out });
-    return { prices: out, fallback: isFallback, stale: false, attemptId, nativeAvailable, pluginAvailable };
+    billingLog(isFallback || stale ? "warn" : "info", "price fetch complete", { attemptId, fallback: isFallback, stale, prices: out });
+    return { prices: out, fallback: isFallback, stale, error: stale ? "STALE_LEGACY_PRICE" : undefined, attemptId, nativeAvailable, pluginAvailable };
   } catch (e) {
     billingLog("error", "price fetch failed", { attemptId, error: serializeBillingError(e) });
     return { prices: fallbackPrices(), fallback: true, stale: false, error: "PRICE_FETCH_FAILED", attemptId, nativeAvailable, pluginAvailable };
