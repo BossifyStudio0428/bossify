@@ -15,6 +15,7 @@ export function UpgradeModal() {
   useEffect(() => {
     if (!upgradeOpen) return;
     let cancelled = false;
+    let retry: ReturnType<typeof setTimeout> | null = null;
     queryProductDetailsSafe()
       .then((result) => {
         if (cancelled) return;
@@ -22,15 +23,14 @@ export function UpgradeModal() {
         const monthly = result.prices.find((p) => p.plan === "monthly");
         if (monthly?.formattedPrice) setProMonthlyPrice(monthly.formattedPrice);
         if (result.nativeAvailable && (result.fallback || result.stale || !monthly?.formattedPrice || monthly.formattedPrice === "—")) {
-          const retry = setTimeout(() => { if (!cancelled) setRetryTick((n) => n + 1); }, Math.min(30000, 2500 * (retryTick + 1)));
-          return () => clearTimeout(retry);
+          retry = setTimeout(() => { if (!cancelled) setRetryTick((n) => n + 1); }, Math.min(30000, 2500 * (retryTick + 1)));
         }
       })
       .catch((error) => {
         console.error("[billing] upgrade modal price fetch failed", error);
         if (!cancelled && isNativeBillingAvailable()) setRetryTick((n) => n + 1);
       });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; if (retry) clearTimeout(retry); };
   }, [upgradeOpen, retryTick]);
 
   if (!upgradeOpen) return null;
