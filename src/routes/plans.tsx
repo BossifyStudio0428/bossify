@@ -46,15 +46,34 @@ function PlansPage() {
   // INR / IDR / etc.) so the UI matches what the store will charge.
   useEffect(() => {
     let cancelled = false;
-    queryProductDetails()
-      .then((prices: ProductPrice[]) => {
-        if (cancelled) return;
-        const next = { ...storePrices };
-        for (const p of prices) next[p.plan] = p.formattedPrice;
-        setStorePrices(next);
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
+    const load = () =>
+      queryProductDetails()
+        .then((prices: ProductPrice[]) => {
+          if (cancelled) return;
+          setStorePrices((prev) => {
+            const next = { ...prev };
+            for (const p of prices) next[p.plan] = p.formattedPrice;
+            return next;
+          });
+        })
+        .catch(() => {});
+    // Fetch immediately, then again after the store has had time to finish
+    // its first sync with Google Play (cold start can take a few seconds
+    // before localized prices are available).
+    load();
+    const t1 = setTimeout(load, 1500);
+    const t2 = setTimeout(load, 4000);
+    // Also refresh when the user brings the app back to the foreground —
+    // catches the case where they changed the price in Play Console
+    // moments earlier.
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      clearTimeout(t1);
+      clearTimeout(t2);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
