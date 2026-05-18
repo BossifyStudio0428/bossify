@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { ChevronLeft, Eye, EyeOff, Mail, Check } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { appSupabase as supabase } from "@/lib/appSupabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { mapAuthError, isValidEmail, pwStrength } from "@/lib/authErrors";
