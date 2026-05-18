@@ -100,6 +100,7 @@ const ONBOARDING_SETUP_ROUTES: readonly string[] = [
   "/business-profile",
   "/payment-details",
   "/payment-setup",
+  "/payment-success",
 ];
 
 export function AppShell() {
