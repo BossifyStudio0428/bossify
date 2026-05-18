@@ -351,10 +351,14 @@ export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult
     const readPrice = (product: any, offer?: any): { price?: string; currency?: string } => {
       const phase = offer?.pricingPhases?.[0];
       if (phase?.price) return { price: phase.price, currency: phase.currency };
+      if (phase?.formattedPrice) return { price: phase.formattedPrice, currency: phase.priceCurrencyCode ?? phase.currency };
       if (offer?.price) return { price: offer.price, currency: offer.currency };
       if (offer?.formattedPrice) return { price: offer.formattedPrice, currency: offer.priceCurrencyCode };
       const p = product?.pricing;
       if (p?.price) return { price: p.price, currency: p.currency };
+      if (p?.formattedPrice) return { price: p.formattedPrice, currency: p.priceCurrencyCode ?? p.currency };
+      if (product?.price) return { price: product.price, currency: product.currency };
+      if (product?.formattedPrice) return { price: product.formattedPrice, currency: product.priceCurrencyCode };
       return {};
     };
 
