@@ -172,6 +172,18 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  useEffect(() => {
+    if (!user) return;
+    const onFocus = () => { refresh(); };
+    const onVisible = () => { if (!document.hidden) refresh(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [user?.id, refresh]);
+
   // Re-query Google Play for the user's actual entitlement and reconcile
   // it with Supabase. The native store is the source of truth — if the
   // user cancelled in Play Store, refunded, or restored on a new device,
