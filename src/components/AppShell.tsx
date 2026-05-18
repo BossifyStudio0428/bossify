@@ -100,6 +100,7 @@ const ONBOARDING_SETUP_ROUTES: readonly string[] = [
   "/business-profile",
   "/payment-details",
   "/payment-setup",
+  "/payment-success",
 ];
 
 export function AppShell() {
@@ -234,8 +235,7 @@ function ShellInner() {
       return;
     }
     const isRegistering =
-      typeof window !== "undefined" &&
-      safeSessionStorage.getItem("bossify_registering") === "1";
+      typeof window !== "undefined" && safeSessionStorage.getItem("bossify_registering") === "1";
     if (session && isLoginRoute && !isRegistering) {
       navigate({ to: "/" });
       return;
@@ -250,7 +250,18 @@ function ShellInner() {
       if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding", replace: true });
       if (!needsOnboarding && isOnboardingRoute) navigate({ to: "/", replace: true });
     }
-  }, [session, loading, isAuthFlowRoute, isLoginRoute, isOnboardingRoute, isPublicFlow, isLanguageRoute, onboardingChecked, needsOnboarding, navigate]);
+  }, [
+    session,
+    loading,
+    isAuthFlowRoute,
+    isLoginRoute,
+    isOnboardingRoute,
+    isPublicFlow,
+    isLanguageRoute,
+    onboardingChecked,
+    needsOnboarding,
+    navigate,
+  ]);
 
   // Once user is signed in past onboarding, arm the notification permission
   // prompt and run overdue check if granted.

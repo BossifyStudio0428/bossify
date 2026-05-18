@@ -1,11 +1,28 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { DollarSign, ShoppingBag, AlertCircle, PackageX, Bell, Search, Sparkles, TrendingUp, CreditCard, X, ChevronRight, FileText } from "lucide-react";
+import {
+  DollarSign,
+  ShoppingBag,
+  AlertCircle,
+  PackageX,
+  Bell,
+  Search,
+  Sparkles,
+  TrendingUp,
+  CreditCard,
+  X,
+  ChevronRight,
+  FileText,
+} from "lucide-react";
 import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { loadPaymentSummary, isPaymentBannerDismissed, dismissPaymentBanner } from "@/lib/paymentSetup";
+import {
+  loadPaymentSummary,
+  isPaymentBannerDismissed,
+  dismissPaymentBanner,
+} from "@/lib/paymentSetup";
 import { SetupChecklist } from "@/components/SetupChecklist";
 
 export const Route = createFileRoute("/")({ component: Index });
@@ -19,7 +36,14 @@ const statusStyles: Record<string, string> = {
 function Index() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
-  const { hasFullAccess, isLifetime, isStarter, ordersUsed, ordersLimit } = useSubscription();
+  const {
+    hasFullAccess,
+    isLifetime,
+    isStarter,
+    ordersUsed,
+    ordersLimit,
+    refresh: refreshSubscription,
+  } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
@@ -33,27 +57,51 @@ function Index() {
   useEffect(() => {
     setBannerDismissed(isPaymentBannerDismissed());
     if (!user?.id) return;
-    loadPaymentSummary(user.id).then((s) => setHasPayment(s.hasMethod)).catch(() => setHasPayment(true));
+    loadPaymentSummary(user.id)
+      .then((s) => setHasPayment(s.hasMethod))
+      .catch(() => setHasPayment(true));
   }, [user?.id]);
 
   const load = async () => {
     if (!user?.id) return;
     try {
-      const [ordersRes, inventoryRes, customersRes, notificationsRes, profileRes] = await Promise.all([
-        supabase.from("orders").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("inventory").select("stock").eq("user_id", user.id),
-        supabase.from("customers").select("*").eq("user_id", user.id).order("total_spent", { ascending: false }).limit(3),
-        supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
-        supabase.from("profiles").select("avatar_url").eq("id", user.id).maybeSingle(),
-      ]);
-      for (const [label, result] of Object.entries({ ordersRes, inventoryRes, customersRes, notificationsRes, profileRes })) {
+      const [ordersRes, inventoryRes, customersRes, notificationsRes, profileRes] =
+        await Promise.all([
+          supabase
+            .from("orders")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false }),
+          supabase.from("inventory").select("stock").eq("user_id", user.id),
+          supabase
+            .from("customers")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("total_spent", { ascending: false })
+            .limit(3),
+          supabase
+            .from("notifications")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("is_read", false),
+          supabase.from("profiles").select("avatar_url").eq("id", user.id).maybeSingle(),
+        ]);
+      for (const [label, result] of Object.entries({
+        ordersRes,
+        inventoryRes,
+        customersRes,
+        notificationsRes,
+        profileRes,
+      })) {
         if (result.error) console.error(`dashboard ${label} failed`, result.error);
       }
       setOrders((ordersRes.data ?? []) as OrderRow[]);
       setLowStock((inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length);
       setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
       setUnreadNotif(notificationsRes.count ?? 0);
-      setAvatarUrl((profileRes.data as any)?.avatar_url || (user.user_metadata as any)?.avatar_url || null);
+      setAvatarUrl(
+        (profileRes.data as any)?.avatar_url || (user.user_metadata as any)?.avatar_url || null,
+      );
     } catch (error) {
       console.error("dashboard load failed", error);
       setOrders([]);
@@ -67,39 +115,76 @@ function Index() {
   useEffect(() => {
     if (!user?.id) return;
     setHydrated(true);
+    refreshSubscription();
     load();
-    const onFocus = () => load();
+    const onFocus = () => {
+      refreshSubscription();
+      load();
+    };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [user?.id]);
+  }, [user?.id, refreshSubscription]);
 
   useEffect(() => {
     if (!user) return;
     const ch = supabase
       .channel("dash-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "inventory", filter: `user_id=eq.${user.id}` }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` }, () => load())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "inventory", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+        () => load(),
+      )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [user?.id]);
 
   const localeMap = { en: "en-MY", ms: "ms-MY", zh: "zh-CN" } as const;
-  const today = hydrated ? new Date().toLocaleDateString(localeMap[lang], {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-  }) : "";
+  const today = hydrated
+    ? new Date().toLocaleDateString(localeMap[lang], {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "";
   const isToday = (iso: string) => new Date(iso).toDateString() === new Date().toDateString();
   const todayOrders = orders.filter((o) => isToday(o.created_at));
-  const todayRevenue = todayOrders.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0);
-  const todayGrossProfit = todayOrders.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.gross_profit ?? 0), 0);
+  const todayRevenue = todayOrders
+    .filter((o) => o.status === "Paid")
+    .reduce((s, o) => s + Number(o.amount), 0);
+  const todayGrossProfit = todayOrders
+    .filter((o) => o.status === "Paid")
+    .reduce((s, o) => s + Number(o.gross_profit ?? 0), 0);
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
 
   // Comparison vs yesterday
-  const yest = new Date(); yest.setDate(yest.getDate() - 1);
+  const yest = new Date();
+  yest.setDate(yest.getDate() - 1);
   const isYesterday = (iso: string) => new Date(iso).toDateString() === yest.toDateString();
-  const yesterdayRevenue = orders.filter((o) => o.status === "Paid" && isYesterday(o.created_at)).reduce((s, o) => s + Number(o.amount), 0);
-  const revDelta = yesterdayRevenue > 0 ? Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100) : null;
+  const yesterdayRevenue = orders
+    .filter((o) => o.status === "Paid" && isYesterday(o.created_at))
+    .reduce((s, o) => s + Number(o.amount), 0);
+  const revDelta =
+    yesterdayRevenue > 0
+      ? Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
+      : null;
 
   // Motivational
   let motivMsg = t("motiv_default");
@@ -108,21 +193,55 @@ function Index() {
   if (todayRevenue > yesterdayRevenue && yesterdayRevenue > 0) motivMsg = t("motiv_better");
 
   const stats = [
-    { label: t("todays_revenue"), value: `RM ${todayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: t("todays_profit"), value: `RM ${todayGrossProfit.toFixed(0)}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
-    { label: t("new_orders"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" },
-    { label: t("unpaid"), value: String(unpaidCount), icon: AlertCircle, color: "text-red-500", bg: "bg-red-50" },
+    {
+      label: t("todays_revenue"),
+      value: `RM ${todayRevenue.toFixed(0)}`,
+      icon: DollarSign,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+    },
+    {
+      label: t("todays_profit"),
+      value: `RM ${todayGrossProfit.toFixed(0)}`,
+      icon: TrendingUp,
+      color: "text-primary",
+      bg: "bg-primary/10",
+    },
+    {
+      label: t("new_orders"),
+      value: String(todayOrders.length),
+      icon: ShoppingBag,
+      color: "text-primary",
+      bg: "bg-primary/10",
+    },
+    {
+      label: t("unpaid"),
+      value: String(unpaidCount),
+      icon: AlertCircle,
+      color: "text-red-500",
+      bg: "bg-red-50",
+    },
   ];
 
   // Weekly chart
   const weekly: { day: string; value: number }[] = [];
-  const dowKeys = ["dow_sun", "dow_mon", "dow_tue", "dow_wed", "dow_thu", "dow_fri", "dow_sat"] as const;
+  const dowKeys = [
+    "dow_sun",
+    "dow_mon",
+    "dow_tue",
+    "dow_wed",
+    "dow_thu",
+    "dow_fri",
+    "dow_sat",
+  ] as const;
   if (hydrated) {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const total = orders
-        .filter((o) => o.status === "Paid" && new Date(o.created_at).toDateString() === d.toDateString())
+        .filter(
+          (o) => o.status === "Paid" && new Date(o.created_at).toDateString() === d.toDateString(),
+        )
         .reduce((s, o) => s + Number(o.amount), 0);
       weekly.push({ day: t(dowKeys[d.getDay()]), value: total });
     }
@@ -136,7 +255,13 @@ function Index() {
   const recent = orders.slice(0, 3);
   const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
   const hour = hydrated ? new Date().getHours() : 12;
-  const greeting = hydrated ? (hour < 12 ? t("good_morning") : hour < 18 ? t("good_afternoon") : t("good_evening")) : "";
+  const greeting = hydrated
+    ? hour < 12
+      ? t("good_morning")
+      : hour < 18
+        ? t("good_afternoon")
+        : t("good_evening")
+    : "";
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-6">
@@ -146,22 +271,42 @@ function Index() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("welcome")} 👋</h1>
         </div>
         <div className="flex items-start gap-1.5 shrink-0">
-          <Link to="/search" aria-label={t("search")} className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform">
+          <Link
+            to="/search"
+            aria-label={t("search")}
+            className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform"
+          >
             <span className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
               <Search className="h-4 w-4 text-foreground" />
             </span>
             <span className="text-[9px] text-muted-foreground leading-none">{t("search")}</span>
           </Link>
-          <Link to="/notifications" aria-label={t("notifications")} className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform">
+          <Link
+            to="/notifications"
+            aria-label={t("notifications")}
+            className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform"
+          >
             <span className="relative h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
               <Bell className="h-4 w-4 text-foreground" />
-              {unreadNotif > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full" />}
+              {unreadNotif > 0 && (
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full" />
+              )}
             </span>
-            <span className="text-[9px] text-muted-foreground leading-none">{t("alerts_label")}</span>
+            <span className="text-[9px] text-muted-foreground leading-none">
+              {t("alerts_label")}
+            </span>
           </Link>
-          <Link to="/profile" aria-label={t("profile")} className="flex flex-col items-center gap-0.5 active:scale-95">
+          <Link
+            to="/profile"
+            aria-label={t("profile")}
+            className="flex flex-col items-center gap-0.5 active:scale-95"
+          >
             <span className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold shadow-[var(--shadow-soft)] overflow-hidden">
-              {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
             </span>
             <span className="text-[9px] text-muted-foreground leading-none">{t("profile")}</span>
           </Link>
@@ -228,7 +373,10 @@ function Index() {
           <button
             type="button"
             aria-label="dismiss"
-            onClick={() => { dismissPaymentBanner(); setBannerDismissed(true); }}
+            onClick={() => {
+              dismissPaymentBanner();
+              setBannerDismissed(true);
+            }}
             className="h-7 w-7 rounded-full text-amber-700 active:bg-amber-100 flex items-center justify-center shrink-0"
           >
             <X className="h-4 w-4" />
@@ -240,14 +388,19 @@ function Index() {
 
       <section id="tour-stats" className="grid grid-cols-2 gap-3">
         {stats.map((s, i) => (
-          <div key={s.label} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
+          <div
+            key={s.label}
+            className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4"
+          >
             <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${s.bg}`}>
               <s.icon className={`h-5 w-5 ${s.color}`} />
             </div>
             <p className={`mt-3 text-xl font-bold ${s.color}`}>{s.value}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
             {i === 0 && revDelta !== null && (
-              <p className={`text-[10px] mt-0.5 font-semibold ${revDelta >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+              <p
+                className={`text-[10px] mt-0.5 font-semibold ${revDelta >= 0 ? "text-emerald-600" : "text-red-500"}`}
+              >
                 {revDelta >= 0 ? "↑" : "↓"} {Math.abs(revDelta)}% {t("vs_yesterday")}
               </p>
             )}
@@ -275,11 +428,9 @@ function Index() {
           {t("weekly_sales")}
         </p>
         <div className="mt-2 flex items-baseline justify-between gap-3">
-          <p className="text-2xl font-bold text-foreground">
-            RM {Number(weeklyTotal).toFixed(0)}
-          </p>
+          <p className="text-2xl font-bold text-foreground">RM {Number(weeklyTotal).toFixed(0)}</p>
           <p className="text-xs font-medium text-muted-foreground">
-            {selectedWeekly?.day || (t("this_week") || "This week")}
+            {selectedWeekly?.day || t("this_week") || "This week"}
           </p>
         </div>
         <div className="mt-4 flex items-end justify-between gap-2 h-32 min-h-[8rem]">
@@ -305,13 +456,15 @@ function Index() {
                       highlight
                         ? "bg-gradient-to-t from-primary to-primary/70"
                         : hasValue
-                        ? "bg-primary/40"
-                        : "bg-muted"
+                          ? "bg-primary/40"
+                          : "bg-muted"
                     }`}
                     style={{ height: `${h}%` }}
                   />
                 </button>
-                <span className={`text-[10px] ${highlight ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                <span
+                  className={`text-[10px] ${highlight ? "text-primary font-semibold" : "text-muted-foreground"}`}
+                >
                   {w.day}
                 </span>
               </div>
@@ -331,8 +484,12 @@ function Index() {
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
-          <p className="text-sm font-bold text-foreground leading-tight">{t("view_sales_report")}</p>
-          <p className="text-[10px] text-muted-foreground leading-snug">{t("daily_weekly_monthly")}</p>
+          <p className="text-sm font-bold text-foreground leading-tight">
+            {t("view_sales_report")}
+          </p>
+          <p className="text-[10px] text-muted-foreground leading-snug">
+            {t("daily_weekly_monthly")}
+          </p>
         </Link>
         <Link
           to="/analytics"
@@ -345,7 +502,9 @@ function Index() {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
           <p className="text-sm font-bold text-foreground leading-tight">{t("view_analytics")}</p>
-          <p className="text-[10px] text-muted-foreground leading-snug">{t("top_products_customers")}</p>
+          <p className="text-[10px] text-muted-foreground leading-snug">
+            {t("top_products_customers")}
+          </p>
         </Link>
       </section>
 
@@ -369,8 +528,12 @@ function Index() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold text-foreground">RM {Number(o.amount).toFixed(0)}</p>
-                <span className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}>
+                <p className="text-sm font-bold text-foreground">
+                  RM {Number(o.amount).toFixed(0)}
+                </p>
+                <span
+                  className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}
+                >
                   {o.status}
                 </span>
               </div>
@@ -408,9 +571,13 @@ function Index() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{c.total_orders} {t("orders_word")}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {c.total_orders} {t("orders_word")}
+                  </p>
                 </div>
-                <p className="text-sm font-bold text-primary">RM {Number(c.total_spent).toFixed(0)}</p>
+                <p className="text-sm font-bold text-primary">
+                  RM {Number(c.total_spent).toFixed(0)}
+                </p>
               </Link>
             ))}
           </div>

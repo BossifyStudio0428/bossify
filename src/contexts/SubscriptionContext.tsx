@@ -68,7 +68,7 @@ type Ctx = {
   productsLimit: number;
   productsRemaining: number;
   activeBillingPlan: BillingPlan | null;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<SubscriptionRow | null>;
   /**
    * Re-query Google Play for the current user's owned Pro subscription and
    * upsert the result into Supabase. Safe to call any time — on app launch,
@@ -94,7 +94,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setSub(null);
       setLoading(false);
-      return;
+      return null;
     }
     setLoading(true);
     try {
@@ -106,7 +106,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error("subscription load failed", error);
         setSub(null);
-        return;
+        return null;
       }
       if (data) {
         // Client-side monthly reset safety net
@@ -120,7 +120,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         ) {
           const { error: expireError } = await supabase
             .from("subscriptions")
-            .update({ plan: "free", status: "active", provider_product_id: null, current_period_end: null })
+            .update({
+              plan: "free",
+              status: "active",
+              provider_product_id: null,
+              current_period_end: null,
+            })
             .eq("user_id", user.id);
           if (expireError) console.error("subscription expiry sync failed", expireError);
           else {
@@ -146,8 +151,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
             data.last_reset_at = now.toISOString();
           }
         }
-
-        setSub(data as SubscriptionRow);
+        const nextSub = data as SubscriptionRow;
+        setSub(nextSub);
+        return nextSub;
       } else {
         // Auto-create on first access (covers users created before trigger)
         const { data: created, error: createError } = await supabase
@@ -156,17 +162,38 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           .select("*")
           .maybeSingle();
         if (createError) console.error("subscription create failed", createError);
-        setSub((created as SubscriptionRow) ?? null);
+        const nextSub = (created as SubscriptionRow) ?? null;
+        setSub(nextSub);
+        return nextSub;
       }
     } catch (error) {
       console.error("subscription refresh failed", error);
       setSub(null);
+      return null;
     } finally {
       setLoading(false);
     }
   }, [user]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    if (!user) return;
+    const onFocus = () => {
+      refresh();
+    };
+    const onVisible = () => {
+      if (!document.hidden) refresh();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [user?.id, refresh]);
 
   // Re-query Google Play for the user's actual entitlement and reconcile
   // it with Supabase. The native store is the source of truth — if the
@@ -180,18 +207,21 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // downgrade away from it.
       const lifetimeReceipt = await verifyLifetimeOwnership();
       if (lifetimeReceipt) {
-        await supabase.from("subscriptions").upsert({
-          user_id: user.id,
-          plan: "lifetime",
-          status: "active",
-          provider: "google_play",
-          provider_product_id: LIFETIME_PRODUCT_ID,
-          provider_transaction_id: lifetimeReceipt.transactionId,
-          provider_purchase_token: lifetimeReceipt.purchaseToken ?? null,
-          lifetime_purchase_date: sub?.lifetime_purchase_date ?? new Date().toISOString(),
-          lifetime_google_token: lifetimeReceipt.purchaseToken ?? null,
-          current_period_end: null,
-        }, { onConflict: "user_id" });
+        await supabase.from("subscriptions").upsert(
+          {
+            user_id: user.id,
+            plan: "lifetime",
+            status: "active",
+            provider: "google_play",
+            provider_product_id: LIFETIME_PRODUCT_ID,
+            provider_transaction_id: lifetimeReceipt.transactionId,
+            provider_purchase_token: lifetimeReceipt.purchaseToken ?? null,
+            lifetime_purchase_date: sub?.lifetime_purchase_date ?? new Date().toISOString(),
+            lifetime_google_token: lifetimeReceipt.purchaseToken ?? null,
+            current_period_end: null,
+          },
+          { onConflict: "user_id" },
+        );
         await refresh();
         return;
       }
@@ -203,39 +233,48 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
       const receipt = await verifyActiveSubscription();
       if (receipt) {
-        await supabase.from("subscriptions").upsert({
-          user_id: user.id,
-          plan: "pro",
-          status: "active",
-          provider: "google_play",
-          provider_product_id: `${receipt.productId}:${receipt.basePlanId ?? "monthly"}`,
-          provider_transaction_id: receipt.transactionId,
-          provider_purchase_token: receipt.purchaseToken ?? null,
-          current_period_end: receipt.currentPeriodEnd ?? null,
-        }, { onConflict: "user_id" });
+        await supabase.from("subscriptions").upsert(
+          {
+            user_id: user.id,
+            plan: "pro",
+            status: "active",
+            provider: "google_play",
+            provider_product_id: `${receipt.productId}:${receipt.basePlanId ?? "monthly"}`,
+            provider_transaction_id: receipt.transactionId,
+            provider_purchase_token: receipt.purchaseToken ?? null,
+            current_period_end: receipt.currentPeriodEnd ?? null,
+          },
+          { onConflict: "user_id" },
+        );
         await refresh();
         return;
       }
       // Check Starter subscription next.
       const starterReceipt = await verifyActiveStarter();
       if (starterReceipt) {
-        await supabase.from("subscriptions").upsert({
-          user_id: user.id,
-          plan: "starter",
-          status: "active",
-          provider: "google_play",
-          provider_product_id: `${starterReceipt.productId}:${starterReceipt.basePlanId ?? "monthly"}`,
-          provider_transaction_id: starterReceipt.transactionId,
-          provider_purchase_token: starterReceipt.purchaseToken ?? null,
-          current_period_end: starterReceipt.currentPeriodEnd ?? null,
-        }, { onConflict: "user_id" });
+        await supabase.from("subscriptions").upsert(
+          {
+            user_id: user.id,
+            plan: "starter",
+            status: "active",
+            provider: "google_play",
+            provider_product_id: `${starterReceipt.productId}:${starterReceipt.basePlanId ?? "monthly"}`,
+            provider_transaction_id: starterReceipt.transactionId,
+            provider_purchase_token: starterReceipt.purchaseToken ?? null,
+            current_period_end: starterReceipt.currentPeriodEnd ?? null,
+          },
+          { onConflict: "user_id" },
+        );
       } else if (sub?.plan === "pro" && sub?.provider === "google_play") {
-        await supabase.from("subscriptions").update({
-          plan: "free",
-          status: "active",
-          provider_product_id: null,
-          current_period_end: null,
-        }).eq("user_id", user.id);
+        await supabase
+          .from("subscriptions")
+          .update({
+            plan: "free",
+            status: "active",
+            provider_product_id: null,
+            current_period_end: null,
+          })
+          .eq("user_id", user.id);
       }
       // Note: we intentionally do NOT auto-demote pro→free here. Right after
       // a successful purchase the store cache often hasn't refreshed to
@@ -266,12 +305,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         const handle = await App.addListener("appStateChange", ({ isActive }) => {
           if (isActive) syncFromStore();
         });
-        unsub = () => { handle.remove?.(); };
+        unsub = () => {
+          handle.remove?.();
+        };
       } catch {
         // Not running inside Capacitor — ignore.
       }
     })();
-    return () => { unsub?.(); };
+    return () => {
+      unsub?.();
+    };
   }, [user?.id, syncFromStore]);
 
   // Realtime: keep order_count in sync after inserts
@@ -279,10 +322,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const ch = supabase
       .channel(`sub-rt-${user.id}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "subscriptions", filter: `user_id=eq.${user.id}` },
-        (p) => setSub(p.new as SubscriptionRow))
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "subscriptions",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (p) => setSub(p.new as SubscriptionRow),
+      )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [user?.id]);
 
   const plan: Plan = (sub?.plan as Plan) ?? "free";
@@ -291,13 +344,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     : sub?.provider_product_id?.includes("monthly") || sub?.provider_product_id?.includes("yearly")
       ? "monthly"
       : null;
-  const isPeriodActive = !sub?.current_period_end || new Date(sub.current_period_end).getTime() > Date.now();
+  const isPeriodActive =
+    !sub?.current_period_end || new Date(sub.current_period_end).getTime() > Date.now();
   const isPro = plan === "pro" && (sub?.status ?? "active") === "active" && isPeriodActive;
   // Lifetime never expires — no period check.
   const isLifetime = plan === "lifetime" && (sub?.status ?? "active") === "active";
   const isStarter = plan === "starter" && (sub?.status ?? "active") === "active" && isPeriodActive;
   const hasFullAccess = isPro || isLifetime;
-  const limits = getPlanLimits(isStarter ? "starter" : isPro ? "pro" : isLifetime ? "lifetime" : "free");
+  const limits = getPlanLimits(
+    isStarter ? "starter" : isPro ? "pro" : isLifetime ? "lifetime" : "free",
+  );
   const ordersUsed = sub?.order_count ?? 0;
   const ordersLimit = limits.ordersPerMonth;
   const ordersRemaining = Math.max(0, ordersLimit - ordersUsed);
@@ -312,13 +368,30 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const hideUpgrade = () => setUpgradeOpen(false);
 
   return (
-    <SubCtx.Provider value={{
-      sub, plan, isPro, isStarter, isLifetime, hasFullAccess, loading,
-      ordersUsed, ordersLimit, ordersRemaining,
-      productsUsed, productsLimit, productsRemaining,
-      activeBillingPlan,
-      refresh, syncFromStore, showUpgrade, hideUpgrade, upgradeOpen, upgradeReason,
-    }}>
+    <SubCtx.Provider
+      value={{
+        sub,
+        plan,
+        isPro,
+        isStarter,
+        isLifetime,
+        hasFullAccess,
+        loading,
+        ordersUsed,
+        ordersLimit,
+        ordersRemaining,
+        productsUsed,
+        productsLimit,
+        productsRemaining,
+        activeBillingPlan,
+        refresh,
+        syncFromStore,
+        showUpgrade,
+        hideUpgrade,
+        upgradeOpen,
+        upgradeReason,
+      }}
+    >
       {children}
     </SubCtx.Provider>
   );
