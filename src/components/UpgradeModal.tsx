@@ -2,11 +2,27 @@ import { useNavigate } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useEffect, useState } from "react";
+import { queryProductDetails, FALLBACK_PRICES } from "@/lib/billing";
 
 export function UpgradeModal() {
   const { upgradeOpen, hideUpgrade, upgradeReason } = useSubscription();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const [proMonthlyPrice, setProMonthlyPrice] = useState<string>(FALLBACK_PRICES.monthly);
+
+  useEffect(() => {
+    if (!upgradeOpen) return;
+    let cancelled = false;
+    queryProductDetails()
+      .then((prices) => {
+        if (cancelled) return;
+        const monthly = prices.find((p) => p.plan === "monthly");
+        if (monthly?.formattedPrice) setProMonthlyPrice(monthly.formattedPrice);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [upgradeOpen]);
 
   if (!upgradeOpen) return null;
 
@@ -36,7 +52,7 @@ export function UpgradeModal() {
           onClick={() => { hideUpgrade(); navigate({ to: "/plans" }); }}
           className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition"
         >
-          {t("upgrade_to_pro")} → RM 49/{t("per_month").replace(/^\s*\/\s*/, "")}
+          {t("upgrade_to_pro")} → {proMonthlyPrice}/{t("per_month").replace(/^\s*\/\s*/, "")}
         </button>
         <button
           onClick={hideUpgrade}
