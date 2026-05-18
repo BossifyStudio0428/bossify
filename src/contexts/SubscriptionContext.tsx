@@ -114,7 +114,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         const now = new Date();
         const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         if (
-          data.plan === "pro" &&
+          (data.plan === "pro" || data.plan === "starter") &&
           data.current_period_end &&
           new Date(data.current_period_end).getTime() <= now.getTime()
         ) {
