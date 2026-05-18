@@ -11,15 +11,6 @@ export default defineConfig({
     base: "./",
     environments: {
       ssr: {
-        optimizeDeps: {
-          include: [
-            "react",
-            "react-dom",
-            "react/jsx-runtime",
-            "react/jsx-dev-runtime",
-            "react-dom/server",
-          ],
-        },
         resolve: {
       // The published/mobile runtime cannot resolve these runtime modules at
       // request time. Use Vite's environment-aware `resolve.noExternal` instead
