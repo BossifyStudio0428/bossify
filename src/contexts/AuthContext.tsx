@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { appSupabase as supabase } from "@/lib/appSupabase";
+import { supabase } from "@/integrations/supabase/client";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
 type AuthCtx = {

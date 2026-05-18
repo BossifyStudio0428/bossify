@@ -38,81 +38,6 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          business_name: string | null
-          business_type: string | null
-          created_at: string
-          id: string
-          is_admin: boolean
-          notif_evening: boolean
-          notif_inventory: boolean
-          notif_milestone: boolean
-          notif_morning: boolean
-          notif_new_order: boolean
-          notif_unpaid: boolean
-          payment_method_1_name: string | null
-          payment_method_1_number: string | null
-          payment_method_1_qr_url: string | null
-          payment_method_1_type: string | null
-          payment_method_2_name: string | null
-          payment_method_2_number: string | null
-          payment_method_2_qr_url: string | null
-          payment_method_2_type: string | null
-          updated_at: string
-          whatsapp_number: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          business_name?: string | null
-          business_type?: string | null
-          created_at?: string
-          id: string
-          is_admin?: boolean
-          notif_evening?: boolean
-          notif_inventory?: boolean
-          notif_milestone?: boolean
-          notif_morning?: boolean
-          notif_new_order?: boolean
-          notif_unpaid?: boolean
-          payment_method_1_name?: string | null
-          payment_method_1_number?: string | null
-          payment_method_1_qr_url?: string | null
-          payment_method_1_type?: string | null
-          payment_method_2_name?: string | null
-          payment_method_2_number?: string | null
-          payment_method_2_qr_url?: string | null
-          payment_method_2_type?: string | null
-          updated_at?: string
-          whatsapp_number?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          business_name?: string | null
-          business_type?: string | null
-          created_at?: string
-          id?: string
-          is_admin?: boolean
-          notif_evening?: boolean
-          notif_inventory?: boolean
-          notif_milestone?: boolean
-          notif_morning?: boolean
-          notif_new_order?: boolean
-          notif_unpaid?: boolean
-          payment_method_1_name?: string | null
-          payment_method_1_number?: string | null
-          payment_method_1_qr_url?: string | null
-          payment_method_1_type?: string | null
-          payment_method_2_name?: string | null
-          payment_method_2_number?: string | null
-          payment_method_2_qr_url?: string | null
-          payment_method_2_type?: string | null
-          updated_at?: string
-          whatsapp_number?: string | null
-        }
-        Relationships: []
-      }
       subscriptions: {
         Row: {
           count_period_start: string | null
@@ -184,7 +109,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_admin: { Args: never; Returns: boolean }
       trigger_push_kind: { Args: { _kind: string }; Returns: undefined }
     }
     Enums: {
