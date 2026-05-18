@@ -458,7 +458,10 @@ function PlansPage() {
               if (user) {
                 // Lifetime wins — it's a stronger entitlement than a subscription.
                 const lifetimeR = receipts.find((r) => r.productId === LIFETIME_PRODUCT_ID);
-                const proR = receipts.find((r) => r.productId !== LIFETIME_PRODUCT_ID);
+                const proR = receipts.find((r) => r.productId === SUBSCRIPTION_ID);
+                const starterR = receipts.find(
+                  (r) => r.productId === STARTER_PRODUCT_IDS.monthly || r.productId === STARTER_PRODUCT_IDS.annual,
+                );
                 if (lifetimeR) {
                   const { error: restoreError } = await supabase.from("subscriptions").upsert({
                     user_id: user.id,
