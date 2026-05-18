@@ -306,13 +306,27 @@ export function onPurchaseApproved(handler: (r: PurchaseReceipt) => void): () =>
  * defaults whenever the plugin isn't running (web preview, plugin missing,
  * or product not yet approved by Google).
  */
-export async function queryProductDetails(): Promise<ProductPrice[]> {
+export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult> {
+  const attemptId = createBillingAttemptId("prices");
+  const nativeAvailable = isNativeBillingAvailable();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pluginAvailable = typeof window !== "undefined" && !!(window as any).CdvPurchase?.store;
+  billingLog("info", "price fetch start", { attemptId, nativeAvailable, pluginAvailable });
   const store = await initBilling();
-  if (!store) return fallbackPrices();
+  if (!store) {
+    const reason = nativeAvailable ? "STORE_UNAVAILABLE" : "NOT_ANDROID";
+    billingLog("warn", "price fetch fallback: store unavailable", { attemptId, reason, nativeAvailable, pluginAvailable });
+    return { prices: fallbackPrices(), fallback: true, stale: false, error: reason, attemptId, nativeAvailable, pluginAvailable };
+  }
   try {
     // Force a fresh fetch from Google Play so we always reflect the latest
     // Play Console prices (not a stale plugin cache). Safe to call often.
-    try { await store.update(); } catch {}
+    try {
+      await store.update();
+      billingLog("info", "store.update complete", { attemptId });
+    } catch (updateError) {
+      billingLog("warn", "store.update failed, reading current store cache", { attemptId, error: serializeBillingError(updateError) });
+    }
 
     // Pull a localized price string from whichever shape the plugin exposes
     // for a given product type. Subscriptions usually expose
@@ -332,6 +346,13 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
     };
 
     const product = store.get(SUBSCRIPTION_ID);
+    billingLog("info", "product snapshots after update", {
+      attemptId,
+      pro: compactProductSnapshot(product),
+      lifetime: compactProductSnapshot(store.get(LIFETIME_PRODUCT_ID)),
+      starterMonthly: compactProductSnapshot(store.get(STARTER_PRODUCT_IDS.monthly)),
+      starterAnnual: compactProductSnapshot(store.get(STARTER_PRODUCT_IDS.annual)),
+    });
     const out: ProductPrice[] = [];
     for (const offer of product?.offers ?? []) {
       // Match the Play Console base plan id to our local BillingPlan key.
@@ -341,7 +362,10 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
       else if (offerId?.includes(BASE_PLAN_IDS.annual)) plan = "annual";
       if (!plan) continue;
       const { price, currency } = readPrice(product, offer);
-      if (!price) continue;
+      if (!price) {
+        billingLog("warn", "missing pro offer price", { attemptId, offer: compactOfferSnapshot(offer) });
+        continue;
+      }
       out.push({
         plan,
         formattedPrice: price,
@@ -354,11 +378,20 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
       const lifetimeOffer = lifetime?.offers?.[0];
       const { price, currency } = readPrice(lifetime, lifetimeOffer);
       if (price) {
+        if (isLegacyLifetimePrice(price)) {
+          billingLog("warn", "Google Play returned legacy lifetime price; keeping loading state instead of showing stale 1499", {
+            attemptId,
+            productId: LIFETIME_PRODUCT_ID,
+            price,
+            product: compactProductSnapshot(lifetime),
+          });
+        } else {
         out.push({
           plan: "lifetime",
           formattedPrice: price,
           currency: currency ?? "MYR",
         });
+        }
       }
     } catch {}
     // Backfill any missing plan with the fallback so the UI never shows blank.
@@ -390,11 +423,19 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
       } catch {}
       out.push({ plan: key, formattedPrice: STARTER_FALLBACK_PRICES[billing], currency: "MYR" });
     }
-    return out;
+    const hasRealPrice = out.some((p) => p.formattedPrice && p.formattedPrice !== "—");
+    const isFallback = !hasRealPrice;
+    billingLog(isFallback ? "warn" : "info", "price fetch complete", { attemptId, fallback: isFallback, prices: out });
+    return { prices: out, fallback: isFallback, stale: false, attemptId, nativeAvailable, pluginAvailable };
   } catch (e) {
-    console.warn("queryProductDetails failed", e);
-    return fallbackPrices();
+    billingLog("error", "price fetch failed", { attemptId, error: serializeBillingError(e) });
+    return { prices: fallbackPrices(), fallback: true, stale: false, error: "PRICE_FETCH_FAILED", attemptId, nativeAvailable, pluginAvailable };
   }
+}
+
+export async function queryProductDetails(): Promise<ProductPrice[]> {
+  const result = await queryProductDetailsSafe();
+  return result.prices;
 }
 
 function fallbackPrices(): ProductPrice[] {
