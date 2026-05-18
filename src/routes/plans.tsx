@@ -26,6 +26,20 @@ import {
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
 
+async function startStripeCheckout(opts: {
+  userId: string;
+  planType: "starter" | "pro" | "lifetime";
+  billingCycle: "monthly" | "annual" | "one";
+}) {
+  const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
+    body: opts,
+  });
+  if (error) throw new Error(error.message);
+  const url = (data as { url?: string } | null)?.url;
+  if (!url) throw new Error("No checkout URL returned");
+  window.location.href = url;
+}
+
 function PlansPage() {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -97,7 +111,13 @@ function PlansPage() {
   const handleGooglePlayPurchase = async () => {
     if (!user) return;
     if (!isNativeBillingAvailable()) {
-      toast.message(t("google_play_only_android"));
+      setSubmittingPlan("pro");
+      try {
+        await startStripeCheckout({ userId: user.id, planType: "pro", billingCycle: billing });
+      } catch (e) {
+        toast.error((e as Error).message);
+        setSubmittingPlan(null);
+      }
       return;
     }
     setSubmittingPlan("pro");
@@ -158,7 +178,13 @@ function PlansPage() {
   const handleLifetimePurchase = async () => {
     if (!user) return;
     if (!isNativeBillingAvailable()) {
-      toast.message(t("google_play_only_android"));
+      setSubmittingPlan("lifetime");
+      try {
+        await startStripeCheckout({ userId: user.id, planType: "lifetime", billingCycle: "one" });
+      } catch (e) {
+        toast.error((e as Error).message);
+        setSubmittingPlan(null);
+      }
       return;
     }
     setSubmittingPlan("lifetime");
@@ -210,7 +236,13 @@ function PlansPage() {
   const handleStarterPurchase = async () => {
     if (!user) return;
     if (!isNativeBillingAvailable()) {
-      toast.message(t("google_play_only_android"));
+      setSubmittingPlan("starter");
+      try {
+        await startStripeCheckout({ userId: user.id, planType: "starter", billingCycle: billing });
+      } catch (e) {
+        toast.error((e as Error).message);
+        setSubmittingPlan(null);
+      }
       return;
     }
     setSubmittingPlan("starter");
