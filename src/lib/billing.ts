@@ -236,12 +236,14 @@ export function initBilling(): Promise<AnyStore | null> {
     billingLog("info", "init start", { attemptId, nativeAvailable });
     if (!nativeAvailable) {
       billingLog("warn", "init skipped: native Android billing unavailable", { attemptId });
+      _initPromise = null;
       return null;
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cdv = (window as any).CdvPurchase;
     if (!cdv?.store) {
       billingLog("warn", "init skipped: CdvPurchase store missing", { attemptId, cdvKeys: cdv ? Object.keys(cdv) : [] });
+      _initPromise = null;
       return null;
     }
     const store = cdv.store as AnyStore;
@@ -289,6 +291,7 @@ export function initBilling(): Promise<AnyStore | null> {
       return store;
     } catch (e) {
       billingLog("error", "init failed", { attemptId, error: serializeBillingError(e) });
+      _initPromise = null;
       return null;
     }
   })();
