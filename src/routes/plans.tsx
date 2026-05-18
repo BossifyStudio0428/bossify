@@ -324,6 +324,49 @@ function PlansPage() {
         )}
       </section>
 
+      {/* Starter card */}
+      <section className="relative rounded-3xl p-[2px] bg-gradient-to-br from-sky-400 via-teal-400 to-cyan-500">
+        <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-lg font-bold flex items-center gap-1">{t("starter_plan")} <Rocket className="h-4 w-4 text-sky-500" /></h2>
+            <p className="text-xl font-bold text-sky-600">
+              {starterPrice}
+              <span className="text-xs text-muted-foreground font-normal"> {period}</span>
+            </p>
+          </div>
+          <ul className="mt-4 space-y-2">
+            {[
+              t("starter_orders_per_month"),
+              t("starter_products_count"),
+              t("basic_sales_reports"),
+              "WhatsApp " + t("order_template"),
+            ].map((r, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm">
+                <Check className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />
+                <span className="text-foreground">{r}</span>
+              </li>
+            ))}
+          </ul>
+          {isLifetime || isPro ? (
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm">
+              {isLifetime ? `${t("plan_badge_lifetime")} ✓` : `${t("pro_plan")} ✓`}
+            </button>
+          ) : isStarter && activeBillingPlan === billing ? (
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-sky-100 text-sky-700 font-semibold text-sm">
+              {t("current_plan")} ✓
+            </button>
+          ) : (
+            <button
+              onClick={handleStarterPurchase}
+              disabled={submittingPlan !== null}
+              className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-teal-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
+            >
+              {submittingPlan === "starter" ? "..." : `${t("start_starter_plan")} — ${starterPrice}`}
+            </button>
+          )}
+        </div>
+      </section>
+
       {/* Pro card */}
       <section className="relative rounded-3xl p-[2px] bg-gradient-to-br from-primary via-primary/70 to-primary/40">
         <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
