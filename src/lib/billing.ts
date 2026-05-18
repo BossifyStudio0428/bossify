@@ -99,6 +99,16 @@ export type ProductPrice = {
   currency: string;
 };
 
+export type BillingPriceFetchResult = {
+  prices: ProductPrice[];
+  fallback: boolean;
+  stale: boolean;
+  error?: string;
+  attemptId: string;
+  nativeAvailable: boolean;
+  pluginAvailable: boolean;
+};
+
 // ---------------------------------------------------------------------------
 // cordova-plugin-purchase integration
 // ---------------------------------------------------------------------------
@@ -108,6 +118,70 @@ type AnyStore = any;
 
 let _initPromise: Promise<AnyStore | null> | null = null;
 let _approvedHandlers: Array<(r: PurchaseReceipt) => void> = [];
+
+const LEGACY_LIFETIME_PRICE_RE = /(?:^|\b)(?:RM|MYR)\s*1[\s,.]?499(?:[.,]00)?\b/i;
+
+function createBillingAttemptId(scope: string): string {
+  return `${scope}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function serializeBillingError(error: unknown) {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message, stack: error.stack };
+  }
+  if (typeof error === "object" && error !== null) {
+    const e = error as Record<string, unknown>;
+    return { code: e.code, message: e.message, details: e.details, raw: e };
+  }
+  return { message: String(error) };
+}
+
+function billingLog(level: "info" | "warn" | "error", message: string, data: Record<string, unknown> = {}) {
+  const payload = { at: new Date().toISOString(), ...data };
+  const logger = level === "error" ? console.error : level === "warn" ? console.warn : console.info;
+  logger(`[billing] ${message}`, payload);
+}
+
+function isLegacyLifetimePrice(price?: string): boolean {
+  return !!price && LEGACY_LIFETIME_PRICE_RE.test(price.replace(/\u00a0/g, " "));
+}
+
+function compactOfferSnapshot(offer: AnyStore) {
+  return {
+    id: offer?.id,
+    basePlanId: offer?.basePlanId,
+    offerToken: offer?.offerToken ? "present" : undefined,
+    owned: !!offer?.owned,
+    price: offer?.price,
+    formattedPrice: offer?.formattedPrice,
+    currency: offer?.currency ?? offer?.priceCurrencyCode,
+    pricingPhases: (offer?.pricingPhases ?? []).slice(0, 3).map((phase: AnyStore) => ({
+      price: phase?.price,
+      formattedPrice: phase?.formattedPrice,
+      currency: phase?.currency ?? phase?.priceCurrencyCode,
+      billingPeriod: phase?.billingPeriod,
+      recurrenceMode: phase?.recurrenceMode,
+    })),
+  };
+}
+
+function compactProductSnapshot(product: AnyStore) {
+  if (!product) return null;
+  return {
+    id: product?.id,
+    title: product?.title,
+    type: product?.type,
+    state: product?.state,
+    owned: !!product?.owned,
+    pricing: product?.pricing ? {
+      price: product.pricing?.price,
+      formattedPrice: product.pricing?.formattedPrice,
+      currency: product.pricing?.currency ?? product.pricing?.priceCurrencyCode,
+    } : undefined,
+    offerCount: product?.offers?.length ?? 0,
+    offers: (product?.offers ?? []).slice(0, 4).map(compactOfferSnapshot),
+  };
+}
 
 function planFromText(value?: string | null): BillingPlan | undefined {
   if (!value) return undefined;
