@@ -190,6 +190,7 @@ const dict = {
     err_user_exists: "An account with this email already exists",
     err_weak_pw: "Password is too weak. Use at least 8 characters",
     err_network: "No internet connection. Please try again",
+    err_generic: "Something went wrong. Please try again",
     err_email_format: "Please enter a valid email",
     err_pw_mismatch: "Passwords do not match",
     must_agree_terms: "You must agree to the terms",
