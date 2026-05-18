@@ -258,6 +258,26 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
     if (!out.find((x) => x.plan === "lifetime")) {
       out.push({ plan: "lifetime", formattedPrice: LIFETIME_FALLBACK_PRICE, currency: "MYR" });
     }
+    // Starter subscription SKUs (separate products, one base plan each).
+    for (const billing of ["monthly", "annual"] as BillingPlan[]) {
+      const key = (billing === "monthly" ? "starter_monthly" : "starter_annual") as
+        | "starter_monthly"
+        | "starter_annual";
+      try {
+        const starter = store.get(STARTER_PRODUCT_IDS[billing]);
+        const starterOffer = starter?.offers?.[0];
+        const starterPhase = starterOffer?.pricingPhases?.[0];
+        if (starterPhase?.price) {
+          out.push({
+            plan: key,
+            formattedPrice: starterPhase.price as string,
+            currency: (starterPhase.currency as string) ?? "MYR",
+          });
+          continue;
+        }
+      } catch {}
+      out.push({ plan: key, formattedPrice: STARTER_FALLBACK_PRICES[billing], currency: "MYR" });
+    }
     return out;
   } catch (e) {
     console.warn("queryProductDetails failed", e);
