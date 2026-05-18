@@ -34,6 +34,20 @@ async function activateStripeSession(sessionId: string) {
   return JSON.parse(text) as Promise<{ activated?: boolean; plan?: string }>;
 }
 
+async function fetchCurrentPlan() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("plan")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.plan as Plan | undefined;
+}
+
 function isPaidPlan(plan: Plan | undefined) {
   return plan === "starter" || plan === "pro" || plan === "lifetime";
 }
@@ -59,8 +73,10 @@ function PaymentSuccessPage() {
         try {
           if (sessionId) await activateStripeSession(sessionId);
           const latest = await refresh();
-          if (isPaidPlan(latest?.plan)) {
-            if (!cancelled) setConfirmedPlan(latest.plan);
+          const currentPlan =
+            (isPaidPlan(latest?.plan) ? latest?.plan : await fetchCurrentPlan()) ?? undefined;
+          if (isPaidPlan(currentPlan)) {
+            if (!cancelled) setConfirmedPlan(currentPlan);
             return;
           }
         } catch (error) {
