@@ -62,11 +62,11 @@ function PlansPage() {
         // store-formatted price (not the "—" placeholder).
         const hasReal = result.prices.some((p) => p.formattedPrice && p.formattedPrice !== "—");
         if (hasReal && !result.stale) setPricesLoading(false);
-        if (result.fallback || result.stale || !hasReal) setPriceRetryTick((n) => n + 1);
+        if (result.nativeAvailable && (result.fallback || result.stale || !hasReal)) setPriceRetryTick((n) => n + 1);
       })
       .catch((error) => {
         console.error("[billing] plans price fetch failed", error);
-        setPriceRetryTick((n) => n + 1);
+        if (isNativeBillingAvailable()) setPriceRetryTick((n) => n + 1);
       });
   };
 
@@ -105,6 +105,15 @@ function PlansPage() {
   // True when a given displayed price is still the "—" placeholder (i.e.
   // Google Play hasn't returned a real formatted price yet).
   const isPlaceholder = (p: string) => !p || p === "—";
+  useEffect(() => {
+    if (!priceRetryTick || !isNativeBillingAvailable()) return;
+    const needsPrice = Object.values(storePrices).some((p) => isPlaceholder(p));
+    if (!needsPrice) return;
+    const delay = Math.min(30000, 2500 * priceRetryTick);
+    const retry = setTimeout(() => void loadPrices(), delay);
+    return () => clearTimeout(retry);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceRetryTick, storePrices]);
   const fetchingLabel = t("fetching_price");
   // Renders price text OR an inline loading pill, so users never see a bare
   // "—" without explanation.
