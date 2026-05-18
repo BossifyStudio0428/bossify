@@ -39,96 +39,39 @@ function PlansPage() {
     starter_monthly: STARTER_FALLBACK_PRICES.monthly,
     starter_annual: STARTER_FALLBACK_PRICES.annual,
   });
-  // Loading state for the Google Play price sync. `true` while a fetch is
-  // in flight; flips to `false` once we get a real (non-placeholder) price
-  // back. Drives the "Fetching price…" hint and the Retry button.
-  const [pricesLoading, setPricesLoading] = useState(true);
-  const [priceRetryTick, setPriceRetryTick] = useState(0);
 
-  // Pull each user's locally-formatted price from Google Play (MYR / USD /
-  // INR / IDR / etc.) so the UI matches what the store will charge.
-  const loadPrices = (): Promise<void> => {
-    setPricesLoading(true);
-    return queryProductDetailsSafe()
-      .then((result) => {
-        console.info("[billing] plans price result", result);
-        setStorePrices((prev) => {
-          const next = { ...prev };
-          for (const p of result.prices) next[p.plan] = p.formattedPrice;
-          return next;
-        });
-        // We consider prices "loaded" only if at least one is a real
-        // store-formatted price (not the "—" placeholder).
-        const hasReal = result.prices.some((p) => p.formattedPrice && p.formattedPrice !== "—");
-        const hasMissing = result.prices.some((p) => !p.formattedPrice || p.formattedPrice === "—");
-        if (hasReal && !result.stale) setPricesLoading(false);
-        if (result.nativeAvailable && (result.fallback || result.stale || !hasReal || hasMissing)) setPriceRetryTick((n) => n + 1);
-      })
-      .catch((error) => {
-        console.error("[billing] plans price fetch failed", error);
-        if (isNativeBillingAvailable()) setPriceRetryTick((n) => n + 1);
-      });
-  };
-
+  // Pull locally-formatted prices from Google Play in the background and
+  // overwrite the fallbacks once they arrive. No loading UI — fallback
+  // prices (RM 49 / RM 399 / RM 2,999 / RM 19 / RM 159) render instantly.
   useEffect(() => {
     let cancelled = false;
-    const load = () => { if (!cancelled) void loadPrices(); };
-    // Fetch immediately, then again after the store has had time to finish
-    // its first sync with Google Play (cold start can take a few seconds
-    // before localized prices are available).
+    const load = () => {
+      queryProductDetailsSafe()
+        .then((result) => {
+          if (cancelled) return;
+          setStorePrices((prev) => {
+            const next = { ...prev };
+            for (const p of result.prices) {
+              if (p.formattedPrice && p.formattedPrice !== "—") next[p.plan] = p.formattedPrice;
+            }
+            return next;
+          });
+        })
+        .catch(() => {});
+    };
     load();
-    const t1 = setTimeout(load, 1500);
-    const t2 = setTimeout(load, 4000);
-    // Stop the spinner after a reasonable window even if nothing came back
-    // (e.g. running on web preview / plugin missing) so the Retry button
-    // becomes available instead of spinning forever.
-    const tStop = setTimeout(() => { if (!cancelled) setPricesLoading(false); }, 6000);
-    // Also refresh when the user brings the app back to the foreground —
-    // catches the case where they changed the price in Play Console
-    // moments earlier.
     const onVisible = () => { if (!document.hidden) load(); };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(tStop);
       document.removeEventListener("visibilitychange", onVisible);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const price = storePrices[billing];
   const lifetimePrice = storePrices.lifetime;
   const starterPrice = billing === "monthly" ? storePrices.starter_monthly : storePrices.starter_annual;
   const period = billing === "monthly" ? t("per_month") : t("per_year");
-  // True when a given displayed price is still the "—" placeholder (i.e.
-  // Google Play hasn't returned a real formatted price yet).
-  const isPlaceholder = (p: string) => !p || p === "—";
-  useEffect(() => {
-    if (!priceRetryTick || !isNativeBillingAvailable()) return;
-    const needsPrice = Object.values(storePrices).some((p) => isPlaceholder(p));
-    if (!needsPrice) return;
-    const delay = Math.min(30000, 2500 * priceRetryTick);
-    const retry = setTimeout(() => void loadPrices(), delay);
-    return () => clearTimeout(retry);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [priceRetryTick, storePrices]);
-  const fetchingLabel = t("fetching_price");
-  // Renders price text OR an inline loading pill, so users never see a bare
-  // "—" without explanation.
-  const renderPrice = (p: string, className: string) =>
-    isPlaceholder(p) ? (
-      <span className={`${className} inline-flex items-center gap-1.5 text-muted-foreground`}>
-        <span className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" aria-hidden />
-        <span className="text-sm font-medium">{fetchingLabel}</span>
-      </span>
-    ) : (
-      <span className={className}>{p}</span>
-    );
-  // Button label that swaps the "— price" tail for the loading hint when
-  // the price isn't ready, so CTAs don't read "Upgrade to Pro — —".
-  const buttonPriceTail = (p: string) => (isPlaceholder(p) ? ` — ${fetchingLabel}` : ` — ${p}`);
 
   const freeRows: { ok: boolean; label: string }[] = [
     { ok: true, label: t("free_orders_per_month") },
@@ -370,28 +313,6 @@ function PlansPage() {
         ))}
       </div>
 
-      {/* Price sync banner — only shown while we still don't have any real
-          formatted price from Google Play. Gives the user clear feedback
-          (instead of a bare "—") and a manual Retry button. */}
-      {(isPlaceholder(price) || isPlaceholder(lifetimePrice) || isPlaceholder(starterPrice)) && (
-        <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/40 px-3 py-2.5 text-xs">
-          {pricesLoading ? (
-            <span className="h-3.5 w-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" aria-hidden />
-          ) : (
-            <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" aria-hidden />
-          )}
-          <span className="flex-1 text-muted-foreground">{t("fetching_price_hint")}</span>
-          <button
-            type="button"
-            onClick={() => void loadPrices()}
-            disabled={pricesLoading}
-            className="font-semibold text-primary disabled:opacity-50"
-          >
-            {t("retry_price")}
-          </button>
-        </div>
-      )}
-
       {/* Free card */}
       <section className="rounded-3xl bg-card border border-border/60 p-5">
         <div className="flex items-baseline justify-between">
@@ -419,10 +340,8 @@ function PlansPage() {
           <div className="flex items-baseline justify-between">
             <h2 className="text-lg font-bold flex items-center gap-1">{t("starter_plan")} <Rocket className="h-4 w-4 text-sky-500" /></h2>
             <p className="text-xl font-bold text-sky-600">
-              {renderPrice(starterPrice, "text-sky-600")}
-              {!isPlaceholder(starterPrice) && (
-                <span className="text-xs text-muted-foreground font-normal"> {period}</span>
-              )}
+              <span className="text-sky-600">{starterPrice}</span>
+              <span className="text-xs text-muted-foreground font-normal"> {period}</span>
             </p>
           </div>
           <ul className="mt-4 space-y-2">
@@ -449,10 +368,10 @@ function PlansPage() {
           ) : (
             <button
               onClick={handleStarterPurchase}
-              disabled={submittingPlan !== null || isPlaceholder(starterPrice)}
+              disabled={submittingPlan !== null}
               className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-teal-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
-              {submittingPlan === "starter" ? "..." : `${t("start_starter_plan")}${buttonPriceTail(starterPrice)}`}
+              {submittingPlan === "starter" ? "..." : `${t("start_starter_plan")} — ${starterPrice}`}
             </button>
           )}
         </div>
@@ -467,10 +386,8 @@ function PlansPage() {
           <div className="flex items-baseline justify-between">
             <h2 className="text-lg font-bold flex items-center gap-1">{t("pro_plan")} <Sparkles className="h-4 w-4 text-primary" /></h2>
             <p className="text-xl font-bold text-primary">
-              {renderPrice(price, "text-primary")}
-              {!isPlaceholder(price) && (
-                <span className="text-xs text-muted-foreground font-normal"> {period}</span>
-              )}
+              <span className="text-primary">{price}</span>
+              <span className="text-xs text-muted-foreground font-normal"> {period}</span>
             </p>
           </div>
           <ul className="mt-4 space-y-2">
@@ -492,10 +409,10 @@ function PlansPage() {
           ) : (
             <button
               onClick={handleGooglePlayPurchase}
-              disabled={submittingPlan !== null || isPlaceholder(price)}
+              disabled={submittingPlan !== null}
               className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
-              {submittingPlan === "pro" ? "..." : `${t("upgrade_to_pro")}${buttonPriceTail(price)}`}
+              {submittingPlan === "pro" ? "..." : `${t("upgrade_to_pro")} — ${price}`}
             </button>
           )}
         </div>
@@ -510,10 +427,8 @@ function PlansPage() {
           <div className="flex items-baseline justify-between">
             <h2 className="text-lg font-bold flex items-center gap-1">{t("lifetime_plan")} <Crown className="h-4 w-4 text-amber-500" /></h2>
             <p className="text-xl font-bold text-amber-600">
-              {renderPrice(lifetimePrice, "text-amber-600")}
-              {!isPlaceholder(lifetimePrice) && (
-                <span className="text-xs text-muted-foreground font-normal"> · {t("one_time_payment")}</span>
-              )}
+              <span className="text-amber-600">{lifetimePrice}</span>
+              <span className="text-xs text-muted-foreground font-normal"> · {t("one_time_payment")}</span>
             </p>
           </div>
           <ul className="mt-4 space-y-2">
@@ -535,10 +450,10 @@ function PlansPage() {
           ) : (
             <button
               onClick={handleLifetimePurchase}
-              disabled={submittingPlan !== null || isPlaceholder(lifetimePrice)}
+              disabled={submittingPlan !== null}
               className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
-              {submittingPlan === "lifetime" ? "..." : `${t("get_lifetime_access")}${buttonPriceTail(lifetimePrice)}`}
+              {submittingPlan === "lifetime" ? "..." : `${t("get_lifetime_access")} — ${lifetimePrice}`}
             </button>
           )}
         </div>

@@ -27,16 +27,16 @@ export type BillingPlan = keyof typeof BASE_PLAN_IDS;
 
 /** Fallback prices (MYR) when the store hasn't returned localized values yet. */
 export const FALLBACK_PRICES: Record<BillingPlan, string> = {
-  // Neutral placeholder — the real, locally-formatted price comes from
-  // Google Play (queryProductDetails). Never hardcode an MYR amount here
-  // because users in other countries see their own currency from the store.
-  monthly: "—",
-  annual: "—",
+  // Default MYR prices shown immediately while Google Play returns the
+  // user's locally-formatted price. Once the store responds these are
+  // replaced with the real formattedPrice (USD / INR / IDR / etc.).
+  monthly: "RM 49",
+  annual: "RM 399",
 };
 
 /** One-time, non-consumable Lifetime product. */
 export const LIFETIME_PRODUCT_ID = "bossify_lifetime";
-export const LIFETIME_FALLBACK_PRICE = "—";
+export const LIFETIME_FALLBACK_PRICE = "RM 2,999";
 
 /**
  * Starter Plan — separate subscription SKUs (not base plans of `bossify_pro`).
@@ -47,8 +47,8 @@ export const STARTER_PRODUCT_IDS: Record<BillingPlan, string> = {
   annual: "bossify_starter_yearly",
 };
 export const STARTER_FALLBACK_PRICES: Record<BillingPlan, string> = {
-  monthly: "—",
-  annual: "—",
+  monthly: "RM 19",
+  annual: "RM 159",
 };
 
 export type PurchaseReceipt = {
