@@ -24,15 +24,6 @@ const APP_SUPABASE_ANON_KEY =
   Deno.env.get("APP_SUPABASE_ANON_KEY") ??
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
 
-function appServiceRoleKey() {
-  return (
-    Deno.env.get("APP_SUPABASE_SERVICE_ROLE_KEY") ??
-    Deno.env.get("SUPABASE_SECRET_KEYS") ??
-    Deno.env.get("Secret_Key") ??
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST")
@@ -113,8 +104,7 @@ Deno.serve(async (req) => {
       row.current_period_end = null;
     }
 
-    const admin = createClient(APP_SUPABASE_URL, appServiceRoleKey());
-    const { error } = await admin.from("subscriptions").upsert(row, { onConflict: "user_id" });
+    const { error } = await userClient.from("subscriptions").upsert(row, { onConflict: "user_id" });
     if (error) throw error;
 
     return new Response(JSON.stringify({ activated: true, plan: planInfo.plan }), {
