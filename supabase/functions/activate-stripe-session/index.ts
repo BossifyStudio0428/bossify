@@ -7,15 +7,19 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const PRICE_TO_PLAN: Record<string, { plan: "starter" | "pro" | "lifetime"; cycle: "monthly" | "yearly" | "one" }> = {
-  "price_1TYSTPHkpW03osRD2lLt5I94": { plan: "starter", cycle: "monthly" },
-  "price_1TYSTkHkpW03osRDr5iE5FPl": { plan: "starter", cycle: "yearly" },
-  "price_1TYSU2HkpW03osRDCr8VGM8f": { plan: "pro", cycle: "monthly" },
-  "price_1TYSUMHkpW03osRDk0i30nI3": { plan: "pro", cycle: "yearly" },
-  "price_1TYSUlHkpW03osRD7jXc7ZAj": { plan: "lifetime", cycle: "one" },
+const PRICE_TO_PLAN: Record<
+  string,
+  { plan: "starter" | "pro" | "lifetime"; cycle: "monthly" | "yearly" | "one" }
+> = {
+  price_1TYSTPHkpW03osRD2lLt5I94: { plan: "starter", cycle: "monthly" },
+  price_1TYSTkHkpW03osRDr5iE5FPl: { plan: "starter", cycle: "yearly" },
+  price_1TYSU2HkpW03osRDCr8VGM8f: { plan: "pro", cycle: "monthly" },
+  price_1TYSUMHkpW03osRDk0i30nI3: { plan: "pro", cycle: "yearly" },
+  price_1TYSUlHkpW03osRD7jXc7ZAj: { plan: "lifetime", cycle: "one" },
 };
 
-const APP_SUPABASE_URL = Deno.env.get("APP_SUPABASE_URL") ?? "https://knouahqwazerjiyiqgmh.supabase.co";
+const APP_SUPABASE_URL =
+  Deno.env.get("APP_SUPABASE_URL") ?? "https://knouahqwazerjiyiqgmh.supabase.co";
 const APP_SUPABASE_ANON_KEY =
   Deno.env.get("APP_SUPABASE_ANON_KEY") ??
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
@@ -31,7 +35,8 @@ function appServiceRoleKey() {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: corsHeaders });
+  if (req.method !== "POST")
+    return new Response("Method not allowed", { status: 405, headers: corsHeaders });
 
   try {
     const { sessionId } = await req.json();
