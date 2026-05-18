@@ -10,7 +10,7 @@ import { notify as deviceNotify } from "@/lib/notifications";
 import { isPrefEnabled } from "@/lib/notifPrefs";
 import { sendPushToSelf } from "@/lib/sendPush";
 import { notifySituation } from "@/lib/autoNotify";
-import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { PhoneInput } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
@@ -125,7 +125,7 @@ function NewOrderPage() {
   };
 
   const checkLimit = () => {
-    if (!hasFullAccess && ordersUsed >= FREE_LIMITS.ordersPerMonth) {
+    if (!hasFullAccess && ordersUsed >= ordersLimit) {
       showUpgrade(t("upgrade_message"));
       return false;
     }
