@@ -518,6 +518,26 @@ function PlansPage() {
                     prefKey: "notif_milestone",
                     dedupeKey: `pro_${proR.transactionId || proR.purchaseToken || "restored"}`,
                   }).catch(() => {});
+                  return;
+                }
+                if (starterR) {
+                  const cycle = starterR.productId === STARTER_PRODUCT_IDS.annual ? "annual" : "monthly";
+                  const { error: restoreError } = await supabase.from("subscriptions").upsert({
+                    user_id: user.id,
+                    plan: "starter",
+                    status: "active",
+                    provider: "google_play",
+                    provider_product_id: `${starterR.productId}:${cycle}`,
+                    provider_transaction_id: starterR.transactionId,
+                    provider_purchase_token: starterR.purchaseToken ?? null,
+                    current_period_end: starterR.currentPeriodEnd ?? null,
+                  }, { onConflict: "user_id" });
+                  if (restoreError) {
+                    toast.error(`${t("billing_unknown_error")}: ${restoreError.message}`);
+                    return;
+                  }
+                  await refresh();
+                  toast.success(t("starter_restored"));
                 }
               }
             },
