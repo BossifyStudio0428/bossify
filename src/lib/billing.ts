@@ -84,8 +84,12 @@ export function isNativeBillingAvailable(): boolean {
 
 /** Localized price string for a base plan, as returned by Google Play. */
 export type ProductPrice = {
-  /** "monthly" / "annual" for the Pro subscription, "lifetime" for the one-time product. */
-  plan: BillingPlan | "lifetime";
+  /**
+   * "monthly" / "annual" → Pro subscription base plans.
+   * "lifetime" → one-time Lifetime product.
+   * "starter_monthly" / "starter_annual" → Starter subscription SKUs.
+   */
+  plan: BillingPlan | "lifetime" | "starter_monthly" | "starter_annual";
   /** e.g. "RM 49.00", "$11.99", "₹999" — already formatted by the store. */
   formattedPrice: string;
   /** ISO 4217 currency code, e.g. "MYR", "USD". */
@@ -165,6 +169,16 @@ export function initBilling(): Promise<AnyStore | null> {
         {
           id: LIFETIME_PRODUCT_ID,
           type: cdv.ProductType.NON_CONSUMABLE,
+          platform: cdv.Platform.GOOGLE_PLAY,
+        },
+        {
+          id: STARTER_PRODUCT_IDS.monthly,
+          type: cdv.ProductType.PAID_SUBSCRIPTION,
+          platform: cdv.Platform.GOOGLE_PLAY,
+        },
+        {
+          id: STARTER_PRODUCT_IDS.annual,
+          type: cdv.ProductType.PAID_SUBSCRIPTION,
           platform: cdv.Platform.GOOGLE_PLAY,
         },
       ]);
