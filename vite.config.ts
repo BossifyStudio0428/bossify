@@ -14,6 +14,13 @@ export default defineConfig({
       // request time. Bundle TanStack's server/runtime deps so missing imports
       // like `seroval` cannot crash the app with only "Internal server error".
       noExternal: [
+        "react",
+        "react-dom",
+        "react/jsx-runtime",
+        "react/jsx-dev-runtime",
+        "react-dom/server",
+        "react-dom/client",
+        "scheduler",
         "@tanstack/history",
         "@tanstack/react-router",
         "@tanstack/react-start",
