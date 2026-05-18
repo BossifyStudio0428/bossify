@@ -272,19 +272,21 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const plan: Plan = (sub?.plan as Plan) ?? "free";
   const activeBillingPlan: BillingPlan | null = sub?.provider_product_id?.includes("annual")
     ? "annual"
-    : sub?.provider_product_id?.includes("monthly")
+    : sub?.provider_product_id?.includes("monthly") || sub?.provider_product_id?.includes("yearly")
       ? "monthly"
       : null;
   const isPeriodActive = !sub?.current_period_end || new Date(sub.current_period_end).getTime() > Date.now();
   const isPro = plan === "pro" && (sub?.status ?? "active") === "active" && isPeriodActive;
   // Lifetime never expires — no period check.
   const isLifetime = plan === "lifetime" && (sub?.status ?? "active") === "active";
+  const isStarter = plan === "starter" && (sub?.status ?? "active") === "active" && isPeriodActive;
   const hasFullAccess = isPro || isLifetime;
+  const limits = getPlanLimits(isStarter ? "starter" : isPro ? "pro" : isLifetime ? "lifetime" : "free");
   const ordersUsed = sub?.order_count ?? 0;
-  const ordersLimit = FREE_LIMITS.ordersPerMonth;
+  const ordersLimit = limits.ordersPerMonth;
   const ordersRemaining = Math.max(0, ordersLimit - ordersUsed);
   const productsUsed = sub?.inventory_created_total ?? 0;
-  const productsLimit = FREE_LIMITS.inventory;
+  const productsLimit = limits.inventory;
   const productsRemaining = Math.max(0, productsLimit - productsUsed);
 
   const showUpgrade = (reason?: string) => {
@@ -295,7 +297,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SubCtx.Provider value={{
-      sub, plan, isPro, isLifetime, hasFullAccess, loading,
+      sub, plan, isPro, isStarter, isLifetime, hasFullAccess, loading,
       ordersUsed, ordersLimit, ordersRemaining,
       productsUsed, productsLimit, productsRemaining,
       activeBillingPlan,
