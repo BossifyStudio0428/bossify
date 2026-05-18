@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Check, X, Sparkles, Crown, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,7 @@ import {
   purchaseLifetime,
   purchaseStarter,
   restorePurchases,
-  queryProductDetails,
+  queryProductDetailsSafe,
   FALLBACK_PRICES,
   LIFETIME_FALLBACK_PRICE,
   LIFETIME_PRODUCT_ID,
@@ -22,7 +22,6 @@ import {
   STARTER_PRODUCT_IDS,
   STARTER_FALLBACK_PRICES,
   type BillingError,
-  type ProductPrice,
 } from "@/lib/billing";
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
@@ -30,7 +29,6 @@ export const Route = createFileRoute("/plans")({ component: PlansPage });
 function PlansPage() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | null>(null);
@@ -45,24 +43,31 @@ function PlansPage() {
   // in flight; flips to `false` once we get a real (non-placeholder) price
   // back. Drives the "Fetching price…" hint and the Retry button.
   const [pricesLoading, setPricesLoading] = useState(true);
+  const [priceRetryTick, setPriceRetryTick] = useState(0);
 
   // Pull each user's locally-formatted price from Google Play (MYR / USD /
   // INR / IDR / etc.) so the UI matches what the store will charge.
   const loadPrices = (): Promise<void> => {
     setPricesLoading(true);
-    return queryProductDetails()
-      .then((prices: ProductPrice[]) => {
+    return queryProductDetailsSafe()
+      .then((result) => {
+        console.info("[billing] plans price result", result);
         setStorePrices((prev) => {
           const next = { ...prev };
-          for (const p of prices) next[p.plan] = p.formattedPrice;
+          for (const p of result.prices) next[p.plan] = p.formattedPrice;
           return next;
         });
         // We consider prices "loaded" only if at least one is a real
         // store-formatted price (not the "—" placeholder).
-        const hasReal = prices.some((p) => p.formattedPrice && p.formattedPrice !== "—");
-        if (hasReal) setPricesLoading(false);
+        const hasReal = result.prices.some((p) => p.formattedPrice && p.formattedPrice !== "—");
+        const hasMissing = result.prices.some((p) => !p.formattedPrice || p.formattedPrice === "—");
+        if (hasReal && !result.stale) setPricesLoading(false);
+        if (result.nativeAvailable && (result.fallback || result.stale || !hasReal || hasMissing)) setPriceRetryTick((n) => n + 1);
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.error("[billing] plans price fetch failed", error);
+        if (isNativeBillingAvailable()) setPriceRetryTick((n) => n + 1);
+      });
   };
 
   useEffect(() => {
@@ -100,6 +105,15 @@ function PlansPage() {
   // True when a given displayed price is still the "—" placeholder (i.e.
   // Google Play hasn't returned a real formatted price yet).
   const isPlaceholder = (p: string) => !p || p === "—";
+  useEffect(() => {
+    if (!priceRetryTick || !isNativeBillingAvailable()) return;
+    const needsPrice = Object.values(storePrices).some((p) => isPlaceholder(p));
+    if (!needsPrice) return;
+    const delay = Math.min(30000, 2500 * priceRetryTick);
+    const retry = setTimeout(() => void loadPrices(), delay);
+    return () => clearTimeout(retry);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceRetryTick, storePrices]);
   const fetchingLabel = t("fetching_price");
   // Renders price text OR an inline loading pill, so users never see a bare
   // "—" without explanation.

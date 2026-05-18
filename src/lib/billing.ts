@@ -99,6 +99,16 @@ export type ProductPrice = {
   currency: string;
 };
 
+export type BillingPriceFetchResult = {
+  prices: ProductPrice[];
+  fallback: boolean;
+  stale: boolean;
+  error?: string;
+  attemptId: string;
+  nativeAvailable: boolean;
+  pluginAvailable: boolean;
+};
+
 // ---------------------------------------------------------------------------
 // cordova-plugin-purchase integration
 // ---------------------------------------------------------------------------
@@ -108,6 +118,70 @@ type AnyStore = any;
 
 let _initPromise: Promise<AnyStore | null> | null = null;
 let _approvedHandlers: Array<(r: PurchaseReceipt) => void> = [];
+
+const LEGACY_LIFETIME_PRICE_RE = /(?:^|\b)(?:RM|MYR)\s*1[\s,.]?499(?:[.,]00)?\b/i;
+
+function createBillingAttemptId(scope: string): string {
+  return `${scope}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function serializeBillingError(error: unknown) {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message, stack: error.stack };
+  }
+  if (typeof error === "object" && error !== null) {
+    const e = error as Record<string, unknown>;
+    return { code: e.code, message: e.message, details: e.details, raw: e };
+  }
+  return { message: String(error) };
+}
+
+function billingLog(level: "info" | "warn" | "error", message: string, data: Record<string, unknown> = {}) {
+  const payload = { at: new Date().toISOString(), ...data };
+  const logger = level === "error" ? console.error : level === "warn" ? console.warn : console.info;
+  logger(`[billing] ${message}`, payload);
+}
+
+function isLegacyLifetimePrice(price?: string): boolean {
+  return !!price && LEGACY_LIFETIME_PRICE_RE.test(price.replace(/\u00a0/g, " "));
+}
+
+function compactOfferSnapshot(offer: AnyStore) {
+  return {
+    id: offer?.id,
+    basePlanId: offer?.basePlanId,
+    offerToken: offer?.offerToken ? "present" : undefined,
+    owned: !!offer?.owned,
+    price: offer?.price,
+    formattedPrice: offer?.formattedPrice,
+    currency: offer?.currency ?? offer?.priceCurrencyCode,
+    pricingPhases: (offer?.pricingPhases ?? []).slice(0, 3).map((phase: AnyStore) => ({
+      price: phase?.price,
+      formattedPrice: phase?.formattedPrice,
+      currency: phase?.currency ?? phase?.priceCurrencyCode,
+      billingPeriod: phase?.billingPeriod,
+      recurrenceMode: phase?.recurrenceMode,
+    })),
+  };
+}
+
+function compactProductSnapshot(product: AnyStore) {
+  if (!product) return null;
+  return {
+    id: product?.id,
+    title: product?.title,
+    type: product?.type,
+    state: product?.state,
+    owned: !!product?.owned,
+    pricing: product?.pricing ? {
+      price: product.pricing?.price,
+      formattedPrice: product.pricing?.formattedPrice,
+      currency: product.pricing?.currency ?? product.pricing?.priceCurrencyCode,
+    } : undefined,
+    offerCount: product?.offers?.length ?? 0,
+    offers: (product?.offers ?? []).slice(0, 4).map(compactOfferSnapshot),
+  };
+}
 
 function planFromText(value?: string | null): BillingPlan | undefined {
   if (!value) return undefined;
@@ -157,12 +231,27 @@ function getStore(): AnyStore | null {
 export function initBilling(): Promise<AnyStore | null> {
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
-    if (!isNativeBillingAvailable()) return null;
+    const attemptId = createBillingAttemptId("init");
+    const nativeAvailable = isNativeBillingAvailable();
+    billingLog("info", "init start", { attemptId, nativeAvailable });
+    if (!nativeAvailable) {
+      billingLog("warn", "init skipped: native Android billing unavailable", { attemptId });
+      _initPromise = null;
+      return null;
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cdv = (window as any).CdvPurchase;
-    if (!cdv?.store) return null;
+    if (!cdv?.store) {
+      billingLog("warn", "init skipped: CdvPurchase store missing", { attemptId, cdvKeys: cdv ? Object.keys(cdv) : [] });
+      _initPromise = null;
+      return null;
+    }
     const store = cdv.store as AnyStore;
     try {
+      billingLog("info", "registering products", {
+        attemptId,
+        products: [SUBSCRIPTION_ID, LIFETIME_PRODUCT_ID, STARTER_PRODUCT_IDS.monthly, STARTER_PRODUCT_IDS.annual],
+      });
       store.register([
         {
           id: SUBSCRIPTION_ID,
@@ -198,12 +287,24 @@ export function initBilling(): Promise<AnyStore | null> {
 
       await store.initialize([cdv.Platform.GOOGLE_PLAY]);
       await store.update();
+      billingLog("info", "init complete", { attemptId });
       return store;
     } catch (e) {
-      console.warn("billing init failed", e);
+      billingLog("error", "init failed", { attemptId, error: serializeBillingError(e) });
+      _initPromise = null;
       return null;
     }
   })();
+  _initPromise = _initPromise.then(
+    (store) => {
+      if (!store) _initPromise = null;
+      return store;
+    },
+    (error) => {
+      _initPromise = null;
+      throw error;
+    },
+  );
   return _initPromise;
 }
 
@@ -218,13 +319,27 @@ export function onPurchaseApproved(handler: (r: PurchaseReceipt) => void): () =>
  * defaults whenever the plugin isn't running (web preview, plugin missing,
  * or product not yet approved by Google).
  */
-export async function queryProductDetails(): Promise<ProductPrice[]> {
+export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult> {
+  const attemptId = createBillingAttemptId("prices");
+  const nativeAvailable = isNativeBillingAvailable();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pluginAvailable = typeof window !== "undefined" && !!(window as any).CdvPurchase?.store;
+  billingLog("info", "price fetch start", { attemptId, nativeAvailable, pluginAvailable });
   const store = await initBilling();
-  if (!store) return fallbackPrices();
+  if (!store) {
+    const reason = nativeAvailable ? "STORE_UNAVAILABLE" : "NOT_ANDROID";
+    billingLog("warn", "price fetch fallback: store unavailable", { attemptId, reason, nativeAvailable, pluginAvailable });
+    return { prices: fallbackPrices(), fallback: true, stale: false, error: reason, attemptId, nativeAvailable, pluginAvailable };
+  }
   try {
     // Force a fresh fetch from Google Play so we always reflect the latest
     // Play Console prices (not a stale plugin cache). Safe to call often.
-    try { await store.update(); } catch {}
+    try {
+      await store.update();
+      billingLog("info", "store.update complete", { attemptId });
+    } catch (updateError) {
+      billingLog("warn", "store.update failed, reading current store cache", { attemptId, error: serializeBillingError(updateError) });
+    }
 
     // Pull a localized price string from whichever shape the plugin exposes
     // for a given product type. Subscriptions usually expose
@@ -236,15 +351,27 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
     const readPrice = (product: any, offer?: any): { price?: string; currency?: string } => {
       const phase = offer?.pricingPhases?.[0];
       if (phase?.price) return { price: phase.price, currency: phase.currency };
+      if (phase?.formattedPrice) return { price: phase.formattedPrice, currency: phase.priceCurrencyCode ?? phase.currency };
       if (offer?.price) return { price: offer.price, currency: offer.currency };
       if (offer?.formattedPrice) return { price: offer.formattedPrice, currency: offer.priceCurrencyCode };
       const p = product?.pricing;
       if (p?.price) return { price: p.price, currency: p.currency };
+      if (p?.formattedPrice) return { price: p.formattedPrice, currency: p.priceCurrencyCode ?? p.currency };
+      if (product?.price) return { price: product.price, currency: product.currency };
+      if (product?.formattedPrice) return { price: product.formattedPrice, currency: product.priceCurrencyCode };
       return {};
     };
 
     const product = store.get(SUBSCRIPTION_ID);
+    billingLog("info", "product snapshots after update", {
+      attemptId,
+      pro: compactProductSnapshot(product),
+      lifetime: compactProductSnapshot(store.get(LIFETIME_PRODUCT_ID)),
+      starterMonthly: compactProductSnapshot(store.get(STARTER_PRODUCT_IDS.monthly)),
+      starterAnnual: compactProductSnapshot(store.get(STARTER_PRODUCT_IDS.annual)),
+    });
     const out: ProductPrice[] = [];
+    let stale = false;
     for (const offer of product?.offers ?? []) {
       // Match the Play Console base plan id to our local BillingPlan key.
       const offerId: string | undefined = offer.id || offer.basePlanId;
@@ -253,7 +380,10 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
       else if (offerId?.includes(BASE_PLAN_IDS.annual)) plan = "annual";
       if (!plan) continue;
       const { price, currency } = readPrice(product, offer);
-      if (!price) continue;
+      if (!price) {
+        billingLog("warn", "missing pro offer price", { attemptId, offer: compactOfferSnapshot(offer) });
+        continue;
+      }
       out.push({
         plan,
         formattedPrice: price,
@@ -266,11 +396,21 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
       const lifetimeOffer = lifetime?.offers?.[0];
       const { price, currency } = readPrice(lifetime, lifetimeOffer);
       if (price) {
-        out.push({
-          plan: "lifetime",
-          formattedPrice: price,
-          currency: currency ?? "MYR",
-        });
+        if (isLegacyLifetimePrice(price)) {
+          stale = true;
+          billingLog("warn", "Google Play returned legacy lifetime price; keeping loading state instead of showing stale 1499", {
+            attemptId,
+            productId: LIFETIME_PRODUCT_ID,
+            price,
+            product: compactProductSnapshot(lifetime),
+          });
+        } else {
+          out.push({
+            plan: "lifetime",
+            formattedPrice: price,
+            currency: currency ?? "MYR",
+          });
+        }
       }
     } catch {}
     // Backfill any missing plan with the fallback so the UI never shows blank.
@@ -302,11 +442,19 @@ export async function queryProductDetails(): Promise<ProductPrice[]> {
       } catch {}
       out.push({ plan: key, formattedPrice: STARTER_FALLBACK_PRICES[billing], currency: "MYR" });
     }
-    return out;
+    const hasRealPrice = out.some((p) => p.formattedPrice && p.formattedPrice !== "—");
+    const isFallback = !hasRealPrice;
+    billingLog(isFallback || stale ? "warn" : "info", "price fetch complete", { attemptId, fallback: isFallback, stale, prices: out });
+    return { prices: out, fallback: isFallback, stale, error: stale ? "STALE_LEGACY_PRICE" : undefined, attemptId, nativeAvailable, pluginAvailable };
   } catch (e) {
-    console.warn("queryProductDetails failed", e);
-    return fallbackPrices();
+    billingLog("error", "price fetch failed", { attemptId, error: serializeBillingError(e) });
+    return { prices: fallbackPrices(), fallback: true, stale: false, error: "PRICE_FETCH_FAILED", attemptId, nativeAvailable, pluginAvailable };
   }
+}
+
+export async function queryProductDetails(): Promise<ProductPrice[]> {
+  const result = await queryProductDetailsSafe();
+  return result.prices;
 }
 
 function fallbackPrices(): ProductPrice[] {
