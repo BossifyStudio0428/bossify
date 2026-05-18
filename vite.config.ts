@@ -15,4 +15,27 @@ export default defineLovableConfig({
       },
     },
   },
+  vite: {
+    ssr: {
+      noExternal: ["h3-v2", "h3"],
+    },
+    environments: {
+      server: {
+        build: {
+          rollupOptions: {
+            output: {
+              // Cloudflare Worker has no runtime module resolution — keep
+              // the worker as a single file by disabling code-splitting.
+              inlineDynamicImports: true,
+            },
+          },
+        },
+        resolve: {
+          // h3-v2 is an npm alias (npm:h3@...) that the default SSR
+          // externalizer doesn't bundle into the worker. Force it inline.
+          noExternal: ["h3-v2", "h3"],
+        },
+      },
+    },
+  },
 });
