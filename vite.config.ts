@@ -17,23 +17,20 @@ export default defineLovableConfig({
   },
   vite: {
     ssr: {
-      noExternal: ["h3-v2", "h3"],
+      // Cloudflare Worker has no runtime npm resolution — bundle all
+      // SSR deps into the worker. The package.json uses npm: aliases
+      // (h3-v2, rou3, etc.) that the default externalizer can't resolve
+      // at runtime, so we must inline everything.
+      noExternal: true,
     },
     environments: {
       server: {
         build: {
           rollupOptions: {
             output: {
-              // Cloudflare Worker has no runtime module resolution — keep
-              // the worker as a single file by disabling code-splitting.
               inlineDynamicImports: true,
             },
           },
-        },
-        resolve: {
-          // h3-v2 is an npm alias (npm:h3@...) that the default SSR
-          // externalizer doesn't bundle into the worker. Force it inline.
-          noExternal: ["h3-v2", "h3"],
         },
       },
     },
