@@ -39,96 +39,39 @@ function PlansPage() {
     starter_monthly: STARTER_FALLBACK_PRICES.monthly,
     starter_annual: STARTER_FALLBACK_PRICES.annual,
   });
-  // Loading state for the Google Play price sync. `true` while a fetch is
-  // in flight; flips to `false` once we get a real (non-placeholder) price
-  // back. Drives the "Fetching price…" hint and the Retry button.
-  const [pricesLoading, setPricesLoading] = useState(true);
-  const [priceRetryTick, setPriceRetryTick] = useState(0);
 
-  // Pull each user's locally-formatted price from Google Play (MYR / USD /
-  // INR / IDR / etc.) so the UI matches what the store will charge.
-  const loadPrices = (): Promise<void> => {
-    setPricesLoading(true);
-    return queryProductDetailsSafe()
-      .then((result) => {
-        console.info("[billing] plans price result", result);
-        setStorePrices((prev) => {
-          const next = { ...prev };
-          for (const p of result.prices) next[p.plan] = p.formattedPrice;
-          return next;
-        });
-        // We consider prices "loaded" only if at least one is a real
-        // store-formatted price (not the "—" placeholder).
-        const hasReal = result.prices.some((p) => p.formattedPrice && p.formattedPrice !== "—");
-        const hasMissing = result.prices.some((p) => !p.formattedPrice || p.formattedPrice === "—");
-        if (hasReal && !result.stale) setPricesLoading(false);
-        if (result.nativeAvailable && (result.fallback || result.stale || !hasReal || hasMissing)) setPriceRetryTick((n) => n + 1);
-      })
-      .catch((error) => {
-        console.error("[billing] plans price fetch failed", error);
-        if (isNativeBillingAvailable()) setPriceRetryTick((n) => n + 1);
-      });
-  };
-
+  // Pull locally-formatted prices from Google Play in the background and
+  // overwrite the fallbacks once they arrive. No loading UI — fallback
+  // prices (RM 49 / RM 399 / RM 2,999 / RM 19 / RM 159) render instantly.
   useEffect(() => {
     let cancelled = false;
-    const load = () => { if (!cancelled) void loadPrices(); };
-    // Fetch immediately, then again after the store has had time to finish
-    // its first sync with Google Play (cold start can take a few seconds
-    // before localized prices are available).
+    const load = () => {
+      queryProductDetailsSafe()
+        .then((result) => {
+          if (cancelled) return;
+          setStorePrices((prev) => {
+            const next = { ...prev };
+            for (const p of result.prices) {
+              if (p.formattedPrice && p.formattedPrice !== "—") next[p.plan] = p.formattedPrice;
+            }
+            return next;
+          });
+        })
+        .catch(() => {});
+    };
     load();
-    const t1 = setTimeout(load, 1500);
-    const t2 = setTimeout(load, 4000);
-    // Stop the spinner after a reasonable window even if nothing came back
-    // (e.g. running on web preview / plugin missing) so the Retry button
-    // becomes available instead of spinning forever.
-    const tStop = setTimeout(() => { if (!cancelled) setPricesLoading(false); }, 6000);
-    // Also refresh when the user brings the app back to the foreground —
-    // catches the case where they changed the price in Play Console
-    // moments earlier.
     const onVisible = () => { if (!document.hidden) load(); };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(tStop);
       document.removeEventListener("visibilitychange", onVisible);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const price = storePrices[billing];
   const lifetimePrice = storePrices.lifetime;
   const starterPrice = billing === "monthly" ? storePrices.starter_monthly : storePrices.starter_annual;
   const period = billing === "monthly" ? t("per_month") : t("per_year");
-  // True when a given displayed price is still the "—" placeholder (i.e.
-  // Google Play hasn't returned a real formatted price yet).
-  const isPlaceholder = (p: string) => !p || p === "—";
-  useEffect(() => {
-    if (!priceRetryTick || !isNativeBillingAvailable()) return;
-    const needsPrice = Object.values(storePrices).some((p) => isPlaceholder(p));
-    if (!needsPrice) return;
-    const delay = Math.min(30000, 2500 * priceRetryTick);
-    const retry = setTimeout(() => void loadPrices(), delay);
-    return () => clearTimeout(retry);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [priceRetryTick, storePrices]);
-  const fetchingLabel = t("fetching_price");
-  // Renders price text OR an inline loading pill, so users never see a bare
-  // "—" without explanation.
-  const renderPrice = (p: string, className: string) =>
-    isPlaceholder(p) ? (
-      <span className={`${className} inline-flex items-center gap-1.5 text-muted-foreground`}>
-        <span className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" aria-hidden />
-        <span className="text-sm font-medium">{fetchingLabel}</span>
-      </span>
-    ) : (
-      <span className={className}>{p}</span>
-    );
-  // Button label that swaps the "— price" tail for the loading hint when
-  // the price isn't ready, so CTAs don't read "Upgrade to Pro — —".
-  const buttonPriceTail = (p: string) => (isPlaceholder(p) ? ` — ${fetchingLabel}` : ` — ${p}`);
 
   const freeRows: { ok: boolean; label: string }[] = [
     { ok: true, label: t("free_orders_per_month") },
