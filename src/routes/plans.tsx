@@ -271,6 +271,7 @@ function PlansPage() {
             <p className="text-lg font-bold mt-0.5 flex items-center gap-2">
               {isLifetime ? (<>{t("plan_badge_lifetime")} <Crown className="h-4 w-4 text-amber-500" /></>)
                 : isPro ? (<>{t("pro_plan")} <Sparkles className="h-4 w-4 text-primary" /></>)
+                : isStarter ? (<>{t("starter_plan")} <Rocket className="h-4 w-4 text-sky-500" /></>)
                 : t("free_plan")}
             </p>
           </div>
@@ -278,6 +279,8 @@ function PlansPage() {
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">{t("active_badge")}</span>
           ) : isPro ? (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">{t("active_badge")}</span>
+          ) : isStarter ? (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-700">{t("active_badge")}</span>
           ) : (
             <div className="text-right">
               <p className="text-sm font-bold text-foreground">{ordersUsed} / {FREE_LIMITS.ordersPerMonth}</p>
