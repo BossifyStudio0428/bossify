@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import type { BizType } from "@/lib/businessType";
+import type { Lang } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/services")({ component: ServicesPage });
 
