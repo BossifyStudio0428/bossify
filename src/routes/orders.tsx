@@ -177,6 +177,9 @@ function OrdersPage() {
   const remind = async (o: OrderRow) => {
     if (!o.phone) { alert(t("no_phone_for_wa")); return; }
     if (!user) return;
+    // Open window synchronously inside the user gesture so the browser
+    // popup blocker does not block it after the await below.
+    const win = window.open("", "_blank");
     const { paymentDetails, businessName } = await fetchWAProfile(user.id, lang);
     const msg = renderTemplate(getReminderTemplate(lang, bizType, customReminderTpl), {
       customer_name: o.customer_name, business_name: businessName,
@@ -187,7 +190,8 @@ function OrdersPage() {
     }, lang);
     const cleaned = o.phone.replace(/[^0-9]/g, "");
     const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
+    if (win) win.location.href = url;
+    else window.open(url, "_blank");
   };
 
   const remindAllUnpaid = async () => {
