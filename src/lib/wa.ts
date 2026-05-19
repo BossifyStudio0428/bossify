@@ -1,74 +1,396 @@
 import type { Lang } from "@/contexts/I18nContext";
+import type { BizType } from "@/lib/businessType";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { supabase } from "@/integrations/supabase/client";
 
-// English templates remain the canonical "DEFAULT" exported for the
-// Profile template editor (so existing behaviour is preserved).
-export const DEFAULT_ORDER_TPL =
-  `Hi [customer_name]! 👋\n\n` +
-  `Thank you for your order with Bossify! 🛍️\n\n` +
-  `📋 Order: [code]\n` +
-  `🛒 Product: [product] x[quantity]\n` +
-  `💰 Total: RM [amount]\n` +
-  `💳 Status: [status]\n` +
-  `[notes]\n` +
-  `[payment_details]\n` +
-  `Thank you for supporting our business! 🙏`;
+// ---------------------------------------------------------------------------
+// Templates per business type × language.
+// Variable placeholders use [snake_case]. Unused placeholders are stripped.
+// ---------------------------------------------------------------------------
 
-export const DEFAULT_REMINDER_TPL =
-  `Hi [customer_name]! 👋\n\n` +
-  `Friendly reminder — your order has been waiting for payment for [days_ago] day(s). 😊\n\n` +
-  `📋 Order: [code]\n` +
-  `🛒 Product: [product] x[quantity]\n` +
-  `💰 Amount due: RM [amount]\n\n` +
-  `[payment_details]` +
-  `Please make payment at your earliest convenience. Thank you! 🙏`;
+type TplMap = Record<BizType, Record<Lang, string>>;
 
-const ORDER_TPL_BY_LANG: Record<Lang, string> = {
-  en: DEFAULT_ORDER_TPL,
-  ms:
-    `Hai [customer_name]! 👋\n\n` +
-    `Terima kasih atas pesanan anda! 🛍️\n\n` +
-    `📋 Pesanan: [code]\n` +
-    `🛒 Produk: [product] x[quantity]\n` +
-    `💰 Jumlah: RM [amount]\n` +
-    `💳 Status: [status]\n` +
-    `[notes]\n` +
-    `[payment_details]\n` +
-    `Terima kasih kerana menyokong perniagaan kami! 🙏`,
-  zh:
-    `你好 [customer_name]！👋\n\n` +
-    `感谢您的订单！🛍️\n\n` +
-    `📋 订单：[code]\n` +
-    `🛒 产品：[product] x[quantity]\n` +
-    `💰 总额：RM [amount]\n` +
-    `💳 状态：[status]\n` +
-    `[notes]\n` +
-    `[payment_details]\n` +
-    `感谢您支持我们的生意！🙏`,
+const ORDER_TPL: TplMap = {
+  retail: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `Thank you for your order with [business_name]!\n\n` +
+      `📋 Order: [code]\n` +
+      `📦 Product: [product] x[quantity]\n` +
+      `💰 Total: RM [amount]\n` +
+      `💳 Status: [status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `Thank you for supporting our business! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Terima kasih atas pesanan anda dengan [business_name]!\n\n` +
+      `📋 Pesanan: [code]\n` +
+      `📦 Produk: [product] x[quantity]\n` +
+      `💰 Jumlah: RM [amount]\n` +
+      `💳 Status: [status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `Terima kasih kerana menyokong perniagaan kami! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `感谢您在 [business_name] 下单！\n\n` +
+      `📋 订单：[code]\n` +
+      `📦 商品：[product] x[quantity]\n` +
+      `💰 总额：RM [amount]\n` +
+      `💳 状态：[status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `感谢您的支持！🙏`,
+  },
+  fnb: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `Thank you for your order with [business_name]!\n\n` +
+      `📋 Order: [code]\n` +
+      `🍱 Item: [product] x[quantity]\n` +
+      `💰 Total: RM [amount]\n` +
+      `💳 Status: [status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `Thank you for supporting our business! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Terima kasih atas pesanan anda dengan [business_name]!\n\n` +
+      `📋 Pesanan: [code]\n` +
+      `🍱 Menu: [product] x[quantity]\n` +
+      `💰 Jumlah: RM [amount]\n` +
+      `💳 Status: [status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `Terima kasih kerana menyokong perniagaan kami! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `感谢您在 [business_name] 下单！\n\n` +
+      `📋 订单：[code]\n` +
+      `🍱 餐点：[product] x[quantity]\n` +
+      `💰 总额：RM [amount]\n` +
+      `💳 状态：[status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `感谢您的支持！🙏`,
+  },
+  education: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `Thank you for trusting [business_name]!\n\n` +
+      `📋 Case: [code]\n` +
+      `🎓 Service: [product]\n` +
+      `💰 Fee: RM [amount]\n` +
+      `💳 Status: [status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `We will assist you to the best of our ability! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Terima kasih atas kepercayaan anda kepada [business_name]!\n\n` +
+      `📋 Kes: [code]\n` +
+      `🎓 Perkhidmatan: [product]\n` +
+      `💰 Yuran: RM [amount]\n` +
+      `💳 Status: [status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `Kami akan membantu anda sebaik mungkin! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `感谢您信任 [business_name]！\n\n` +
+      `📋 案例：[code]\n` +
+      `🎓 服务：[product]\n` +
+      `💰 费用：RM [amount]\n` +
+      `💳 状态：[status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `我们将竭诚为您服务！🙏`,
+  },
+  beauty: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `Your appointment is confirmed! 💄\n\n` +
+      `📋 Appointment: [code]\n` +
+      `✨ Service: [product]\n` +
+      `[date_time_line]` +
+      `💰 Price: RM [amount]\n` +
+      `💳 Status: [status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `See you soon! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Temujanji anda telah disahkan! 💄\n\n` +
+      `📋 Temujanji: [code]\n` +
+      `✨ Perkhidmatan: [product]\n` +
+      `[date_time_line]` +
+      `💰 Harga: RM [amount]\n` +
+      `💳 Status: [status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `Jumpa anda nanti! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `您的预约已确认！💄\n\n` +
+      `📋 预约：[code]\n` +
+      `✨ 服务：[product]\n` +
+      `[date_time_line]` +
+      `💰 价格：RM [amount]\n` +
+      `💳 状态：[status]\n` +
+      `[notes]` +
+      `[payment_details]` +
+      `期待您的光临！🙏`,
+  },
+  property: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `Thank you for your interest in [business_name]!\n\n` +
+      `📋 Reference: [code]\n` +
+      `🏠 Package: [product]\n` +
+      `💰 Budget: RM [amount]\n` +
+      `[follow_up_line]` +
+      `[notes]` +
+      `[payment_details]` +
+      `We will contact you soon! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Terima kasih atas minat anda dengan [business_name]!\n\n` +
+      `📋 Rujukan: [code]\n` +
+      `🏠 Pakej: [product]\n` +
+      `💰 Anggaran: RM [amount]\n` +
+      `[follow_up_line]` +
+      `[notes]` +
+      `[payment_details]` +
+      `Kami akan menghubungi anda tidak lama lagi! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `感谢您对 [business_name] 的关注！\n\n` +
+      `📋 参考编号：[code]\n` +
+      `🏠 配套：[product]\n` +
+      `💰 预算：RM [amount]\n` +
+      `[follow_up_line]` +
+      `[notes]` +
+      `[payment_details]` +
+      `我们将尽快与您联系！🙏`,
+  },
+  freelance: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `Your project has been received! 💼\n\n` +
+      `📋 Project: [code]\n` +
+      `🔧 Service: [product]\n` +
+      `💰 Amount: RM [amount]\n` +
+      `💳 Status: [status]\n` +
+      `[deadline_line]` +
+      `[notes]` +
+      `[payment_details]` +
+      `Thank you for trusting us! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Projek anda telah diterima! 💼\n\n` +
+      `📋 Projek: [code]\n` +
+      `🔧 Perkhidmatan: [product]\n` +
+      `💰 Jumlah: RM [amount]\n` +
+      `💳 Status: [status]\n` +
+      `[deadline_line]` +
+      `[notes]` +
+      `[payment_details]` +
+      `Terima kasih atas kepercayaan anda! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `您的项目已收到！💼\n\n` +
+      `📋 项目：[code]\n` +
+      `🔧 服务：[product]\n` +
+      `💰 金额：RM [amount]\n` +
+      `💳 状态：[status]\n` +
+      `[deadline_line]` +
+      `[notes]` +
+      `[payment_details]` +
+      `感谢您的信任！🙏`,
+  },
 };
 
-const REMINDER_TPL_BY_LANG: Record<Lang, string> = {
-  en: DEFAULT_REMINDER_TPL,
-  ms:
-    `Hai [customer_name]! 👋\n\n` +
-    `Peringatan mesra — pesanan anda telah menunggu pembayaran selama [days_ago] hari. 😊\n\n` +
-    `📋 Pesanan: [code]\n` +
-    `🛒 Produk: [product] x[quantity]\n` +
-    `💰 Jumlah perlu dibayar: RM [amount]\n\n` +
-    `[payment_details]` +
-    `Sila buat pembayaran secepat mungkin. Terima kasih! 🙏`,
-  zh:
-    `你好 [customer_name]！👋\n\n` +
-    `温馨提醒 — 您的订单已等待付款 [days_ago] 天。😊\n\n` +
-    `📋 订单：[code]\n` +
-    `🛒 产品：[product] x[quantity]\n` +
-    `💰 待付金额：RM [amount]\n\n` +
-    `[payment_details]` +
-    `请尽快完成付款。谢谢！🙏`,
+const REMINDER_TPL: TplMap = {
+  retail: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `This is a payment reminder for your order.\n\n` +
+      `📋 Order: [code]\n` +
+      `📦 Product: [product]\n` +
+      `💰 Amount Due: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Please make payment at your earliest convenience. Thank you! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Ini adalah peringatan pembayaran untuk pesanan anda.\n\n` +
+      `📋 Pesanan: [code]\n` +
+      `📦 Produk: [product]\n` +
+      `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Sila buat pembayaran secepat mungkin. Terima kasih! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `这是您订单的付款提醒。\n\n` +
+      `📋 订单：[code]\n` +
+      `📦 商品：[product]\n` +
+      `💰 待付金额：RM [amount]\n\n` +
+      `[payment_details]` +
+      `请尽快完成付款，谢谢！🙏`,
+  },
+  fnb: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `This is a payment reminder for your order.\n\n` +
+      `📋 Order: [code]\n` +
+      `🍱 Item: [product]\n` +
+      `💰 Amount Due: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Please make payment at your earliest convenience. Thank you! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Ini adalah peringatan pembayaran untuk pesanan anda.\n\n` +
+      `📋 Pesanan: [code]\n` +
+      `🍱 Menu: [product]\n` +
+      `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Sila buat pembayaran secepat mungkin. Terima kasih! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `这是您订单的付款提醒。\n\n` +
+      `📋 订单：[code]\n` +
+      `🍱 餐点：[product]\n` +
+      `💰 待付金额：RM [amount]\n\n` +
+      `[payment_details]` +
+      `请尽快完成付款，谢谢！🙏`,
+  },
+  education: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `Reminder for your outstanding consultation fee.\n\n` +
+      `📋 Case: [code]\n` +
+      `🎓 Service: [product]\n` +
+      `💰 Outstanding Fee: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Please make payment. Thank you! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Peringatan pembayaran yuran perundingan anda.\n\n` +
+      `📋 Kes: [code]\n` +
+      `🎓 Perkhidmatan: [product]\n` +
+      `💰 Yuran Belum Dibayar: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Sila buat pembayaran. Terima kasih! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `您的咨询费用付款提醒。\n\n` +
+      `📋 案例：[code]\n` +
+      `🎓 服务：[product]\n` +
+      `💰 未付费用：RM [amount]\n\n` +
+      `[payment_details]` +
+      `请尽快付款，谢谢！🙏`,
+  },
+  beauty: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `Reminder for your outstanding payment.\n\n` +
+      `📋 Appointment: [code]\n` +
+      `✨ Service: [product]\n` +
+      `💰 Amount Due: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Please make payment. Thank you! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Peringatan pembayaran tertunggak anda.\n\n` +
+      `📋 Temujanji: [code]\n` +
+      `✨ Perkhidmatan: [product]\n` +
+      `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Sila buat pembayaran. Terima kasih! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `您的未付款项提醒。\n\n` +
+      `📋 预约：[code]\n` +
+      `✨ 服务：[product]\n` +
+      `💰 待付金额：RM [amount]\n\n` +
+      `[payment_details]` +
+      `请尽快付款，谢谢！🙏`,
+  },
+  property: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `Reminder for your outstanding payment.\n\n` +
+      `📋 Reference: [code]\n` +
+      `🏠 Package: [product]\n` +
+      `💰 Amount Due: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Please make payment. Thank you! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Peringatan pembayaran tertunggak anda.\n\n` +
+      `📋 Rujukan: [code]\n` +
+      `🏠 Pakej: [product]\n` +
+      `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Sila buat pembayaran. Terima kasih! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `您的未付款项提醒。\n\n` +
+      `📋 参考编号：[code]\n` +
+      `🏠 配套：[product]\n` +
+      `💰 待付金额：RM [amount]\n\n` +
+      `[payment_details]` +
+      `请尽快付款，谢谢！🙏`,
+  },
+  freelance: {
+    en:
+      `Hi [customer_name]! 👋\n\n` +
+      `Reminder for your outstanding project payment.\n\n` +
+      `📋 Project: [code]\n` +
+      `🔧 Service: [product]\n` +
+      `💰 Amount Due: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Please make payment. Thank you! 🙏`,
+    ms:
+      `Hi [customer_name]! 👋\n\n` +
+      `Peringatan pembayaran projek tertunggak anda.\n\n` +
+      `📋 Projek: [code]\n` +
+      `🔧 Perkhidmatan: [product]\n` +
+      `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
+      `[payment_details]` +
+      `Sila buat pembayaran. Terima kasih! 🙏`,
+    zh:
+      `你好 [customer_name]！👋\n\n` +
+      `您的项目未付款项提醒。\n\n` +
+      `📋 项目：[code]\n` +
+      `🔧 服务：[product]\n` +
+      `💰 待付金额：RM [amount]\n\n` +
+      `[payment_details]` +
+      `请尽快付款，谢谢！🙏`,
+  },
 };
+
+// Retail-EN canonical defaults exported for the Profile template editor.
+export const DEFAULT_ORDER_TPL = ORDER_TPL.retail.en;
+export const DEFAULT_REMINDER_TPL = REMINDER_TPL.retail.en;
 
 const NOTES_LABEL: Record<Lang, string> = { en: "Notes", ms: "Nota", zh: "备注" };
+
+const DATE_TIME_LABEL: Record<Lang, string> = {
+  en: "Date & Time",
+  ms: "Tarikh & Masa",
+  zh: "日期和时间",
+};
+const FOLLOW_UP_LABEL: Record<Lang, string> = {
+  en: "Follow-up",
+  ms: "Susulan",
+  zh: "跟进日期",
+};
+const DEADLINE_LABEL: Record<Lang, string> = {
+  en: "Deadline",
+  ms: "Tarikh Akhir",
+  zh: "截止日期",
+};
 
 const PAYMENT_LABELS: Record<Lang, { header: string; name: string; qr: string }> = {
   en: { header: "Payment Details", name: "Name", qr: "QR Code" },
@@ -129,26 +451,73 @@ export async function fetchFreshPaymentBlock(userId: string, lang: Lang = getAct
   return formatPaymentBlock(methods, lang);
 }
 
+/** Fetch payment block + business name in a single profile read. */
+export async function fetchWAProfile(
+  userId: string,
+  lang: Lang = getActiveLang(),
+): Promise<{ paymentDetails: string; businessName: string }> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select(
+      "business_name,payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url",
+    )
+    .eq("id", userId)
+    .single();
+
+  const businessName = profile?.business_name?.trim() || "us";
+  if (!profile?.payment_method_1_type) return { paymentDetails: "", businessName };
+
+  const methods: PaymentMethod[] = [{
+    type: profile.payment_method_1_type,
+    number: profile.payment_method_1_number,
+    name: profile.payment_method_1_name,
+    qr_url: profile.payment_method_1_qr_url ?? null,
+  }];
+  if (profile.payment_method_2_type) {
+    methods.push({
+      type: profile.payment_method_2_type,
+      number: profile.payment_method_2_number,
+      name: profile.payment_method_2_name,
+      qr_url: profile.payment_method_2_qr_url ?? null,
+    });
+  }
+  return { paymentDetails: formatPaymentBlock(methods, lang), businessName };
+}
+
 export function getActiveLang(): Lang {
   if (typeof window === "undefined") return "en";
   const v = safeLocalStorage.getItem("bossify_lang") as Lang | null;
   return v === "en" || v === "ms" || v === "zh" ? v : "en";
 }
 
-export function getOrderTemplate(lang: Lang, customTpl?: string | null): string {
-  // Use custom template only when user has actually customised it
-  // (otherwise we'd lock everyone into English).
-  if (customTpl && customTpl.trim() && customTpl !== DEFAULT_ORDER_TPL) return customTpl;
-  return ORDER_TPL_BY_LANG[lang] ?? DEFAULT_ORDER_TPL;
+function resolveBiz(biz: BizType | null | undefined): BizType {
+  return (biz ?? "retail") as BizType;
 }
 
-export function getReminderTemplate(lang: Lang, customTpl?: string | null): string {
+export function getOrderTemplate(
+  lang: Lang,
+  biz: BizType | null | undefined,
+  customTpl?: string | null,
+): string {
+  // Custom template only when actually customised away from English retail default.
+  if (customTpl && customTpl.trim() && customTpl !== DEFAULT_ORDER_TPL) return customTpl;
+  const b = resolveBiz(biz);
+  return ORDER_TPL[b][lang] ?? ORDER_TPL.retail.en;
+}
+
+export function getReminderTemplate(
+  lang: Lang,
+  biz: BizType | null | undefined,
+  customTpl?: string | null,
+): string {
   if (customTpl && customTpl.trim() && customTpl !== DEFAULT_REMINDER_TPL) return customTpl;
-  return REMINDER_TPL_BY_LANG[lang] ?? DEFAULT_REMINDER_TPL;
+  const b = resolveBiz(biz);
+  return REMINDER_TPL[b][lang] ?? REMINDER_TPL.retail.en;
 }
 
 export type TplVars = {
   customer_name?: string;
+  business_name?: string;
   code?: string;
   product?: string;
   quantity?: string | number;
@@ -157,23 +526,44 @@ export type TplVars = {
   notes?: string;
   days_ago?: string | number;
   payment_details?: string;
+  date_time?: string;
+  follow_up_date?: string;
+  deadline?: string;
 };
 
 export function renderTemplate(tpl: string, vars: TplVars, lang: Lang = getActiveLang()): string {
   let out = tpl;
+
+  // notes line
   const noteLine = vars.notes ? `📝 ${NOTES_LABEL[lang]}: ${vars.notes}\n` : "";
   out = out.replace(/\[notes if not empty:[^\]]*\]/g, noteLine);
   out = out.replace(/\[notes\]/g, noteLine);
+
+  // optional extras (composed lines so they cleanly disappear when empty)
+  const dateTimeLine = vars.date_time ? `📅 ${DATE_TIME_LABEL[lang]}: ${vars.date_time}\n` : "";
+  const followUpLine = vars.follow_up_date ? `📅 ${FOLLOW_UP_LABEL[lang]}: ${vars.follow_up_date}\n` : "";
+  const deadlineLine = vars.deadline ? `📅 ${DEADLINE_LABEL[lang]}: ${vars.deadline}\n` : "";
+  out = out.replace(/\[date_time_line\]/g, dateTimeLine);
+  out = out.replace(/\[follow_up_line\]/g, followUpLine);
+  out = out.replace(/\[deadline_line\]/g, deadlineLine);
+
+  // payment details (insert as-is; templates already include the placeholder)
   const payBlock = vars.payment_details ?? "";
   if (out.includes("[payment_details]")) {
-    out = out.replace(/\[payment_details\]/g, payBlock);
+    out = out.replace(/\[payment_details\]/g, payBlock ? `\n${payBlock}` : "");
   } else if (payBlock) {
     out = `${out.trim()}\n\n${payBlock}`;
   }
+
+  // remaining scalar vars
   for (const [k, v] of Object.entries(vars)) {
-    if (k === "notes" || k === "payment_details") continue;
+    if (k === "notes" || k === "payment_details" || k === "date_time" || k === "follow_up_date" || k === "deadline") continue;
     out = out.replace(new RegExp(`\\[${k}\\]`, "g"), String(v ?? ""));
   }
+
+  // strip any leftover unknown [placeholders] so users never see raw tokens
+  out = out.replace(/\[[a-z_]+\]/gi, "");
+
   return out.replace(/\n{3,}/g, "\n\n").trim();
 }
 
@@ -184,6 +574,5 @@ export function buildWhatsAppLink(phone: string, message: string) {
 
 export function daysSince(iso: string): number {
   const ms = Date.now() - new Date(iso).getTime();
-  // Always at least 1 day so reminder messages don't read "0 day(s)".
   return Math.max(1, Math.ceil(ms / 86400000));
 }
