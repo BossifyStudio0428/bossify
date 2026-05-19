@@ -26,10 +26,12 @@ export function BusinessTypeProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     const { data } = await supabase
       .from("profiles")
-      .select("business_category")
+      .select("business_category,business_type")
       .eq("id", user.id)
       .maybeSingle();
-    setTypeState(((data as any)?.business_category ?? null) as BizType | null);
+    const cat = (data as any)?.business_category ?? null;
+    const bt = (data as any)?.business_type ?? null;
+    setTypeState((cat || bt) as BizType | null);
     setLoading(false);
   };
 
@@ -41,7 +43,7 @@ export function BusinessTypeProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase
       .from("profiles")
       .upsert(
-        { id: user.id, business_category: t } as any,
+        { id: user.id, business_category: t, business_type: t } as any,
         { onConflict: "id" },
       );
     if (error) {
