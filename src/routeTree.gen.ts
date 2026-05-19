@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UniversityInsightsRouteImport } from './routes/university-insights'
 import { Route as SplashRouteImport } from './routes/splash'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ReportsRouteImport } from './routes/reports'
@@ -28,6 +29,7 @@ import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as ImportOrdersRouteImport } from './routes/import-orders'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as ClientsCompareRouteImport } from './routes/clients-compare'
 import { Route as BusinessTypeRouteImport } from './routes/business-type'
 import { Route as BusinessProfileRouteImport } from './routes/business-profile'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -39,6 +41,11 @@ import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-passwo
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 
+const UniversityInsightsRoute = UniversityInsightsRouteImport.update({
+  id: '/university-insights',
+  path: '/university-insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SplashRoute = SplashRouteImport.update({
   id: '/splash',
   path: '/splash',
@@ -134,6 +141,11 @@ const CustomersRoute = CustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClientsCompareRoute = ClientsCompareRouteImport.update({
+  id: '/clients-compare',
+  path: '/clients-compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BusinessTypeRoute = BusinessTypeRouteImport.update({
   id: '/business-type',
   path: '/business-type',
@@ -192,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
+  '/clients-compare': typeof ClientsCompareRoute
   '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
@@ -211,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/splash': typeof SplashRoute
+  '/university-insights': typeof UniversityInsightsRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -223,6 +237,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
+  '/clients-compare': typeof ClientsCompareRoute
   '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
@@ -242,6 +257,7 @@ export interface FileRoutesByTo {
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/splash': typeof SplashRoute
+  '/university-insights': typeof UniversityInsightsRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -255,6 +271,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
+  '/clients-compare': typeof ClientsCompareRoute
   '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
@@ -274,6 +291,7 @@ export interface FileRoutesById {
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/splash': typeof SplashRoute
+  '/university-insights': typeof UniversityInsightsRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -288,6 +306,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/business-profile'
     | '/business-type'
+    | '/clients-compare'
     | '/customers'
     | '/forgot-password'
     | '/import-orders'
@@ -307,6 +326,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/search'
     | '/splash'
+    | '/university-insights'
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -319,6 +339,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/business-profile'
     | '/business-type'
+    | '/clients-compare'
     | '/customers'
     | '/forgot-password'
     | '/import-orders'
@@ -338,6 +359,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/search'
     | '/splash'
+    | '/university-insights'
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -350,6 +372,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/business-profile'
     | '/business-type'
+    | '/clients-compare'
     | '/customers'
     | '/forgot-password'
     | '/import-orders'
@@ -369,6 +392,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/search'
     | '/splash'
+    | '/university-insights'
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -382,6 +406,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BusinessProfileRoute: typeof BusinessProfileRoute
   BusinessTypeRoute: typeof BusinessTypeRoute
+  ClientsCompareRoute: typeof ClientsCompareRoute
   CustomersRoute: typeof CustomersRoute
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
   ImportOrdersRoute: typeof ImportOrdersRoute
@@ -401,11 +426,19 @@ export interface RootRouteChildren {
   ReportsRoute: typeof ReportsRoute
   SearchRoute: typeof SearchRoute
   SplashRoute: typeof SplashRoute
+  UniversityInsightsRoute: typeof UniversityInsightsRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/university-insights': {
+      id: '/university-insights'
+      path: '/university-insights'
+      fullPath: '/university-insights'
+      preLoaderRoute: typeof UniversityInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/splash': {
       id: '/splash'
       path: '/splash'
@@ -539,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clients-compare': {
+      id: '/clients-compare'
+      path: '/clients-compare'
+      fullPath: '/clients-compare'
+      preLoaderRoute: typeof ClientsCompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/business-type': {
       id: '/business-type'
       path: '/business-type'
@@ -644,6 +684,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BusinessProfileRoute: BusinessProfileRoute,
   BusinessTypeRoute: BusinessTypeRoute,
+  ClientsCompareRoute: ClientsCompareRoute,
   CustomersRoute: CustomersRoute,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
   ImportOrdersRoute: ImportOrdersRoute,
@@ -663,8 +704,18 @@ const rootRouteChildren: RootRouteChildren = {
   ReportsRoute: ReportsRoute,
   SearchRoute: SearchRoute,
   SplashRoute: SplashRoute,
+  UniversityInsightsRoute: UniversityInsightsRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
