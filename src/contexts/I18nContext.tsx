@@ -2015,6 +2015,18 @@ const dict = {
     save_appointment: "保存预约",
     save_lead: "保存线索",
     save_project: "保存项目",
+    sec_recent_cases: "最新案例",
+    sec_recent_appointments: "最新预约",
+    sec_recent_leads: "最新潜在客户",
+    sec_recent_projects: "最新项目",
+    sec_latest_clients: "最新客户",
+    sec_followups_today: "今日跟进",
+    view_case_reports: "查看案例报告",
+    view_appointment_reports: "查看预约报告",
+    view_lead_reports: "查看潜在客户报告",
+    view_project_reports: "查看项目报告",
+    client_analytics: "客户分析",
+    followup_analytics: "跟进分析",
   },
 } as const;
 
