@@ -72,6 +72,16 @@ function CustomerDetail() {
   };
   useEffect(() => { load(); }, [customerId]);
 
+  useEffect(() => {
+    if (loading) return;
+    const h = typeof window !== "undefined" ? window.location.hash : "";
+    if (!h) return;
+    const id = h.replace("#", "");
+    setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }, [loading]);
+
   const handleDelete = async () => {
     if (!customer) return;
     const { error } = await supabase.from("customers").delete().eq("id", customer.id);
@@ -205,8 +215,12 @@ function CustomerDetail() {
       {bizType === "education" && (
         <>
           <EducationDetailsForm clientId={customer.id} userId={customer.user_id} />
-          <FollowupPipeline clientId={customer.id} userId={customer.user_id} />
-          <AdditionalServices clientId={customer.id} userId={customer.user_id} />
+          <div id="pipeline" className="scroll-mt-16">
+            <FollowupPipeline clientId={customer.id} userId={customer.user_id} />
+          </div>
+          <div id="services" className="scroll-mt-16">
+            <AdditionalServices clientId={customer.id} userId={customer.user_id} />
+          </div>
         </>
       )}
 
