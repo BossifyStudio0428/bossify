@@ -223,7 +223,7 @@ function Onboarding() {
             qIndex={step - 1}
             question={QUESTIONS[step - 1]}
             value={answers[QUESTIONS[step - 1].key]}
-            onSelect={(v) => select(QUESTIONS[step - 1].key, v)}
+            onSelect={(v, bizKey) => select(QUESTIONS[step - 1].key, v, bizKey)}
             onBack={goBack}
             onContinue={() => {
               if (step === 7) {
