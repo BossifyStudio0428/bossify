@@ -65,6 +65,10 @@ function OrdersPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [phoneSheet, setPhoneSheet] = useState<{ phone: string; name: string } | null>(null);
+  const [waProfile, setWaProfile] = useState<{ paymentDetails: string; businessName: string }>({
+    paymentDetails: "",
+    businessName: "us",
+  });
 
   useEffect(() => { setHydrated(true); }, []);
 
@@ -95,6 +99,18 @@ function OrdersPage() {
   }, [user?.id]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!user) {
+      setWaProfile({ paymentDetails: "", businessName: "us" });
+      return;
+    }
+    let cancelled = false;
+    fetchWAProfile(user.id, lang).then((profile) => {
+      if (!cancelled) setWaProfile(profile);
+    });
+    return () => { cancelled = true; };
+  }, [user?.id, lang]);
 
   // Re-fetch whenever the page/tab regains focus so the list never shows
   // stale local state (e.g. after a delete from another device).
@@ -174,24 +190,19 @@ function OrdersPage() {
     }
   };
 
-  const remind = async (o: OrderRow) => {
+  const remind = (o: OrderRow) => {
     if (!o.phone) { alert(t("no_phone_for_wa")); return; }
     if (!user) return;
-    // Open window synchronously inside the user gesture so the browser
-    // popup blocker does not block it after the await below.
-    const win = window.open("", "_blank");
-    const { paymentDetails, businessName } = await fetchWAProfile(user.id, lang);
     const msg = renderTemplate(getReminderTemplate(lang, bizType, customReminderTpl), {
-      customer_name: o.customer_name, business_name: businessName,
+      customer_name: o.customer_name, business_name: waProfile.businessName,
       code: o.code, product: o.product,
       quantity: o.quantity, amount: Number(o.amount).toFixed(2),
       status: o.status, days_ago: daysSince(o.created_at),
-      payment_details: paymentDetails,
+      payment_details: waProfile.paymentDetails,
     }, lang);
     const cleaned = o.phone.replace(/[^0-9]/g, "");
     const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`;
-    if (win) win.location.href = url;
-    else window.open(url, "_blank");
+    window.open(url, "_blank");
   };
 
   const remindAllUnpaid = async () => {
