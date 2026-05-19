@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.send_followup_reminders() FROM PUBLIC, anon, authenticated;
