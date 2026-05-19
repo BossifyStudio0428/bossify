@@ -24,7 +24,7 @@ type Sheet =
   | { kind: "delete"; item: Service };
 
 function ServicesPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType } = useBusinessType();
   const isPackages = bizType === "property";
@@ -84,7 +84,7 @@ function ServicesPage() {
           </div>
         )}
         {!loading && items.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10">{t(emptyKey)}</p>
+          <EmptyState bizType={bizType} lang={lang} onAdd={() => setSheet({ kind: "form" })} addLabel={t(addKey)} />
         )}
         {!loading && items.map((it) => (
           <article key={it.id} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
