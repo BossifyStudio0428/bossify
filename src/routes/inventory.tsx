@@ -9,6 +9,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { notifySituation } from "@/lib/autoNotify";
+import { getNotifMessage } from "@/lib/notifMessages";
 
 export const Route = createFileRoute("/inventory")({ component: InventoryPage });
 
@@ -22,7 +23,7 @@ type Sheet =
   | { kind: "delete"; item: InventoryRow };
 
 function InventoryPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { type: bizType } = useBusinessType();
   const { user } = useAuth();
   const { hasFullAccess, showUpgrade, productsUsed, productsLimit } = useSubscription();
@@ -59,10 +60,14 @@ function InventoryPage() {
     } else {
       toast.success(t("stock_updated"));
       if (next <= 5 && next < it.stock) {
+        const m = getNotifMessage("low_stock", bizType, lang, {
+          product: it.name,
+          quantity: next,
+        });
         notifySituation({
           kind: "low_stock",
-          title: next === 0 ? "Out of Stock ❌" : "Low Stock Alert 📦",
-          body: next === 0 ? `${it.name} is sold out. Restock now!` : `${it.name} is running low. Only ${next} left!`,
+          title: m.title,
+          body: m.body,
           link: "/inventory",
           prefKey: "notif_inventory",
           dedupeKey: `stock_${it.id}_${next}`,

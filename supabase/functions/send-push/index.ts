@@ -207,8 +207,77 @@ type Kind =
   | "morning_summary"
   | "unpaid_reminder"
   | "closing_report"
+  | "follow_up_reminder"
   | "custom"
   | "register_device";
+
+type Lang = "en" | "ms" | "zh";
+type Biz = "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
+
+function fill(tpl: string, vars: Record<string, string | number>) {
+  return tpl.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
+}
+
+// ---- Localized templates (must mirror src/lib/notifMessages.ts) ----
+const T_MORNING: Record<string, Record<Lang, { title: string; body: string }>> = {
+  default: {
+    en: { title: "Good morning, Boss! ☀️", body: "☀️ Yesterday: {count} orders, RM {revenue}" },
+    ms: { title: "Selamat pagi, Boss! ☀️", body: "☀️ Semalam: {count} pesanan, RM {revenue}" },
+    zh: { title: "早安，老板！☀️", body: "☀️ 昨日：{count} 个订单，RM {revenue}" },
+  },
+  education: {
+    en: { title: "Good morning, Boss! ☀️", body: "☀️ Yesterday: {count} cases, RM {revenue}" },
+    ms: { title: "Selamat pagi, Boss! ☀️", body: "☀️ Semalam: {count} kes, RM {revenue}" },
+    zh: { title: "早安，老板！☀️", body: "☀️ 昨日：{count} 个案例，RM {revenue}" },
+  },
+  beauty: {
+    en: { title: "Good morning, Boss! ☀️", body: "☀️ Yesterday: {count} appointments, RM {revenue}" },
+    ms: { title: "Selamat pagi, Boss! ☀️", body: "☀️ Semalam: {count} temujanji, RM {revenue}" },
+    zh: { title: "早安，老板！☀️", body: "☀️ 昨日：{count} 个预约，RM {revenue}" },
+  },
+  freelance: {
+    en: { title: "Good morning, Boss! ☀️", body: "☀️ Yesterday: {count} projects, RM {revenue}" },
+    ms: { title: "Selamat pagi, Boss! ☀️", body: "☀️ Semalam: {count} projek, RM {revenue}" },
+    zh: { title: "早安，老板！☀️", body: "☀️ 昨日：{count} 个项目，RM {revenue}" },
+  },
+};
+const T_CLOSING: Record<string, Record<Lang, { title: string; body: string }>> = {
+  default: {
+    en: { title: "Closing Report 🌙", body: "🌙 Today: {count} orders, RM {revenue}" },
+    ms: { title: "Laporan Penutup 🌙", body: "🌙 Hari ini: {count} pesanan, RM {revenue}" },
+    zh: { title: "今日总结 🌙", body: "🌙 今日：{count} 个订单，RM {revenue}" },
+  },
+  education: {
+    en: { title: "Closing Report 🌙", body: "🌙 Today: {count} new cases, RM {revenue}" },
+    ms: { title: "Laporan Penutup 🌙", body: "🌙 Hari ini: {count} kes baru, RM {revenue}" },
+    zh: { title: "今日总结 🌙", body: "🌙 今日：{count} 个新案例，RM {revenue}" },
+  },
+  beauty: {
+    en: { title: "Closing Report 🌙", body: "🌙 Today: {count} appointments, RM {revenue}" },
+    ms: { title: "Laporan Penutup 🌙", body: "🌙 Hari ini: {count} temujanji, RM {revenue}" },
+    zh: { title: "今日总结 🌙", body: "🌙 今日：{count} 个预约，RM {revenue}" },
+  },
+  freelance: {
+    en: { title: "Closing Report 🌙", body: "🌙 Today: {count} active projects, RM {revenue}" },
+    ms: { title: "Laporan Penutup 🌙", body: "🌙 Hari ini: {count} projek aktif, RM {revenue}" },
+    zh: { title: "今日总结 🌙", body: "🌙 今日：{count} 个活跃项目，RM {revenue}" },
+  },
+};
+const T_UNPAID_GENERIC: Record<Lang, { title: string; body: string }> = {
+  en: { title: "Payment Reminder ⚠️", body: "⚠️ You have {count} unpaid orders to follow up." },
+  ms: { title: "Peringatan Pembayaran ⚠️", body: "⚠️ Anda ada {count} pesanan belum dibayar." },
+  zh: { title: "付款提醒 ⚠️", body: "⚠️ 您有 {count} 个未付订单需要跟进。" },
+};
+const T_FOLLOWUP: Record<Lang, { title: string; body: string }> = {
+  en: { title: "📅 Follow-up Reminder", body: "📅 You have {count} follow-up(s) due today." },
+  ms: { title: "📅 Peringatan Susulan", body: "📅 Anda ada {count} susulan hari ini." },
+  zh: { title: "📅 跟进提醒", body: "📅 您今天有 {count} 个跟进事项。" },
+};
+
+function pickBiz<T>(pack: Record<string, T>, biz: string | null): T {
+  const b = (biz ?? "retail") as Biz;
+  return pack[b] ?? (b === "fnb" ? pack["retail"] : undefined) ?? pack["default"];
+}
 
 async function resolveContent(
   userId: string,
@@ -218,11 +287,13 @@ async function resolveContent(
   const { data: prefs } = await admin
     .from("profiles")
     .select(
-      "notif_new_order,notif_unpaid,notif_inventory,notif_morning,notif_evening,notif_milestone",
+      "notif_new_order,notif_unpaid,notif_inventory,notif_morning,notif_evening,notif_milestone,business_category,language",
     )
     .eq("id", userId)
     .maybeSingle();
-  const p = (prefs ?? {}) as Record<string, boolean | null>;
+  const p = (prefs ?? {}) as Record<string, any>;
+  const biz = (p.business_category ?? null) as string | null;
+  const lang = (["en", "ms", "zh"].includes(p.language) ? p.language : "en") as Lang;
   const allowed = (() => {
     switch (kind) {
       case "new_order":
@@ -249,13 +320,18 @@ async function resolveContent(
   if (!override.title || !override.body) {
     if (kind === "morning_summary") {
       const since = new Date(Date.now() - 86400000).toISOString();
-      const { count } = await admin
+      const { data: rows } = await admin
         .from("orders")
-        .select("id", { count: "exact", head: true })
+        .select("amount")
         .eq("user_id", userId)
         .gte("created_at", since);
-      title = "Good morning, Boss! ☀️";
-      body = `You had ${count ?? 0} orders yesterday. Let's smash today!`;
+      const revenue = (rows ?? []).reduce(
+        (s: number, r: { amount?: number | null }) => s + Number(r.amount ?? 0),
+        0,
+      );
+      const tpl = pickBiz(T_MORNING, biz)[lang];
+      title = tpl.title;
+      body = fill(tpl.body, { count: rows?.length ?? 0, revenue: revenue.toFixed(2) });
       link = "/";
     } else if (kind === "unpaid_reminder") {
       const { count } = await admin
@@ -263,8 +339,9 @@ async function resolveContent(
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
         .eq("status", "Unpaid");
-      title = "Payment Reminder ⚠️";
-      body = `You have ${count ?? 0} unpaid orders to follow up.`;
+      const tpl = T_UNPAID_GENERIC[lang];
+      title = tpl.title;
+      body = fill(tpl.body, { count: count ?? 0 });
       link = "/orders";
     } else if (kind === "closing_report") {
       const today = new Date();
@@ -278,9 +355,23 @@ async function resolveContent(
         (s: number, r: { amount?: number | null }) => s + Number(r.amount ?? 0),
         0,
       );
-      title = "Closing Report 🌙";
-      body = `Today: ${rows?.length ?? 0} orders · RM ${total.toFixed(2)}`;
+      const tpl = pickBiz(T_CLOSING, biz)[lang];
+      title = tpl.title;
+      body = fill(tpl.body, { count: rows?.length ?? 0, revenue: total.toFixed(2) });
       link = "/reports";
+    } else if (kind === "follow_up_reminder") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { count } = await admin
+        .from("follow_ups")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("is_done", false)
+        .lte("follow_up_date", today.toISOString().slice(0, 10));
+      const tpl = T_FOLLOWUP[lang];
+      title = tpl.title;
+      body = fill(tpl.body, { count: count ?? 0 });
+      link = "/customers";
     }
   }
   return { title, body, link, allowed };

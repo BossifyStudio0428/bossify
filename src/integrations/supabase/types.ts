@@ -119,6 +119,7 @@ export type Database = {
           created_at: string
           id: string
           is_admin: boolean
+          language: string | null
           notif_evening: boolean
           notif_inventory: boolean
           notif_milestone: boolean
@@ -144,6 +145,7 @@ export type Database = {
           created_at?: string
           id: string
           is_admin?: boolean
+          language?: string | null
           notif_evening?: boolean
           notif_inventory?: boolean
           notif_milestone?: boolean
@@ -169,6 +171,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_admin?: boolean
+          language?: string | null
           notif_evening?: boolean
           notif_inventory?: boolean
           notif_milestone?: boolean
