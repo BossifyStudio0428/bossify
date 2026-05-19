@@ -23,6 +23,7 @@ type Sheet =
 
 function InventoryPage() {
   const { t } = useI18n();
+  const { type: bizType } = useBusinessType();
   const { user } = useAuth();
   const { hasFullAccess, showUpgrade, productsUsed, productsLimit } = useSubscription();
   const [query, setQuery] = useState("");
