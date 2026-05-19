@@ -41,10 +41,59 @@ function NewOrderPage() {
     Unpaid: t("unpaid"),
     Pending: t("pending"),
   };
+
+  // ---- Business-type config ----
+  const eff = (bizType ?? "retail") as
+    | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
+  const isRetailish = eff === "retail" || eff === "fnb";
+  const showQuantity = isRetailish;
+  const showPaymentStatus = eff !== "property";
+  const productLabel =
+    eff === "education" ? t("f_service")
+    : eff === "beauty"  ? t("f_service")
+    : eff === "property" ? t("f_property_type")
+    : eff === "freelance" ? t("f_project_type")
+    : eff === "fnb" ? t("f_menu_item")
+    : t("product");
+  const productPh =
+    eff === "education" ? t("f_service_ph")
+    : eff === "beauty"  ? t("f_beauty_service_ph")
+    : eff === "property" ? t("f_property_ph")
+    : eff === "freelance" ? t("f_freelance_service_ph")
+    : t("select_product");
+  const customerLabel = isRetailish ? t("customer_name") : t("f_client_name");
+  const customerPh    = isRetailish ? t("customer_name_ph") : t("f_client_name_ph");
+  const priceLabel    = eff === "education" ? t("f_consultation_fee")
+                      : eff === "property"  ? t("f_budget")
+                      : t("price");
+  const saveLabel =
+    eff === "education" ? t("save_case")
+    : eff === "beauty"  ? t("save_appointment")
+    : eff === "property" ? t("save_lead")
+    : eff === "freelance" ? t("save_project")
+    : t("save_order");
+
   const [status, setStatus] = useState<OrderStatus>("Unpaid");
   const [form, setForm] = useState({
     customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "",
   });
+  // Per-business-type extras
+  const [extras, setExtras] = useState({
+    course_interest: "",
+    university_preference: "",
+    application_status: "not_applied" as
+      "not_applied" | "applied" | "interview" | "offer_received" | "accepted" | "rejected",
+    date_time: "",
+    location_interest: "",
+    lead_status: "enquiry" as "enquiry" | "in_progress" | "completed" | "rejected",
+    followup_date: "",
+    project_description: "",
+    deadline_date: "",
+  });
+  const updExtra = <K extends keyof typeof extras>(k: K) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setExtras((p) => ({ ...p, [k]: e.target.value as any }));
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
