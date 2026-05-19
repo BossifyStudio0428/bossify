@@ -16,12 +16,21 @@ function TermsPage() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase
+      const { data: prof } = await supabase
         .from("profiles")
         .select("payment_platform" as any)
         .eq("id", user.id)
         .maybeSingle();
-      const p = (data as any)?.payment_platform;
+      let p = (prof as any)?.payment_platform as string | null | undefined;
+      if (p !== "google_play" && p !== "stripe") {
+        const { data: sub } = await supabase
+          .from("subscriptions")
+          .select("provider")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        const prov = (sub as any)?.provider;
+        if (prov === "google_play" || prov === "stripe") p = prov;
+      }
       if (p === "google_play" || p === "stripe") setPlatform(p);
     })();
   }, []);
