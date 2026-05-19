@@ -324,16 +324,34 @@ function NewOrderPage() {
     return { id: inserted.id, code: inserted.code };
   };
 
-  const buildMessage = (code: string, paymentDetails = paymentPreviewBlock) => renderTemplate(getOrderTemplate(lang, customOrderTpl), {
-    customer_name: form.customer_name || "Customer",
-    code,
-    product: form.product || "—",
-    quantity: form.quantity || "1",
-    amount: form.amount ? Number(form.amount).toFixed(2) : "0.00",
-    status,
-    notes: form.notes,
-    payment_details: status !== "Paid" ? paymentDetails : "",
-  }, lang);
+  const buildMessage = (code: string, paymentDetails = paymentPreviewBlock) => {
+    const name = form.customer_name || "Customer";
+    const amt = form.amount ? Number(form.amount).toFixed(2) : "0.00";
+    const svc = form.product || "—";
+    const pay = status !== "Paid" ? paymentDetails : "";
+    if (eff === "education") {
+      return `Hi ${name}! 👋\n\nThank you for your consultation!\n\n📋 Case: ${code}\n🎓 Service: ${svc}\n💰 Fee: RM ${amt}\n💳 Status: ${status}${pay ? `\n\n${pay}` : ""}\n\nThank you for trusting us! 🙏`;
+    }
+    if (eff === "beauty") {
+      return `Hi ${name}! 👋\n\nYour appointment is confirmed! 💄\n\n📋 Appointment: ${code}\n✨ Service: ${svc}${extras.date_time ? `\n📅 Date: ${extras.date_time}` : ""}\n💰 Price: RM ${amt}${pay ? `\n\n${pay}` : ""}\n\nSee you soon! 🙏`;
+    }
+    if (eff === "freelance") {
+      return `Hi ${name}! 👋\n\nYour project has been received! 💼\n\n📋 Project: ${code}\n🔧 Service: ${svc}\n💰 Amount: RM ${amt}${extras.deadline_date ? `\n📅 Deadline: ${extras.deadline_date}` : ""}${pay ? `\n\n${pay}` : ""}\n\nThank you! 🙏`;
+    }
+    if (eff === "property") {
+      return `Hi ${name}! 👋\n\nThanks for your interest with us!\n\n📋 Ref: ${code}\n🏠 ${svc}${extras.location_interest ? `\n📍 ${extras.location_interest}` : ""}\n💰 Budget: RM ${amt}${extras.followup_date ? `\n📅 Follow-up: ${extras.followup_date}` : ""}\n\nWe will be in touch soon! 🙏`;
+    }
+    return renderTemplate(getOrderTemplate(lang, customOrderTpl), {
+      customer_name: name,
+      code,
+      product: svc,
+      quantity: form.quantity || "1",
+      amount: amt,
+      status,
+      notes: form.notes,
+      payment_details: pay,
+    }, lang);
+  };
 
   const livePreview = buildMessage("ORD-PREVIEW-001");
 
