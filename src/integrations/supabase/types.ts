@@ -250,6 +250,9 @@ export type Database = {
           id: string
           inventory_created_total: number
           last_reset_at: string | null
+          lifetime_activated_at: string | null
+          lifetime_device_limit: number | null
+          lifetime_email: string | null
           lifetime_google_token: string | null
           lifetime_purchase_date: string | null
           order_count: number
@@ -271,6 +274,9 @@ export type Database = {
           id?: string
           inventory_created_total?: number
           last_reset_at?: string | null
+          lifetime_activated_at?: string | null
+          lifetime_device_limit?: number | null
+          lifetime_email?: string | null
           lifetime_google_token?: string | null
           lifetime_purchase_date?: string | null
           order_count?: number
@@ -292,6 +298,9 @@ export type Database = {
           id?: string
           inventory_created_total?: number
           last_reset_at?: string | null
+          lifetime_activated_at?: string | null
+          lifetime_device_limit?: number | null
+          lifetime_email?: string | null
           lifetime_google_token?: string | null
           lifetime_purchase_date?: string | null
           order_count?: number
