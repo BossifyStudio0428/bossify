@@ -106,7 +106,7 @@ function PaymentSetupPage() {
           <input
             value={number}
             onChange={(e) => setNumber(e.target.value)}
-            placeholder={t("pay_account_no")}
+            placeholder={type === "Bank Transfer" ? t("pay_account_number") : t("pay_account_no")}
             className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/70"
           />
           <input
