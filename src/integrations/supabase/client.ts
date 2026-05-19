@@ -51,6 +51,20 @@ export type CustomerRow = {
   total_spent: number;
   last_order_at: string | null;
   created_at: string;
+  remarks?: string | null;
+  customer_status?: CustomerStatus | null;
+};
+
+export type CustomerStatus = "enquiry" | "in_progress" | "completed" | "rejected";
+
+export type FollowUpRow = {
+  id: string;
+  user_id: string;
+  customer_id: string;
+  follow_up_date: string; // YYYY-MM-DD
+  note: string | null;
+  is_done: boolean;
+  created_at: string;
 };
 
 export type ProfileRow = {

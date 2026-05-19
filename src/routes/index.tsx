@@ -14,6 +14,7 @@ import {
   ChevronRight,
   FileText,
 } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -49,6 +50,8 @@ function Index() {
   const [lowStock, setLowStock] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
+  const [followUpsThisWeek, setFollowUpsThisWeek] = useState(0);
+  const [followUpsOverdue, setFollowUpsOverdue] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [selectedWeeklyIndex, setSelectedWeeklyIndex] = useState<number>(6);
   const [hasPayment, setHasPayment] = useState<boolean | null>(null);
@@ -99,6 +102,19 @@ function Index() {
       setLowStock((inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length);
       setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
       setUnreadNotif(notificationsRes.count ?? 0);
+      // Follow-ups: this week + overdue
+      const today = new Date(); today.setHours(0,0,0,0);
+      const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
+      const todayStr = today.toISOString().slice(0, 10);
+      const weekEndStr = weekEnd.toISOString().slice(0, 10);
+      const { data: fuData } = await supabase
+        .from("follow_ups")
+        .select("follow_up_date,is_done")
+        .eq("user_id", user.id)
+        .eq("is_done", false);
+      const fus = (fuData ?? []) as { follow_up_date: string; is_done: boolean }[];
+      setFollowUpsThisWeek(fus.filter((f) => f.follow_up_date >= todayStr && f.follow_up_date <= weekEndStr).length);
+      setFollowUpsOverdue(fus.filter((f) => f.follow_up_date < todayStr).length);
       setAvatarUrl(
         (profileRes.data as any)?.avatar_url || (user.user_metadata as any)?.avatar_url || null,
       );
@@ -422,6 +438,29 @@ function Index() {
         </div>
         <ChevronRight className="h-5 w-5 text-amber-500 shrink-0" />
       </Link>
+
+      {(followUpsThisWeek > 0 || followUpsOverdue > 0) && (
+        <Link
+          to="/customers"
+          aria-label={t("followup_reminder")}
+          className="flex items-center gap-3 rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 pr-4 active:scale-[0.99] transition-transform"
+        >
+          <span className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <CalendarIcon className="h-5 w-5 text-primary" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground leading-tight">
+              📅 {followUpsThisWeek} {t("followups_this_week")}
+            </p>
+            {followUpsOverdue > 0 && (
+              <p className="text-[11px] font-semibold text-red-600 mt-0.5">
+                {followUpsOverdue} {t("followup_overdue")}
+              </p>
+            )}
+          </div>
+          <ChevronRight className="h-5 w-5 text-primary shrink-0" />
+        </Link>
+      )}
 
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">

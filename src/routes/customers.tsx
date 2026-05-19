@@ -2,11 +2,22 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { MoreVertical } from "lucide-react";
 import { toast } from "sonner";
-import { supabase, type CustomerRow } from "@/integrations/supabase/client";
+import { supabase, type CustomerRow, type CustomerStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/customers")({ component: CustomersPage });
+
+const CUSTOMER_STATUS_ORDER: CustomerStatus[] = ["enquiry", "in_progress", "completed", "rejected"];
+const CUSTOMER_STATUS_STYLES: Record<CustomerStatus, string> = {
+  enquiry: "bg-blue-100 text-blue-700",
+  in_progress: "bg-amber-100 text-amber-700",
+  completed: "bg-emerald-100 text-emerald-700",
+  rejected: "bg-red-100 text-red-600",
+};
+const CUSTOMER_STATUS_DOT: Record<CustomerStatus, string> = {
+  enquiry: "🔵", in_progress: "🟡", completed: "🟢", rejected: "🔴",
+};
 
 function relTime(iso: string | null, t: (k: any) => string) {
   if (!iso) return t("never");
@@ -35,6 +46,18 @@ function CustomersPage() {
   const [menuFor, setMenuFor] = useState<CustomerRow | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<CustomerRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<CustomerStatus | "all">("all");
+
+  const cycleStatus = async (c: CustomerRow) => {
+    const current = (c.customer_status ?? "enquiry") as CustomerStatus;
+    const next = CUSTOMER_STATUS_ORDER[(CUSTOMER_STATUS_ORDER.indexOf(current) + 1) % CUSTOMER_STATUS_ORDER.length];
+    setCustomers((prev) => prev.map((x) => x.id === c.id ? { ...x, customer_status: next } : x));
+    const { error } = await supabase.from("customers").update({ customer_status: next }).eq("id", c.id);
+    if (error) {
+      toast.error(error.message);
+      setCustomers((prev) => prev.map((x) => x.id === c.id ? { ...x, customer_status: current } : x));
+    }
+  };
 
   const doDelete = async () => {
     if (!confirmDelete || !user) return;
@@ -76,6 +99,7 @@ function CustomersPage() {
 
   const visible = customers.filter((c) => {
     const q = query.toLowerCase();
+    if (statusFilter !== "all" && (c.customer_status ?? "enquiry") !== statusFilter) return false;
     return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q);
   });
 
@@ -96,6 +120,24 @@ function CustomersPage() {
           placeholder={t("search_customers")}
           className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
         />
+      </div>
+
+      <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
+        <button
+          onClick={() => setStatusFilter("all")}
+          className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+        >
+          {t("all_statuses")}
+        </button>
+        {CUSTOMER_STATUS_ORDER.map((s) => (
+          <button
+            key={s}
+            onClick={() => setStatusFilter(s)}
+            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === s ? CUSTOMER_STATUS_STYLES[s] + " ring-2 ring-offset-1 ring-current" : "bg-muted text-muted-foreground"}`}
+          >
+            {CUSTOMER_STATUS_DOT[s]} {t(`cs_${s}` as any)}
+          </button>
+        ))}
       </div>
 
       <div className="space-y-3">
@@ -121,17 +163,31 @@ function CustomersPage() {
                 {c.name.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                </div>
                 {c.phone && (
                   <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>
                 )}
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   {c.total_orders} {t("orders_word")} · {t("last")}: {relTime(c.last_order_at, t)}
                 </p>
+                {c.remarks && (
+                  <p className="text-[11px] text-muted-foreground/90 mt-1 truncate italic">
+                    💬 {c.remarks.length > 50 ? c.remarks.slice(0, 50) + "…" : c.remarks}
+                  </p>
+                )}
               </div>
             </Link>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               <p className="text-sm font-bold text-primary">RM {Number(c.total_spent).toFixed(0)}</p>
+              <button
+                onClick={() => cycleStatus(c)}
+                aria-label="Status"
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[(c.customer_status ?? "enquiry") as CustomerStatus]}`}
+              >
+                {CUSTOMER_STATUS_DOT[(c.customer_status ?? "enquiry") as CustomerStatus]} {t(`cs_${(c.customer_status ?? "enquiry") as CustomerStatus}` as any)}
+              </button>
               <button
                 onClick={() => {
                   if (!c.phone) { toast.error(t("no_phone_for_wa")); return; }
