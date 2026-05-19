@@ -125,16 +125,8 @@ function AnalyticsPage() {
     const k = r.application_status ?? "not_applied";
     appStatusCounts.set(k, (appStatusCounts.get(k) ?? 0) + 1);
   });
-  const appStatusLabels: Record<string, string> = {
-    not_applied: t("rep_in_progress"),
-    applied: t("rep_in_progress"),
-    interview: t("rep_in_progress"),
-    offer_received: t("rep_in_progress"),
-    accepted: t("rep_completed"),
-    rejected: t("rep_rejected"),
-  };
   const appStatusData = [...appStatusCounts.entries()].map(([k, v]) => ({
-    name: appStatusLabels[k] ?? k,
+    name: t((`edu_app_${k}`) as any) as string,
     value: v,
     color: appStatusColors[k] ?? "#7C3AED",
   })).filter((s) => s.value > 0);
