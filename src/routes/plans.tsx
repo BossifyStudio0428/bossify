@@ -656,6 +656,56 @@ function PlansPage() {
         {t("restore_purchases")}
       </button>
 
+      {lifetimeConfirmOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 animate-fade-in p-5"
+          onClick={() => setLifetimeConfirmOpen(false)}
+        >
+          <div
+            className="w-full max-w-[360px] bg-card rounded-3xl p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Crown className="h-5 w-5 text-amber-500" />
+              {t("confirm_lifetime_title")}
+            </h2>
+            <p className="mt-3 text-[13px] text-foreground leading-relaxed">
+              {t("confirm_lifetime_intro")}
+            </p>
+            <ul className="mt-3 space-y-2 text-[13px] text-foreground">
+              <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" /><span>{t("confirm_lifetime_b1").replace("{email}", user?.email ?? "—")}</span></li>
+              <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" /><span>{t("confirm_lifetime_b2")}</span></li>
+              <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" /><span>{t("confirm_lifetime_b3")}</span></li>
+              <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" /><span>{t("confirm_lifetime_b4")}</span></li>
+            </ul>
+            <p className="mt-3 text-[12px] text-muted-foreground">{t("confirm_lifetime_ask")}</p>
+            <Link
+              to="/terms"
+              className="mt-2 block text-[11px] text-primary underline"
+            >
+              {t("terms_of_use")}
+            </Link>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setLifetimeConfirmOpen(false)}
+                className="flex-1 py-3 rounded-2xl bg-muted text-foreground font-semibold text-sm"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  setLifetimeConfirmOpen(false);
+                  handleLifetimePurchase();
+                }}
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm shadow-[var(--shadow-soft)]"
+              >
+                {t("i_agree_purchase")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
