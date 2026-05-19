@@ -587,50 +587,51 @@ function Index() {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
           <p className="text-sm font-bold text-foreground leading-tight">
-            {t("view_sales_report")}
+            {t(
+              eff === "education" ? "view_case_reports"
+              : eff === "beauty"  ? "view_appointment_reports"
+              : eff === "property" ? "view_lead_reports"
+              : eff === "freelance" ? "view_project_reports"
+              : "view_sales_report",
+            )}
           </p>
           <p className="text-[10px] text-muted-foreground leading-snug">
             {t("daily_weekly_monthly")}
           </p>
         </Link>
         <Link
-          to="/analytics"
+          to={eff === "education" ? "/university-insights" : "/analytics"}
           className="rounded-2xl bg-card border-2 border-primary/30 p-3 flex flex-col gap-1.5 active:scale-[0.98] transition-transform shadow-[var(--shadow-card)]"
         >
           <div className="flex items-center justify-between">
             <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <TrendingUp className="h-5 w-5" />
+              {eff === "education" ? <span className="text-base">🎓</span> : <TrendingUp className="h-5 w-5" />}
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
-          <p className="text-sm font-bold text-foreground leading-tight">{t("view_analytics")}</p>
+          <p className="text-sm font-bold text-foreground leading-tight">
+            {t(
+              eff === "education" ? "edu_insights"
+              : eff === "property" ? "followup_analytics"
+              : eff === "beauty" || eff === "freelance" ? "client_analytics"
+              : "view_analytics",
+            )}
+          </p>
           <p className="text-[10px] text-muted-foreground leading-snug">
             {t("top_products_customers")}
           </p>
         </Link>
       </section>
 
-      {eff === "education" && (
-        <Link
-          to="/university-insights"
-          className="flex items-center gap-3 rounded-2xl bg-card border-2 border-primary/30 p-3 pr-4 active:scale-[0.99] transition-transform shadow-[var(--shadow-card)]"
-        >
-          <span className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            🎓
-          </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground leading-tight">{t("edu_insights")}</p>
-            <p className="text-[10px] text-muted-foreground leading-snug">
-              {t("edu_top_universities")} · {t("edu_top_courses")}
-            </p>
-          </div>
-          <ChevronRight className="h-5 w-5 text-primary shrink-0" />
-        </Link>
-      )}
-
       <section>
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
-          {t("recent_orders")}
+          {t(
+            eff === "education" ? "sec_recent_cases"
+            : eff === "beauty"  ? "sec_recent_appointments"
+            : eff === "property" ? "sec_recent_leads"
+            : eff === "freelance" ? "sec_recent_projects"
+            : "recent_orders",
+          )}
         </p>
         <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
           {recent.length === 0 && (
@@ -673,7 +674,8 @@ function Index() {
         </Link>
       )}
 
-      {topCustomers.length > 0 && (
+      {/* Section 2: depends on business type */}
+      {isRetailish && topCustomers.length > 0 && (
         <section>
           <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
             {t("top_customers")}
@@ -698,6 +700,66 @@ function Index() {
                 <p className="text-sm font-bold text-primary">
                   RM {Number(c.total_spent).toFixed(0)}
                 </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {(eff === "education" || eff === "beauty" || eff === "freelance") && latestClients.length > 0 && (
+        <section>
+          <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
+            {t("sec_latest_clients")}
+          </p>
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+            {latestClients.map((c) => (
+              <Link
+                key={c.id}
+                to="/customer/$customerId"
+                params={{ customerId: c.id }}
+                className="flex items-center gap-3 p-4"
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                  {c.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {c.phone ?? ""}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {eff === "property" && (
+        <section>
+          <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
+            {t("sec_followups_today")}
+          </p>
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+            {followUpsTodayList.length === 0 && (
+              <p className="text-center text-xs text-muted-foreground py-6">—</p>
+            )}
+            {followUpsTodayList.map((f) => (
+              <Link
+                key={f.id}
+                to="/customers"
+                className="flex items-center gap-3 p-4"
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                  📅
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{f.customer_name}</p>
+                  {f.note && (
+                    <p className="text-[11px] text-muted-foreground truncate">{f.note}</p>
+                  )}
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </Link>
             ))}
           </div>
