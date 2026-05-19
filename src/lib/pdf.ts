@@ -33,12 +33,19 @@ async function savePdf(doc: jsPDF, filename: string): Promise<void> {
       return;
     }
   }
-  // Web: open in a new tab so the user can preview before downloading.
+  // Web: trigger a direct download via an anchor. Opening blob: URLs in a new
+  // tab is blocked on many published hosts (CSP / popup blockers) and shows a
+  // blank page, so we download instead — which works everywhere.
   try {
     const blob = doc.output("blob");
     const url = URL.createObjectURL(blob);
-    const win = window.open(url, "_blank");
-    if (!win) doc.save(filename);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   } catch {
     doc.save(filename);
