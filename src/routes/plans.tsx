@@ -419,12 +419,7 @@ function PlansPage() {
             </p>
           </div>
           <ul className="mt-4 space-y-2">
-            {[
-              t("starter_orders_per_month"),
-              t("starter_products_count"),
-              t("basic_sales_reports"),
-              "WhatsApp " + t("order_template"),
-            ].map((r, i) => (
+            {starterRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
                 <Check className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />
                 <span className="text-foreground">{r}</span>
