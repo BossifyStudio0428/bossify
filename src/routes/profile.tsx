@@ -39,15 +39,20 @@ function ProfilePage() {
   const [reminderTpl, setReminderTpl] = useState(DEFAULT_REMINDER_TPL);
   const [paySummary, setPaySummary] = useState<PaymentSummary | null>(null);
 
+  const reportsLabelKey =
+    bizType === "education" ? "rep_case_reports"
+    : bizType === "beauty" ? "rep_appointment_reports"
+    : bizType === "property" ? "rep_lead_reports"
+    : bizType === "freelance" ? "rep_project_reports"
+    : "sales_reports";
+  const analyticsLabelKey =
+    bizType === "education" ? "edu_insights"
+    : bizType === "beauty" || bizType === "freelance" ? "client_analytics"
+    : bizType === "property" ? "followup_analytics"
+    : "analytics_label";
+
   const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
     { icon: "🏪", key: "biz", label: t("business_profile"), onClick: () => navigate({ to: "/business-profile" }) },
-    {
-      icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
-      key: "biztype",
-      label: t("business_type_menu"),
-      value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
-      onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
-    },
     ...(!hasInventory(bizType)
       ? [{
           icon: bizType === "property" ? "📦" : "🧰",
@@ -56,8 +61,15 @@ function ProfilePage() {
           onClick: () => navigate({ to: "/services" }),
         }]
       : []),
-    { icon: "📊", key: "analytics", label: t("analytics_label"), onClick: () => navigate({ to: "/analytics" }) },
-    { icon: "📊", key: "rep", label: t("sales_reports"), onClick: () => navigate({ to: "/reports" }) },
+    {
+      icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
+      key: "biztype",
+      label: t("business_type_menu"),
+      value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
+      onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
+    },
+    { icon: "📊", key: "analytics", label: t(analyticsLabelKey), onClick: () => navigate({ to: "/analytics" }) },
+    { icon: "📊", key: "rep", label: t(reportsLabelKey), onClick: () => navigate({ to: "/reports" }) },
     { icon: "🔔", key: "notif2", label: t("notifications"), onClick: () => navigate({ to: "/notifications" }) },
     { icon: "⚙️", key: "notifsettings", label: t("notification_settings"), onClick: () => navigate({ to: "/notification-settings" }) },
     { icon: "🌐", key: "lang", label: t("language"), value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`, onClick: () => setLangOpen(true) },
