@@ -207,6 +207,12 @@ function Index() {
     .filter((o) => o.status === "Paid")
     .reduce((s, o) => s + Number(o.gross_profit ?? 0), 0);
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
+  const activeProjects = orders.filter((o) => o.status !== "Paid").length;
+  const nowD = new Date();
+  const monthStart = new Date(nowD.getFullYear(), nowD.getMonth(), 1);
+  const monthRevenue = orders
+    .filter((o) => o.status === "Paid" && new Date(o.created_at) >= monthStart)
+    .reduce((s, o) => s + Number(o.amount), 0);
 
   // Comparison vs yesterday
   const yest = new Date();
@@ -226,36 +232,35 @@ function Index() {
   if (unpaidCount > 3) motivMsg = t("motiv_unpaid").replace("{n}", String(unpaidCount));
   if (todayRevenue > yesterdayRevenue && yesterdayRevenue > 0) motivMsg = t("motiv_better");
 
-  const stats = [
-    {
-      label: t("todays_revenue"),
-      value: `RM ${todayRevenue.toFixed(0)}`,
-      icon: DollarSign,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-    },
-    {
-      label: t("todays_profit"),
-      value: `RM ${todayGrossProfit.toFixed(0)}`,
-      icon: TrendingUp,
-      color: "text-primary",
-      bg: "bg-primary/10",
-    },
-    {
-      label: t("new_orders"),
-      value: String(todayOrders.length),
-      icon: ShoppingBag,
-      color: "text-primary",
-      bg: "bg-primary/10",
-    },
-    {
-      label: t("unpaid"),
-      value: String(unpaidCount),
-      icon: AlertCircle,
-      color: "text-red-500",
-      bg: "bg-red-50",
-    },
-  ];
+  const eff: BizType = (bizType ?? "retail") as BizType;
+  type Stat = { label: string; value: string; icon: typeof DollarSign; color: string; bg: string };
+  const revenueCard: Stat = { label: t("todays_revenue"), value: `RM ${todayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
+  const profitCard: Stat = { label: t("todays_profit"), value: `RM ${todayGrossProfit.toFixed(0)}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" };
+  const newOrdersCard: Stat = { label: t("new_orders"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" };
+  const unpaidCard: Stat = { label: t("unpaid"), value: String(unpaidCount), icon: AlertCircle, color: "text-red-500", bg: "bg-red-50" };
+  const lowStockCard: Stat = { label: t("low_stock"), value: String(lowStock), icon: PackageX, color: "text-amber-500", bg: "bg-amber-50" };
+  const newCasesCard: Stat = { label: t("stat_new_cases"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" };
+  const newAppointmentsCard: Stat = { label: t("stat_appointments_today"), value: String(todayOrders.length), icon: Calendar, color: "text-primary", bg: "bg-primary/10" };
+  const newLeadsCard: Stat = { label: t("stat_new_leads"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" };
+  const totalClientsCard: Stat = { label: t("stat_total_clients"), value: String(totalClients), icon: Users, color: "text-primary", bg: "bg-primary/10" };
+  const followupsTodayCard: Stat = { label: t("stat_followups_today"), value: String(followUpsToday), icon: Calendar, color: "text-primary", bg: "bg-primary/10" };
+  const followupsWeekCard: Stat = { label: t("followups_this_week"), value: String(followUpsThisWeek), icon: Calendar, color: "text-primary", bg: "bg-primary/10" };
+  const inProgressCard: Stat = { label: t("stat_in_progress"), value: String(inProgressCount), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" };
+  const completedMonthCard: Stat = { label: t("stat_completed_month"), value: String(completedThisMonth), icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" };
+  const activeProjectsCard: Stat = { label: t("stat_active_projects"), value: String(activeProjects), icon: Briefcase, color: "text-primary", bg: "bg-primary/10" };
+  const monthRevenueCard: Stat = { label: t("stat_month_revenue"), value: `RM ${monthRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
+
+  const STATS_BY_TYPE: Record<BizType, Stat[]> = {
+    retail:    [revenueCard, profitCard, newOrdersCard, unpaidCard, lowStockCard],
+    fnb:       [revenueCard, newOrdersCard, unpaidCard, lowStockCard],
+    education: [newCasesCard, unpaidCard, totalClientsCard, followupsTodayCard],
+    beauty:    [newAppointmentsCard, unpaidCard, totalClientsCard, followupsWeekCard],
+    property:  [newLeadsCard, inProgressCard, completedMonthCard, followupsTodayCard],
+    freelance: [activeProjectsCard, unpaidCard, monthRevenueCard, followupsTodayCard],
+  };
+  const stats = STATS_BY_TYPE[eff];
+  const showLowStockCard = hasInventory(eff);
+  const showRevenueDelta = stats[0] === revenueCard;
 
   // Weekly chart
   const weekly: { day: string; value: number }[] = [];
