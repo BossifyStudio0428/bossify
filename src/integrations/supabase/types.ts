@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_education_details: {
+        Row: {
+          academic_result: string | null
+          application_status: string | null
+          client_id: string
+          course_interest: string | null
+          created_at: string
+          family_income: string | null
+          id: string
+          scholarship_interest: boolean | null
+          university_preference: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          academic_result?: string | null
+          application_status?: string | null
+          client_id: string
+          course_interest?: string | null
+          created_at?: string
+          family_income?: string | null
+          id?: string
+          scholarship_interest?: boolean | null
+          university_preference?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          academic_result?: string | null
+          application_status?: string | null
+          client_id?: string
+          course_interest?: string | null
+          created_at?: string
+          family_income?: string | null
+          id?: string
+          scholarship_interest?: boolean | null
+          university_preference?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       device_tokens: {
         Row: {
           id: string

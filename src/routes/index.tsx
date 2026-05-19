@@ -573,6 +573,24 @@ function Index() {
         </Link>
       </section>
 
+      {eff === "education" && (
+        <Link
+          to="/university-insights"
+          className="flex items-center gap-3 rounded-2xl bg-card border-2 border-primary/30 p-3 pr-4 active:scale-[0.99] transition-transform shadow-[var(--shadow-card)]"
+        >
+          <span className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            🎓
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground leading-tight">{t("edu_insights")}</p>
+            <p className="text-[10px] text-muted-foreground leading-snug">
+              {t("edu_top_universities")} · {t("edu_top_courses")}
+            </p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-primary shrink-0" />
+        </Link>
+      )}
+
       <section>
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
           {t("recent_orders")}
