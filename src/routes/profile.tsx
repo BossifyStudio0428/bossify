@@ -12,6 +12,8 @@ import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CreditCard, AlertTriangle, CheckCircle2, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { BIZ_TYPES } from "@/lib/businessType";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -27,6 +29,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const { isPro, isStarter, isLifetime, hasFullAccess, ordersUsed, showUpgrade } = useSubscription();
   const { theme, toggle: toggleTheme } = useTheme();
+  const { type: bizType } = useBusinessType();
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string; avatar_url: string | null } | null>(null);
@@ -38,6 +41,13 @@ function ProfilePage() {
 
   const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
     { icon: "🏪", key: "biz", label: t("business_profile"), onClick: () => navigate({ to: "/business-profile" }) },
+    {
+      icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
+      key: "biztype",
+      label: t("business_type_menu"),
+      value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
+      onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
+    },
     { icon: "📊", key: "analytics", label: t("analytics_label"), onClick: () => navigate({ to: "/analytics" }) },
     { icon: "📊", key: "rep", label: t("sales_reports"), onClick: () => navigate({ to: "/reports" }) },
     { icon: "🔔", key: "notif2", label: t("notifications"), onClick: () => navigate({ to: "/notifications" }) },
