@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 import {
   verifyActiveSubscription,
   verifyLifetimeOwnership,
@@ -122,6 +124,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         ) {
           data.plan = "free";
           data.status = "active";
+          if (!notifiedLockRef.current) {
+            notifiedLockRef.current = true;
+            toast.error(tRef.current("lifetime_account_lock_msg"));
+          }
         }
         // Client-side monthly reset safety net
         const period = data.count_period_start ? new Date(data.count_period_start) : null;
