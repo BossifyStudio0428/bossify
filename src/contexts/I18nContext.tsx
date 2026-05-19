@@ -2223,6 +2223,17 @@ const dict = {
     rep_appointment_revenue: "预约收入",
     rep_lead_revenue: "潜在客户收入",
     rep_project_revenue: "项目收入",
+    an_top_services: "热门服务",
+    an_top_clients: "顶级客户",
+    an_top_customers: "顶级客户",
+    an_most_requested_unis: "最常申请大学",
+    an_most_popular_courses: "最热门课程",
+    an_busiest_day: "最忙的一天",
+    an_top_areas: "热门地区",
+    an_conversion_rate: "转化率",
+    an_application_status_breakdown: "申请状态分析",
+    an_project_status_breakdown: "项目状态分析",
+    an_lead_status_breakdown: "潜在客户状态分析",
   },
 } as const;
 
