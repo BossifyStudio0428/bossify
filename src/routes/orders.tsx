@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
-import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, fetchWAProfile } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
@@ -177,9 +177,10 @@ function OrdersPage() {
   const remind = async (o: OrderRow) => {
     if (!o.phone) { alert(t("no_phone_for_wa")); return; }
     if (!user) return;
-    const paymentDetails = await fetchFreshPaymentBlock(user.id, lang);
-    const msg = renderTemplate(getReminderTemplate(lang, customReminderTpl), {
-      customer_name: o.customer_name, code: o.code, product: o.product,
+    const { paymentDetails, businessName } = await fetchWAProfile(user.id, lang);
+    const msg = renderTemplate(getReminderTemplate(lang, bizType, customReminderTpl), {
+      customer_name: o.customer_name, business_name: businessName,
+      code: o.code, product: o.product,
       quantity: o.quantity, amount: Number(o.amount).toFixed(2),
       status: o.status, days_ago: daysSince(o.created_at),
       payment_details: paymentDetails,
