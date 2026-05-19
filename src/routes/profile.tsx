@@ -37,6 +37,21 @@ function ProfilePage() {
   const [tplOpen, setTplOpen] = useState(false);
   const defaultOrderTpl = getOrderTemplate(lang, bizType);
   const defaultReminderTpl = getReminderTemplate(lang, bizType);
+
+  const varsHelp = (() => {
+    const base = "[customer_name] [code] [product] [amount]";
+    const status = " [status]";
+    const qty = " [quantity]";
+    const tail = " [notes] [days_ago]";
+    const list =
+      bizType === "property"
+        ? `${base}${tail}`
+        : bizType === "retail" || bizType === "fnb" || !bizType
+          ? `${base}${qty}${status}${tail}`
+          : `${base}${status}${tail}`;
+    const prefix = lang === "ms" ? "Pemboleh ubah: " : lang === "zh" ? "变量：" : "Variables: ";
+    return `${prefix}${list}`;
+  })();
   const [orderTpl, setOrderTpl] = useState<string>(DEFAULT_ORDER_TPL);
   const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
   const [orderCustom, setOrderCustom] = useState(false);
