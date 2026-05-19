@@ -18,6 +18,8 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { HOME_GREETING_KEY } from "@/lib/businessType";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import {
   loadPaymentSummary,
