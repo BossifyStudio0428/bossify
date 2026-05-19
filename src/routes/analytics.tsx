@@ -8,6 +8,7 @@ import {
 import { supabase, type OrderRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
 export const Route = createFileRoute("/analytics")({ component: AnalyticsPage });
 
@@ -17,9 +18,12 @@ function AnalyticsPage() {
   const { user } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const { type: bizType } = useBusinessType();
+  const eff = bizType ?? "retail";
   const [range, setRange] = useState<Range>("month");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [eduRows, setEduRows] = useState<Array<{ university_preference: string | null; course_interest: string | null; application_status: string | null }>>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -30,6 +34,17 @@ function AnalyticsPage() {
       setLoading(false);
     })();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user || eff !== "education") return;
+    (async () => {
+      const { data } = await supabase
+        .from("client_education_details")
+        .select("university_preference,course_interest,application_status")
+        .eq("user_id", user.id);
+      setEduRows((data ?? []) as any);
+    })();
+  }, [user?.id, eff]);
 
   const now = new Date();
   const cutoff = (() => {
@@ -67,6 +82,15 @@ function AnalyticsPage() {
     .map(([name, v]) => ({ name: name.length > 12 ? name.slice(0,12)+"…" : name, qty: v.qty, rev: v.rev }))
     .sort((a, b) => b.qty - a.qty).slice(0, 5);
 
+  // Top customers/clients by spending
+  const custMap = new Map<string, number>();
+  paid.forEach((o) => {
+    custMap.set(o.customer_name, (custMap.get(o.customer_name) ?? 0) + Number(o.amount));
+  });
+  const topCustomers = [...custMap.entries()]
+    .map(([name, spent]) => ({ name: name.length > 14 ? name.slice(0,14)+"…" : name, spent }))
+    .sort((a, b) => b.spent - a.spent).slice(0, 5);
+
   // Best days of week
   const dowKeys = ["dow_sun","dow_mon","dow_tue","dow_wed","dow_thu","dow_fri","dow_sat"] as const;
   const dowCounts = dowKeys.map((k) => ({ day: t(k), orders: 0 }));
@@ -79,6 +103,41 @@ function AnalyticsPage() {
     { name: t("unpaid"), value: filtered.filter((o)=>o.status==="Unpaid").length, color: "#EF4444" },
     { name: t("pending"), value: filtered.filter((o)=>o.status==="Pending").length, color: "#F59E0B" },
   ];
+
+  // Education: top universities & courses (from client_education_details)
+  const splitList = (s: string | null | undefined) =>
+    (s ?? "").split(/[,;/]/).map((x) => x.trim()).filter(Boolean);
+  const tallyTop = (rows: typeof eduRows, field: "university_preference" | "course_interest") => {
+    const m = new Map<string, number>();
+    rows.forEach((r) => splitList(r[field]).forEach((v) => m.set(v, (m.get(v) ?? 0) + 1)));
+    return [...m.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+  };
+  const topUnis = tallyTop(eduRows, "university_preference");
+  const topCourses = tallyTop(eduRows, "course_interest");
+
+  // Education: application status breakdown
+  const appStatusColors: Record<string, string> = {
+    not_applied: "#94A3B8", applied: "#3B82F6", interview: "#F59E0B",
+    offer_received: "#A855F7", accepted: "#10B981", rejected: "#EF4444",
+  };
+  const appStatusCounts = new Map<string, number>();
+  eduRows.forEach((r) => {
+    const k = r.application_status ?? "not_applied";
+    appStatusCounts.set(k, (appStatusCounts.get(k) ?? 0) + 1);
+  });
+  const appStatusData = [...appStatusCounts.entries()].map(([k, v]) => ({
+    name: t((`as_${k}` as any)) || k,
+    value: v,
+    color: appStatusColors[k] ?? "#7C3AED",
+  })).filter((s) => s.value > 0);
+
+  // Property: conversion rate + top areas (from product field used as area)
+  const conversionRate = filtered.length > 0 ? (paid.length / filtered.length) * 100 : 0;
+  const areaMap = new Map<string, number>();
+  filtered.forEach((o) => { areaMap.set(o.product, (areaMap.get(o.product) ?? 0) + 1); });
+  const topAreas = [...areaMap.entries()]
+    .map(([name, count]) => ({ name: name.length > 14 ? name.slice(0,14)+"…" : name, count }))
+    .sort((a, b) => b.count - a.count).slice(0, 5);
 
   // Peak hours
   const hourBuckets = [6, 9, 12, 15, 18, 21];
@@ -99,6 +158,23 @@ function AnalyticsPage() {
     { key: "month", label: t("this_month") },
     { key: "all", label: t("all") },
   ];
+
+  const topItemsTitleKey =
+    eff === "retail" || eff === "fnb" ? "top_products" : "an_top_services";
+  const topPeopleTitleKey =
+    eff === "retail" || eff === "fnb" ? "an_top_customers" : "an_top_clients";
+  const dayTitleKey = eff === "beauty" ? "an_busiest_day" : "best_selling_days";
+  const statusTitleKey =
+    eff === "education" ? "an_application_status_breakdown"
+    : eff === "property" ? "an_lead_status_breakdown"
+    : eff === "freelance" ? "an_project_status_breakdown"
+    : "status_breakdown";
+
+  const showTopItems = eff !== "property";
+  const showTopPeople = eff !== "property";
+  const showDayOfWeek = eff === "retail" || eff === "fnb" || eff === "beauty";
+  const showPeakHours = eff === "retail" || eff === "fnb";
+  const showStatus = eff !== "retail" && eff !== "fnb" ? true : true; // keep for all
 
   return (
     <div className="px-5 pt-10 pb-8 space-y-5">
@@ -137,7 +213,8 @@ function AnalyticsPage() {
             </ResponsiveContainer>
           </Card>
 
-          <Card title={t("top_products")}>
+          {showTopItems && (
+          <Card title={t(topItemsTitleKey)}>
             {topProducts.length === 0 ? <p className="text-xs text-muted-foreground">{t("no_data")}</p> : (
               <ResponsiveContainer width="100%" height={Math.max(120, topProducts.length * 40)}>
                 <BarChart data={topProducts} layout="vertical">
@@ -149,8 +226,87 @@ function AnalyticsPage() {
               </ResponsiveContainer>
             )}
           </Card>
+          )}
 
-          <Card title={t("best_selling_days")}>
+          {showTopPeople && (
+          <Card title={t(topPeopleTitleKey)}>
+            {topCustomers.length === 0 ? <p className="text-xs text-muted-foreground">{t("no_data")}</p> : (
+              <ResponsiveContainer width="100%" height={Math.max(120, topCustomers.length * 40)}>
+                <BarChart data={topCustomers} layout="vertical">
+                  <XAxis type="number" fontSize={10} tick={{ fill: "currentColor" }} />
+                  <YAxis type="category" dataKey="name" fontSize={10} width={90} tick={{ fill: "currentColor" }} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} formatter={(v: number) => `RM ${v.toFixed(0)}`} />
+                  <Bar dataKey="spent" fill="#10B981" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+          )}
+
+          {eff === "education" && (
+            <>
+              <Card title={t("an_most_requested_unis")}>
+                {topUnis.length === 0 ? <p className="text-xs text-muted-foreground">{t("no_data")}</p> : (
+                  <ul className="divide-y divide-border/60">
+                    {topUnis.map((u) => (
+                      <li key={u.name} className="flex justify-between py-2 text-sm">
+                        <span className="font-medium">{u.name}</span>
+                        <span className="text-muted-foreground">{u.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+              <Card title={t("an_most_popular_courses")}>
+                {topCourses.length === 0 ? <p className="text-xs text-muted-foreground">{t("no_data")}</p> : (
+                  <ul className="divide-y divide-border/60">
+                    {topCourses.map((c) => (
+                      <li key={c.name} className="flex justify-between py-2 text-sm">
+                        <span className="font-medium">{c.name}</span>
+                        <span className="text-muted-foreground">{c.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+              {appStatusData.length > 0 && (
+                <Card title={t("an_application_status_breakdown")}>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie data={appStatusData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
+                        {appStatusData.map((s, i) => <Cell key={i} fill={s.color} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Card>
+              )}
+            </>
+          )}
+
+          {eff === "property" && (
+            <>
+              <Card title={t("an_conversion_rate")} subtitle={`${paid.length}/${filtered.length}`}>
+                <p className="text-4xl font-bold text-primary">{conversionRate.toFixed(1)}%</p>
+              </Card>
+              <Card title={t("an_top_areas")}>
+                {topAreas.length === 0 ? <p className="text-xs text-muted-foreground">{t("no_data")}</p> : (
+                  <ul className="divide-y divide-border/60">
+                    {topAreas.map((a) => (
+                      <li key={a.name} className="flex justify-between py-2 text-sm">
+                        <span className="font-medium">{a.name}</span>
+                        <span className="text-muted-foreground">{a.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            </>
+          )}
+
+          {showDayOfWeek && (
+          <Card title={t(dayTitleKey)}>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={dowCounts}>
                 <XAxis dataKey="day" fontSize={10} tick={{ fill: "currentColor" }} />
@@ -162,8 +318,10 @@ function AnalyticsPage() {
               </BarChart>
             </ResponsiveContainer>
           </Card>
+          )}
 
-          <Card title={t("status_breakdown")}>
+          {showStatus && (
+          <Card title={t(statusTitleKey)}>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
@@ -174,7 +332,9 @@ function AnalyticsPage() {
               </PieChart>
             </ResponsiveContainer>
           </Card>
+          )}
 
+          {showPeakHours && (
           <Card title={t("peak_hours")}>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={peak}>
@@ -185,6 +345,7 @@ function AnalyticsPage() {
               </BarChart>
             </ResponsiveContainer>
           </Card>
+          )}
         </>
       )}
     </div>
