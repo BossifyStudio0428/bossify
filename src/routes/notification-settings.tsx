@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Settings, Bell, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { isNotifGranted, openAppNotificationSettings, notify } from "@/lib/notifications";
 import { sendPushToSelf } from "@/lib/sendPush";
 import { registerPushForUser } from "@/lib/pushRegister";
