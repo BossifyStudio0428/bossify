@@ -28,6 +28,7 @@ import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as ImportOrdersRouteImport } from './routes/import-orders'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as BusinessTypeRouteImport } from './routes/business-type'
 import { Route as BusinessProfileRouteImport } from './routes/business-profile'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
@@ -133,6 +134,11 @@ const CustomersRoute = CustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BusinessTypeRoute = BusinessTypeRouteImport.update({
+  id: '/business-type',
+  path: '/business-type',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BusinessProfileRoute = BusinessProfileRouteImport.update({
   id: '/business-profile',
   path: '/business-profile',
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
+  '/business-type': typeof BusinessTypeRoute
   '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
+  '/business-type': typeof BusinessTypeRoute
   '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/business-profile': typeof BusinessProfileRoute
+  '/business-type': typeof BusinessTypeRoute
   '/customers': typeof CustomersRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
@@ -278,6 +287,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/business-profile'
+    | '/business-type'
     | '/customers'
     | '/forgot-password'
     | '/import-orders'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/business-profile'
+    | '/business-type'
     | '/customers'
     | '/forgot-password'
     | '/import-orders'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/business-profile'
+    | '/business-type'
     | '/customers'
     | '/forgot-password'
     | '/import-orders'
@@ -369,6 +381,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
   BusinessProfileRoute: typeof BusinessProfileRoute
+  BusinessTypeRoute: typeof BusinessTypeRoute
   CustomersRoute: typeof CustomersRoute
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
   ImportOrdersRoute: typeof ImportOrdersRoute
@@ -526,6 +539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/business-type': {
+      id: '/business-type'
+      path: '/business-type'
+      fullPath: '/business-type'
+      preLoaderRoute: typeof BusinessTypeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/business-profile': {
       id: '/business-profile'
       path: '/business-profile'
@@ -623,6 +643,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
   BusinessProfileRoute: BusinessProfileRoute,
+  BusinessTypeRoute: BusinessTypeRoute,
   CustomersRoute: CustomersRoute,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
   ImportOrdersRoute: ImportOrdersRoute,

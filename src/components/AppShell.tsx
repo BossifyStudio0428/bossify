@@ -17,6 +17,8 @@ import { loadPrefs } from "@/lib/notifPrefs";
 import { rescheduleAll, runUnpaidNotifyNow } from "@/lib/notifSchedule";
 import { initBilling } from "@/lib/billing";
 import { registerPushForUser } from "@/lib/pushRegister";
+import { BusinessTypeProvider, useBusinessType } from "@/contexts/BusinessTypeContext";
+import { bizKey, hasInventory } from "@/lib/businessType";
 
 // Session-level flag — true once we've shown the cold-start splash this app
 // launch. We use sessionStorage so the splash flow survives client-side
@@ -85,18 +87,15 @@ if (typeof window !== "undefined") {
   }, NATIVE_SPLASH_MS);
 }
 
-const tabs = [
-  { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
-  { to: "/orders", labelKey: "nav_orders", icon: ClipboardList, id: "tour-tab-orders" },
-  { to: "/inventory", labelKey: "nav_inventory", icon: Package, id: "tour-tab-inventory" },
-  { to: "/customers", labelKey: "nav_customers", icon: Users, id: "tour-tab-customers" },
-] as const;
+import type { TKey } from "@/contexts/I18nContext";
+type TabDef = { to: string; labelKey: TKey; icon: typeof Home; id: string };
 
 // Routes that are part of the first-time setup / onboarding flow. The
 // bottom navigation bar is hidden while the user is on any of these pages
 // so they focus on completing setup before exploring the rest of the app.
 const ONBOARDING_SETUP_ROUTES: readonly string[] = [
   "/onboarding",
+  "/business-type",
   "/business-profile",
   "/payment-details",
   "/payment-setup",
@@ -110,9 +109,11 @@ export function AppShell() {
       <ThemeProvider>
         <AuthProvider>
           <SubscriptionProvider>
-            <ShellInner />
-            <UpgradeModal />
-            <Toaster position="bottom-center" richColors closeButton />
+            <BusinessTypeProvider>
+              <ShellInner />
+              <UpgradeModal />
+              <Toaster position="bottom-center" richColors closeButton />
+            </BusinessTypeProvider>
           </SubscriptionProvider>
         </AuthProvider>
       </ThemeProvider>
@@ -138,6 +139,7 @@ function ShellInner() {
     locationPathname === "/reset-password" ||
     locationPathname.startsWith("/forgot-password");
   const isOnboardingRoute = locationPathname === "/onboarding";
+  const isBusinessTypeRoute = locationPathname === "/business-type";
   const isSetupFlowRoute = ONBOARDING_SETUP_ROUTES.some(
     (r) => locationPathname === r || locationPathname.startsWith(r + "/"),
   );
@@ -149,6 +151,7 @@ function ShellInner() {
   const isPublicFlow = isSplashRoute || isLanguageRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const { type: bizType, loading: bizLoading } = useBusinessType();
   const [notifReady, setNotifReady] = useState(false);
 
   // Start with the Bossify splash on the first frame of every cold start.
@@ -245,6 +248,11 @@ function ShellInner() {
       if (completedOnboarding) {
         if (needsOnboarding) setNeedsOnboarding(false);
         if (isOnboardingRoute) navigate({ to: "/", replace: true });
+        // Force business-type selection once onboarding is done if profile
+        // hasn't picked one yet. Don't redirect away from the page itself.
+        if (!bizLoading && !bizType && !isBusinessTypeRoute && !isSetupFlowRoute) {
+          navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
+        }
         return;
       }
       if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding", replace: true });
@@ -256,10 +264,14 @@ function ShellInner() {
     isAuthFlowRoute,
     isLoginRoute,
     isOnboardingRoute,
+    isBusinessTypeRoute,
+    isSetupFlowRoute,
     isPublicFlow,
     isLanguageRoute,
     onboardingChecked,
     needsOnboarding,
+    bizType,
+    bizLoading,
     navigate,
   ]);
 
@@ -285,7 +297,7 @@ function ShellInner() {
     return <BossifySplash />;
   }
 
-  if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
+  if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || isBusinessTypeRoute || !session) {
     return (
       <div
         style={{
@@ -327,29 +339,43 @@ function ShellInner() {
 
 const BottomNav = memo(function BottomNav() {
   const { t } = useI18n();
+  const { type } = useBusinessType();
+  const tabs: TabDef[] = [
+    { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
+    { to: "/orders", labelKey: bizKey(type, "orders"), icon: ClipboardList, id: "tour-tab-orders" },
+    ...(hasInventory(type)
+      ? [{ to: "/inventory", labelKey: bizKey(type, "inventory"), icon: Package, id: "tour-tab-inventory" } as TabDef]
+      : []),
+    { to: "/customers", labelKey: bizKey(type, "customers"), icon: Users, id: "tour-tab-customers" },
+  ];
+  const leftCount = hasInventory(type) ? 2 : 2;
+  const gridCols = hasInventory(type) ? "grid-cols-5" : "grid-cols-3";
+  // When inventory is hidden, layout is: Home | Orders | FAB | Customers (4 cells around FAB).
+  // We render Home + Orders (left), FAB, then Customers (right).
   return (
     <nav
       className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40"
       style={{ bottom: "max(env(safe-area-inset-bottom), 0px)" }}
     >
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
-        <ul className="grid grid-cols-5 items-center h-16 px-1">
-          {tabs.slice(0, 2).map((tab) => (
+        <ul className={`grid ${hasInventory(type) ? "grid-cols-5" : "grid-cols-5"} items-center h-16 px-1`}>
+          {tabs.slice(0, leftCount).map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
           <li className="flex justify-center">
             <Link
               id="tour-new-order"
               to="/new-order"
-              aria-label={t("nav_new_order")}
+              aria-label={t(bizKey(type, "new_order"))}
               className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
             >
               <Plus className="h-7 w-7" strokeWidth={2.5} />
             </Link>
           </li>
-          {tabs.slice(2).map((tab) => (
+          {tabs.slice(leftCount).map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
+          {!hasInventory(type) && <li />}
         </ul>
       </div>
     </nav>

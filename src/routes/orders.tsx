@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { bizKey } from "@/lib/businessType";
 import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
@@ -45,6 +47,7 @@ function formatTime(iso: string) {
 function OrdersPage() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
+  const { type: bizType } = useBusinessType();
   const navigate = useNavigate();
   const { hasFullAccess, showUpgrade } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
@@ -331,7 +334,7 @@ function OrdersPage() {
   return (
     <div className="px-5 pt-10 pb-4 space-y-5">
       <header className="flex items-center gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("orders")}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t(bizKey(bizType, "orders"))}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {todayCount} {t("today_count")}
         </span>
