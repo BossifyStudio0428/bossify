@@ -1786,6 +1786,15 @@ const dict = {
     bg_property: "查看今日潜在客户 🏠",
     bg_fnb: "查看今日订单 🍱",
     bg_freelance: "查看今日项目 💪",
+    stat_new_cases: "新案例",
+    stat_total_clients: "客户总数",
+    stat_followups_today: "今日跟进",
+    stat_appointments_today: "今日预约",
+    stat_new_leads: "新潜在客户",
+    stat_in_progress: "进行中",
+    stat_completed_month: "本月完成",
+    stat_active_projects: "活跃项目",
+    stat_month_revenue: "本月收入",
   },
 } as const;
 
