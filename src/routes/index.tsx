@@ -39,6 +39,7 @@ const statusStyles: Record<string, string> = {
 function Index() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
+  const { type: bizType } = useBusinessType();
   const {
     hasFullAccess,
     isLifetime,
@@ -287,6 +288,7 @@ function Index() {
         <div className="min-w-0 flex-1">
           <p className="text-sm text-muted-foreground">{greeting},</p>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("welcome")} 👋</h1>
+          <p className="text-xs text-muted-foreground mt-1">{t(HOME_GREETING_KEY[bizType ?? "retail"])}</p>
         </div>
         <div className="flex items-start gap-1.5 shrink-0">
           <Link
