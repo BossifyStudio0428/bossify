@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { BIZ_TYPES, type BizType } from "@/lib/businessType";
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
 
@@ -14,7 +16,7 @@ type Q = {
   key: string;
   labelKey: TKey;
   titleKey: TKey;
-  options: { emoji: string; textKey: TKey }[];
+  options: { emoji: string; textKey: TKey; bizKey?: BizType }[];
 };
 
 const QUESTIONS: Q[] = [
@@ -22,13 +24,11 @@ const QUESTIONS: Q[] = [
     key: "business_type",
     labelKey: "ob_q1_label",
     titleKey: "ob_q1_title",
-    options: [
-      { emoji: "🍱", textKey: "ob_q1_o1" },
-      { emoji: "👗", textKey: "ob_q1_o2" },
-      { emoji: "💄", textKey: "ob_q1_o3" },
-      { emoji: "🧵", textKey: "ob_q1_o4" },
-      { emoji: "📦", textKey: "ob_q1_o5" },
-    ],
+    options: BIZ_TYPES.map((b) => ({
+      emoji: b.emoji,
+      textKey: b.nameKey,
+      bizKey: b.key,
+    })),
   },
   {
     key: "order_management",
@@ -100,9 +100,11 @@ function Onboarding() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { setType } = useBusinessType();
   // step: 0 = welcome, 1..7 = questions, 8 = complete
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [bizSelection, setBizSelection] = useState<BizType | null>(null);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -142,8 +144,10 @@ function Onboarding() {
     };
   }, [user, authLoading, navigate]);
 
-  const select = (key: string, val: string) =>
+  const select = (key: string, val: string, bizKey?: BizType) => {
     setAnswers((a) => ({ ...a, [key]: val }));
+    if (key === "business_type" && bizKey) setBizSelection(bizKey);
+  };
 
   const goNext = () => {
     setDirection("forward");
@@ -158,7 +162,13 @@ function Onboarding() {
     if (!user || saving) return;
     setSaving(true);
     safeLocalStorage.setItem(`${ONBOARDING_DONE_KEY}:${user.id}`, "1");
-    navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
+    // Persist chosen business type to profiles so labels update everywhere
+    if (!skip && bizSelection) {
+      try { await setType(bizSelection); } catch (e) { console.error("setType failed", e); }
+      navigate({ to: "/payment-setup", replace: true });
+    } else {
+      navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
+    }
     try {
       const payload: Record<string, string | null> = {
         user_id: user.id,
@@ -213,7 +223,7 @@ function Onboarding() {
             qIndex={step - 1}
             question={QUESTIONS[step - 1]}
             value={answers[QUESTIONS[step - 1].key]}
-            onSelect={(v) => select(QUESTIONS[step - 1].key, v)}
+            onSelect={(v, bizKey) => select(QUESTIONS[step - 1].key, v, bizKey)}
             onBack={goBack}
             onContinue={() => {
               if (step === 7) {
@@ -289,7 +299,7 @@ function QuestionScreen({
   qIndex: number;
   question: Q;
   value: string | undefined;
-  onSelect: (v: string) => void;
+  onSelect: (v: string, bizKey?: BizType) => void;
   onBack: () => void;
   onContinue: () => void;
   animClass: string;
@@ -339,7 +349,7 @@ function QuestionScreen({
           return (
             <button
               key={o.textKey}
-              onClick={() => onSelect(optText)}
+              onClick={() => onSelect(optText, o.bizKey)}
               className="w-full flex items-center gap-3 text-left transition-all active:scale-[1.02]"
               style={{
                 padding: "11px 14px",
