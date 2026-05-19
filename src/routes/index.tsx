@@ -675,7 +675,7 @@ function Index() {
       )}
 
       {/* Section 2: depends on business type */}
-      {isRetailish && topCustomers.length > 0 && (
+      {(eff === "retail" || eff === "fnb") && topCustomers.length > 0 && (
         <section>
           <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
             {t("top_customers")}
