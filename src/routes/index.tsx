@@ -607,7 +607,7 @@ function Index() {
         </div>
       </section>
 
-      {lowStock > 0 && (
+      {showLowStockCard && lowStock > 0 && (
         <Link
           to="/inventory"
           className="block rounded-2xl bg-amber-50 border border-amber-200 p-3 active:scale-[0.99] transition-transform"
