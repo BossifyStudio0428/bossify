@@ -12,12 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UniversityInsightsRouteImport } from './routes/university-insights'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SplashRouteImport } from './routes/splash'
+import { Route as ServicesSummaryRouteImport } from './routes/services-summary'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PlansRouteImport } from './routes/plans'
+import { Route as PipelineOverviewRouteImport } from './routes/pipeline-overview'
 import { Route as PaymentSuccessRouteImport } from './routes/payment-success'
 import { Route as PaymentSetupRouteImport } from './routes/payment-setup'
 import { Route as PaymentDetailsRouteImport } from './routes/payment-details'
@@ -58,6 +60,11 @@ const SplashRoute = SplashRouteImport.update({
   path: '/splash',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServicesSummaryRoute = ServicesSummaryRouteImport.update({
+  id: '/services-summary',
+  path: '/services-summary',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
   path: '/services',
@@ -86,6 +93,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PlansRoute = PlansRouteImport.update({
   id: '/plans',
   path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PipelineOverviewRoute = PipelineOverviewRouteImport.update({
+  id: '/pipeline-overview',
+  path: '/pipeline-overview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentSuccessRoute = PaymentSuccessRouteImport.update({
@@ -230,12 +242,14 @@ export interface FileRoutesByFullPath {
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
   '/payment-success': typeof PaymentSuccessRoute
+  '/pipeline-overview': typeof PipelineOverviewRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
+  '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
@@ -265,12 +279,14 @@ export interface FileRoutesByTo {
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
   '/payment-success': typeof PaymentSuccessRoute
+  '/pipeline-overview': typeof PipelineOverviewRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
+  '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
@@ -301,12 +317,14 @@ export interface FileRoutesById {
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
   '/payment-success': typeof PaymentSuccessRoute
+  '/pipeline-overview': typeof PipelineOverviewRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
+  '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
@@ -338,12 +356,14 @@ export interface FileRouteTypes {
     | '/payment-details'
     | '/payment-setup'
     | '/payment-success'
+    | '/pipeline-overview'
     | '/plans'
     | '/privacy'
     | '/profile'
     | '/reports'
     | '/search'
     | '/services'
+    | '/services-summary'
     | '/splash'
     | '/terms'
     | '/university-insights'
@@ -373,12 +393,14 @@ export interface FileRouteTypes {
     | '/payment-details'
     | '/payment-setup'
     | '/payment-success'
+    | '/pipeline-overview'
     | '/plans'
     | '/privacy'
     | '/profile'
     | '/reports'
     | '/search'
     | '/services'
+    | '/services-summary'
     | '/splash'
     | '/terms'
     | '/university-insights'
@@ -408,12 +430,14 @@ export interface FileRouteTypes {
     | '/payment-details'
     | '/payment-setup'
     | '/payment-success'
+    | '/pipeline-overview'
     | '/plans'
     | '/privacy'
     | '/profile'
     | '/reports'
     | '/search'
     | '/services'
+    | '/services-summary'
     | '/splash'
     | '/terms'
     | '/university-insights'
@@ -444,12 +468,14 @@ export interface RootRouteChildren {
   PaymentDetailsRoute: typeof PaymentDetailsRoute
   PaymentSetupRoute: typeof PaymentSetupRoute
   PaymentSuccessRoute: typeof PaymentSuccessRoute
+  PipelineOverviewRoute: typeof PipelineOverviewRoute
   PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ReportsRoute: typeof ReportsRoute
   SearchRoute: typeof SearchRoute
   ServicesRoute: typeof ServicesRoute
+  ServicesSummaryRoute: typeof ServicesSummaryRoute
   SplashRoute: typeof SplashRoute
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
@@ -477,6 +503,13 @@ declare module '@tanstack/react-router' {
       path: '/splash'
       fullPath: '/splash'
       preLoaderRoute: typeof SplashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services-summary': {
+      id: '/services-summary'
+      path: '/services-summary'
+      fullPath: '/services-summary'
+      preLoaderRoute: typeof ServicesSummaryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/services': {
@@ -519,6 +552,13 @@ declare module '@tanstack/react-router' {
       path: '/plans'
       fullPath: '/plans'
       preLoaderRoute: typeof PlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pipeline-overview': {
+      id: '/pipeline-overview'
+      path: '/pipeline-overview'
+      fullPath: '/pipeline-overview'
+      preLoaderRoute: typeof PipelineOverviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payment-success': {
@@ -738,12 +778,14 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentDetailsRoute: PaymentDetailsRoute,
   PaymentSetupRoute: PaymentSetupRoute,
   PaymentSuccessRoute: PaymentSuccessRoute,
+  PipelineOverviewRoute: PipelineOverviewRoute,
   PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ReportsRoute: ReportsRoute,
   SearchRoute: SearchRoute,
   ServicesRoute: ServicesRoute,
+  ServicesSummaryRoute: ServicesSummaryRoute,
   SplashRoute: SplashRoute,
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
@@ -752,12 +794,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
