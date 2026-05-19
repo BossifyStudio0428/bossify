@@ -76,7 +76,7 @@ const DEFAULT_KEY: Record<SemanticKey, TKey> = {
   orders: "orders",
   new_order: "new_order",
   customers: "customers",
-  new_customer: "new_customer",
+  new_customer: "bl_new_customer",
   products: "bl_products",
   inventory: "inventory",
 };
