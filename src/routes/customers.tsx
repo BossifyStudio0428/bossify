@@ -113,6 +113,14 @@ function CustomersPage() {
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {customers.length} {t("total")}
         </span>
+        {bizType === "education" && (
+          <Link
+            to="/clients-compare"
+            className="ml-auto text-[11px] font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95"
+          >
+            ⚖️ {t("edu_compare")}
+          </Link>
+        )}
       </header>
 
       <div className="relative">
