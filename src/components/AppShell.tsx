@@ -17,6 +17,8 @@ import { loadPrefs } from "@/lib/notifPrefs";
 import { rescheduleAll, runUnpaidNotifyNow } from "@/lib/notifSchedule";
 import { initBilling } from "@/lib/billing";
 import { registerPushForUser } from "@/lib/pushRegister";
+import { BusinessTypeProvider, useBusinessType } from "@/contexts/BusinessTypeContext";
+import { bizKey, hasInventory } from "@/lib/businessType";
 
 // Session-level flag — true once we've shown the cold-start splash this app
 // launch. We use sessionStorage so the splash flow survives client-side
@@ -85,18 +87,14 @@ if (typeof window !== "undefined") {
   }, NATIVE_SPLASH_MS);
 }
 
-const tabs = [
-  { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
-  { to: "/orders", labelKey: "nav_orders", icon: ClipboardList, id: "tour-tab-orders" },
-  { to: "/inventory", labelKey: "nav_inventory", icon: Package, id: "tour-tab-inventory" },
-  { to: "/customers", labelKey: "nav_customers", icon: Users, id: "tour-tab-customers" },
-] as const;
+type TabDef = { to: string; labelKey: string; icon: typeof Home; id: string };
 
 // Routes that are part of the first-time setup / onboarding flow. The
 // bottom navigation bar is hidden while the user is on any of these pages
 // so they focus on completing setup before exploring the rest of the app.
 const ONBOARDING_SETUP_ROUTES: readonly string[] = [
   "/onboarding",
+  "/business-type",
   "/business-profile",
   "/payment-details",
   "/payment-setup",
@@ -110,9 +108,11 @@ export function AppShell() {
       <ThemeProvider>
         <AuthProvider>
           <SubscriptionProvider>
-            <ShellInner />
-            <UpgradeModal />
-            <Toaster position="bottom-center" richColors closeButton />
+            <BusinessTypeProvider>
+              <ShellInner />
+              <UpgradeModal />
+              <Toaster position="bottom-center" richColors closeButton />
+            </BusinessTypeProvider>
           </SubscriptionProvider>
         </AuthProvider>
       </ThemeProvider>
@@ -138,6 +138,7 @@ function ShellInner() {
     locationPathname === "/reset-password" ||
     locationPathname.startsWith("/forgot-password");
   const isOnboardingRoute = locationPathname === "/onboarding";
+  const isBusinessTypeRoute = locationPathname === "/business-type";
   const isSetupFlowRoute = ONBOARDING_SETUP_ROUTES.some(
     (r) => locationPathname === r || locationPathname.startsWith(r + "/"),
   );
@@ -149,6 +150,7 @@ function ShellInner() {
   const isPublicFlow = isSplashRoute || isLanguageRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const { type: bizType, loading: bizLoading } = useBusinessType();
   const [notifReady, setNotifReady] = useState(false);
 
   // Start with the Bossify splash on the first frame of every cold start.
@@ -245,6 +247,11 @@ function ShellInner() {
       if (completedOnboarding) {
         if (needsOnboarding) setNeedsOnboarding(false);
         if (isOnboardingRoute) navigate({ to: "/", replace: true });
+        // Force business-type selection once onboarding is done if profile
+        // hasn't picked one yet. Don't redirect away from the page itself.
+        if (!bizLoading && !bizType && !isBusinessTypeRoute && !isSetupFlowRoute) {
+          navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
+        }
         return;
       }
       if (needsOnboarding && !isOnboardingRoute) navigate({ to: "/onboarding", replace: true });
@@ -256,10 +263,14 @@ function ShellInner() {
     isAuthFlowRoute,
     isLoginRoute,
     isOnboardingRoute,
+    isBusinessTypeRoute,
+    isSetupFlowRoute,
     isPublicFlow,
     isLanguageRoute,
     onboardingChecked,
     needsOnboarding,
+    bizType,
+    bizLoading,
     navigate,
   ]);
 
@@ -285,7 +296,7 @@ function ShellInner() {
     return <BossifySplash />;
   }
 
-  if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || !session) {
+  if (isPublicFlow || isAuthFlowRoute || isOnboardingRoute || isBusinessTypeRoute || !session) {
     return (
       <div
         style={{
