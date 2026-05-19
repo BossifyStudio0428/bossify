@@ -19,7 +19,8 @@ import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supaba
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { HOME_GREETING_KEY } from "@/lib/businessType";
+import { HOME_GREETING_KEY, hasInventory, type BizType } from "@/lib/businessType";
+import { Calendar, Users, Briefcase, CheckCircle2, Clock } from "lucide-react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import {
   loadPaymentSummary,
@@ -55,6 +56,10 @@ function Index() {
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [followUpsThisWeek, setFollowUpsThisWeek] = useState(0);
   const [followUpsOverdue, setFollowUpsOverdue] = useState(0);
+  const [followUpsToday, setFollowUpsToday] = useState(0);
+  const [totalClients, setTotalClients] = useState(0);
+  const [inProgressCount, setInProgressCount] = useState(0);
+  const [completedThisMonth, setCompletedThisMonth] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [selectedWeeklyIndex, setSelectedWeeklyIndex] = useState<number>(6);
   const [hasPayment, setHasPayment] = useState<boolean | null>(null);
@@ -118,6 +123,16 @@ function Index() {
       const fus = (fuData ?? []) as { follow_up_date: string; is_done: boolean }[];
       setFollowUpsThisWeek(fus.filter((f) => f.follow_up_date >= todayStr && f.follow_up_date <= weekEndStr).length);
       setFollowUpsOverdue(fus.filter((f) => f.follow_up_date < todayStr).length);
+      setFollowUpsToday(fus.filter((f) => f.follow_up_date === todayStr).length);
+      // Customer counts (total + by status)
+      const [{ count: totalC }, { count: inProg }, { count: completedC }] = await Promise.all([
+        supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("customer_status", "in_progress"),
+        supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("customer_status", "completed"),
+      ]);
+      setTotalClients(totalC ?? 0);
+      setInProgressCount(inProg ?? 0);
+      setCompletedThisMonth(completedC ?? 0);
       setAvatarUrl(
         (profileRes.data as any)?.avatar_url || (user.user_metadata as any)?.avatar_url || null,
       );
@@ -192,6 +207,12 @@ function Index() {
     .filter((o) => o.status === "Paid")
     .reduce((s, o) => s + Number(o.gross_profit ?? 0), 0);
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
+  const activeProjects = orders.filter((o) => o.status !== "Paid").length;
+  const nowD = new Date();
+  const monthStart = new Date(nowD.getFullYear(), nowD.getMonth(), 1);
+  const monthRevenue = orders
+    .filter((o) => o.status === "Paid" && new Date(o.created_at) >= monthStart)
+    .reduce((s, o) => s + Number(o.amount), 0);
 
   // Comparison vs yesterday
   const yest = new Date();
@@ -211,36 +232,35 @@ function Index() {
   if (unpaidCount > 3) motivMsg = t("motiv_unpaid").replace("{n}", String(unpaidCount));
   if (todayRevenue > yesterdayRevenue && yesterdayRevenue > 0) motivMsg = t("motiv_better");
 
-  const stats = [
-    {
-      label: t("todays_revenue"),
-      value: `RM ${todayRevenue.toFixed(0)}`,
-      icon: DollarSign,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-    },
-    {
-      label: t("todays_profit"),
-      value: `RM ${todayGrossProfit.toFixed(0)}`,
-      icon: TrendingUp,
-      color: "text-primary",
-      bg: "bg-primary/10",
-    },
-    {
-      label: t("new_orders"),
-      value: String(todayOrders.length),
-      icon: ShoppingBag,
-      color: "text-primary",
-      bg: "bg-primary/10",
-    },
-    {
-      label: t("unpaid"),
-      value: String(unpaidCount),
-      icon: AlertCircle,
-      color: "text-red-500",
-      bg: "bg-red-50",
-    },
-  ];
+  const eff: BizType = (bizType ?? "retail") as BizType;
+  type Stat = { label: string; value: string; icon: typeof DollarSign; color: string; bg: string };
+  const revenueCard: Stat = { label: t("todays_revenue"), value: `RM ${todayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
+  const profitCard: Stat = { label: t("todays_profit"), value: `RM ${todayGrossProfit.toFixed(0)}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" };
+  const newOrdersCard: Stat = { label: t("new_orders"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" };
+  const unpaidCard: Stat = { label: t("unpaid"), value: String(unpaidCount), icon: AlertCircle, color: "text-red-500", bg: "bg-red-50" };
+  const lowStockCard: Stat = { label: t("low_stock"), value: String(lowStock), icon: PackageX, color: "text-amber-500", bg: "bg-amber-50" };
+  const newCasesCard: Stat = { label: t("stat_new_cases"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" };
+  const newAppointmentsCard: Stat = { label: t("stat_appointments_today"), value: String(todayOrders.length), icon: Calendar, color: "text-primary", bg: "bg-primary/10" };
+  const newLeadsCard: Stat = { label: t("stat_new_leads"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" };
+  const totalClientsCard: Stat = { label: t("stat_total_clients"), value: String(totalClients), icon: Users, color: "text-primary", bg: "bg-primary/10" };
+  const followupsTodayCard: Stat = { label: t("stat_followups_today"), value: String(followUpsToday), icon: Calendar, color: "text-primary", bg: "bg-primary/10" };
+  const followupsWeekCard: Stat = { label: t("followups_this_week"), value: String(followUpsThisWeek), icon: Calendar, color: "text-primary", bg: "bg-primary/10" };
+  const inProgressCard: Stat = { label: t("stat_in_progress"), value: String(inProgressCount), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" };
+  const completedMonthCard: Stat = { label: t("stat_completed_month"), value: String(completedThisMonth), icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" };
+  const activeProjectsCard: Stat = { label: t("stat_active_projects"), value: String(activeProjects), icon: Briefcase, color: "text-primary", bg: "bg-primary/10" };
+  const monthRevenueCard: Stat = { label: t("stat_month_revenue"), value: `RM ${monthRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
+
+  const STATS_BY_TYPE: Record<BizType, Stat[]> = {
+    retail:    [revenueCard, profitCard, newOrdersCard, unpaidCard, lowStockCard],
+    fnb:       [revenueCard, newOrdersCard, unpaidCard, lowStockCard],
+    education: [newCasesCard, unpaidCard, totalClientsCard, followupsTodayCard],
+    beauty:    [newAppointmentsCard, unpaidCard, totalClientsCard, followupsWeekCard],
+    property:  [newLeadsCard, inProgressCard, completedMonthCard, followupsTodayCard],
+    freelance: [activeProjectsCard, unpaidCard, monthRevenueCard, followupsTodayCard],
+  };
+  const stats = STATS_BY_TYPE[eff];
+  const showLowStockCard = hasInventory(eff);
+  const showRevenueDelta = stats[0] === revenueCard;
 
   // Weekly chart
   const weekly: { day: string; value: number }[] = [];
@@ -417,7 +437,7 @@ function Index() {
             </div>
             <p className={`mt-3 text-xl font-bold ${s.color}`}>{s.value}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
-            {i === 0 && revDelta !== null && (
+            {i === 0 && showRevenueDelta && revDelta !== null && (
               <p
                 className={`text-[10px] mt-0.5 font-semibold ${revDelta >= 0 ? "text-emerald-600" : "text-red-500"}`}
               >
@@ -428,20 +448,22 @@ function Index() {
         ))}
       </section>
 
-      <Link
-        to="/inventory"
-        aria-label={t("low_stock")}
-        className="flex items-center gap-3 rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 pr-4 active:scale-[0.99] transition-transform"
-      >
-        <span className="h-11 w-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-          <PackageX className="h-5 w-5 text-amber-500" />
-        </span>
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className="text-xl font-bold text-amber-500 leading-none">{lowStock}</span>
-          <span className="text-xs text-muted-foreground leading-tight">{t("low_stock")}</span>
-        </div>
-        <ChevronRight className="h-5 w-5 text-amber-500 shrink-0" />
-      </Link>
+      {showLowStockCard && (
+        <Link
+          to="/inventory"
+          aria-label={t("low_stock")}
+          className="flex items-center gap-3 rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 pr-4 active:scale-[0.99] transition-transform"
+        >
+          <span className="h-11 w-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+            <PackageX className="h-5 w-5 text-amber-500" />
+          </span>
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            <span className="text-xl font-bold text-amber-500 leading-none">{lowStock}</span>
+            <span className="text-xs text-muted-foreground leading-tight">{t("low_stock")}</span>
+          </div>
+          <ChevronRight className="h-5 w-5 text-amber-500 shrink-0" />
+        </Link>
+      )}
 
       {(followUpsThisWeek > 0 || followUpsOverdue > 0) && (
         <Link
@@ -585,7 +607,7 @@ function Index() {
         </div>
       </section>
 
-      {lowStock > 0 && (
+      {showLowStockCard && lowStock > 0 && (
         <Link
           to="/inventory"
           className="block rounded-2xl bg-amber-50 border border-amber-200 p-3 active:scale-[0.99] transition-transform"
