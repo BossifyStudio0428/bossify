@@ -6,7 +6,7 @@ import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
 import { toast } from "sonner";
-import { DEFAULT_ORDER_TPL, DEFAULT_REMINDER_TPL } from "@/lib/wa";
+import { DEFAULT_ORDER_TPL, DEFAULT_REMINDER_TPL, getOrderTemplate, getReminderTemplate } from "@/lib/wa";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -35,8 +35,19 @@ function ProfilePage() {
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string; avatar_url: string | null } | null>(null);
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
-  const [orderTpl, setOrderTpl] = useState(DEFAULT_ORDER_TPL);
-  const [reminderTpl, setReminderTpl] = useState(DEFAULT_REMINDER_TPL);
+  const defaultOrderTpl = getOrderTemplate(lang, bizType);
+  const defaultReminderTpl = getReminderTemplate(lang, bizType);
+  const [orderTpl, setOrderTpl] = useState<string>(DEFAULT_ORDER_TPL);
+  const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
+  const [orderCustom, setOrderCustom] = useState(false);
+  const [reminderCustom, setReminderCustom] = useState(false);
+
+  // Keep textarea in sync with biz-type / lang default when user hasn't customised.
+  useEffect(() => {
+    if (!orderCustom) setOrderTpl(defaultOrderTpl);
+    if (!reminderCustom) setReminderTpl(defaultReminderTpl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bizType, lang]);
   const [paySummary, setPaySummary] = useState<PaymentSummary | null>(null);
 
   const reportsLabelKey =
