@@ -5,6 +5,16 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, type BizType } from "@/lib/businessType";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Search = { from?: "profile" | "onboarding" };
 
@@ -22,8 +32,9 @@ function BusinessTypePage() {
   const { type, setType } = useBusinessType();
   const [selected, setSelected] = useState<BizType | null>(type);
   const [saving, setSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const onContinue = async () => {
+  const doSave = async () => {
     if (!selected || saving) return;
     setSaving(true);
     try {
@@ -35,7 +46,18 @@ function BusinessTypePage() {
       toast.error((e as Error).message);
     } finally {
       setSaving(false);
+      setConfirmOpen(false);
     }
+  };
+
+  const onContinue = () => {
+    if (!selected || saving) return;
+    // Confirm only when changing an existing type (no data loss, just labels)
+    if (type && selected !== type) {
+      setConfirmOpen(true);
+      return;
+    }
+    void doSave();
   };
 
   return (
@@ -82,6 +104,23 @@ function BusinessTypePage() {
             {saving ? t("saving") : t("continue")}
           </button>
         </div>
+
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("business_type_confirm_title")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("business_type_confirm_body")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={saving}>{t("cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={(e) => { e.preventDefault(); void doSave(); }} disabled={saving}>
+                {saving ? t("saving") : t("business_type_confirm_yes")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
