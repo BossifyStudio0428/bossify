@@ -554,6 +554,17 @@ function PlansPage() {
                   (r) => r.productId === STARTER_PRODUCT_IDS.monthly || r.productId === STARTER_PRODUCT_IDS.annual,
                 );
                 if (lifetimeR) {
+                  // Account lock: lifetime is bound to ONE email. If this
+                  // device's logged-in email differs from the original
+                  // purchaser's email, do NOT restore.
+                  if (
+                    sub?.lifetime_email &&
+                    user.email &&
+                    sub.lifetime_email.toLowerCase() !== user.email.toLowerCase()
+                  ) {
+                    toast.error(t("lifetime_restore_mismatch"));
+                    return;
+                  }
                   const { error: restoreError } = await supabase.from("subscriptions").upsert({
                     user_id: user.id,
                     plan: "lifetime",
@@ -564,6 +575,8 @@ function PlansPage() {
                     provider_purchase_token: lifetimeR.purchaseToken ?? null,
                     lifetime_purchase_date: sub?.lifetime_purchase_date ?? new Date().toISOString(),
                     lifetime_google_token: lifetimeR.purchaseToken ?? null,
+                    lifetime_email: sub?.lifetime_email ?? user.email ?? null,
+                    lifetime_activated_at: sub?.lifetime_activated_at ?? new Date().toISOString(),
                     current_period_end: null,
                   }, { onConflict: "user_id" });
                   if (restoreError) {
