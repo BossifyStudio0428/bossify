@@ -5,8 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
-import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { BIZ_TYPES, type BizType } from "@/lib/businessType";
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
 
@@ -16,20 +14,10 @@ type Q = {
   key: string;
   labelKey: TKey;
   titleKey: TKey;
-  options: { emoji: string; textKey: TKey; bizKey?: BizType }[];
+  options: { emoji: string; textKey: TKey }[];
 };
 
 const QUESTIONS: Q[] = [
-  {
-    key: "business_type",
-    labelKey: "ob_q1_label",
-    titleKey: "ob_q1_title",
-    options: BIZ_TYPES.map((b) => ({
-      emoji: b.emoji,
-      textKey: b.nameKey,
-      bizKey: b.key,
-    })),
-  },
   {
     key: "order_management",
     labelKey: "ob_q2_label",
@@ -100,11 +88,9 @@ function Onboarding() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
-  const { setType } = useBusinessType();
-  // step: 0 = welcome, 1..7 = questions, 8 = complete
+  // step: 0 = welcome, 1..6 = questions, 7 = complete
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [bizSelection, setBizSelection] = useState<BizType | null>(null);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -144,9 +130,8 @@ function Onboarding() {
     };
   }, [user, authLoading, navigate]);
 
-  const select = (key: string, val: string, bizKey?: BizType) => {
+  const select = (key: string, val: string) => {
     setAnswers((a) => ({ ...a, [key]: val }));
-    if (key === "business_type" && bizKey) setBizSelection(bizKey);
   };
 
   const goNext = () => {
@@ -162,17 +147,11 @@ function Onboarding() {
     if (!user || saving) return;
     setSaving(true);
     safeLocalStorage.setItem(`${ONBOARDING_DONE_KEY}:${user.id}`, "1");
-    // Persist chosen business type to profiles so labels update everywhere
-    if (!skip && bizSelection) {
-      try { await setType(bizSelection); } catch (e) { console.error("setType failed", e); }
-      navigate({ to: "/payment-setup", replace: true });
-    } else {
-      navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
-    }
+    // Always direct users to the dedicated business-type picker after onboarding
+    navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
     try {
       const payload: Record<string, string | null> = {
         user_id: user.id,
-        business_type: null,
         order_management: null,
         biggest_challenge: null,
         daily_orders: null,
@@ -216,28 +195,28 @@ function Onboarding() {
       <div className="w-full max-w-[420px] min-h-screen flex flex-col px-5 py-8">
         {step === 0 && <Welcome onStart={goNext} />}
 
-        {step >= 1 && step <= 7 && (
+        {step >= 1 && step <= 6 && (
           <QuestionScreen
             key={step}
             animClass={animClass}
             qIndex={step - 1}
             question={QUESTIONS[step - 1]}
             value={answers[QUESTIONS[step - 1].key]}
-            onSelect={(v, bizKey) => select(QUESTIONS[step - 1].key, v, bizKey)}
+            onSelect={(v) => select(QUESTIONS[step - 1].key, v)}
             onBack={goBack}
             onContinue={() => {
-              if (step === 7) {
+              if (step === 6) {
                 setDirection("forward");
-                setStep(8);
+                setStep(7);
               } else {
                 goNext();
               }
             }}
-            isLast={step === 7}
+            isLast={step === 6}
           />
         )}
 
-        {step === 8 && (
+        {step === 7 && (
           <Completion
             answers={answers}
             saving={saving}
@@ -269,9 +248,6 @@ function Welcome({ onStart }: { onStart: () => void }) {
         <span className="px-4 py-1.5 rounded-full bg-[#F3F0FF] text-primary text-xs font-medium">
           {t("takes_1min")}
         </span>
-        <span className="px-4 py-1.5 rounded-full bg-[#F3F0FF] text-primary text-xs font-medium">
-          {t("q7")}
-        </span>
       </div>
       <div className="w-full mt-10 space-y-3">
         <button
@@ -299,7 +275,7 @@ function QuestionScreen({
   qIndex: number;
   question: Q;
   value: string | undefined;
-  onSelect: (v: string, bizKey?: BizType) => void;
+  onSelect: (v: string) => void;
   onBack: () => void;
   onContinue: () => void;
   animClass: string;
@@ -310,7 +286,7 @@ function QuestionScreen({
     <div className={`flex-1 flex flex-col ${animClass}`}>
       {/* Progress */}
       <div className="flex gap-1.5 mb-4">
-        {Array.from({ length: 7 }).map((_, i) => (
+        {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
             className="flex-1 rounded-full transition-colors"
@@ -349,7 +325,7 @@ function QuestionScreen({
           return (
             <button
               key={o.textKey}
-              onClick={() => onSelect(optText, o.bizKey)}
+              onClick={() => onSelect(optText)}
               className="w-full flex items-center gap-3 text-left transition-all active:scale-[1.02]"
               style={{
                 padding: "11px 14px",
@@ -406,7 +382,6 @@ function Completion({
 }) {
   const { t } = useI18n();
   const summary: { labelKey: TKey; key: string }[] = [
-    { labelKey: "ob_summary_business", key: "business_type" },
     { labelKey: "ob_summary_challenge", key: "biggest_challenge" },
     { labelKey: "ob_summary_goal", key: "primary_goal" },
     { labelKey: "ob_summary_growth", key: "growth_goal" },
