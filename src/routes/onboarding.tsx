@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { BIZ_TYPES, type BizType } from "@/lib/businessType";
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
 
@@ -14,7 +16,7 @@ type Q = {
   key: string;
   labelKey: TKey;
   titleKey: TKey;
-  options: { emoji: string; textKey: TKey }[];
+  options: { emoji: string; textKey: TKey; bizKey?: BizType }[];
 };
 
 const QUESTIONS: Q[] = [
@@ -22,13 +24,11 @@ const QUESTIONS: Q[] = [
     key: "business_type",
     labelKey: "ob_q1_label",
     titleKey: "ob_q1_title",
-    options: [
-      { emoji: "🍱", textKey: "ob_q1_o1" },
-      { emoji: "👗", textKey: "ob_q1_o2" },
-      { emoji: "💄", textKey: "ob_q1_o3" },
-      { emoji: "🧵", textKey: "ob_q1_o4" },
-      { emoji: "📦", textKey: "ob_q1_o5" },
-    ],
+    options: BIZ_TYPES.map((b) => ({
+      emoji: b.emoji,
+      textKey: b.nameKey,
+      bizKey: b.key,
+    })),
   },
   {
     key: "order_management",
