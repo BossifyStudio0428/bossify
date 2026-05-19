@@ -12,6 +12,7 @@ import { notify as deviceNotify } from "@/lib/notifications";
 import { isPrefEnabled } from "@/lib/notifPrefs";
 import { sendPushToSelf } from "@/lib/sendPush";
 import { notifySituation } from "@/lib/autoNotify";
+import { getNotifMessage } from "@/lib/notifMessages";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { PhoneInput } from "@/components/PhoneInput";
 
@@ -261,10 +262,14 @@ function NewOrderPage() {
       const newStock = Math.max(0, Number(matchedItem.stock ?? 0) - quantity);
       await supabase.from("inventory").update({ stock: newStock }).eq("id", matchedItem.id);
       if (newStock <= 5 && newStock < Number(matchedItem.stock ?? 0)) {
+        const m = getNotifMessage("low_stock", bizType, lang, {
+          product: matchedItem.name,
+          quantity: newStock,
+        });
         notifySituation({
           kind: "low_stock",
-          title: newStock === 0 ? "Out of Stock ❌" : "Low Stock Alert 📦",
-          body: newStock === 0 ? `${matchedItem.name} is sold out. Restock now!` : `${matchedItem.name} is running low. Only ${newStock} left!`,
+          title: m.title,
+          body: m.body,
           link: "/inventory",
           prefKey: "notif_inventory",
           dedupeKey: `stock_${matchedItem.id}_${newStock}`,
