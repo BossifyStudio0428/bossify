@@ -118,8 +118,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
       if (data) {
         // Lifetime account lock: if the current logged-in email no longer
-        // matches the email the Lifetime was activated under, downgrade
-        // to Free locally. Lifetime is bound to ONE account forever.
+        // matches the email the Lifetime was activated under, treat the
+        // plan as Free locally and warn the user. The DB trigger
+        // (protect_lifetime_fields) prevents tampering with the binding
+        // fields, and the unique index on lifetime_email guarantees one
+        // email = one Lifetime — this client-side check is just UX.
         if (
           data.plan === "lifetime" &&
           data.lifetime_email &&
