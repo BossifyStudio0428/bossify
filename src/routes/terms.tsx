@@ -11,6 +11,20 @@ function TermsPage() {
   const { t } = useI18n();
   const { plan } = useSubscription();
   const [platform, setPlatform] = useState<"google_play" | "stripe" | null>(null);
+  const [isNativeAndroid, setIsNativeAndroid] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") {
+          setIsNativeAndroid(true);
+        }
+      } catch {
+        // not in Capacitor — web
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -35,9 +49,26 @@ function TermsPage() {
     })();
   }, []);
 
+  // Platform precedence:
+  // 1. Running inside the Android app → Google Play only (the only payment method available there).
+  // 2. Known payment platform from profile/subscription → that one only.
+  // 3. Free plan on web → show both for reference.
+  // 4. Unknown on web → default to Stripe (web purchases go through Stripe).
   const isFree = plan === "free";
-  const showGoogle = isFree || platform === "google_play" || (!platform && !isFree);
-  const showStripe = isFree || platform === "stripe" || (!platform && !isFree);
+  let showGoogle = false;
+  let showStripe = false;
+  if (isNativeAndroid) {
+    showGoogle = true;
+  } else if (platform === "google_play") {
+    showGoogle = true;
+  } else if (platform === "stripe") {
+    showStripe = true;
+  } else if (isFree) {
+    showGoogle = true;
+    showStripe = true;
+  } else {
+    showStripe = true;
+  }
 
   const bullets = [
     t("terms_lifetime_b1"),
@@ -71,13 +102,13 @@ function TermsPage() {
         {showGoogle && (
           <div className="space-y-1.5">
             <h3 className="text-sm font-semibold text-foreground">{t("terms_refund_google_play_title")}</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">{t("terms_refund_google_play")}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{t("terms_refund_google_play")}</p>
           </div>
         )}
         {showStripe && (
           <div className="space-y-1.5">
             <h3 className="text-sm font-semibold text-foreground">{t("terms_refund_stripe_title")}</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">{t("terms_refund_stripe")}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{t("terms_refund_stripe")}</p>
           </div>
         )}
       </section>
