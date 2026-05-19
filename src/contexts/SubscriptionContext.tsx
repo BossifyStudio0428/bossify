@@ -221,6 +221,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // downgrade away from it.
       const lifetimeReceipt = await verifyLifetimeOwnership();
       if (lifetimeReceipt) {
+        // Account-lock check: if the stored row was activated under a
+        // different email, do NOT restore lifetime on this account.
+        if (
+          sub?.lifetime_email &&
+          user.email &&
+          sub.lifetime_email.toLowerCase() !== user.email.toLowerCase()
+        ) {
+          await refresh();
+          return;
+        }
         await supabase.from("subscriptions").upsert(
           {
             user_id: user.id,
@@ -232,6 +242,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
             provider_purchase_token: lifetimeReceipt.purchaseToken ?? null,
             lifetime_purchase_date: sub?.lifetime_purchase_date ?? new Date().toISOString(),
             lifetime_google_token: lifetimeReceipt.purchaseToken ?? null,
+            lifetime_email: sub?.lifetime_email ?? user.email ?? null,
+            lifetime_activated_at: sub?.lifetime_activated_at ?? new Date().toISOString(),
             current_period_end: null,
           },
           { onConflict: "user_id" },
