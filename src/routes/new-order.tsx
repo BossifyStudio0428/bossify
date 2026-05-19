@@ -98,6 +98,7 @@ function NewOrderPage() {
   const [saving, setSaving] = useState(false);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
+  const [services, setServices] = useState<Array<{ id: string; name: string; price: number }>>([]);
   const [unitPrice, setUnitPrice] = useState<number | null>(null);
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
   const [paymentPreviewBlock, setPaymentPreviewBlock] = useState<string>("");
@@ -112,8 +113,17 @@ function NewOrderPage() {
       setInventory((inv ?? []) as InventoryRow[]);
       if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
       setPaymentPreviewBlock(await fetchFreshPaymentBlock(user.id, lang));
+      if (!isRetailish) {
+        const { data: svc } = await supabase
+          .from("services")
+          .select("id,name,price")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false });
+        setServices(((svc ?? []) as any).map((s: any) => ({ ...s, price: Number(s.price) })));
+      }
     })();
-  }, [lang, user]);
+  }, [lang, user, isRetailish]);
 
   const upd = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((p) => ({ ...p, [k]: e.target.value }));
@@ -424,6 +434,22 @@ function NewOrderPage() {
     form.product.length > 0
       ? inventory.filter((i) => i.name.toLowerCase().includes(form.product.toLowerCase())).slice(0, 5)
       : [];
+
+  const serviceMatches =
+    !isRetailish && form.product.length > 0
+      ? services.filter((s) => s.name.toLowerCase().includes(form.product.toLowerCase())).slice(0, 5)
+      : !isRetailish
+        ? services.slice(0, 5)
+        : [];
+
+  const selectService = (s: { id: string; name: string; price: number }) => {
+    setForm((p) => ({
+      ...p,
+      product: s.name,
+      amount: s.price > 0 ? s.price.toFixed(2) : p.amount,
+    }));
+    setShowSuggest(false);
+  };
 
   return (
     <div className="px-5 pt-10 pb-6 space-y-6">
