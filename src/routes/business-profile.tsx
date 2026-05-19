@@ -9,8 +9,6 @@ import { PhoneInput } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/business-profile")({ component: BusinessProfilePage });
 
-const BUSINESS_TYPES = ["Food & Beverage", "Fashion", "Beauty", "Handmade", "Others"] as const;
-
 function BusinessProfilePage() {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -21,7 +19,6 @@ function BusinessProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     business_name: "",
-    business_type: "",
     whatsapp_number: "",
     avatar_url: "",
   });
@@ -31,13 +28,12 @@ function BusinessProfilePage() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("business_name,business_type,whatsapp_number,avatar_url")
+        .select("business_name,whatsapp_number,avatar_url")
         .eq("id", user.id)
         .maybeSingle();
       if (data) {
         setForm({
           business_name: data.business_name ?? "",
-          business_type: data.business_type ?? "",
           whatsapp_number: data.whatsapp_number ?? "",
           avatar_url: data.avatar_url ?? "",
         });
@@ -74,7 +70,6 @@ function BusinessProfilePage() {
     setSaving(true);
     const { error } = await supabase.from("profiles").update({
       business_name: form.business_name.trim(),
-      business_type: form.business_type || null,
       whatsapp_number: form.whatsapp_number.trim() || null,
       avatar_url: form.avatar_url || null,
     }).eq("id", user.id);
@@ -116,18 +111,6 @@ function BusinessProfilePage() {
 
       <div className="space-y-4">
         <Field label={t("business_name")} value={form.business_name} onChange={(v) => setForm((p) => ({ ...p, business_name: v }))} />
-
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("business_type_label")}</label>
-          <select
-            value={form.business_type}
-            onChange={(e) => setForm((p) => ({ ...p, business_type: e.target.value }))}
-            className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground"
-          >
-            <option value="">{t("select_dash")}</option>
-            {BUSINESS_TYPES.map((b) => <option key={b} value={b}>{b}</option>)}
-          </select>
-        </div>
 
         <PhoneInput
           label={`WhatsApp ${t("phone_number")}`}
