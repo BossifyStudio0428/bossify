@@ -18,6 +18,7 @@ import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PlansRouteImport } from './routes/plans'
+import { Route as PipelineOverviewRouteImport } from './routes/pipeline-overview'
 import { Route as PaymentSuccessRouteImport } from './routes/payment-success'
 import { Route as PaymentSetupRouteImport } from './routes/payment-setup'
 import { Route as PaymentDetailsRouteImport } from './routes/payment-details'
@@ -86,6 +87,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PlansRoute = PlansRouteImport.update({
   id: '/plans',
   path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PipelineOverviewRoute = PipelineOverviewRouteImport.update({
+  id: '/pipeline-overview',
+  path: '/pipeline-overview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentSuccessRoute = PaymentSuccessRouteImport.update({
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
   '/payment-success': typeof PaymentSuccessRoute
+  '/pipeline-overview': typeof PipelineOverviewRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByTo {
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
   '/payment-success': typeof PaymentSuccessRoute
+  '/pipeline-overview': typeof PipelineOverviewRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
   '/payment-success': typeof PaymentSuccessRoute
+  '/pipeline-overview': typeof PipelineOverviewRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -338,6 +347,7 @@ export interface FileRouteTypes {
     | '/payment-details'
     | '/payment-setup'
     | '/payment-success'
+    | '/pipeline-overview'
     | '/plans'
     | '/privacy'
     | '/profile'
@@ -373,6 +383,7 @@ export interface FileRouteTypes {
     | '/payment-details'
     | '/payment-setup'
     | '/payment-success'
+    | '/pipeline-overview'
     | '/plans'
     | '/privacy'
     | '/profile'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/payment-details'
     | '/payment-setup'
     | '/payment-success'
+    | '/pipeline-overview'
     | '/plans'
     | '/privacy'
     | '/profile'
@@ -444,6 +456,7 @@ export interface RootRouteChildren {
   PaymentDetailsRoute: typeof PaymentDetailsRoute
   PaymentSetupRoute: typeof PaymentSetupRoute
   PaymentSuccessRoute: typeof PaymentSuccessRoute
+  PipelineOverviewRoute: typeof PipelineOverviewRoute
   PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
@@ -519,6 +532,13 @@ declare module '@tanstack/react-router' {
       path: '/plans'
       fullPath: '/plans'
       preLoaderRoute: typeof PlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pipeline-overview': {
+      id: '/pipeline-overview'
+      path: '/pipeline-overview'
+      fullPath: '/pipeline-overview'
+      preLoaderRoute: typeof PipelineOverviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payment-success': {
@@ -738,6 +758,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentDetailsRoute: PaymentDetailsRoute,
   PaymentSetupRoute: PaymentSetupRoute,
   PaymentSuccessRoute: PaymentSuccessRoute,
+  PipelineOverviewRoute: PipelineOverviewRoute,
   PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
