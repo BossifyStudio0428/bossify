@@ -14,11 +14,7 @@ export function mapAuthError(message: string | undefined | null): TKey | null {
   if (m.includes("already registered") || m.includes("user already") || m.includes("already exists") || m.includes("email address is already")) return "err_user_exists";
   if (m.includes("password") && (m.includes("weak") || m.includes("short") || m.includes("least") || m.includes("characters"))) return "err_weak_pw";
   if (m.includes("network") || m.includes("fetch") || m.includes("failed to fetch")) return "err_network";
-  if (m.includes("rate limit") || m.includes("too many") || m.includes("over_email_send_rate") || m.includes("exceeded")) return "err_rate_limit";
-  if (m.includes("signup") && (m.includes("disabled") || m.includes("not allowed") || m.includes("disallowed"))) return "err_signup_disabled";
-  if (m.includes("signups not allowed")) return "err_signup_disabled";
-  if (m.includes("token has expired") || m.includes("expired") && m.includes("otp")) return "err_otp_expired";
-  if (m.includes("invalid otp") || m.includes("token") && m.includes("invalid")) return "invalid_code";
+  if (m.includes("invalid otp") || (m.includes("token") && (m.includes("invalid") || m.includes("expired")))) return "invalid_code";
   return null;
 }
 
