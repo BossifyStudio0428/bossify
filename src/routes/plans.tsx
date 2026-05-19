@@ -4,8 +4,9 @@ import { ChevronLeft, Check, X, Sparkles, Crown, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useI18n } from "@/contexts/I18nContext";
+import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useSubscription, FREE_LIMITS } from "@/contexts/SubscriptionContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { notifySituation } from "@/lib/autoNotify";
 import {
   isNativeBillingAvailable,
@@ -64,6 +65,9 @@ async function startStripeCheckout(opts: {
 
 function PlansPage() {
   const { t } = useI18n();
+  const { type: bizType } = useBusinessType();
+  const eff = (bizType ?? "retail") as
+    | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
   const { user } = useAuth();
   const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
@@ -109,26 +113,42 @@ function PlansPage() {
   const starterPrice = billing === "monthly" ? storePrices.starter_monthly : storePrices.starter_annual;
   const period = billing === "monthly" ? t("per_month") : t("per_year");
 
+  // Per-business-type feature keys. Pricing & savings are NOT touched.
+  const FREE: Record<typeof eff, TKey[]> = {
+    retail:    ["free_orders_per_month", "free_inventory_count", "pf_basic_dashboard", "pf_wa_order_confirms"],
+    fnb:       ["free_orders_per_month", "free_inventory_count", "pf_basic_dashboard", "pf_wa_order_confirms"],
+    education: ["pf_cases_20", "pf_services_10", "pf_basic_dashboard", "pf_wa_confirm_tpl"],
+    beauty:    ["pf_appointments_20", "pf_services_10", "pf_basic_dashboard", "pf_wa_confirm_tpl"],
+    property:  ["pf_leads_20", "pf_packages_10", "pf_basic_dashboard", "pf_followup_reminders"],
+    freelance: ["pf_projects_20", "pf_services_10", "pf_basic_dashboard", "pf_wa_confirm_tpl"],
+  };
+  const STARTER: Record<typeof eff, TKey[]> = {
+    retail:    ["starter_orders_per_month", "starter_products_count", "basic_sales_reports", "ps_wa_confirmations"],
+    fnb:       ["starter_orders_per_month", "starter_products_count", "basic_sales_reports", "ps_wa_confirmations"],
+    education: ["ps_cases_40", "ps_services_25", "ps_basic_case_reports", "ps_uni_insights_basic", "ps_wa_confirmations"],
+    beauty:    ["ps_appointments_40", "ps_services_25", "ps_basic_appointment_reports", "ps_wa_confirmations"],
+    property:  ["ps_leads_40", "ps_packages_25", "ps_basic_lead_reports", "pf_followup_reminders"],
+    freelance: ["ps_projects_40", "ps_services_25", "ps_basic_project_reports", "ps_wa_confirmations"],
+  };
+  const PRO: Record<typeof eff, TKey[]> = {
+    retail:    ["unlimited_orders_feat", "pp_unlimited_products", "full_reports_feat", "export_pdf", "wa_template", "remind_all_unpaid", "priority_support_feat"],
+    fnb:       ["unlimited_orders_feat", "pp_unlimited_products", "full_reports_feat", "export_pdf", "wa_template", "remind_all_unpaid", "priority_support_feat"],
+    education: ["pp_unlimited_cases", "pp_unlimited_services", "pp_full_case_reports", "pp_uni_insights_full", "pp_client_comparison", "export_pdf", "wa_template", "priority_support_feat"],
+    beauty:    ["pp_unlimited_appointments", "pp_unlimited_services", "pp_full_appointment_reports", "pp_client_analytics", "export_pdf", "wa_template", "remind_all_unpaid", "priority_support_feat"],
+    property:  ["pp_unlimited_leads", "pp_unlimited_packages", "pp_full_lead_reports", "pp_followup_analytics", "export_pdf", "priority_support_feat"],
+    freelance: ["pp_unlimited_projects", "pp_unlimited_services", "pp_full_project_reports", "pp_client_analytics", "export_pdf", "wa_template", "priority_support_feat"],
+  };
+
+  const freePositive: TKey[] = FREE[eff];
   const freeRows: { ok: boolean; label: string }[] = [
-    { ok: true, label: t("free_orders_per_month") },
-    { ok: true, label: t("free_inventory_count") },
-    { ok: true, label: t("todays_revenue") + " · " + t("recent_orders") },
-    { ok: true, label: "WhatsApp " + t("order_template") },
+    ...freePositive.map((k) => ({ ok: true, label: t(k) })),
+    // upsell hints (what you don't get on Free)
     { ok: false, label: t("sales_reports") },
     { ok: false, label: t("export_pdf") },
-    { ok: false, label: t("remind_all_unpaid") },
     { ok: false, label: t("wa_template") },
   ];
-
-  const proRows = [
-    t("unlimited_orders_feat"),
-    t("unlimited_inventory_feat"),
-    t("full_reports_feat"),
-    t("export_pdf"),
-    t("wa_template"),
-    t("remind_all_unpaid"),
-    t("priority_support_feat"),
-  ];
+  const starterRows = STARTER[eff].map((k) => t(k));
+  const proRows = PRO[eff].map((k) => t(k));
 
   const handleGooglePlayPurchase = async () => {
     if (!user) return;
