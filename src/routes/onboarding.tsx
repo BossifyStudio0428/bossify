@@ -100,9 +100,11 @@ function Onboarding() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { setType } = useBusinessType();
   // step: 0 = welcome, 1..7 = questions, 8 = complete
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [bizSelection, setBizSelection] = useState<BizType | null>(null);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -142,8 +144,10 @@ function Onboarding() {
     };
   }, [user, authLoading, navigate]);
 
-  const select = (key: string, val: string) =>
+  const select = (key: string, val: string, bizKey?: BizType) => {
     setAnswers((a) => ({ ...a, [key]: val }));
+    if (key === "business_type" && bizKey) setBizSelection(bizKey);
+  };
 
   const goNext = () => {
     setDirection("forward");
@@ -158,7 +162,13 @@ function Onboarding() {
     if (!user || saving) return;
     setSaving(true);
     safeLocalStorage.setItem(`${ONBOARDING_DONE_KEY}:${user.id}`, "1");
-    navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
+    // Persist chosen business type to profiles so labels update everywhere
+    if (!skip && bizSelection) {
+      try { await setType(bizSelection); } catch (e) { console.error("setType failed", e); }
+      navigate({ to: "/payment-setup", replace: true });
+    } else {
+      navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
+    }
     try {
       const payload: Record<string, string | null> = {
         user_id: user.id,
