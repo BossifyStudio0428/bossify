@@ -29,6 +29,8 @@ export type SubscriptionRow = {
   current_period_end?: string | null;
   lifetime_purchase_date?: string | null;
   lifetime_google_token?: string | null;
+  lifetime_email?: string | null;
+  lifetime_activated_at?: string | null;
 };
 
 export const FREE_LIMITS = {
