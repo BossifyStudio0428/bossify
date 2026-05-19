@@ -414,6 +414,7 @@ const dict = {
     // Bottom nav
     nav_home: "Home",
     nav_orders: "Orders",
+    nav_services: "Services",
     nav_inventory: "Inventory",
     nav_customers: "Customers",
     nav_profile: "Profile",
@@ -1179,6 +1180,7 @@ const dict = {
     profit_breakdown: "Pecahan Keuntungan",
     nav_home: "Utama",
     nav_orders: "Pesanan",
+    nav_services: "Servis",
     nav_inventory: "Inventori",
     nav_customers: "Pelanggan",
     nav_profile: "Profil",
@@ -1940,6 +1942,7 @@ const dict = {
     profit_breakdown: "利润明细",
     nav_home: "首页",
     nav_orders: "订单",
+    nav_services: "服务",
     nav_inventory: "库存",
     nav_customers: "客户",
     nav_profile: "我的",
