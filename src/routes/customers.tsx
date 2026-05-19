@@ -255,7 +255,10 @@ function CustomersPage() {
         {!loading && customers.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_customers_create")}</p>
         )}
-        {!loading && customers.length > 0 && visible.map((c, idx) => (
+        {!loading && customers.length > 0 && bizType === "education" && viewMode === "kanban" && (
+          <CasesKanban customers={visible} eduInfo={mergedEduInfo} />
+        )}
+        {!loading && customers.length > 0 && (viewMode === "list" || bizType !== "education") && visible.map((c, idx) => (
           <div
             key={c.id}
             className={`rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] flex items-center gap-3 p-4 transition-all duration-200 ${removingId === c.id ? "opacity-0 scale-95" : "opacity-100"}`}
@@ -276,11 +279,19 @@ function CustomersPage() {
                   <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>
                 )}
                 {bizType === "education" ? (
-                  <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                    {eduDetails[c.id]?.university_preference
-                      ? <>🏫 {eduDetails[c.id]!.university_preference}{eduDetails[c.id]?.application_status ? ` · 📋 ${eduDetails[c.id]!.application_status}` : ""}</>
-                      : t("no_university_set")}
-                  </p>
+                  <>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      {eduDetails[c.id]?.university_preference
+                        ? <>🏫 {eduDetails[c.id]!.university_preference}{eduDetails[c.id]?.application_status ? ` · 📋 ${eduDetails[c.id]!.application_status}` : ""}</>
+                        : t("no_university_set")}
+                    </p>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <div className="h-1 flex-1 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full bg-primary" style={{ width: `${((mergedEduInfo[c.id]?.completedCount ?? 0) / 10) * 100}%` }} />
+                      </div>
+                      <span className="text-[10px] font-semibold text-muted-foreground">{mergedEduInfo[c.id]?.completedCount ?? 0}/10</span>
+                    </div>
+                  </>
                 ) : (
                   <p className="text-[11px] text-muted-foreground mt-0.5">
                     {c.total_orders} {t(ordersWordKey)} · {t("last")}: {relTime(c.last_order_at, t)}
@@ -302,6 +313,28 @@ function CustomersPage() {
               >
                 {CUSTOMER_STATUS_DOT[(c.customer_status ?? "enquiry") as CustomerStatus]} {t(`cs_${(c.customer_status ?? "enquiry") as CustomerStatus}` as any)}
               </button>
+              {bizType === "education" && (
+                <div className="flex gap-1">
+                  <Link
+                    to="/customer/$customerId"
+                    params={{ customerId: c.id }}
+                    hash="pipeline"
+                    aria-label={t("open_pipeline")}
+                    className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary active:scale-95"
+                  >
+                    📞
+                  </Link>
+                  <Link
+                    to="/customer/$customerId"
+                    params={{ customerId: c.id }}
+                    hash="services"
+                    aria-label={t("open_services")}
+                    className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary active:scale-95"
+                  >
+                    🎓
+                  </Link>
+                </div>
+              )}
               <button
                 onClick={() => {
                   if (!c.phone) { toast.error(t("no_phone_for_wa")); return; }
