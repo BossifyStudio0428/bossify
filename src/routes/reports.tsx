@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { exportSalesReportPDF } from "@/lib/pdf";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
 export const Route = createFileRoute("/reports")({ component: ReportsPage });
 
@@ -20,6 +21,9 @@ function ReportsPage() {
   const { user } = useAuth();
   const { t } = useI18n();
   const { hasFullAccess, showUpgrade } = useSubscription();
+  const { type: bizType } = useBusinessType();
+  const eff = bizType ?? "retail";
+  const showCostProfit = eff === "retail" || eff === "fnb";
   const [range, setRange] = useState<Range>("month");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +85,8 @@ function ReportsPage() {
   const totalOrders = inRange.length;
   const paidOrders = inRange.filter((o) => o.status === "Paid").length;
   const unpaidAmount = inRange.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount), 0);
+  const pendingCount = inRange.filter((o) => o.status === "Pending").length;
+  const unpaidCount = inRange.filter((o) => o.status === "Unpaid").length;
 
   // Revenue chart - by day
   const chartData = useMemo(() => {
@@ -165,15 +171,75 @@ function ReportsPage() {
     }
   };
 
-  const summaryCards = [
-    { label: t("total_revenue"), value: `RM ${totalRevenue.toFixed(0)}`, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: t("total_cost"), value: `RM ${totalCost.toFixed(0)}`, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: t("gross_profit"), value: `RM ${totalGrossProfit.toFixed(0)}`, color: "text-primary", bg: "bg-primary/10" },
-    { label: t("profit_margin"), value: `${profitMargin.toFixed(1)}%`, color: "text-primary", bg: "bg-primary/10" },
-    { label: t("total_orders"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
-    { label: t("paid_orders_label"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: t("unpaid_amount"), value: `RM ${unpaidAmount.toFixed(0)}`, color: "text-red-500", bg: "bg-red-50" },
-  ];
+  const revenueCard = { label: t("total_revenue"), value: `RM ${totalRevenue.toFixed(0)}`, color: "text-emerald-600", bg: "bg-emerald-50" };
+  const unpaidCard = { label: t("unpaid_amount"), value: `RM ${unpaidAmount.toFixed(0)}`, color: "text-red-500", bg: "bg-red-50" };
+
+  const summaryCards = (() => {
+    if (eff === "education") {
+      return [
+        revenueCard,
+        { label: t("rep_total_cases"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
+        { label: t("rep_paid_cases"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
+        unpaidCard,
+        { label: t("rep_completed_cases"), value: String(paidOrders), color: "text-primary", bg: "bg-primary/10" },
+        { label: t("rep_in_progress"), value: String(pendingCount), color: "text-amber-600", bg: "bg-amber-50" },
+      ];
+    }
+    if (eff === "beauty") {
+      return [
+        revenueCard,
+        { label: t("rep_total_appointments"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
+        { label: t("rep_paid_appointments"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
+        unpaidCard,
+      ];
+    }
+    if (eff === "property") {
+      return [
+        { label: t("rep_total_leads"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
+        { label: t("rep_completed"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
+        { label: t("rep_in_progress"), value: String(pendingCount), color: "text-amber-600", bg: "bg-amber-50" },
+        { label: t("rep_rejected"), value: String(unpaidCount), color: "text-red-500", bg: "bg-red-50" },
+        revenueCard,
+        unpaidCard,
+      ];
+    }
+    if (eff === "freelance") {
+      return [
+        revenueCard,
+        { label: t("rep_total_projects"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
+        { label: t("rep_active_projects"), value: String(pendingCount), color: "text-amber-600", bg: "bg-amber-50" },
+        { label: t("rep_completed_projects"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
+        unpaidCard,
+      ];
+    }
+    // retail / fnb
+    return [
+      revenueCard,
+      { label: t("total_cost"), value: `RM ${totalCost.toFixed(0)}`, color: "text-amber-600", bg: "bg-amber-50" },
+      { label: t("gross_profit"), value: `RM ${totalGrossProfit.toFixed(0)}`, color: "text-primary", bg: "bg-primary/10" },
+      { label: t("profit_margin"), value: `${profitMargin.toFixed(1)}%`, color: "text-primary", bg: "bg-primary/10" },
+      { label: t("total_orders"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
+      { label: t("paid_orders_label"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
+      unpaidCard,
+    ];
+  })();
+
+  // Suppress unused-var warning for cost metrics when not shown
+  void totalCost; void totalGrossProfit; void profitMargin; void showCostProfit;
+
+  const titleKey =
+    eff === "education" ? "rep_case_reports"
+    : eff === "beauty"  ? "rep_appointment_reports"
+    : eff === "property" ? "rep_lead_reports"
+    : eff === "freelance" ? "rep_project_reports"
+    : "sales_reports";
+
+  const chartLabelKey =
+    eff === "education" ? "rep_case_revenue"
+    : eff === "beauty"  ? "rep_appointment_revenue"
+    : eff === "property" ? "rep_lead_revenue"
+    : eff === "freelance" ? "rep_project_revenue"
+    : "rep_revenue";
 
   return (
     <div className="px-5 pt-10 pb-6 space-y-5">
@@ -191,7 +257,7 @@ function ReportsPage() {
       )}
       <header className="flex items-center gap-2">
         <Link to="/profile" className="-ml-2 p-2 rounded-full active:bg-muted"><ChevronLeft className="h-5 w-5" /></Link>
-        <h1 className="text-2xl font-bold tracking-tight">{t("sales_reports")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t(titleKey)}</h1>
       </header>
 
       <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
@@ -222,7 +288,7 @@ function ReportsPage() {
       </section>
 
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
-        <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2">{t("revenue_chart")}</p>
+        <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2">{t(chartLabelKey)}</p>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
