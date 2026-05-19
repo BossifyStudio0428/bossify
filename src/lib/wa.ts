@@ -416,24 +416,21 @@ const DEADLINE_LABEL: Record<Lang, string> = {
   zh: "截止日期",
 };
 
-const PAYMENT_LABELS: Record<Lang, { header: string; name: string; qr: string; qrAsk: string }> = {
+const PAYMENT_LABELS: Record<Lang, { header: string; name: string; qr: string }> = {
   en: {
     header: "Payment Details",
     name: "Name",
     qr: "QR Code",
-    qrAsk: "Please reply 'QR' to receive payment QR code",
   },
   ms: {
     header: "Maklumat Pembayaran",
     name: "Nama",
     qr: "Kod QR",
-    qrAsk: "Sila balas 'QR' untuk terima kod QR pembayaran",
   },
   zh: {
     header: "付款方式",
     name: "户名",
     qr: "QR码",
-    qrAsk: "请回复 'QR' 以接收付款二维码",
   },
 };
 
@@ -456,7 +453,7 @@ export function formatPaymentBlock(
   for (const m of valid) {
     lines.push(m.number ? `${m.type}${sep}${m.number}` : String(m.type));
     if (m.name) lines.push(`${labels.name}${sep}${m.name}`);
-    if (m.qr_url) lines.push(`📷 ${labels.qr}${sep}${labels.qrAsk}`);
+    if (m.qr_url) lines.push(`📷 ${labels.qr}${sep}${m.qr_url}`);
   }
   lines.push("━━━━━━━━━━━━━━━");
   return lines.join("\n") + "\n\n";
