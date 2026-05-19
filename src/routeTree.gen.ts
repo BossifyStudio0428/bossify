@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UniversityInsightsRouteImport } from './routes/university-insights'
 import { Route as SplashRouteImport } from './routes/splash'
+import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -49,6 +50,11 @@ const UniversityInsightsRoute = UniversityInsightsRouteImport.update({
 const SplashRoute = SplashRouteImport.update({
   id: '/splash',
   path: '/splash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesRoute = ServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchRoute = SearchRouteImport.update({
@@ -223,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
+  '/services': typeof ServicesRoute
   '/splash': typeof SplashRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -256,6 +263,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
+  '/services': typeof ServicesRoute
   '/splash': typeof SplashRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
+  '/services': typeof ServicesRoute
   '/splash': typeof SplashRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reports'
     | '/search'
+    | '/services'
     | '/splash'
     | '/university-insights'
     | '/customer/$customerId'
@@ -358,6 +368,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reports'
     | '/search'
+    | '/services'
     | '/splash'
     | '/university-insights'
     | '/customer/$customerId'
@@ -391,6 +402,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reports'
     | '/search'
+    | '/services'
     | '/splash'
     | '/university-insights'
     | '/customer/$customerId'
@@ -425,6 +437,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ReportsRoute: typeof ReportsRoute
   SearchRoute: typeof SearchRoute
+  ServicesRoute: typeof ServicesRoute
   SplashRoute: typeof SplashRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
@@ -444,6 +457,13 @@ declare module '@tanstack/react-router' {
       path: '/splash'
       fullPath: '/splash'
       preLoaderRoute: typeof SplashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services': {
+      id: '/services'
+      path: '/services'
+      fullPath: '/services'
+      preLoaderRoute: typeof ServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search': {
@@ -703,6 +723,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ReportsRoute: ReportsRoute,
   SearchRoute: SearchRoute,
+  ServicesRoute: ServicesRoute,
   SplashRoute: SplashRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
