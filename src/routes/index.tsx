@@ -527,7 +527,7 @@ function Index() {
 
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
-          {t("weekly_sales")}
+          {t(eff === "retail" || eff === "fnb" ? "weekly_sales" : "weekly_revenue")}
         </p>
         <div className="mt-2 flex items-baseline justify-between gap-3">
           <p className="text-2xl font-bold text-foreground">RM {Number(weeklyTotal).toFixed(0)}</p>
