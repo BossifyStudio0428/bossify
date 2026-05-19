@@ -6,7 +6,14 @@ import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
 import { toast } from "sonner";
-import { DEFAULT_ORDER_TPL, DEFAULT_REMINDER_TPL, getOrderTemplate, getReminderTemplate } from "@/lib/wa";
+import {
+  DEFAULT_ORDER_TPL,
+  DEFAULT_REMINDER_TPL,
+  getOrderTemplate,
+  getReminderTemplate,
+  isBuiltInOrderTpl,
+  isBuiltInReminderTpl,
+} from "@/lib/wa";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -122,10 +129,21 @@ function ProfilePage() {
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
       setProfile(p as any);
       setIsAdmin(!!(p as any)?.is_admin);
-      if (pref?.wa_order_template) { setOrderTpl(pref.wa_order_template); setOrderCustom(true); }
-      else { setOrderTpl(defaultOrderTpl); setOrderCustom(false); }
-      if (pref?.wa_reminder_template) { setReminderTpl(pref.wa_reminder_template); setReminderCustom(true); }
-      else { setReminderTpl(defaultReminderTpl); setReminderCustom(false); }
+      // Treat any saved value that still matches a built-in default (in any
+      // biz/lang) as non-custom, so changing business_type or language flips
+      // to the right default automatically.
+      const savedOrder = pref?.wa_order_template ?? null;
+      const savedReminder = pref?.wa_reminder_template ?? null;
+      if (savedOrder && !isBuiltInOrderTpl(savedOrder)) {
+        setOrderTpl(savedOrder); setOrderCustom(true);
+      } else {
+        setOrderTpl(defaultOrderTpl); setOrderCustom(false);
+      }
+      if (savedReminder && !isBuiltInReminderTpl(savedReminder)) {
+        setReminderTpl(savedReminder); setReminderCustom(true);
+      } else {
+        setReminderTpl(defaultReminderTpl); setReminderCustom(false);
+      }
       try {
         const s = await loadPaymentSummary(user.id);
         if (!cancelled) setPaySummary(s);
