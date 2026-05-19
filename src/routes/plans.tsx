@@ -72,6 +72,7 @@ function PlansPage() {
   const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | null>(null);
+  const [lifetimeConfirmOpen, setLifetimeConfirmOpen] = useState(false);
   const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual" | "lifetime" | "starter_monthly" | "starter_annual", string>>({
     monthly: FALLBACK_PRICES.monthly,
     annual: FALLBACK_PRICES.annual,
