@@ -40,14 +40,62 @@ export async function parseSpreadsheet(file: File): Promise<ParsedSheet> {
   const sheetName = wb.SheetNames[0];
   if (!sheetName) throw new Error("No sheets found");
   const ws = wb.Sheets[sheetName];
-  const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
+
+  // Read as array-of-arrays so we can find the real header row
+  // (Excel files often have a title / merged cell on row 1 like "BUDGET")
+  const aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, {
+    header: 1,
     defval: "",
     raw: false,
+    blankrows: false,
   });
-  const headers = json.length
-    ? Object.keys(json[0])
-    : (XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 })[0] as string[] | undefined) ?? [];
-  return { headers, rows: json };
+  if (aoa.length === 0) return { headers: [], rows: [] };
+
+  // Find the header row: the first row that has ≥2 non-empty text-ish cells.
+  // Prefer rows whose cells look like labels (mostly non-numeric).
+  const scoreRow = (row: unknown[]) => {
+    let textCells = 0;
+    let nonEmpty = 0;
+    for (const c of row) {
+      const s = String(c ?? "").trim();
+      if (!s) continue;
+      nonEmpty++;
+      if (!/^-?\d+(\.\d+)?$/.test(s)) textCells++;
+    }
+    return { nonEmpty, textCells };
+  };
+
+  let headerIdx = 0;
+  for (let i = 0; i < Math.min(aoa.length, 15); i++) {
+    const { nonEmpty, textCells } = scoreRow(aoa[i]);
+    if (nonEmpty >= 2 && textCells >= 2) { headerIdx = i; break; }
+  }
+
+  const rawHeaders = (aoa[headerIdx] ?? []).map((h, i) => {
+    const s = String(h ?? "").trim();
+    return s || `Column ${i + 1}`;
+  });
+  // Dedupe header names
+  const seen = new Map<string, number>();
+  const headers = rawHeaders.map((h) => {
+    const n = seen.get(h) ?? 0;
+    seen.set(h, n + 1);
+    return n === 0 ? h : `${h} (${n + 1})`;
+  });
+
+  const rows: Record<string, unknown>[] = [];
+  for (let r = headerIdx + 1; r < aoa.length; r++) {
+    const row = aoa[r];
+    const obj: Record<string, unknown> = {};
+    let hasAny = false;
+    headers.forEach((h, i) => {
+      const v = row[i];
+      obj[h] = v ?? "";
+      if (String(v ?? "").trim()) hasAny = true;
+    });
+    if (hasAny) rows.push(obj);
+  }
+  return { headers, rows };
 }
 
 /** Heuristic: match a header to one of our fields (EN / MS / ZH). */
