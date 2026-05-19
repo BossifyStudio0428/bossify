@@ -87,7 +87,8 @@ if (typeof window !== "undefined") {
   }, NATIVE_SPLASH_MS);
 }
 
-type TabDef = { to: string; labelKey: string; icon: typeof Home; id: string };
+import type { TKey } from "@/contexts/I18nContext";
+type TabDef = { to: string; labelKey: TKey; icon: typeof Home; id: string };
 
 // Routes that are part of the first-time setup / onboarding flow. The
 // bottom navigation bar is hidden while the user is on any of these pages
