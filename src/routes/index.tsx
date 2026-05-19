@@ -114,6 +114,14 @@ function Index() {
       setLowStock((inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length);
       setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
       setUnreadNotif(notificationsRes.count ?? 0);
+      // Latest clients (recently added)
+      const { data: latestC } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      setLatestClients((latestC ?? []) as CustomerRow[]);
       // Follow-ups: this week + overdue
       const today = new Date(); today.setHours(0,0,0,0);
       const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
@@ -128,6 +136,29 @@ function Index() {
       setFollowUpsThisWeek(fus.filter((f) => f.follow_up_date >= todayStr && f.follow_up_date <= weekEndStr).length);
       setFollowUpsOverdue(fus.filter((f) => f.follow_up_date < todayStr).length);
       setFollowUpsToday(fus.filter((f) => f.follow_up_date === todayStr).length);
+      // Today's follow-up list (for property dashboard)
+      const { data: fuTodayRows } = await supabase
+        .from("follow_ups")
+        .select("id, note, customer_id")
+        .eq("user_id", user.id)
+        .eq("is_done", false)
+        .eq("follow_up_date", todayStr)
+        .limit(5);
+      const fuRows = (fuTodayRows ?? []) as { id: string; note: string | null; customer_id: string | null }[];
+      const custIds = Array.from(new Set(fuRows.map((r) => r.customer_id).filter(Boolean))) as string[];
+      let nameById = new Map<string, string>();
+      if (custIds.length) {
+        const { data: cs } = await supabase
+          .from("customers").select("id,name").in("id", custIds);
+        (cs ?? []).forEach((c: any) => nameById.set(c.id, c.name));
+      }
+      setFollowUpsTodayList(
+        fuRows.map((r) => ({
+          id: r.id,
+          customer_name: (r.customer_id && nameById.get(r.customer_id)) || "—",
+          note: r.note,
+        })),
+      );
       // Customer counts (total + by status)
       const [{ count: totalC }, { count: inProg }, { count: completedC }] = await Promise.all([
         supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
