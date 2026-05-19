@@ -618,7 +618,13 @@ function Index() {
             )}
           </p>
           <p className="text-[10px] text-muted-foreground leading-snug">
-            {t("top_products_customers")}
+            {t(
+              eff === "education" ? "analytics_sub_education"
+              : eff === "beauty" ? "analytics_sub_beauty"
+              : eff === "property" ? "analytics_sub_property"
+              : eff === "freelance" ? "analytics_sub_freelance"
+              : "top_products_customers",
+            )}
           </p>
         </Link>
       </section>
