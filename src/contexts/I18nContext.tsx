@@ -347,6 +347,11 @@ const dict = {
     terms_lifetime_b4: "Deleting your account will permanently void the Lifetime Deal",
     terms_lifetime_b5: "Bossify reserves the right to terminate Lifetime access if the account is found to be shared or misused",
     terms_lifetime_b6: "The Lifetime Deal covers the current version of Bossify and future updates during the product's active period",
+    terms_refund_heading: "REFUND POLICY",
+    terms_refund_google_play_title: "Google Play purchases",
+    terms_refund_google_play: "All refund requests are subject to Google Play Store's refund policy. Bossify does not process refunds directly.",
+    terms_refund_stripe_title: "Stripe (Web) purchases",
+    terms_refund_stripe: "Refunds can be requested within 7 days of purchase. After 7 days, no refunds will be processed. Please contact bossifystudio@gmail.com for refund requests.",
     // Starter plan
     starter_plan: "Starter Plan",
     start_starter_plan: "Start Starter Plan",
