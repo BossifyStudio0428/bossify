@@ -111,7 +111,7 @@ const ORDER_TPL: TplMap = {
     en:
       `Hi [customer_name]! 👋\n\n` +
       `Your appointment is confirmed! 💄\n\n` +
-      `📋 Appointment: [code]\n` +
+      `💄 Appointment: [code]\n` +
       `✨ Service: [product]\n` +
       `[date_time_line]` +
       `💰 Price: RM [amount]\n` +
@@ -122,7 +122,7 @@ const ORDER_TPL: TplMap = {
     ms:
       `Hi [customer_name]! 👋\n\n` +
       `Temujanji anda telah disahkan! 💄\n\n` +
-      `📋 Temujanji: [code]\n` +
+      `💄 Temujanji: [code]\n` +
       `✨ Perkhidmatan: [product]\n` +
       `[date_time_line]` +
       `💰 Harga: RM [amount]\n` +
@@ -133,7 +133,7 @@ const ORDER_TPL: TplMap = {
     zh:
       `你好 [customer_name]！👋\n\n` +
       `您的预约已确认！💄\n\n` +
-      `📋 预约：[code]\n` +
+      `💄 预约：[code]\n` +
       `✨ 服务：[product]\n` +
       `[date_time_line]` +
       `💰 价格：RM [amount]\n` +
@@ -178,7 +178,7 @@ const ORDER_TPL: TplMap = {
     en:
       `Hi [customer_name]! 👋\n\n` +
       `Your project has been received! 💼\n\n` +
-      `📋 Project: [code]\n` +
+      `💼 Project: [code]\n` +
       `🔧 Service: [product]\n` +
       `💰 Amount: RM [amount]\n` +
       `💳 Status: [status]\n` +
@@ -189,7 +189,7 @@ const ORDER_TPL: TplMap = {
     ms:
       `Hi [customer_name]! 👋\n\n` +
       `Projek anda telah diterima! 💼\n\n` +
-      `📋 Projek: [code]\n` +
+      `💼 Projek: [code]\n` +
       `🔧 Perkhidmatan: [product]\n` +
       `💰 Jumlah: RM [amount]\n` +
       `💳 Status: [status]\n` +
@@ -200,7 +200,7 @@ const ORDER_TPL: TplMap = {
     zh:
       `你好 [customer_name]！👋\n\n` +
       `您的项目已收到！💼\n\n` +
-      `📋 项目：[code]\n` +
+      `💼 项目：[code]\n` +
       `🔧 服务：[product]\n` +
       `💰 金额：RM [amount]\n` +
       `💳 状态：[status]\n` +
@@ -294,7 +294,7 @@ const REMINDER_TPL: TplMap = {
     en:
       `Hi [customer_name]! 👋\n\n` +
       `Reminder for your outstanding payment.\n\n` +
-      `📋 Appointment: [code]\n` +
+      `💄 Appointment: [code]\n` +
       `✨ Service: [product]\n` +
       `💰 Amount Due: RM [amount]\n\n` +
       `[payment_details]` +
@@ -302,7 +302,7 @@ const REMINDER_TPL: TplMap = {
     ms:
       `Hi [customer_name]! 👋\n\n` +
       `Peringatan pembayaran tertunggak anda.\n\n` +
-      `📋 Temujanji: [code]\n` +
+      `💄 Temujanji: [code]\n` +
       `✨ Perkhidmatan: [product]\n` +
       `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
       `[payment_details]` +
@@ -310,7 +310,7 @@ const REMINDER_TPL: TplMap = {
     zh:
       `你好 [customer_name]！👋\n\n` +
       `您的未付款项提醒。\n\n` +
-      `📋 预约：[code]\n` +
+      `💄 预约：[code]\n` +
       `✨ 服务：[product]\n` +
       `💰 待付金额：RM [amount]\n\n` +
       `[payment_details]` +
@@ -346,7 +346,7 @@ const REMINDER_TPL: TplMap = {
     en:
       `Hi [customer_name]! 👋\n\n` +
       `Reminder for your outstanding project payment.\n\n` +
-      `📋 Project: [code]\n` +
+      `💼 Project: [code]\n` +
       `🔧 Service: [product]\n` +
       `💰 Amount Due: RM [amount]\n\n` +
       `[payment_details]` +
@@ -354,7 +354,7 @@ const REMINDER_TPL: TplMap = {
     ms:
       `Hi [customer_name]! 👋\n\n` +
       `Peringatan pembayaran projek tertunggak anda.\n\n` +
-      `📋 Projek: [code]\n` +
+      `💼 Projek: [code]\n` +
       `🔧 Perkhidmatan: [product]\n` +
       `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
       `[payment_details]` +
@@ -362,7 +362,7 @@ const REMINDER_TPL: TplMap = {
     zh:
       `你好 [customer_name]！👋\n\n` +
       `您的项目未付款项提醒。\n\n` +
-      `📋 项目：[code]\n` +
+      `💼 项目：[code]\n` +
       `🔧 服务：[product]\n` +
       `💰 待付金额：RM [amount]\n\n` +
       `[payment_details]` +
