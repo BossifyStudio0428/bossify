@@ -111,6 +111,18 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return null;
       }
       if (data) {
+        // Lifetime account lock: if the current logged-in email no longer
+        // matches the email the Lifetime was activated under, downgrade
+        // to Free locally. Lifetime is bound to ONE account forever.
+        if (
+          data.plan === "lifetime" &&
+          data.lifetime_email &&
+          user.email &&
+          data.lifetime_email.toLowerCase() !== user.email.toLowerCase()
+        ) {
+          data.plan = "free";
+          data.status = "active";
+        }
         // Client-side monthly reset safety net
         const period = data.count_period_start ? new Date(data.count_period_start) : null;
         const now = new Date();
