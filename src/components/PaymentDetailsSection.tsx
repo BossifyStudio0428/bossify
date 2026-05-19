@@ -171,7 +171,7 @@ export default function PaymentDetailsSection() {
       <input
         value={m.number}
         onChange={(e) => set({ ...m, number: e.target.value })}
-        placeholder={t("pay_account_no")}
+        placeholder={m.type === "Bank Transfer" ? t("pay_account_number") : t("pay_account_no")}
         inputMode={m.type === "Bank Transfer" ? "numeric" : "tel"}
         className={`w-full rounded-2xl bg-card border px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 ${numberError ? "border-destructive" : "border-border/60"}`}
       />
