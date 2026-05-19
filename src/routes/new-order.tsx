@@ -41,10 +41,59 @@ function NewOrderPage() {
     Unpaid: t("unpaid"),
     Pending: t("pending"),
   };
+
+  // ---- Business-type config ----
+  const eff = (bizType ?? "retail") as
+    | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
+  const isRetailish = eff === "retail" || eff === "fnb";
+  const showQuantity = isRetailish;
+  const showPaymentStatus = eff !== "property";
+  const productLabel =
+    eff === "education" ? t("f_service")
+    : eff === "beauty"  ? t("f_service")
+    : eff === "property" ? t("f_property_type")
+    : eff === "freelance" ? t("f_project_type")
+    : eff === "fnb" ? t("f_menu_item")
+    : t("product");
+  const productPh =
+    eff === "education" ? t("f_service_ph")
+    : eff === "beauty"  ? t("f_beauty_service_ph")
+    : eff === "property" ? t("f_property_ph")
+    : eff === "freelance" ? t("f_freelance_service_ph")
+    : t("select_product");
+  const customerLabel = isRetailish ? t("customer_name") : t("f_client_name");
+  const customerPh    = isRetailish ? t("customer_name_ph") : t("f_client_name_ph");
+  const priceLabel    = eff === "education" ? t("f_consultation_fee")
+                      : eff === "property"  ? t("f_budget")
+                      : t("price");
+  const saveLabel =
+    eff === "education" ? t("save_case")
+    : eff === "beauty"  ? t("save_appointment")
+    : eff === "property" ? t("save_lead")
+    : eff === "freelance" ? t("save_project")
+    : t("save_order");
+
   const [status, setStatus] = useState<OrderStatus>("Unpaid");
   const [form, setForm] = useState({
     customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "",
   });
+  // Per-business-type extras
+  const [extras, setExtras] = useState({
+    course_interest: "",
+    university_preference: "",
+    application_status: "not_applied" as
+      "not_applied" | "applied" | "interview" | "offer_received" | "accepted" | "rejected",
+    date_time: "",
+    location_interest: "",
+    lead_status: "enquiry" as "enquiry" | "in_progress" | "completed" | "rejected",
+    followup_date: "",
+    project_description: "",
+    deadline_date: "",
+  });
+  const updExtra = <K extends keyof typeof extras>(k: K) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setExtras((p) => ({ ...p, [k]: e.target.value as any }));
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
@@ -121,7 +170,7 @@ function NewOrderPage() {
     const e: Record<string, string> = {};
     if (!form.customer_name.trim()) e.customer_name = t("required_field");
     if (!form.product.trim()) e.product = t("required_field");
-    if (!form.quantity || Number(form.quantity) < 1) e.quantity = t("required_field");
+    if (showQuantity && (!form.quantity || Number(form.quantity) < 1)) e.quantity = t("required_field");
     if (!form.amount || Number(form.amount) < 0) e.amount = t("required_field");
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -139,7 +188,7 @@ function NewOrderPage() {
     if (!user) return null;
     const code = genCode();
     const amount = Number(form.amount) || 0;
-    const quantity = Number(form.quantity) || 1;
+    const quantity = showQuantity ? (Number(form.quantity) || 1) : 1;
     const fullPhone = form.phone.replace(/\D/g, "");
     const productName = form.product.trim();
 
@@ -150,6 +199,26 @@ function NewOrderPage() {
     const unitCost = matchedItem ? Number(matchedItem.cost_price ?? 0) : 0;
     const cost = unitCost * quantity;
     const gross_profit = amount - cost;
+
+    // Build notes payload: include any extra type-specific fields above the user's note.
+    const extraLines: string[] = [];
+    if (eff === "education") {
+      if (extras.course_interest) extraLines.push(`${t("f_course_interest")}: ${extras.course_interest}`);
+      if (extras.university_preference) extraLines.push(`${t("f_university_preference")}: ${extras.university_preference}`);
+      extraLines.push(`${t("f_app_status")}: ${t(`edu_app_${extras.application_status}` as any)}`);
+    } else if (eff === "beauty") {
+      if (extras.date_time) extraLines.push(`${t("f_date_time")}: ${extras.date_time}`);
+    } else if (eff === "property") {
+      if (extras.location_interest) extraLines.push(`${t("f_location_interest")}: ${extras.location_interest}`);
+      extraLines.push(`${t("f_lead_status")}: ${t(`cs_${extras.lead_status}` as any)}`);
+      if (extras.followup_date) extraLines.push(`${t("f_followup_date")}: ${extras.followup_date}`);
+    } else if (eff === "freelance") {
+      if (extras.project_description) extraLines.push(`${t("f_project_description")}: ${extras.project_description}`);
+      if (extras.deadline_date) extraLines.push(`${t("f_deadline_date")}: ${extras.deadline_date}`);
+    }
+    const userNote = form.notes.trim();
+    const combinedNotes = [extraLines.join("\n"), userNote].filter(Boolean).join("\n\n") || null;
+    const effectiveStatus: OrderStatus = eff === "property" ? "Pending" : status;
 
     const { data: inserted, error: orderErr } = await supabase
       .from("orders")
@@ -163,8 +232,8 @@ function NewOrderPage() {
         amount,
         cost,
         gross_profit,
-        status,
-        notes: form.notes.trim() || null,
+        status: effectiveStatus,
+        notes: combinedNotes,
       })
       .select("id, code")
       .single();
@@ -218,19 +287,71 @@ function NewOrderPage() {
       }
     }
 
+    // Education: also persist structured fields onto client_education_details
+    // if a customer row exists for this phone.
+    if (eff === "education" && fullPhone) {
+      try {
+        const { data: cust } = await supabase
+          .from("customers").select("id").eq("user_id", user.id).eq("phone", fullPhone).maybeSingle();
+        if (cust?.id) {
+          await (supabase as any).from("client_education_details").upsert({
+            client_id: cust.id,
+            user_id: user.id,
+            course_interest: extras.course_interest || null,
+            university_preference: extras.university_preference || null,
+            application_status: extras.application_status,
+          }, { onConflict: "client_id" });
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    // Property: persist follow-up reminder
+    if (eff === "property" && extras.followup_date && fullPhone) {
+      try {
+        const { data: cust } = await supabase
+          .from("customers").select("id").eq("user_id", user.id).eq("phone", fullPhone).maybeSingle();
+        if (cust?.id) {
+          await (supabase as any).from("follow_ups").insert({
+            user_id: user.id,
+            customer_id: cust.id,
+            follow_up_date: extras.followup_date,
+            note: form.product.trim() || null,
+          });
+        }
+      } catch { /* non-fatal */ }
+    }
+
     return { id: inserted.id, code: inserted.code };
   };
 
-  const buildMessage = (code: string, paymentDetails = paymentPreviewBlock) => renderTemplate(getOrderTemplate(lang, customOrderTpl), {
-    customer_name: form.customer_name || "Customer",
-    code,
-    product: form.product || "—",
-    quantity: form.quantity || "1",
-    amount: form.amount ? Number(form.amount).toFixed(2) : "0.00",
-    status,
-    notes: form.notes,
-    payment_details: status !== "Paid" ? paymentDetails : "",
-  }, lang);
+  const buildMessage = (code: string, paymentDetails = paymentPreviewBlock) => {
+    const name = form.customer_name || "Customer";
+    const amt = form.amount ? Number(form.amount).toFixed(2) : "0.00";
+    const svc = form.product || "—";
+    const pay = status !== "Paid" ? paymentDetails : "";
+    if (eff === "education") {
+      return `Hi ${name}! 👋\n\nThank you for your consultation!\n\n📋 Case: ${code}\n🎓 Service: ${svc}\n💰 Fee: RM ${amt}\n💳 Status: ${status}${pay ? `\n\n${pay}` : ""}\n\nThank you for trusting us! 🙏`;
+    }
+    if (eff === "beauty") {
+      return `Hi ${name}! 👋\n\nYour appointment is confirmed! 💄\n\n📋 Appointment: ${code}\n✨ Service: ${svc}${extras.date_time ? `\n📅 Date: ${extras.date_time}` : ""}\n💰 Price: RM ${amt}${pay ? `\n\n${pay}` : ""}\n\nSee you soon! 🙏`;
+    }
+    if (eff === "freelance") {
+      return `Hi ${name}! 👋\n\nYour project has been received! 💼\n\n📋 Project: ${code}\n🔧 Service: ${svc}\n💰 Amount: RM ${amt}${extras.deadline_date ? `\n📅 Deadline: ${extras.deadline_date}` : ""}${pay ? `\n\n${pay}` : ""}\n\nThank you! 🙏`;
+    }
+    if (eff === "property") {
+      return `Hi ${name}! 👋\n\nThanks for your interest with us!\n\n📋 Ref: ${code}\n🏠 ${svc}${extras.location_interest ? `\n📍 ${extras.location_interest}` : ""}\n💰 Budget: RM ${amt}${extras.followup_date ? `\n📅 Follow-up: ${extras.followup_date}` : ""}\n\nWe will be in touch soon! 🙏`;
+    }
+    return renderTemplate(getOrderTemplate(lang, customOrderTpl), {
+      customer_name: name,
+      code,
+      product: svc,
+      quantity: form.quantity || "1",
+      amount: amt,
+      status,
+      notes: form.notes,
+      payment_details: pay,
+    }, lang);
+  };
 
   const livePreview = buildMessage("ORD-PREVIEW-001");
 
@@ -314,7 +435,7 @@ function NewOrderPage() {
       </header>
 
       <form className="space-y-5" onSubmit={save} noValidate>
-        <Field label={t("customer_name")} icon="👤" placeholder={t("customer_name_ph")} value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
+        <Field label={customerLabel} icon="👤" placeholder={customerPh} value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
         <PhoneInput
           label={t("phone_number")}
           value={form.phone}
@@ -322,20 +443,20 @@ function NewOrderPage() {
         />
 
         <div className="space-y-1.5 relative" id="tour-no-product">
-          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("product")}</label>
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{productLabel}</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🛍️</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">{eff === "education" ? "🎓" : eff === "beauty" ? "✨" : eff === "property" ? "🏠" : eff === "freelance" ? "💼" : "🛍️"}</span>
             <input
               value={form.product}
               onChange={onProductChange}
               onFocus={() => setShowSuggest(true)}
               onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
-              placeholder={t("select_product")}
+              placeholder={productPh}
               className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${errors.product ? "border-red-400" : "border-border/60"}`}
             />
           </div>
           {errors.product && <p className="text-[11px] text-red-500 px-1">{errors.product}</p>}
-          {showSuggest && productMatches.length > 0 && (
+          {isRetailish && showSuggest && productMatches.length > 0 && (
             <div className="absolute z-20 left-0 right-0 top-full mt-1 rounded-xl bg-card border border-border/60 shadow-lg overflow-hidden max-h-64 overflow-y-auto">
               <p className="px-4 pt-2 pb-1 text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">
                 {t("select_from_list")}
@@ -356,7 +477,7 @@ function NewOrderPage() {
               ))}
             </div>
           )}
-          {form.product.trim() && (
+          {isRetailish && form.product.trim() && (
             matchedInventory ? (
               <p className="text-[11px] text-emerald-600 px-1 flex items-center gap-1">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -373,9 +494,36 @@ function NewOrderPage() {
           )}
         </div>
 
-        <Field label={t("quantity")} icon="#" placeholder="1" value={form.quantity} onChange={onQuantityChange} type="number" error={errors.quantity} />
+        {showQuantity && (
+          <Field label={t("quantity")} icon="#" placeholder="1" value={form.quantity} onChange={onQuantityChange} type="number" error={errors.quantity} />
+        )}
+
+        {/* Per-business extra fields */}
+        {eff === "education" && (
+          <>
+            <Field label={t("f_course_interest")} icon="🎓" placeholder={t("f_course_ph")} value={extras.course_interest} onChange={updExtra("course_interest")} />
+            <Field label={t("f_university_preference")} icon="🏫" placeholder={t("f_uni_ph")} value={extras.university_preference} onChange={updExtra("university_preference")} />
+          </>
+        )}
+        {eff === "beauty" && (
+          <Field label={t("f_date_time")} icon="📅" placeholder="" value={extras.date_time} onChange={updExtra("date_time")} type="datetime-local" />
+        )}
+        {eff === "property" && (
+          <Field label={t("f_location_interest")} icon="📍" placeholder={t("f_location_ph")} value={extras.location_interest} onChange={updExtra("location_interest")} />
+        )}
+        {eff === "freelance" && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_project_description")}</label>
+            <textarea
+              rows={3} value={extras.project_description} onChange={updExtra("project_description")}
+              placeholder={t("f_project_desc_ph")}
+              className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
+            />
+          </div>
+        )}
+
         <Field
-          label={t("price")}
+          label={priceLabel}
           icon="💰"
           placeholder="0.00"
           value={form.amount}
@@ -385,6 +533,38 @@ function NewOrderPage() {
           hint={unitPrice != null ? `Auto: RM ${unitPrice.toFixed(2)} × ${Number(form.quantity) || 0}` : undefined}
         />
 
+        {eff === "education" && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_app_status")}</label>
+            <select value={extras.application_status} onChange={updExtra("application_status")}
+              className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition">
+              {(["not_applied","applied","interview","offer_received","accepted","rejected"] as const).map((s) => (
+                <option key={s} value={s}>{t(`edu_app_${s}` as any)}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {eff === "property" && (
+          <>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_lead_status")}</label>
+              <select value={extras.lead_status} onChange={updExtra("lead_status")}
+                className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition">
+                {(["enquiry","in_progress","completed","rejected"] as const).map((s) => (
+                  <option key={s} value={s}>{t(`cs_${s}` as any)}</option>
+                ))}
+              </select>
+            </div>
+            <Field label={t("f_followup_date")} icon="📅" placeholder="" value={extras.followup_date} onChange={updExtra("followup_date")} type="date" />
+          </>
+        )}
+
+        {eff === "freelance" && (
+          <Field label={t("f_deadline_date")} icon="📅" placeholder="" value={extras.deadline_date} onChange={updExtra("deadline_date")} type="date" />
+        )}
+
+        {showPaymentStatus && (
         <div className="space-y-1.5" id="tour-no-status">
           <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
             {t("payment_status")}
@@ -403,6 +583,7 @@ function NewOrderPage() {
             })}
           </div>
         </div>
+        )}
 
         <div className="space-y-1.5">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
@@ -420,7 +601,7 @@ function NewOrderPage() {
             type="submit" disabled={saving}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition-transform disabled:opacity-60"
           >
-            {saving ? t("saving") : t("save_order")}
+            {saving ? t("saving") : saveLabel}
           </button>
           {!hasFullAccess && (
             <p className="text-center text-[11px] text-muted-foreground">
@@ -430,6 +611,7 @@ function NewOrderPage() {
               )}
             </p>
           )}
+          {eff !== "property" && (
           <button
             type="button"
             onClick={saveAndWhatsApp}
@@ -439,6 +621,7 @@ function NewOrderPage() {
           >
             📲 {t("save_whatsapp")}
           </button>
+          )}
         </div>
 
         {(form.customer_name || form.product) && (
