@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import type { BizType } from "@/lib/businessType";
+import type { Lang } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/services")({ component: ServicesPage });
 
@@ -24,7 +26,7 @@ type Sheet =
   | { kind: "delete"; item: Service };
 
 function ServicesPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType } = useBusinessType();
   const isPackages = bizType === "property";
@@ -84,7 +86,7 @@ function ServicesPage() {
           </div>
         )}
         {!loading && items.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10">{t(emptyKey)}</p>
+          <EmptyState bizType={bizType} lang={lang} onAdd={() => setSheet({ kind: "form" })} addLabel={t(addKey)} />
         )}
         {!loading && items.map((it) => (
           <article key={it.id} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
@@ -254,6 +256,117 @@ function Field({
           className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
         />
       )}
+    </div>
+  );
+}
+
+type EmptyContent = {
+  icon: string;
+  title: Record<Lang, string>;
+  desc: Record<Lang, string>;
+  examples: string[];
+};
+
+const EMPTY_CONTENT: Partial<Record<BizType, EmptyContent>> = {
+  education: {
+    icon: "🎓",
+    title: {
+      en: "Add Your Services",
+      ms: "Tambah Perkhidmatan Anda",
+      zh: "添加您的服务",
+    },
+    desc: {
+      en: "Add services you offer like 'University Application', 'Consultation Session', etc. These will appear when creating a new case.",
+      ms: "Tambah perkhidmatan yang anda tawarkan seperti 'Permohonan Universiti', 'Sesi Perundingan' dan sebagainya. Perkhidmatan ini akan muncul semasa anda membuat kes baru.",
+      zh: "添加您提供的服务，例如'大学申请'、'咨询课程'等。创建新案例时可以直接选择。",
+    },
+    examples: [
+      "University Application — RM 500",
+      "Consultation Session — RM 100",
+      "Document Preparation — RM 200",
+    ],
+  },
+  beauty: {
+    icon: "💄",
+    title: {
+      en: "Add Your Services",
+      ms: "Tambah Perkhidmatan Anda",
+      zh: "添加您的服务",
+    },
+    desc: {
+      en: "Add beauty services like 'Facial', 'Manicure', etc. These will appear when creating a new appointment.",
+      ms: "Tambah perkhidmatan kecantikan anda seperti 'Facial', 'Manicure' dan sebagainya. Perkhidmatan ini akan muncul semasa anda membuat temujanji baru.",
+      zh: "添加您的美容服务，例如'面部护理'、'美甲'等。创建新预约时可以直接选择。",
+    },
+    examples: [
+      "Facial — 60 mins — RM 150",
+      "Manicure — 45 mins — RM 80",
+      "Hair Treatment — 90 mins — RM 200",
+    ],
+  },
+  property: {
+    icon: "🏠",
+    title: {
+      en: "Add Your Packages",
+      ms: "Tambah Pakej Anda",
+      zh: "添加您的配套",
+    },
+    desc: {
+      en: "Add packages or products you offer. These will appear when creating a new lead.",
+      ms: "Tambah pakej atau produk yang anda tawarkan. Ini akan muncul semasa anda membuat prospek baru.",
+      zh: "添加您提供的配套或产品。创建新潜在客户时可以直接选择。",
+    },
+    examples: [
+      "Basic Coverage — RM 200/year",
+      "Premium Package — RM 500/year",
+      "Property Consultation — RM 300",
+    ],
+  },
+  freelance: {
+    icon: "💼",
+    title: {
+      en: "Add Your Services",
+      ms: "Tambah Perkhidmatan Anda",
+      zh: "添加您的服务",
+    },
+    desc: {
+      en: "Add freelance services like 'Logo Design', 'Website Development', etc. These will appear when creating a new project.",
+      ms: "Tambah perkhidmatan freelance anda seperti 'Rekabentuk Logo', 'Pembangunan Laman Web' dan sebagainya. Ini akan muncul semasa anda membuat projek baru.",
+      zh: "添加您的自由职业服务，例如'Logo设计'、'网站开发'等。创建新项目时可以直接选择。",
+    },
+    examples: [
+      "Logo Design — RM 300",
+      "Website Development — RM 2,000",
+      "Social Media Management — RM 500/month",
+    ],
+  },
+};
+
+function EmptyState({
+  bizType, lang, onAdd, addLabel,
+}: { bizType: BizType | null | undefined; lang: Lang; onAdd: () => void; addLabel: string }) {
+  const content = EMPTY_CONTENT[(bizType ?? "freelance") as BizType] ?? EMPTY_CONTENT.freelance!;
+  return (
+    <div className="flex flex-col items-center text-center py-8 px-2 space-y-4">
+      <div className="text-[60px] leading-none">{content.icon}</div>
+      <h2 className="text-[18px] font-bold text-foreground">{content.title[lang]}</h2>
+      <p className="text-sm text-muted-foreground max-w-[320px]">{content.desc[lang]}</p>
+      <div className="flex flex-wrap justify-center gap-2 pt-1">
+        {content.examples.map((ex) => (
+          <span
+            key={ex}
+            className="text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground border border-border/60"
+          >
+            {ex}
+          </span>
+        ))}
+      </div>
+      <button
+        onClick={onAdd}
+        className="mt-2 inline-flex items-center gap-1.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold shadow-[var(--shadow-soft)] active:scale-[0.99] transition-transform"
+      >
+        <Plus className="h-4 w-4" strokeWidth={2.5} /> {addLabel}
+      </button>
     </div>
   );
 }
