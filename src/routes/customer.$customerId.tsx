@@ -7,6 +7,8 @@ import { useI18n } from "@/contexts/I18nContext";
 import { PhoneInput } from "@/components/PhoneInput";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { EducationDetailsForm } from "@/components/EducationDetailsForm";
+import { FollowupPipeline } from "@/components/FollowupPipeline";
+import { AdditionalServices } from "@/components/AdditionalServices";
 
 export const Route = createFileRoute("/customer/$customerId")({ component: CustomerDetail });
 
@@ -201,7 +203,11 @@ function CustomerDetail() {
       </section>
 
       {bizType === "education" && (
-        <EducationDetailsForm clientId={customer.id} userId={customer.user_id} />
+        <>
+          <EducationDetailsForm clientId={customer.id} userId={customer.user_id} />
+          <FollowupPipeline clientId={customer.id} userId={customer.user_id} />
+          <AdditionalServices clientId={customer.id} userId={customer.user_id} />
+        </>
       )}
 
       <section className="space-y-2">
