@@ -176,6 +176,8 @@ function Index() {
       setOrders([]);
       setLowStock(0);
       setTopCustomers([]);
+      setLatestClients([]);
+      setFollowUpsTodayList([]);
       setUnreadNotif(0);
       setAvatarUrl((user.user_metadata as any)?.avatar_url || null);
     }
