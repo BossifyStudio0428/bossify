@@ -82,14 +82,25 @@ function AnalyticsPage() {
     .map(([name, v]) => ({ name: name.length > 12 ? name.slice(0,12)+"…" : name, qty: v.qty, rev: v.rev }))
     .sort((a, b) => b.qty - a.qty).slice(0, 5);
 
-  // Top customers/clients by spending
-  const custMap = new Map<string, number>();
+  // Top customers/clients by spending (sum across ALL paid orders, case-insensitive name match)
+  const custMap = new Map<string, { display: string; spent: number; orders: number }>();
   paid.forEach((o) => {
-    custMap.set(o.customer_name, (custMap.get(o.customer_name) ?? 0) + Number(o.amount));
+    const raw = (o.customer_name ?? "").trim();
+    if (!raw) return;
+    const key = raw.toLowerCase();
+    const cur = custMap.get(key) ?? { display: raw, spent: 0, orders: 0 };
+    cur.spent += Number(o.amount) || 0;
+    cur.orders += 1;
+    custMap.set(key, cur);
   });
-  const topCustomers = [...custMap.entries()]
-    .map(([name, spent]) => ({ name: name.length > 14 ? name.slice(0,14)+"…" : name, spent }))
-    .sort((a, b) => b.spent - a.spent).slice(0, 5);
+  const topCustomers = [...custMap.values()]
+    .map((v) => ({
+      name: v.display.length > 14 ? v.display.slice(0, 14) + "…" : v.display,
+      spent: v.spent,
+      orders: v.orders,
+    }))
+    .sort((a, b) => b.spent - a.spent)
+    .slice(0, 5);
 
   // Best days of week
   const dowKeys = ["dow_sun","dow_mon","dow_tue","dow_wed","dow_thu","dow_fri","dow_sat"] as const;
@@ -235,7 +246,10 @@ function AnalyticsPage() {
                 <BarChart data={topCustomers} layout="vertical">
                   <XAxis type="number" fontSize={10} tick={{ fill: "currentColor" }} />
                   <YAxis type="category" dataKey="name" fontSize={10} width={90} tick={{ fill: "currentColor" }} />
-                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} formatter={(v: number) => `RM ${v.toFixed(0)}`} />
+                  <Tooltip
+                    contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }}
+                    formatter={(v: number, _n, p: any) => [`RM ${Number(v).toFixed(2)} (${p?.payload?.orders ?? 0})`, ""]}
+                  />
                   <Bar dataKey="spent" fill="#10B981" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -271,13 +285,13 @@ function AnalyticsPage() {
               </Card>
               {appStatusData.length > 0 && (
                 <Card title={t("an_application_status_breakdown")}>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie data={appStatusData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart margin={{ top: 20, right: 20, bottom: 10, left: 20 }}>
+                      <Pie data={appStatusData} dataKey="value" nameKey="name" cx="50%" cy="45%" innerRadius={45} outerRadius={70} paddingAngle={3}>
                         {appStatusData.map((s, i) => <Cell key={i} fill={s.color} />)}
                       </Pie>
                       <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: 11 }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </Card>
@@ -322,13 +336,13 @@ function AnalyticsPage() {
 
           {showStatus && (
           <Card title={t(statusTitleKey)}>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart margin={{ top: 20, right: 20, bottom: 10, left: 20 }}>
+                <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="45%" innerRadius={45} outerRadius={70} paddingAngle={3}>
                   {statusData.map((s, i) => <Cell key={i} fill={s.color} />)}
                 </Pie>
                 <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: 11 }} />
               </PieChart>
             </ResponsiveContainer>
           </Card>
