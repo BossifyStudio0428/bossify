@@ -294,17 +294,17 @@ function ProfilePage() {
             <p className="text-sm font-semibold py-1">{t("wa_template")}</p>
             <div>
               <label className="text-[11px] uppercase font-semibold text-muted-foreground">{t("order_template")}</label>
-              <textarea value={orderTpl} onChange={(e) => setOrderTpl(e.target.value)} rows={6}
+              <textarea value={orderTpl} onChange={(e) => { setOrderTpl(e.target.value); setOrderCustom(true); }} rows={6}
                 className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono" />
-              <button onClick={() => setOrderTpl(DEFAULT_ORDER_TPL)} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
+              <button onClick={() => { setOrderTpl(defaultOrderTpl); setOrderCustom(false); }} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
             </div>
             <div>
               <label className="text-[11px] uppercase font-semibold text-muted-foreground">{t("reminder_template")}</label>
-              <textarea value={reminderTpl} onChange={(e) => setReminderTpl(e.target.value)} rows={6}
+              <textarea value={reminderTpl} onChange={(e) => { setReminderTpl(e.target.value); setReminderCustom(true); }} rows={6}
                 className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono" />
-              <button onClick={() => setReminderTpl(DEFAULT_REMINDER_TPL)} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
+              <button onClick={() => { setReminderTpl(defaultReminderTpl); setReminderCustom(false); }} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
             </div>
-            <p className="text-[10px] text-muted-foreground">{t("variables_help")}</p>
+            <p className="text-[10px] text-muted-foreground">{varsHelp}</p>
             <button onClick={saveTemplates} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold">{t("save")}</button>
           </div>
         </div>
