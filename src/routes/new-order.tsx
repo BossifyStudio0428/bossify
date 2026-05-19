@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { supabase, type OrderStatus, type InventoryRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { bizKey } from "@/lib/businessType";
 import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
 import { notify as deviceNotify } from "@/lib/notifications";
@@ -31,6 +33,7 @@ function genCode() {
 function NewOrderPage() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
+  const { type: bizType } = useBusinessType();
   const navigate = useNavigate();
   const { hasFullAccess, ordersUsed, ordersLimit, ordersRemaining, showUpgrade } = useSubscription();
   const statusLabels: Record<OrderStatus, string> = {
@@ -305,7 +308,7 @@ function NewOrderPage() {
     <div className="px-5 pt-10 pb-6 space-y-6">
       <header>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          {t("new_order")} <span className="text-primary">✦</span>
+          {t(bizKey(bizType, "new_order"))} <span className="text-primary">✦</span>
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("fill_details")}</p>
       </header>

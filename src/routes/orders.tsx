@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { bizKey } from "@/lib/businessType";
 import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
@@ -45,6 +47,7 @@ function formatTime(iso: string) {
 function OrdersPage() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
+  const { type: bizType } = useBusinessType();
   const navigate = useNavigate();
   const { hasFullAccess, showUpgrade } = useSubscription();
   const [hydrated, setHydrated] = useState(false);

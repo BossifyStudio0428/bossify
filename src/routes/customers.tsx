@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { supabase, type CustomerRow, type CustomerStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { bizKey } from "@/lib/businessType";
 
 export const Route = createFileRoute("/customers")({ component: CustomersPage });
 
@@ -38,6 +40,7 @@ function buildWA(phone: string, message: string) {
 
 function CustomersPage() {
   const { t } = useI18n();
+  const { type: bizType } = useBusinessType();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -106,7 +109,7 @@ function CustomersPage() {
   return (
     <div className="px-5 pt-10 pb-4 space-y-5">
       <header className="flex items-center gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("customers")}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t(bizKey(bizType, "customers"))}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {customers.length} {t("total")}
         </span>
