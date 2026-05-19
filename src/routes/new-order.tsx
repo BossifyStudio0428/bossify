@@ -611,6 +611,7 @@ function NewOrderPage() {
               )}
             </p>
           )}
+          {eff !== "property" && (
           <button
             type="button"
             onClick={saveAndWhatsApp}
@@ -620,6 +621,7 @@ function NewOrderPage() {
           >
             📲 {t("save_whatsapp")}
           </button>
+          )}
         </div>
 
         {(form.customer_name || form.product) && (
