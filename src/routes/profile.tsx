@@ -107,8 +107,10 @@ function ProfilePage() {
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
       setProfile(p as any);
       setIsAdmin(!!(p as any)?.is_admin);
-      if (pref?.wa_order_template) setOrderTpl(pref.wa_order_template);
-      if (pref?.wa_reminder_template) setReminderTpl(pref.wa_reminder_template);
+      if (pref?.wa_order_template) { setOrderTpl(pref.wa_order_template); setOrderCustom(true); }
+      else { setOrderTpl(defaultOrderTpl); setOrderCustom(false); }
+      if (pref?.wa_reminder_template) { setReminderTpl(pref.wa_reminder_template); setReminderCustom(true); }
+      else { setReminderTpl(defaultReminderTpl); setReminderCustom(false); }
       try {
         const s = await loadPaymentSummary(user.id);
         if (!cancelled) setPaySummary(s);
