@@ -19,10 +19,11 @@ function endOfDay(d: Date) { const x = new Date(d); x.setHours(23,59,59,999); re
 
 function ReportsPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { hasFullAccess, showUpgrade } = useSubscription();
   const { type: bizType } = useBusinessType();
-  const eff = bizType ?? "retail";
+  const eff = (bizType ?? "retail") as
+    | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
   const showCostProfit = eff === "retail" || eff === "fnb";
   const [range, setRange] = useState<Range>("month");
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -152,12 +153,25 @@ function ReportsPage() {
     // Yield so the button shows its loading state before heavy PDF work runs.
     await new Promise((r) => setTimeout(r, 30));
     try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("business_name,avatar_url")
+        .eq("id", user?.id ?? "")
+        .maybeSingle();
       await exportSalesReportPDF({
-        businessName: user?.email?.split("@")[0] ?? "My Store",
+        lang,
+        bizType: eff,
+        businessName: profile?.business_name ?? (user?.email?.split("@")[0] ?? "My Store"),
+        logoDataUrl: profile?.avatar_url ?? null,
         rangeLabel: label,
-        totalRevenue, totalOrders, paidOrders, unpaidAmount,
-        topProducts, topCustomers,
-        orders: inRange.map((o) => ({
+        totalRevenue,
+        totalCost, grossProfit: totalGrossProfit, profitMargin,
+        totalOrders, paidOrders, unpaidAmount,
+        pendingCount, unpaidCount,
+        completedCount: paidOrders,
+        topProducts,
+        topCustomers: topCustomers.map((c) => ({ name: c.name, orders: c.orders, spent: c.spent })),
+        rows: inRange.map((o) => ({
           date: new Date(o.created_at).toLocaleDateString("en-MY"),
           code: o.code, customer: o.customer_name, product: o.product,
           qty: Number(o.quantity), amount: Number(o.amount), status: o.status,

@@ -210,11 +210,22 @@ function OrdersPage() {
       const rows = visible.map((o) => ({
         date: new Date(o.created_at).toLocaleDateString("en-MY"),
         code: o.code, customer: o.customer_name, product: o.product,
-        amount: Number(o.amount), status: o.status,
+        qty: Number(o.quantity), amount: Number(o.amount), status: o.status,
       }));
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("business_name,avatar_url")
+        .eq("id", user?.id ?? "")
+        .maybeSingle();
+      const eff = (bizType ?? "retail") as
+        | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
       await exportOrdersListPDF({
-        businessName: user?.email?.split("@")[0] ?? "My Store",
-        statusLabel: active, orders: rows,
+        lang,
+        bizType: eff,
+        businessName: profile?.business_name ?? (user?.email?.split("@")[0] ?? "My Store"),
+        logoDataUrl: profile?.avatar_url ?? null,
+        statusLabel: active,
+        rows,
       });
     } catch (e) {
       console.error("[orders] export failed", e);
