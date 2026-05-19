@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { loadPaymentSummary } from "@/lib/paymentSetup";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
 // Stores the keys that were already complete at the moment the user
 // dismissed the card. We use this snapshot to re-show the card if any of
@@ -23,6 +24,7 @@ type Item = {
 export function SetupChecklist() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { type: bizType } = useBusinessType();
   const [items, setItems] = useState<Item[] | null>(null);
   const [dismissedKeys, setDismissedKeys] = useState<string[] | null>(null);
 
@@ -36,9 +38,16 @@ export function SetupChecklist() {
   const load = async () => {
     if (!user) return;
     try {
-      const [profileRes, invRes, ordersRes, custRes, paySummary] = await Promise.all([
+      const eff = (bizType ?? "retail") as string;
+      const usesInventory = eff === "retail" || eff === "fnb";
+      const [profileRes, invRes, svcRes, ordersRes, custRes, paySummary] = await Promise.all([
         supabase.from("profiles").select("business_name,business_type,whatsapp_number").eq("id", user.id).maybeSingle(),
-        supabase.from("inventory").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        usesInventory
+          ? supabase.from("inventory").select("id", { count: "exact", head: true }).eq("user_id", user.id)
+          : Promise.resolve({ count: 0 } as any),
+        !usesInventory
+          ? supabase.from("services").select("id", { count: "exact", head: true }).eq("user_id", user.id)
+          : Promise.resolve({ count: 0 } as any),
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("customers").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         loadPaymentSummary(user.id).catch(() => ({ hasMethod: false, type: null, number: null })),
@@ -48,6 +57,23 @@ export function SetupChecklist() {
         !!p.business_name?.trim() &&
         !!p.business_type?.trim() &&
         !!p.whatsapp_number?.trim();
+
+      const item2Label =
+        eff === "property" ? t("setup_step_package")
+        : usesInventory ? t("setup_step_inv")
+        : t("setup_step_service");
+      const item2To = usesInventory ? "/inventory" : "/services";
+      const item2Done = usesInventory ? (invRes.count ?? 0) > 0 : (svcRes.count ?? 0) > 0;
+
+      const item4Label =
+        eff === "education" ? t("setup_step_case")
+        : eff === "beauty" ? t("setup_step_appointment")
+        : eff === "property" ? t("setup_step_lead")
+        : eff === "freelance" ? t("setup_step_project")
+        : t("setup_step_order");
+
+      const item5Label = usesInventory ? t("setup_step_cust") : t("setup_step_client");
+
       setItems([
         {
           key: "biz",
@@ -57,9 +83,9 @@ export function SetupChecklist() {
         },
         {
           key: "inv",
-          label: t("setup_step_inv"),
-          to: "/inventory",
-          done: (invRes.count ?? 0) > 0,
+          label: item2Label,
+          to: item2To,
+          done: item2Done,
         },
         {
           key: "pay",
@@ -69,13 +95,13 @@ export function SetupChecklist() {
         },
         {
           key: "ord",
-          label: t("setup_step_order"),
+          label: item4Label,
           to: "/new-order",
           done: (ordersRes.count ?? 0) > 0,
         },
         {
           key: "cust",
-          label: t("setup_step_cust"),
+          label: item5Label,
           to: "/customers",
           done: (custRes.count ?? 0) > 0,
         },
@@ -86,7 +112,7 @@ export function SetupChecklist() {
     }
   };
 
-  useEffect(() => { load(); }, [user?.id]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id, bizType]);
 
   // Realtime: refresh as the user completes actions on other screens.
   useEffect(() => {
@@ -95,6 +121,7 @@ export function SetupChecklist() {
       .channel(`setup-checklist-${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "inventory", filter: `user_id=eq.${user.id}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "services", filter: `user_id=eq.${user.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "customers", filter: `user_id=eq.${user.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` }, load)
       .subscribe();
