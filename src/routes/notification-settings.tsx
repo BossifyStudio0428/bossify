@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Settings, Bell, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { isNotifGranted, openAppNotificationSettings, notify } from "@/lib/notifications";
 import { sendPushToSelf } from "@/lib/sendPush";
 import { registerPushForUser } from "@/lib/pushRegister";
@@ -76,14 +77,86 @@ function NotifSettingsPage() {
     }
   };
 
+  const { type: bizType } = useBusinessType();
+
+  const newItem = (() => {
+    switch (bizType) {
+      case "education":
+        return { icon: "🎓", labelKey: "notif_setting_new_case" as const, descKey: "notif_setting_new_case_desc" as const };
+      case "beauty":
+        return { icon: "💄", labelKey: "notif_setting_new_appointment" as const, descKey: "notif_setting_new_appointment_desc" as const };
+      case "property":
+        return { icon: "🏠", labelKey: "notif_setting_new_lead" as const, descKey: "notif_setting_new_lead_desc" as const };
+      case "freelance":
+        return { icon: "💼", labelKey: "notif_setting_new_project" as const, descKey: "notif_setting_new_project_desc" as const };
+      default:
+        return { icon: "🛍", labelKey: "notif_setting_new_order" as const, descKey: "notif_setting_new_order_desc" as const };
+    }
+  })();
+
+  const unpaidDescKey = (() => {
+    switch (bizType) {
+      case "education": return "notif_setting_unpaid_desc_education";
+      case "beauty": return "notif_setting_unpaid_desc_beauty";
+      case "property": return "notif_setting_unpaid_desc_property";
+      case "freelance": return "notif_setting_unpaid_desc_freelance";
+      default: return "notif_setting_unpaid_desc";
+    }
+  })();
+
+  const morningDescKey = (() => {
+    switch (bizType) {
+      case "education": return "notif_setting_morning_desc_education";
+      case "beauty": return "notif_setting_morning_desc_beauty";
+      case "property": return "notif_setting_morning_desc_property";
+      case "freelance": return "notif_setting_morning_desc_freelance";
+      default: return "notif_setting_morning_desc";
+    }
+  })();
+
+  const eveningDescKey = (() => {
+    switch (bizType) {
+      case "education": return "notif_setting_evening_desc_education";
+      case "beauty": return "notif_setting_evening_desc_beauty";
+      case "property": return "notif_setting_evening_desc_property";
+      case "freelance": return "notif_setting_evening_desc_freelance";
+      default: return "notif_setting_evening_desc";
+    }
+  })();
+
+  const isRetailFnb = bizType === "retail" || bizType === "fnb";
+
   const items: { icon: string; label: string; desc: string }[] = [
-    { icon: "🛍", label: t("notif_setting_new_order"), desc: t("notif_setting_new_order_desc") },
-    { icon: "💰", label: t("notif_setting_unpaid"), desc: t("notif_setting_unpaid_desc") },
-    { icon: "📦", label: t("notif_setting_inventory"), desc: t("notif_setting_inventory_desc") },
-    { icon: "🌅", label: t("notif_setting_morning"), desc: t("notif_setting_morning_desc") },
-    { icon: "🌙", label: t("notif_setting_evening"), desc: t("notif_setting_evening_desc") },
-    { icon: "🎯", label: t("notif_setting_milestone"), desc: t("notif_setting_milestone_desc") },
+    { icon: newItem.icon, label: t(newItem.labelKey as any), desc: t(newItem.descKey as any) },
   ];
+
+  if (bizType === "property") {
+    items.push(
+      { icon: "📅", label: t("notif_setting_followup" as any), desc: t("notif_setting_followup_desc" as any) },
+      { icon: "💰", label: t("notif_setting_unpaid"), desc: t(unpaidDescKey as any) },
+    );
+  } else {
+    items.push(
+      { icon: "💰", label: t("notif_setting_unpaid"), desc: t(unpaidDescKey as any) },
+    );
+    if (!isRetailFnb) {
+      items.push(
+        { icon: "📅", label: t("notif_setting_followup" as any), desc: t("notif_setting_followup_desc" as any) },
+      );
+    }
+  }
+
+  if (isRetailFnb) {
+    items.push(
+      { icon: "📦", label: t("notif_setting_inventory"), desc: t("notif_setting_inventory_desc") },
+    );
+  }
+
+  items.push(
+    { icon: "🌅", label: t("notif_setting_morning"), desc: t(morningDescKey as any) },
+    { icon: "🌙", label: t("notif_setting_evening"), desc: t(eveningDescKey as any) },
+    { icon: "🎯", label: t("notif_setting_milestone"), desc: t("notif_setting_milestone_desc") },
+  );
 
   return (
     <div className="px-5 pt-10 pb-6 space-y-4">
