@@ -439,6 +439,29 @@ function Index() {
         <ChevronRight className="h-5 w-5 text-amber-500 shrink-0" />
       </Link>
 
+      {(followUpsThisWeek > 0 || followUpsOverdue > 0) && (
+        <Link
+          to="/customers"
+          aria-label={t("followup_reminder")}
+          className="flex items-center gap-3 rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 pr-4 active:scale-[0.99] transition-transform"
+        >
+          <span className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <CalendarIcon className="h-5 w-5 text-primary" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground leading-tight">
+              📅 {followUpsThisWeek} {t("followups_this_week")}
+            </p>
+            {followUpsOverdue > 0 && (
+              <p className="text-[11px] font-semibold text-red-600 mt-0.5">
+                {followUpsOverdue} {t("followup_overdue")}
+              </p>
+            )}
+          </div>
+          <ChevronRight className="h-5 w-5 text-primary shrink-0" />
+        </Link>
+      )}
+
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
           {t("weekly_sales")}
