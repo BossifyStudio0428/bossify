@@ -13,7 +13,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { CreditCard, AlertTriangle, CheckCircle2, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { BIZ_TYPES } from "@/lib/businessType";
+import { BIZ_TYPES, hasInventory } from "@/lib/businessType";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -48,6 +48,14 @@ function ProfilePage() {
       value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
       onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
     },
+    ...(!hasInventory(bizType)
+      ? [{
+          icon: bizType === "property" ? "📦" : "🧰",
+          key: "services",
+          label: t(bizType === "property" ? "packages_title" : "services_title"),
+          onClick: () => navigate({ to: "/services" }),
+        }]
+      : []),
     { icon: "📊", key: "analytics", label: t("analytics_label"), onClick: () => navigate({ to: "/analytics" }) },
     { icon: "📊", key: "rep", label: t("sales_reports"), onClick: () => navigate({ to: "/reports" }) },
     { icon: "🔔", key: "notif2", label: t("notifications"), onClick: () => navigate({ to: "/notifications" }) },
