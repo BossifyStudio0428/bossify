@@ -521,13 +521,16 @@ function PlansPage() {
             </button>
           ) : (
             <button
-              onClick={handleLifetimePurchase}
+              onClick={() => setLifetimeConfirmOpen(true)}
               disabled={submittingPlan !== null}
               className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
               {submittingPlan === "lifetime" ? "..." : `${t("get_lifetime_access")} — ${lifetimePrice}`}
             </button>
           )}
+          <Link to="/terms" className="mt-3 block text-center text-[11px] text-muted-foreground underline">
+            {t("terms_of_use")}
+          </Link>
         </div>
       </section>
 
