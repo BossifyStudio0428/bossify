@@ -251,8 +251,8 @@ function Index() {
   const monthRevenueCard: Stat = { label: t("stat_month_revenue"), value: `RM ${monthRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
 
   const STATS_BY_TYPE: Record<BizType, Stat[]> = {
-    retail:    [revenueCard, profitCard, newOrdersCard, unpaidCard, lowStockCard],
-    fnb:       [revenueCard, newOrdersCard, unpaidCard, lowStockCard],
+    retail:    [revenueCard, profitCard, newOrdersCard, unpaidCard],
+    fnb:       [revenueCard, newOrdersCard, unpaidCard],
     education: [newCasesCard, unpaidCard, totalClientsCard, followupsTodayCard],
     beauty:    [newAppointmentsCard, unpaidCard, totalClientsCard, followupsWeekCard],
     property:  [newLeadsCard, inProgressCard, completedMonthCard, followupsTodayCard],
