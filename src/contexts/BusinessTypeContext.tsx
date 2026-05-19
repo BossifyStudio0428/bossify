@@ -38,10 +38,17 @@ export function BusinessTypeProvider({ children }: { children: ReactNode }) {
   const setType = async (t: BizType) => {
     if (!user) return;
     setTypeState(t);
-    await supabase
+    const { error } = await supabase
       .from("profiles")
-      .update({ business_category: t } as any)
-      .eq("id", user.id);
+      .upsert(
+        { id: user.id, business_category: t } as any,
+        { onConflict: "id" },
+      );
+    if (error) {
+      console.error("setType upsert failed", error);
+      throw error;
+    }
+    await refresh();
   };
 
   return (
