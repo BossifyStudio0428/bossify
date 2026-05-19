@@ -53,6 +53,10 @@ function Index() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
+  const [latestClients, setLatestClients] = useState<CustomerRow[]>([]);
+  const [followUpsTodayList, setFollowUpsTodayList] = useState<
+    { id: string; customer_name: string; note: string | null }[]
+  >([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [followUpsThisWeek, setFollowUpsThisWeek] = useState(0);
   const [followUpsOverdue, setFollowUpsOverdue] = useState(0);
