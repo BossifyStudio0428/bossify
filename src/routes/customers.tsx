@@ -4,7 +4,7 @@ import { MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type CustomerStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useI18n } from "@/contexts/I18nContext";
+import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
 
@@ -50,6 +50,16 @@ function CustomersPage() {
   const [confirmDelete, setConfirmDelete] = useState<CustomerRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<CustomerStatus | "all">("all");
+  const [eduDetails, setEduDetails] = useState<Record<string, { university_preference: string | null; application_status: string | null }>>({});
+
+  const ordersWordKey: TKey =
+    bizType === "education" ? "case_word"
+    : bizType === "beauty" ? "appointment_word"
+    : bizType === "property" ? "lead_word"
+    : bizType === "freelance" ? "project_word"
+    : "orders_word";
+  const searchKey: TKey =
+    bizType && bizType !== "retail" && bizType !== "fnb" ? "search_clients" : "search_customers";
 
   const cycleStatus = async (c: CustomerRow) => {
     const current = (c.customer_status ?? "enquiry") as CustomerStatus;
@@ -92,6 +102,24 @@ function CustomersPage() {
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
+    if (bizType !== "education" || !user) { setEduDetails({}); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("client_education_details")
+        .select("client_id,university_preference,application_status")
+        .eq("user_id", user.id);
+      if (cancelled) return;
+      const map: Record<string, { university_preference: string | null; application_status: string | null }> = {};
+      for (const r of (data ?? []) as any[]) {
+        map[r.client_id] = { university_preference: r.university_preference, application_status: r.application_status };
+      }
+      setEduDetails(map);
+    })();
+    return () => { cancelled = true; };
+  }, [bizType, user?.id, customers.length]);
+
+  useEffect(() => {
     if (!user) return;
     const ch = supabase
       .channel("cust-rt")
@@ -128,7 +156,7 @@ function CustomersPage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("search_customers")}
+          placeholder={t(searchKey)}
           className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
         />
       </div>
@@ -180,9 +208,17 @@ function CustomersPage() {
                 {c.phone && (
                   <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>
                 )}
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {c.total_orders} {t("orders_word")} · {t("last")}: {relTime(c.last_order_at, t)}
-                </p>
+                {bizType === "education" ? (
+                  <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                    {eduDetails[c.id]?.university_preference
+                      ? <>🏫 {eduDetails[c.id]!.university_preference}{eduDetails[c.id]?.application_status ? ` · 📋 ${eduDetails[c.id]!.application_status}` : ""}</>
+                      : t("no_university_set")}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {c.total_orders} {t(ordersWordKey)} · {t("last")}: {relTime(c.last_order_at, t)}
+                  </p>
+                )}
                 {c.remarks && (
                   <p className="text-[11px] text-muted-foreground/90 mt-1 truncate italic">
                     💬 {c.remarks.length > 50 ? c.remarks.slice(0, 50) + "…" : c.remarks}
