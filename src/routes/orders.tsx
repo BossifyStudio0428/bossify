@@ -177,6 +177,10 @@ function OrdersPage() {
   const remind = async (o: OrderRow) => {
     if (!o.phone) { alert(t("no_phone_for_wa")); return; }
     if (!user) return;
+    // Open window synchronously inside the click handler so browsers don't
+    // block it as a popup (Customers page works because it calls window.open
+    // directly in the handler). We navigate it once the async work is done.
+    const win = typeof window !== "undefined" ? window.open("about:blank", "_blank") : null;
     const { paymentDetails, businessName } = await fetchWAProfile(user.id, lang);
     const msg = renderTemplate(getReminderTemplate(lang, bizType, customReminderTpl), {
       customer_name: o.customer_name, business_name: businessName,
@@ -185,7 +189,12 @@ function OrdersPage() {
       status: o.status, days_ago: daysSince(o.created_at),
       payment_details: paymentDetails,
     }, lang);
-    window.open(buildWhatsAppLink(o.phone, msg), "_blank");
+    const url = buildWhatsAppLink(o.phone, msg);
+    if (win) {
+      win.location.href = url;
+    } else {
+      window.open(url, "_blank");
+    }
   };
 
   const remindAllUnpaid = async () => {
