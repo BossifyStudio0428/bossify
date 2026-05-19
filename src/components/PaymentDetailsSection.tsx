@@ -7,11 +7,11 @@ import { useI18n } from "@/contexts/I18nContext";
 
 const PAYMENT_TYPES = ["DuitNow", "Bank Transfer", "TNG eWallet", "ShopeePay", "Other"];
 
-type Method = { type: string; number: string; name: string; qr_url: string };
-const empty: Method = { type: "", number: "", name: "", qr_url: "" };
+type Method = { type: string; number: string; name: string; bank: string; qr_url: string };
+const empty: Method = { type: "", number: "", name: "", bank: "", qr_url: "" };
 
 function hasMethod(m: Method) {
-  return !!(m.type || m.number || m.name || m.qr_url);
+  return !!(m.type || m.number || m.name || m.bank || m.qr_url);
 }
 
 // Returns translation key of error, or "" if valid / empty
@@ -54,12 +54,13 @@ export default function PaymentDetailsSection() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url")
+        .select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_bank,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_bank,payment_method_2_qr_url")
         .eq("id", user.id)
         .maybeSingle();
       if (data) {
-        const next1 = { type: data.payment_method_1_type ?? "", number: data.payment_method_1_number ?? "", name: data.payment_method_1_name ?? "", qr_url: data.payment_method_1_qr_url ?? "" };
-        const next2 = { type: data.payment_method_2_type ?? "", number: data.payment_method_2_number ?? "", name: data.payment_method_2_name ?? "", qr_url: data.payment_method_2_qr_url ?? "" };
+        const d = data as any;
+        const next1 = { type: d.payment_method_1_type ?? "", number: d.payment_method_1_number ?? "", name: d.payment_method_1_name ?? "", bank: d.payment_method_1_bank ?? "", qr_url: d.payment_method_1_qr_url ?? "" };
+        const next2 = { type: d.payment_method_2_type ?? "", number: d.payment_method_2_number ?? "", name: d.payment_method_2_name ?? "", bank: d.payment_method_2_bank ?? "", qr_url: d.payment_method_2_qr_url ?? "" };
         setM1(next1);
         setM2(next2);
         setShow2(hasMethod(next2));
@@ -75,12 +76,14 @@ export default function PaymentDetailsSection() {
       payment_method_1_type: nextM1.type || null,
       payment_method_1_number: nextM1.number || null,
       payment_method_1_name: nextM1.name || null,
+      payment_method_1_bank: nextM1.bank || null,
       payment_method_1_qr_url: nextM1.qr_url || null,
       payment_method_2_type: nextShow2 ? (nextM2.type || null) : null,
       payment_method_2_number: nextShow2 ? (nextM2.number || null) : null,
       payment_method_2_name: nextShow2 ? (nextM2.name || null) : null,
+      payment_method_2_bank: nextShow2 ? (nextM2.bank || null) : null,
       payment_method_2_qr_url: nextShow2 ? (nextM2.qr_url || null) : null,
-    }).eq("id", user.id);
+    } as any).eq("id", user.id);
     setSaving(false);
     if (error) {
       toast.error(error.message);
@@ -181,6 +184,14 @@ export default function PaymentDetailsSection() {
         placeholder={t("pay_account_name")}
         className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70"
       />
+      {m.type === "Bank Transfer" ? (
+        <input
+          value={m.bank}
+          onChange={(e) => set({ ...m, bank: e.target.value })}
+          placeholder={t("pay_bank_name")}
+          className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70"
+        />
+      ) : null}
       <QrUploader
         value={m.qr_url}
         uploading={uploading === slot}
@@ -222,6 +233,7 @@ export default function PaymentDetailsSection() {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-foreground truncate">{m.type || t("pay_method")}</p>
           {m.number ? <p className="text-sm text-foreground mt-1 break-all">{m.number}</p> : null}
+          {m.bank ? <p className="text-xs text-muted-foreground mt-1 truncate">🏦 {m.bank}</p> : null}
           {m.name ? <p className="text-xs text-muted-foreground mt-1 truncate">{m.name}</p> : null}
           {m.qr_url ? <p className="text-[10px] text-primary font-semibold mt-1">{t("qr_uploaded")}</p> : null}
         </div>
