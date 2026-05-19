@@ -435,7 +435,7 @@ function NewOrderPage() {
       </header>
 
       <form className="space-y-5" onSubmit={save} noValidate>
-        <Field label={t("customer_name")} icon="👤" placeholder={t("customer_name_ph")} value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
+        <Field label={customerLabel} icon="👤" placeholder={customerPh} value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
         <PhoneInput
           label={t("phone_number")}
           value={form.phone}
@@ -443,20 +443,20 @@ function NewOrderPage() {
         />
 
         <div className="space-y-1.5 relative" id="tour-no-product">
-          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("product")}</label>
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{productLabel}</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🛍️</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">{eff === "education" ? "🎓" : eff === "beauty" ? "✨" : eff === "property" ? "🏠" : eff === "freelance" ? "💼" : "🛍️"}</span>
             <input
               value={form.product}
               onChange={onProductChange}
               onFocus={() => setShowSuggest(true)}
               onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
-              placeholder={t("select_product")}
+              placeholder={productPh}
               className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${errors.product ? "border-red-400" : "border-border/60"}`}
             />
           </div>
           {errors.product && <p className="text-[11px] text-red-500 px-1">{errors.product}</p>}
-          {showSuggest && productMatches.length > 0 && (
+          {isRetailish && showSuggest && productMatches.length > 0 && (
             <div className="absolute z-20 left-0 right-0 top-full mt-1 rounded-xl bg-card border border-border/60 shadow-lg overflow-hidden max-h-64 overflow-y-auto">
               <p className="px-4 pt-2 pb-1 text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">
                 {t("select_from_list")}
@@ -477,7 +477,7 @@ function NewOrderPage() {
               ))}
             </div>
           )}
-          {form.product.trim() && (
+          {isRetailish && form.product.trim() && (
             matchedInventory ? (
               <p className="text-[11px] text-emerald-600 px-1 flex items-center gap-1">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -494,9 +494,36 @@ function NewOrderPage() {
           )}
         </div>
 
-        <Field label={t("quantity")} icon="#" placeholder="1" value={form.quantity} onChange={onQuantityChange} type="number" error={errors.quantity} />
+        {showQuantity && (
+          <Field label={t("quantity")} icon="#" placeholder="1" value={form.quantity} onChange={onQuantityChange} type="number" error={errors.quantity} />
+        )}
+
+        {/* Per-business extra fields */}
+        {eff === "education" && (
+          <>
+            <Field label={t("f_course_interest")} icon="🎓" placeholder={t("f_course_ph")} value={extras.course_interest} onChange={updExtra("course_interest")} />
+            <Field label={t("f_university_preference")} icon="🏫" placeholder={t("f_uni_ph")} value={extras.university_preference} onChange={updExtra("university_preference")} />
+          </>
+        )}
+        {eff === "beauty" && (
+          <Field label={t("f_date_time")} icon="📅" placeholder="" value={extras.date_time} onChange={updExtra("date_time")} type="datetime-local" />
+        )}
+        {eff === "property" && (
+          <Field label={t("f_location_interest")} icon="📍" placeholder={t("f_location_ph")} value={extras.location_interest} onChange={updExtra("location_interest")} />
+        )}
+        {eff === "freelance" && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_project_description")}</label>
+            <textarea
+              rows={3} value={extras.project_description} onChange={updExtra("project_description")}
+              placeholder={t("f_project_desc_ph")}
+              className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
+            />
+          </div>
+        )}
+
         <Field
-          label={t("price")}
+          label={priceLabel}
           icon="💰"
           placeholder="0.00"
           value={form.amount}
@@ -506,6 +533,38 @@ function NewOrderPage() {
           hint={unitPrice != null ? `Auto: RM ${unitPrice.toFixed(2)} × ${Number(form.quantity) || 0}` : undefined}
         />
 
+        {eff === "education" && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_app_status")}</label>
+            <select value={extras.application_status} onChange={updExtra("application_status")}
+              className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition">
+              {(["not_applied","applied","interview","offer_received","accepted","rejected"] as const).map((s) => (
+                <option key={s} value={s}>{t(`edu_app_${s}` as any)}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {eff === "property" && (
+          <>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_lead_status")}</label>
+              <select value={extras.lead_status} onChange={updExtra("lead_status")}
+                className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition">
+                {(["enquiry","in_progress","completed","rejected"] as const).map((s) => (
+                  <option key={s} value={s}>{t(`cs_${s}` as any)}</option>
+                ))}
+              </select>
+            </div>
+            <Field label={t("f_followup_date")} icon="📅" placeholder="" value={extras.followup_date} onChange={updExtra("followup_date")} type="date" />
+          </>
+        )}
+
+        {eff === "freelance" && (
+          <Field label={t("f_deadline_date")} icon="📅" placeholder="" value={extras.deadline_date} onChange={updExtra("deadline_date")} type="date" />
+        )}
+
+        {showPaymentStatus && (
         <div className="space-y-1.5" id="tour-no-status">
           <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
             {t("payment_status")}
@@ -524,6 +583,7 @@ function NewOrderPage() {
             })}
           </div>
         </div>
+        )}
 
         <div className="space-y-1.5">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
@@ -541,7 +601,7 @@ function NewOrderPage() {
             type="submit" disabled={saving}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition-transform disabled:opacity-60"
           >
-            {saving ? t("saving") : t("save_order")}
+            {saving ? t("saving") : saveLabel}
           </button>
           {!hasFullAccess && (
             <p className="text-center text-[11px] text-muted-foreground">
