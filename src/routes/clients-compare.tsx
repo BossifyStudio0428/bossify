@@ -140,7 +140,7 @@ function ComparePage() {
         doc.setFontSize(9);
         doc.text(`${c.name} — ${p.done}/10`, 14, y);
         doc.setDrawColor(220);
-        doc.setFillColor(230);
+        doc.setFillColor(230, 230, 230);
         doc.rect(70, y - 4, 150, 5, "F");
         doc.setFillColor(...PURPLE);
         doc.rect(70, y - 4, (150 * pct) / 100, 5, "F");
