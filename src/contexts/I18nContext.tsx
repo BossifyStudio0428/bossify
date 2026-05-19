@@ -2331,10 +2331,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       const { data } = await supabase.auth.getUser();
       const uid = data.user?.id;
       if (uid) {
-        await supabase.from("user_preferences").upsert(
-          { user_id: uid, language: l, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" }
-        );
+        await supabase.from("profiles").update({ language: l } as any).eq("id", uid);
       }
     })();
   };
