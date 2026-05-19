@@ -6,7 +6,7 @@ import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
 import { toast } from "sonner";
-import { DEFAULT_ORDER_TPL, DEFAULT_REMINDER_TPL } from "@/lib/wa";
+import { DEFAULT_ORDER_TPL, DEFAULT_REMINDER_TPL, getOrderTemplate, getReminderTemplate } from "@/lib/wa";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -35,8 +35,34 @@ function ProfilePage() {
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string; avatar_url: string | null } | null>(null);
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
-  const [orderTpl, setOrderTpl] = useState(DEFAULT_ORDER_TPL);
-  const [reminderTpl, setReminderTpl] = useState(DEFAULT_REMINDER_TPL);
+  const defaultOrderTpl = getOrderTemplate(lang, bizType);
+  const defaultReminderTpl = getReminderTemplate(lang, bizType);
+
+  const varsHelp = (() => {
+    const base = "[customer_name] [code] [product] [amount]";
+    const status = " [status]";
+    const qty = " [quantity]";
+    const tail = " [notes] [days_ago]";
+    const list =
+      bizType === "property"
+        ? `${base}${tail}`
+        : bizType === "retail" || bizType === "fnb" || !bizType
+          ? `${base}${qty}${status}${tail}`
+          : `${base}${status}${tail}`;
+    const prefix = lang === "ms" ? "Pemboleh ubah: " : lang === "zh" ? "变量：" : "Variables: ";
+    return `${prefix}${list}`;
+  })();
+  const [orderTpl, setOrderTpl] = useState<string>(DEFAULT_ORDER_TPL);
+  const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
+  const [orderCustom, setOrderCustom] = useState(false);
+  const [reminderCustom, setReminderCustom] = useState(false);
+
+  // Keep textarea in sync with biz-type / lang default when user hasn't customised.
+  useEffect(() => {
+    if (!orderCustom) setOrderTpl(defaultOrderTpl);
+    if (!reminderCustom) setReminderTpl(defaultReminderTpl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bizType, lang]);
   const [paySummary, setPaySummary] = useState<PaymentSummary | null>(null);
 
   const reportsLabelKey =
@@ -96,8 +122,10 @@ function ProfilePage() {
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
       setProfile(p as any);
       setIsAdmin(!!(p as any)?.is_admin);
-      if (pref?.wa_order_template) setOrderTpl(pref.wa_order_template);
-      if (pref?.wa_reminder_template) setReminderTpl(pref.wa_reminder_template);
+      if (pref?.wa_order_template) { setOrderTpl(pref.wa_order_template); setOrderCustom(true); }
+      else { setOrderTpl(defaultOrderTpl); setOrderCustom(false); }
+      if (pref?.wa_reminder_template) { setReminderTpl(pref.wa_reminder_template); setReminderCustom(true); }
+      else { setReminderTpl(defaultReminderTpl); setReminderCustom(false); }
       try {
         const s = await loadPaymentSummary(user.id);
         if (!cancelled) setPaySummary(s);
@@ -281,17 +309,17 @@ function ProfilePage() {
             <p className="text-sm font-semibold py-1">{t("wa_template")}</p>
             <div>
               <label className="text-[11px] uppercase font-semibold text-muted-foreground">{t("order_template")}</label>
-              <textarea value={orderTpl} onChange={(e) => setOrderTpl(e.target.value)} rows={6}
+              <textarea value={orderTpl} onChange={(e) => { setOrderTpl(e.target.value); setOrderCustom(true); }} rows={6}
                 className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono" />
-              <button onClick={() => setOrderTpl(DEFAULT_ORDER_TPL)} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
+              <button onClick={() => { setOrderTpl(defaultOrderTpl); setOrderCustom(false); }} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
             </div>
             <div>
               <label className="text-[11px] uppercase font-semibold text-muted-foreground">{t("reminder_template")}</label>
-              <textarea value={reminderTpl} onChange={(e) => setReminderTpl(e.target.value)} rows={6}
+              <textarea value={reminderTpl} onChange={(e) => { setReminderTpl(e.target.value); setReminderCustom(true); }} rows={6}
                 className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono" />
-              <button onClick={() => setReminderTpl(DEFAULT_REMINDER_TPL)} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
+              <button onClick={() => { setReminderTpl(defaultReminderTpl); setReminderCustom(false); }} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
             </div>
-            <p className="text-[10px] text-muted-foreground">{t("variables_help")}</p>
+            <p className="text-[10px] text-muted-foreground">{varsHelp}</p>
             <button onClick={saveTemplates} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold">{t("save")}</button>
           </div>
         </div>
