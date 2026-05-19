@@ -243,6 +243,8 @@ function PlansPage() {
             provider_purchase_token: receipt.purchaseToken ?? null,
             lifetime_purchase_date: new Date().toISOString(),
             lifetime_google_token: receipt.purchaseToken ?? null,
+            lifetime_email: user.email ?? null,
+            lifetime_activated_at: new Date().toISOString(),
             current_period_end: null,
           }, { onConflict: "user_id" });
           if (upsertError) {
