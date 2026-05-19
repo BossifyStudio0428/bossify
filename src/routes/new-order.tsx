@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
-import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchWAProfile } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
 import { notify as deviceNotify } from "@/lib/notifications";
 import { isPrefEnabled } from "@/lib/notifPrefs";
@@ -102,6 +102,7 @@ function NewOrderPage() {
   const [unitPrice, setUnitPrice] = useState<number | null>(null);
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
   const [paymentPreviewBlock, setPaymentPreviewBlock] = useState<string>("");
+  const [businessName, setBusinessName] = useState<string>("");
 
   useEffect(() => {
     (async () => {
@@ -112,7 +113,9 @@ function NewOrderPage() {
       ]);
       setInventory((inv ?? []) as InventoryRow[]);
       if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
-      setPaymentPreviewBlock(await fetchFreshPaymentBlock(user.id, lang));
+      const wa = await fetchWAProfile(user.id, lang);
+      setPaymentPreviewBlock(wa.paymentDetails);
+      setBusinessName(wa.businessName);
       if (!isRetailish) {
         const { data: svc } = await supabase
           .from("services")
@@ -339,20 +342,9 @@ function NewOrderPage() {
     const amt = form.amount ? Number(form.amount).toFixed(2) : "0.00";
     const svc = form.product || "—";
     const pay = status !== "Paid" ? paymentDetails : "";
-    if (eff === "education") {
-      return `Hi ${name}! 👋\n\nThank you for your consultation!\n\n📋 Case: ${code}\n🎓 Service: ${svc}\n💰 Fee: RM ${amt}\n💳 Status: ${status}${pay ? `\n\n${pay}` : ""}\n\nThank you for trusting us! 🙏`;
-    }
-    if (eff === "beauty") {
-      return `Hi ${name}! 👋\n\nYour appointment is confirmed! 💄\n\n📋 Appointment: ${code}\n✨ Service: ${svc}${extras.date_time ? `\n📅 Date: ${extras.date_time}` : ""}\n💰 Price: RM ${amt}${pay ? `\n\n${pay}` : ""}\n\nSee you soon! 🙏`;
-    }
-    if (eff === "freelance") {
-      return `Hi ${name}! 👋\n\nYour project has been received! 💼\n\n📋 Project: ${code}\n🔧 Service: ${svc}\n💰 Amount: RM ${amt}${extras.deadline_date ? `\n📅 Deadline: ${extras.deadline_date}` : ""}${pay ? `\n\n${pay}` : ""}\n\nThank you! 🙏`;
-    }
-    if (eff === "property") {
-      return `Hi ${name}! 👋\n\nThanks for your interest with us!\n\n📋 Ref: ${code}\n🏠 ${svc}${extras.location_interest ? `\n📍 ${extras.location_interest}` : ""}\n💰 Budget: RM ${amt}${extras.followup_date ? `\n📅 Follow-up: ${extras.followup_date}` : ""}\n\nWe will be in touch soon! 🙏`;
-    }
-    return renderTemplate(getOrderTemplate(lang, customOrderTpl), {
+    return renderTemplate(getOrderTemplate(lang, bizType, customOrderTpl), {
       customer_name: name,
+      business_name: businessName || "us",
       code,
       product: svc,
       quantity: form.quantity || "1",
@@ -360,6 +352,9 @@ function NewOrderPage() {
       status,
       notes: form.notes,
       payment_details: pay,
+      date_time: extras.date_time,
+      follow_up_date: extras.followup_date,
+      deadline: extras.deadline_date,
     }, lang);
   };
 
@@ -408,7 +403,7 @@ function NewOrderPage() {
     setSaving(false);
     if (!res) return;
     toast.success(t("order_saved"));
-    const msg = buildMessage(res.code, user ? await fetchFreshPaymentBlock(user.id, lang) : "");
+    const msg = buildMessage(res.code, user ? (await fetchWAProfile(user.id, lang)).paymentDetails : "");
     if (user) {
       await createNotification({
         user_id: user.id, type: "new_order",

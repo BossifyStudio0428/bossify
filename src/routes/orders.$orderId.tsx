@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchFreshPaymentBlock } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchWAProfile } from "@/lib/wa";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { PhoneInput } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/orders/$orderId")({
@@ -26,6 +27,7 @@ function OrderDetailPage() {
   const { edit } = Route.useSearch();
   const { user } = useAuth();
   const { t, lang } = useI18n();
+  const { type: bizType } = useBusinessType();
   const navigate = useNavigate();
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,9 +53,11 @@ function OrderDetailPage() {
   const sendWA = async () => {
     if (!order?.phone) { alert(t("no_phone_for_wa")); return; }
     if (!user) return;
-    const paymentDetails = order.status !== "Paid" ? await fetchFreshPaymentBlock(user.id, lang) : "";
-    const msg = renderTemplate(getOrderTemplate(lang, customOrderTpl), {
-      customer_name: order.customer_name, code: order.code, product: order.product,
+    const { paymentDetails: rawPay, businessName } = await fetchWAProfile(user.id, lang);
+    const paymentDetails = order.status !== "Paid" ? rawPay : "";
+    const msg = renderTemplate(getOrderTemplate(lang, bizType, customOrderTpl), {
+      customer_name: order.customer_name, business_name: businessName,
+      code: order.code, product: order.product,
       quantity: order.quantity, amount: Number(order.amount).toFixed(2),
       status: order.status, notes: order.notes ?? "",
       payment_details: paymentDetails,
