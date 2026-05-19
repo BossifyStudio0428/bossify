@@ -1,6 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 import {
   verifyActiveSubscription,
   verifyLifetimeOwnership,
@@ -29,6 +31,8 @@ export type SubscriptionRow = {
   current_period_end?: string | null;
   lifetime_purchase_date?: string | null;
   lifetime_google_token?: string | null;
+  lifetime_email?: string | null;
+  lifetime_activated_at?: string | null;
 };
 
 export const FREE_LIMITS = {
@@ -85,10 +89,14 @@ const SubCtx = createContext<Ctx | undefined>(undefined);
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [sub, setSub] = useState<SubscriptionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState("");
+  const notifiedLockRef = useRef(false);
+  const tRef = useRef(t);
+  useEffect(() => { tRef.current = t; }, [t]);
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -109,6 +117,22 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return null;
       }
       if (data) {
+        // Lifetime account lock: if the current logged-in email no longer
+        // matches the email the Lifetime was activated under, downgrade
+        // to Free locally. Lifetime is bound to ONE account forever.
+        if (
+          data.plan === "lifetime" &&
+          data.lifetime_email &&
+          user.email &&
+          data.lifetime_email.toLowerCase() !== user.email.toLowerCase()
+        ) {
+          data.plan = "free";
+          data.status = "active";
+          if (!notifiedLockRef.current) {
+            notifiedLockRef.current = true;
+            toast.error(tRef.current("lifetime_account_lock_msg"));
+          }
+        }
         // Client-side monthly reset safety net
         const period = data.count_period_start ? new Date(data.count_period_start) : null;
         const now = new Date();
@@ -207,6 +231,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // downgrade away from it.
       const lifetimeReceipt = await verifyLifetimeOwnership();
       if (lifetimeReceipt) {
+        // Account-lock check: if the stored row was activated under a
+        // different email, do NOT restore lifetime on this account.
+        if (
+          sub?.lifetime_email &&
+          user.email &&
+          sub.lifetime_email.toLowerCase() !== user.email.toLowerCase()
+        ) {
+          await refresh();
+          return;
+        }
         await supabase.from("subscriptions").upsert(
           {
             user_id: user.id,
@@ -218,6 +252,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
             provider_purchase_token: lifetimeReceipt.purchaseToken ?? null,
             lifetime_purchase_date: sub?.lifetime_purchase_date ?? new Date().toISOString(),
             lifetime_google_token: lifetimeReceipt.purchaseToken ?? null,
+            lifetime_email: sub?.lifetime_email ?? user.email ?? null,
+            lifetime_activated_at: sub?.lifetime_activated_at ?? new Date().toISOString(),
             current_period_end: null,
           },
           { onConflict: "user_id" },

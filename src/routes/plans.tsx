@@ -72,6 +72,7 @@ function PlansPage() {
   const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | null>(null);
+  const [lifetimeConfirmOpen, setLifetimeConfirmOpen] = useState(false);
   const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual" | "lifetime" | "starter_monthly" | "starter_annual", string>>({
     monthly: FALLBACK_PRICES.monthly,
     annual: FALLBACK_PRICES.annual,
@@ -243,6 +244,8 @@ function PlansPage() {
             provider_purchase_token: receipt.purchaseToken ?? null,
             lifetime_purchase_date: new Date().toISOString(),
             lifetime_google_token: receipt.purchaseToken ?? null,
+            lifetime_email: user.email ?? null,
+            lifetime_activated_at: new Date().toISOString(),
             current_period_end: null,
           }, { onConflict: "user_id" });
           if (upsertError) {
@@ -518,13 +521,16 @@ function PlansPage() {
             </button>
           ) : (
             <button
-              onClick={handleLifetimePurchase}
+              onClick={() => setLifetimeConfirmOpen(true)}
               disabled={submittingPlan !== null}
               className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
               {submittingPlan === "lifetime" ? "..." : `${t("get_lifetime_access")} — ${lifetimePrice}`}
             </button>
           )}
+          <Link to="/terms" className="mt-3 block text-center text-[11px] text-muted-foreground underline">
+            {t("terms_of_use")}
+          </Link>
         </div>
       </section>
 
@@ -548,6 +554,17 @@ function PlansPage() {
                   (r) => r.productId === STARTER_PRODUCT_IDS.monthly || r.productId === STARTER_PRODUCT_IDS.annual,
                 );
                 if (lifetimeR) {
+                  // Account lock: lifetime is bound to ONE email. If this
+                  // device's logged-in email differs from the original
+                  // purchaser's email, do NOT restore.
+                  if (
+                    sub?.lifetime_email &&
+                    user.email &&
+                    sub.lifetime_email.toLowerCase() !== user.email.toLowerCase()
+                  ) {
+                    toast.error(t("lifetime_restore_mismatch"));
+                    return;
+                  }
                   const { error: restoreError } = await supabase.from("subscriptions").upsert({
                     user_id: user.id,
                     plan: "lifetime",
@@ -558,6 +575,8 @@ function PlansPage() {
                     provider_purchase_token: lifetimeR.purchaseToken ?? null,
                     lifetime_purchase_date: sub?.lifetime_purchase_date ?? new Date().toISOString(),
                     lifetime_google_token: lifetimeR.purchaseToken ?? null,
+                    lifetime_email: sub?.lifetime_email ?? user.email ?? null,
+                    lifetime_activated_at: sub?.lifetime_activated_at ?? new Date().toISOString(),
                     current_period_end: null,
                   }, { onConflict: "user_id" });
                   if (restoreError) {
@@ -636,6 +655,56 @@ function PlansPage() {
       >
         {t("restore_purchases")}
       </button>
+
+      {lifetimeConfirmOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 animate-fade-in p-5"
+          onClick={() => setLifetimeConfirmOpen(false)}
+        >
+          <div
+            className="w-full max-w-[360px] bg-card rounded-3xl p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Crown className="h-5 w-5 text-amber-500" />
+              {t("confirm_lifetime_title")}
+            </h2>
+            <p className="mt-3 text-[13px] text-foreground leading-relaxed">
+              {t("confirm_lifetime_intro")}
+            </p>
+            <ul className="mt-3 space-y-2 text-[13px] text-foreground">
+              <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" /><span>{t("confirm_lifetime_b1").replace("{email}", user?.email ?? "—")}</span></li>
+              <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" /><span>{t("confirm_lifetime_b2")}</span></li>
+              <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" /><span>{t("confirm_lifetime_b3")}</span></li>
+              <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" /><span>{t("confirm_lifetime_b4")}</span></li>
+            </ul>
+            <p className="mt-3 text-[12px] text-muted-foreground">{t("confirm_lifetime_ask")}</p>
+            <Link
+              to="/terms"
+              className="mt-2 block text-[11px] text-primary underline"
+            >
+              {t("terms_of_use")}
+            </Link>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setLifetimeConfirmOpen(false)}
+                className="flex-1 py-3 rounded-2xl bg-muted text-foreground font-semibold text-sm"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  setLifetimeConfirmOpen(false);
+                  handleLifetimePurchase();
+                }}
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm shadow-[var(--shadow-soft)]"
+              >
+                {t("i_agree_purchase")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
