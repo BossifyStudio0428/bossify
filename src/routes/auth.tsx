@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { mapAuthError, isValidEmail, pwStrength } from "@/lib/authErrors";
+import { authErrorText, isValidEmail, pwStrength } from "@/lib/authErrors";
 import { safeSessionStorage } from "@/lib/safeStorage";
 
 export const Route = createFileRoute("/auth")({ component: AuthPage });
@@ -143,7 +143,7 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
     setLoading(true);
     const { error: err } = await signIn(email, password);
     setLoading(false);
-    if (err) { setError(t(mapAuthError(err))); return; }
+    if (err) { setError(authErrorText(err, t)); return; }
     router.invalidate();
     navigate({ to: "/" });
   };
@@ -239,7 +239,7 @@ function RegEmailScreen({
       options: { shouldCreateUser: true, data: { business_name: businessName } },
     });
     setLoading(false);
-    if (err) { setError(t(mapAuthError(err.message))); return; }
+    if (err) { setError(authErrorText(err.message, t)); return; }
     onNext();
   };
 
@@ -343,7 +343,7 @@ function RegOtpScreen({ email, onBack, onNext }: { email: string; onBack: () => 
   const resend = async () => {
     setError(null);
     const { error: err } = await supabase.auth.signInWithOtp({ email });
-    if (err) setError(t(mapAuthError(err.message)));
+    if (err) setError(authErrorText(err.message, t));
     else { setSeconds(60); toast.success("Code resent"); }
   };
 
@@ -431,7 +431,7 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
     });
     if (updErr || !userRes.user) {
       setLoading(false);
-      setError(t(mapAuthError(updErr?.message)));
+      setError(authErrorText(updErr?.message, t));
       return;
     }
     const uid = userRes.user.id;
