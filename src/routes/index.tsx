@@ -53,6 +53,10 @@ function Index() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lowStock, setLowStock] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
+  const [latestClients, setLatestClients] = useState<CustomerRow[]>([]);
+  const [followUpsTodayList, setFollowUpsTodayList] = useState<
+    { id: string; customer_name: string; note: string | null }[]
+  >([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [followUpsThisWeek, setFollowUpsThisWeek] = useState(0);
   const [followUpsOverdue, setFollowUpsOverdue] = useState(0);
@@ -110,6 +114,14 @@ function Index() {
       setLowStock((inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length);
       setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
       setUnreadNotif(notificationsRes.count ?? 0);
+      // Latest clients (recently added)
+      const { data: latestC } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      setLatestClients((latestC ?? []) as CustomerRow[]);
       // Follow-ups: this week + overdue
       const today = new Date(); today.setHours(0,0,0,0);
       const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
@@ -124,6 +136,29 @@ function Index() {
       setFollowUpsThisWeek(fus.filter((f) => f.follow_up_date >= todayStr && f.follow_up_date <= weekEndStr).length);
       setFollowUpsOverdue(fus.filter((f) => f.follow_up_date < todayStr).length);
       setFollowUpsToday(fus.filter((f) => f.follow_up_date === todayStr).length);
+      // Today's follow-up list (for property dashboard)
+      const { data: fuTodayRows } = await supabase
+        .from("follow_ups")
+        .select("id, note, customer_id")
+        .eq("user_id", user.id)
+        .eq("is_done", false)
+        .eq("follow_up_date", todayStr)
+        .limit(5);
+      const fuRows = (fuTodayRows ?? []) as { id: string; note: string | null; customer_id: string | null }[];
+      const custIds = Array.from(new Set(fuRows.map((r) => r.customer_id).filter(Boolean))) as string[];
+      let nameById = new Map<string, string>();
+      if (custIds.length) {
+        const { data: cs } = await supabase
+          .from("customers").select("id,name").in("id", custIds);
+        (cs ?? []).forEach((c: any) => nameById.set(c.id, c.name));
+      }
+      setFollowUpsTodayList(
+        fuRows.map((r) => ({
+          id: r.id,
+          customer_name: (r.customer_id && nameById.get(r.customer_id)) || "—",
+          note: r.note,
+        })),
+      );
       // Customer counts (total + by status)
       const [{ count: totalC }, { count: inProg }, { count: completedC }] = await Promise.all([
         supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
@@ -141,6 +176,8 @@ function Index() {
       setOrders([]);
       setLowStock(0);
       setTopCustomers([]);
+      setLatestClients([]);
+      setFollowUpsTodayList([]);
       setUnreadNotif(0);
       setAvatarUrl((user.user_metadata as any)?.avatar_url || null);
     }
@@ -550,50 +587,51 @@ function Index() {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
           <p className="text-sm font-bold text-foreground leading-tight">
-            {t("view_sales_report")}
+            {t(
+              eff === "education" ? "view_case_reports"
+              : eff === "beauty"  ? "view_appointment_reports"
+              : eff === "property" ? "view_lead_reports"
+              : eff === "freelance" ? "view_project_reports"
+              : "view_sales_report",
+            )}
           </p>
           <p className="text-[10px] text-muted-foreground leading-snug">
             {t("daily_weekly_monthly")}
           </p>
         </Link>
         <Link
-          to="/analytics"
+          to={eff === "education" ? "/university-insights" : "/analytics"}
           className="rounded-2xl bg-card border-2 border-primary/30 p-3 flex flex-col gap-1.5 active:scale-[0.98] transition-transform shadow-[var(--shadow-card)]"
         >
           <div className="flex items-center justify-between">
             <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <TrendingUp className="h-5 w-5" />
+              {eff === "education" ? <span className="text-base">🎓</span> : <TrendingUp className="h-5 w-5" />}
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
-          <p className="text-sm font-bold text-foreground leading-tight">{t("view_analytics")}</p>
+          <p className="text-sm font-bold text-foreground leading-tight">
+            {t(
+              eff === "education" ? "edu_insights"
+              : eff === "property" ? "followup_analytics"
+              : eff === "beauty" || eff === "freelance" ? "client_analytics"
+              : "view_analytics",
+            )}
+          </p>
           <p className="text-[10px] text-muted-foreground leading-snug">
             {t("top_products_customers")}
           </p>
         </Link>
       </section>
 
-      {eff === "education" && (
-        <Link
-          to="/university-insights"
-          className="flex items-center gap-3 rounded-2xl bg-card border-2 border-primary/30 p-3 pr-4 active:scale-[0.99] transition-transform shadow-[var(--shadow-card)]"
-        >
-          <span className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            🎓
-          </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground leading-tight">{t("edu_insights")}</p>
-            <p className="text-[10px] text-muted-foreground leading-snug">
-              {t("edu_top_universities")} · {t("edu_top_courses")}
-            </p>
-          </div>
-          <ChevronRight className="h-5 w-5 text-primary shrink-0" />
-        </Link>
-      )}
-
       <section>
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
-          {t("recent_orders")}
+          {t(
+            eff === "education" ? "sec_recent_cases"
+            : eff === "beauty"  ? "sec_recent_appointments"
+            : eff === "property" ? "sec_recent_leads"
+            : eff === "freelance" ? "sec_recent_projects"
+            : "recent_orders",
+          )}
         </p>
         <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
           {recent.length === 0 && (
@@ -636,7 +674,8 @@ function Index() {
         </Link>
       )}
 
-      {topCustomers.length > 0 && (
+      {/* Section 2: depends on business type */}
+      {(eff === "retail" || eff === "fnb") && topCustomers.length > 0 && (
         <section>
           <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
             {t("top_customers")}
@@ -661,6 +700,66 @@ function Index() {
                 <p className="text-sm font-bold text-primary">
                   RM {Number(c.total_spent).toFixed(0)}
                 </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {(eff === "education" || eff === "beauty" || eff === "freelance") && latestClients.length > 0 && (
+        <section>
+          <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
+            {t("sec_latest_clients")}
+          </p>
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+            {latestClients.map((c) => (
+              <Link
+                key={c.id}
+                to="/customer/$customerId"
+                params={{ customerId: c.id }}
+                className="flex items-center gap-3 p-4"
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                  {c.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {c.phone ?? ""}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {eff === "property" && (
+        <section>
+          <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2 px-1">
+            {t("sec_followups_today")}
+          </p>
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+            {followUpsTodayList.length === 0 && (
+              <p className="text-center text-xs text-muted-foreground py-6">—</p>
+            )}
+            {followUpsTodayList.map((f) => (
+              <Link
+                key={f.id}
+                to="/customers"
+                className="flex items-center gap-3 p-4"
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                  📅
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{f.customer_name}</p>
+                  {f.note && (
+                    <p className="text-[11px] text-muted-foreground truncate">{f.note}</p>
+                  )}
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </Link>
             ))}
           </div>
