@@ -331,7 +331,7 @@ function OrdersPage() {
   return (
     <div className="px-5 pt-10 pb-4 space-y-5">
       <header className="flex items-center gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("orders")}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t(bizKey(bizType, "orders"))}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {todayCount} {t("today_count")}
         </span>
