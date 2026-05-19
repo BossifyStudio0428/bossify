@@ -299,7 +299,7 @@ function QuestionScreen({
   qIndex: number;
   question: Q;
   value: string | undefined;
-  onSelect: (v: string) => void;
+  onSelect: (v: string, bizKey?: BizType) => void;
   onBack: () => void;
   onContinue: () => void;
   animClass: string;
@@ -349,7 +349,7 @@ function QuestionScreen({
           return (
             <button
               key={o.textKey}
-              onClick={() => onSelect(optText)}
+              onClick={() => onSelect(optText, o.bizKey)}
               className="w-full flex items-center gap-3 text-left transition-all active:scale-[1.02]"
               style={{
                 padding: "11px 14px",
