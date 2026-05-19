@@ -374,6 +374,30 @@ const REMINDER_TPL: TplMap = {
 export const DEFAULT_ORDER_TPL = ORDER_TPL.retail.en;
 export const DEFAULT_REMINDER_TPL = REMINDER_TPL.retail.en;
 
+/** True if `tpl` matches any built-in order template across biz × lang. */
+export function isBuiltInOrderTpl(tpl: string | null | undefined): boolean {
+  if (!tpl) return true;
+  const t = tpl.trim();
+  for (const biz of Object.keys(ORDER_TPL) as BizType[]) {
+    for (const l of Object.keys(ORDER_TPL[biz]) as Lang[]) {
+      if (ORDER_TPL[biz][l].trim() === t) return true;
+    }
+  }
+  return false;
+}
+
+/** True if `tpl` matches any built-in reminder template across biz × lang. */
+export function isBuiltInReminderTpl(tpl: string | null | undefined): boolean {
+  if (!tpl) return true;
+  const t = tpl.trim();
+  for (const biz of Object.keys(REMINDER_TPL) as BizType[]) {
+    for (const l of Object.keys(REMINDER_TPL[biz]) as Lang[]) {
+      if (REMINDER_TPL[biz][l].trim() === t) return true;
+    }
+  }
+  return false;
+}
+
 const NOTES_LABEL: Record<Lang, string> = { en: "Notes", ms: "Nota", zh: "备注" };
 
 const DATE_TIME_LABEL: Record<Lang, string> = {
