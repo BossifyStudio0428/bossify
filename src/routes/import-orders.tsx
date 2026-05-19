@@ -45,18 +45,18 @@ function ImportOrdersPage() {
       setFileName(file.name);
       const p = await parseSpreadsheet(file);
       if (p.rows.length === 0) {
-        toast.error("File is empty");
+        toast.error(t("import_file_empty"));
         return;
       }
       if (p.rows.length > 1000) {
-        toast.error(("Max 1000 rows per import. Got {n}.").replace("{n}", String(p.rows.length)));
+        toast.error(t("import_max_rows").replace("{n}", String(p.rows.length)));
         return;
       }
       setParsed(p);
       setMapping(autoMapHeaders(p.headers));
       setStep("map");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to read file");
+      toast.error(e instanceof Error ? e.message : t("import_read_failed"));
     }
   };
 
@@ -76,14 +76,14 @@ function ImportOrdersPage() {
   };
 
   const runImport = async () => {
-    if (!user) { toast.error("Not logged in"); return; }
+    if (!user) { toast.error(t("import_not_logged_in")); return; }
     const missing = requiredMissing();
     if (missing.length) {
-      toast.error(`Please map: ${missing.join(", ")}`);
+      toast.error(t("import_please_map").replace("{fields}", missing.join(", ")));
       return;
     }
     const valid = mapped.filter((m) => m._errors.length === 0);
-    if (valid.length === 0) { toast.error("No valid rows to import"); return; }
+    if (valid.length === 0) { toast.error(t("import_no_valid")); return; }
 
     setImporting(true);
     let inserted = 0, updated = 0, skipped = 0;
@@ -140,14 +140,14 @@ function ImportOrdersPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          {"Import Orders"}
+          {t("import_orders")}
         </h1>
       </header>
 
       {step === "upload" && (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {"Upload your Excel or CSV file. The app will auto-detect columns."}
+            {t("import_upload_hint")}
           </p>
           <button
             onClick={() => fileRef.current?.click()}
@@ -155,7 +155,7 @@ function ImportOrdersPage() {
           >
             <Upload className="h-10 w-10 text-primary" />
             <p className="text-sm font-semibold text-foreground">
-              {"Tap to choose file"}
+              {t("import_tap_choose")}
             </p>
             <p className="text-xs text-muted-foreground">.xlsx · .xls · .csv</p>
           </button>
@@ -166,13 +166,13 @@ function ImportOrdersPage() {
           />
           <div className="rounded-2xl bg-muted/40 border border-border/60 p-4 space-y-2">
             <p className="text-xs font-semibold text-foreground">
-              {"Tips"}
+              {t("import_tips")}
             </p>
             <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
-              <li>{"First row should be column names (Customer, Product, Amount...)"}</li>
-              <li>{"Required: Customer Name, Product, Amount"}</li>
-              <li>{"Orders with the same Order Code will be overwritten."}</li>
-              <li>{"Up to 1000 rows per import."}</li>
+              <li>{t("import_tip_header")}</li>
+              <li>{t("import_tip_required")}</li>
+              <li>{t("import_tip_overwrite")}</li>
+              <li>{t("import_tip_limit")}</li>
             </ul>
           </div>
         </div>
@@ -184,15 +184,15 @@ function ImportOrdersPage() {
             <FileSpreadsheet className="h-4 w-4" />
             <span className="truncate">{fileName}</span>
             <span>·</span>
-            <span>{parsed.rows.length} {"rows"}</span>
+            <span>{parsed.rows.length} {t("import_rows")}</span>
           </div>
 
           <section className="space-y-2">
             <h2 className="text-sm font-semibold text-foreground">
-              {"Match your columns"}
+              {t("import_match_cols")}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {"We've guessed — adjust any that look wrong."}
+              {t("import_match_sub")}
             </p>
             <div className="space-y-2">
               {parsed.headers.map((h) => (
@@ -215,15 +215,15 @@ function ImportOrdersPage() {
 
           <section className="space-y-2">
             <h2 className="text-sm font-semibold text-foreground">
-              {"Preview"}
+              {t("import_preview")}
             </h2>
             <div className="flex gap-2 text-xs">
               <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
-                ✓ {validCount} {"ready"}
+                ✓ {validCount} {t("import_ready")}
               </span>
               {invalidCount > 0 && (
                 <span className="px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">
-                  ⚠ {invalidCount} {"will skip"}
+                  ⚠ {invalidCount} {t("import_will_skip")}
                 </span>
               )}
             </div>
@@ -264,7 +264,7 @@ function ImportOrdersPage() {
               </table>
               {mapped.length > 10 && (
                 <p className="text-[11px] text-muted-foreground pt-2">
-                  + {mapped.length - 10} {"more rows"}
+                  + {mapped.length - 10} {t("import_more_rows")}
                 </p>
               )}
             </div>
@@ -284,8 +284,8 @@ function ImportOrdersPage() {
               className="flex-[2] py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60"
             >
               {importing
-                ? ("Importing...")
-                : `${"Import"} ${validCount}`}
+                ? t("import_importing")
+                : `${t("import_btn")} ${validCount}`}
             </button>
           </div>
         </div>
@@ -296,18 +296,18 @@ function ImportOrdersPage() {
           <div className="rounded-2xl bg-card border border-border/60 p-6 text-center space-y-3">
             <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
             <h2 className="text-xl font-bold text-foreground">
-              {"Import complete"}
+              {t("import_complete")}
             </h2>
             <div className="flex justify-center gap-4 text-sm pt-2">
-              <div><span className="font-bold text-foreground">{result.inserted}</span> <span className="text-muted-foreground">{"new"}</span></div>
-              <div><span className="font-bold text-foreground">{result.updated}</span> <span className="text-muted-foreground">{"updated"}</span></div>
-              <div><span className="font-bold text-foreground">{result.skipped}</span> <span className="text-muted-foreground">{"skipped"}</span></div>
+              <div><span className="font-bold text-foreground">{result.inserted}</span> <span className="text-muted-foreground">{t("import_new")}</span></div>
+              <div><span className="font-bold text-foreground">{result.updated}</span> <span className="text-muted-foreground">{t("import_updated")}</span></div>
+              <div><span className="font-bold text-foreground">{result.skipped}</span> <span className="text-muted-foreground">{t("import_skipped")}</span></div>
             </div>
           </div>
           {result.errors.length > 0 && (
             <div className="rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 p-4 space-y-2">
               <p className="text-xs font-semibold text-red-700 dark:text-red-400">
-                {"Some rows had errors:"}
+                {t("import_some_errors")}
               </p>
               <ul className="text-xs text-red-700 dark:text-red-400 space-y-1">
                 {result.errors.map((e, i) => <li key={i}>• {e}</li>)}
@@ -318,7 +318,7 @@ function ImportOrdersPage() {
             onClick={() => navigate({ to: "/orders" })}
             className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-sm active:scale-[0.99]"
           >
-            {"Back to Orders"}
+            {t("import_back_orders")}
           </button>
         </div>
       )}
