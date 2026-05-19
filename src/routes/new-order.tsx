@@ -503,6 +503,27 @@ function NewOrderPage() {
               ))}
             </div>
           )}
+          {!isRetailish && showSuggest && serviceMatches.length > 0 && (
+            <div className="absolute z-20 left-0 right-0 top-full mt-1 rounded-xl bg-card border border-border/60 shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+              <p className="px-4 pt-2 pb-1 text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">
+                {t("select_from_list")}
+              </p>
+              {serviceMatches.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => selectService(s)}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-muted/60 flex items-center justify-between gap-2"
+                >
+                  <span className="font-medium text-foreground">{s.name}</span>
+                  {s.price > 0 && (
+                    <span className="text-[11px] text-muted-foreground shrink-0">RM {s.price.toFixed(2)}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
           {isRetailish && form.product.trim() && (
             matchedInventory ? (
               <p className="text-[11px] text-emerald-600 px-1 flex items-center gap-1">
