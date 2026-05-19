@@ -38,6 +38,36 @@ export type Database = {
         }
         Relationships: []
       }
+      follow_ups: {
+        Row: {
+          created_at: string
+          customer_id: string
+          follow_up_date: string
+          id: string
+          is_done: boolean
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          follow_up_date: string
+          id?: string
+          is_done?: boolean
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          follow_up_date?: string
+          id?: string
+          is_done?: boolean
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -185,6 +215,7 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      send_followup_reminders: { Args: never; Returns: undefined }
       trigger_push_kind: { Args: { _kind: string }; Returns: undefined }
     }
     Enums: {
