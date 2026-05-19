@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { supabase, type CustomerRow, type OrderRow, type CustomerStatus, type FollowUpRow } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
 import { PhoneInput } from "@/components/PhoneInput";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { EducationDetailsForm } from "@/components/EducationDetailsForm";
 
 export const Route = createFileRoute("/customer/$customerId")({ component: CustomerDetail });
 
@@ -33,6 +35,7 @@ function buildWA(phone: string, message: string) {
 function CustomerDetail() {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const { type: bizType } = useBusinessType();
   const { customerId } = Route.useParams();
   const [customer, setCustomer] = useState<CustomerRow | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -196,6 +199,10 @@ function CustomerDetail() {
           )}
         </div>
       </section>
+
+      {bizType === "education" && (
+        <EducationDetailsForm clientId={customer.id} userId={customer.user_id} />
+      )}
 
       <section className="space-y-2">
         <div className="flex items-center justify-between px-1">
