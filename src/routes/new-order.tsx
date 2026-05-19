@@ -170,7 +170,7 @@ function NewOrderPage() {
     const e: Record<string, string> = {};
     if (!form.customer_name.trim()) e.customer_name = t("required_field");
     if (!form.product.trim()) e.product = t("required_field");
-    if (!form.quantity || Number(form.quantity) < 1) e.quantity = t("required_field");
+    if (showQuantity && (!form.quantity || Number(form.quantity) < 1)) e.quantity = t("required_field");
     if (!form.amount || Number(form.amount) < 0) e.amount = t("required_field");
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -188,7 +188,7 @@ function NewOrderPage() {
     if (!user) return null;
     const code = genCode();
     const amount = Number(form.amount) || 0;
-    const quantity = Number(form.quantity) || 1;
+    const quantity = showQuantity ? (Number(form.quantity) || 1) : 1;
     const fullPhone = form.phone.replace(/\D/g, "");
     const productName = form.product.trim();
 
@@ -199,6 +199,26 @@ function NewOrderPage() {
     const unitCost = matchedItem ? Number(matchedItem.cost_price ?? 0) : 0;
     const cost = unitCost * quantity;
     const gross_profit = amount - cost;
+
+    // Build notes payload: include any extra type-specific fields above the user's note.
+    const extraLines: string[] = [];
+    if (eff === "education") {
+      if (extras.course_interest) extraLines.push(`${t("f_course_interest")}: ${extras.course_interest}`);
+      if (extras.university_preference) extraLines.push(`${t("f_university_preference")}: ${extras.university_preference}`);
+      extraLines.push(`${t("f_app_status")}: ${t(`edu_app_${extras.application_status}` as any)}`);
+    } else if (eff === "beauty") {
+      if (extras.date_time) extraLines.push(`${t("f_date_time")}: ${extras.date_time}`);
+    } else if (eff === "property") {
+      if (extras.location_interest) extraLines.push(`${t("f_location_interest")}: ${extras.location_interest}`);
+      extraLines.push(`${t("f_lead_status")}: ${t(`cs_${extras.lead_status}` as any)}`);
+      if (extras.followup_date) extraLines.push(`${t("f_followup_date")}: ${extras.followup_date}`);
+    } else if (eff === "freelance") {
+      if (extras.project_description) extraLines.push(`${t("f_project_description")}: ${extras.project_description}`);
+      if (extras.deadline_date) extraLines.push(`${t("f_deadline_date")}: ${extras.deadline_date}`);
+    }
+    const userNote = form.notes.trim();
+    const combinedNotes = [extraLines.join("\n"), userNote].filter(Boolean).join("\n\n") || null;
+    const effectiveStatus: OrderStatus = eff === "property" ? "Pending" : status;
 
     const { data: inserted, error: orderErr } = await supabase
       .from("orders")
@@ -212,8 +232,8 @@ function NewOrderPage() {
         amount,
         cost,
         gross_profit,
-        status,
-        notes: form.notes.trim() || null,
+        status: effectiveStatus,
+        notes: combinedNotes,
       })
       .select("id, code")
       .single();
@@ -265,6 +285,40 @@ function NewOrderPage() {
           last_order_at: new Date().toISOString(),
         });
       }
+    }
+
+    // Education: also persist structured fields onto client_education_details
+    // if a customer row exists for this phone.
+    if (eff === "education" && fullPhone) {
+      try {
+        const { data: cust } = await supabase
+          .from("customers").select("id").eq("user_id", user.id).eq("phone", fullPhone).maybeSingle();
+        if (cust?.id) {
+          await (supabase as any).from("client_education_details").upsert({
+            client_id: cust.id,
+            user_id: user.id,
+            course_interest: extras.course_interest || null,
+            university_preference: extras.university_preference || null,
+            application_status: extras.application_status,
+          }, { onConflict: "client_id" });
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    // Property: persist follow-up reminder
+    if (eff === "property" && extras.followup_date && fullPhone) {
+      try {
+        const { data: cust } = await supabase
+          .from("customers").select("id").eq("user_id", user.id).eq("phone", fullPhone).maybeSingle();
+        if (cust?.id) {
+          await (supabase as any).from("follow_ups").insert({
+            user_id: user.id,
+            customer_id: cust.id,
+            follow_up_date: extras.followup_date,
+            note: form.product.trim() || null,
+          });
+        }
+      } catch { /* non-fatal */ }
     }
 
     return { id: inserted.id, code: inserted.code };
