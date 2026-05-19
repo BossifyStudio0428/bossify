@@ -338,29 +338,43 @@ function ShellInner() {
 
 const BottomNav = memo(function BottomNav() {
   const { t } = useI18n();
+  const { type } = useBusinessType();
+  const tabs: TabDef[] = [
+    { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
+    { to: "/orders", labelKey: bizKey(type, "orders"), icon: ClipboardList, id: "tour-tab-orders" },
+    ...(hasInventory(type)
+      ? [{ to: "/inventory", labelKey: bizKey(type, "inventory"), icon: Package, id: "tour-tab-inventory" } as TabDef]
+      : []),
+    { to: "/customers", labelKey: bizKey(type, "customers"), icon: Users, id: "tour-tab-customers" },
+  ];
+  const leftCount = hasInventory(type) ? 2 : 2;
+  const gridCols = hasInventory(type) ? "grid-cols-5" : "grid-cols-3";
+  // When inventory is hidden, layout is: Home | Orders | FAB | Customers (4 cells around FAB).
+  // We render Home + Orders (left), FAB, then Customers (right).
   return (
     <nav
       className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40"
       style={{ bottom: "max(env(safe-area-inset-bottom), 0px)" }}
     >
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
-        <ul className="grid grid-cols-5 items-center h-16 px-1">
-          {tabs.slice(0, 2).map((tab) => (
+        <ul className={`grid ${hasInventory(type) ? "grid-cols-5" : "grid-cols-5"} items-center h-16 px-1`}>
+          {tabs.slice(0, leftCount).map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
           <li className="flex justify-center">
             <Link
               id="tour-new-order"
               to="/new-order"
-              aria-label={t("nav_new_order")}
+              aria-label={t(bizKey(type, "new_order"))}
               className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
             >
               <Plus className="h-7 w-7" strokeWidth={2.5} />
             </Link>
           </li>
-          {tabs.slice(2).map((tab) => (
+          {tabs.slice(leftCount).map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
+          {!hasInventory(type) && <li />}
         </ul>
       </div>
     </nav>
