@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
+import { CasesKanban, type EduStageInfo } from "@/components/CasesKanban";
 
 export const Route = createFileRoute("/customers")({ component: CustomersPage });
 
@@ -51,6 +52,8 @@ function CustomersPage() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<CustomerStatus | "all">("all");
   const [eduDetails, setEduDetails] = useState<Record<string, { university_preference: string | null; application_status: string | null }>>({});
+  const [eduInfo, setEduInfo] = useState<Record<string, EduStageInfo>>({});
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
 
   const ordersWordKey: TKey =
     bizType === "education" ? "case_word"
@@ -120,6 +123,41 @@ function CustomersPage() {
   }, [bizType, user?.id, customers.length]);
 
   useEffect(() => {
+    if (bizType !== "education" || !user) { setEduInfo({}); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("education_followup_stages")
+        .select("client_id,stage_number,is_completed")
+        .eq("user_id", user.id);
+      if (cancelled) return;
+      const map: Record<string, EduStageInfo> = {};
+      for (const r of (data ?? []) as { client_id: string; stage_number: number; is_completed: boolean }[]) {
+        const cur = map[r.client_id] ?? { completedCount: 0, currentStage: 1, university: null };
+        if (r.is_completed) cur.completedCount += 1;
+        map[r.client_id] = cur;
+      }
+      // currentStage = completedCount + 1 (capped at 10)
+      for (const id of Object.keys(map)) {
+        map[id].currentStage = Math.min(10, map[id].completedCount + 1);
+      }
+      // attach university from eduDetails snapshot (best effort)
+      setEduInfo(map);
+    })();
+    return () => { cancelled = true; };
+  }, [bizType, user?.id, customers.length]);
+
+  // merge university into eduInfo when eduDetails updates
+  const mergedEduInfo: Record<string, EduStageInfo> = (() => {
+    const out: Record<string, EduStageInfo> = {};
+    for (const c of customers) {
+      const info = eduInfo[c.id] ?? { completedCount: 0, currentStage: 1, university: null };
+      out[c.id] = { ...info, university: eduDetails[c.id]?.university_preference ?? null };
+    }
+    return out;
+  })();
+
+  useEffect(() => {
     if (!user) return;
     const ch = supabase
       .channel("cust-rt")
@@ -141,15 +179,44 @@ function CustomersPage() {
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {customers.length} {t("total")}
         </span>
-        {bizType === "education" && (
+      </header>
+
+      {bizType === "education" && (
+        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
+          <Link
+            to="/pipeline-overview"
+            className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary/10 text-primary active:scale-95"
+          >
+            📊 {t("pipeline_overview")}
+          </Link>
+          <Link
+            to="/services-summary"
+            className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary/10 text-primary active:scale-95"
+          >
+            🎓 {t("services_summary")}
+          </Link>
           <Link
             to="/clients-compare"
-            className="ml-auto text-[11px] font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95"
+            className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary text-primary-foreground active:scale-95"
           >
             ⚖️ {t("edu_compare")}
           </Link>
-        )}
-      </header>
+          <div className="ml-auto inline-flex rounded-2xl bg-muted p-0.5 shrink-0">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`text-[11px] font-semibold px-3 py-1.5 rounded-xl transition ${viewMode === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+            >
+              📋 {t("view_list")}
+            </button>
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`text-[11px] font-semibold px-3 py-1.5 rounded-xl transition ${viewMode === "kanban" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+            >
+              🔀 {t("view_kanban")}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🔍</span>
