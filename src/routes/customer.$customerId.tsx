@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, X, Calendar as CalendarIcon, Check } from "lucide-react";
 import { toast } from "sonner";
-import { supabase, type CustomerRow, type OrderRow } from "@/integrations/supabase/client";
+import { supabase, type CustomerRow, type OrderRow, type CustomerStatus, type FollowUpRow } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
 import { PhoneInput } from "@/components/PhoneInput";
 
@@ -12,6 +12,17 @@ const statusStyles: Record<string, string> = {
   Paid: "bg-emerald-100 text-emerald-700",
   Unpaid: "bg-red-100 text-red-600",
   Pending: "bg-amber-100 text-amber-700",
+};
+
+const CUSTOMER_STATUS_ORDER: CustomerStatus[] = ["enquiry", "in_progress", "completed", "rejected"];
+const CUSTOMER_STATUS_STYLES: Record<CustomerStatus, string> = {
+  enquiry: "bg-blue-100 text-blue-700",
+  in_progress: "bg-amber-100 text-amber-700",
+  completed: "bg-emerald-100 text-emerald-700",
+  rejected: "bg-red-100 text-red-600",
+};
+const CUSTOMER_STATUS_DOT: Record<CustomerStatus, string> = {
+  enquiry: "🔵", in_progress: "🟡", completed: "🟢", rejected: "🔴",
 };
 
 function buildWA(phone: string, message: string) {
@@ -28,17 +39,30 @@ function CustomerDetail() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [remarks, setRemarks] = useState("");
+  const [savingRemarks, setSavingRemarks] = useState(false);
+  const [followUps, setFollowUps] = useState<FollowUpRow[]>([]);
+  const [showFollowUp, setShowFollowUp] = useState(false);
+  const [fuDate, setFuDate] = useState("");
+  const [fuNote, setFuNote] = useState("");
+  const [savingFu, setSavingFu] = useState(false);
 
   const load = async () => {
     setLoading(true);
     const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).maybeSingle();
     if (!c) { setLoading(false); return; }
     setCustomer(c as CustomerRow);
+    setRemarks(((c as CustomerRow).remarks ?? "") as string);
     const { data: o } = await supabase
       .from("orders").select("*")
       .eq("customer_name", (c as CustomerRow).name)
       .order("created_at", { ascending: false });
     setOrders((o ?? []) as OrderRow[]);
+    const { data: fu } = await supabase
+      .from("follow_ups").select("*")
+      .eq("customer_id", customerId)
+      .order("follow_up_date", { ascending: true });
+    setFollowUps((fu ?? []) as FollowUpRow[]);
     setLoading(false);
   };
   useEffect(() => { load(); }, [customerId]);
@@ -49,6 +73,50 @@ function CustomerDetail() {
     if (error) { toast.error(error.message); return; }
     toast.success(t("customer_deleted"));
     navigate({ to: "/customers" });
+  };
+
+  const cycleStatus = async () => {
+    if (!customer) return;
+    const current = (customer.customer_status ?? "enquiry") as CustomerStatus;
+    const next = CUSTOMER_STATUS_ORDER[(CUSTOMER_STATUS_ORDER.indexOf(current) + 1) % CUSTOMER_STATUS_ORDER.length];
+    const prev = customer;
+    setCustomer({ ...customer, customer_status: next });
+    const { error } = await supabase.from("customers").update({ customer_status: next }).eq("id", customer.id);
+    if (error) { setCustomer(prev); toast.error(error.message); }
+  };
+
+  const saveRemarks = async () => {
+    if (!customer) return;
+    setSavingRemarks(true);
+    const { error } = await supabase.from("customers").update({ remarks: remarks || null }).eq("id", customer.id);
+    setSavingRemarks(false);
+    if (error) { toast.error(error.message); return; }
+    setCustomer({ ...customer, remarks: remarks || null });
+    toast.success(t("customer_updated"));
+  };
+
+  const saveFollowUp = async () => {
+    if (!customer || !fuDate) { toast.error(t("required_field")); return; }
+    setSavingFu(true);
+    const { data, error } = await supabase.from("follow_ups").insert({
+      user_id: customer.user_id,
+      customer_id: customer.id,
+      follow_up_date: fuDate,
+      note: fuNote || null,
+      is_done: false,
+    }).select("*").single();
+    setSavingFu(false);
+    if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
+    setFollowUps((prev) => [...prev, data as FollowUpRow].sort((a, b) => a.follow_up_date.localeCompare(b.follow_up_date)));
+    setShowFollowUp(false); setFuDate(""); setFuNote("");
+    toast.success(t("followup_saved"));
+  };
+
+  const markFollowUpDone = async (fu: FollowUpRow) => {
+    const { error } = await supabase.from("follow_ups").update({ is_done: true }).eq("id", fu.id);
+    if (error) { toast.error(error.message); return; }
+    setFollowUps((prev) => prev.map((x) => x.id === fu.id ? { ...x, is_done: true } : x));
+    toast.success(t("followup_done"));
   };
 
   if (loading) {
@@ -68,6 +136,9 @@ function CustomerDetail() {
   }
 
   const memberSince = new Date(customer.created_at).toLocaleDateString("en-MY", { month: "short", year: "numeric" });
+  const currentStatus = (customer.customer_status ?? "enquiry") as CustomerStatus;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const openFollowUps = followUps.filter((f) => !f.is_done);
 
   return (
     <div className="px-5 pt-10 pb-6 space-y-5">
@@ -88,12 +159,81 @@ function CustomerDetail() {
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
         )}
+        <button
+          onClick={cycleStatus}
+          className={`mt-2 text-xs font-semibold px-3 py-1.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[currentStatus]}`}
+        >
+          {CUSTOMER_STATUS_DOT[currentStatus]} {t(`cs_${currentStatus}` as any)}
+        </button>
       </section>
 
       <section className="grid grid-cols-3 gap-2">
         <Stat label={t("total_orders")} value={String(customer.total_orders)} />
         <Stat label={t("total_spent")} value={`RM ${Number(customer.total_spent).toFixed(0)}`} />
         <Stat label={t("member_since")} value={memberSince} />
+      </section>
+
+      <section className="space-y-2">
+        <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
+          {t("remarks")}
+        </p>
+        <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 space-y-2">
+          <textarea
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            placeholder={t("remarks_placeholder")}
+            rows={4}
+            className="w-full resize-y rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15"
+          />
+          {remarks !== (customer.remarks ?? "") && (
+            <button
+              onClick={saveRemarks}
+              disabled={savingRemarks}
+              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60 active:scale-[0.99]"
+            >
+              {savingRemarks ? t("saving") : t("save")}
+            </button>
+          )}
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+            {t("followup_reminder")}
+          </p>
+          <button
+            onClick={() => setShowFollowUp(true)}
+            className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95"
+          >
+            <CalendarIcon className="h-3.5 w-3.5" /> {t("set_followup")}
+          </button>
+        </div>
+        <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+          {openFollowUps.length === 0 && (
+            <p className="text-center text-xs text-muted-foreground py-5">{t("no_followups")}</p>
+          )}
+          {openFollowUps.map((f) => {
+            const overdue = f.follow_up_date < todayStr;
+            return (
+              <div key={f.id} className="p-3 flex items-center gap-3">
+                <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${overdue ? "bg-red-50 text-red-600" : "bg-primary/10 text-primary"}`}>
+                  <CalendarIcon className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-semibold ${overdue ? "text-red-600" : "text-foreground"}`}>
+                    {new Date(f.follow_up_date).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })}
+                    {overdue && <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">{t("followup_overdue")}</span>}
+                  </p>
+                  {f.note && <p className="text-xs text-muted-foreground truncate">{f.note}</p>}
+                </div>
+                <button onClick={() => markFollowUpDone(f)} aria-label="done" className="p-2 rounded-full bg-emerald-50 text-emerald-600 active:scale-95">
+                  <Check className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       <section className="space-y-2">
@@ -152,6 +292,38 @@ function CustomerDetail() {
           onClose={() => setEditing(false)}
           onSaved={(c) => { setCustomer(c); setEditing(false); }}
         />
+      )}
+      {showFollowUp && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setShowFollowUp(false)}>
+          <div className="w-full max-w-[390px] rounded-t-3xl bg-card p-5 pb-8 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">{t("set_followup")}</h3>
+              <button onClick={() => setShowFollowUp(false)} className="p-1.5 rounded-full hover:bg-muted"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("set_followup")}</label>
+              <input
+                type="date" value={fuDate} min={todayStr}
+                onChange={(e) => setFuDate(e.target.value)}
+                className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("notes")}</label>
+              <textarea
+                value={fuNote} onChange={(e) => setFuNote(e.target.value)} rows={3}
+                placeholder={t("followup_note_ph")}
+                className="w-full resize-y rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15"
+              />
+            </div>
+            <button
+              onClick={saveFollowUp} disabled={savingFu || !fuDate}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60"
+            >
+              {savingFu ? t("saving") : t("save")}
+            </button>
+          </div>
+        </div>
       )}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setConfirmDelete(false)}>
