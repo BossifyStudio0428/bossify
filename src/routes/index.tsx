@@ -641,7 +641,7 @@ function Index() {
         </p>
         <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
           {recent.length === 0 && (
-            <p className="text-center text-xs text-muted-foreground py-6">{t("no_orders_yet")}</p>
+            <p className="text-center text-xs text-muted-foreground py-6">{t(eff === "education" ? "no_cases_yet" : eff === "beauty" ? "no_appointments_yet" : eff === "property" ? "no_leads_yet" : eff === "freelance" ? "no_projects_yet" : "no_orders_yet")}</p>
           )}
           {recent.map((o) => (
             <div key={o.id} className="flex items-center gap-3 p-4">
