@@ -403,7 +403,7 @@ function NewOrderPage() {
     setSaving(false);
     if (!res) return;
     toast.success(t("order_saved"));
-    const msg = buildMessage(res.code, user ? await fetchFreshPaymentBlock(user.id, lang) : "");
+    const msg = buildMessage(res.code, user ? (await fetchWAProfile(user.id, lang)).paymentDetails : "");
     if (user) {
       await createNotification({
         user_id: user.id, type: "new_order",
