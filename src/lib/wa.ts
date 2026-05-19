@@ -416,20 +416,23 @@ const DEADLINE_LABEL: Record<Lang, string> = {
   zh: "截止日期",
 };
 
-const PAYMENT_LABELS: Record<Lang, { header: string; name: string; qr: string }> = {
+const PAYMENT_LABELS: Record<Lang, { header: string; name: string; bank: string; qr: string }> = {
   en: {
     header: "Payment Details",
     name: "Name",
+    bank: "Bank",
     qr: "QR Code",
   },
   ms: {
     header: "Maklumat Pembayaran",
     name: "Nama",
+    bank: "Bank",
     qr: "Kod QR",
   },
   zh: {
     header: "付款方式",
     name: "户名",
+    bank: "银行",
     qr: "QR码",
   },
 };
@@ -438,6 +441,7 @@ export type PaymentMethod = {
   type?: string | null;
   number?: string | null;
   name?: string | null;
+  bank?: string | null;
   qr_url?: string | null;
 };
 
@@ -452,6 +456,7 @@ export function formatPaymentBlock(
   const lines: string[] = ["━━━━━━━━━━━━━━━", `💳 ${labels.header}${sep}`];
   for (const m of valid) {
     lines.push(m.number ? `${m.type}${sep}${m.number}` : String(m.type));
+    if (m.bank) lines.push(`${labels.bank}${sep}${m.bank}`);
     if (m.name) lines.push(`${labels.name}${sep}${m.name}`);
     if (m.qr_url) lines.push(`📷 ${labels.qr}${sep}${m.qr_url}`);
   }
@@ -460,11 +465,12 @@ export function formatPaymentBlock(
 }
 
 export async function fetchFreshPaymentBlock(userId: string, lang: Lang = getActiveLang()): Promise<string> {
-  const { data: profile } = await supabase
+  const { data: profileRaw } = await supabase
     .from("profiles")
-    .select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url")
+    .select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_bank,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_bank,payment_method_2_qr_url")
     .eq("id", userId)
     .single();
+  const profile = profileRaw as any;
 
   if (!profile?.payment_method_1_type) return "";
 
@@ -472,6 +478,7 @@ export async function fetchFreshPaymentBlock(userId: string, lang: Lang = getAct
     type: profile.payment_method_1_type,
     number: profile.payment_method_1_number,
     name: profile.payment_method_1_name,
+    bank: profile.payment_method_1_bank,
     qr_url: profile.payment_method_1_qr_url ?? null,
   }];
 
@@ -480,6 +487,7 @@ export async function fetchFreshPaymentBlock(userId: string, lang: Lang = getAct
       type: profile.payment_method_2_type,
       number: profile.payment_method_2_number,
       name: profile.payment_method_2_name,
+      bank: profile.payment_method_2_bank,
       qr_url: profile.payment_method_2_qr_url ?? null,
     });
   }
@@ -492,13 +500,14 @@ export async function fetchWAProfile(
   userId: string,
   lang: Lang = getActiveLang(),
 ): Promise<{ paymentDetails: string; businessName: string }> {
-  const { data: profile } = await supabase
+  const { data: profileRaw } = await supabase
     .from("profiles")
     .select(
-      "business_name,payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_qr_url",
+      "business_name,payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_bank,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_bank,payment_method_2_qr_url",
     )
     .eq("id", userId)
     .single();
+  const profile = profileRaw as any;
 
   const businessName = profile?.business_name?.trim() || "us";
   if (!profile?.payment_method_1_type) return { paymentDetails: "", businessName };
@@ -507,6 +516,7 @@ export async function fetchWAProfile(
     type: profile.payment_method_1_type,
     number: profile.payment_method_1_number,
     name: profile.payment_method_1_name,
+    bank: profile.payment_method_1_bank,
     qr_url: profile.payment_method_1_qr_url ?? null,
   }];
   if (profile.payment_method_2_type) {
@@ -514,6 +524,7 @@ export async function fetchWAProfile(
       type: profile.payment_method_2_type,
       number: profile.payment_method_2_number,
       name: profile.payment_method_2_name,
+      bank: profile.payment_method_2_bank,
       qr_url: profile.payment_method_2_qr_url ?? null,
     });
   }
