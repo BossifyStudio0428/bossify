@@ -18,6 +18,7 @@ function PaymentSetupPage() {
   const [type, setType] = useState("");
   const [number, setNumber] = useState("");
   const [name, setName] = useState("");
+  const [bank, setBank] = useState("");
   const [qrUrl, setQrUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -36,7 +37,7 @@ function PaymentSetupPage() {
 
   const handleSave = async () => {
     if (!user) return;
-    if (!type && !number && !name && !qrUrl) {
+    if (!type && !number && !name && !bank && !qrUrl) {
       // nothing entered → treat as skip
       finish(false);
       return;
@@ -46,8 +47,9 @@ function PaymentSetupPage() {
       payment_method_1_type: type || null,
       payment_method_1_number: number || null,
       payment_method_1_name: name || null,
+      payment_method_1_bank: bank || null,
       payment_method_1_qr_url: qrUrl || null,
-    }).eq("id", user.id);
+    } as any).eq("id", user.id);
     setSaving(false);
     if (error) {
       toast.error(error.message);
@@ -113,6 +115,14 @@ function PaymentSetupPage() {
             placeholder={t("pay_account_name")}
             className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/70"
           />
+          {type === "Bank Transfer" ? (
+            <input
+              value={bank}
+              onChange={(e) => setBank(e.target.value)}
+              placeholder={t("pay_bank_name")}
+              className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/70"
+            />
+          ) : null}
           <div className="flex items-center gap-3 pt-1">
             {qrUrl ? (
               <img src={qrUrl} alt="QR" className="h-16 w-16 rounded-xl object-cover border border-border/60" />
