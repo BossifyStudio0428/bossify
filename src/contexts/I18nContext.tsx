@@ -582,7 +582,6 @@ const dict = {
     business_type_confirm_title: "Change business type?",
     business_type_confirm_body: "Changing business type will update the app labels. Your data will not be affected. Continue?",
     business_type_confirm_yes: "Yes, Change",
-    cancel: "Cancel",
     bt_retail: "Retail / Online Shop",
     bt_education: "Education / Consultation",
     bt_beauty: "Beauty & Wellness",
