@@ -136,6 +136,7 @@ export type Database = {
           payment_method_2_number: string | null
           payment_method_2_qr_url: string | null
           payment_method_2_type: string | null
+          payment_platform: string | null
           updated_at: string
           whatsapp_number: string | null
         }
@@ -164,6 +165,7 @@ export type Database = {
           payment_method_2_number?: string | null
           payment_method_2_qr_url?: string | null
           payment_method_2_type?: string | null
+          payment_platform?: string | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -192,6 +194,7 @@ export type Database = {
           payment_method_2_number?: string | null
           payment_method_2_qr_url?: string | null
           payment_method_2_type?: string | null
+          payment_platform?: string | null
           updated_at?: string
           whatsapp_number?: string | null
         }

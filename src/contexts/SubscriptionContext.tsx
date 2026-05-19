@@ -176,6 +176,19 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           }
         }
         const nextSub = data as SubscriptionRow;
+        // Mirror payment platform onto profiles for the Terms refund policy.
+        if (
+          (nextSub.plan === "pro" || nextSub.plan === "starter" || nextSub.plan === "lifetime") &&
+          (nextSub.provider === "google_play" || nextSub.provider === "stripe")
+        ) {
+          supabase
+            .from("profiles")
+            .update({ payment_platform: nextSub.provider } as any)
+            .eq("id", user.id)
+            .then(({ error }) => {
+              if (error) console.warn("payment_platform sync failed", error);
+            });
+        }
         setSub(nextSub);
         return nextSub;
       } else {
