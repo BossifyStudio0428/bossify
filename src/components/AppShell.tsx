@@ -345,7 +345,7 @@ const BottomNav = memo(function BottomNav() {
     { to: "/orders", labelKey: bizKey(type, "orders"), icon: ClipboardList, id: "tour-tab-orders" },
     ...(hasInventory(type)
       ? [{ to: "/inventory", labelKey: bizKey(type, "inventory"), icon: Package, id: "tour-tab-inventory" } as TabDef]
-      : [{ to: "/services", labelKey: "services_title", icon: Briefcase, id: "tour-tab-services" } as TabDef]),
+      : [{ to: "/services", labelKey: "nav_services", icon: Briefcase, id: "tour-tab-services" } as TabDef]),
     { to: "/customers", labelKey: bizKey(type, "customers"), icon: Users, id: "tour-tab-customers" },
   ];
   const leftCount = 2;
