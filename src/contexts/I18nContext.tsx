@@ -2874,6 +2874,9 @@ const dict = {
     pof_desc_beauty: "将此链接分享给您的客户。他们无需下载任何应用程序即可直接预约。",
     pof_desc_property: "将此链接分享给您的潜在客户。他们无需下载任何应用程序即可直接提交询问。",
     pof_desc_freelance: "将此链接分享给您的客户。他们无需下载任何应用程序即可直接提交项目详情。",
+    pof_section_title_order: "我的订单表格",
+    pof_section_title_enquiry: "我的询问表格",
+    pof_section_title_booking: "我的预约表格",
     // Public order form titles by business type
     pof_title_retail: "订单表格",
     pof_title_enquiry: "询问表格",
