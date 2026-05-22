@@ -25,6 +25,7 @@ import { Route as PaymentSuccessRouteImport } from './routes/payment-success'
 import { Route as PaymentSetupRouteImport } from './routes/payment-setup'
 import { Route as PaymentDetailsRouteImport } from './routes/payment-details'
 import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as OrderFormRouteImport } from './routes/order-form'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NotificationSettingsRouteImport } from './routes/notification-settings'
@@ -126,6 +127,11 @@ const PaymentDetailsRoute = PaymentDetailsRouteImport.update({
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderFormRoute = OrderFormRouteImport.update({
+  id: '/order-form',
+  path: '/order-form',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -257,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
+  '/order-form': typeof OrderFormRoute
   '/orders': typeof OrdersRouteWithChildren
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
@@ -297,6 +304,7 @@ export interface FileRoutesByTo {
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
+  '/order-form': typeof OrderFormRoute
   '/orders': typeof OrdersRouteWithChildren
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
@@ -338,6 +346,7 @@ export interface FileRoutesById {
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
+  '/order-form': typeof OrderFormRoute
   '/orders': typeof OrdersRouteWithChildren
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
@@ -380,6 +389,7 @@ export interface FileRouteTypes {
     | '/notification-settings'
     | '/notifications'
     | '/onboarding'
+    | '/order-form'
     | '/orders'
     | '/payment-details'
     | '/payment-setup'
@@ -420,6 +430,7 @@ export interface FileRouteTypes {
     | '/notification-settings'
     | '/notifications'
     | '/onboarding'
+    | '/order-form'
     | '/orders'
     | '/payment-details'
     | '/payment-setup'
@@ -460,6 +471,7 @@ export interface FileRouteTypes {
     | '/notification-settings'
     | '/notifications'
     | '/onboarding'
+    | '/order-form'
     | '/orders'
     | '/payment-details'
     | '/payment-setup'
@@ -501,6 +513,7 @@ export interface RootRouteChildren {
   NotificationSettingsRoute: typeof NotificationSettingsRoute
   NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
+  OrderFormRoute: typeof OrderFormRoute
   OrdersRoute: typeof OrdersRouteWithChildren
   PaymentDetailsRoute: typeof PaymentDetailsRoute
   PaymentSetupRoute: typeof PaymentSetupRoute
@@ -634,6 +647,13 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/orders'
       preLoaderRoute: typeof OrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-form': {
+      id: '/order-form'
+      path: '/order-form'
+      fullPath: '/order-form'
+      preLoaderRoute: typeof OrderFormRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -835,6 +855,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationSettingsRoute: NotificationSettingsRoute,
   NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
+  OrderFormRoute: OrderFormRoute,
   OrdersRoute: OrdersRouteWithChildren,
   PaymentDetailsRoute: PaymentDetailsRoute,
   PaymentSetupRoute: PaymentSetupRoute,
