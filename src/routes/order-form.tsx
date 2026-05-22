@@ -14,6 +14,7 @@ function OrderFormPage() {
   const navigate = useNavigate();
   const [code, setCode] = useState<string | null>(null);
   const [enabled, setEnabled] = useState<boolean>(true);
+  const [businessType, setBusinessType] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -23,12 +24,13 @@ function OrderFormPage() {
       if (!user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("order_form_code,order_form_enabled" as any)
+        .select("order_form_code,order_form_enabled,business_type" as any)
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
       setCode(((data as any)?.order_form_code as string) ?? null);
       setEnabled(((data as any)?.order_form_enabled as boolean) ?? true);
+      setBusinessType(((data as any)?.business_type as string) ?? null);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -95,6 +97,21 @@ function OrderFormPage() {
           <div className="rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-[11px] font-mono text-foreground break-all">
             {link}
           </div>
+          {businessType && (
+            <p className="text-[12px] italic text-[#888] leading-relaxed">
+              {t(
+                businessType === "education"
+                  ? "pof_desc_education"
+                  : businessType === "beauty"
+                    ? "pof_desc_beauty"
+                    : businessType === "property"
+                      ? "pof_desc_property"
+                      : businessType === "freelance"
+                        ? "pof_desc_freelance"
+                        : "pof_desc_retail",
+              )}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
