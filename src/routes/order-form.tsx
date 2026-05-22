@@ -1,0 +1,147 @@
+import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useI18n } from "@/contexts/I18nContext";
+
+export const Route = createFileRoute("/order-form")({ component: OrderFormPage });
+
+function OrderFormPage() {
+  const { user } = useAuth();
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const [code, setCode] = useState<string | null>(null);
+  const [enabled, setEnabled] = useState<boolean>(true);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("order_form_code,order_form_enabled" as any)
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setCode(((data as any)?.order_form_code as string) ?? null);
+      setEnabled(((data as any)?.order_form_enabled as boolean) ?? true);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const link = code
+    ? `${typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app"}/order/${code}`
+    : "";
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(link)}`;
+
+  return (
+    <div className="px-5 pt-10 pb-10 space-y-5 max-w-[480px] mx-auto">
+      <header className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/profile" })}
+          className="h-9 w-9 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+        <div>
+          <h1 className="text-lg font-bold text-foreground">🔗 {t("pof_section_title")}</h1>
+          <p className="text-[11px] text-muted-foreground">{t("pof_section_sub")}</p>
+        </div>
+      </header>
+
+      {loading ? (
+        <p className="text-sm text-muted-foreground text-center py-10">{t("loading")}</p>
+      ) : !code ? (
+        <div className="rounded-2xl bg-card border border-border/60 p-6 text-center text-sm text-muted-foreground">
+          {t("pof_not_found_sub")}
+        </div>
+      ) : (
+        <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3">
+          <div className="flex items-center justify-between rounded-xl bg-muted/40 border border-border/60 px-3 py-2">
+            <span className="text-xs font-medium">
+              {enabled ? t("pof_enabled") : t("pof_disabled")}
+            </span>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!user) return;
+                const next = !enabled;
+                setEnabled(next);
+                const { error } = await supabase
+                  .from("profiles")
+                  .update({ order_form_enabled: next } as any)
+                  .eq("id", user.id);
+                if (error) {
+                  setEnabled(!next);
+                  toast.error(error.message);
+                }
+              }}
+              role="switch"
+              aria-checked={enabled}
+              className={`relative h-6 w-11 rounded-full transition-colors ${enabled ? "bg-primary" : "bg-muted-foreground/30"}`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-5" : ""}`}
+              />
+            </button>
+          </div>
+          <div className="rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-[11px] font-mono text-foreground break-all">
+            {link}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText(link);
+                toast.success(t("pof_link_copied"));
+              }}
+              className="py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold active:scale-95"
+            >
+              📋 {t("pof_copy_link")}
+            </button>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(t("pof_wa_share_msg").replace("{link}", link))}`}
+              target="_blank"
+              rel="noreferrer"
+              className="py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-semibold text-center active:scale-95"
+            >
+              💬 {t("pof_share_wa")}
+            </a>
+            <button
+              type="button"
+              onClick={() => setQrOpen(true)}
+              className="py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95"
+            >
+              📱 {t("pof_qr_code")}
+            </button>
+            <a
+              href={link}
+              target="_blank"
+              rel="noreferrer"
+              className="py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold text-center active:scale-95"
+            >
+              👁 {t("pof_view_form")}
+            </a>
+          </div>
+          {qrOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6" onClick={() => setQrOpen(false)}>
+              <div className="bg-card rounded-3xl p-6 text-center max-w-xs" onClick={(e) => e.stopPropagation()}>
+                <p className="text-sm font-semibold mb-3">{t("pof_qr_title")}</p>
+                <img src={qrUrl} alt="QR" className="mx-auto h-60 w-60 rounded-xl" />
+                <p className="text-[10px] text-muted-foreground mt-3 break-all">{link}</p>
+                <button onClick={() => setQrOpen(false)} className="mt-4 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">{t("pof_close")}</button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
