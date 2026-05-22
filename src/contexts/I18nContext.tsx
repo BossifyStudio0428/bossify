@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
@@ -2878,7 +2878,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     return (safeLocalStorage.getItem("bossify_lang") as Lang) || "en";
   });
 
-  const setLang = (l: Lang) => {
+  const setLang = useCallback((l: Lang) => {
     setLangState(l);
     if (typeof window !== "undefined") safeLocalStorage.setItem("bossify_lang", l);
     // best-effort sync to supabase
@@ -2889,7 +2889,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         await supabase.from("profiles").update({ language: l } as any).eq("id", uid);
       }
     })();
-  };
+  }, []);
 
   const t = (k: TKey) => (dict[lang] as any)[k] ?? (dict.en as any)[k] ?? k;
 
