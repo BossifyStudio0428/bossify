@@ -1,6 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createClient } from "@supabase/supabase-js";
+
+// IMPORTANT: the public order form must read/write the SAME backend that
+// generated the seller's link in the browser. We intentionally use the
+// browser-facing URL + anon key here (not supabaseAdmin, which is wired to
+// a different project via process.env). RLS already allows anon SELECT on
+// enabled profiles/inventory and anon INSERT on online_form orders.
+const PUBLIC_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
+const PUBLIC_SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
+
+function getPublicClient() {
+  return createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
 const CODE_RE = /^[a-z0-9_-]{4,32}$/i;
 
@@ -27,11 +42,11 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
     return z.object({ code: z.string().regex(CODE_RE) }).parse(input);
   })
   .handler(async ({ data }) => {
-    const sb = supabaseAdmin as any;
+    const sb = getPublicClient() as any;
     const { data: profile, error } = await sb
       .from("profiles")
       .select(
-        "id, business_name, avatar_url, business_type, whatsapp_number, order_form_enabled, order_form_code, language",
+        "id, business_name, avatar_url, business_type, whatsapp_number, order_form_enabled, order_form_code",
       )
       .eq("order_form_code", data.code.toLowerCase())
       .maybeSingle();
@@ -78,7 +93,7 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
         avatar_url: profile.avatar_url ?? null,
         business_type: bizType,
         whatsapp_number: profile.whatsapp_number ?? null,
-        language: profile.language ?? "en",
+        language: (profile as any).language ?? "en",
       },
       products,
     };
@@ -94,7 +109,7 @@ function genCode() {
 export const submitPublicOrder = createServerFn({ method: "POST" })
   .inputValidator((input) => SubmitSchema.parse(input))
   .handler(async ({ data }) => {
-    const sb = supabaseAdmin as any;
+    const sb = getPublicClient() as any;
 
     const { data: profile, error: pErr } = await sb
       .from("profiles")
