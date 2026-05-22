@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { pofSectionTitleKey, pofDescKey, type BizType } from "@/lib/businessType";
 
 export const Route = createFileRoute("/order-form")({ component: OrderFormPage });
 
@@ -53,7 +54,7 @@ function OrderFormPage() {
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-foreground">🔗 {t("pof_section_title")}</h1>
+          <h1 className="text-lg font-bold text-foreground">🔗 {t(pofSectionTitleKey(businessType as BizType | null))}</h1>
           <p className="text-[11px] text-muted-foreground">{t("pof_section_sub")}</p>
         </div>
       </header>
@@ -97,21 +98,9 @@ function OrderFormPage() {
           <div className="rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-[11px] font-mono text-foreground break-all">
             {link}
           </div>
-          {businessType && (
-            <p className="text-[12px] italic text-[#888] leading-relaxed">
-              {t(
-                businessType === "education"
-                  ? "pof_desc_education"
-                  : businessType === "beauty"
-                    ? "pof_desc_beauty"
-                    : businessType === "property"
-                      ? "pof_desc_property"
-                      : businessType === "freelance"
-                        ? "pof_desc_freelance"
-                        : "pof_desc_retail",
-              )}
-            </p>
-          )}
+          <p className="text-[12px] italic text-[#888] leading-relaxed">
+            {t(pofDescKey(businessType as BizType | null))}
+          </p>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"

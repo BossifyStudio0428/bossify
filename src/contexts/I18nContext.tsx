@@ -931,7 +931,11 @@ const dict = {
     pof_desc_education: "Share this link with your students. They can submit enquiries directly without downloading any app.",
     pof_desc_beauty: "Share this link with your clients. They can book appointments directly without downloading any app.",
     pof_desc_property: "Share this link with your prospects. They can submit enquiries directly without downloading any app.",
-    pof_desc_freelance: "Share this link with your clients. They can submit project details directly without downloading any app.",
+    pof_desc_freelance: "Share this link with your clients. They can book services directly without downloading any app.",
+    // Section title by business type (My Order/Enquiry/Booking Form)
+    pof_section_title_order: "My Order Form",
+    pof_section_title_enquiry: "My Enquiry Form",
+    pof_section_title_booking: "My Booking Form",
     // Public order form titles by business type
     pof_title_retail: "Order Form",
     pof_title_enquiry: "Enquiry Form",
@@ -1899,7 +1903,10 @@ const dict = {
     pof_desc_education: "Kongsi pautan ini kepada pelajar anda. Mereka boleh menghantar pertanyaan terus tanpa memuat turun sebarang aplikasi.",
     pof_desc_beauty: "Kongsi pautan ini kepada pelanggan anda. Mereka boleh membuat tempahan terus tanpa memuat turun sebarang aplikasi.",
     pof_desc_property: "Kongsi pautan ini kepada bakal pelanggan anda. Mereka boleh menghantar pertanyaan terus tanpa memuat turun sebarang aplikasi.",
-    pof_desc_freelance: "Kongsi pautan ini kepada klien anda. Mereka boleh menghantar butiran projek terus tanpa memuat turun sebarang aplikasi.",
+    pof_desc_freelance: "Kongsi pautan ini kepada klien anda. Mereka boleh menempah perkhidmatan terus tanpa memuat turun sebarang aplikasi.",
+    pof_section_title_order: "Borang Pesanan Saya",
+    pof_section_title_enquiry: "Borang Pertanyaan Saya",
+    pof_section_title_booking: "Borang Tempahan Saya",
     // Public order form titles by business type
     pof_title_retail: "Borang Pesanan",
     pof_title_enquiry: "Borang Pertanyaan",
@@ -2866,7 +2873,10 @@ const dict = {
     pof_desc_education: "将此链接分享给您的学生。他们无需下载任何应用程序即可直接提交询问。",
     pof_desc_beauty: "将此链接分享给您的客户。他们无需下载任何应用程序即可直接预约。",
     pof_desc_property: "将此链接分享给您的潜在客户。他们无需下载任何应用程序即可直接提交询问。",
-    pof_desc_freelance: "将此链接分享给您的客户。他们无需下载任何应用程序即可直接提交项目详情。",
+    pof_desc_freelance: "将此链接分享给您的客户。他们无需下载任何应用程序即可直接预约服务。",
+    pof_section_title_order: "我的订单表格",
+    pof_section_title_enquiry: "我的询问表格",
+    pof_section_title_booking: "我的预约表格",
     // Public order form titles by business type
     pof_title_retail: "订单表格",
     pof_title_enquiry: "询问表格",
