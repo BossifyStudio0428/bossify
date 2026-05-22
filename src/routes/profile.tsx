@@ -22,6 +22,7 @@ import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, hasInventory } from "@/lib/businessType";
 import { PLATFORMS } from "@/lib/platforms";
+import { PlatformIcon } from "@/components/PlatformIcon";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
