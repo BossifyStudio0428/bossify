@@ -42,8 +42,6 @@ function ProfilePage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string; avatar_url: string | null } | null>(null);
-  const [orderFormCode, setOrderFormCode] = useState<string | null>(null);
-  const [orderFormEnabled, setOrderFormEnabled] = useState<boolean>(true);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({});
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
@@ -138,8 +136,6 @@ function ProfilePage() {
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
       setProfile(p as any);
       setIsAdmin(!!(p as any)?.is_admin);
-      setOrderFormCode(((p as any)?.order_form_code as string) ?? null);
-      setOrderFormEnabled(((p as any)?.order_form_enabled as boolean) ?? true);
       setConnectedPlatforms(((p as any)?.connected_platforms as Record<string, boolean>) ?? {});
       // Treat any saved value that still matches a built-in default (in any
       // biz/lang) as non-custom, so changing business_type or language flips
