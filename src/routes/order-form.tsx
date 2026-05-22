@@ -24,12 +24,13 @@ function OrderFormPage() {
       if (!user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("order_form_code,order_form_enabled" as any)
+        .select("order_form_code,order_form_enabled,business_type" as any)
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
       setCode(((data as any)?.order_form_code as string) ?? null);
       setEnabled(((data as any)?.order_form_enabled as boolean) ?? true);
+      setBusinessType(((data as any)?.business_type as string) ?? null);
       setLoading(false);
     })();
     return () => { cancelled = true; };
