@@ -5,6 +5,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getPlatform, type PlatformKey } from "@/lib/platforms";
+import { PlatformIcon } from "@/components/PlatformIcon";
 
 export const Route = createFileRoute("/connected-platforms/$platform")({
   component: PlatformConnectPage,
@@ -58,8 +59,8 @@ function PlatformConnectPage() {
       </header>
 
       <div className="flex flex-col items-center text-center gap-3">
-        <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-primary/15 to-primary/5 border border-border/60 flex items-center justify-center text-5xl shadow-[var(--shadow-soft)]">
-          {cfg.emoji}
+        <div className="shadow-[var(--shadow-soft)]">
+          <PlatformIcon platform={cfg.key} size={96} />
         </div>
         <span
           className={`text-xs font-semibold px-3 py-1 rounded-full ${
