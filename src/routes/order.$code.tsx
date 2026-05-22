@@ -148,15 +148,21 @@ function PublicOrderFormPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 bg-background">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
         <div className="text-center max-w-sm">
-          <div className="text-6xl mb-4">💜</div>
+          <div className="mx-auto h-20 w-20 rounded-full bg-emerald-500/15 flex items-center justify-center text-5xl mb-5">
+            ✅
+          </div>
           <h1 className="text-2xl font-bold">
-            {t("pof_thanks").replace("{name}", done.name)}
+            {t("pof_thanks").replace("{name}", done.name)} 🎉
           </h1>
           <p className="text-sm text-muted-foreground mt-3">{t("pof_will_contact")}</p>
-          <p className="text-xs text-muted-foreground mt-4">{done.code}</p>
+          <p className="text-sm font-semibold text-foreground mt-4">— {done.business}</p>
+          <p className="text-[11px] text-muted-foreground mt-2 font-mono">{done.code}</p>
         </div>
+        <p className="text-[11px] text-muted-foreground mt-10">
+          {lang === "ms" ? "Dikuasakan oleh" : lang === "zh" ? "由" : "Powered by"} Bossify 💜
+        </p>
       </div>
     );
   }
