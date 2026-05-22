@@ -40,6 +40,8 @@ function ProfilePage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string; avatar_url: string | null } | null>(null);
+  const [orderFormCode, setOrderFormCode] = useState<string | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
   const defaultOrderTpl = getOrderTemplate(lang, bizType);
@@ -120,7 +122,7 @@ function ProfilePage() {
       const [{ data: o }, { count: cust }, { data: p }, { data: pref }] = await Promise.all([
         supabase.from("orders").select("amount,status").eq("user_id", user.id),
         supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("profiles").select("business_name,plan,created_at,is_admin,avatar_url").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("business_name,plan,created_at,is_admin,avatar_url,order_form_code" as any).eq("id", user.id).maybeSingle(),
         supabase.from("user_preferences").select("wa_order_template,wa_reminder_template").eq("user_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
@@ -129,6 +131,7 @@ function ProfilePage() {
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
       setProfile(p as any);
       setIsAdmin(!!(p as any)?.is_admin);
+      setOrderFormCode(((p as any)?.order_form_code as string) ?? null);
       // Treat any saved value that still matches a built-in default (in any
       // biz/lang) as non-custom, so changing business_type or language flips
       // to the right default automatically.
