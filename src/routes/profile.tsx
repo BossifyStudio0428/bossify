@@ -107,7 +107,7 @@ function ProfilePage() {
       value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
       onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
     },
-    { icon: "🔗", key: "orderform", label: t("pof_section_title"), onClick: () => navigate({ to: "/order-form" }) },
+    { icon: "🔗", key: "orderform", label: t(pofSectionTitleKey(bizType)), onClick: () => navigate({ to: "/order-form" }) },
     { icon: "📊", key: "analytics", label: t(analyticsLabelKey), onClick: () => navigate({ to: "/analytics" }) },
     { icon: "📊", key: "rep", label: t(reportsLabelKey), onClick: () => navigate({ to: "/reports" }) },
     { icon: "🔔", key: "notif2", label: t("notifications"), onClick: () => navigate({ to: "/notifications" }) },
