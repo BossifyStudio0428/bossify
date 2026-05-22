@@ -14,6 +14,7 @@ function OrderFormPage() {
   const navigate = useNavigate();
   const [code, setCode] = useState<string | null>(null);
   const [enabled, setEnabled] = useState<boolean>(true);
+  const [businessType, setBusinessType] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
