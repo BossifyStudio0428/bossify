@@ -932,6 +932,10 @@ const dict = {
     pof_desc_beauty: "Share this link with your clients. They can book appointments directly without downloading any app.",
     pof_desc_property: "Share this link with your prospects. They can submit enquiries directly without downloading any app.",
     pof_desc_freelance: "Share this link with your clients. They can submit project details directly without downloading any app.",
+    // Section title by business type (My Order/Enquiry/Booking Form)
+    pof_section_title_order: "My Order Form",
+    pof_section_title_enquiry: "My Enquiry Form",
+    pof_section_title_booking: "My Booking Form",
     // Public order form titles by business type
     pof_title_retail: "Order Form",
     pof_title_enquiry: "Enquiry Form",
