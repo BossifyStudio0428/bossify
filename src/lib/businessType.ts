@@ -94,3 +94,37 @@ export const HOME_GREETING_KEY: Record<BizType, TKey> = {
   fnb:       "bg_fnb",
   freelance: "bg_freelance",
 };
+
+/** Section title for "My ___ Form" entry/page, per business type. */
+export function pofSectionTitleKey(type: BizType | null | undefined): TKey {
+  switch (type) {
+    case "education":
+    case "property":
+      return "pof_section_title_enquiry";
+    case "beauty":
+    case "freelance":
+      return "pof_section_title_booking";
+    case "retail":
+    case "fnb":
+    default:
+      return "pof_section_title_order";
+  }
+}
+
+/** Description shown below the public form link, per business type. */
+export function pofDescKey(type: BizType | null | undefined): TKey {
+  switch (type) {
+    case "education":
+      return "pof_desc_education";
+    case "beauty":
+      return "pof_desc_beauty";
+    case "property":
+      return "pof_desc_property";
+    case "freelance":
+      return "pof_desc_freelance";
+    case "retail":
+    case "fnb":
+    default:
+      return "pof_desc_retail";
+  }
+}
