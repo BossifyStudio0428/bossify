@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -223,6 +223,12 @@ function Onboarding() {
             onFinish={() => finish(false)}
           />
         )}
+
+        <div className="mt-auto pt-4 flex items-center justify-center gap-3 text-[11px] text-muted-foreground">
+          <Link to="/terms" className="underline hover:text-primary">{t("terms_conditions")}</Link>
+          <span>·</span>
+          <Link to="/privacy-policy" className="underline hover:text-primary">{t("privacy_policy")}</Link>
+        </div>
       </div>
     </div>
   );
