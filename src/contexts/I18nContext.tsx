@@ -1890,6 +1890,16 @@ const dict = {
     pof_source_manual: "Pesanan Manual",
     pof_source_online: "Borang Dalam Talian",
     pof_wa_share_msg: "Hai! Buat pesanan dengan kami di sini: {link}",
+    // Public order form titles by business type
+    pof_title_retail: "Borang Pesanan",
+    pof_title_enquiry: "Borang Pertanyaan",
+    pof_title_booking: "Borang Tempahan",
+    pof_title_project: "Borang Projek",
+    // Public order form taglines by business type
+    pof_tagline_retail: "Isi butiran pesanan anda di bawah",
+    pof_tagline_enquiry: "Isi butiran pertanyaan anda di bawah",
+    pof_tagline_booking: "Tempah temujanji anda di bawah",
+    pof_tagline_project: "Hantar butiran projek anda di bawah",
     privacy_policy: "Dasar Privasi",
     terms_conditions: "Terma & Syarat",
     pp_title: "DASAR PRIVASI",
