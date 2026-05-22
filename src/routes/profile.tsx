@@ -87,8 +87,11 @@ function ProfilePage() {
     : bizType === "property" ? "followup_analytics"
     : "analytics_label";
 
-  const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
+  const menuTop: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
     { icon: "🏪", key: "biz", label: t("business_profile"), onClick: () => navigate({ to: "/business-profile" }) },
+  ];
+
+  const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
     ...(!hasInventory(bizType)
       ? [{
           icon: bizType === "property" ? "📦" : "🧰",

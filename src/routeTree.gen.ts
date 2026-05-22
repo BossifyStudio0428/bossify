@@ -46,6 +46,7 @@ import { Route as OrderCodeRouteImport } from './routes/order.$code'
 import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
+import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
 
 const UniversityInsightsRoute = UniversityInsightsRouteImport.update({
   id: '/university-insights',
@@ -232,6 +233,12 @@ const CustomerCustomerIdRoute = CustomerCustomerIdRouteImport.update({
   path: '/customer/$customerId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnectedPlatformsPlatformRoute =
+  ConnectedPlatformsPlatformRouteImport.update({
+    id: '/connected-platforms/$platform',
+    path: '/connected-platforms/$platform',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -266,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/splash': typeof SplashRoute
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -305,6 +313,7 @@ export interface FileRoutesByTo {
   '/splash': typeof SplashRoute
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -345,6 +354,7 @@ export interface FileRoutesById {
   '/splash': typeof SplashRoute
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/terms'
     | '/university-insights'
+    | '/connected-platforms/$platform'
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -425,6 +436,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/terms'
     | '/university-insights'
+    | '/connected-platforms/$platform'
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -464,6 +476,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/terms'
     | '/university-insights'
+    | '/connected-platforms/$platform'
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -504,6 +517,7 @@ export interface RootRouteChildren {
   SplashRoute: typeof SplashRoute
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
+  ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
 }
@@ -769,6 +783,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomerCustomerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connected-platforms/$platform': {
+      id: '/connected-platforms/$platform'
+      path: '/connected-platforms/$platform'
+      fullPath: '/connected-platforms/$platform'
+      preLoaderRoute: typeof ConnectedPlatformsPlatformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -830,6 +851,7 @@ const rootRouteChildren: RootRouteChildren = {
   SplashRoute: SplashRoute,
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
+  ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
   OrderCodeRoute: OrderCodeRoute,
 }
