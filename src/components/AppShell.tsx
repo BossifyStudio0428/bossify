@@ -215,7 +215,7 @@ function ShellInner() {
     // Language gate runs FIRST and applies to every route except /language
     // itself. Even on /splash we redirect immediately if the user has not
     // tapped Continue on the language page yet.
-    if (!isLanguageRoute && !isOrderFormRoute && !hasPickedLanguageEver()) {
+    if (!isLanguageRoute && !isOrderFormRoute && !isPrivacyPolicyRoute && !isTermsRoute && !hasPickedLanguageEver()) {
       setShowInlineSplash(false);
       navigate({ to: "/language", replace: true });
       return;
