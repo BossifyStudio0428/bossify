@@ -31,9 +31,9 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
     const { data: profile, error } = await sb
       .from("profiles")
       .select(
-        "id, business_name, avatar_url, business_type, whatsapp_number, order_form_enabled, order_form_code",
+        "id, business_name, avatar_url, business_type, whatsapp_number, order_form_enabled, order_form_code, language",
       )
-      .eq("order_form_code", data.code)
+      .eq("order_form_code", data.code.toLowerCase())
       .maybeSingle();
 
     if (error || !profile) return { ok: false as const, reason: "not_found" as const };
@@ -78,6 +78,7 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
         avatar_url: profile.avatar_url ?? null,
         business_type: bizType,
         whatsapp_number: profile.whatsapp_number ?? null,
+        language: profile.language ?? "en",
       },
       products,
     };
@@ -98,7 +99,7 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
     const { data: profile, error: pErr } = await sb
       .from("profiles")
       .select("id, business_type, order_form_enabled, business_name")
-      .eq("order_form_code", data.code)
+      .eq("order_form_code", data.code.toLowerCase())
       .maybeSingle();
     if (pErr || !profile) return { ok: false as const, reason: "not_found" as const };
     if (profile.order_form_enabled === false) {
