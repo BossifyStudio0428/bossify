@@ -137,7 +137,8 @@ function ShellInner() {
   const isAuthFlowRoute =
     locationPathname === "/auth" ||
     locationPathname === "/reset-password" ||
-    locationPathname.startsWith("/forgot-password");
+    locationPathname.startsWith("/forgot-password") ||
+    locationPathname.startsWith("/order/");
   const isOnboardingRoute = locationPathname === "/onboarding";
   const isBusinessTypeRoute = locationPathname === "/business-type";
   const isSetupFlowRoute = ONBOARDING_SETUP_ROUTES.some(
@@ -148,7 +149,8 @@ function ShellInner() {
   // Only /language is a true "public bypass" for the language guard.
   // /splash must still respect the language gate so a user who exits the
   // app on the language screen without choosing is redirected back to it.
-  const isPublicFlow = isSplashRoute || isLanguageRoute;
+  const isOrderFormRoute = locationPathname.startsWith("/order/");
+  const isPublicFlow = isSplashRoute || isLanguageRoute || isOrderFormRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const { type: bizType, loading: bizLoading } = useBusinessType();
