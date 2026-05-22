@@ -927,6 +927,16 @@ const dict = {
     pof_source_manual: "Manual",
     pof_source_online: "Online Form",
     pof_wa_share_msg: "Hi! Place your order with us here: {link}",
+    // Public order form titles by business type
+    pof_title_retail: "Order Form",
+    pof_title_enquiry: "Enquiry Form",
+    pof_title_booking: "Booking Form",
+    pof_title_project: "Project Form",
+    // Public order form taglines by business type
+    pof_tagline_retail: "Fill in your order details below",
+    pof_tagline_enquiry: "Fill in your enquiry details below",
+    pof_tagline_booking: "Book your appointment below",
+    pof_tagline_project: "Submit your project details below",
     privacy_policy: "Privacy Policy",
     terms_conditions: "Terms & Conditions",
     pp_title: "PRIVACY POLICY",
