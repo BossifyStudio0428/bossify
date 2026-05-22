@@ -40,6 +40,8 @@ function ProfilePage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string; avatar_url: string | null } | null>(null);
+  const [orderFormCode, setOrderFormCode] = useState<string | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
   const defaultOrderTpl = getOrderTemplate(lang, bizType);
@@ -120,7 +122,7 @@ function ProfilePage() {
       const [{ data: o }, { count: cust }, { data: p }, { data: pref }] = await Promise.all([
         supabase.from("orders").select("amount,status").eq("user_id", user.id),
         supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("profiles").select("business_name,plan,created_at,is_admin,avatar_url").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("business_name,plan,created_at,is_admin,avatar_url,order_form_code" as any).eq("id", user.id).maybeSingle(),
         supabase.from("user_preferences").select("wa_order_template,wa_reminder_template").eq("user_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
@@ -129,6 +131,7 @@ function ProfilePage() {
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
       setProfile(p as any);
       setIsAdmin(!!(p as any)?.is_admin);
+      setOrderFormCode(((p as any)?.order_form_code as string) ?? null);
       // Treat any saved value that still matches a built-in default (in any
       // biz/lang) as non-custom, so changing business_type or language flips
       // to the right default automatically.
@@ -276,6 +279,67 @@ function ProfilePage() {
           </button>
         ))}
       </section>
+
+      {orderFormCode && (() => {
+        const link = `${typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app"}/order/${orderFormCode}`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(link)}`;
+        return (
+          <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3">
+            <div>
+              <p className="text-sm font-bold text-foreground">🔗 {t("pof_section_title")}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{t("pof_section_sub")}</p>
+            </div>
+            <div className="rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-[11px] font-mono text-foreground break-all">
+              {link}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(link);
+                  toast.success(t("pof_link_copied"));
+                }}
+                className="py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold active:scale-95"
+              >
+                📋 {t("pof_copy_link")}
+              </button>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(t("pof_wa_share_msg").replace("{link}", link))}`}
+                target="_blank"
+                rel="noreferrer"
+                className="py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-semibold text-center active:scale-95"
+              >
+                💬 {t("pof_share_wa")}
+              </a>
+              <button
+                type="button"
+                onClick={() => setQrOpen(true)}
+                className="py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95"
+              >
+                📱 {t("pof_qr_code")}
+              </button>
+              <a
+                href={link}
+                target="_blank"
+                rel="noreferrer"
+                className="py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold text-center active:scale-95"
+              >
+                👁 {t("pof_view_form")}
+              </a>
+            </div>
+            {qrOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6" onClick={() => setQrOpen(false)}>
+                <div className="bg-card rounded-3xl p-6 text-center max-w-xs" onClick={(e) => e.stopPropagation()}>
+                  <p className="text-sm font-semibold mb-3">{t("pof_qr_title")}</p>
+                  <img src={qrUrl} alt="QR" className="mx-auto h-60 w-60 rounded-xl" />
+                  <p className="text-[10px] text-muted-foreground mt-3 break-all">{link}</p>
+                  <button onClick={() => setQrOpen(false)} className="mt-4 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">{t("pof_close")}</button>
+                </div>
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       <button
         type="button"
