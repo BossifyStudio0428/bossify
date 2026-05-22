@@ -1904,6 +1904,9 @@ const dict = {
     pof_desc_beauty: "Kongsi pautan ini kepada pelanggan anda. Mereka boleh membuat tempahan terus tanpa memuat turun sebarang aplikasi.",
     pof_desc_property: "Kongsi pautan ini kepada bakal pelanggan anda. Mereka boleh menghantar pertanyaan terus tanpa memuat turun sebarang aplikasi.",
     pof_desc_freelance: "Kongsi pautan ini kepada klien anda. Mereka boleh menghantar butiran projek terus tanpa memuat turun sebarang aplikasi.",
+    pof_section_title_order: "Borang Pesanan Saya",
+    pof_section_title_enquiry: "Borang Pertanyaan Saya",
+    pof_section_title_booking: "Borang Tempahan Saya",
     // Public order form titles by business type
     pof_title_retail: "Borang Pesanan",
     pof_title_enquiry: "Borang Pertanyaan",
