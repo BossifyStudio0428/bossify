@@ -117,6 +117,7 @@ function ProfilePage() {
     { icon: "💳", key: "sub", label: t("subscription"), value: isLifetime ? t("plan_badge_lifetime") : isPro ? t("pro_plan") : isStarter ? t("starter_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
     { icon: "📲", key: "wa", label: t("wa_template"), value: hasFullAccess ? undefined : "🔒", onClick: () => hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template")) },
     { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
+    { icon: "🗑️", key: "deldata", label: t("data_deletion"), onClick: () => navigate({ to: "/data-deletion" }) },
     ...(isAdmin ? [{ icon: "⚙️", key: "admin", label: t("admin_panel"), value: "PRO", onClick: () => navigate({ to: "/admin" }) }] : []),
   ];
 
