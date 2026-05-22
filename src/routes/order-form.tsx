@@ -97,6 +97,21 @@ function OrderFormPage() {
           <div className="rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-[11px] font-mono text-foreground break-all">
             {link}
           </div>
+          {businessType && (
+            <p className="text-[12px] italic text-[#888] leading-relaxed">
+              {t(
+                businessType === "education"
+                  ? "pof_desc_education"
+                  : businessType === "beauty"
+                    ? "pof_desc_beauty"
+                    : businessType === "property"
+                      ? "pof_desc_property"
+                      : businessType === "freelance"
+                        ? "pof_desc_freelance"
+                        : "pof_desc_retail",
+              )}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
