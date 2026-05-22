@@ -187,6 +187,20 @@ function PublicOrderFormPage() {
           ? "pof_submit_project"
           : "pof_submit";
 
+  const formMeta = (() => {
+    switch (bizType) {
+      case "education":
+      case "property":
+        return { titleKey: "pof_title_enquiry" as const, taglineKey: "pof_tagline_enquiry" as const };
+      case "beauty":
+        return { titleKey: "pof_title_booking" as const, taglineKey: "pof_tagline_booking" as const };
+      case "freelance":
+        return { titleKey: "pof_title_project" as const, taglineKey: "pof_tagline_project" as const };
+      default:
+        return { titleKey: "pof_title_retail" as const, taglineKey: "pof_tagline_retail" as const };
+    }
+  })();
+
   const labels = (() => {
     switch (bizType) {
       case "education":
@@ -213,8 +227,9 @@ function PublicOrderFormPage() {
               initials
             )}
           </div>
-          <h1 className="mt-3 text-xl font-bold">{profile.business_name}</h1>
-          <p className="text-xs text-muted-foreground mt-1">{t("pof_place_order_below")}</p>
+          <p className="mt-2 text-sm font-medium text-muted-foreground">{profile.business_name}</p>
+          <h1 className="mt-1 text-xl font-bold">{t(formMeta.titleKey)}</h1>
+          <p className="text-xs text-muted-foreground mt-1">{t(formMeta.taglineKey)}</p>
         </header>
 
         <form onSubmit={onSubmit} className="space-y-4">
