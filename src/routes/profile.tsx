@@ -20,7 +20,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { CreditCard, AlertTriangle, CheckCircle2, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { BIZ_TYPES, hasInventory } from "@/lib/businessType";
+import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType";
 import { PLATFORMS } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
 
