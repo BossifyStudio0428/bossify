@@ -45,7 +45,6 @@ function ProfilePage() {
   const [orderFormCode, setOrderFormCode] = useState<string | null>(null);
   const [orderFormEnabled, setOrderFormEnabled] = useState<boolean>(true);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({});
-  const [qrOpen, setQrOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
   const defaultOrderTpl = getOrderTemplate(lang, bizType);
