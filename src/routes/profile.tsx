@@ -291,6 +291,34 @@ function ProfilePage() {
               <p className="text-sm font-bold text-foreground">🔗 {t("pof_section_title")}</p>
               <p className="text-[11px] text-muted-foreground mt-0.5">{t("pof_section_sub")}</p>
             </div>
+            <div className="flex items-center justify-between rounded-xl bg-muted/40 border border-border/60 px-3 py-2">
+              <span className="text-xs font-medium">
+                {orderFormEnabled ? t("pof_enabled") : t("pof_disabled")}
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!user) return;
+                  const next = !orderFormEnabled;
+                  setOrderFormEnabled(next);
+                  const { error } = await supabase
+                    .from("profiles")
+                    .update({ order_form_enabled: next } as any)
+                    .eq("id", user.id);
+                  if (error) {
+                    setOrderFormEnabled(!next);
+                    toast.error(error.message);
+                  }
+                }}
+                role="switch"
+                aria-checked={orderFormEnabled}
+                className={`relative h-6 w-11 rounded-full transition-colors ${orderFormEnabled ? "bg-primary" : "bg-muted-foreground/30"}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${orderFormEnabled ? "translate-x-5" : ""}`}
+                />
+              </button>
+            </div>
             <div className="rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-[11px] font-mono text-foreground break-all">
               {link}
             </div>
