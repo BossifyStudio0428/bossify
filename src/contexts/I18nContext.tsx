@@ -2852,6 +2852,16 @@ const dict = {
     pof_source_manual: "手动订单",
     pof_source_online: "在线表格",
     pof_wa_share_msg: "您好！点此向我们下单：{link}",
+    // Public order form titles by business type
+    pof_title_retail: "订单表格",
+    pof_title_enquiry: "询问表格",
+    pof_title_booking: "预约表格",
+    pof_title_project: "项目表格",
+    // Public order form taglines by business type
+    pof_tagline_retail: "请填写您的订单详情",
+    pof_tagline_enquiry: "请填写您的询问详情",
+    pof_tagline_booking: "请在下方预约您的服务",
+    pof_tagline_project: "请在下方提交您的项目详情",
     privacy_policy: "隐私政策",
     terms_conditions: "条款与条件",
     pp_title: "隐私政策",
