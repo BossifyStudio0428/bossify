@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          created_at: string
+          id: string
+          last_order_at: string | null
+          name: string
+          phone: string | null
+          total_orders: number
+          total_spent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_order_at?: string | null
+          name: string
+          phone?: string | null
+          total_orders?: number
+          total_spent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_order_at?: string | null
+          name?: string
+          phone?: string | null
+          total_orders?: number
+          total_spent?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       device_tokens: {
         Row: {
           id: string
@@ -110,6 +146,87 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory: {
+        Row: {
+          created_at: string
+          id: string
+          low_stock_threshold: number
+          name: string
+          price: number
+          stock: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          low_stock_threshold?: number
+          name: string
+          price?: number
+          stock?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          low_stock_threshold?: number
+          name?: string
+          price?: number
+          stock?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          amount: number
+          code: string
+          created_at: string
+          customer_name: string
+          id: string
+          notes: string | null
+          order_source: string
+          phone: string | null
+          product: string
+          quantity: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          code: string
+          created_at?: string
+          customer_name: string
+          id?: string
+          notes?: string | null
+          order_source?: string
+          phone?: string | null
+          product: string
+          quantity?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          code?: string
+          created_at?: string
+          customer_name?: string
+          id?: string
+          notes?: string | null
+          order_source?: string
+          phone?: string | null
+          product?: string
+          quantity?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -126,6 +243,8 @@ export type Database = {
           notif_morning: boolean
           notif_new_order: boolean
           notif_unpaid: boolean
+          order_form_code: string | null
+          order_form_enabled: boolean
           payment_method_1_bank: string | null
           payment_method_1_name: string | null
           payment_method_1_number: string | null
@@ -155,6 +274,8 @@ export type Database = {
           notif_morning?: boolean
           notif_new_order?: boolean
           notif_unpaid?: boolean
+          order_form_code?: string | null
+          order_form_enabled?: boolean
           payment_method_1_bank?: string | null
           payment_method_1_name?: string | null
           payment_method_1_number?: string | null
@@ -184,6 +305,8 @@ export type Database = {
           notif_morning?: boolean
           notif_new_order?: boolean
           notif_unpaid?: boolean
+          order_form_code?: string | null
+          order_form_enabled?: boolean
           payment_method_1_bank?: string | null
           payment_method_1_name?: string | null
           payment_method_1_number?: string | null

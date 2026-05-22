@@ -21,6 +21,7 @@ type LoadState =
         avatar_url: string | null;
         business_type: string;
         whatsapp_number: string | null;
+        language?: "en" | "ms" | "zh";
       };
       products: Array<{ id: string; name: string; price: number }>;
     };
@@ -30,6 +31,7 @@ function PublicOrderFormPage() {
   const { t, lang } = useI18n();
   const loadFn = useServerFn(getPublicOrderForm);
   const submitFn = useServerFn(submitPublicOrder);
+  const { setLang } = useI18n();
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<null | { name: string; code: string; business: string }>(null);
@@ -68,6 +70,9 @@ function PublicOrderFormPage() {
           profile: res.profile,
           products: res.products,
         });
+        if (res.profile.language === "en" || res.profile.language === "ms" || res.profile.language === "zh") {
+          setLang(res.profile.language);
+        }
       } catch {
         if (!cancelled) setState({ status: "error", reason: "network" });
       }
@@ -75,7 +80,7 @@ function PublicOrderFormPage() {
     return () => {
       cancelled = true;
     };
-  }, [code, loadFn]);
+  }, [code, loadFn, setLang]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
