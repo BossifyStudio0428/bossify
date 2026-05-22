@@ -41,6 +41,7 @@ function ProfilePage() {
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string; avatar_url: string | null } | null>(null);
   const [orderFormCode, setOrderFormCode] = useState<string | null>(null);
+  const [orderFormEnabled, setOrderFormEnabled] = useState<boolean>(true);
   const [qrOpen, setQrOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
@@ -122,7 +123,7 @@ function ProfilePage() {
       const [{ data: o }, { count: cust }, { data: p }, { data: pref }] = await Promise.all([
         supabase.from("orders").select("amount,status").eq("user_id", user.id),
         supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("profiles").select("business_name,plan,created_at,is_admin,avatar_url,order_form_code" as any).eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("business_name,plan,created_at,is_admin,avatar_url,order_form_code,order_form_enabled" as any).eq("id", user.id).maybeSingle(),
         supabase.from("user_preferences").select("wa_order_template,wa_reminder_template").eq("user_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
@@ -132,6 +133,7 @@ function ProfilePage() {
       setProfile(p as any);
       setIsAdmin(!!(p as any)?.is_admin);
       setOrderFormCode(((p as any)?.order_form_code as string) ?? null);
+      setOrderFormEnabled(((p as any)?.order_form_enabled as boolean) ?? true);
       // Treat any saved value that still matches a built-in default (in any
       // biz/lang) as non-custom, so changing business_type or language flips
       // to the right default automatically.
@@ -288,6 +290,34 @@ function ProfilePage() {
             <div>
               <p className="text-sm font-bold text-foreground">🔗 {t("pof_section_title")}</p>
               <p className="text-[11px] text-muted-foreground mt-0.5">{t("pof_section_sub")}</p>
+            </div>
+            <div className="flex items-center justify-between rounded-xl bg-muted/40 border border-border/60 px-3 py-2">
+              <span className="text-xs font-medium">
+                {orderFormEnabled ? t("pof_enabled") : t("pof_disabled")}
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!user) return;
+                  const next = !orderFormEnabled;
+                  setOrderFormEnabled(next);
+                  const { error } = await supabase
+                    .from("profiles")
+                    .update({ order_form_enabled: next } as any)
+                    .eq("id", user.id);
+                  if (error) {
+                    setOrderFormEnabled(!next);
+                    toast.error(error.message);
+                  }
+                }}
+                role="switch"
+                aria-checked={orderFormEnabled}
+                className={`relative h-6 w-11 rounded-full transition-colors ${orderFormEnabled ? "bg-primary" : "bg-muted-foreground/30"}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${orderFormEnabled ? "translate-x-5" : ""}`}
+                />
+              </button>
             </div>
             <div className="rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-[11px] font-mono text-foreground break-all">
               {link}
