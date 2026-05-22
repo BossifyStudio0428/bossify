@@ -1,32 +1,32 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useI18n } from "@/contexts/I18nContext";
-import { FileText, ChevronLeft } from "lucide-react";
+import { Shield, ChevronLeft } from "lucide-react";
 
-export const Route = createFileRoute("/terms")({
+export const Route = createFileRoute("/privacy-policy")({
   head: () => ({
     meta: [
-      { title: "Terms & Conditions — Bossify" },
-      { name: "description", content: "Bossify Terms & Conditions. Read our terms of service, refund policy, and user agreement." },
+      { title: "Privacy Policy — Bossify" },
+      { name: "description", content: "Bossify Privacy Policy. Learn how we collect, use, store and protect your personal information." },
     ],
   }),
-  component: TermsConditionsPage,
+  component: PrivacyPolicyPage,
 });
 
-function TermsConditionsPage() {
+function PrivacyPolicyPage() {
   const { t } = useI18n();
 
   const sections = [
-    { title: t("tc_s1_title"), body: t("tc_s1_body") },
-    { title: t("tc_s2_title"), body: t("tc_s2_body") },
-    { title: t("tc_s3_title"), body: t("tc_s3_body") },
-    { title: t("tc_s4_title"), body: t("tc_s4_body") },
-    { title: t("tc_s5_title"), body: t("tc_s5_body") },
-    { title: t("tc_s6_title"), body: t("tc_s6_body") },
-    { title: t("tc_s7_title"), body: t("tc_s7_body") },
-    { title: t("tc_s8_title"), body: t("tc_s8_body") },
-    { title: t("tc_s9_title"), body: t("tc_s9_body") },
-    { title: t("tc_s10_title"), body: t("tc_s10_body") },
-    { title: t("tc_s11_title"), body: t("tc_s11_body") },
+    { title: t("pp_s1_title"), body: t("pp_s1_body") },
+    { title: t("pp_s2_title"), body: t("pp_s2_body") },
+    { title: t("pp_s3_title"), body: t("pp_s3_body") },
+    { title: t("pp_s4_title"), body: t("pp_s4_body") },
+    { title: t("pp_s5_title"), body: t("pp_s5_body") },
+    { title: t("pp_s6_title"), body: t("pp_s6_body") },
+    { title: t("pp_s7_title"), body: t("pp_s7_body") },
+    { title: t("pp_s8_title"), body: t("pp_s8_body") },
+    { title: t("pp_s9_title"), body: t("pp_s9_body") },
+    { title: t("pp_s10_title"), body: t("pp_s10_body") },
+    { title: t("pp_s11_title"), body: t("pp_s11_body") },
   ];
 
   return (
@@ -38,12 +38,12 @@ function TermsConditionsPage() {
             <ChevronLeft className="h-5 w-5" style={{ color: "#1E1333" }} />
           </Link>
           <div className="flex items-center gap-2">
-            <FileText className="h-6 w-6" style={{ color: "#7C3AED" }} />
-            <h1 className="text-xl font-bold" style={{ color: "#1E1333" }}>{t("tc_title")}</h1>
+            <Shield className="h-6 w-6" style={{ color: "#7C3AED" }} />
+            <h1 className="text-xl font-bold" style={{ color: "#1E1333" }}>{t("pp_title")}</h1>
           </div>
         </header>
 
-        <p className="text-xs mb-6" style={{ color: "#6B7280" }}>{t("tc_updated")}</p>
+        <p className="text-xs mb-6" style={{ color: "#6B7280" }}>{t("pp_updated")}</p>
 
         {/* Sections */}
         <div className="space-y-4">
