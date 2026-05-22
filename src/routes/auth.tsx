@@ -54,6 +54,11 @@ function AuthPage() {
           }}
         />
       )}
+      <div className="mt-auto pt-4 flex items-center justify-center gap-3 text-[11px]" style={{ color: "#9CA3AF" }}>
+        <Link to="/terms" className="underline hover:text-[#7C3AED]">{t("terms_conditions")}</Link>
+        <span>·</span>
+        <Link to="/privacy-policy" className="underline hover:text-[#7C3AED]">{t("privacy_policy")}</Link>
+      </div>
     </div>
   );
 }
