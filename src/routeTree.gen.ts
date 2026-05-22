@@ -34,6 +34,7 @@ import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as ImportOrdersRouteImport } from './routes/import-orders'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as ClientsCompareRouteImport } from './routes/clients-compare'
 import { Route as BusinessTypeRouteImport } from './routes/business-type'
@@ -174,6 +175,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DataDeletionRoute = DataDeletionRouteImport.update({
+  id: '/data-deletion',
+  path: '/data-deletion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CustomersRoute = CustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
   '/customers': typeof CustomersRoute
+  '/data-deletion': typeof DataDeletionRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
   '/inventory': typeof InventoryRoute
@@ -296,6 +303,7 @@ export interface FileRoutesByTo {
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
   '/customers': typeof CustomersRoute
+  '/data-deletion': typeof DataDeletionRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
   '/inventory': typeof InventoryRoute
@@ -338,6 +346,7 @@ export interface FileRoutesById {
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
   '/customers': typeof CustomersRoute
+  '/data-deletion': typeof DataDeletionRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
   '/inventory': typeof InventoryRoute
@@ -381,6 +390,7 @@ export interface FileRouteTypes {
     | '/business-type'
     | '/clients-compare'
     | '/customers'
+    | '/data-deletion'
     | '/forgot-password'
     | '/import-orders'
     | '/inventory'
@@ -422,6 +432,7 @@ export interface FileRouteTypes {
     | '/business-type'
     | '/clients-compare'
     | '/customers'
+    | '/data-deletion'
     | '/forgot-password'
     | '/import-orders'
     | '/inventory'
@@ -463,6 +474,7 @@ export interface FileRouteTypes {
     | '/business-type'
     | '/clients-compare'
     | '/customers'
+    | '/data-deletion'
     | '/forgot-password'
     | '/import-orders'
     | '/inventory'
@@ -505,6 +517,7 @@ export interface RootRouteChildren {
   BusinessTypeRoute: typeof BusinessTypeRoute
   ClientsCompareRoute: typeof ClientsCompareRoute
   CustomersRoute: typeof CustomersRoute
+  DataDeletionRoute: typeof DataDeletionRoute
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
   ImportOrdersRoute: typeof ImportOrdersRoute
   InventoryRoute: typeof InventoryRoute
@@ -712,6 +725,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/data-deletion': {
+      id: '/data-deletion'
+      path: '/data-deletion'
+      fullPath: '/data-deletion'
+      preLoaderRoute: typeof DataDeletionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/customers': {
       id: '/customers'
       path: '/customers'
@@ -847,6 +867,7 @@ const rootRouteChildren: RootRouteChildren = {
   BusinessTypeRoute: BusinessTypeRoute,
   ClientsCompareRoute: ClientsCompareRoute,
   CustomersRoute: CustomersRoute,
+  DataDeletionRoute: DataDeletionRoute,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
   ImportOrdersRoute: ImportOrdersRoute,
   InventoryRoute: InventoryRoute,
