@@ -41,6 +41,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
+import { Route as OrderCodeRouteImport } from './routes/order.$code'
 import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
@@ -205,6 +206,11 @@ const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
   path: '/$orderId',
   getParentRoute: () => OrdersRoute,
 } as any)
+const OrderCodeRoute = OrderCodeRouteImport.update({
+  id: '/order/$code',
+  path: '/order/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForgotPasswordVerifyRoute = ForgotPasswordVerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
+  '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
 }
 export interface FileRoutesByTo {
@@ -293,6 +300,7 @@ export interface FileRoutesByTo {
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
+  '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
 }
 export interface FileRoutesById {
@@ -331,6 +339,7 @@ export interface FileRoutesById {
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
+  '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
 }
 export interface FileRouteTypes {
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
+    | '/order/$code'
     | '/orders/$orderId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -407,6 +417,7 @@ export interface FileRouteTypes {
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
+    | '/order/$code'
     | '/orders/$orderId'
   id:
     | '__root__'
@@ -444,6 +455,7 @@ export interface FileRouteTypes {
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
+    | '/order/$code'
     | '/orders/$orderId'
   fileRoutesById: FileRoutesById
 }
@@ -480,6 +492,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
+  OrderCodeRoute: typeof OrderCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -708,6 +721,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersOrderIdRouteImport
       parentRoute: typeof OrdersRoute
     }
+    '/order/$code': {
+      id: '/order/$code'
+      path: '/order/$code'
+      fullPath: '/order/$code'
+      preLoaderRoute: typeof OrderCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password/verify': {
       id: '/forgot-password/verify'
       path: '/verify'
@@ -790,6 +810,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
+  OrderCodeRoute: OrderCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
