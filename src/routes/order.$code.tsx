@@ -165,6 +165,15 @@ function PublicOrderFormPage() {
   const bizType = profile.business_type;
   const initials = (profile.business_name || "?").slice(0, 2).toUpperCase();
 
+  const submitLabelKey =
+    bizType === "education" || bizType === "property"
+      ? "pof_submit_enquiry"
+      : bizType === "beauty"
+        ? "pof_book_appt"
+        : bizType === "freelance"
+          ? "pof_submit_project"
+          : "pof_submit";
+
   const labels = (() => {
     switch (bizType) {
       case "education":
@@ -306,7 +315,7 @@ function PublicOrderFormPage() {
             disabled={submitting}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] disabled:opacity-60"
           >
-            {submitting ? t("saving") : t("pof_submit")}
+            {submitting ? t("saving") : t(submitLabelKey)}
           </button>
 
           <p className="text-[10px] text-center text-muted-foreground pt-2">
