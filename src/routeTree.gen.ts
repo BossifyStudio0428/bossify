@@ -17,6 +17,7 @@ import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PlansRouteImport } from './routes/plans'
 import { Route as PipelineOverviewRouteImport } from './routes/pipeline-overview'
@@ -84,6 +85,11 @@ const ReportsRoute = ReportsRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -251,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/pipeline-overview': typeof PipelineOverviewRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/pipeline-overview': typeof PipelineOverviewRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/pipeline-overview': typeof PipelineOverviewRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/pipeline-overview'
     | '/plans'
     | '/privacy'
+    | '/privacy-policy'
     | '/profile'
     | '/reports'
     | '/search'
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/pipeline-overview'
     | '/plans'
     | '/privacy'
+    | '/privacy-policy'
     | '/profile'
     | '/reports'
     | '/search'
@@ -444,6 +455,7 @@ export interface FileRouteTypes {
     | '/pipeline-overview'
     | '/plans'
     | '/privacy'
+    | '/privacy-policy'
     | '/profile'
     | '/reports'
     | '/search'
@@ -483,6 +495,7 @@ export interface RootRouteChildren {
   PipelineOverviewRoute: typeof PipelineOverviewRoute
   PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ProfileRoute: typeof ProfileRoute
   ReportsRoute: typeof ReportsRoute
   SearchRoute: typeof SearchRoute
@@ -551,6 +564,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -801,6 +821,7 @@ const rootRouteChildren: RootRouteChildren = {
   PipelineOverviewRoute: PipelineOverviewRoute,
   PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
   ProfileRoute: ProfileRoute,
   ReportsRoute: ReportsRoute,
   SearchRoute: SearchRoute,
@@ -815,3 +836,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

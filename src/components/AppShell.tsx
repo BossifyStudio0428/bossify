@@ -150,7 +150,9 @@ function ShellInner() {
   // /splash must still respect the language gate so a user who exits the
   // app on the language screen without choosing is redirected back to it.
   const isOrderFormRoute = locationPathname.startsWith("/order/");
-  const isPublicFlow = isSplashRoute || isLanguageRoute || isOrderFormRoute;
+  const isPrivacyPolicyRoute = locationPathname === "/privacy-policy";
+  const isTermsRoute = locationPathname === "/terms";
+  const isPublicFlow = isSplashRoute || isLanguageRoute || isOrderFormRoute || isPrivacyPolicyRoute || isTermsRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const { type: bizType, loading: bizLoading } = useBusinessType();
@@ -213,7 +215,7 @@ function ShellInner() {
     // Language gate runs FIRST and applies to every route except /language
     // itself. Even on /splash we redirect immediately if the user has not
     // tapped Continue on the language page yet.
-    if (!isLanguageRoute && !isOrderFormRoute && !hasPickedLanguageEver()) {
+    if (!isLanguageRoute && !isOrderFormRoute && !isPrivacyPolicyRoute && !isTermsRoute && !hasPickedLanguageEver()) {
       setShowInlineSplash(false);
       navigate({ to: "/language", replace: true });
       return;
