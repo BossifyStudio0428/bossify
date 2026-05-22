@@ -118,10 +118,12 @@ function PublicOrderFormPage() {
           business: res.business_name || state.profile.business_name,
         });
       } else {
-        alert(t("order_save_failed"));
+        const reason = (res as any).error || (res as any).reason || "";
+        alert(`${t("order_save_failed")}${reason ? `\n\n${reason}` : ""}`);
       }
-    } catch {
-      alert(t("order_save_failed"));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`${t("order_save_failed")}\n\n${msg}`);
     } finally {
       setSubmitting(false);
     }
