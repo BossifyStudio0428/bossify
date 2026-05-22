@@ -227,8 +227,9 @@ function PublicOrderFormPage() {
               initials
             )}
           </div>
-          <h1 className="mt-3 text-xl font-bold">{profile.business_name}</h1>
-          <p className="text-xs text-muted-foreground mt-1">{t("pof_place_order_below")}</p>
+          <p className="mt-2 text-sm font-medium text-muted-foreground">{profile.business_name}</p>
+          <h1 className="mt-1 text-xl font-bold">{t(formMeta.titleKey)}</h1>
+          <p className="text-xs text-muted-foreground mt-1">{t(formMeta.taglineKey)}</p>
         </header>
 
         <form onSubmit={onSubmit} className="space-y-4">
