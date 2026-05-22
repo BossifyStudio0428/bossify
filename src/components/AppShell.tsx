@@ -150,7 +150,9 @@ function ShellInner() {
   // /splash must still respect the language gate so a user who exits the
   // app on the language screen without choosing is redirected back to it.
   const isOrderFormRoute = locationPathname.startsWith("/order/");
-  const isPublicFlow = isSplashRoute || isLanguageRoute || isOrderFormRoute;
+  const isPrivacyPolicyRoute = locationPathname === "/privacy-policy";
+  const isTermsRoute = locationPathname === "/terms";
+  const isPublicFlow = isSplashRoute || isLanguageRoute || isOrderFormRoute || isPrivacyPolicyRoute || isTermsRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const { type: bizType, loading: bizLoading } = useBusinessType();
