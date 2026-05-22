@@ -305,7 +305,7 @@ function ProfilePage() {
                 onClick={() => navigate({ to: "/connected-platforms/$platform", params: { platform: p.key } })}
                 className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
               >
-                <span className="text-lg w-6 text-center">{p.emoji}</span>
+                <PlatformIcon platform={p.key} size={32} />
                 <span className="flex-1 text-sm font-medium text-foreground">{p.name}</span>
                 <span
                   className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
