@@ -233,6 +233,7 @@ export type Database = {
           business_category: string | null
           business_name: string | null
           business_type: string | null
+          connected_platforms: Json
           created_at: string
           id: string
           is_admin: boolean
@@ -264,6 +265,7 @@ export type Database = {
           business_category?: string | null
           business_name?: string | null
           business_type?: string | null
+          connected_platforms?: Json
           created_at?: string
           id: string
           is_admin?: boolean
@@ -295,6 +297,7 @@ export type Database = {
           business_category?: string | null
           business_name?: string | null
           business_type?: string | null
+          connected_platforms?: Json
           created_at?: string
           id?: string
           is_admin?: boolean

@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS connected_platforms jsonb NOT NULL DEFAULT '{"tiktok": false, "shopee": false, "lazada": false, "instagram": false, "facebook": false}'::jsonb;

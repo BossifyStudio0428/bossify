@@ -21,6 +21,7 @@ import { CreditCard, AlertTriangle, CheckCircle2, ChevronRight as ChevronRightIc
 import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, hasInventory } from "@/lib/businessType";
+import { PLATFORMS } from "@/lib/platforms";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -42,6 +43,7 @@ function ProfilePage() {
   const [profile, setProfile] = useState<{ business_name: string | null; plan: string | null; created_at: string; avatar_url: string | null } | null>(null);
   const [orderFormCode, setOrderFormCode] = useState<string | null>(null);
   const [orderFormEnabled, setOrderFormEnabled] = useState<boolean>(true);
+  const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({});
   const [qrOpen, setQrOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
@@ -87,8 +89,11 @@ function ProfilePage() {
     : bizType === "property" ? "followup_analytics"
     : "analytics_label";
 
-  const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
+  const menuTop: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
     { icon: "🏪", key: "biz", label: t("business_profile"), onClick: () => navigate({ to: "/business-profile" }) },
+  ];
+
+  const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
     ...(!hasInventory(bizType)
       ? [{
           icon: bizType === "property" ? "📦" : "🧰",
@@ -123,7 +128,7 @@ function ProfilePage() {
       const [{ data: o }, { count: cust }, { data: p }, { data: pref }] = await Promise.all([
         supabase.from("orders").select("amount,status").eq("user_id", user.id),
         supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("profiles").select("business_name,plan,created_at,is_admin,avatar_url,order_form_code,order_form_enabled" as any).eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("business_name,plan,created_at,is_admin,avatar_url,order_form_code,order_form_enabled,connected_platforms" as any).eq("id", user.id).maybeSingle(),
         supabase.from("user_preferences").select("wa_order_template,wa_reminder_template").eq("user_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
@@ -134,6 +139,7 @@ function ProfilePage() {
       setIsAdmin(!!(p as any)?.is_admin);
       setOrderFormCode(((p as any)?.order_form_code as string) ?? null);
       setOrderFormEnabled(((p as any)?.order_form_enabled as boolean) ?? true);
+      setConnectedPlatforms(((p as any)?.connected_platforms as Record<string, boolean>) ?? {});
       // Treat any saved value that still matches a built-in default (in any
       // biz/lang) as non-custom, so changing business_type or language flips
       // to the right default automatically.
@@ -264,6 +270,57 @@ function ProfilePage() {
         </div>
         <ChevronRightIcon className={`h-4 w-4 ${paySummary?.hasMethod ? "text-emerald-700" : "text-amber-700"}`} />
       </button>
+
+      <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60 overflow-hidden">
+        {menuTop.map((m) => (
+          <button
+            key={m.key}
+            id={`tour-menu-${m.key}`}
+            type="button"
+            onClick={m.onClick}
+            className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
+          >
+            <span className="text-lg w-6 text-center">{m.icon}</span>
+            <span className="flex-1 text-sm font-medium text-foreground">{m.label}</span>
+            {m.value && <span className="text-xs text-muted-foreground">{m.value}</span>}
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        ))}
+      </section>
+
+      <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
+        <div className="px-4 pt-4 pb-2">
+          <p className="text-[11px] uppercase font-semibold tracking-wider text-muted-foreground">
+            {t("connected_platforms")}
+          </p>
+        </div>
+        <div className="divide-y divide-border/60">
+          {PLATFORMS.map((p) => {
+            const isConn = !!connectedPlatforms[p.key];
+            return (
+              <button
+                key={p.key}
+                type="button"
+                onClick={() => navigate({ to: "/connected-platforms/$platform", params: { platform: p.key } })}
+                className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
+              >
+                <span className="text-lg w-6 text-center">{p.emoji}</span>
+                <span className="flex-1 text-sm font-medium text-foreground">{p.name}</span>
+                <span
+                  className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+                    isConn
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {isConn ? `${t("connected")} ✅` : t("not_connected")}
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60 overflow-hidden">
         {menu.map((m) => (
