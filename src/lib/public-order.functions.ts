@@ -7,7 +7,8 @@ const PUBLIC_SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
 
 function getPublicClient() {
-  return createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+  const serviceKey = process.env.APP_SUPABASE_SERVICE_ROLE_KEY;
+  return createClient(PUBLIC_SUPABASE_URL, serviceKey || PUBLIC_SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
