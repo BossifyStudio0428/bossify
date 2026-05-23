@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type PushKind = "new_order" | "low_stock" | "milestone" | "custom";
-const PUSH_FUNCTION_URL = "https://utqlrdbhvnugqvemjegi.supabase.co/functions/v1/send-push";
+const PUSH_FUNCTION_URL = "https://knouahqwazerjiyiqgmh.supabase.co/functions/v1/send-push";
 
 async function callPushFunction(body: Record<string, unknown>, didRefresh = false): Promise<{
   data: Record<string, unknown> | null;
