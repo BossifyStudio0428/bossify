@@ -37,6 +37,15 @@ const LANG_INFO: Record<Lang, { flag: string; label: string }> = {
   zh: { flag: "🇨🇳", label: "简体中文" },
 };
 
+type ProfileSummary = {
+  business_name: string | null;
+  created_at: string;
+  avatar_url: string | null;
+  is_admin: boolean | null;
+};
+
+type OrderSummary = { amount: number | string | null; status: string | null };
+
 function ProfilePage() {
   const { user, signOut } = useAuth();
   const { t, lang, setLang } = useI18n();
@@ -47,11 +56,7 @@ function ProfilePage() {
   const { type: bizType } = useBusinessType();
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
-  const [profile, setProfile] = useState<{
-    business_name: string | null;
-    created_at: string;
-    avatar_url: string | null;
-  } | null>(null);
+  const [profile, setProfile] = useState<Omit<ProfileSummary, "is_admin"> | null>(null);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({});
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
