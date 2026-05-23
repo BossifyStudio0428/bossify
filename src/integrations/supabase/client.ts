@@ -1,8 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
-const SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
+// Use the managed Lovable Cloud backend (matches .env + server-side
+// supabaseAdmin). All RLS policies, migrations and server functions are
+// wired to this project.
+const SUPABASE_URL =
+  (import.meta as any).env?.VITE_SUPABASE_URL ||
+  "https://utqlrdbhvnugqvemjegi.supabase.co";
+const SUPABASE_ANON_KEY =
+  (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0cWxyZGJodm51Z3F2ZW1qZWdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NTY3NDcsImV4cCI6MjA5NDAzMjc0N30.Y9T5utLkjgJoDybFDqhKMDlEAX87W5cTlCUPyWkeVd4";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
