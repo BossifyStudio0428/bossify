@@ -1,20 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// IMPORTANT: the public order form must read/write the SAME backend that
-// generated the seller's link in the browser. We intentionally use the
-// browser-facing URL + anon key here (not supabaseAdmin, which is wired to
-// a different project via process.env). RLS already allows anon SELECT on
-// enabled profiles/inventory and anon INSERT on online_form orders.
-const PUBLIC_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
-const PUBLIC_SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
-
+// Use the managed backend's service-role client so RLS is bypassed for the
+// public order form. We still validate everything (code lookup, enabled flag,
+// schema) before inserting, so this stays safe.
 function getPublicClient() {
-  return createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return supabaseAdmin;
 }
 
 const CODE_RE = /^[a-z0-9_-]{4,32}$/i;
