@@ -17,7 +17,12 @@ import {
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { CreditCard, AlertTriangle, CheckCircle2, ChevronRight as ChevronRightIcon } from "lucide-react";
+import {
+  CreditCard,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight as ChevronRightIcon,
+} from "lucide-react";
 import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType";
@@ -36,12 +41,17 @@ function ProfilePage() {
   const { user, signOut } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
-  const { isPro, isStarter, isLifetime, hasFullAccess, ordersUsed, showUpgrade } = useSubscription();
+  const { isPro, isStarter, isLifetime, hasFullAccess, ordersUsed, showUpgrade } =
+    useSubscription();
   const { theme, toggle: toggleTheme } = useTheme();
   const { type: bizType } = useBusinessType();
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
-  const [profile, setProfile] = useState<{ business_name: string | null; created_at: string; avatar_url: string | null } | null>(null);
+  const [profile, setProfile] = useState<{
+    business_name: string | null;
+    created_at: string;
+    avatar_url: string | null;
+  } | null>(null);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({});
   const [langOpen, setLangOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
@@ -76,50 +86,141 @@ function ProfilePage() {
   const [paySummary, setPaySummary] = useState<PaymentSummary | null>(null);
 
   const reportsLabelKey =
-    bizType === "education" ? "rep_case_reports"
-    : bizType === "beauty" ? "rep_appointment_reports"
-    : bizType === "property" ? "rep_lead_reports"
-    : bizType === "freelance" ? "rep_project_reports"
-    : "sales_reports";
+    bizType === "education"
+      ? "rep_case_reports"
+      : bizType === "beauty"
+        ? "rep_appointment_reports"
+        : bizType === "property"
+          ? "rep_lead_reports"
+          : bizType === "freelance"
+            ? "rep_project_reports"
+            : "sales_reports";
   const analyticsLabelKey =
-    bizType === "education" ? "edu_insights"
-    : bizType === "beauty" || bizType === "freelance" ? "client_analytics"
-    : bizType === "property" ? "followup_analytics"
-    : "analytics_label";
+    bizType === "education"
+      ? "edu_insights"
+      : bizType === "beauty" || bizType === "freelance"
+        ? "client_analytics"
+        : bizType === "property"
+          ? "followup_analytics"
+          : "analytics_label";
 
-  const menuTop: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
-    { icon: "🏪", key: "biz", label: t("business_profile"), onClick: () => navigate({ to: "/business-profile" }) },
-  ];
-
-  const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] = [
-    ...(!hasInventory(bizType)
-      ? [{
-          icon: bizType === "property" ? "📦" : "🧰",
-          key: "services",
-          label: t(bizType === "property" ? "packages_title" : "services_title"),
-          onClick: () => navigate({ to: "/services" }),
-        }]
-      : []),
+  const menuTop: {
+    icon: string;
+    key: string;
+    label: string;
+    value?: string;
+    onClick?: () => void;
+  }[] = [
     {
-      icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
-      key: "biztype",
-      label: t("business_type_menu"),
-      value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
-      onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
+      icon: "🏪",
+      key: "biz",
+      label: t("business_profile"),
+      onClick: () => navigate({ to: "/business-profile" }),
     },
-    { icon: "🔗", key: "orderform", label: t(pofSectionTitleKey(bizType)), onClick: () => navigate({ to: "/order-form" }) },
-    { icon: "📊", key: "analytics", label: t(analyticsLabelKey), onClick: () => navigate({ to: "/analytics" }) },
-    { icon: "📊", key: "rep", label: t(reportsLabelKey), onClick: () => navigate({ to: "/reports" }) },
-    { icon: "🔔", key: "notif2", label: t("notifications"), onClick: () => navigate({ to: "/notifications" }) },
-    { icon: "⚙️", key: "notifsettings", label: t("notification_settings"), onClick: () => navigate({ to: "/notification-settings" }) },
-    { icon: "🌐", key: "lang", label: t("language"), value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`, onClick: () => setLangOpen(true) },
-    { icon: theme === "dark" ? "🌙" : "☀️", key: "theme", label: t("appearance"), value: theme === "dark" ? t("dark") : t("light"), onClick: toggleTheme },
-    { icon: "💳", key: "sub", label: t("subscription"), value: isLifetime ? t("plan_badge_lifetime") : isPro ? t("pro_plan") : isStarter ? t("starter_plan") : t("free_plan"), onClick: () => navigate({ to: "/plans" }) },
-    { icon: "📲", key: "wa", label: t("wa_template"), value: hasFullAccess ? undefined : "🔒", onClick: () => hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template")) },
-    { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
-    { icon: "🗑️", key: "deldata", label: t("data_deletion"), onClick: () => navigate({ to: "/data-deletion" }) },
-    ...(isAdmin ? [{ icon: "⚙️", key: "admin", label: t("admin_panel"), value: "PRO", onClick: () => navigate({ to: "/admin" }) }] : []),
   ];
+
+  const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] =
+    [
+      ...(!hasInventory(bizType)
+        ? [
+            {
+              icon: bizType === "property" ? "📦" : "🧰",
+              key: "services",
+              label: t(bizType === "property" ? "packages_title" : "services_title"),
+              onClick: () => navigate({ to: "/services" }),
+            },
+          ]
+        : []),
+      {
+        icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
+        key: "biztype",
+        label: t("business_type_menu"),
+        value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
+        onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
+      },
+      {
+        icon: "🔗",
+        key: "orderform",
+        label: t(pofSectionTitleKey(bizType)),
+        onClick: () => navigate({ to: "/order-form" }),
+      },
+      {
+        icon: "📊",
+        key: "analytics",
+        label: t(analyticsLabelKey),
+        onClick: () => navigate({ to: "/analytics" }),
+      },
+      {
+        icon: "📊",
+        key: "rep",
+        label: t(reportsLabelKey),
+        onClick: () => navigate({ to: "/reports" }),
+      },
+      {
+        icon: "🔔",
+        key: "notif2",
+        label: t("notifications"),
+        onClick: () => navigate({ to: "/notifications" }),
+      },
+      {
+        icon: "⚙️",
+        key: "notifsettings",
+        label: t("notification_settings"),
+        onClick: () => navigate({ to: "/notification-settings" }),
+      },
+      {
+        icon: "🌐",
+        key: "lang",
+        label: t("language"),
+        value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`,
+        onClick: () => setLangOpen(true),
+      },
+      {
+        icon: theme === "dark" ? "🌙" : "☀️",
+        key: "theme",
+        label: t("appearance"),
+        value: theme === "dark" ? t("dark") : t("light"),
+        onClick: toggleTheme,
+      },
+      {
+        icon: "💳",
+        key: "sub",
+        label: t("subscription"),
+        value: isLifetime
+          ? t("plan_badge_lifetime")
+          : isPro
+            ? t("pro_plan")
+            : isStarter
+              ? t("starter_plan")
+              : t("free_plan"),
+        onClick: () => navigate({ to: "/plans" }),
+      },
+      {
+        icon: "📲",
+        key: "wa",
+        label: t("wa_template"),
+        value: hasFullAccess ? undefined : "🔒",
+        onClick: () => (hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template"))),
+      },
+      { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
+      {
+        icon: "🗑️",
+        key: "deldata",
+        label: t("data_deletion"),
+        onClick: () => navigate({ to: "/data-deletion" }),
+      },
+      ...(isAdmin
+        ? [
+            {
+              icon: "⚙️",
+              key: "admin",
+              label: t("admin_panel"),
+              value: "PRO",
+              onClick: () => navigate({ to: "/admin" }),
+            },
+          ]
+        : []),
+    ];
 
   useEffect(() => {
     if (!user) return;
@@ -127,13 +228,26 @@ function ProfilePage() {
     const load = async () => {
       const [{ data: o }, { count: cust }, { data: p }, { data: pref }] = await Promise.all([
         supabase.from("orders").select("amount,status").eq("user_id", user.id),
-        supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("profiles").select("business_name,created_at,is_admin,avatar_url").eq("id", user.id).maybeSingle(),
-        supabase.from("user_preferences").select("wa_order_template,wa_reminder_template").eq("user_id", user.id).maybeSingle(),
+        supabase
+          .from("customers")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+        supabase
+          .from("profiles")
+          .select("business_name,created_at,is_admin,avatar_url")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("user_preferences")
+          .select("wa_order_template,wa_reminder_template")
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
       if (cancelled) return;
       const orders = o ?? [];
-      const revenue = orders.filter((x: any) => x.status === "Paid").reduce((s: number, x: any) => s + Number(x.amount), 0);
+      const revenue = orders
+        .filter((x: any) => x.status === "Paid")
+        .reduce((s: number, x: any) => s + Number(x.amount), 0);
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
       setProfile(p as any);
       setIsAdmin(!!(p as any)?.is_admin);
@@ -144,27 +258,41 @@ function ProfilePage() {
       const savedOrder = pref?.wa_order_template ?? null;
       const savedReminder = pref?.wa_reminder_template ?? null;
       if (savedOrder && !isBuiltInOrderTpl(savedOrder)) {
-        setOrderTpl(savedOrder); setOrderCustom(true);
+        setOrderTpl(savedOrder);
+        setOrderCustom(true);
       } else {
-        setOrderTpl(defaultOrderTpl); setOrderCustom(false);
+        setOrderTpl(defaultOrderTpl);
+        setOrderCustom(false);
       }
       if (savedReminder && !isBuiltInReminderTpl(savedReminder)) {
-        setReminderTpl(savedReminder); setReminderCustom(true);
+        setReminderTpl(savedReminder);
+        setReminderCustom(true);
       } else {
-        setReminderTpl(defaultReminderTpl); setReminderCustom(false);
+        setReminderTpl(defaultReminderTpl);
+        setReminderCustom(false);
       }
       try {
         const s = await loadPaymentSummary(user.id);
         if (!cancelled) setPaySummary(s);
-      } catch { if (!cancelled) setPaySummary({ hasMethod: false, type: null, number: null }); }
+      } catch {
+        if (!cancelled) setPaySummary({ hasMethod: false, type: null, number: null });
+      }
     };
     load();
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
     const ch = supabase
       .channel("profile-stats-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "customers", filter: `user_id=eq.${user.id}` }, () => load())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "customers", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
       .subscribe();
     return () => {
       cancelled = true;
@@ -176,17 +304,28 @@ function ProfilePage() {
   const saveTemplates = async () => {
     if (!user) return;
     const { error } = await supabase.from("user_preferences").upsert(
-      { user_id: user.id, wa_order_template: orderTpl, wa_reminder_template: reminderTpl, updated_at: new Date().toISOString() },
-      { onConflict: "user_id" }
+      {
+        user_id: user.id,
+        wa_order_template: orderTpl,
+        wa_reminder_template: reminderTpl,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" },
     );
     if (error) toast.error(error.message);
-    else { toast.success(t("template_saved")); setTplOpen(false); }
+    else {
+      toast.success(t("template_saved"));
+      setTplOpen(false);
+    }
   };
 
   const businessName = profile?.business_name ?? user?.email?.split("@")[0] ?? t("my_store");
   const initials = businessName.slice(0, 2).toUpperCase();
   const memberSince = profile?.created_at
-    ? new Date(profile.created_at).toLocaleDateString(lang === "zh" ? "zh-CN" : lang === "ms" ? "ms-MY" : "en-MY", { month: "long", year: "numeric" })
+    ? new Date(profile.created_at).toLocaleDateString(
+        lang === "zh" ? "zh-CN" : lang === "ms" ? "ms-MY" : "en-MY",
+        { month: "long", year: "numeric" },
+      )
     : "—";
 
   const businessStats = [
@@ -208,11 +347,27 @@ function ProfilePage() {
     <div className="px-5 pt-10 pb-6 space-y-6">
       <header className="flex flex-col items-center text-center">
         <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-3xl font-bold shadow-[var(--shadow-soft)] overflow-hidden">
-          {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : initials}
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            initials
+          )}
         </div>
         <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">{businessName}</h1>
-        <span className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isLifetime ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white" : isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : isStarter ? "bg-gradient-to-r from-sky-500 to-teal-500 text-white" : "bg-muted text-muted-foreground"}`}>
-          {isLifetime ? t("plan_badge_lifetime") : isPro ? <>{t("pro_plan")} <Sparkles className="h-3 w-3" /></> : isStarter ? t("plan_badge_starter") : t("free_plan")}
+        <span
+          className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isLifetime ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white" : isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : isStarter ? "bg-gradient-to-r from-sky-500 to-teal-500 text-white" : "bg-muted text-muted-foreground"}`}
+        >
+          {isLifetime ? (
+            t("plan_badge_lifetime")
+          ) : isPro ? (
+            <>
+              {t("pro_plan")} <Sparkles className="h-3 w-3" />
+            </>
+          ) : isStarter ? (
+            t("plan_badge_starter")
+          ) : (
+            t("free_plan")
+          )}
         </span>
         {!hasFullAccess && (
           <button
@@ -222,15 +377,22 @@ function ProfilePage() {
             {t("orders_used").replace("{x}", String(ordersUsed))} → {t("upgrade_to_pro")}
           </button>
         )}
-        <p className="mt-2 text-xs text-muted-foreground">{t("member_since_label")} {memberSince}</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {t("member_since_label")} {memberSince}
+        </p>
         <p className="mt-1 text-[11px] text-muted-foreground">{user?.email}</p>
       </header>
 
       <section className="grid grid-cols-3 gap-2">
         {businessStats.map((s) => (
-          <div key={s.label} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 text-center">
+          <div
+            key={s.label}
+            className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 text-center"
+          >
             <p className="text-base font-bold text-foreground">{s.value}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wide">{s.label}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wide">
+              {s.label}
+            </p>
           </div>
         ))}
       </section>
@@ -246,13 +408,23 @@ function ProfilePage() {
             : "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200"
         }`}
       >
-        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
-          paySummary?.hasMethod ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-        }`}>
-          {paySummary?.hasMethod ? <CheckCircle2 className="h-6 w-6" /> : <AlertTriangle className="h-6 w-6" />}
+        <div
+          className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
+            paySummary?.hasMethod
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-amber-100 text-amber-700"
+          }`}
+        >
+          {paySummary?.hasMethod ? (
+            <CheckCircle2 className="h-6 w-6" />
+          ) : (
+            <AlertTriangle className="h-6 w-6" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`text-sm font-bold ${paySummary?.hasMethod ? "text-emerald-800" : "text-amber-900"}`}>
+          <p
+            className={`text-sm font-bold ${paySummary?.hasMethod ? "text-emerald-800" : "text-amber-900"}`}
+          >
             {paySummary?.hasMethod ? `✓ ${t("payment_active")}` : `⚠️ ${t("payment_not_setup")}`}
           </p>
           {paySummary?.hasMethod ? (
@@ -260,12 +432,12 @@ function ProfilePage() {
               {paySummary.type ?? "—"} {paySummary.number ? `· ${paySummary.number}` : ""}
             </p>
           ) : (
-            <p className="text-[11px] text-amber-700 font-semibold mt-0.5">
-              {t("set_up_now")} →
-            </p>
+            <p className="text-[11px] text-amber-700 font-semibold mt-0.5">{t("set_up_now")} →</p>
           )}
         </div>
-        <ChevronRightIcon className={`h-4 w-4 ${paySummary?.hasMethod ? "text-emerald-700" : "text-amber-700"}`} />
+        <ChevronRightIcon
+          className={`h-4 w-4 ${paySummary?.hasMethod ? "text-emerald-700" : "text-amber-700"}`}
+        />
       </button>
 
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60 overflow-hidden">
@@ -298,16 +470,16 @@ function ProfilePage() {
               <button
                 key={p.key}
                 type="button"
-                onClick={() => navigate({ to: "/connected-platforms/$platform", params: { platform: p.key } })}
+                onClick={() =>
+                  navigate({ to: "/connected-platforms/$platform", params: { platform: p.key } })
+                }
                 className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
               >
                 <PlatformIcon platform={p.key} size={32} />
                 <span className="flex-1 text-sm font-medium text-foreground">{p.name}</span>
                 <span
                   className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
-                    isConn
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-muted text-muted-foreground"
+                    isConn ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {isConn ? `${t("connected")} ✅` : t("not_connected")}
@@ -349,7 +521,10 @@ function ProfilePage() {
         {t("terms_conditions")}
       </Link>
 
-      <Link to="/privacy-policy" className="block text-center text-xs text-muted-foreground underline">
+      <Link
+        to="/privacy-policy"
+        className="block text-center text-xs text-muted-foreground underline"
+      >
         {t("privacy_policy")}
       </Link>
 
@@ -374,11 +549,16 @@ function ProfilePage() {
                 <button
                   key={code}
                   type="button"
-                  onClick={() => { setLang(code); setLangOpen(false); }}
+                  onClick={() => {
+                    setLang(code);
+                    setLangOpen(false);
+                  }}
                   className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-all ${sel ? "bg-primary/10 border-primary" : "bg-card border-border/60"}`}
                 >
                   <span className="text-xl">{LANG_INFO[code].flag}</span>
-                  <span className="flex-1 text-left text-sm font-medium text-foreground">{LANG_INFO[code].label}</span>
+                  <span className="flex-1 text-left text-sm font-medium text-foreground">
+                    {LANG_INFO[code].label}
+                  </span>
                   {sel && <Check className="h-4 w-4 text-primary" strokeWidth={3} />}
                 </button>
               );
@@ -388,24 +568,69 @@ function ProfilePage() {
       )}
 
       {tplOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 animate-fade-in" onClick={() => setTplOpen(false)}>
-          <div className="w-full max-w-[390px] bg-card rounded-t-3xl p-5 space-y-3 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 animate-fade-in"
+          onClick={() => setTplOpen(false)}
+        >
+          <div
+            className="w-full max-w-[390px] bg-card rounded-t-3xl p-5 space-y-3 max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mx-auto h-1 w-10 rounded-full bg-muted" />
             <p className="text-sm font-semibold py-1">{t("wa_template")}</p>
             <div>
-              <label className="text-[11px] uppercase font-semibold text-muted-foreground">{t("order_template")}</label>
-              <textarea value={orderTpl} onChange={(e) => { setOrderTpl(e.target.value); setOrderCustom(true); }} rows={6}
-                className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono" />
-              <button onClick={() => { setOrderTpl(defaultOrderTpl); setOrderCustom(false); }} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
+              <label className="text-[11px] uppercase font-semibold text-muted-foreground">
+                {t("order_template")}
+              </label>
+              <textarea
+                value={orderTpl}
+                onChange={(e) => {
+                  setOrderTpl(e.target.value);
+                  setOrderCustom(true);
+                }}
+                rows={6}
+                className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono"
+              />
+              <button
+                onClick={() => {
+                  setOrderTpl(defaultOrderTpl);
+                  setOrderCustom(false);
+                }}
+                className="text-[11px] text-primary mt-1"
+              >
+                {t("reset_default")}
+              </button>
             </div>
             <div>
-              <label className="text-[11px] uppercase font-semibold text-muted-foreground">{t("reminder_template")}</label>
-              <textarea value={reminderTpl} onChange={(e) => { setReminderTpl(e.target.value); setReminderCustom(true); }} rows={6}
-                className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono" />
-              <button onClick={() => { setReminderTpl(defaultReminderTpl); setReminderCustom(false); }} className="text-[11px] text-primary mt-1">{t("reset_default")}</button>
+              <label className="text-[11px] uppercase font-semibold text-muted-foreground">
+                {t("reminder_template")}
+              </label>
+              <textarea
+                value={reminderTpl}
+                onChange={(e) => {
+                  setReminderTpl(e.target.value);
+                  setReminderCustom(true);
+                }}
+                rows={6}
+                className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono"
+              />
+              <button
+                onClick={() => {
+                  setReminderTpl(defaultReminderTpl);
+                  setReminderCustom(false);
+                }}
+                className="text-[11px] text-primary mt-1"
+              >
+                {t("reset_default")}
+              </button>
             </div>
             <p className="text-[10px] text-muted-foreground">{varsHelp}</p>
-            <button onClick={saveTemplates} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold">{t("save")}</button>
+            <button
+              onClick={saveTemplates}
+              className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold"
+            >
+              {t("save")}
+            </button>
           </div>
         </div>
       )}
