@@ -1,12 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createClient } from "@supabase/supabase-js";
 
-// Use the managed backend's service-role client so RLS is bypassed for the
-// public order form. We still validate everything (code lookup, enabled flag,
-// schema) before inserting, so this stays safe.
+const PUBLIC_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
+const PUBLIC_SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
+
 function getPublicClient() {
-  return supabaseAdmin;
+  const serviceKey = process.env.APP_SUPABASE_SERVICE_ROLE_KEY;
+  return createClient(PUBLIC_SUPABASE_URL, serviceKey || PUBLIC_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 const CODE_RE = /^[a-z0-9_-]{4,32}$/i;
