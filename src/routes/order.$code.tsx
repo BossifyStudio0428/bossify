@@ -177,6 +177,12 @@ function PublicOrderFormPage() {
   const { profile, products } = state;
   const bizType = profile.business_type;
   const initials = (profile.business_name || "?").slice(0, 2).toUpperCase();
+  const isRetailish = bizType === "retail" || bizType === "fnb";
+  const matchedProduct = products.find((p) => p.name === form.product);
+  const unitPrice = matchedProduct?.price ?? 0;
+  const qtyNum = Math.max(1, Number(form.quantity) || 1);
+  const totalPrice = isRetailish ? unitPrice * qtyNum : unitPrice;
+  const noProducts = products.length === 0;
 
   const submitLabelKey =
     bizType === "education" || bizType === "property"
@@ -256,7 +262,21 @@ function PublicOrderFormPage() {
           </Field>
 
           <Field label={`${labels.product} *`}>
-            {products.length > 0 ? (
+            {noProducts ? (
+              <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-5 text-center text-xs text-muted-foreground">
+                {isRetailish
+                  ? (lang === "ms"
+                      ? "Penjual belum menambah produk. Sila cuba semula nanti."
+                      : lang === "zh"
+                        ? "卖家尚未添加产品，请稍后再试。"
+                        : "The seller hasn't added any products yet. Please try again later.")
+                  : (lang === "ms"
+                      ? "Penjual belum menyediakan perkhidmatan. Sila cuba semula nanti."
+                      : lang === "zh"
+                        ? "卖家尚未提供服务，请稍后再试。"
+                        : "The seller hasn't listed any services yet. Please try again later.")}
+              </div>
+            ) : (
               <select required value={form.product} onChange={upd("product")} className="pof-input">
                 <option value="">{t("select_product")}</option>
                 {products.map((p) => (
@@ -266,14 +286,6 @@ function PublicOrderFormPage() {
                   </option>
                 ))}
               </select>
-            ) : (
-              <input
-                required
-                value={form.product}
-                onChange={upd("product")}
-                className="pof-input"
-                maxLength={160}
-              />
             )}
           </Field>
 
@@ -288,6 +300,24 @@ function PublicOrderFormPage() {
                 className="pof-input"
               />
             </Field>
+          )}
+
+          {!noProducts && matchedProduct && (
+            <div className="rounded-2xl border border-border bg-card px-4 py-3 flex items-center justify-between">
+              <div className="space-y-0.5">
+                <p className="text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
+                  {isRetailish
+                    ? (lang === "ms" ? "Jumlah" : lang === "zh" ? "总价" : "Total")
+                    : (lang === "ms" ? "Harga" : lang === "zh" ? "价格" : "Price")}
+                </p>
+                {isRetailish && unitPrice > 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    RM {unitPrice.toFixed(2)} × {qtyNum}
+                  </p>
+                )}
+              </div>
+              <p className="text-lg font-bold text-primary">RM {totalPrice.toFixed(2)}</p>
+            </div>
           )}
 
           {bizType === "education" && (
@@ -340,7 +370,7 @@ function PublicOrderFormPage() {
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || noProducts}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] disabled:opacity-60"
           >
             {submitting ? t("saving") : t(submitLabelKey)}
