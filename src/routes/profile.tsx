@@ -249,13 +249,14 @@ function ProfilePage() {
           .maybeSingle(),
       ]);
       if (cancelled) return;
-      const orders = o ?? [];
+      const orders = (o ?? []) as OrderSummary[];
       const revenue = orders
-        .filter((x: any) => x.status === "Paid")
-        .reduce((s: number, x: any) => s + Number(x.amount), 0);
+        .filter((x) => x.status === "Paid")
+        .reduce((s, x) => s + Number(x.amount), 0);
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
-      setProfile(p as any);
-      setIsAdmin(!!(p as any)?.is_admin);
+      const loadedProfile = p as ProfileSummary | null;
+      setProfile(loadedProfile);
+      setIsAdmin(!!loadedProfile?.is_admin);
       setConnectedPlatforms({});
       // Treat any saved value that still matches a built-in default (in any
       // biz/lang) as non-custom, so changing business_type or language flips
