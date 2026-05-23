@@ -468,74 +468,83 @@ function NewOrderPage() {
 
         <div className="space-y-1.5 relative" id="tour-no-product">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{productLabel}</label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">{eff === "education" ? "🎓" : eff === "beauty" ? "✨" : eff === "property" ? "🏠" : eff === "freelance" ? "💼" : "🛍️"}</span>
-            <input
-              value={form.product}
-              onChange={onProductChange}
-              onFocus={() => setShowSuggest(true)}
-              onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
-              placeholder={productPh}
-              className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${errors.product ? "border-red-400" : "border-border/60"}`}
-            />
-          </div>
+          {(() => {
+            const hasList = isRetailish ? inventory.length > 0 : services.length > 0;
+            if (!hasList) {
+              return (
+                <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-4 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    {isRetailish
+                      ? (lang === "ms"
+                          ? "Anda belum menambah produk inventori. Sila tambah di Inventori dahulu."
+                          : lang === "zh"
+                            ? "您还没有添加库存产品。请先到「库存」页面添加。"
+                            : "You haven't added any inventory products yet. Please add one in Inventory first.")
+                      : (lang === "ms"
+                          ? "Anda belum menyediakan perkhidmatan. Sila tambah di Perkhidmatan dahulu."
+                          : lang === "zh"
+                            ? "您还没有添加服务。请先到「服务」页面添加。"
+                            : "You haven't added any services yet. Please add one in Services first.")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate({ to: isRetailish ? "/inventory" : "/services" } as any)}
+                    className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold active:scale-95"
+                  >
+                    {isRetailish
+                      ? (lang === "ms" ? "Pergi ke Inventori" : lang === "zh" ? "前往库存" : "Go to Inventory")
+                      : (lang === "ms" ? "Pergi ke Perkhidmatan" : lang === "zh" ? "前往服务" : "Go to Services")}
+                  </button>
+                </div>
+              );
+            }
+            return (
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base z-10 pointer-events-none">{eff === "education" ? "🎓" : eff === "beauty" ? "✨" : eff === "property" ? "🏠" : eff === "freelance" ? "💼" : "🛍️"}</span>
+                <select
+                  value={form.product}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (!v) {
+                      setForm((p) => ({ ...p, product: "", amount: "" }));
+                      setUnitPrice(null);
+                      return;
+                    }
+                    if (isRetailish) {
+                      const item = inventory.find((i) => i.name === v);
+                      if (item) selectInventoryProduct(item);
+                    } else {
+                      const svc = services.find((s) => s.name === v);
+                      if (svc) selectService(svc);
+                    }
+                    if (errors.product) setErrors((p) => ({ ...p, product: "" }));
+                  }}
+                  className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition appearance-none ${errors.product ? "border-red-400" : "border-border/60"}`}
+                >
+                  <option value="">{productPh}</option>
+                  {isRetailish
+                    ? inventory.map((m) => (
+                        <option key={m.id} value={m.name}>
+                          {m.name}{m.price ? ` — RM ${Number(m.price).toFixed(2)}` : ""} · {m.stock} {m.unit}
+                        </option>
+                      ))
+                    : services.map((s) => (
+                        <option key={s.id} value={s.name}>
+                          {s.name}{s.price > 0 ? ` — RM ${s.price.toFixed(2)}` : ""}
+                        </option>
+                      ))}
+                </select>
+              </div>
+            );
+          })()}
           {errors.product && <p className="text-[11px] text-red-500 px-1">{errors.product}</p>}
-          {isRetailish && showSuggest && productMatches.length > 0 && (
-            <div className="absolute z-20 left-0 right-0 top-full mt-1 rounded-xl bg-card border border-border/60 shadow-lg overflow-hidden max-h-64 overflow-y-auto">
-              <p className="px-4 pt-2 pb-1 text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">
-                {t("select_from_list")}
-              </p>
-              {productMatches.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => selectInventoryProduct(m)}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-muted/60 flex items-center justify-between gap-2"
-                >
-                  <span className="font-medium text-foreground">{m.name}</span>
-                  <span className="text-[11px] text-muted-foreground shrink-0">
-                    {m.stock} {m.unit}{m.price ? ` · RM ${Number(m.price).toFixed(2)}` : ""}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-          {!isRetailish && showSuggest && serviceMatches.length > 0 && (
-            <div className="absolute z-20 left-0 right-0 top-full mt-1 rounded-xl bg-card border border-border/60 shadow-lg overflow-hidden max-h-64 overflow-y-auto">
-              <p className="px-4 pt-2 pb-1 text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">
-                {t("select_from_list")}
-              </p>
-              {serviceMatches.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => selectService(s)}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-muted/60 flex items-center justify-between gap-2"
-                >
-                  <span className="font-medium text-foreground">{s.name}</span>
-                  {s.price > 0 && (
-                    <span className="text-[11px] text-muted-foreground shrink-0">RM {s.price.toFixed(2)}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-          {isRetailish && form.product.trim() && (
-            matchedInventory ? (
-              <p className="text-[11px] text-emerald-600 px-1 flex items-center gap-1">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                {t("from_inventory")} · {t("stock_available")
-                  .replace("{x}", String(matchedInventory.stock))
-                  .replace("{unit}", matchedInventory.unit)}
-              </p>
-            ) : (
-              <p className="text-[11px] text-muted-foreground px-1 flex items-center gap-1">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
-                {t("manual_entry")} · {t("product_not_found")}
-              </p>
-            )
+          {isRetailish && matchedInventory && (
+            <p className="text-[11px] text-emerald-600 px-1 flex items-center gap-1">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              {t("from_inventory")} · {t("stock_available")
+                .replace("{x}", String(matchedInventory.stock))
+                .replace("{unit}", matchedInventory.unit)}
+            </p>
           )}
         </div>
 
