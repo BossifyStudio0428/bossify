@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, X, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
-import { supabase, type InventoryRow } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import type { InvRow } from "@/lib/inventoryTypes";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
@@ -10,6 +11,7 @@ import { bizKey } from "@/lib/businessType";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { notifySituation } from "@/lib/autoNotify";
 import { getNotifMessage } from "@/lib/notifMessages";
+import { ProductFormSheet, QtySheet, ConfirmSheet } from "@/components/InventorySheets";
 
 export const Route = createFileRoute("/inventory")({ component: InventoryPage });
 
@@ -17,10 +19,10 @@ const LOW_THRESHOLD = 5;
 
 type Sheet =
   | { kind: "none" }
-  | { kind: "form"; item?: InventoryRow }
-  | { kind: "restock"; item: InventoryRow }
-  | { kind: "remove"; item: InventoryRow }
-  | { kind: "delete"; item: InventoryRow };
+  | { kind: "form"; item?: InvRow }
+  | { kind: "restock"; item: InvRow }
+  | { kind: "remove"; item: InvRow }
+  | { kind: "delete"; item: InvRow };
 
 function InventoryPage() {
   const { t, lang } = useI18n();
@@ -28,7 +30,7 @@ function InventoryPage() {
   const { user } = useAuth();
   const { hasFullAccess, showUpgrade, productsUsed, productsLimit } = useSubscription();
   const [query, setQuery] = useState("");
-  const [items, setItems] = useState<InventoryRow[]>([]);
+  const [items, setItems] = useState<InvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
   const firstLowRef = useRef<HTMLElement | null>(null);
@@ -36,7 +38,7 @@ function InventoryPage() {
   const load = async () => {
     const { data, error } = await supabase.from("inventory").select("*").order("name", { ascending: true });
     if (error) toast.error(error.message);
-    setItems((data ?? []) as InventoryRow[]);
+    setItems((data ?? []) as unknown as InvRow[]);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -50,7 +52,7 @@ function InventoryPage() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id]);
 
-  const adjust = async (it: InventoryRow, next: number) => {
+  const adjust = async (it: InvRow, next: number) => {
     const prev = items;
     setItems((p) => p.map((x) => (x.id === it.id ? { ...x, stock: next } : x)));
     const { error } = await supabase.from("inventory").update({ stock: next }).eq("id", it.id);
@@ -76,7 +78,7 @@ function InventoryPage() {
     }
   };
 
-  const handleDelete = async (it: InventoryRow) => {
+  const handleDelete = async (it: InvRow) => {
     const prev = items;
     setItems((p) => p.filter((x) => x.id !== it.id));
     const { error } = await supabase.from("inventory").delete().eq("id", it.id);
@@ -153,7 +155,27 @@ function InventoryPage() {
               className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3"
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-semibold text-foreground flex-1">{it.name}</p>
+                <Link
+                  to="/inventory/$itemId"
+                  params={{ itemId: it.id }}
+                  className="flex items-start gap-3 flex-1 min-w-0 active:opacity-70 transition"
+                >
+                  <div className="h-12 w-12 shrink-0 rounded-xl bg-muted/50 border border-border/60 overflow-hidden flex items-center justify-center">
+                    {it.image_url ? (
+                      <img src={it.image_url} alt={it.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-sm font-semibold text-foreground truncate">{it.name}</p>
+                    {it.category && (
+                      <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                        {it.category}
+                      </span>
+                    )}
+                  </div>
+                </Link>
                 <div className="flex items-center gap-1.5">
                   {low && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600">
