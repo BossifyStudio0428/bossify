@@ -201,6 +201,8 @@ export type Database = {
           notes: string | null
           order_source: string
           phone: string | null
+          platform_metadata: Json | null
+          platform_order_id: string | null
           product: string
           quantity: number
           status: string
@@ -216,6 +218,8 @@ export type Database = {
           notes?: string | null
           order_source?: string
           phone?: string | null
+          platform_metadata?: Json | null
+          platform_order_id?: string | null
           product: string
           quantity?: number
           status?: string
@@ -231,11 +235,97 @@ export type Database = {
           notes?: string | null
           order_source?: string
           phone?: string | null
+          platform_metadata?: Json | null
+          platform_order_id?: string | null
           product?: string
           quantity?: number
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_connections: {
+        Row: {
+          access_token_encrypted: string | null
+          connected_at: string
+          id: string
+          last_error: string | null
+          last_synced_at: string | null
+          platform: string
+          platform_shop_id: string | null
+          platform_shop_name: string | null
+          refresh_token_encrypted: string | null
+          scopes: string[]
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          connected_at?: string
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          platform: string
+          platform_shop_id?: string | null
+          platform_shop_name?: string | null
+          refresh_token_encrypted?: string | null
+          scopes?: string[]
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          connected_at?: string
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          platform?: string
+          platform_shop_id?: string | null
+          platform_shop_name?: string | null
+          refresh_token_encrypted?: string | null
+          scopes?: string[]
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_order_events: {
+        Row: {
+          event_type: string
+          id: string
+          order_id: string | null
+          platform: string
+          platform_order_id: string
+          processed: boolean
+          raw_payload: Json | null
+          received_at: string
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          order_id?: string | null
+          platform: string
+          platform_order_id: string
+          processed?: boolean
+          raw_payload?: Json | null
+          received_at?: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          order_id?: string | null
+          platform?: string
+          platform_order_id?: string
+          processed?: boolean
+          raw_payload?: Json | null
+          received_at?: string
         }
         Relationships: []
       }
