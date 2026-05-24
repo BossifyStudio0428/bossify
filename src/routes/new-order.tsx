@@ -659,7 +659,7 @@ function NewOrderPage() {
           </button>
           {!hasFullAccess && (
             <p className="text-center text-[11px] text-muted-foreground">
-              {t("orders_used").replace("{x}", String(ordersUsed))}
+              {t("orders_used").replace("{x}", String(ordersUsed)).replace("{limit}", String(ordersLimit))}
               {ordersRemaining <= 5 && ordersRemaining > 0 && (
                 <span className="ml-1 text-amber-600 font-semibold">· {ordersRemaining} left</span>
               )}
