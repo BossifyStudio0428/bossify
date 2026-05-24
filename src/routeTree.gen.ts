@@ -50,6 +50,7 @@ import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-passwo
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
+import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
 import { Route as ApiPublicOauthTiktokCallbackRouteImport } from './routes/api/public/oauth/tiktok/callback'
 
 const UniversityInsightsRoute = UniversityInsightsRouteImport.update({
@@ -258,6 +259,11 @@ const ConnectedPlatformsPlatformRoute =
     path: '/connected-platforms/$platform',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWebhooksTiktokRoute = ApiPublicWebhooksTiktokRouteImport.update({
+  id: '/api/public/webhooks/tiktok',
+  path: '/api/public/webhooks/tiktok',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOauthTiktokCallbackRoute =
   ApiPublicOauthTiktokCallbackRouteImport.update({
     id: '/api/public/oauth/tiktok/callback',
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -351,6 +358,7 @@ export interface FileRoutesByTo {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
 }
 export interface FileRoutesById {
@@ -396,6 +404,7 @@ export interface FileRoutesById {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
 }
 export interface FileRouteTypes {
@@ -442,6 +451,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -486,6 +496,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
   id:
     | '__root__'
@@ -530,6 +541,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
   fileRoutesById: FileRoutesById
 }
@@ -571,6 +583,7 @@ export interface RootRouteChildren {
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
+  ApiPublicWebhooksTiktokRoute: typeof ApiPublicWebhooksTiktokRoute
   ApiPublicOauthTiktokCallbackRoute: typeof ApiPublicOauthTiktokCallbackRoute
 }
 
@@ -863,6 +876,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnectedPlatformsPlatformRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/tiktok': {
+      id: '/api/public/webhooks/tiktok'
+      path: '/api/public/webhooks/tiktok'
+      fullPath: '/api/public/webhooks/tiktok'
+      preLoaderRoute: typeof ApiPublicWebhooksTiktokRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/oauth/tiktok/callback': {
       id: '/api/public/oauth/tiktok/callback'
       path: '/api/public/oauth/tiktok/callback'
@@ -948,6 +968,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
   OrderCodeRoute: OrderCodeRoute,
+  ApiPublicWebhooksTiktokRoute: ApiPublicWebhooksTiktokRoute,
   ApiPublicOauthTiktokCallbackRoute: ApiPublicOauthTiktokCallbackRoute,
 }
 export const routeTree = rootRouteImport
