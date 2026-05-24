@@ -15,13 +15,26 @@ function getPublicClient() {
 
 const CODE_RE = /^[a-z0-9_-]{4,32}$/i;
 
+const CartItemSchema = z.object({
+  product: z.string().trim().min(1).max(200),
+  variant: z.string().trim().max(120).optional().default(""),
+  quantity: z.number().int().min(1).max(9999).optional().default(1),
+  unit_price: z.number().min(0).max(10_000_000).optional().default(0),
+});
+
 const SubmitSchema = z.object({
   code: z.string().regex(CODE_RE),
   customer_name: z.string().trim().min(1).max(120),
   phone: z.string().trim().max(32).optional().default(""),
-  product: z.string().trim().min(1).max(160),
+  // Legacy single-item fields (still supported for back-compat)
+  product: z.string().trim().min(1).max(200).optional().default(""),
   quantity: z.number().int().min(1).max(9999).optional().default(1),
   amount: z.number().min(0).max(10_000_000).optional().default(0),
+  // New cart-style submissions (retail / fnb multi-item, or single-item with variant)
+  items: z.array(CartItemSchema).max(50).optional().default([]),
+  // Optional extras
+  fulfilment: z.string().trim().max(40).optional().default(""), // dine_in | takeaway | delivery
+  address: z.string().trim().max(500).optional().default(""),
   notes: z.string().trim().max(2000).optional().default(""),
   // Business-type specific extras (all optional strings)
   course_interest: z.string().trim().max(160).optional().default(""),
@@ -56,22 +69,35 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
     const isRetailish = bizType === "retail" || bizType === "fnb";
 
     // Pull either inventory items (retail/fnb) or services (others)
-    let products: Array<{ id: string; name: string; price: number }> = [];
+    let products: Array<{
+      id: string;
+      name: string;
+      price: number;
+      image_url: string | null;
+      category: string | null;
+      description: string | null;
+      variants: Array<{ id?: string; name: string; price: number }>;
+      duration_minutes?: number | null;
+    }> = [];
     if (isRetailish) {
       const { data: inv } = await sb
         .from("inventory")
-        .select("id,name,price")
+        .select("id,name,price,image_url,category,description,variants")
         .eq("user_id", profile.id)
         .order("name", { ascending: true });
       products = ((inv ?? []) as any[]).map((x) => ({
         id: String(x.id),
         name: String(x.name),
         price: Number(x.price ?? 0),
+        image_url: x.image_url ?? null,
+        category: x.category ?? null,
+        description: x.description ?? null,
+        variants: Array.isArray(x.variants) ? x.variants : [],
       }));
     } else {
       const { data: svc } = await sb
         .from("services")
-        .select("id,name,price,is_active")
+        .select("id,name,price,is_active,image_url,category,description,variants,duration_minutes")
         .eq("user_id", profile.id)
         .eq("is_active", true)
         .order("name", { ascending: true });
@@ -79,6 +105,11 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
         id: String(x.id),
         name: String(x.name),
         price: Number(x.price ?? 0),
+        image_url: x.image_url ?? null,
+        category: x.category ?? null,
+        description: x.description ?? null,
+        variants: Array.isArray(x.variants) ? x.variants : [],
+        duration_minutes: x.duration_minutes ?? null,
       }));
     }
 
@@ -123,6 +154,17 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
 
     // Build notes from biz-specific extras + user notes
     const extra: string[] = [];
+    if (bizType === "fnb" && data.fulfilment) {
+      const labelMap: Record<string, string> = {
+        dine_in: "Dine-in",
+        takeaway: "Takeaway",
+        delivery: "Delivery",
+      };
+      extra.push(`Type: ${labelMap[data.fulfilment] ?? data.fulfilment}`);
+    }
+    if (bizType === "retail" && data.address) {
+      extra.push(`Address: ${data.address}`);
+    }
     if (bizType === "education") {
       if (data.course_interest) extra.push(`Course: ${data.course_interest}`);
       if (data.university_preference) extra.push(`University: ${data.university_preference}`);
@@ -134,14 +176,53 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
     } else if (bizType === "freelance") {
       if (data.project_description) extra.push(`Project: ${data.project_description}`);
       if (data.deadline) extra.push(`Deadline: ${data.deadline}`);
+      if (data.date_time) extra.push(`Preferred: ${data.date_time}`);
     }
+
+    // Build product string + totals from cart (preferred) or legacy fields
+    let productText = "";
+    let totalQty = 1;
+    let totalAmount = 0;
+    if (data.items && data.items.length > 0) {
+      productText = data.items
+        .map((it) => {
+          const label = it.variant ? `${it.product} (${it.variant})` : it.product;
+          return isRetailish ? `${label} × ${it.quantity}` : label;
+        })
+        .join(", ");
+      totalQty = isRetailish
+        ? data.items.reduce((s, it) => s + (it.quantity || 1), 0)
+        : 1;
+      totalAmount = data.items.reduce(
+        (s, it) => s + Number(it.unit_price || 0) * (isRetailish ? (it.quantity || 1) : 1),
+        0,
+      );
+      // Itemized lines added to notes for seller clarity
+      const lines = data.items.map((it) => {
+        const label = it.variant ? `${it.product} (${it.variant})` : it.product;
+        const sub = Number(it.unit_price || 0) * (isRetailish ? (it.quantity || 1) : 1);
+        return isRetailish
+          ? `• ${label} × ${it.quantity} — RM ${sub.toFixed(2)}`
+          : `• ${label} — RM ${sub.toFixed(2)}`;
+      });
+      extra.unshift(`Items:\n${lines.join("\n")}`);
+    } else {
+      productText = (data.product || "").trim();
+      totalQty = isRetailish ? Math.max(1, Number(data.quantity) || 1) : 1;
+      totalAmount = Number(data.amount) || 0;
+    }
+
+    if (!productText) {
+      return { ok: false as const, reason: "insert_failed" as const, error: "No product selected" };
+    }
+
     const combinedNotes =
       [extra.join("\n"), (data.notes || "").trim()].filter(Boolean).join("\n\n") || null;
 
     const code = genCode();
     const phoneDigits = (data.phone || "").replace(/\D/g, "");
-    const qty = isRetailish ? Math.max(1, Number(data.quantity) || 1) : 1;
-    const amount = Number(data.amount) || 0;
+    const qty = totalQty;
+    const amount = totalAmount;
 
     const { data: inserted, error: oErr } = await sb
       .from("orders")
@@ -150,7 +231,7 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
         code,
         customer_name: data.customer_name.trim(),
         phone: phoneDigits || null,
-        product: data.product.trim(),
+        product: productText,
         quantity: qty,
         amount,
         status: "Unpaid",
