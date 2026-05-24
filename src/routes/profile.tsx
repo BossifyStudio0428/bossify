@@ -28,6 +28,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType";
 import { PLATFORMS } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
+import { isNativeBillingAvailable } from "@/lib/billing";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -200,6 +201,18 @@ function ProfilePage() {
               : t("free_plan"),
         onClick: () => navigate({ to: "/plans" }),
       },
+      ...(!isNativeBillingAvailable() && (isStarter || isPro)
+        ? [
+            {
+              icon: "🔗",
+              key: "stripeportal",
+              label: t("manage_subscription"),
+              value: t("manage_subscription_subtitle"),
+              onClick: () =>
+                window.open("https://billing.stripe.com/p/login/8x2bJ12Ya2sX9JKaIAeIw00", "_blank"),
+            },
+          ]
+        : []),
       {
         icon: "📲",
         key: "wa",
