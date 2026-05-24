@@ -7,6 +7,7 @@ import {
   submitPublicOrder,
 } from "@/lib/public-order.functions";
 import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe } from "lucide-react";
+import bossifyLogo from "@/assets/bossify-logo.png";
 
 export const Route = createFileRoute("/order/$code")({
   component: PublicOrderFormPage,
@@ -255,9 +256,11 @@ function PublicOrderFormPage() {
       <div className="pof-scope min-h-screen flex items-center justify-center px-6">
         <PofStyles />
         <div className="w-full max-w-sm text-center">
-          <div className="mx-auto mb-6 h-16 w-16 rounded-2xl pof-hero text-white flex items-center justify-center text-2xl font-bold shadow-lg">
-            B
-          </div>
+          <img
+            src={bossifyLogo}
+            alt="Bossify"
+            className="mx-auto mb-6 h-20 w-20 object-contain"
+          />
           <h1 className="text-xl font-bold">Bossify</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Choose your language · Pilih bahasa · 选择语言
