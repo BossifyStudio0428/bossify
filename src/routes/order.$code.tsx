@@ -249,6 +249,45 @@ function PublicOrderFormPage() {
     );
   }
 
+  // ---- Language picker screen ----
+  if (!langPicked) {
+    return (
+      <div className="pof-scope min-h-screen flex items-center justify-center px-6">
+        <PofStyles />
+        <div className="w-full max-w-sm text-center">
+          <div className="mx-auto mb-6 h-16 w-16 rounded-2xl pof-hero text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+            B
+          </div>
+          <h1 className="text-xl font-bold">Bossify</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Choose your language · Pilih bahasa · 选择语言
+          </p>
+          <div className="mt-8 space-y-2.5">
+            {([
+              { code: "en" as Lang, label: "English", sub: "Continue in English" },
+              { code: "ms" as Lang, label: "Bahasa Malaysia", sub: "Teruskan dalam Bahasa Malaysia" },
+              { code: "zh" as Lang, label: "中文", sub: "继续使用中文" },
+            ]).map((opt) => (
+              <button
+                key={opt.code}
+                type="button"
+                onClick={() => pickLang(opt.code)}
+                className="w-full px-5 py-4 rounded-2xl border border-border bg-card text-left active:scale-[0.99] transition-transform flex items-center justify-between"
+              >
+                <span>
+                  <span className="block text-sm font-bold">{opt.label}</span>
+                  <span className="block text-[11px] text-muted-foreground mt-0.5">{opt.sub}</span>
+                </span>
+                <span className="text-primary text-lg">→</span>
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-10">Powered by Bossify 💜</p>
+        </div>
+      </div>
+    );
+  }
+
   if (done) {
     return (
       <div className="pof-scope min-h-screen flex flex-col items-center justify-center px-6">
