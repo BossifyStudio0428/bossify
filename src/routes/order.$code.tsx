@@ -420,10 +420,17 @@ function PublicOrderFormPage() {
                   initials
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-[11px] uppercase tracking-wider text-white/70">{t(formMeta.titleKey)}</p>
                 <h1 className="text-lg font-bold truncate">{profile.business_name}</h1>
               </div>
+              <LangSwitcher
+                lang={lang}
+                open={showLangMenu}
+                onToggle={() => setShowLangMenu((v) => !v)}
+                onPick={pickLang}
+                variant="hero"
+              />
             </div>
             <p className="mt-4 text-xs text-white/80">{browseLabel}</p>
           </header>
