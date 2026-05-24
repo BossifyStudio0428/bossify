@@ -296,10 +296,17 @@ function PublicOrderFormPage() {
       <div className="pof-scope min-h-screen flex flex-col items-center justify-center px-6">
         <PofStyles />
         <div className="text-center max-w-sm">
-          <div className="pof-check-wrap mx-auto mb-6">
-            <svg className="pof-check" viewBox="0 0 52 52">
-              <circle className="pof-check-circle" cx="26" cy="26" r="24" fill="none" />
-              <path className="pof-check-path" fill="none" d="M14 27 l8 8 l16 -18" />
+          <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-emerald-100 flex items-center justify-center animate-scale-in">
+            <svg
+              className="h-14 w-14 text-emerald-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
           <h1 className="text-2xl font-bold">
