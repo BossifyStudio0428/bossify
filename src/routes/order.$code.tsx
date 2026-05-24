@@ -811,7 +811,7 @@ function LangSwitcher({
             className="fixed inset-0 z-40"
             onClick={onToggle}
           />
-          <div className="absolute right-0 top-full mt-2 z-50 w-44 rounded-2xl bg-card border border-border shadow-lg overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-2xl bg-white border border-gray-200 shadow-xl overflow-hidden">
             {([
               { code: "en" as Lang, label: "English" },
               { code: "ms" as Lang, label: "Bahasa Malaysia" },
@@ -821,12 +821,14 @@ function LangSwitcher({
                 key={opt.code}
                 type="button"
                 onClick={() => onPick(opt.code)}
-                className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between ${
-                  lang === opt.code ? "bg-primary/10 text-primary font-semibold" : "text-foreground"
+                className={`w-full px-4 py-3 text-left text-sm flex items-center justify-between transition-colors ${
+                  lang === opt.code
+                    ? "bg-[#f3f0ff] text-[#7C3AED] font-semibold"
+                    : "text-[#1a1a1a] hover:bg-gray-50"
                 }`}
               >
                 <span>{opt.label}</span>
-                {lang === opt.code && <Check size={14} />}
+                {lang === opt.code && <Check size={16} />}
               </button>
             ))}
           </div>
