@@ -148,34 +148,46 @@ export type Database = {
       }
       inventory: {
         Row: {
+          category: string | null
           created_at: string
+          description: string | null
           id: string
+          image_url: string | null
           low_stock_threshold: number
           name: string
           price: number
           stock: number
           updated_at: string
           user_id: string
+          variants: Json
         }
         Insert: {
+          category?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          image_url?: string | null
           low_stock_threshold?: number
           name: string
           price?: number
           stock?: number
           updated_at?: string
           user_id: string
+          variants?: Json
         }
         Update: {
+          category?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          image_url?: string | null
           low_stock_threshold?: number
           name?: string
           price?: number
           stock?: number
           updated_at?: string
           user_id?: string
+          variants?: Json
         }
         Relationships: []
       }

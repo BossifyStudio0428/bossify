@@ -128,3 +128,13 @@ export function pofDescKey(type: BizType | null | undefined): TKey {
       return "pof_desc_retail";
   }
 }
+
+/** Default category suggestions per business type. */
+export const CATEGORY_PRESETS: Record<BizType, string[]> = {
+  retail:    ["Clothing", "Accessories", "Electronics", "Beauty", "Home", "Food"],
+  fnb:       ["Food", "Drinks", "Desserts", "Snacks", "Sets"],
+  beauty:    ["Facial", "Body", "Nails", "Hair", "Massage"],
+  education: ["Local University", "Overseas", "TVET", "Foundation", "Diploma", "Postgraduate"],
+  property:  ["Condo", "Terrace", "Apartment", "Commercial", "Land", "Insurance"],
+  freelance: ["Design", "IT", "Cleaning", "Marketing", "Writing", "Consulting"],
+};
