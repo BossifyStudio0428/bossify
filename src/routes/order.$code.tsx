@@ -566,10 +566,17 @@ function PublicOrderFormPage() {
           >
             <ArrowLeft size={16} />
           </button>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold">{checkoutLabel}</h1>
             <p className="text-[11px] text-muted-foreground">{t(formMeta.taglineKey)}</p>
           </div>
+          <LangSwitcher
+            lang={lang}
+            open={showLangMenu}
+            onToggle={() => setShowLangMenu((v) => !v)}
+            onPick={pickLang}
+            variant="plain"
+          />
         </header>
 
         {/* Cart summary */}
