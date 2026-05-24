@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useI18n } from "@/contexts/I18nContext";
+import { useI18n, type Lang } from "@/contexts/I18nContext";
 import {
   getPublicOrderForm,
   submitPublicOrder,
 } from "@/lib/public-order.functions";
-import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check } from "lucide-react";
+import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe } from "lucide-react";
 
 export const Route = createFileRoute("/order/$code")({
   component: PublicOrderFormPage,
@@ -57,6 +57,30 @@ function PublicOrderFormPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<null | { name: string; code: string; business: string }>(null);
 
+  // Language picker: shown first if customer hasn't chosen for this session
+  const [langPicked, setLangPicked] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return sessionStorage.getItem("pof_lang_picked") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const userPickedRef = useRef<boolean>(langPicked);
+
+  const pickLang = (l: Lang) => {
+    userPickedRef.current = true;
+    setLang(l);
+    try {
+      sessionStorage.setItem("pof_lang_picked", "1");
+    } catch {
+      /* ignore */
+    }
+    setLangPicked(true);
+    setShowLangMenu(false);
+  };
+
   const [activeCategory, setActiveCategory] = useState<string>("__all");
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -96,7 +120,11 @@ function PublicOrderFormPage() {
           profile: res.profile,
           products: res.products as Product[],
         });
-        if (res.profile.language === "en" || res.profile.language === "ms" || res.profile.language === "zh") {
+        // Only auto-apply seller's language if the customer hasn't chosen their own
+        if (
+          !userPickedRef.current &&
+          (res.profile.language === "en" || res.profile.language === "ms" || res.profile.language === "zh")
+        ) {
           setLang(res.profile.language);
         }
       } catch {
