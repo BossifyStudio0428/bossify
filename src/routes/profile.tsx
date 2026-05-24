@@ -15,7 +15,7 @@ import {
   isBuiltInReminderTpl,
 } from "@/lib/wa";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { Sparkles, Sun, Moon, ExternalLink } from "lucide-react";
+import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import {
   CreditCard,
