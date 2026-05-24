@@ -296,10 +296,17 @@ function PublicOrderFormPage() {
       <div className="pof-scope min-h-screen flex flex-col items-center justify-center px-6">
         <PofStyles />
         <div className="text-center max-w-sm">
-          <div className="pof-check-wrap mx-auto mb-6">
-            <svg className="pof-check" viewBox="0 0 52 52">
-              <circle className="pof-check-circle" cx="26" cy="26" r="24" fill="none" />
-              <path className="pof-check-path" fill="none" d="M14 27 l8 8 l16 -18" />
+          <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-emerald-100 flex items-center justify-center animate-scale-in">
+            <svg
+              className="h-14 w-14 text-emerald-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
           <h1 className="text-2xl font-bold">
@@ -804,7 +811,7 @@ function LangSwitcher({
             className="fixed inset-0 z-40"
             onClick={onToggle}
           />
-          <div className="absolute right-0 top-full mt-2 z-50 w-44 rounded-2xl bg-card border border-border shadow-lg overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-2xl bg-white border border-gray-200 shadow-xl overflow-hidden">
             {([
               { code: "en" as Lang, label: "English" },
               { code: "ms" as Lang, label: "Bahasa Malaysia" },
@@ -814,12 +821,14 @@ function LangSwitcher({
                 key={opt.code}
                 type="button"
                 onClick={() => onPick(opt.code)}
-                className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between ${
-                  lang === opt.code ? "bg-primary/10 text-primary font-semibold" : "text-foreground"
+                className={`w-full px-4 py-3 text-left text-sm flex items-center justify-between transition-colors ${
+                  lang === opt.code
+                    ? "bg-[#f3f0ff] text-[#7C3AED] font-semibold"
+                    : "text-[#1a1a1a] hover:bg-gray-50"
                 }`}
               >
                 <span>{opt.label}</span>
-                {lang === opt.code && <Check size={14} />}
+                {lang === opt.code && <Check size={16} />}
               </button>
             ))}
           </div>
@@ -1012,11 +1021,8 @@ function PofStyles() {
       @keyframes pof-slide-up { from { transform: translateY(100%);} to { transform: translateY(0);} }
       .animate-slide-up { animation: pof-slide-up 0.28s ease-out; }
 
-      .pof-check-wrap { width: 96px; height: 96px; border-radius: 50%; background: hsl(142 72% 95%); display:flex; align-items:center; justify-content:center; }
-      .pof-check { width: 64px; height: 64px; }
-      .pof-check-circle { stroke: hsl(142 71% 45%); stroke-width: 3; stroke-dasharray: 166; stroke-dashoffset: 166; animation: pof-stroke 0.6s cubic-bezier(0.65,0,0.45,1) forwards; }
-      .pof-check-path { stroke: hsl(142 71% 45%); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 48; stroke-dashoffset: 48; animation: pof-stroke 0.4s 0.5s cubic-bezier(0.65,0,0.45,1) forwards; }
-      @keyframes pof-stroke { to { stroke-dashoffset: 0; } }
+      @keyframes pof-scale-in { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      .animate-scale-in { animation: pof-scale-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     `}</style>
   );
 }
