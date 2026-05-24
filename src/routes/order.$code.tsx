@@ -1021,11 +1021,8 @@ function PofStyles() {
       @keyframes pof-slide-up { from { transform: translateY(100%);} to { transform: translateY(0);} }
       .animate-slide-up { animation: pof-slide-up 0.28s ease-out; }
 
-      .pof-check-wrap { width: 96px; height: 96px; border-radius: 50%; background: hsl(142 72% 95%); display:flex; align-items:center; justify-content:center; }
-      .pof-check { width: 64px; height: 64px; }
-      .pof-check-circle { stroke: hsl(142 71% 45%); stroke-width: 3; stroke-dasharray: 166; stroke-dashoffset: 166; animation: pof-stroke 0.6s cubic-bezier(0.65,0,0.45,1) forwards; }
-      .pof-check-path { stroke: hsl(142 71% 45%); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 48; stroke-dashoffset: 48; animation: pof-stroke 0.4s 0.5s cubic-bezier(0.65,0,0.45,1) forwards; }
-      @keyframes pof-stroke { to { stroke-dashoffset: 0; } }
+      @keyframes pof-scale-in { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      .animate-scale-in { animation: pof-scale-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     `}</style>
   );
 }
