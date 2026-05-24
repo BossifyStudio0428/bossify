@@ -27,7 +27,7 @@ const SubmitSchema = z.object({
   customer_name: z.string().trim().min(1).max(120),
   phone: z.string().trim().max(32).optional().default(""),
   // Legacy single-item fields (still supported for back-compat)
-  product: z.string().trim().min(1).max(200).optional().default(""),
+  product: z.string().trim().max(200).optional().default(""),
   quantity: z.number().int().min(1).max(9999).optional().default(1),
   amount: z.number().min(0).max(10_000_000).optional().default(0),
   // New cart-style submissions (retail / fnb multi-item, or single-item with variant)

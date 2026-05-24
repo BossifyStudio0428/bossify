@@ -1,19 +1,19 @@
-我会直接修复这两个仍然硬编码 `/20` 的位置：
+## Problem
+Public order form cart submissions fail with:
+`product: too_small, minimum 1 character`
 
-1. **翻译文案改成动态 limit**
-   - `src/contexts/I18nContext.tsx`
-   - 把英文、马来文、中文的 `orders_used` 从固定 `20` 改成 `{limit}`。
-   - 结果会显示 `23 / 40`，不是 `23 / 20`。
+Because `SubmitSchema` in `src/lib/public-order.functions.ts` requires `product` to be at least 1 character, but cart-style submissions (retail/fnb multi-item) send `product: ""` and use the `items[]` array instead.
 
-2. **Profile 页面传入真实 Starter limit**
-   - `src/routes/profile.tsx`
-   - 现在只替换 `{x}`，没有替换 `{limit}`，所以会继续显示旧的固定 20。
-   - 我会从 `useSubscription()` 取 `ordersLimit`，并显示 `ordersUsed / ordersLimit`。
+## Fix
+In `src/lib/public-order.functions.ts`, remove `.min(1)` from the legacy `product` field:
 
-3. **New Order 页面也同步修复**
-   - `src/routes/new-order.tsx`
-   - 同样传入 `ordersLimit`，避免创建订单页也显示错。
+```ts
+// Before
+product: z.string().trim().min(1).max(200).optional().default(""),
+// After
+product: z.string().trim().max(200).optional().default(""),
+```
 
-4. **验证**
-   - 搜索确认 `orders_used` 不再硬编码 `/20`。
-   - 确认 Starter 的 limit 使用 `SubscriptionContext` 里的 `STARTER_LIMITS.ordersPerMonth = 40`。
+The handler already builds `productText` from either `items[]` or the legacy `product` field and returns a clear `insert_failed` error if both are empty — so this is safe and preserves backward compatibility.
+
+One-line change, no other files affected.
