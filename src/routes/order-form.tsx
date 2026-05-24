@@ -37,9 +37,7 @@ function OrderFormPage() {
     return () => { cancelled = true; };
   }, [user]);
 
-  const link = code
-    ? `${typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app"}/order/${code}`
-    : "";
+  const link = code ? `${getPublicOrigin()}/order/${code}` : "";
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(link)}`;
 
   return (
