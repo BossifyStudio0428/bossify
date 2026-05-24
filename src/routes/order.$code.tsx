@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useI18n } from "@/contexts/I18nContext";
@@ -10,6 +10,26 @@ import {
 export const Route = createFileRoute("/order/$code")({
   component: PublicOrderFormPage,
 });
+
+type Variant = { id?: string; name: string; price: number };
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string | null;
+  category: string | null;
+  description: string | null;
+  variants: Variant[];
+  duration_minutes?: number | null;
+};
+type CartLine = {
+  productId: string;
+  product: string;
+  variant: string;
+  unit_price: number;
+  quantity: number;
+  image_url: string | null;
+};
 
 type LoadState =
   | { status: "loading" }
@@ -23,7 +43,7 @@ type LoadState =
         whatsapp_number: string | null;
         language?: "en" | "ms" | "zh";
       };
-      products: Array<{ id: string; name: string; price: number }>;
+      products: Product[];
     };
 
 function PublicOrderFormPage() {
@@ -36,12 +56,17 @@ function PublicOrderFormPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<null | { name: string; code: string; business: string }>(null);
 
+  const [activeCategory, setActiveCategory] = useState<string>("__all");
+  const [openProduct, setOpenProduct] = useState<Product | null>(null);
+  const [cart, setCart] = useState<CartLine[]>([]);
+  const [showCheckout, setShowCheckout] = useState(false);
+
   const [form, setForm] = useState({
     customer_name: "",
     phone: "",
-    product: "",
-    quantity: "1",
     notes: "",
+    address: "",
+    fulfilment: "takeaway", // fnb only
     course_interest: "",
     university_preference: "",
     date_time: "",
@@ -68,7 +93,7 @@ function PublicOrderFormPage() {
         setState({
           status: "ready",
           profile: res.profile,
-          products: res.products,
+          products: res.products as Product[],
         });
         if (res.profile.language === "en" || res.profile.language === "ms" || res.profile.language === "zh") {
           setLang(res.profile.language);
@@ -82,26 +107,66 @@ function PublicOrderFormPage() {
     };
   }, [code, loadFn, setLang]);
 
+  const categories = useMemo(() => {
+    if (state.status !== "ready") return [] as string[];
+    const set = new Set<string>();
+    for (const p of state.products) if (p.category) set.add(p.category);
+    return Array.from(set).sort();
+  }, [state]);
+
+  const filteredProducts = useMemo(() => {
+    if (state.status !== "ready") return [] as Product[];
+    if (activeCategory === "__all") return state.products;
+    return state.products.filter((p) => (p.category ?? "") === activeCategory);
+  }, [state, activeCategory]);
+
+  const bizType = state.status === "ready" ? state.profile.business_type : "retail";
+  const isRetailish = bizType === "retail" || bizType === "fnb";
+  const cartTotal = cart.reduce((s, l) => s + l.unit_price * (isRetailish ? l.quantity : 1), 0);
+  const cartCount = cart.reduce((s, l) => s + (isRetailish ? l.quantity : 1), 0);
+
+  const addToCart = (line: CartLine) => {
+    setCart((prev) => {
+      if (!isRetailish) return [line]; // services: only one selection at a time
+      const key = `${line.productId}::${line.variant}`;
+      const existing = prev.find((l) => `${l.productId}::${l.variant}` === key);
+      if (existing) {
+        return prev.map((l) =>
+          l === existing ? { ...l, quantity: l.quantity + line.quantity } : l,
+        );
+      }
+      return [...prev, line];
+    });
+  };
+
+  const updateLineQty = (idx: number, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((l, i) => (i === idx ? { ...l, quantity: Math.max(0, l.quantity + delta) } : l))
+        .filter((l) => l.quantity > 0),
+    );
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (state.status !== "ready") return;
-    if (!form.customer_name.trim() || !form.phone.trim() || !form.product.trim()) return;
+    if (!form.customer_name.trim() || !form.phone.trim() || cart.length === 0) return;
     setSubmitting(true);
-    const bizType = state.profile.business_type;
-    const matched = state.products.find((p) => p.name === form.product);
-    const unit = matched?.price ?? 0;
-    const qty = Number(form.quantity) || 1;
-    const amount = (bizType === "retail" || bizType === "fnb") ? unit * qty : unit;
     try {
       const res = await submitFn({
         data: {
           code,
           customer_name: form.customer_name.trim(),
           phone: form.phone.trim(),
-          product: form.product.trim(),
-          quantity: qty,
-          amount,
+          items: cart.map((l) => ({
+            product: l.product,
+            variant: l.variant,
+            quantity: l.quantity,
+            unit_price: l.unit_price,
+          })),
           notes: form.notes,
+          address: form.address,
+          fulfilment: bizType === "fnb" ? form.fulfilment : "",
           course_interest: form.course_interest,
           university_preference: form.university_preference,
           date_time: form.date_time,
@@ -175,13 +240,7 @@ function PublicOrderFormPage() {
   }
 
   const { profile, products } = state;
-  const bizType = profile.business_type;
   const initials = (profile.business_name || "?").slice(0, 2).toUpperCase();
-  const isRetailish = bizType === "retail" || bizType === "fnb";
-  const matchedProduct = products.find((p) => p.name === form.product);
-  const unitPrice = matchedProduct?.price ?? 0;
-  const qtyNum = Math.max(1, Number(form.quantity) || 1);
-  const totalPrice = isRetailish ? unitPrice * qtyNum : unitPrice;
   const noProducts = products.length === 0;
 
   const submitLabelKey =
@@ -210,35 +269,251 @@ function PublicOrderFormPage() {
   const labels = (() => {
     switch (bizType) {
       case "education":
-        return { name: t("f_client_name"), product: t("f_service") };
       case "beauty":
-        return { name: t("f_client_name"), product: t("f_service") };
-      case "property":
-        return { name: t("f_client_name"), product: t("packages_title") };
       case "freelance":
-        return { name: t("f_client_name"), product: t("f_service") };
+        return { name: t("f_client_name") };
+      case "property":
+        return { name: t("f_client_name") };
       default:
-        return { name: t("customer_name"), product: t("product") };
+        return { name: t("customer_name") };
     }
   })();
 
+  // Inline localized labels (avoid i18n churn for new keys)
+  const L = (en: string, ms: string, zh: string) =>
+    lang === "ms" ? ms : lang === "zh" ? zh : en;
+
+  const browseLabel = L(
+    isRetailish ? "Browse menu" : "Browse",
+    isRetailish ? "Lihat menu" : "Lihat",
+    isRetailish ? "浏览" : "浏览",
+  );
+  const allLabel = L("All", "Semua", "全部");
+  const addLabel = L("Add", "Tambah", "添加");
+  const selectLabel = L("Select", "Pilih", "选择");
+  const viewCartLabel = isRetailish
+    ? L("View cart", "Lihat troli", "查看购物车")
+    : L("Continue", "Teruskan", "继续");
+  const checkoutLabel = L("Checkout", "Bayar", "结账");
+  const cartLabel = isRetailish ? L("Your cart", "Troli anda", "您的购物车") : L("Your selection", "Pilihan anda", "您的选择");
+  const detailsLabel = L("Your details", "Maklumat anda", "您的信息");
+  const fulfilmentLabel = L("Order type", "Jenis pesanan", "订单类型");
+  const dineIn = L("Dine-in", "Makan di sini", "堂食");
+  const takeaway = L("Takeaway", "Bungkus", "外带");
+  const delivery = L("Delivery", "Hantar", "外送");
+  const addressLabel = L("Delivery address", "Alamat penghantaran", "送货地址");
+  const totalLabel = L("Total", "Jumlah", "总计");
+  const emptyCartLabel = L(
+    isRetailish ? "Your cart is empty" : "Nothing selected yet",
+    isRetailish ? "Troli anda kosong" : "Belum ada pilihan",
+    isRetailish ? "购物车是空的" : "尚未选择",
+  );
+  const removeLabel = L("Remove", "Buang", "移除");
+
+  // Detail sheet (product / service detail)
+  const renderDetailSheet = () => {
+    if (!openProduct) return null;
+    return (
+      <DetailSheet
+        product={openProduct}
+        isRetailish={isRetailish}
+        addLabel={addToCartLabelFor(bizType, lang)}
+        onClose={() => setOpenProduct(null)}
+        onAdd={(line) => {
+          addToCart(line);
+          setOpenProduct(null);
+        }}
+        lang={lang}
+      />
+    );
+  };
+
+  // ---- Catalog screen ----
+  if (!showCheckout) {
+    return (
+      <div className="min-h-screen bg-background flex justify-center pb-24">
+        <div className="w-full max-w-[420px] px-5 pt-10 space-y-5">
+          <header className="flex flex-col items-center text-center">
+            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-2xl font-bold shadow-[var(--shadow-soft)] overflow-hidden">
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
+            <p className="mt-2 text-sm font-medium text-muted-foreground">{profile.business_name}</p>
+            <h1 className="mt-1 text-xl font-bold">{t(formMeta.titleKey)}</h1>
+            <p className="text-xs text-muted-foreground mt-1">{browseLabel}</p>
+          </header>
+
+          {noProducts ? (
+            <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-xs text-muted-foreground">
+              {isRetailish
+                ? L(
+                    "The seller hasn't added any products yet. Please try again later.",
+                    "Penjual belum menambah produk. Sila cuba semula nanti.",
+                    "卖家尚未添加产品，请稍后再试。",
+                  )
+                : L(
+                    "The seller hasn't listed any services yet. Please try again later.",
+                    "Penjual belum menyediakan perkhidmatan. Sila cuba semula nanti.",
+                    "卖家尚未提供服务，请稍后再试。",
+                  )}
+            </div>
+          ) : (
+            <>
+              {categories.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
+                  <CategoryChip
+                    label={allLabel}
+                    active={activeCategory === "__all"}
+                    onClick={() => setActiveCategory("__all")}
+                  />
+                  {categories.map((c) => (
+                    <CategoryChip
+                      key={c}
+                      label={c}
+                      active={activeCategory === c}
+                      onClick={() => setActiveCategory(c)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                {filteredProducts.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setOpenProduct(p)}
+                    className="text-left rounded-2xl border border-border bg-card overflow-hidden active:scale-[0.98] transition-transform"
+                  >
+                    <div className="aspect-square w-full bg-muted/40 overflow-hidden">
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-3xl text-muted-foreground/40">
+                          {isRetailish ? "🛍️" : "✨"}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2.5 space-y-1">
+                      {p.category && (
+                        <p className="text-[9px] font-semibold tracking-wider uppercase text-primary/80 truncate">
+                          {p.category}
+                        </p>
+                      )}
+                      <p className="text-[13px] font-semibold leading-tight line-clamp-2">{p.name}</p>
+                      <p className="text-xs font-bold text-primary">
+                        {p.variants && p.variants.length > 0 ? "from " : ""}
+                        RM {Number(p.price || (p.variants?.[0]?.price ?? 0)).toFixed(2)}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          <p className="text-[10px] text-center text-muted-foreground pt-2">
+            {lang === "ms" ? "Dikuasakan oleh" : lang === "zh" ? "由" : "Powered by"} Bossify
+          </p>
+        </div>
+
+        {cart.length > 0 && (
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] px-4 pb-4 pt-2 bg-gradient-to-t from-background via-background to-transparent">
+            <button
+              type="button"
+              onClick={() => setShowCheckout(true)}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] flex items-center justify-between px-5"
+            >
+              <span>
+                {viewCartLabel} {isRetailish ? `· ${cartCount}` : ""}
+              </span>
+              <span>RM {cartTotal.toFixed(2)}</span>
+            </button>
+          </div>
+        )}
+
+        {renderDetailSheet()}
+        <PofStyles />
+      </div>
+    );
+  }
+
+  // ---- Checkout screen ----
   return (
     <div className="min-h-screen bg-background flex justify-center">
       <div className="w-full max-w-[420px] px-5 pt-10 pb-10 space-y-5">
-        <header className="flex flex-col items-center text-center">
-          <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-2xl font-bold shadow-[var(--shadow-soft)] overflow-hidden">
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-            ) : (
-              initials
-            )}
+        <header className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowCheckout(false)}
+            className="h-9 w-9 rounded-full bg-card border border-border flex items-center justify-center text-sm"
+            aria-label="Back"
+          >
+            ←
+          </button>
+          <div>
+            <h1 className="text-lg font-bold">{checkoutLabel}</h1>
+            <p className="text-[11px] text-muted-foreground">{t(formMeta.taglineKey)}</p>
           </div>
-          <p className="mt-2 text-sm font-medium text-muted-foreground">{profile.business_name}</p>
-          <h1 className="mt-1 text-xl font-bold">{t(formMeta.titleKey)}</h1>
-          <p className="text-xs text-muted-foreground mt-1">{t(formMeta.taglineKey)}</p>
         </header>
 
+        {/* Cart summary */}
+        <section className="space-y-2">
+          <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{cartLabel}</p>
+          {cart.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-xs text-muted-foreground">
+              {emptyCartLabel}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {cart.map((l, i) => (
+                <div key={`${l.productId}-${l.variant}-${i}`} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5">
+                  <div className="h-14 w-14 rounded-xl bg-muted/40 overflow-hidden flex-shrink-0">
+                    {l.image_url ? (
+                      <img src={l.image_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-xl text-muted-foreground/40">
+                        {isRetailish ? "🛍️" : "✨"}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold leading-tight truncate">{l.product}</p>
+                    {l.variant && <p className="text-[11px] text-muted-foreground truncate">{l.variant}</p>}
+                    <p className="text-xs font-bold text-primary mt-0.5">
+                      RM {(l.unit_price * (isRetailish ? l.quantity : 1)).toFixed(2)}
+                    </p>
+                  </div>
+                  {isRetailish ? (
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => updateLineQty(i, -1)} className="h-7 w-7 rounded-full bg-muted text-sm font-bold">−</button>
+                      <span className="w-6 text-center text-xs font-semibold">{l.quantity}</span>
+                      <button type="button" onClick={() => updateLineQty(i, 1)} className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-sm font-bold">+</button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setCart((p) => p.filter((_, j) => j !== i))}
+                      className="text-[11px] text-rose-500 px-2"
+                    >
+                      {removeLabel}
+                    </button>
+                  )}
+                </div>
+              ))}
+              <div className="flex items-center justify-between px-2 pt-1">
+                <span className="text-sm font-semibold">{totalLabel}</span>
+                <span className="text-lg font-bold text-primary">RM {cartTotal.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+        </section>
+
         <form onSubmit={onSubmit} className="space-y-4">
+          <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{detailsLabel}</p>
           <Field label={`${labels.name} *`}>
             <input
               required
@@ -261,63 +536,31 @@ function PublicOrderFormPage() {
             />
           </Field>
 
-          <Field label={`${labels.product} *`}>
-            {noProducts ? (
-              <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-5 text-center text-xs text-muted-foreground">
-                {isRetailish
-                  ? (lang === "ms"
-                      ? "Penjual belum menambah produk. Sila cuba semula nanti."
-                      : lang === "zh"
-                        ? "卖家尚未添加产品，请稍后再试。"
-                        : "The seller hasn't added any products yet. Please try again later.")
-                  : (lang === "ms"
-                      ? "Penjual belum menyediakan perkhidmatan. Sila cuba semula nanti."
-                      : lang === "zh"
-                        ? "卖家尚未提供服务，请稍后再试。"
-                        : "The seller hasn't listed any services yet. Please try again later.")}
-              </div>
-            ) : (
-              <select required value={form.product} onChange={upd("product")} className="pof-input">
-                <option value="">{t("select_product")}</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.name}>
-                    {p.name}
-                    {p.price > 0 ? ` — RM ${p.price.toFixed(2)}` : ""}
-                  </option>
+          {bizType === "fnb" && (
+            <Field label={fulfilmentLabel}>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ["dine_in", dineIn],
+                  ["takeaway", takeaway],
+                  ["delivery", delivery],
+                ] as const).map(([val, label]) => (
+                  <button
+                    type="button"
+                    key={val}
+                    onClick={() => setForm((p) => ({ ...p, fulfilment: val }))}
+                    className={`py-2.5 rounded-xl text-xs font-semibold border ${form.fulfilment === val ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border"}`}
+                  >
+                    {label}
+                  </button>
                 ))}
-              </select>
-            )}
-          </Field>
-
-          {(bizType === "retail" || bizType === "fnb") && (
-            <Field label={t("quantity")}>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                value={form.quantity}
-                onChange={upd("quantity")}
-                className="pof-input"
-              />
+              </div>
             </Field>
           )}
 
-          {!noProducts && matchedProduct && (
-            <div className="rounded-2xl border border-border bg-card px-4 py-3 flex items-center justify-between">
-              <div className="space-y-0.5">
-                <p className="text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
-                  {isRetailish
-                    ? (lang === "ms" ? "Jumlah" : lang === "zh" ? "总价" : "Total")
-                    : (lang === "ms" ? "Harga" : lang === "zh" ? "价格" : "Price")}
-                </p>
-                {isRetailish && unitPrice > 0 && (
-                  <p className="text-[11px] text-muted-foreground">
-                    RM {unitPrice.toFixed(2)} × {qtyNum}
-                  </p>
-                )}
-              </div>
-              <p className="text-lg font-bold text-primary">RM {totalPrice.toFixed(2)}</p>
-            </div>
+          {(bizType === "retail" || (bizType === "fnb" && form.fulfilment === "delivery")) && (
+            <Field label={addressLabel}>
+              <textarea rows={2} value={form.address} onChange={upd("address")} className="pof-input" maxLength={500} />
+            </Field>
           )}
 
           {bizType === "education" && (
@@ -331,7 +574,7 @@ function PublicOrderFormPage() {
             </>
           )}
 
-          {bizType === "beauty" && (
+          {(bizType === "beauty" || bizType === "freelance") && (
             <Field label={t("f_date_time")}>
               <input
                 type="datetime-local"
@@ -354,14 +597,9 @@ function PublicOrderFormPage() {
           )}
 
           {bizType === "freelance" && (
-            <>
-              <Field label={t("f_project_description")}>
-                <textarea rows={3} value={form.project_description} onChange={upd("project_description")} className="pof-input" maxLength={2000} />
-              </Field>
-              <Field label={t("f_deadline_date")}>
-                <input type="date" value={form.deadline} onChange={upd("deadline")} className="pof-input" />
-              </Field>
-            </>
+            <Field label={t("f_project_description")}>
+              <textarea rows={3} value={form.project_description} onChange={upd("project_description")} className="pof-input" maxLength={2000} />
+            </Field>
           )}
 
           <Field label={t("notes")}>
@@ -370,7 +608,7 @@ function PublicOrderFormPage() {
 
           <button
             type="submit"
-            disabled={submitting || noProducts}
+            disabled={submitting || cart.length === 0}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] disabled:opacity-60"
           >
             {submitting ? t("saving") : t(submitLabelKey)}
@@ -381,19 +619,7 @@ function PublicOrderFormPage() {
           </p>
         </form>
 
-        <style>{`
-          .pof-input {
-            width: 100%;
-            border-radius: 14px;
-            background: hsl(var(--card));
-            border: 1px solid hsl(var(--border));
-            padding: 12px 14px;
-            font-size: 14px;
-            outline: none;
-            color: hsl(var(--foreground));
-          }
-          .pof-input:focus { border-color: hsl(var(--primary)); box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15); }
-        `}</style>
+        <PofStyles />
       </div>
     </div>
   );
@@ -407,5 +633,181 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </label>
       {children}
     </div>
+  );
+}
+
+function CategoryChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+        active ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function addToCartLabelFor(bizType: string, lang: "en" | "ms" | "zh") {
+  const isRetailish = bizType === "retail" || bizType === "fnb";
+  if (isRetailish) {
+    return lang === "ms" ? "Tambah ke troli" : lang === "zh" ? "加入购物车" : "Add to cart";
+  }
+  if (bizType === "beauty") return lang === "ms" ? "Pilih perkhidmatan" : lang === "zh" ? "选择服务" : "Select service";
+  if (bizType === "education" || bizType === "property")
+    return lang === "ms" ? "Buat pertanyaan" : lang === "zh" ? "查询" : "Enquire";
+  if (bizType === "freelance") return lang === "ms" ? "Tempah" : lang === "zh" ? "预订" : "Book";
+  return lang === "ms" ? "Pilih" : lang === "zh" ? "选择" : "Select";
+}
+
+function DetailSheet({
+  product,
+  isRetailish,
+  addLabel,
+  onClose,
+  onAdd,
+  lang,
+}: {
+  product: Product;
+  isRetailish: boolean;
+  addLabel: string;
+  onClose: () => void;
+  onAdd: (line: CartLine) => void;
+  lang: "en" | "ms" | "zh";
+}) {
+  const hasVariants = product.variants && product.variants.length > 0;
+  const [selectedVariantIdx, setSelectedVariantIdx] = useState<number>(0);
+  const [qty, setQty] = useState<number>(1);
+
+  const variant = hasVariants ? product.variants[selectedVariantIdx] : null;
+  const unitPrice = variant ? Number(variant.price) : Number(product.price ?? 0);
+
+  const handleAdd = () => {
+    onAdd({
+      productId: product.id,
+      product: product.name,
+      variant: variant ? variant.name : "",
+      unit_price: unitPrice,
+      quantity: isRetailish ? Math.max(1, qty) : 1,
+      image_url: product.image_url,
+    });
+  };
+
+  const variantsLabel = lang === "ms" ? "Pilihan" : lang === "zh" ? "选项" : "Options";
+  const qtyLabel = lang === "ms" ? "Kuantiti" : lang === "zh" ? "数量" : "Quantity";
+  const durationLabel = lang === "ms" ? "Tempoh" : lang === "zh" ? "时长" : "Duration";
+  const mins = lang === "ms" ? "minit" : lang === "zh" ? "分钟" : "min";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
+      <div
+        className="w-full max-w-[420px] max-h-[92vh] bg-background rounded-t-3xl overflow-y-auto pb-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative">
+          <div className="aspect-[4/3] w-full bg-muted/40 overflow-hidden">
+            {product.image_url ? (
+              <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center text-6xl text-muted-foreground/30">
+                {isRetailish ? "🛍️" : "✨"}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-3 right-3 h-9 w-9 rounded-full bg-background/90 backdrop-blur text-base"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="px-5 pt-4 space-y-3">
+          {product.category && (
+            <p className="text-[10px] font-semibold tracking-wider uppercase text-primary/80">
+              {product.category}
+            </p>
+          )}
+          <h2 className="text-xl font-bold leading-tight">{product.name}</h2>
+          {product.duration_minutes ? (
+            <p className="text-xs text-muted-foreground">
+              {durationLabel}: {product.duration_minutes} {mins}
+            </p>
+          ) : null}
+          {product.description && (
+            <p className="text-sm text-foreground/80 whitespace-pre-wrap">{product.description}</p>
+          )}
+
+          {hasVariants && (
+            <div className="space-y-2 pt-1">
+              <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+                {variantsLabel}
+              </p>
+              <div className="space-y-1.5">
+                {product.variants.map((v, idx) => {
+                  const active = idx === selectedVariantIdx;
+                  return (
+                    <button
+                      type="button"
+                      key={(v.id ?? "") + idx}
+                      onClick={() => setSelectedVariantIdx(idx)}
+                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl border transition-colors ${
+                        active ? "bg-primary/10 border-primary" : "bg-card border-border"
+                      }`}
+                    >
+                      <span className="text-sm font-medium">{v.name}</span>
+                      <span className="text-sm font-bold text-primary">RM {Number(v.price).toFixed(2)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {isRetailish && (
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-xs font-semibold text-muted-foreground">{qtyLabel}</span>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-9 w-9 rounded-full bg-muted text-base font-bold">−</button>
+                <span className="w-8 text-center text-sm font-semibold">{qty}</span>
+                <button type="button" onClick={() => setQty((q) => Math.min(99, q + 1))} className="h-9 w-9 rounded-full bg-primary text-primary-foreground text-base font-bold">+</button>
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleAdd}
+            className="w-full mt-3 py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] flex items-center justify-between px-5"
+          >
+            <span>{addLabel}</span>
+            <span>RM {(unitPrice * (isRetailish ? qty : 1)).toFixed(2)}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PofStyles() {
+  return (
+    <style>{`
+      .pof-input {
+        width: 100%;
+        border-radius: 14px;
+        background: hsl(var(--card));
+        border: 1px solid hsl(var(--border));
+        padding: 12px 14px;
+        font-size: 14px;
+        outline: none;
+        color: hsl(var(--foreground));
+      }
+      .pof-input:focus { border-color: hsl(var(--primary)); box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15); }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { scrollbar-width: none; }
+    `}</style>
   );
 }
