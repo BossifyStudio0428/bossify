@@ -50,7 +50,7 @@ function ProfilePage() {
   const { user, signOut } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
-  const { isPro, isStarter, isLifetime, hasFullAccess, ordersUsed, showUpgrade } =
+  const { isPro, isStarter, isLifetime, hasFullAccess, ordersUsed, ordersLimit, showUpgrade } =
     useSubscription();
   const { theme, toggle: toggleTheme } = useTheme();
   const { type: bizType } = useBusinessType();
@@ -380,7 +380,7 @@ function ProfilePage() {
             onClick={() => navigate({ to: "/plans" })}
             className="mt-2 text-[11px] text-primary font-semibold underline"
           >
-            {t("orders_used").replace("{x}", String(ordersUsed))} → {t("upgrade_to_pro")}
+            {t("orders_used").replace("{x}", String(ordersUsed)).replace("{limit}", String(ordersLimit))} → {t("upgrade_to_pro")}
           </button>
         )}
         <p className="mt-2 text-xs text-muted-foreground">
