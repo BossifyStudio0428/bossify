@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { pofSectionTitleKey, pofDescKey, type BizType } from "@/lib/businessType";
+import { getPublicOrigin } from "@/lib/publicUrl";
 
 export const Route = createFileRoute("/order-form")({ component: OrderFormPage });
 
@@ -37,9 +38,7 @@ function OrderFormPage() {
     return () => { cancelled = true; };
   }, [user]);
 
-  const link = code
-    ? `${typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app"}/order/${code}`
-    : "";
+  const link = code ? `${getPublicOrigin()}/order/${code}` : "";
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(link)}`;
 
   return (
