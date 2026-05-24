@@ -741,25 +741,26 @@ function DetailSheet({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
       <div
-        className="w-full max-w-[420px] max-h-[92vh] bg-background rounded-t-3xl overflow-y-auto pb-6"
+        className="pof-scope w-full max-w-[420px] max-h-[92vh] bg-background rounded-t-3xl overflow-y-auto pb-6 animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative">
-          <div className="aspect-[4/3] w-full bg-muted/40 overflow-hidden">
+          <div className="aspect-square w-full bg-muted/40 overflow-hidden">
             {product.image_url ? (
               <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
             ) : (
-              <div className="h-full w-full flex items-center justify-center text-6xl text-muted-foreground/30">
-                {isRetailish ? "🛍️" : "✨"}
+              <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
+                <ShoppingBag size={64} />
               </div>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-3 right-3 h-9 w-9 rounded-full bg-background/90 backdrop-blur text-base"
+            className="absolute top-3 right-3 h-9 w-9 rounded-full bg-background/95 backdrop-blur shadow flex items-center justify-center"
+            aria-label="Close"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
 
@@ -809,9 +810,9 @@ function DetailSheet({
             <div className="flex items-center justify-between pt-1">
               <span className="text-xs font-semibold text-muted-foreground">{qtyLabel}</span>
               <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-9 w-9 rounded-full bg-muted text-base font-bold">−</button>
+                <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-9 w-9 rounded-full bg-muted flex items-center justify-center"><Minus size={16} /></button>
                 <span className="w-8 text-center text-sm font-semibold">{qty}</span>
-                <button type="button" onClick={() => setQty((q) => Math.min(99, q + 1))} className="h-9 w-9 rounded-full bg-primary text-primary-foreground text-base font-bold">+</button>
+                <button type="button" onClick={() => setQty((q) => Math.min(99, q + 1))} className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center"><Plus size={16} strokeWidth={3} /></button>
               </div>
             </div>
           )}
@@ -819,7 +820,7 @@ function DetailSheet({
           <button
             type="button"
             onClick={handleAdd}
-            className="w-full mt-3 py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] flex items-center justify-between px-5"
+            className="w-full mt-3 py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg flex items-center justify-between px-5 active:scale-[0.99] transition-transform"
           >
             <span>{addLabel}</span>
             <span>RM {(unitPrice * (isRetailish ? qty : 1)).toFixed(2)}</span>
@@ -833,6 +834,26 @@ function DetailSheet({
 function PofStyles() {
   return (
     <style>{`
+      .pof-scope {
+        --background: 0 0% 100%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
+        --muted: 240 6% 96%;
+        --muted-foreground: 215 16% 47%;
+        --border: 240 6% 92%;
+        --primary: 262 83% 58%;
+        --primary-foreground: 0 0% 100%;
+        background: hsl(var(--background));
+        color: hsl(var(--foreground));
+      }
+      .pof-hero {
+        background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+      }
+      .pof-card {
+        border: 1px solid hsl(var(--border));
+        box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.04);
+      }
       .pof-input {
         width: 100%;
         border-radius: 14px;
@@ -846,6 +867,15 @@ function PofStyles() {
       .pof-input:focus { border-color: hsl(var(--primary)); box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15); }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { scrollbar-width: none; }
+
+      @keyframes pof-slide-up { from { transform: translateY(100%);} to { transform: translateY(0);} }
+      .animate-slide-up { animation: pof-slide-up 0.28s ease-out; }
+
+      .pof-check-wrap { width: 96px; height: 96px; border-radius: 50%; background: hsl(142 72% 95%); display:flex; align-items:center; justify-content:center; }
+      .pof-check { width: 64px; height: 64px; }
+      .pof-check-circle { stroke: hsl(142 71% 45%); stroke-width: 3; stroke-dasharray: 166; stroke-dashoffset: 166; animation: pof-stroke 0.6s cubic-bezier(0.65,0,0.45,1) forwards; }
+      .pof-check-path { stroke: hsl(142 71% 45%); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 48; stroke-dashoffset: 48; animation: pof-stroke 0.4s 0.5s cubic-bezier(0.65,0,0.45,1) forwards; }
+      @keyframes pof-stroke { to { stroke-dashoffset: 0; } }
     `}</style>
   );
 }
