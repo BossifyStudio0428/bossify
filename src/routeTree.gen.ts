@@ -45,6 +45,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 import { Route as OrderCodeRouteImport } from './routes/order.$code'
+import { Route as InventoryItemIdRouteImport } from './routes/inventory.$itemId'
 import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
@@ -230,6 +231,11 @@ const OrderCodeRoute = OrderCodeRouteImport.update({
   path: '/order/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InventoryItemIdRoute = InventoryItemIdRouteImport.update({
+  id: '/$itemId',
+  path: '/$itemId',
+  getParentRoute: () => InventoryRoute,
+} as any)
 const ForgotPasswordVerifyRoute = ForgotPasswordVerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
@@ -264,7 +270,7 @@ export interface FileRoutesByFullPath {
   '/data-deletion': typeof DataDeletionRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
-  '/inventory': typeof InventoryRoute
+  '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
@@ -291,6 +297,7 @@ export interface FileRoutesByFullPath {
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
+  '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
 }
@@ -306,7 +313,7 @@ export interface FileRoutesByTo {
   '/data-deletion': typeof DataDeletionRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
-  '/inventory': typeof InventoryRoute
+  '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
@@ -333,6 +340,7 @@ export interface FileRoutesByTo {
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
+  '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
 }
@@ -349,7 +357,7 @@ export interface FileRoutesById {
   '/data-deletion': typeof DataDeletionRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
-  '/inventory': typeof InventoryRoute
+  '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
@@ -376,6 +384,7 @@ export interface FileRoutesById {
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
+  '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
 }
@@ -420,6 +429,7 @@ export interface FileRouteTypes {
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
+    | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
   fileRoutesByTo: FileRoutesByTo
@@ -462,6 +472,7 @@ export interface FileRouteTypes {
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
+    | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
   id:
@@ -504,6 +515,7 @@ export interface FileRouteTypes {
     | '/customer/$customerId'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
+    | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
   fileRoutesById: FileRoutesById
@@ -520,7 +532,7 @@ export interface RootRouteChildren {
   DataDeletionRoute: typeof DataDeletionRoute
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
   ImportOrdersRoute: typeof ImportOrdersRoute
-  InventoryRoute: typeof InventoryRoute
+  InventoryRoute: typeof InventoryRouteWithChildren
   LanguageRoute: typeof LanguageRoute
   NewOrderRoute: typeof NewOrderRoute
   NotificationSettingsRoute: typeof NotificationSettingsRoute
@@ -802,6 +814,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inventory/$itemId': {
+      id: '/inventory/$itemId'
+      path: '/$itemId'
+      fullPath: '/inventory/$itemId'
+      preLoaderRoute: typeof InventoryItemIdRouteImport
+      parentRoute: typeof InventoryRoute
+    }
     '/forgot-password/verify': {
       id: '/forgot-password/verify'
       path: '/verify'
@@ -847,6 +866,18 @@ const ForgotPasswordRouteWithChildren = ForgotPasswordRoute._addFileChildren(
   ForgotPasswordRouteChildren,
 )
 
+interface InventoryRouteChildren {
+  InventoryItemIdRoute: typeof InventoryItemIdRoute
+}
+
+const InventoryRouteChildren: InventoryRouteChildren = {
+  InventoryItemIdRoute: InventoryItemIdRoute,
+}
+
+const InventoryRouteWithChildren = InventoryRoute._addFileChildren(
+  InventoryRouteChildren,
+)
+
 interface OrdersRouteChildren {
   OrdersOrderIdRoute: typeof OrdersOrderIdRoute
 }
@@ -870,7 +901,7 @@ const rootRouteChildren: RootRouteChildren = {
   DataDeletionRoute: DataDeletionRoute,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
   ImportOrdersRoute: ImportOrdersRoute,
-  InventoryRoute: InventoryRoute,
+  InventoryRoute: InventoryRouteWithChildren,
   LanguageRoute: LanguageRoute,
   NewOrderRoute: NewOrderRoute,
   NotificationSettingsRoute: NotificationSettingsRoute,
