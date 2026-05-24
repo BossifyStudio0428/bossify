@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useI18n } from "@/contexts/I18nContext";
+import { useI18n, type Lang } from "@/contexts/I18nContext";
 import {
   getPublicOrderForm,
   submitPublicOrder,
 } from "@/lib/public-order.functions";
-import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check } from "lucide-react";
+import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe } from "lucide-react";
 
 export const Route = createFileRoute("/order/$code")({
   component: PublicOrderFormPage,
@@ -57,6 +57,30 @@ function PublicOrderFormPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<null | { name: string; code: string; business: string }>(null);
 
+  // Language picker: shown first if customer hasn't chosen for this session
+  const [langPicked, setLangPicked] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return sessionStorage.getItem("pof_lang_picked") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const userPickedRef = useRef<boolean>(langPicked);
+
+  const pickLang = (l: Lang) => {
+    userPickedRef.current = true;
+    setLang(l);
+    try {
+      sessionStorage.setItem("pof_lang_picked", "1");
+    } catch {
+      /* ignore */
+    }
+    setLangPicked(true);
+    setShowLangMenu(false);
+  };
+
   const [activeCategory, setActiveCategory] = useState<string>("__all");
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -96,7 +120,11 @@ function PublicOrderFormPage() {
           profile: res.profile,
           products: res.products as Product[],
         });
-        if (res.profile.language === "en" || res.profile.language === "ms" || res.profile.language === "zh") {
+        // Only auto-apply seller's language if the customer hasn't chosen their own
+        if (
+          !userPickedRef.current &&
+          (res.profile.language === "en" || res.profile.language === "ms" || res.profile.language === "zh")
+        ) {
           setLang(res.profile.language);
         }
       } catch {
@@ -216,6 +244,45 @@ function PublicOrderFormPage() {
           <p className="text-sm text-muted-foreground mt-2">
             {state.reason === "disabled" ? t("pof_form_disabled_sub") : t("pof_not_found_sub")}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Language picker screen ----
+  if (!langPicked) {
+    return (
+      <div className="pof-scope min-h-screen flex items-center justify-center px-6">
+        <PofStyles />
+        <div className="w-full max-w-sm text-center">
+          <div className="mx-auto mb-6 h-16 w-16 rounded-2xl pof-hero text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+            B
+          </div>
+          <h1 className="text-xl font-bold">Bossify</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Choose your language · Pilih bahasa · 选择语言
+          </p>
+          <div className="mt-8 space-y-2.5">
+            {([
+              { code: "en" as Lang, label: "English", sub: "Continue in English" },
+              { code: "ms" as Lang, label: "Bahasa Malaysia", sub: "Teruskan dalam Bahasa Malaysia" },
+              { code: "zh" as Lang, label: "中文", sub: "继续使用中文" },
+            ]).map((opt) => (
+              <button
+                key={opt.code}
+                type="button"
+                onClick={() => pickLang(opt.code)}
+                className="w-full px-5 py-4 rounded-2xl border border-border bg-card text-left active:scale-[0.99] transition-transform flex items-center justify-between"
+              >
+                <span>
+                  <span className="block text-sm font-bold">{opt.label}</span>
+                  <span className="block text-[11px] text-muted-foreground mt-0.5">{opt.sub}</span>
+                </span>
+                <span className="text-primary text-lg">→</span>
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-10">Powered by Bossify 💜</p>
         </div>
       </div>
     );
@@ -353,10 +420,17 @@ function PublicOrderFormPage() {
                   initials
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-[11px] uppercase tracking-wider text-white/70">{t(formMeta.titleKey)}</p>
                 <h1 className="text-lg font-bold truncate">{profile.business_name}</h1>
               </div>
+              <LangSwitcher
+                lang={lang}
+                open={showLangMenu}
+                onToggle={() => setShowLangMenu((v) => !v)}
+                onPick={pickLang}
+                variant="hero"
+              />
             </div>
             <p className="mt-4 text-xs text-white/80">{browseLabel}</p>
           </header>
@@ -492,10 +566,17 @@ function PublicOrderFormPage() {
           >
             <ArrowLeft size={16} />
           </button>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold">{checkoutLabel}</h1>
             <p className="text-[11px] text-muted-foreground">{t(formMeta.taglineKey)}</p>
           </div>
+          <LangSwitcher
+            lang={lang}
+            open={showLangMenu}
+            onToggle={() => setShowLangMenu((v) => !v)}
+            onPick={pickLang}
+            variant="plain"
+          />
         </header>
 
         {/* Cart summary */}
@@ -685,6 +766,63 @@ function CategoryChip({ label, active, onClick }: { label: string; active: boole
     >
       {label}
     </button>
+  );
+}
+
+function LangSwitcher({
+  lang,
+  open,
+  onToggle,
+  onPick,
+  variant,
+}: {
+  lang: Lang;
+  open: boolean;
+  onToggle: () => void;
+  onPick: (l: Lang) => void;
+  variant: "hero" | "plain";
+}) {
+  const label = lang === "ms" ? "BM" : lang === "zh" ? "中" : "EN";
+  const btnClass =
+    variant === "hero"
+      ? "h-9 px-2.5 rounded-full bg-white/15 backdrop-blur ring-1 ring-white/30 text-white flex items-center gap-1.5 text-[11px] font-semibold"
+      : "h-9 px-2.5 rounded-full bg-card border border-border flex items-center gap-1.5 text-[11px] font-semibold";
+  return (
+    <div className="relative">
+      <button type="button" onClick={onToggle} className={btnClass} aria-label="Language">
+        <Globe size={14} />
+        <span>{label}</span>
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-label="Close language menu"
+            className="fixed inset-0 z-40"
+            onClick={onToggle}
+          />
+          <div className="absolute right-0 top-full mt-2 z-50 w-44 rounded-2xl bg-card border border-border shadow-lg overflow-hidden">
+            {([
+              { code: "en" as Lang, label: "English" },
+              { code: "ms" as Lang, label: "Bahasa Malaysia" },
+              { code: "zh" as Lang, label: "中文" },
+            ]).map((opt) => (
+              <button
+                key={opt.code}
+                type="button"
+                onClick={() => onPick(opt.code)}
+                className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between ${
+                  lang === opt.code ? "bg-primary/10 text-primary font-semibold" : "text-foreground"
+                }`}
+              >
+                <span>{opt.label}</span>
+                {lang === opt.code && <Check size={14} />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
