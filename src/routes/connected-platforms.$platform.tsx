@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Check } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ChevronLeft, Check, Loader2 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { getPlatform, type PlatformKey } from "@/lib/platforms";
+import { getPlatform } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
+import {
+  startPlatformConnect,
+  disconnectPlatform,
+  getPlatformConnection,
+} from "@/lib/platformConnect.functions";
 
 export const Route = createFileRoute("/connected-platforms/$platform")({
   component: PlatformConnectPage,
@@ -17,22 +22,60 @@ function PlatformConnectPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const [sheetMessage, setSheetMessage] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+  const [connection, setConnection] = useState<null | {
+    platform_shop_name: string | null;
+    status: string;
+    last_synced_at: string | null;
+  }>(null);
 
   const cfg = getPlatform(platform);
+  const startConnect = useServerFn(startPlatformConnect);
+  const disconnect = useServerFn(disconnectPlatform);
+  const getConnection = useServerFn(getPlatformConnection);
 
   useEffect(() => {
     if (!user || !cfg) return;
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("connected_platforms" as any)
-        .eq("id", user.id)
-        .maybeSingle();
-      const cp = ((data as any)?.connected_platforms ?? {}) as Record<PlatformKey, boolean>;
-      setConnected(!!cp[cfg.key]);
+      try {
+        const { connection: c } = await getConnection({
+          data: { platform: cfg.key as any },
+        });
+        setConnection(c as any);
+      } catch {
+        setConnection(null);
+      }
     })();
-  }, [user, cfg]);
+  }, [user, cfg, getConnection]);
+
+  const connected = connection?.status === "active";
+
+  const handleConnect = async () => {
+    if (!cfg) return;
+    setBusy(true);
+    try {
+      const { authUrl } = await startConnect({ data: { platform: cfg.key as any } });
+      // Full-page redirect so the OAuth callback can return here.
+      window.location.href = authUrl;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setSheetMessage(msg);
+      setSheetOpen(true);
+      setBusy(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!cfg) return;
+    setBusy(true);
+    try {
+      await disconnect({ data: { platform: cfg.key as any } });
+      setConnection(null);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (!cfg) {
     return (
@@ -87,10 +130,12 @@ function PlatformConnectPage() {
 
       <button
         type="button"
-        onClick={() => setSheetOpen(true)}
-        className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99]"
+        disabled={busy}
+        onClick={connected ? handleDisconnect : handleConnect}
+        className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2"
       >
-        {cfg.connectLabel[lang]}
+        {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+        {connected ? "Disconnect" : cfg.connectLabel[lang]}
       </button>
 
       {sheetOpen && (
@@ -103,10 +148,14 @@ function PlatformConnectPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto h-1 w-10 rounded-full bg-muted" />
-            <p className="text-lg font-bold text-foreground py-1">{t("coming_soon_title")}</p>
-            <p className="text-sm text-muted-foreground">{cfg.comingSoonMsg[lang]}</p>
+            <p className="text-lg font-bold text-foreground py-1">
+              {sheetMessage ? "Connection error" : t("coming_soon_title")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {sheetMessage || cfg.comingSoonMsg[lang]}
+            </p>
             <button
-              onClick={() => setSheetOpen(false)}
+              onClick={() => { setSheetOpen(false); setSheetMessage(""); }}
               className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm"
             >
               OK
