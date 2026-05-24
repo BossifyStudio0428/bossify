@@ -6,6 +6,7 @@ import {
   getPublicOrderForm,
   submitPublicOrder,
 } from "@/lib/public-order.functions";
+import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check } from "lucide-react";
 
 export const Route = createFileRoute("/order/$code")({
   component: PublicOrderFormPage,
@@ -196,7 +197,8 @@ function PublicOrderFormPage() {
 
   if (state.status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="pof-scope min-h-screen flex items-center justify-center">
+        <PofStyles />
         <p className="text-sm text-muted-foreground">{t("loading")}</p>
       </div>
     );
@@ -204,7 +206,8 @@ function PublicOrderFormPage() {
 
   if (state.status === "error") {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 bg-background">
+      <div className="pof-scope min-h-screen flex items-center justify-center px-6">
+        <PofStyles />
         <div className="text-center max-w-sm">
           <div className="text-5xl mb-3">😢</div>
           <h1 className="text-xl font-bold">
@@ -220,17 +223,24 @@ function PublicOrderFormPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
+      <div className="pof-scope min-h-screen flex flex-col items-center justify-center px-6">
+        <PofStyles />
         <div className="text-center max-w-sm">
-          <div className="mx-auto h-20 w-20 rounded-full bg-emerald-500/15 flex items-center justify-center text-5xl mb-5">
-            ✅
+          <div className="pof-check-wrap mx-auto mb-6">
+            <svg className="pof-check" viewBox="0 0 52 52">
+              <circle className="pof-check-circle" cx="26" cy="26" r="24" fill="none" />
+              <path className="pof-check-path" fill="none" d="M14 27 l8 8 l16 -18" />
+            </svg>
           </div>
           <h1 className="text-2xl font-bold">
             {t("pof_thanks").replace("{name}", done.name)} 🎉
           </h1>
           <p className="text-sm text-muted-foreground mt-3">{t("pof_will_contact")}</p>
-          <p className="text-sm font-semibold text-foreground mt-4">— {done.business}</p>
-          <p className="text-[11px] text-muted-foreground mt-2 font-mono">{done.code}</p>
+          <div className="mt-6 rounded-2xl border border-border bg-card px-5 py-4">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Order</p>
+            <p className="text-sm font-mono font-semibold mt-1">{done.code}</p>
+            <p className="text-xs text-muted-foreground mt-2">— {done.business}</p>
+          </div>
         </div>
         <p className="text-[11px] text-muted-foreground mt-10">
           {lang === "ms" ? "Dikuasakan oleh" : lang === "zh" ? "由" : "Powered by"} Bossify 💜
@@ -331,20 +341,27 @@ function PublicOrderFormPage() {
   // ---- Catalog screen ----
   if (!showCheckout) {
     return (
-      <div className="min-h-screen bg-background flex justify-center pb-24">
-        <div className="w-full max-w-[420px] px-5 pt-10 space-y-5">
-          <header className="flex flex-col items-center text-center">
-            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-2xl font-bold shadow-[var(--shadow-soft)] overflow-hidden">
-              {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initials
-              )}
+      <div className="pof-scope min-h-screen flex justify-center pb-28">
+        <div className="w-full max-w-[420px]">
+          {/* Hero header */}
+          <header className="pof-hero px-5 pt-10 pb-6 rounded-b-3xl text-white">
+            <div className="flex items-center gap-3">
+              <div className="h-14 w-14 rounded-2xl bg-white/15 backdrop-blur ring-1 ring-white/30 flex items-center justify-center text-lg font-bold overflow-hidden">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initials
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-wider text-white/70">{t(formMeta.titleKey)}</p>
+                <h1 className="text-lg font-bold truncate">{profile.business_name}</h1>
+              </div>
             </div>
-            <p className="mt-2 text-sm font-medium text-muted-foreground">{profile.business_name}</p>
-            <h1 className="mt-1 text-xl font-bold">{t(formMeta.titleKey)}</h1>
-            <p className="text-xs text-muted-foreground mt-1">{browseLabel}</p>
+            <p className="mt-4 text-xs text-white/80">{browseLabel}</p>
           </header>
+
+          <div className="px-5 pt-5 space-y-5">
 
           {noProducts ? (
             <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-xs text-muted-foreground">
@@ -382,34 +399,46 @@ function PublicOrderFormPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 {filteredProducts.map((p) => (
-                  <button
+                  <div
                     key={p.id}
-                    type="button"
-                    onClick={() => setOpenProduct(p)}
-                    className="text-left rounded-2xl border border-border bg-card overflow-hidden active:scale-[0.98] transition-transform"
+                    className="relative rounded-2xl bg-card overflow-hidden pof-card"
                   >
-                    <div className="aspect-square w-full bg-muted/40 overflow-hidden">
-                      {p.image_url ? (
-                        <img src={p.image_url} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center text-3xl text-muted-foreground/40">
-                          {isRetailish ? "🛍️" : "✨"}
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-2.5 space-y-1">
-                      {p.category && (
-                        <p className="text-[9px] font-semibold tracking-wider uppercase text-primary/80 truncate">
-                          {p.category}
+                    <button
+                      type="button"
+                      onClick={() => setOpenProduct(p)}
+                      className="block w-full text-left active:scale-[0.98] transition-transform"
+                    >
+                      <div className="aspect-square w-full bg-muted/40 overflow-hidden">
+                        {p.image_url ? (
+                          <img src={p.image_url} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-muted-foreground/40">
+                            <ShoppingBag size={32} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3 pb-12 space-y-1">
+                        {p.category && (
+                          <p className="text-[9px] font-semibold tracking-wider uppercase text-primary/80 truncate">
+                            {p.category}
+                          </p>
+                        )}
+                        <p className="text-[13px] font-semibold leading-tight line-clamp-2 min-h-[2.4em]">{p.name}</p>
+                        <p className="text-sm font-bold text-primary">
+                          {p.variants && p.variants.length > 0 ? "from " : ""}
+                          RM {Number(p.price || (p.variants?.[0]?.price ?? 0)).toFixed(2)}
                         </p>
-                      )}
-                      <p className="text-[13px] font-semibold leading-tight line-clamp-2">{p.name}</p>
-                      <p className="text-xs font-bold text-primary">
-                        {p.variants && p.variants.length > 0 ? "from " : ""}
-                        RM {Number(p.price || (p.variants?.[0]?.price ?? 0)).toFixed(2)}
-                      </p>
-                    </div>
-                  </button>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOpenProduct(p)}
+                      aria-label={addLabel}
+                      className="absolute bottom-2.5 right-2.5 h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                    >
+                      <Plus size={18} strokeWidth={3} />
+                    </button>
+                  </div>
                 ))}
               </div>
             </>
@@ -418,6 +447,7 @@ function PublicOrderFormPage() {
           <p className="text-[10px] text-center text-muted-foreground pt-2">
             {lang === "ms" ? "Dikuasakan oleh" : lang === "zh" ? "由" : "Powered by"} Bossify
           </p>
+          </div>
         </div>
 
         {cart.length > 0 && (
@@ -425,10 +455,18 @@ function PublicOrderFormPage() {
             <button
               type="button"
               onClick={() => setShowCheckout(true)}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] flex items-center justify-between px-5"
+              className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg flex items-center justify-between px-5 active:scale-[0.99] transition-transform"
             >
-              <span>
-                {viewCartLabel} {isRetailish ? `· ${cartCount}` : ""}
+              <span className="flex items-center gap-2.5">
+                <span className="relative inline-flex h-8 w-8 rounded-full bg-white/20 items-center justify-center">
+                  <ShoppingCart size={16} />
+                  {isRetailish && (
+                    <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 rounded-full bg-white text-primary text-[10px] font-bold flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
+                </span>
+                {viewCartLabel}
               </span>
               <span>RM {cartTotal.toFixed(2)}</span>
             </button>
@@ -443,16 +481,16 @@ function PublicOrderFormPage() {
 
   // ---- Checkout screen ----
   return (
-    <div className="min-h-screen bg-background flex justify-center">
-      <div className="w-full max-w-[420px] px-5 pt-10 pb-10 space-y-5">
-        <header className="flex items-center gap-3">
+    <div className="pof-scope min-h-screen flex justify-center">
+      <div className="w-full max-w-[420px] px-5 pt-8 pb-10 space-y-5">
+        <header className="flex items-center gap-3 sticky top-0 -mx-5 px-5 py-3 bg-background/90 backdrop-blur z-10">
           <button
             type="button"
             onClick={() => setShowCheckout(false)}
             className="h-9 w-9 rounded-full bg-card border border-border flex items-center justify-center text-sm"
             aria-label="Back"
           >
-            ←
+            <ArrowLeft size={16} />
           </button>
           <div>
             <h1 className="text-lg font-bold">{checkoutLabel}</h1>
@@ -609,7 +647,7 @@ function PublicOrderFormPage() {
           <button
             type="submit"
             disabled={submitting || cart.length === 0}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] disabled:opacity-60"
+            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg disabled:opacity-60 active:scale-[0.99] transition-transform"
           >
             {submitting ? t("saving") : t(submitLabelKey)}
           </button>
