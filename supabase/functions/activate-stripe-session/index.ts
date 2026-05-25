@@ -18,11 +18,9 @@ const PRICE_TO_PLAN: Record<
   price_1TYR1lHkpW03osRD3sRkqZcL: { plan: "lifetime", cycle: "one" },
 };
 
-const APP_SUPABASE_URL =
-  Deno.env.get("APP_SUPABASE_URL") ?? "https://knouahqwazerjiyiqgmh.supabase.co";
-const APP_SUPABASE_ANON_KEY =
-  Deno.env.get("APP_SUPABASE_ANON_KEY") ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
+const APP_SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const APP_SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+const APP_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -39,6 +37,12 @@ Deno.serve(async (req) => {
     }
 
     const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY")!;
+    if (!APP_SUPABASE_URL || !APP_SUPABASE_ANON_KEY || !APP_SERVICE_ROLE_KEY) {
+      return new Response(JSON.stringify({ error: "Backend configuration missing" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const authHeader = req.headers.get("authorization") ?? "";
 
     const userClient = createClient(APP_SUPABASE_URL, APP_SUPABASE_ANON_KEY, {
@@ -104,7 +108,10 @@ Deno.serve(async (req) => {
       row.current_period_end = null;
     }
 
-    const { error } = await userClient.from("subscriptions").upsert(row, { onConflict: "user_id" });
+    const adminClient = createClient(APP_SUPABASE_URL, APP_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await adminClient.from("subscriptions").upsert(row, { onConflict: "user_id" });
     if (error) throw error;
 
     return new Response(JSON.stringify({ activated: true, plan: planInfo.plan }), {

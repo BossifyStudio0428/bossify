@@ -1,17 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createClient } from "@supabase/supabase-js";
-
-const PUBLIC_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
-const PUBLIC_SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
-
-function getPublicClient() {
-  const serviceKey = process.env.APP_SUPABASE_SERVICE_ROLE_KEY;
-  return createClient(PUBLIC_SUPABASE_URL, serviceKey || PUBLIC_SUPABASE_ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
+import { getPublicOrderClient } from "./public-order.server";
 
 const CODE_RE = /^[a-z0-9_-]{4,32}$/i;
 
@@ -51,7 +40,7 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
     return z.object({ code: z.string().regex(CODE_RE) }).parse(input);
   })
   .handler(async ({ data }) => {
-    const sb = getPublicClient() as any;
+    const sb = getPublicOrderClient() as any;
     const { data: profile, error } = await sb
       .from("profiles")
       .select(
@@ -136,7 +125,7 @@ function genCode() {
 export const submitPublicOrder = createServerFn({ method: "POST" })
   .inputValidator((input) => SubmitSchema.parse(input))
   .handler(async ({ data }) => {
-    const sb = getPublicClient() as any;
+    const sb = getPublicOrderClient() as any;
 
     const { data: profile, error: pErr } = await sb
       .from("profiles")

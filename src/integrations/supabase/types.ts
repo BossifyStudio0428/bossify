@@ -683,9 +683,52 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      can_assign_team_invitation_role: {
+        Args: { _actor_id: string; _role: string; _team_id: string }
+        Returns: boolean
+      }
+      can_assign_team_role: {
+        Args: {
+          _actor_id: string
+          _role: string
+          _target_user_id: string
+          _team_id: string
+        }
+        Returns: boolean
+      }
+      can_manage_team_member:
+        | {
+            Args: {
+              _actor_id: string
+              _target_user_id: string
+              _team_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _actor_id: string
+              _target_role: string
+              _target_user_id: string
+              _team_id: string
+            }
+            Returns: boolean
+          }
       device_limit_for_plan: { Args: { _plan: string }; Returns: number }
       device_limit_for_user: { Args: { _user_id: string }; Returns: number }
+      is_active_team_member: {
+        Args: { _actor_id: string; _team_id: string }
+        Returns: boolean
+      }
       is_admin: { Args: never; Returns: boolean }
+      is_team_admin: {
+        Args: { _actor_id: string; _team_id: string }
+        Returns: boolean
+      }
+      is_team_owner: {
+        Args: { _actor_id: string; _team_id: string }
+        Returns: boolean
+      }
       send_followup_reminders: { Args: never; Returns: undefined }
       trigger_push_kind: { Args: { _kind: string }; Returns: undefined }
     }
