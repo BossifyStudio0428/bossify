@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
+import { deductInventoryStock } from "./deductStock";
 
 const PUBLIC_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
 const PUBLIC_SUPABASE_ANON_KEY =
