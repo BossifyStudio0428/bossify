@@ -25,6 +25,8 @@ import {
   STARTER_FALLBACK_PRICES,
   TEAM_PRODUCT_IDS,
   TEAM_FALLBACK_PRICES,
+  ALL_TEAM_PRODUCT_IDS,
+  teamProductLookup,
   type TeamTier,
   type BillingError,
 } from "@/lib/billing";
