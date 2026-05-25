@@ -373,6 +373,7 @@ const dict = {
     plan_badge_starter: "Starter Plan 🚀",
     welcome_to_starter: "Welcome to Starter 🚀",
     starter_restored: "Starter access restored",
+    team_restored: "Team plan restored",
     // Business Profile
     photo_max_5mb: "Max 5MB",
     photo_updated: "Photo updated!",
@@ -1365,6 +1366,7 @@ const dict = {
     plan_badge_starter: "Pelan Starter 🚀",
     welcome_to_starter: "Selamat datang ke Starter 🚀",
     starter_restored: "Akses Starter dipulihkan",
+    team_restored: "Pelan Pasukan dipulihkan",
     photo_max_5mb: "Maksimum 5MB",
     photo_updated: "Foto dikemaskini!",
     profile_updated: "Profil dikemaskini!",
@@ -2345,6 +2347,7 @@ const dict = {
     plan_badge_starter: "入门版 🚀",
     welcome_to_starter: "欢迎使用入门版 🚀",
     starter_restored: "入门版使用权已恢复",
+    team_restored: "团队版使用权已恢复",
     photo_max_5mb: "最大 5MB",
     photo_updated: "照片已更新！",
     profile_updated: "资料已更新！",
