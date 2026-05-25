@@ -195,12 +195,24 @@ function PlansPage() {
   const [scope, setScope] = useState<"individual" | "team">("individual");
   const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | null>(null);
   const [lifetimeConfirmOpen, setLifetimeConfirmOpen] = useState(false);
-  const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual" | "lifetime" | "starter_monthly" | "starter_annual", string>>({
+  type PriceKey =
+    | "monthly" | "annual" | "lifetime"
+    | "starter_monthly" | "starter_annual"
+    | "team_starter_monthly" | "team_starter_annual"
+    | "team_pro_monthly" | "team_pro_annual"
+    | "team_business_monthly" | "team_business_annual";
+  const [storePrices, setStorePrices] = useState<Record<PriceKey, string>>({
     monthly: FALLBACK_PRICES.monthly,
     annual: FALLBACK_PRICES.annual,
     lifetime: LIFETIME_FALLBACK_PRICE,
     starter_monthly: STARTER_FALLBACK_PRICES.monthly,
     starter_annual: STARTER_FALLBACK_PRICES.annual,
+    team_starter_monthly: TEAM_FALLBACK_PRICES.team_starter.monthly,
+    team_starter_annual: TEAM_FALLBACK_PRICES.team_starter.annual,
+    team_pro_monthly: TEAM_FALLBACK_PRICES.team_pro.monthly,
+    team_pro_annual: TEAM_FALLBACK_PRICES.team_pro.annual,
+    team_business_monthly: TEAM_FALLBACK_PRICES.team_business.monthly,
+    team_business_annual: TEAM_FALLBACK_PRICES.team_business.annual,
   });
 
   // Pull locally-formatted prices from Google Play in the background and
