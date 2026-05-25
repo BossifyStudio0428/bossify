@@ -742,6 +742,7 @@ function PlansPage() {
               if (user) {
                 // Lifetime wins — it's a stronger entitlement than a subscription.
                 const lifetimeR = receipts.find((r) => r.productId === LIFETIME_PRODUCT_ID);
+                const teamR = receipts.find((r) => ALL_TEAM_PRODUCT_IDS.includes(r.productId));
                 const proR = receipts.find((r) => r.productId === SUBSCRIPTION_ID);
                 const starterR = receipts.find(
                   (r) => r.productId === STARTER_PRODUCT_IDS.monthly || r.productId === STARTER_PRODUCT_IDS.annual,
@@ -788,6 +789,37 @@ function PlansPage() {
                     dedupeKey: `lifetime_${lifetimeR.transactionId || lifetimeR.purchaseToken || "restored"}`,
                   }).catch(() => {});
                   return;
+                }
+                if (teamR) {
+                  const lookup = teamProductLookup(teamR.productId);
+                  if (lookup) {
+                    const { error: restoreError } = await supabase.from("subscriptions").upsert({
+                      user_id: user.id,
+                      plan: lookup.tier,
+                      status: "active",
+                      provider: "google_play",
+                      provider_product_id: `${teamR.productId}:${lookup.billing}`,
+                      provider_transaction_id: teamR.transactionId,
+                      provider_purchase_token: teamR.purchaseToken ?? null,
+                      current_period_end: teamR.currentPeriodEnd ?? null,
+                    }, { onConflict: "user_id" });
+                    if (restoreError) {
+                      console.error("[billing] Team restore upsert failed:", restoreError);
+                      toast.error(`${t("billing_unknown_error")}: ${restoreError.message}`);
+                      return;
+                    }
+                    await refresh();
+                    toast.success(t("team_restored"));
+                    notifySituation({
+                      kind: "milestone",
+                      title: t("team_restored"),
+                      body: t("team_restored"),
+                      link: "/plans",
+                      prefKey: "notif_milestone",
+                      dedupeKey: `team_${teamR.transactionId || teamR.purchaseToken || "restored"}`,
+                    }).catch(() => {});
+                    return;
+                  }
                 }
                 if (proR) {
                   const { error: restoreError } = await supabase.from("subscriptions").upsert({
