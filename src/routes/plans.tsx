@@ -142,13 +142,14 @@ function PlansPage() {
 
   const freePositive: TKey[] = FREE[eff];
   const freeRows: { ok: boolean; label: string }[] = [
+    { ok: true, label: "1 台设备 / 1 device" },
     ...freePositive.map((k) => ({ ok: true, label: t(k) })),
     // upsell hints (what you don't get on Free)
     { ok: false, label: t("sales_reports") },
     { ok: false, label: t("export_pdf") },
     { ok: false, label: t("wa_template") },
   ];
-  const starterRows = STARTER[eff].map((k) => t(k));
+  const starterRows = ["2 台设备 / 2 devices", ...STARTER[eff].map((k) => t(k))];
   const proRows = PRO[eff].map((k) => t(k));
 
   const handleGooglePlayPurchase = async () => {
@@ -463,6 +464,10 @@ function PlansPage() {
             </p>
           </div>
           <ul className="mt-4 space-y-2">
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <span className="text-foreground">3 台设备 / 3 devices</span>
+            </li>
             {proRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
                 <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -504,6 +509,10 @@ function PlansPage() {
             </p>
           </div>
           <ul className="mt-4 space-y-2">
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+              <span className="text-foreground">5 台设备 / 5 devices</span>
+            </li>
             {proRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
                 <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
