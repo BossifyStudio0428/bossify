@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Users, UserPlus, Trash2, Copy, ArrowLeft } from "lucide-react";
+import { Users, UserPlus, Trash2, Copy, ArrowLeft, LogOut, Crown, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +19,14 @@ type MemberRow = {
   role: "owner" | "admin" | "staff"; status: "active" | "pending" | "removed";
   updated_at: string; joined_at: string | null; invited_by: string | null;
 };
+type InviteRow = {
+  id: string; email: string; role: string; status: string;
+  token: string; expires_at: string; created_at: string;
+};
+type ActivityRow = {
+  id: string; action: string; target_email: string | null;
+  actor_id: string | null; created_at: string;
+};
 
 function planLimit(plan: string) {
   if (plan === "team_starter") return 3;
@@ -33,8 +41,12 @@ function TeamPage() {
   const { plan } = useSubscription();
   const [team, setTeam] = useState<TeamRow | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
+  const [invites, setInvites] = useState<InviteRow[]>([]);
+  const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [tab, setTab] = useState<"members" | "activity">("members");
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
 
   const load = async () => {
     if (!user) return;
@@ -71,6 +83,24 @@ function TeamPage() {
         .neq("status", "removed")
         .order("created_at", { ascending: true });
       setMembers((m as any[]) ?? []);
+      const { data: inv } = await supabase
+        .from("team_invitations")
+        .select("*")
+        .eq("team_id", t.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      setInvites((inv as any[]) ?? []);
+      if (t.plan === "team_pro" || t.plan === "team_business") {
+        const { data: log } = await supabase
+          .from("team_activity_log")
+          .select("id, action, target_email, actor_id, created_at")
+          .eq("team_id", t.id)
+          .order("created_at", { ascending: false })
+          .limit(50);
+        setActivity((log as any[]) ?? []);
+      } else {
+        setActivity([]);
+      }
     }
     setLoading(false);
   };
@@ -87,7 +117,36 @@ function TeamPage() {
     if (m.role === "owner") { toast.error(t("team_err_owner_remove")); return; }
     if (!confirm(t("team_remove_confirm"))) return;
     const { error } = await supabase.from("team_members").update({ status: "removed" }).eq("id", m.id);
-    if (error) toast.error(error.message); else { toast.success("Removed"); load(); }
+    if (error) { toast.error(error.message); return; }
+    if (team && (team.plan === "team_pro" || team.plan === "team_business")) {
+      await supabase.rpc("log_team_activity" as any, {
+        _team_id: team.id, _action: "member_removed",
+        _target_user_id: m.user_id, _target_email: m.invited_email, _metadata: null,
+      });
+    }
+    toast.success("Removed");
+    load();
+  };
+
+  const leave = async () => {
+    if (!team) return;
+    if (!confirm(t("team_leave_confirm"))) return;
+    const { error } = await supabase.rpc("leave_team" as any, { _team_id: team.id });
+    if (error) { toast.error(error.message); return; }
+    toast.success(t("team_left"));
+    setTeam(null);
+    setMembers([]);
+  };
+
+  const resend = async (inv: InviteRow) => {
+    const { data, error } = await supabase.rpc("resend_team_invitation" as any, { _invitation_id: inv.id });
+    if (error) { toast.error(error.message); return; }
+    toast.success(t("team_resent"));
+    if (data && typeof data === "string") {
+      const link = `${getPublicOrigin()}/team/join/${data}`;
+      try { await navigator.clipboard.writeText(link); } catch {}
+    }
+    load();
   };
 
   if (loading) return <div className="p-6">{t("loading")}</div>;
@@ -105,6 +164,8 @@ function TeamPage() {
   }
 
   const planLabel = team.plan === "team_starter" ? "Team Starter" : team.plan === "team_pro" ? "Team Pro" : "Team Business";
+  const showActivity = team.plan === "team_pro" || team.plan === "team_business";
+  const admins = members.filter((m) => m.role === "admin" && m.status === "active");
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -134,6 +195,19 @@ function TeamPage() {
           )}
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-1 bg-muted rounded-lg p-1">
+          <button
+            className={`flex-1 py-1.5 rounded-md text-sm font-medium ${tab === "members" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
+            onClick={() => setTab("members")}
+          >{t("team_tab_members")}</button>
+          <button
+            className={`flex-1 py-1.5 rounded-md text-sm font-medium ${tab === "activity" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
+            onClick={() => setTab("activity")}
+          >{t("team_tab_activity")}</button>
+        </div>
+
+        {tab === "members" && (
         <div className="space-y-2">
           {members.map((m) => (
             <div key={m.id} className="bg-card rounded-xl p-3 flex items-center gap-3">
@@ -154,7 +228,75 @@ function TeamPage() {
               )}
             </div>
           ))}
+
+          {/* Pending invites with expiry / resend */}
+          {invites.length > 0 && canInvite && (
+            <div className="pt-2 space-y-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase">Pending Invites</h3>
+              {invites.map((inv) => {
+                const expired = new Date(inv.expires_at).getTime() < Date.now();
+                return (
+                  <div key={inv.id} className="bg-card rounded-xl p-3 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate text-sm">{inv.email}</div>
+                      <div className="text-xs text-muted-foreground flex gap-2 flex-wrap">
+                        <span>{t(`team_role_${inv.role}` as any)}</span>
+                        <span>·</span>
+                        {expired ? (
+                          <span className="text-destructive font-medium">{t("team_invite_expired_badge")}</span>
+                        ) : (
+                          <span>{t("team_invite_expires")}: {new Date(inv.expires_at).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => resend(inv)}>
+                      <RefreshCw className="w-3 h-3 mr-1" />{t("team_resend")}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
+        )}
+
+        {tab === "activity" && (
+          <div className="space-y-2">
+            {!showActivity ? (
+              <div className="bg-muted/40 rounded-xl p-6 text-center text-sm text-muted-foreground">
+                {t("team_activity_locked")}
+              </div>
+            ) : activity.length === 0 ? (
+              <div className="text-center text-sm text-muted-foreground py-6">{t("team_activity_empty")}</div>
+            ) : (
+              activity.map((a) => (
+                <div key={a.id} className="bg-card rounded-xl p-3 text-sm">
+                  <div className="font-medium">
+                    {t(`team_act_${a.action}` as any) || a.action}
+                    {a.target_email ? ` · ${a.target_email}` : ""}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(a.created_at).toLocaleString()}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Owner actions */}
+        {myRole === "owner" && admins.length > 0 && (
+          <Button variant="outline" className="w-full" onClick={() => setTransferOpen(true)}>
+            <Crown className="w-4 h-4 mr-2" />{t("team_transfer")}
+          </Button>
+        )}
+
+        {/* Leave team (non-owner) */}
+        {myRole !== "owner" && me && (
+          <Button variant="outline" className="w-full text-destructive" onClick={leave}>
+            <LogOut className="w-4 h-4 mr-2" />{t("team_leave")}
+          </Button>
+        )}
       </div>
 
       <InviteModal
@@ -162,13 +304,21 @@ function TeamPage() {
         onClose={() => { setInviteOpen(false); load(); }}
         teamId={team.id}
         myRole={myRole}
+        teamPlan={team.plan}
+      />
+
+      <TransferModal
+        open={transferOpen}
+        onClose={() => { setTransferOpen(false); load(); }}
+        teamId={team.id}
+        admins={admins}
       />
     </div>
   );
 }
 
-function InviteModal({ open, onClose, teamId, myRole }: {
-  open: boolean; onClose: () => void; teamId: string; myRole: string;
+function InviteModal({ open, onClose, teamId, myRole, teamPlan }: {
+  open: boolean; onClose: () => void; teamId: string; myRole: string; teamPlan: string;
 }) {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -202,6 +352,12 @@ function InviteModal({ open, onClose, teamId, myRole }: {
       }
       const link = `${getPublicOrigin()}/team/join/${inv.token}`;
       setInviteLink(link);
+      if (teamPlan === "team_pro" || teamPlan === "team_business") {
+        await supabase.rpc("log_team_activity" as any, {
+          _team_id: teamId, _action: "invite_sent",
+          _target_user_id: null, _target_email: email, _metadata: null,
+        });
+      }
     } catch (e: any) {
       toast.error(e.message || "Failed");
     } finally { setSending(false); }
@@ -245,6 +401,62 @@ function InviteModal({ open, onClose, teamId, myRole }: {
           ) : (
             <Button onClick={() => { setEmail(""); setInviteLink(""); onClose(); }}>{t("save")}</Button>
           )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function TransferModal({ open, onClose, teamId, admins }: {
+  open: boolean; onClose: () => void; teamId: string; admins: MemberRow[];
+}) {
+  const { t } = useI18n();
+  const [picked, setPicked] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!picked) return;
+    if (!confirm(t("team_transfer_confirm"))) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("transfer_team_ownership" as any, {
+      _team_id: teamId, _new_owner_id: picked,
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    await supabase.rpc("log_team_activity" as any, {
+      _team_id: teamId, _action: "ownership_transferred",
+      _target_user_id: picked, _target_email: null, _metadata: null,
+    });
+    toast.success(t("team_transfer_success"));
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{t("team_transfer")}</DialogTitle></DialogHeader>
+        {admins.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("team_no_admins")}</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">{t("team_transfer_pick")}</p>
+            <select
+              className="w-full border rounded-md p-2 bg-background"
+              value={picked}
+              onChange={(e) => setPicked(e.target.value)}
+            >
+              <option value="">—</option>
+              {admins.map((a) => (
+                <option key={a.id} value={a.user_id ?? ""}>
+                  {a.invited_email || a.user_id?.slice(0, 8)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("cancel")}</Button>
+          <Button onClick={submit} disabled={!picked || busy}>{t("team_transfer")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

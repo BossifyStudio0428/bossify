@@ -28,6 +28,7 @@ import {
   dismissPaymentBanner,
 } from "@/lib/paymentSetup";
 import { SetupChecklist } from "@/components/SetupChecklist";
+import { TeamBanner } from "@/components/TeamBanner";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -462,6 +463,7 @@ function Index() {
       )}
 
       <SetupChecklist />
+      <TeamBanner />
 
       <section id="tour-stats" className="grid grid-cols-2 gap-3">
         {stats.map((s, i) => (
