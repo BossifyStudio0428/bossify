@@ -12,19 +12,16 @@ export const Route = createFileRoute("/payment-success")({
 });
 
 async function activateStripeSession(sessionId: string) {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
   const {
     data: { session },
     error,
   } = await supabase.auth.getSession();
   if (error || !session?.access_token)
     throw new Error("Please sign in again to activate your plan.");
-  const res = await fetch(`${supabaseUrl}/functions/v1/activate-stripe-session`, {
+  const res = await fetch(`/api/public/stripe/activate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      apikey: anonKey,
       Authorization: `Bearer ${session.access_token}`,
     },
     body: JSON.stringify({ sessionId }),
