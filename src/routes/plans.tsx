@@ -64,13 +64,14 @@ async function startStripeCheckout(opts: {
 }
 
 function PlansPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { type: bizType } = useBusinessType();
   const eff = (bizType ?? "retail") as
     | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
   const { user } = useAuth();
   const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [scope, setScope] = useState<"individual" | "team">("individual");
   const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | null>(null);
   const [lifetimeConfirmOpen, setLifetimeConfirmOpen] = useState(false);
   const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual" | "lifetime" | "starter_monthly" | "starter_annual", string>>({
