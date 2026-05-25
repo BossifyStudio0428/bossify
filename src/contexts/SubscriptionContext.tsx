@@ -316,6 +316,25 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         await refresh();
         return;
       }
+      // Team subscriptions (any tier).
+      const teamOwned = await verifyActiveTeam();
+      if (teamOwned) {
+        await supabase.from("subscriptions").upsert(
+          {
+            user_id: user.id,
+            plan: teamOwned.tier,
+            status: "active",
+            provider: "google_play",
+            provider_product_id: `${teamOwned.receipt.productId}:${teamOwned.billing}`,
+            provider_transaction_id: teamOwned.receipt.transactionId,
+            provider_purchase_token: teamOwned.receipt.purchaseToken ?? null,
+            current_period_end: teamOwned.receipt.currentPeriodEnd ?? null,
+          },
+          { onConflict: "user_id" },
+        );
+        await refresh();
+        return;
+      }
       // Check Starter subscription next.
       const starterReceipt = await verifyActiveStarter();
       if (starterReceipt) {
