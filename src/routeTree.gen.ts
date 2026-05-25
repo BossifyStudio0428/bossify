@@ -52,6 +52,7 @@ import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$custo
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
 import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
 import { Route as ApiPublicStripeCheckoutRouteImport } from './routes/api/public/stripe/checkout'
+import { Route as ApiPublicStripeActivateRouteImport } from './routes/api/public/stripe/activate'
 import { Route as ApiPublicOauthTiktokCallbackRouteImport } from './routes/api/public/oauth/tiktok/callback'
 
 const UniversityInsightsRoute = UniversityInsightsRouteImport.update({
@@ -270,6 +271,11 @@ const ApiPublicStripeCheckoutRoute = ApiPublicStripeCheckoutRouteImport.update({
   path: '/api/public/stripe/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicStripeActivateRoute = ApiPublicStripeActivateRouteImport.update({
+  id: '/api/public/stripe/activate',
+  path: '/api/public/stripe/activate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOauthTiktokCallbackRoute =
   ApiPublicOauthTiktokCallbackRouteImport.update({
     id: '/api/public/oauth/tiktok/callback',
@@ -319,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
@@ -365,6 +372,7 @@ export interface FileRoutesByTo {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
@@ -412,6 +420,7 @@ export interface FileRoutesById {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
@@ -460,6 +469,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
@@ -506,6 +516,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
@@ -552,6 +563,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
@@ -595,6 +607,7 @@ export interface RootRouteChildren {
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
+  ApiPublicStripeActivateRoute: typeof ApiPublicStripeActivateRoute
   ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
   ApiPublicWebhooksTiktokRoute: typeof ApiPublicWebhooksTiktokRoute
   ApiPublicOauthTiktokCallbackRoute: typeof ApiPublicOauthTiktokCallbackRoute
@@ -903,6 +916,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicStripeCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/stripe/activate': {
+      id: '/api/public/stripe/activate'
+      path: '/api/public/stripe/activate'
+      fullPath: '/api/public/stripe/activate'
+      preLoaderRoute: typeof ApiPublicStripeActivateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/oauth/tiktok/callback': {
       id: '/api/public/oauth/tiktok/callback'
       path: '/api/public/oauth/tiktok/callback'
@@ -988,6 +1008,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
   OrderCodeRoute: OrderCodeRoute,
+  ApiPublicStripeActivateRoute: ApiPublicStripeActivateRoute,
   ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
   ApiPublicWebhooksTiktokRoute: ApiPublicWebhooksTiktokRoute,
   ApiPublicOauthTiktokCallbackRoute: ApiPublicOauthTiktokCallbackRoute,

@@ -52,7 +52,9 @@ export const Route = createFileRoute("/api/public/stripe/activate")({
           let currentPeriodEnd: string | null = null;
           let subscriptionId: string | null = null;
           if (session.mode === "subscription" && session.subscription) {
-            const sub = await stripe.subscriptions.retrieve(session.subscription as string);
+            const sub = (await stripe.subscriptions.retrieve(
+              session.subscription as string,
+            )) as any;
             priceId = sub.items.data[0]?.price.id;
             currentPeriodEnd = new Date(sub.current_period_end * 1000).toISOString();
             subscriptionId = sub.id;
@@ -82,7 +84,7 @@ export const Route = createFileRoute("/api/public/stripe/activate")({
 
           const { error } = await externalSupabaseAdmin
             .from("subscriptions")
-            .upsert(row, { onConflict: "user_id" });
+            .upsert(row as any, { onConflict: "user_id" });
           if (error) throw error;
 
           return json(200, { activated: true, plan: planInfo.plan });
