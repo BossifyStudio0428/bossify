@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
+import { deductInventoryStock } from "./deductStock";
 
 const PUBLIC_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
 const PUBLIC_SUPABASE_ANON_KEY =
@@ -243,6 +244,15 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
 
     if (oErr || !inserted) {
       return { ok: false as const, reason: "insert_failed" as const, error: oErr?.message };
+    }
+
+    // Auto-deduct stock for retail/fnb only (services don't have stock).
+    if (isRetailish) {
+      const deductItems =
+        data.items && data.items.length > 0
+          ? data.items.map((it) => ({ product: it.product, quantity: it.quantity || 1 }))
+          : [{ product: productText, quantity: qty }];
+      await deductInventoryStock(sb, userId, deductItems);
     }
 
     // Upsert customer by phone
