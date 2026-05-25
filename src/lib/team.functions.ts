@@ -87,7 +87,7 @@ export const declineTeamInvite = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await externalSupabaseAdmin
       .from("team_invitations")
-      .update({ status: "declined" } as any)
+      .update({ status: "revoked" } as any)
       .eq("token", data.token)
       .eq("status", "pending");
     return { ok: true as const };
