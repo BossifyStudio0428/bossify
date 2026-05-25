@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { ChevronLeft, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n } from "@/contexts/I18nContext";
+import {
+  loadAdminOverview,
+  revokeAdminSubscriptionPlan,
+  setAdminSubscriptionPlan,
+} from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
@@ -21,6 +26,9 @@ function AdminPage() {
   const { refresh: refreshSub } = useSubscription();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const loadAdminOverviewFn = useServerFn(loadAdminOverview);
+  const setAdminSubscriptionPlanFn = useServerFn(setAdminSubscriptionPlan);
+  const revokeAdminSubscriptionPlanFn = useServerFn(revokeAdminSubscriptionPlan);
   const [tab, setTab] = useState<"stats" | "users" | "orders">("stats");
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -32,22 +40,22 @@ function AdminPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-      const ok = !!data?.is_admin;
-      setIsAdmin(ok);
-      setChecking(false);
-      if (!ok) { navigate({ to: "/" }); return; }
-      loadAll();
+      try {
+        await loadAll();
+        setIsAdmin(true);
+      } catch {
+        setIsAdmin(false);
+        navigate({ to: "/" });
+      } finally {
+        setChecking(false);
+      }
     })();
   }, [user?.id]);
 
   const loadAll = async () => {
-    const [{ data: u }, { data: o }] = await Promise.all([
-      supabase.from("admin_users_view").select("*").order("created_at", { ascending: false }),
-      supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(20),
-    ]);
-    setUsers((u ?? []) as AdminUser[]);
-    setAllOrders(o ?? []);
+    const data = await loadAdminOverviewFn();
+    setUsers((data.users ?? []) as AdminUser[]);
+    setAllOrders(data.orders ?? []);
   };
 
   if (checking) return <p className="p-6 text-sm text-muted-foreground">{t("admin_checking")}</p>;
@@ -68,29 +76,26 @@ function AdminPage() {
     const expires = months === "lifetime"
       ? new Date(2099, 0, 1)
       : new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000);
-    const { error } = await supabase.from("subscriptions").update({
-      plan: "pro", status: "active", expires_at: expires.toISOString(),
-      started_at: new Date().toISOString(),
-    }).eq("user_id", uid);
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await setAdminSubscriptionPlanFn({ data: { userId: uid, months } });
       toast.success(`${t("admin_pro_granted")}${months === "lifetime" ? ` (${t("admin_lifetime")})` : ` ${months} ${t("months_short")}`}`);
       if (uid === user?.id) refreshSub();
       loadAll();
       setGrantOpen(null);
+    } catch {
+      toast.error(t("update_failed"));
     }
   };
 
   const revokePro = async (uid: string) => {
     if (!confirm(t("admin_revoke_confirm"))) return;
-    const { error } = await supabase.from("subscriptions").update({
-      plan: "free", status: "active", expires_at: null,
-    }).eq("user_id", uid);
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await revokeAdminSubscriptionPlanFn({ data: { userId: uid } });
       toast.success(t("admin_reverted_free"));
       if (uid === user?.id) refreshSub();
       loadAll();
+    } catch {
+      toast.error(t("update_failed"));
     }
   };
 
