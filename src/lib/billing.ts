@@ -539,6 +539,20 @@ function fallbackPrices(): ProductPrice[] {
   subs.push({ plan: "lifetime", formattedPrice: LIFETIME_FALLBACK_PRICE, currency: "MYR" });
   subs.push({ plan: "starter_monthly", formattedPrice: STARTER_FALLBACK_PRICES.monthly, currency: "MYR" });
   subs.push({ plan: "starter_annual", formattedPrice: STARTER_FALLBACK_PRICES.annual, currency: "MYR" });
+  for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
+    subs.push({
+      plan: `${tier}_monthly` as
+        | "team_starter_monthly" | "team_pro_monthly" | "team_business_monthly",
+      formattedPrice: TEAM_FALLBACK_PRICES[tier].monthly,
+      currency: "MYR",
+    });
+    subs.push({
+      plan: `${tier}_annual` as
+        | "team_starter_annual" | "team_pro_annual" | "team_business_annual",
+      formattedPrice: TEAM_FALLBACK_PRICES[tier].annual,
+      currency: "MYR",
+    });
+  }
   return subs;
 }
 
