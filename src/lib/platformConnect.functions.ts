@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireExternalSupabaseAuth as requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
+import { externalSupabaseAdmin as supabaseAdmin } from "@/integrations/supabase/external-admin.server";
 import { signOAuthState } from "@/lib/platforms/oauth-state.server";
 import { buildTikTokAuthUrl } from "@/lib/platforms/tiktok.server";
 

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { externalSupabaseAdmin as supabaseAdmin } from "@/integrations/supabase/external-admin.server";
 import { verifyOAuthState } from "@/lib/platforms/oauth-state.server";
 import { exchangeTikTokCode } from "@/lib/platforms/tiktok.server";
 import { encryptToken } from "@/lib/platforms/crypto.server";

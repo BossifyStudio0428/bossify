@@ -188,15 +188,14 @@ async function startStripeCheckout(opts: {
     | "team_business";
   billingCycle: "monthly" | "annual" | "one";
 }) {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
   const { data: { session } } = await supabase.auth.getSession();
-  const res = await fetch(`${supabaseUrl}/functions/v1/create-stripe-checkout`, {
+  const res = await fetch(`/api/public/stripe/checkout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      apikey: anonKey,
-      Authorization: `Bearer ${session?.access_token ?? anonKey}`,
+      ...(session?.access_token
+        ? { Authorization: `Bearer ${session.access_token}` }
+        : {}),
     },
     body: JSON.stringify(opts),
   });
