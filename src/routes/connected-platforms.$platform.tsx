@@ -53,17 +53,9 @@ function PlatformConnectPage() {
 
   const handleConnect = async () => {
     if (!cfg) return;
-    setBusy(true);
-    try {
-      const { authUrl } = await startConnect({ data: { platform: cfg.key as any } });
-      // Full-page redirect so the OAuth callback can return here.
-      window.location.href = authUrl;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setSheetMessage(msg);
-      setSheetOpen(true);
-      setBusy(false);
-    }
+    // All platform integrations are pending API approval — show coming soon.
+    setSheetMessage("");
+    setSheetOpen(true);
   };
 
   const handleDisconnect = async () => {
