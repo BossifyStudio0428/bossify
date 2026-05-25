@@ -51,6 +51,48 @@ export const STARTER_FALLBACK_PRICES: Record<BillingPlan, string> = {
   annual: "RM 159",
 };
 
+/**
+ * Team Plans — each tier has separate monthly/yearly subscription SKUs.
+ */
+export type TeamTier = "team_starter" | "team_pro" | "team_business";
+
+export const TEAM_PRODUCT_IDS: Record<TeamTier, Record<BillingPlan, string>> = {
+  team_starter: {
+    monthly: "bossify_team_starter_monthly",
+    annual: "bossify_team_starter_yearly",
+  },
+  team_pro: {
+    monthly: "bossify_team_pro_monthly",
+    annual: "bossify_team_pro_yearly",
+  },
+  team_business: {
+    monthly: "bossify_team_business_monthly",
+    annual: "bossify_team_business_yearly",
+  },
+};
+
+export const TEAM_FALLBACK_PRICES: Record<TeamTier, Record<BillingPlan, string>> = {
+  team_starter:  { monthly: "RM 129", annual: "RM 1,099" },
+  team_pro:      { monthly: "RM 249", annual: "RM 2,099" },
+  team_business: { monthly: "RM 599", annual: "RM 4,799" },
+};
+
+/** Flat list of all team product IDs (for registration / iteration). */
+export const ALL_TEAM_PRODUCT_IDS: string[] = (Object.keys(TEAM_PRODUCT_IDS) as TeamTier[])
+  .flatMap((tier) => [TEAM_PRODUCT_IDS[tier].monthly, TEAM_PRODUCT_IDS[tier].annual]);
+
+/** Reverse lookup from product id → { tier, billing }. */
+export function teamProductLookup(
+  productId: string,
+): { tier: TeamTier; billing: BillingPlan } | null {
+  for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
+    const ids = TEAM_PRODUCT_IDS[tier];
+    if (productId === ids.monthly) return { tier, billing: "monthly" };
+    if (productId === ids.annual)  return { tier, billing: "annual" };
+  }
+  return null;
+}
+
 export type PurchaseReceipt = {
   productId: string;
   transactionId: string;
