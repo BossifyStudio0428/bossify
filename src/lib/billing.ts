@@ -919,3 +919,68 @@ export async function restorePurchases(
     onError({ code: err?.code ?? "unknown", message: err?.message ?? "Restore failed" });
   }
 }
+
+/**
+ * Verify ownership of any Team subscription. Returns the active receipt
+ * along with the matched tier/billing, or null if none owned.
+ */
+export async function verifyActiveTeam(): Promise<
+  { receipt: PurchaseReceipt; tier: TeamTier; billing: BillingPlan } | null
+> {
+  if (!isNativeBillingAvailable()) return null;
+  const store = await initBilling();
+  if (!store) return null;
+  try {
+    try { await store.restorePurchases(); } catch {}
+    try { await store.update(); } catch {}
+    for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
+      for (const billing of ["annual", "monthly"] as BillingPlan[]) {
+        const id = TEAM_PRODUCT_IDS[tier][billing];
+        const product = store.get(id);
+        if (!product) continue;
+        const owned: boolean = !!(product.owned || product.offers?.some?.((o: AnyStore) => o?.owned));
+        if (!owned) continue;
+        const tx = product.transaction ?? {};
+        return {
+          tier,
+          billing,
+          receipt: {
+            productId: id,
+            transactionId: tx.id ?? tx.transactionId ?? "",
+            purchaseToken: tx.purchaseToken,
+            basePlanId: billing,
+            currentPeriodEnd: isoFromDate(tx.expirationDate),
+          },
+        };
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Purchase a Team Plan subscription. Each tier × billing-cycle is a separate
+ * Google Play subscription SKU (one base plan each), so we order it
+ * directly — same pattern as `purchaseStarter`.
+ */
+export async function purchaseTeam(
+  tier: TeamTier,
+  billing: BillingPlan,
+  onSuccess: (receipt: PurchaseReceipt, info: { tier: TeamTier; billing: BillingPlan }) => Promise<void> | void,
+  onError: (err: BillingError) => void,
+): Promise<void> {
+  if (!isNativeBillingAvailable()) {
+    onError({ code: "not_android", message: "Not running inside Android app" });
+    return;
+  }
+  const productId = TEAM_PRODUCT_IDS[tier][billing];
+  try {
+    const receipt = await tryNativePurchase(productId, "");
+    await onSuccess({ ...receipt, productId, basePlanId: billing }, { tier, billing });
+  } catch (e) {
+    const err = e as Partial<BillingError> | undefined;
+    onError({ code: err?.code ?? "unknown", message: err?.message ?? "Purchase failed" });
+  }
+}
