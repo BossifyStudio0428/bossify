@@ -97,17 +97,37 @@ const TEAM_PLANS: TeamPlanDef[] = [
   },
 ];
 
-function TeamPlansSection({ lang, billing }: { lang: "en" | "ms" | "zh"; billing: "monthly" | "annual" }) {
+function TeamPlansSection({
+  lang,
+  billing,
+  storePrices,
+  onPurchase,
+  submittingTier,
+  currentTier,
+  currentBilling,
+}: {
+  lang: "en" | "ms" | "zh";
+  billing: "monthly" | "annual";
+  storePrices: Record<string, string>;
+  onPurchase: (tier: TeamTier) => void;
+  submittingTier: TeamTier | null;
+  currentTier: TeamTier | null;
+  currentBilling: "monthly" | "annual" | null;
+}) {
   const periodLabel = billing === "monthly"
     ? (lang === "zh" ? "/月" : lang === "ms" ? "/bulan" : "/month")
     : (lang === "zh" ? "/年" : lang === "ms" ? "/tahun" : "/year");
-  const comingSoon = lang === "zh" ? "即将推出" : lang === "ms" ? "Akan Datang" : "Coming Soon";
+  const subscribeLabel = lang === "zh" ? "订阅" : lang === "ms" ? "Langgan" : "Subscribe";
+  const currentLabel = lang === "zh" ? "当前方案 ✓" : lang === "ms" ? "Pelan Semasa ✓" : "Current Plan ✓";
 
   return (
     <>
       {TEAM_PLANS.map((p) => {
-        const price = billing === "monthly" ? p.monthly : p.yearly;
+        const priceKey = `${p.key}_${billing === "monthly" ? "monthly" : "annual"}`;
+        const price = storePrices[priceKey] ?? (billing === "monthly" ? p.monthly : p.yearly);
         const name = p.name[lang];
+        const isCurrent = currentTier === p.key && currentBilling === billing;
+        const isSubmitting = submittingTier === p.key;
         return (
           <section key={p.key} className={`relative rounded-3xl p-[2px] bg-gradient-to-br ${p.gradient}`}>
             <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
@@ -134,12 +154,19 @@ function TeamPlansSection({ lang, billing }: { lang: "en" | "ms" | "zh"; billing
                   </li>
                 ))}
               </ul>
-              <button
-                disabled
-                className="mt-5 w-full py-3 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm"
-              >
-                {comingSoon}
-              </button>
+              {isCurrent ? (
+                <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-100 text-emerald-700 font-semibold text-sm">
+                  {currentLabel}
+                </button>
+              ) : (
+                <button
+                  onClick={() => onPurchase(p.key)}
+                  disabled={submittingTier !== null}
+                  className={`mt-5 w-full py-3 rounded-2xl bg-gradient-to-r ${p.btnGradient} text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60`}
+                >
+                  {isSubmitting ? "..." : `${subscribeLabel} — ${price}`}
+                </button>
+              )}
             </div>
           </section>
         );
