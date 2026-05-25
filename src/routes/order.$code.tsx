@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
-import {
+import type {
   getPublicOrderForm,
   submitPublicOrder,
 } from "@/lib/public-order.functions";
