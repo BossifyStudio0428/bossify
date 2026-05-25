@@ -305,6 +305,10 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
 
     if (oErr || !inserted) {
       console.error("[submitPublicOrder] orders insert failed", oErr);
+      const msg = oErr?.message ?? "";
+      if (msg.includes("order_quota_reached")) {
+        return { ok: false as const, reason: "shop_closed" as const };
+      }
       return { ok: false as const, reason: "insert_failed" as const, error: oErr?.message ?? "Failed to insert order" };
     }
 
