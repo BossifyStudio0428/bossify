@@ -179,6 +179,16 @@ async function sendToTokens(
             priority: "HIGH",
             notification: { sound: "default" },
           },
+          webpush: {
+            headers: { Urgency: "high" },
+            notification: {
+              title: payload.title,
+              body: payload.body,
+              icon: "/favicon.ico",
+              badge: "/favicon.ico",
+            },
+            fcm_options: { link: payload.link ?? "/" },
+          },
         },
       };
       try {
