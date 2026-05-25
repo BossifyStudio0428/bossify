@@ -182,6 +182,12 @@ function ProfilePage() {
         onClick: () => setLangOpen(true),
       },
       {
+        icon: "📱",
+        key: "devices",
+        label: t("my_devices"),
+        onClick: () => navigate({ to: "/devices" }),
+      },
+      {
         icon: theme === "dark" ? "🌙" : "☀️",
         key: "theme",
         label: t("appearance"),
