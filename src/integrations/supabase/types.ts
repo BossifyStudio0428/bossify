@@ -720,6 +720,7 @@ export type Database = {
         Args: { _actor_id: string; _team_id: string }
         Returns: boolean
       }
+      orders_limit_for_plan: { Args: { _plan: string }; Returns: number }
       send_followup_reminders: { Args: never; Returns: undefined }
       trigger_push_kind: { Args: { _kind: string }; Returns: undefined }
     }

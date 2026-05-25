@@ -214,8 +214,13 @@ function PublicOrderFormPage() {
           business: res.business_name || state.profile.business_name,
         });
       } else {
-        const reason = (res as any).error || (res as any).reason || "";
-        alert(`${t("order_save_failed")}${reason ? `\n\n${reason}` : ""}`);
+        const reason = (res as any).reason;
+        if (reason === "shop_closed" || reason === "disabled") {
+          setState({ status: "error", reason: "disabled" });
+          return;
+        }
+        const detail = (res as any).error || reason || "";
+        alert(`${t("order_save_failed")}${detail ? `\n\n${detail}` : ""}`);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
