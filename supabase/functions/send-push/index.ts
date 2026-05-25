@@ -179,6 +179,16 @@ async function sendToTokens(
             priority: "HIGH",
             notification: { sound: "default" },
           },
+          webpush: {
+            headers: { Urgency: "high" },
+            notification: {
+              title: payload.title,
+              body: payload.body,
+              icon: "/favicon.ico",
+              badge: "/favicon.ico",
+            },
+            fcm_options: { link: payload.link ?? "/" },
+          },
         },
       };
       try {
@@ -438,7 +448,12 @@ Deno.serve(async (req) => {
         return json(403, { error: "Can only register own device" });
       const token = typeof parsed.token === "string" ? parsed.token.trim() : "";
       if (!token || token.length > 4096) return json(400, { error: "Invalid device token" });
-      const platform = parsed.platform === "ios" ? "ios" : "android";
+      const platform =
+        parsed.platform === "ios"
+          ? "ios"
+          : parsed.platform === "web"
+            ? "web"
+            : "android";
       const { error } = await admin
         .from("device_tokens")
         .upsert(

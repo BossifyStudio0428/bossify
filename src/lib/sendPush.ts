@@ -80,7 +80,7 @@ export async function sendPushToSelf(params: {
 export async function registerDeviceForPush(params: {
   userId: string;
   token: string;
-  platform?: "android" | "ios";
+  platform?: "android" | "ios" | "web";
 }) {
   const res = await callPushFunction({ kind: "register_device", ...params });
   if (res.error) console.warn("registerDeviceForPush failed", res.error);

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { registerWebPush, isWebPushSupported } from "./webPush";
 
 const PERM_ASKED_KEY = "bossify_notif_asked";
 const PERM_GRANTED_KEY = "bossify_notif_granted";
@@ -91,18 +92,28 @@ export async function requestNotifPermission(): Promise<boolean> {
   markNotifAsked();
   const plugin = await getPlugin();
   if (!plugin) {
-    // Web fallback
-    if (typeof window !== "undefined" && "Notification" in window) {
-      try {
-        const res = await Notification.requestPermission();
-        const ok = res === "granted";
-        if (ok) localStorage.setItem(PERM_GRANTED_KEY, "1");
-        return ok;
-      } catch {
-        return false;
+    // Web platform — try full Web Push (FCM) so notifications also fire
+    // when the tab is closed. Falls back to plain Notification API if
+    // Firebase config / VAPID key is not set yet.
+    if (typeof window === "undefined" || !("Notification" in window)) return false;
+    try {
+      const { data } = await supabase.auth.getSession();
+      const userId = data.session?.user?.id ?? null;
+      if (userId && isWebPushSupported()) {
+        const ok = await registerWebPush(userId);
+        if (ok) {
+          localStorage.setItem(PERM_GRANTED_KEY, "1");
+          return true;
+        }
       }
+      // Fallback: at least ask for in-tab notifications
+      const res = await Notification.requestPermission();
+      const ok = res === "granted";
+      if (ok) localStorage.setItem(PERM_GRANTED_KEY, "1");
+      return ok;
+    } catch {
+      return false;
     }
-    return false;
   }
   try {
     // Check current state first — if previously denied, the native prompt
