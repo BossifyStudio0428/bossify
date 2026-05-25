@@ -61,6 +61,10 @@ export function getPlanLimits(plan: Plan) {
   if (plan === "pro" || plan === "lifetime") {
     return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity };
   }
+  if (plan === "team_starter" || plan === "team_pro" || plan === "team_business") {
+    // Team plans inherit Pro-level (unlimited) numeric caps.
+    return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity };
+  }
   if (plan === "starter") return STARTER_LIMITS;
   return FREE_LIMITS;
 }
@@ -71,6 +75,8 @@ type Ctx = {
   isPro: boolean;
   isStarter: boolean;
   isLifetime: boolean;
+  isTeam: boolean;
+  teamTier: "team_starter" | "team_pro" | "team_business" | null;
   /** True for both Pro subscribers and Lifetime owners. Use this for feature gates. */
   hasFullAccess: boolean;
   loading: boolean;
