@@ -949,7 +949,19 @@ function PlansPage() {
           onPurchase={async (tier) => {
             if (!user) return;
             if (!isNativeBillingAvailable()) {
-              toast.message(t("google_play_only_android"));
+              // Web: use Stripe Checkout
+              setSubmittingTeam(tier);
+              try {
+                await startStripeCheckout({
+                  userId: user.id,
+                  planType: tier,
+                  billingCycle: billing,
+                });
+              } catch (e) {
+                toast.error((e as Error).message);
+              } finally {
+                setSubmittingTeam(null);
+              }
               return;
             }
             setSubmittingTeam(tier);
