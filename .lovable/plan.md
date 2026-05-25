@@ -1,48 +1,39 @@
-## 现状
+## 问题
 
-- **前端 client.ts** ✅ 已指向外部 Supabase (`knouahqwazerjiyiqgmh`) — auth、登录、所有读写已经走外部
-- **server functions** ❌ 仍连 Lovable Cloud (用 `process.env.SUPABASE_URL` = Lovable Cloud)
-- **auth-middleware** ❌ 用 Lovable Cloud 的 JWKS 验证 token,而 token 实际来自外部 — 现在已经坏的
-- **edge functions** (send-push, stripe-webhook, activate-stripe-session, create-stripe-checkout) ❌ 部署在 Lovable Cloud
-- **数据库 migrations / cron / triggers** ❌ 在 Lovable Cloud,触发的 webhook URL 写死指向 Lovable Cloud
+按 Upgrade 后 `POST /api/public/stripe/checkout` 在服务端直接返回 status `0`（worker 没回应），所以浏览器拿不到 `url`，Stripe Checkout 自然弹不出来。
 
-## 目标
+不是你改 webhook secret 的问题 —— webhook secret 只影响 `/stripe/webhook`，跟开 checkout 无关。
 
-所有运行时代码 100% 走外部 Supabase (`knouahqwazerjiyiqgmh`)。Lovable Cloud 只保留为残留(无法删除)。
+真正原因在 `src/lib/stripe.server.ts`：
 
-## 改动
+```ts
+return new Stripe(secret, { apiVersion: "..." });
+```
 
-### 1. 创建外部 Supabase 服务端客户端
-新文件 `src/integrations/supabase/external-admin.server.ts`:
-- 用 `APP_SUPABASE_SERVICE_ROLE_KEY` (已存在) + 硬编码的外部 URL
-- 导出 `externalSupabaseAdmin`
+Stripe Node SDK 默认使用 Node 的 `http` 模块发请求。Lovable 的服务端跑在 Cloudflare Worker（workerd）上，`http` 模块只是个空壳，调用就会抛错并让 worker 崩掉 → 客户端看到的就是没回应、什么都没发生。
 
-### 2. 创建外部 auth middleware
-新文件 `src/integrations/supabase/external-auth-middleware.ts`:
-- 用外部 URL + 外部 anon key 验证 bearer token
-- 导出 `requireExternalSupabaseAuth`
+之前的 Lovable Cloud edge function（Deno 跑的）没事，是因为 Deno 自带 fetch 当 transport；现在搬到 TanStack server route（Worker 跑）就踩坑了。
 
-### 3. 迁移所有 server functions
-把以下文件里的 `supabaseAdmin` → `externalSupabaseAdmin`,`requireSupabaseAuth` → `requireExternalSupabaseAuth`:
-- `src/lib/admin.functions.ts`
-- `src/lib/platformConnect.functions.ts`
-- `src/lib/public-order.server.ts` (合并它现有的外部 client)
-- `src/routes/api/public/webhooks/tiktok.ts`
-- `src/routes/api/public/oauth/tiktok/callback.ts`
+## 修复
 
-### 4. Edge Functions / Stripe
-Edge functions 部署在 Lovable Cloud 无法自动迁移到外部 Supabase。两个选择:
-- **A**: 把 Stripe 流程改成 TanStack server routes (`src/routes/api/public/stripe/*`),完全脱离 edge functions
-- **B**: 暂时保留 edge functions 在 Lovable Cloud(它们用 service role 调用外部 DB)
+只改一处：`src/lib/stripe.server.ts` 的 `getStripe()`，告诉 Stripe SDK 用 fetch 而不是 Node http，并在 Web Crypto 上做 webhook 验签：
 
-推荐 A — 真正"什么都不在 Lovable Cloud"。Push notification 的 cron 也要改:把 `trigger_push_kind` / `send_followup_reminders` 数据库函数的 webhook URL 从 `https://utqlrdbhvnugqvemjegi.supabase.co/...` 改成外部项目的 URL 或 app 的 `/api/public/cron/*` 路由。这需要在**外部 Supabase** 上跑 migration。
+```ts
+return new Stripe(secret, {
+  apiVersion: "2024-11-20.acacia" as any,
+  httpClient: Stripe.createFetchHttpClient(),
+});
+```
 
-### 5. 外部 Supabase 上的 schema
-所有 migrations 历史只跑在 Lovable Cloud。外部 Supabase 的 schema 已存在但版本未知。需要确认外部已有相同 schema,否则需要手动同步。
+并把 webhook 路由里的 `stripe.webhooks.constructEventAsync(...)` 加上第 4 个参数 `undefined` + 第 5 个参数 `Stripe.createSubtleCryptoProvider()`，否则在 Worker 上验签也会失败（没有 Node `crypto`）。
 
-## 需要你确认的两个关键决定
+## 验证
 
-1. **Edge functions 怎么办?** A (改成 server routes,彻底脱离) 还是 B (暂留)?
-2. **外部 Supabase 上有没有完整 schema?** Migrations 历史在 Lovable Cloud,你需要确认外部已有这些表/函数/triggers,或者授权我把所有 migration SQL 在外部 Supabase 上重跑一遍。
+1. 部署后再按一次 Upgrade，预期跳出 Stripe Checkout 页面。
+2. 如果还是不行，看 worker 日志（不会再是 status 0，应该是 200/4xx 并带错误信息）继续排查。
 
-确认后我开始改。
+## 不动的部分
+
+- Stripe price IDs、checkout 业务逻辑、auth 验证、CORS、前端 `startStripeCheckout` 都保持原样。
+- `send-push` edge function 不动。
+- Webhook secret 你已经更新好了，不用再改。
