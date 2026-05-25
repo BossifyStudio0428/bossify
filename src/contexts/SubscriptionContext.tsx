@@ -417,9 +417,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // Lifetime never expires — no period check.
   const isLifetime = plan === "lifetime" && (sub?.status ?? "active") === "active";
   const isStarter = plan === "starter" && (sub?.status ?? "active") === "active" && isPeriodActive;
-  const hasFullAccess = isPro || isLifetime;
+  const teamTier: "team_starter" | "team_pro" | "team_business" | null =
+    (plan === "team_starter" || plan === "team_pro" || plan === "team_business") &&
+    (sub?.status ?? "active") === "active" &&
+    isPeriodActive
+      ? plan
+      : null;
+  const isTeam = teamTier !== null;
+  const hasFullAccess = isPro || isLifetime || isTeam;
   const limits = getPlanLimits(
-    isStarter ? "starter" : isPro ? "pro" : isLifetime ? "lifetime" : "free",
+    teamTier ? teamTier : isStarter ? "starter" : isPro ? "pro" : isLifetime ? "lifetime" : "free",
   );
   const ordersUsed = sub?.order_count ?? 0;
   const ordersLimit = limits.ordersPerMonth;
@@ -442,6 +449,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         isPro,
         isStarter,
         isLifetime,
+        isTeam,
+        teamTier,
         hasFullAccess,
         loading,
         ordersUsed,
