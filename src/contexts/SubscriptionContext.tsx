@@ -7,13 +7,22 @@ import {
   verifyActiveSubscription,
   verifyLifetimeOwnership,
   verifyActiveStarter,
+  verifyActiveTeam,
   isNativeBillingAvailable,
   LIFETIME_PRODUCT_ID,
   STARTER_PRODUCT_IDS,
+  TEAM_PRODUCT_IDS,
   type BillingPlan,
 } from "@/lib/billing";
 
-export type Plan = "free" | "starter" | "pro" | "lifetime";
+export type Plan =
+  | "free"
+  | "starter"
+  | "pro"
+  | "lifetime"
+  | "team_starter"
+  | "team_pro"
+  | "team_business";
 
 export type SubscriptionRow = {
   id: string;
