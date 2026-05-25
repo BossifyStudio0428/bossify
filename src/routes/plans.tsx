@@ -464,6 +464,10 @@ function PlansPage() {
             </p>
           </div>
           <ul className="mt-4 space-y-2">
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <span className="text-foreground">3 台设备 / 3 devices</span>
+            </li>
             {proRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
                 <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -505,6 +509,10 @@ function PlansPage() {
             </p>
           </div>
           <ul className="mt-4 space-y-2">
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+              <span className="text-foreground">5 台设备 / 5 devices</span>
+            </li>
             {proRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
                 <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
