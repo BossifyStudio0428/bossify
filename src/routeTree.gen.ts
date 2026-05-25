@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UniversityInsightsRouteImport } from './routes/university-insights'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as SplashRouteImport } from './routes/splash'
 import { Route as ServicesSummaryRouteImport } from './routes/services-summary'
 import { Route as ServicesRouteImport } from './routes/services'
@@ -43,6 +44,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 import { Route as OrderCodeRouteImport } from './routes/order.$code'
 import { Route as InventoryItemIdRouteImport } from './routes/inventory.$itemId'
@@ -50,6 +52,7 @@ import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-passwo
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
+import { Route as TeamJoinTokenRouteImport } from './routes/team.join.$token'
 import { Route as ApiPublicOrderFormRouteImport } from './routes/api/public/order-form'
 import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe/webhook'
@@ -65,6 +68,11 @@ const UniversityInsightsRoute = UniversityInsightsRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SplashRoute = SplashRouteImport.update({
@@ -227,6 +235,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeamWelcomeRoute = TeamWelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => TeamRoute,
+} as any)
 const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
   id: '/$orderId',
   path: '/$orderId',
@@ -263,6 +276,11 @@ const ConnectedPlatformsPlatformRoute =
     path: '/connected-platforms/$platform',
     getParentRoute: () => rootRouteImport,
   } as any)
+const TeamJoinTokenRoute = TeamJoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => TeamRoute,
+} as any)
 const ApiPublicOrderFormRoute = ApiPublicOrderFormRouteImport.update({
   id: '/api/public/order-form',
   path: '/api/public/order-form',
@@ -328,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
+  '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
@@ -337,7 +356,9 @@ export interface FileRoutesByFullPath {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/team/welcome': typeof TeamWelcomeRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
+  '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
@@ -377,6 +398,7 @@ export interface FileRoutesByTo {
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
+  '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
@@ -386,7 +408,9 @@ export interface FileRoutesByTo {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/team/welcome': typeof TeamWelcomeRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
+  '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
@@ -427,6 +451,7 @@ export interface FileRoutesById {
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
+  '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
@@ -436,7 +461,9 @@ export interface FileRoutesById {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/team/welcome': typeof TeamWelcomeRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
+  '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
@@ -478,6 +505,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/services-summary'
     | '/splash'
+    | '/team'
     | '/terms'
     | '/university-insights'
     | '/connected-platforms/$platform'
@@ -487,7 +515,9 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/team/welcome'
     | '/api/public/order-form'
+    | '/team/join/$token'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/stripe/webhook'
@@ -527,6 +557,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/services-summary'
     | '/splash'
+    | '/team'
     | '/terms'
     | '/university-insights'
     | '/connected-platforms/$platform'
@@ -536,7 +567,9 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/team/welcome'
     | '/api/public/order-form'
+    | '/team/join/$token'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/stripe/webhook'
@@ -576,6 +609,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/services-summary'
     | '/splash'
+    | '/team'
     | '/terms'
     | '/university-insights'
     | '/connected-platforms/$platform'
@@ -585,7 +619,9 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/team/welcome'
     | '/api/public/order-form'
+    | '/team/join/$token'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/stripe/webhook'
@@ -626,6 +662,7 @@ export interface RootRouteChildren {
   ServicesRoute: typeof ServicesRoute
   ServicesSummaryRoute: typeof ServicesSummaryRoute
   SplashRoute: typeof SplashRoute
+  TeamRoute: typeof TeamRouteWithChildren
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
@@ -653,6 +690,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/splash': {
@@ -879,6 +923,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/team/welcome': {
+      id: '/team/welcome'
+      path: '/welcome'
+      fullPath: '/team/welcome'
+      preLoaderRoute: typeof TeamWelcomeRouteImport
+      parentRoute: typeof TeamRoute
+    }
     '/orders/$orderId': {
       id: '/orders/$orderId'
       path: '/$orderId'
@@ -927,6 +978,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/connected-platforms/$platform'
       preLoaderRoute: typeof ConnectedPlatformsPlatformRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/team/join/$token': {
+      id: '/team/join/$token'
+      path: '/join/$token'
+      fullPath: '/team/join/$token'
+      preLoaderRoute: typeof TeamJoinTokenRouteImport
+      parentRoute: typeof TeamRoute
     }
     '/api/public/order-form': {
       id: '/api/public/order-form'
@@ -1010,6 +1068,18 @@ const OrdersRouteChildren: OrdersRouteChildren = {
 const OrdersRouteWithChildren =
   OrdersRoute._addFileChildren(OrdersRouteChildren)
 
+interface TeamRouteChildren {
+  TeamWelcomeRoute: typeof TeamWelcomeRoute
+  TeamJoinTokenRoute: typeof TeamJoinTokenRoute
+}
+
+const TeamRouteChildren: TeamRouteChildren = {
+  TeamWelcomeRoute: TeamWelcomeRoute,
+  TeamJoinTokenRoute: TeamJoinTokenRoute,
+}
+
+const TeamRouteWithChildren = TeamRoute._addFileChildren(TeamRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
@@ -1043,6 +1113,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServicesRoute: ServicesRoute,
   ServicesSummaryRoute: ServicesSummaryRoute,
   SplashRoute: SplashRoute,
+  TeamRoute: TeamRouteWithChildren,
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,

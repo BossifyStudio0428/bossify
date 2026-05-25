@@ -93,7 +93,14 @@ function PaymentSuccessPage() {
   // Once we have a paid plan, redirect home after 3s.
   useEffect(() => {
     if (!confirmedPlan) return;
-    const t = setTimeout(() => navigate({ to: "/" }), 3000);
+    const isTeam =
+      confirmedPlan === "team_starter" ||
+      confirmedPlan === "team_pro" ||
+      confirmedPlan === "team_business";
+    const t = setTimeout(
+      () => navigate({ to: isTeam ? "/team/welcome" : "/" }),
+      isTeam ? 1500 : 3000,
+    );
     return () => clearTimeout(t);
   }, [confirmedPlan, navigate]);
 

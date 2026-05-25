@@ -1,0 +1,252 @@
+import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Users, UserPlus, Trash2, Copy, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useI18n } from "@/contexts/I18nContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { getPublicOrigin } from "@/lib/publicUrl";
+
+export const Route = createFileRoute("/team")({ component: TeamPage });
+
+type TeamRow = { id: string; name: string; plan: string; owner_id: string; current_period_end: string | null };
+type MemberRow = {
+  id: string; team_id: string; user_id: string | null; invited_email: string | null;
+  role: "owner" | "admin" | "staff"; status: "active" | "pending" | "removed";
+  updated_at: string; joined_at: string | null; invited_by: string | null;
+};
+
+function planLimit(plan: string) {
+  if (plan === "team_starter") return 3;
+  if (plan === "team_pro") return 10;
+  if (plan === "team_business") return Infinity;
+  return 1;
+}
+
+function TeamPage() {
+  const { user } = useAuth();
+  const { t } = useI18n();
+  const { plan } = useSubscription();
+  const [team, setTeam] = useState<TeamRow | null>(null);
+  const [members, setMembers] = useState<MemberRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  const load = async () => {
+    if (!user) return;
+    setLoading(true);
+    // Find a team where current user is owner or active member
+    const { data: ownedTeam } = await supabase
+      .from("teams")
+      .select("id, name, plan, owner_id, current_period_end")
+      .eq("owner_id", user.id)
+      .maybeSingle();
+    let t: TeamRow | null = (ownedTeam as any) ?? null;
+    if (!t) {
+      const { data: myMembership } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle();
+      if (myMembership?.team_id) {
+        const { data: tt } = await supabase
+          .from("teams")
+          .select("id, name, plan, owner_id, current_period_end")
+          .eq("id", myMembership.team_id)
+          .maybeSingle();
+        t = (tt as any) ?? null;
+      }
+    }
+    setTeam(t);
+    if (t) {
+      const { data: m } = await supabase
+        .from("team_members")
+        .select("*")
+        .eq("team_id", t.id)
+        .neq("status", "removed")
+        .order("created_at", { ascending: true });
+      setMembers((m as any[]) ?? []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, [user?.id]);
+
+  const me = members.find((m) => m.user_id === user?.id);
+  const myRole = team?.owner_id === user?.id ? "owner" : me?.role ?? "staff";
+  const canInvite = myRole === "owner" || myRole === "admin";
+  const seatsUsed = members.filter((m) => m.status === "active" || m.status === "pending").length;
+  const seatsTotal = team ? planLimit(team.plan) : 0;
+
+  const remove = async (m: MemberRow) => {
+    if (m.role === "owner") { toast.error(t("team_err_owner_remove")); return; }
+    if (!confirm(t("team_remove_confirm"))) return;
+    const { error } = await supabase.from("team_members").update({ status: "removed" }).eq("id", m.id);
+    if (error) toast.error(error.message); else { toast.success("Removed"); load(); }
+  };
+
+  if (loading) return <div className="p-6">{t("loading")}</div>;
+
+  if (!team) {
+    return (
+      <div className="min-h-screen p-6 bg-background">
+        <div className="max-w-md mx-auto bg-card rounded-2xl p-6 text-center space-y-4">
+          <Users className="w-12 h-12 mx-auto text-muted-foreground" />
+          <p>{t("team_no_team")}</p>
+          <Button asChild><Link to="/plans">{t("team_upgrade")}</Link></Button>
+        </div>
+      </div>
+    );
+  }
+
+  const planLabel = team.plan === "team_starter" ? "Team Starter" : team.plan === "team_pro" ? "Team Pro" : "Team Business";
+
+  return (
+    <div className="min-h-screen bg-background pb-24">
+      <div className="sticky top-0 bg-card border-b px-4 py-3 flex items-center gap-3">
+        <Link to="/profile"><ArrowLeft className="w-5 h-5" /></Link>
+        <h1 className="text-lg font-semibold">{t("team_my_team")}</h1>
+      </div>
+
+      <div className="p-4 space-y-4 max-w-2xl mx-auto">
+        <div className="bg-card rounded-2xl p-4 space-y-2">
+          <div className="flex justify-between"><span className="text-muted-foreground">{t("team_plan")}</span><span className="font-semibold">{planLabel}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">{t("team_seats")}</span>
+            <span className="font-semibold">{seatsUsed} / {seatsTotal === Infinity ? "∞" : seatsTotal}</span>
+          </div>
+          {team.current_period_end && (
+            <div className="flex justify-between"><span className="text-muted-foreground">{t("team_renewal")}</span>
+              <span className="font-semibold">{new Date(team.current_period_end).toLocaleDateString()}</span></div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">{t("team_members")} ({members.length})</h2>
+          {canInvite && (
+            <Button size="sm" onClick={() => setInviteOpen(true)}>
+              <UserPlus className="w-4 h-4 mr-1" />{t("team_invite")}
+            </Button>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          {members.map((m) => (
+            <div key={m.id} className="bg-card rounded-xl p-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                {(m.invited_email || m.user_id || "?").slice(0, 1).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{m.invited_email || m.user_id?.slice(0, 8)}</div>
+                <div className="text-xs text-muted-foreground flex gap-2">
+                  <span className="capitalize">{t(`team_role_${m.role}` as any)}</span>
+                  <span>·</span>
+                  <span>{t(`team_status_${m.status}` as any)}</span>
+                  {m.joined_at && <><span>·</span><span>{t("team_last_active")}: {new Date(m.updated_at).toLocaleDateString()}</span></>}
+                </div>
+              </div>
+              {canInvite && m.role !== "owner" && m.user_id !== user?.id && (
+                <Button size="icon" variant="ghost" onClick={() => remove(m)}><Trash2 className="w-4 h-4" /></Button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <InviteModal
+        open={inviteOpen}
+        onClose={() => { setInviteOpen(false); load(); }}
+        teamId={team.id}
+        myRole={myRole}
+      />
+    </div>
+  );
+}
+
+function InviteModal({ open, onClose, teamId, myRole }: {
+  open: boolean; onClose: () => void; teamId: string; myRole: string;
+}) {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"admin" | "staff">("staff");
+  const [sending, setSending] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+
+  const submit = async () => {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast.error(t("team_err_invalid_email")); return; }
+    if (role === "admin" && myRole !== "owner") { toast.error(t("team_err_perm")); return; }
+    setSending(true);
+    try {
+      // Create invitation token row
+      const { data: inv, error: iErr } = await supabase
+        .from("team_invitations")
+        .insert({ team_id: teamId, email, role, invited_by: user!.id } as any)
+        .select("token")
+        .single();
+      if (iErr) throw iErr;
+      // Create pending team_member row (so seat is counted)
+      const { error: mErr } = await supabase
+        .from("team_members")
+        .insert({ team_id: teamId, invited_email: email, role, status: "pending", invited_by: user!.id } as any);
+      if (mErr && !mErr.message?.includes("duplicate")) {
+        if (mErr.message?.includes("team_member_limit_reached")) {
+          toast.error(t("team_err_limit"));
+        } else {
+          toast.error(mErr.message);
+        }
+      }
+      const link = `${getPublicOrigin()}/team/join/${inv.token}`;
+      setInviteLink(link);
+    } catch (e: any) {
+      toast.error(e.message || "Failed");
+    } finally { setSending(false); }
+  };
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(inviteLink);
+    toast.success(t("team_invite_copied"));
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) { setEmail(""); setInviteLink(""); onClose(); } }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{t("team_invite_title")}</DialogTitle></DialogHeader>
+        {!inviteLink ? (
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm text-muted-foreground">{t("team_invite_email")}</label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="member@example.com" />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground">{t("team_invite_role")}</label>
+              <select className="w-full border rounded-md p-2 bg-background" value={role} onChange={(e) => setRole(e.target.value as any)}>
+                <option value="staff">{t("team_role_staff")}</option>
+                {myRole === "owner" && <option value="admin">{t("team_role_admin")}</option>}
+              </select>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm">{t("team_invite_link")}</p>
+            <div className="flex gap-2">
+              <Input readOnly value={inviteLink} />
+              <Button size="icon" onClick={copy}><Copy className="w-4 h-4" /></Button>
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          {!inviteLink ? (
+            <Button onClick={submit} disabled={sending}>{t("team_send_invite")}</Button>
+          ) : (
+            <Button onClick={() => { setEmail(""); setInviteLink(""); onClose(); }}>{t("save")}</Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
