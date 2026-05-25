@@ -660,7 +660,7 @@ function PlansPage() {
           <ul className="mt-4 space-y-2">
             <li className="flex items-start gap-2 text-sm">
               <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <span className="text-foreground">3 设备 / 3 Devices / 3 Peranti</span>
+              <span className="text-foreground">{proDeviceLabel}</span>
             </li>
             {proRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
