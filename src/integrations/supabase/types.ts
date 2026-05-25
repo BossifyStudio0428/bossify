@@ -561,6 +561,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      device_limit_for_plan: { Args: { _plan: string }; Returns: number }
+      device_limit_for_user: { Args: { _user_id: string }; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       send_followup_reminders: { Args: never; Returns: undefined }
       trigger_push_kind: { Args: { _kind: string }; Returns: undefined }
