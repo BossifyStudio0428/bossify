@@ -54,8 +54,8 @@ function AdminPage() {
 
   const loadAll = async () => {
     const data = await loadAdminOverviewFn();
-    setUsers((data.users ?? []) as AdminUser[]);
-    setAllOrders(data.orders ?? []);
+    setUsers((data.users ?? []) as unknown as AdminUser[]);
+    setAllOrders((data.orders ?? []) as unknown as any[]);
   };
 
   if (checking) return <p className="p-6 text-sm text-muted-foreground">{t("admin_checking")}</p>;
@@ -73,9 +73,6 @@ function AdminPage() {
   const userMap = new Map(users.map((u) => [u.id, u.business_name || u.id.slice(0, 8)]));
 
   const grantPro = async (uid: string, months: number | "lifetime") => {
-    const expires = months === "lifetime"
-      ? new Date(2099, 0, 1)
-      : new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000);
     try {
       await setAdminSubscriptionPlanFn({ data: { userId: uid, months } });
       toast.success(`${t("admin_pro_granted")}${months === "lifetime" ? ` (${t("admin_lifetime")})` : ` ${months} ${t("months_short")}`}`);
