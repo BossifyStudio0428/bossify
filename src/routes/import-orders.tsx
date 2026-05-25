@@ -89,6 +89,7 @@ function ImportOrdersPage() {
     setImporting(true);
     let inserted = 0, updated = 0, skipped = 0;
     const errors: string[] = [];
+    const stockDeductions: Array<{ product: string; quantity: number }> = [];
 
     // Fetch existing codes once
     const codes = valid.map((v) => v.code).filter((c): c is string => !!c);
@@ -124,8 +125,16 @@ function ImportOrdersPage() {
         payload.code = row.code || generateCode();
         const { error } = await supabase.from("orders").insert(payload);
         if (error) { errors.push(`Row ${row._rowIndex}: ${error.message}`); skipped++; }
-        else inserted++;
+        else {
+          inserted++;
+          stockDeductions.push({ product: row.product, quantity: row.quantity });
+        }
       }
+    }
+
+    // Best-effort: deduct stock for newly imported orders that match an inventory item.
+    if (stockDeductions.length > 0) {
+      await deductInventoryStock(supabase, user.id, stockDeductions);
     }
 
     skipped += invalidCount;
