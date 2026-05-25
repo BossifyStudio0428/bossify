@@ -179,7 +179,13 @@ function TeamPlansSection({
 
 async function startStripeCheckout(opts: {
   userId: string;
-  planType: "starter" | "pro" | "lifetime";
+  planType:
+    | "starter"
+    | "pro"
+    | "lifetime"
+    | "team_starter"
+    | "team_pro"
+    | "team_business";
   billingCycle: "monthly" | "annual" | "one";
 }) {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
