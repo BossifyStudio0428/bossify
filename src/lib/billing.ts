@@ -135,6 +135,7 @@ export type ProductPrice = {
    * "starter_monthly" / "starter_annual" → Starter subscription SKUs.
    */
   plan: BillingPlan | "lifetime" | "starter_monthly" | "starter_annual";
+  /** "team_<tier>_<billing>" entries are produced for the 6 team SKUs. */
   /** e.g. "RM 49.00", "$11.99", "₹999" — already formatted by the store. */
   formattedPrice: string;
   /** ISO 4217 currency code, e.g. "MYR", "USD". */
