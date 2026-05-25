@@ -321,6 +321,11 @@ export function initBilling(): Promise<AnyStore | null> {
           type: cdv.ProductType.PAID_SUBSCRIPTION,
           platform: cdv.Platform.GOOGLE_PLAY,
         },
+        ...ALL_TEAM_PRODUCT_IDS.map((id) => ({
+          id,
+          type: cdv.ProductType.PAID_SUBSCRIPTION,
+          platform: cdv.Platform.GOOGLE_PLAY,
+        })),
       ]);
 
       // Approved → collect receipt → finish so Google marks the order
