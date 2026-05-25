@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type Stripe from "stripe";
+import Stripe from "stripe";
 import { getStripe, priceToPlan } from "@/lib/stripe.server";
 import { externalSupabaseAdmin } from "@/integrations/supabase/external-admin.server";
 
@@ -16,7 +16,15 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
         const stripe = getStripe();
         let event: Stripe.Event;
         try {
-          event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+          // Worker runtime has no Node `crypto`; use the Web Crypto provider
+          // so signature verification works.
+          event = await stripe.webhooks.constructEventAsync(
+            body,
+            signature,
+            webhookSecret,
+            undefined,
+            Stripe.createSubtleCryptoProvider(),
+          );
         } catch (e) {
           return new Response(`Webhook Error: ${(e as Error).message}`, { status: 400 });
         }

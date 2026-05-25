@@ -38,7 +38,13 @@ export const PRICE_TO_PLAN: Record<string, PlanInfo> = {
 export function getStripe(): Stripe {
   const secret = process.env.STRIPE_SECRET_KEY;
   if (!secret) throw new Error("STRIPE_SECRET_KEY is not configured");
-  return new Stripe(secret, { apiVersion: "2024-11-20.acacia" as any });
+  // Cloudflare Workers runtime: Node's `http` module is stubbed, so the
+  // Stripe SDK's default HTTP client hangs/crashes. Use the fetch-based
+  // client so requests actually go out.
+  return new Stripe(secret, {
+    apiVersion: "2024-11-20.acacia" as any,
+    httpClient: Stripe.createFetchHttpClient(),
+  });
 }
 
 export function priceToPlan(priceId: string | null | undefined): PlanInfo | null {
