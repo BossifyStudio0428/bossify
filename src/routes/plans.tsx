@@ -411,6 +411,7 @@ function PlansPage() {
         ))}
       </div>
 
+      {scope === "individual" && (<>
       {/* Free card */}
       <section className="rounded-3xl bg-card border border-border/60 p-5">
         <div className="flex items-baseline justify-between">
