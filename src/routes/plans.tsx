@@ -13,6 +13,7 @@ import {
   purchasePlan,
   purchaseLifetime,
   purchaseStarter,
+  purchaseTeam,
   restorePurchases,
   queryProductDetailsSafe,
   FALLBACK_PRICES,
@@ -22,6 +23,9 @@ import {
   BASE_PLAN_IDS,
   STARTER_PRODUCT_IDS,
   STARTER_FALLBACK_PRICES,
+  TEAM_PRODUCT_IDS,
+  TEAM_FALLBACK_PRICES,
+  type TeamTier,
   type BillingError,
 } from "@/lib/billing";
 
