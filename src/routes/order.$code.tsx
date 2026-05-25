@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
 import {
   getPublicOrderForm,
@@ -203,25 +202,25 @@ function PublicOrderFormPage() {
     setSubmitting(true);
     try {
       const res = await postPublicOrder({
-          code,
-          customer_name: form.customer_name.trim(),
-          phone: form.phone.trim(),
-          items: cart.map((l) => ({
-            product: l.product,
-            variant: l.variant,
-            quantity: l.quantity,
-            unit_price: l.unit_price,
-          })),
-          notes: form.notes,
-          address: form.address,
-          fulfilment: bizType === "fnb" ? form.fulfilment : "",
-          course_interest: form.course_interest,
-          university_preference: form.university_preference,
-          date_time: form.date_time,
-          budget: form.budget,
-          location_interest: form.location_interest,
-          project_description: form.project_description,
-          deadline: form.deadline,
+        code,
+        customer_name: form.customer_name.trim(),
+        phone: form.phone.trim(),
+        items: cart.map((l) => ({
+          product: l.product,
+          variant: l.variant,
+          quantity: l.quantity,
+          unit_price: l.unit_price,
+        })),
+        notes: form.notes,
+        address: form.address,
+        fulfilment: bizType === "fnb" ? form.fulfilment : "",
+        course_interest: form.course_interest,
+        university_preference: form.university_preference,
+        date_time: form.date_time,
+        budget: form.budget,
+        location_interest: form.location_interest,
+        project_description: form.project_description,
+        deadline: form.deadline,
       });
       if (res.ok) {
         setDone({
