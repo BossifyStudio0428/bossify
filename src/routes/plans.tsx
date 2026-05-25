@@ -313,6 +313,8 @@ function PlansPage() {
   const freePositive: TKey[] = FREE[eff];
   const freeDeviceLabel = lang === "zh" ? "1 台设备" : lang === "ms" ? "1 Peranti" : "1 Device";
   const starterDeviceLabel = lang === "zh" ? "2 台设备" : lang === "ms" ? "2 Peranti" : "2 Devices";
+  const proDeviceLabel = lang === "zh" ? "3 台设备" : lang === "ms" ? "3 Peranti" : "3 Devices";
+  const lifetimeDeviceLabel = lang === "zh" ? "5 台设备" : lang === "ms" ? "5 Peranti" : "5 Devices";
   const freeRows: { ok: boolean; label: string }[] = [
     { ok: true, label: freeDeviceLabel },
     ...freePositive.map((k) => ({ ok: true, label: t(k) })),
@@ -658,7 +660,7 @@ function PlansPage() {
           <ul className="mt-4 space-y-2">
             <li className="flex items-start gap-2 text-sm">
               <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <span className="text-foreground">3 设备 / 3 Devices / 3 Peranti</span>
+              <span className="text-foreground">{proDeviceLabel}</span>
             </li>
             {proRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
@@ -703,7 +705,7 @@ function PlansPage() {
           <ul className="mt-4 space-y-2">
             <li className="flex items-start gap-2 text-sm">
               <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-              <span className="text-foreground">5 设备 / 5 Devices / 5 Peranti</span>
+              <span className="text-foreground">{lifetimeDeviceLabel}</span>
             </li>
             {proRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
