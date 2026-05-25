@@ -74,7 +74,14 @@ Deno.serve(async (req) => {
     }
     const stripe = new Stripe(secret, { apiVersion: "2024-11-20.acacia" });
 
-    const origin = req.headers.get("origin") || "https://bossify-malaysia.lovable.app";
+    const ALLOWED_ORIGINS = new Set([
+      "https://bossify-malaysia.lovable.app",
+      "https://id-preview--db91ee30-ba9c-4741-9a03-2d8ed9ec2d81.lovable.app",
+    ]);
+    const reqOrigin = req.headers.get("origin") ?? "";
+    const origin = ALLOWED_ORIGINS.has(reqOrigin)
+      ? reqOrigin
+      : "https://bossify-malaysia.lovable.app";
     const session = await stripe.checkout.sessions.create({
       mode: planType === "lifetime" ? "payment" : "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
@@ -92,7 +99,7 @@ Deno.serve(async (req) => {
     });
   } catch (e) {
     console.error("create-stripe-checkout error", e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
+    return new Response(JSON.stringify({ error: "An unexpected error occurred. Please try again." }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

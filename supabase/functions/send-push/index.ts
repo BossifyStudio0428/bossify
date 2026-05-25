@@ -500,6 +500,6 @@ Deno.serve(async (req) => {
     return json(200, { ok: true, ...r });
   } catch (e) {
     console.error("send-push failed", e);
-    return json(500, { error: (e as Error).message });
+    return json(500, { error: "An unexpected error occurred." });
   }
 });
