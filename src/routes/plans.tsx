@@ -27,6 +27,126 @@ import {
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
 
+type TeamPlanDef = {
+  key: "team_starter" | "team_pro" | "team_business";
+  name: { zh: string; ms: string; en: string };
+  monthly: string;
+  yearly: string;
+  saveLabel: { zh: string; ms: string; en: string };
+  badge?: { zh: string; ms: string; en: string };
+  features: { zh: string; ms: string; en: string }[];
+  gradient: string;
+  accent: string;
+  btnGradient: string;
+};
+
+const TEAM_PLANS: TeamPlanDef[] = [
+  {
+    key: "team_starter",
+    name: { zh: "团队入门版", ms: "Team Starter", en: "Team Starter" },
+    monthly: "RM 129",
+    yearly: "RM 1,099",
+    saveLabel: { zh: "节省 29%", ms: "Jimat 29%", en: "Save 29%" },
+    gradient: "from-indigo-400 via-violet-400 to-purple-500",
+    accent: "text-indigo-600",
+    btnGradient: "from-indigo-500 to-violet-500",
+    features: [
+      { zh: "3 位用户", ms: "3 pengguna", en: "3 users" },
+      { zh: "包含所有专业版功能", ms: "Semua ciri Pro", en: "All Pro features" },
+      { zh: "角色管理（拥有者/管理员/员工）", ms: "Pengurusan peranan (Pemilik/Admin/Staf)", en: "Role management (Owner/Admin/Staff)" },
+      { zh: "共享订单、客户、库存", ms: "Kongsi pesanan, pelanggan, inventori", en: "Shared orders, customers, inventory" },
+      { zh: "每位用户 3 台设备", ms: "3 peranti setiap pengguna", en: "3 devices per user" },
+    ],
+  },
+  {
+    key: "team_pro",
+    name: { zh: "团队专业版", ms: "Team Pro", en: "Team Pro" },
+    monthly: "RM 249",
+    yearly: "RM 2,099",
+    saveLabel: { zh: "节省 30%", ms: "Jimat 30%", en: "Save 30%" },
+    badge: { zh: "最受欢迎", ms: "Paling Popular", en: "Most Popular" },
+    gradient: "from-primary via-primary/70 to-primary/40",
+    accent: "text-primary",
+    btnGradient: "from-primary to-primary/80",
+    features: [
+      { zh: "10 位用户", ms: "10 pengguna", en: "10 users" },
+      { zh: "包含所有团队入门版功能", ms: "Semua ciri Team Starter", en: "All Team Starter features" },
+      { zh: "活动记录", ms: "Log aktiviti", en: "Activity log" },
+      { zh: "优先支持", ms: "Sokongan keutamaan", en: "Priority support" },
+      { zh: "每位用户 3 台设备", ms: "3 peranti setiap pengguna", en: "3 devices per user" },
+    ],
+  },
+  {
+    key: "team_business",
+    name: { zh: "团队商业版", ms: "Team Business", en: "Team Business" },
+    monthly: "RM 599",
+    yearly: "RM 4,799",
+    saveLabel: { zh: "节省 33%", ms: "Jimat 33%", en: "Save 33%" },
+    badge: { zh: "最佳价值", ms: "Nilai Terbaik", en: "Best Value" },
+    gradient: "from-amber-400 via-amber-300 to-yellow-500",
+    accent: "text-amber-600",
+    btnGradient: "from-amber-500 to-yellow-500",
+    features: [
+      { zh: "无限用户", ms: "Pengguna tanpa had", en: "Unlimited users" },
+      { zh: "包含所有团队专业版功能", ms: "Semua ciri Team Pro", en: "All Team Pro features" },
+      { zh: "专属支持", ms: "Sokongan khas", en: "Dedicated support" },
+      { zh: "客制化入门指导", ms: "Onboarding tersuai", en: "Custom onboarding" },
+      { zh: "无限设备", ms: "Peranti tanpa had", en: "Unlimited devices" },
+    ],
+  },
+];
+
+function TeamPlansSection({ lang, billing }: { lang: "en" | "ms" | "zh"; billing: "monthly" | "annual" }) {
+  const periodLabel = billing === "monthly"
+    ? (lang === "zh" ? "/月" : lang === "ms" ? "/bulan" : "/month")
+    : (lang === "zh" ? "/年" : lang === "ms" ? "/tahun" : "/year");
+  const comingSoon = lang === "zh" ? "即将推出" : lang === "ms" ? "Akan Datang" : "Coming Soon";
+
+  return (
+    <>
+      {TEAM_PLANS.map((p) => {
+        const price = billing === "monthly" ? p.monthly : p.yearly;
+        const name = p.name[lang];
+        return (
+          <section key={p.key} className={`relative rounded-3xl p-[2px] bg-gradient-to-br ${p.gradient}`}>
+            <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
+              {p.badge && (
+                <span className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r ${p.btnGradient} text-white shadow`}>
+                  {p.badge[lang]}
+                </span>
+              )}
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="text-lg font-bold">{name}</h2>
+                <p className={`text-xl font-bold ${p.accent}`}>
+                  <span>{price}</span>
+                  <span className="text-xs text-muted-foreground font-normal">{periodLabel}</span>
+                </p>
+              </div>
+              {billing === "annual" && (
+                <p className="mt-1 text-[11px] font-semibold text-emerald-600">{p.saveLabel[lang]}</p>
+              )}
+              <ul className="mt-4 space-y-2">
+                {p.features.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <Check className={`h-4 w-4 ${p.accent} shrink-0 mt-0.5`} />
+                    <span className="text-foreground">{f[lang]}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                disabled
+                className="mt-5 w-full py-3 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm"
+              >
+                {comingSoon}
+              </button>
+            </div>
+          </section>
+        );
+      })}
+    </>
+  );
+}
+
 async function startStripeCheckout(opts: {
   userId: string;
   planType: "starter" | "pro" | "lifetime";
