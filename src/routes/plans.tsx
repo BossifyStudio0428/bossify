@@ -735,6 +735,9 @@ function PlansPage() {
           </div>
         </div>
       )}
+      </>)}
+
+      {scope === "team" && <TeamPlansSection lang={lang} billing={billing} />}
 
     </div>
   );
