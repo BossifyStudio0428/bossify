@@ -257,10 +257,10 @@ function NewOrderPage() {
       return null;
     }
 
-    // Auto-deduct stock if inventory item matches
+    // Stock deduction is handled by the DB trigger `trg_deduct_stock_on_order`.
+    // We only fire the low-stock notification here based on the projected value.
     if (matchedItem) {
       const newStock = Math.max(0, Number(matchedItem.stock ?? 0) - quantity);
-      await supabase.from("inventory").update({ stock: newStock }).eq("id", matchedItem.id);
       if (newStock <= 5 && newStock < Number(matchedItem.stock ?? 0)) {
         const m = getNotifMessage("low_stock", bizType, lang, {
           product: matchedItem.name,
