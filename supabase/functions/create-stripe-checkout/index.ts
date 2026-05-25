@@ -13,6 +13,12 @@ const PRICE_IDS: Record<string, string> = {
   "pro:monthly":     "price_1TYR0xHkpW03osRD8sRq0tO2",
   "pro:yearly":      "price_1TYR1LHkpW03osRDJrShdU7c",
   "lifetime:one":    "price_1TYR1lHkpW03osRD3sRkqZcL",
+  "team_starter:monthly":  "price_1TamtmHkpW03osRDhcMkc9bH",
+  "team_starter:yearly":   "price_1TamuIHkpW03osRDENjsHuL0",
+  "team_pro:monthly":      "price_1TamucHkpW03osRDVEwu8wmD",
+  "team_pro:yearly":       "price_1Tamv6HkpW03osRDzhg1ksUP",
+  "team_business:monthly": "price_1TamveHkpW03osRDx8m6JVZj",
+  "team_business:yearly":  "price_1TamvwHkpW03osRDjjB4ILBg",
 };
 
 Deno.serve(async (req) => {
