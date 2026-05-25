@@ -6,10 +6,13 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FCM_SERVICE_ACCOUNT_JSON = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON");
 const PUSH_WEBHOOK_SECRET = Deno.env.get("PUSH_WEBHOOK_SECRET");
-const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
 const APP_SUPABASE_URL = Deno.env.get("APP_SUPABASE_URL") ?? SUPABASE_URL;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
 const APP_SUPABASE_ANON_KEY = Deno.env.get("APP_SUPABASE_ANON_KEY") ?? ANON_KEY;
-const CRON_KEYS = new Set([ANON_KEY].filter(Boolean));
+// CRON access must use a high-entropy server-side secret. The public anon key
+// MUST NOT be accepted here — it is exposed to every browser client and would
+// let any visitor broadcast push notifications.
+const CRON_KEYS = new Set([PUSH_WEBHOOK_SECRET].filter(Boolean));
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",

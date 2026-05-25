@@ -1,4 +1,5 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,15 +25,41 @@ const PRICE_IDS: Record<string, string> = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { priceId: clientPriceId, userId, planType, billingCycle } = await req.json();
-    if (!userId || !planType) {
-      return new Response(JSON.stringify({ error: "Missing userId or planType" }), {
+    // Require a valid bearer token. We derive userId from the verified JWT —
+    // we do NOT trust any userId or priceId supplied by the client.
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const ANON_KEY =
+      Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+    const sb = createClient(SUPABASE_URL, ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: userData, error: userErr } = await sb.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = userData.user.id;
+
+    const { planType, billingCycle } = await req.json();
+    if (!planType) {
+      return new Response(JSON.stringify({ error: "Missing planType" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const cycle = planType === "lifetime" ? "one" : (billingCycle === "annual" || billingCycle === "yearly" ? "yearly" : "monthly");
-    const priceId = clientPriceId || PRICE_IDS[`${planType}:${cycle}`];
+    // Resolve price ID exclusively from the server-side mapping. Never trust
+    // a client-supplied priceId — that would allow plan/price spoofing.
+    const priceId = PRICE_IDS[`${planType}:${cycle}`];
     if (!priceId) {
       return new Response(JSON.stringify({ error: `Unknown plan ${planType}:${cycle}` }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

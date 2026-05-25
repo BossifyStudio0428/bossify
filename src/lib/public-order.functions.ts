@@ -141,6 +141,35 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
     const isRetailish = bizType === "retail" || bizType === "fnb";
     const userId: string = profile.id;
 
+    // Load authoritative prices from the database. We never trust client-supplied
+    // unit_price / amount values — a malicious client could submit RM 0.
+    const priceMap = new Map<string, number>();
+    const sourceTable = isRetailish ? "inventory" : "services";
+    const { data: priceRows } = await sb
+      .from(sourceTable)
+      .select("name, price, variants")
+      .eq("user_id", userId);
+    for (const row of (priceRows ?? []) as any[]) {
+      const baseName = String(row.name ?? "").trim().toLowerCase();
+      const basePrice = Number(row.price ?? 0);
+      if (baseName) priceMap.set(baseName, basePrice);
+      const variants = Array.isArray(row.variants) ? row.variants : [];
+      for (const v of variants) {
+        const vName = String(v?.name ?? "").trim();
+        if (!vName) continue;
+        const vPrice = Number(v?.price ?? basePrice);
+        priceMap.set(`${baseName} (${vName.toLowerCase()})`, vPrice);
+      }
+    }
+    const lookupPrice = (product: string, variant?: string): number | null => {
+      const p = product.trim().toLowerCase();
+      if (variant && variant.trim()) {
+        const key = `${p} (${variant.trim().toLowerCase()})`;
+        if (priceMap.has(key)) return priceMap.get(key)!;
+      }
+      return priceMap.has(p) ? priceMap.get(p)! : null;
+    };
+
     // Build notes from biz-specific extras + user notes
     const extra: string[] = [];
     if (bizType === "fnb" && data.fulfilment) {
@@ -173,6 +202,20 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
     let totalQty = 1;
     let totalAmount = 0;
     if (data.items && data.items.length > 0) {
+      // Resolve every item's price from the server-side mapping. Reject
+      // items whose product cannot be matched to a real inventory/service row.
+      const resolved = data.items.map((it) => {
+        const serverPrice = lookupPrice(it.product, it.variant);
+        return { it, serverPrice };
+      });
+      const unknown = resolved.find((r) => r.serverPrice === null);
+      if (unknown) {
+        return {
+          ok: false as const,
+          reason: "insert_failed" as const,
+          error: `Unknown product: ${unknown.it.product}`,
+        };
+      }
       productText = data.items
         .map((it) => {
           const label = it.variant ? `${it.product} (${it.variant})` : it.product;
@@ -182,14 +225,15 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
       totalQty = isRetailish
         ? data.items.reduce((s, it) => s + (it.quantity || 1), 0)
         : 1;
-      totalAmount = data.items.reduce(
-        (s, it) => s + Number(it.unit_price || 0) * (isRetailish ? (it.quantity || 1) : 1),
+      totalAmount = resolved.reduce(
+        (s, { it, serverPrice }) =>
+          s + Number(serverPrice ?? 0) * (isRetailish ? (it.quantity || 1) : 1),
         0,
       );
       // Itemized lines added to notes for seller clarity
-      const lines = data.items.map((it) => {
+      const lines = resolved.map(({ it, serverPrice }) => {
         const label = it.variant ? `${it.product} (${it.variant})` : it.product;
-        const sub = Number(it.unit_price || 0) * (isRetailish ? (it.quantity || 1) : 1);
+        const sub = Number(serverPrice ?? 0) * (isRetailish ? (it.quantity || 1) : 1);
         return isRetailish
           ? `• ${label} × ${it.quantity} — RM ${sub.toFixed(2)}`
           : `• ${label} — RM ${sub.toFixed(2)}`;
@@ -198,7 +242,16 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
     } else {
       productText = (data.product || "").trim();
       totalQty = isRetailish ? Math.max(1, Number(data.quantity) || 1) : 1;
-      totalAmount = Number(data.amount) || 0;
+      // Legacy single-item path: derive the price server-side too.
+      const serverPrice = productText ? lookupPrice(productText) : null;
+      if (productText && serverPrice === null) {
+        return {
+          ok: false as const,
+          reason: "insert_failed" as const,
+          error: `Unknown product: ${productText}`,
+        };
+      }
+      totalAmount = Number(serverPrice ?? 0) * totalQty;
     }
 
     if (!productText) {
