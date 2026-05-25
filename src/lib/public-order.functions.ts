@@ -344,8 +344,9 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
     // Push notification to seller (best-effort)
     try {
       const pushSecret = process.env.PUSH_WEBHOOK_SECRET;
+      console.log("[submitPublicOrder] push secret present:", !!pushSecret);
       if (pushSecret) {
-        await fetch("https://utqlrdbhvnugqvemjegi.supabase.co/functions/v1/send-push", {
+        const pushRes = await fetch("https://utqlrdbhvnugqvemjegi.supabase.co/functions/v1/send-push", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -359,9 +360,13 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
             link: "/orders",
           }),
         });
+        const pushBody = await pushRes.text();
+        console.log("[submitPublicOrder] push result", pushRes.status, pushBody);
+      } else {
+        console.warn("[submitPublicOrder] PUSH_WEBHOOK_SECRET missing in worker env");
       }
-    } catch {
-      /* non-fatal */
+    } catch (e) {
+      console.error("[submitPublicOrder] push error", e);
     }
 
     return {
