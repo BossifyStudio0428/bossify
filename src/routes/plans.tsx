@@ -217,10 +217,11 @@ function PlansPage() {
   const eff = (bizType ?? "retail") as
     | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
   const { user } = useAuth();
-  const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
+  const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan, teamTier } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [scope, setScope] = useState<"individual" | "team">("individual");
   const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | null>(null);
+  const [submittingTeam, setSubmittingTeam] = useState<TeamTier | null>(null);
   const [lifetimeConfirmOpen, setLifetimeConfirmOpen] = useState(false);
   type PriceKey =
     | "monthly" | "annual" | "lifetime"
