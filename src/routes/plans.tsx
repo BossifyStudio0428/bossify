@@ -51,11 +51,10 @@ const TEAM_PLANS: TeamPlanDef[] = [
     accent: "text-indigo-600",
     btnGradient: "from-indigo-500 to-violet-500",
     features: [
-      { zh: "3 位用户", ms: "3 pengguna", en: "3 users" },
       { zh: "包含所有专业版功能", ms: "Semua ciri Pro", en: "All Pro features" },
       { zh: "角色管理（拥有者/管理员/员工）", ms: "Pengurusan peranan (Pemilik/Admin/Staf)", en: "Role management (Owner/Admin/Staff)" },
       { zh: "共享订单、客户、库存", ms: "Kongsi pesanan, pelanggan, inventori", en: "Shared orders, customers, inventory" },
-      { zh: "每位用户 3 台设备", ms: "3 peranti setiap pengguna", en: "3 devices per user" },
+      { zh: "3 用户，每人 3 设备", ms: "3 Pengguna, 3 peranti setiap satu", en: "3 Users, 3 devices each" },
     ],
   },
   {
@@ -69,11 +68,10 @@ const TEAM_PLANS: TeamPlanDef[] = [
     accent: "text-primary",
     btnGradient: "from-primary to-primary/80",
     features: [
-      { zh: "10 位用户", ms: "10 pengguna", en: "10 users" },
       { zh: "包含所有团队入门版功能", ms: "Semua ciri Team Starter", en: "All Team Starter features" },
       { zh: "活动记录", ms: "Log aktiviti", en: "Activity log" },
       { zh: "优先支持", ms: "Sokongan keutamaan", en: "Priority support" },
-      { zh: "每位用户 3 台设备", ms: "3 peranti setiap pengguna", en: "3 devices per user" },
+      { zh: "10 用户，每人 3 设备", ms: "10 Pengguna, 3 peranti setiap satu", en: "10 Users, 3 devices each" },
     ],
   },
   {
@@ -87,11 +85,10 @@ const TEAM_PLANS: TeamPlanDef[] = [
     accent: "text-amber-600",
     btnGradient: "from-amber-500 to-yellow-500",
     features: [
-      { zh: "无限用户", ms: "Pengguna tanpa had", en: "Unlimited users" },
       { zh: "包含所有团队专业版功能", ms: "Semua ciri Team Pro", en: "All Team Pro features" },
       { zh: "专属支持", ms: "Sokongan khas", en: "Dedicated support" },
       { zh: "客制化入门指导", ms: "Onboarding tersuai", en: "Custom onboarding" },
-      { zh: "无限设备", ms: "Peranti tanpa had", en: "Unlimited devices" },
+      { zh: "无限用户，每人 3 设备", ms: "Pengguna tanpa had, 3 peranti setiap satu", en: "Unlimited Users, 3 devices each" },
     ],
   },
 ];
@@ -263,14 +260,14 @@ function PlansPage() {
 
   const freePositive: TKey[] = FREE[eff];
   const freeRows: { ok: boolean; label: string }[] = [
-    { ok: true, label: "1 台设备 / 1 device" },
+    { ok: true, label: "1 设备 / 1 Device / 1 Peranti" },
     ...freePositive.map((k) => ({ ok: true, label: t(k) })),
     // upsell hints (what you don't get on Free)
     { ok: false, label: t("sales_reports") },
     { ok: false, label: t("export_pdf") },
     { ok: false, label: t("wa_template") },
   ];
-  const starterRows = ["2 台设备 / 2 devices", ...STARTER[eff].map((k) => t(k))];
+  const starterRows = ["2 设备 / 2 Devices / 2 Peranti", ...STARTER[eff].map((k) => t(k))];
   const proRows = PRO[eff].map((k) => t(k));
 
   const handleGooglePlayPurchase = async () => {
@@ -607,7 +604,7 @@ function PlansPage() {
           <ul className="mt-4 space-y-2">
             <li className="flex items-start gap-2 text-sm">
               <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <span className="text-foreground">3 台设备 / 3 devices</span>
+              <span className="text-foreground">3 设备 / 3 Devices / 3 Peranti</span>
             </li>
             {proRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
@@ -652,7 +649,7 @@ function PlansPage() {
           <ul className="mt-4 space-y-2">
             <li className="flex items-start gap-2 text-sm">
               <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-              <span className="text-foreground">5 台设备 / 5 devices</span>
+              <span className="text-foreground">5 设备 / 5 Devices / 5 Peranti</span>
             </li>
             {proRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
