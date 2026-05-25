@@ -246,6 +246,15 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
       return { ok: false as const, reason: "insert_failed" as const, error: oErr?.message };
     }
 
+    // Auto-deduct stock for retail/fnb only (services don't have stock).
+    if (isRetailish) {
+      const deductItems =
+        data.items && data.items.length > 0
+          ? data.items.map((it) => ({ product: it.product, quantity: it.quantity || 1 }))
+          : [{ product: productText, quantity: qty }];
+      await deductInventoryStock(sb, userId, deductItems);
+    }
+
     // Upsert customer by phone
     if (phoneDigits) {
       const { data: existing } = await sb
