@@ -134,8 +134,13 @@ export type ProductPrice = {
    * "lifetime" → one-time Lifetime product.
    * "starter_monthly" / "starter_annual" → Starter subscription SKUs.
    */
-  plan: BillingPlan | "lifetime" | "starter_monthly" | "starter_annual";
-  /** "team_<tier>_<billing>" entries are produced for the 6 team SKUs. */
+  plan:
+    | BillingPlan
+    | "lifetime"
+    | "starter_monthly" | "starter_annual"
+    | "team_starter_monthly" | "team_starter_annual"
+    | "team_pro_monthly"     | "team_pro_annual"
+    | "team_business_monthly" | "team_business_annual";
   /** e.g. "RM 49.00", "$11.99", "₹999" — already formatted by the store. */
   formattedPrice: string;
   /** ISO 4217 currency code, e.g. "MYR", "USD". */
