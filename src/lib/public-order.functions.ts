@@ -318,15 +318,23 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
 
     // Push notification to seller (best-effort)
     try {
-      await sb.functions.invoke("send-push", {
-        body: {
-          kind: "new_order",
-          targetUserId: userId,
-          title: "New order received! 🛍️",
-          body: `From ${data.customer_name} · ${data.product}`,
-          link: "/orders",
-        },
-      });
+      const pushSecret = process.env.PUSH_WEBHOOK_SECRET;
+      if (pushSecret) {
+        await fetch("https://utqlrdbhvnugqvemjegi.supabase.co/functions/v1/send-push", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-cron-secret": pushSecret,
+          },
+          body: JSON.stringify({
+            kind: "new_order",
+            targetUserId: userId,
+            title: "New order received! 🛍️",
+            body: `From ${data.customer_name} · ${productText}`,
+            link: "/orders",
+          }),
+        });
+      }
     } catch {
       /* non-fatal */
     }
