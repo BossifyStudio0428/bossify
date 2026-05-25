@@ -15,16 +15,28 @@ const stripe = new Stripe(stripeSecret, { apiVersion: "2024-11-20.acacia" });
 
 function priceToPlan(
   priceId: string | null | undefined,
-): { plan: "starter" | "pro" | "lifetime"; cycle: "monthly" | "yearly" | "one" } | null {
+): {
+  plan: "starter" | "pro" | "lifetime" | "team_starter" | "team_pro" | "team_business";
+  cycle: "monthly" | "yearly" | "one";
+} | null {
   const map: Record<
     string,
-    { plan: "starter" | "pro" | "lifetime"; cycle: "monthly" | "yearly" | "one" }
+    {
+      plan: "starter" | "pro" | "lifetime" | "team_starter" | "team_pro" | "team_business";
+      cycle: "monthly" | "yearly" | "one";
+    }
   > = {
     price_1TYQzgHkpW03osRD7GNJFs4D: { plan: "starter", cycle: "monthly" },
     price_1TYR0LHkpW03osRDPHKAU9BF: { plan: "starter", cycle: "yearly" },
     price_1TYR0xHkpW03osRD8sRq0tO2: { plan: "pro", cycle: "monthly" },
     price_1TYR1LHkpW03osRDJrShdU7c: { plan: "pro", cycle: "yearly" },
     price_1TYR1lHkpW03osRD3sRkqZcL: { plan: "lifetime", cycle: "one" },
+    price_1TamtmHkpW03osRDhcMkc9bH: { plan: "team_starter",  cycle: "monthly" },
+    price_1TamuIHkpW03osRDENjsHuL0: { plan: "team_starter",  cycle: "yearly" },
+    price_1TamucHkpW03osRDVEwu8wmD: { plan: "team_pro",      cycle: "monthly" },
+    price_1Tamv6HkpW03osRDzhg1ksUP: { plan: "team_pro",      cycle: "yearly" },
+    price_1TamveHkpW03osRDx8m6JVZj: { plan: "team_business", cycle: "monthly" },
+    price_1TamvwHkpW03osRDjjB4ILBg: { plan: "team_business", cycle: "yearly" },
   };
   return priceId ? (map[priceId] ?? null) : null;
 }
