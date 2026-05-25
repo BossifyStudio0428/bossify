@@ -313,6 +313,8 @@ function PlansPage() {
   const freePositive: TKey[] = FREE[eff];
   const freeDeviceLabel = lang === "zh" ? "1 台设备" : lang === "ms" ? "1 Peranti" : "1 Device";
   const starterDeviceLabel = lang === "zh" ? "2 台设备" : lang === "ms" ? "2 Peranti" : "2 Devices";
+  const proDeviceLabel = lang === "zh" ? "3 台设备" : lang === "ms" ? "3 Peranti" : "3 Devices";
+  const lifetimeDeviceLabel = lang === "zh" ? "5 台设备" : lang === "ms" ? "5 Peranti" : "5 Devices";
   const freeRows: { ok: boolean; label: string }[] = [
     { ok: true, label: freeDeviceLabel },
     ...freePositive.map((k) => ({ ok: true, label: t(k) })),
