@@ -51,6 +51,48 @@ export const STARTER_FALLBACK_PRICES: Record<BillingPlan, string> = {
   annual: "RM 159",
 };
 
+/**
+ * Team Plans — each tier has separate monthly/yearly subscription SKUs.
+ */
+export type TeamTier = "team_starter" | "team_pro" | "team_business";
+
+export const TEAM_PRODUCT_IDS: Record<TeamTier, Record<BillingPlan, string>> = {
+  team_starter: {
+    monthly: "bossify_team_starter_monthly",
+    annual: "bossify_team_starter_yearly",
+  },
+  team_pro: {
+    monthly: "bossify_team_pro_monthly",
+    annual: "bossify_team_pro_yearly",
+  },
+  team_business: {
+    monthly: "bossify_team_business_monthly",
+    annual: "bossify_team_business_yearly",
+  },
+};
+
+export const TEAM_FALLBACK_PRICES: Record<TeamTier, Record<BillingPlan, string>> = {
+  team_starter:  { monthly: "RM 129", annual: "RM 1,099" },
+  team_pro:      { monthly: "RM 249", annual: "RM 2,099" },
+  team_business: { monthly: "RM 599", annual: "RM 4,799" },
+};
+
+/** Flat list of all team product IDs (for registration / iteration). */
+export const ALL_TEAM_PRODUCT_IDS: string[] = (Object.keys(TEAM_PRODUCT_IDS) as TeamTier[])
+  .flatMap((tier) => [TEAM_PRODUCT_IDS[tier].monthly, TEAM_PRODUCT_IDS[tier].annual]);
+
+/** Reverse lookup from product id → { tier, billing }. */
+export function teamProductLookup(
+  productId: string,
+): { tier: TeamTier; billing: BillingPlan } | null {
+  for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
+    const ids = TEAM_PRODUCT_IDS[tier];
+    if (productId === ids.monthly) return { tier, billing: "monthly" };
+    if (productId === ids.annual)  return { tier, billing: "annual" };
+  }
+  return null;
+}
+
 export type PurchaseReceipt = {
   productId: string;
   transactionId: string;
@@ -92,7 +134,13 @@ export type ProductPrice = {
    * "lifetime" → one-time Lifetime product.
    * "starter_monthly" / "starter_annual" → Starter subscription SKUs.
    */
-  plan: BillingPlan | "lifetime" | "starter_monthly" | "starter_annual";
+  plan:
+    | BillingPlan
+    | "lifetime"
+    | "starter_monthly" | "starter_annual"
+    | "team_starter_monthly" | "team_starter_annual"
+    | "team_pro_monthly"     | "team_pro_annual"
+    | "team_business_monthly" | "team_business_annual";
   /** e.g. "RM 49.00", "$11.99", "₹999" — already formatted by the store. */
   formattedPrice: string;
   /** ISO 4217 currency code, e.g. "MYR", "USD". */
@@ -273,6 +321,11 @@ export function initBilling(): Promise<AnyStore | null> {
           type: cdv.ProductType.PAID_SUBSCRIPTION,
           platform: cdv.Platform.GOOGLE_PLAY,
         },
+        ...ALL_TEAM_PRODUCT_IDS.map((id) => ({
+          id,
+          type: cdv.ProductType.PAID_SUBSCRIPTION,
+          platform: cdv.Platform.GOOGLE_PLAY,
+        })),
       ]);
 
       // Approved → collect receipt → finish so Google marks the order
@@ -442,6 +495,26 @@ export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult
       } catch {}
       out.push({ plan: key, formattedPrice: STARTER_FALLBACK_PRICES[billing], currency: "MYR" });
     }
+    // Team subscription SKUs.
+    for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
+      for (const billing of ["monthly", "annual"] as BillingPlan[]) {
+        const planKey = `${tier}_${billing === "annual" ? "annual" : "monthly"}` as
+          | "team_starter_monthly" | "team_starter_annual"
+          | "team_pro_monthly"     | "team_pro_annual"
+          | "team_business_monthly" | "team_business_annual";
+        try {
+          const productId = TEAM_PRODUCT_IDS[tier][billing];
+          const teamProduct = store.get(productId);
+          const teamOffer = teamProduct?.offers?.[0];
+          const { price, currency } = readPrice(teamProduct, teamOffer);
+          if (price) {
+            out.push({ plan: planKey, formattedPrice: price, currency: currency ?? "MYR" });
+            continue;
+          }
+        } catch {}
+        out.push({ plan: planKey, formattedPrice: TEAM_FALLBACK_PRICES[tier][billing], currency: "MYR" });
+      }
+    }
     const hasRealPrice = out.some((p) => p.formattedPrice && p.formattedPrice !== "—");
     const isFallback = !hasRealPrice;
     billingLog(isFallback || stale ? "warn" : "info", "price fetch complete", { attemptId, fallback: isFallback, stale, prices: out });
@@ -466,6 +539,20 @@ function fallbackPrices(): ProductPrice[] {
   subs.push({ plan: "lifetime", formattedPrice: LIFETIME_FALLBACK_PRICE, currency: "MYR" });
   subs.push({ plan: "starter_monthly", formattedPrice: STARTER_FALLBACK_PRICES.monthly, currency: "MYR" });
   subs.push({ plan: "starter_annual", formattedPrice: STARTER_FALLBACK_PRICES.annual, currency: "MYR" });
+  for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
+    subs.push({
+      plan: `${tier}_monthly` as
+        | "team_starter_monthly" | "team_pro_monthly" | "team_business_monthly",
+      formattedPrice: TEAM_FALLBACK_PRICES[tier].monthly,
+      currency: "MYR",
+    });
+    subs.push({
+      plan: `${tier}_annual` as
+        | "team_starter_annual" | "team_pro_annual" | "team_business_annual",
+      formattedPrice: TEAM_FALLBACK_PRICES[tier].annual,
+      currency: "MYR",
+    });
+  }
   return subs;
 }
 
@@ -572,6 +659,22 @@ async function tryNativeRestore(): Promise<PurchaseReceipt[]> {
           basePlanId: billing,
           currentPeriodEnd: isoFromDate(s.transaction?.expirationDate),
         });
+      }
+    }
+    // Team subscriptions
+    for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
+      for (const billing of ["monthly", "annual"] as BillingPlan[]) {
+        const id = TEAM_PRODUCT_IDS[tier][billing];
+        const tp = store.get(id);
+        if (tp?.owned || tp?.offers?.some?.((o: AnyStore) => o?.owned)) {
+          out.push({
+            productId: id,
+            transactionId: tp.transaction?.id ?? "",
+            purchaseToken: tp.transaction?.purchaseToken,
+            basePlanId: billing,
+            currentPeriodEnd: isoFromDate(tp.transaction?.expirationDate),
+          });
+        }
       }
     }
     return out;
@@ -814,5 +917,70 @@ export async function restorePurchases(
   } catch (e) {
     const err = e as Partial<BillingError> | undefined;
     onError({ code: err?.code ?? "unknown", message: err?.message ?? "Restore failed" });
+  }
+}
+
+/**
+ * Verify ownership of any Team subscription. Returns the active receipt
+ * along with the matched tier/billing, or null if none owned.
+ */
+export async function verifyActiveTeam(): Promise<
+  { receipt: PurchaseReceipt; tier: TeamTier; billing: BillingPlan } | null
+> {
+  if (!isNativeBillingAvailable()) return null;
+  const store = await initBilling();
+  if (!store) return null;
+  try {
+    try { await store.restorePurchases(); } catch {}
+    try { await store.update(); } catch {}
+    for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
+      for (const billing of ["annual", "monthly"] as BillingPlan[]) {
+        const id = TEAM_PRODUCT_IDS[tier][billing];
+        const product = store.get(id);
+        if (!product) continue;
+        const owned: boolean = !!(product.owned || product.offers?.some?.((o: AnyStore) => o?.owned));
+        if (!owned) continue;
+        const tx = product.transaction ?? {};
+        return {
+          tier,
+          billing,
+          receipt: {
+            productId: id,
+            transactionId: tx.id ?? tx.transactionId ?? "",
+            purchaseToken: tx.purchaseToken,
+            basePlanId: billing,
+            currentPeriodEnd: isoFromDate(tx.expirationDate),
+          },
+        };
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Purchase a Team Plan subscription. Each tier × billing-cycle is a separate
+ * Google Play subscription SKU (one base plan each), so we order it
+ * directly — same pattern as `purchaseStarter`.
+ */
+export async function purchaseTeam(
+  tier: TeamTier,
+  billing: BillingPlan,
+  onSuccess: (receipt: PurchaseReceipt, info: { tier: TeamTier; billing: BillingPlan }) => Promise<void> | void,
+  onError: (err: BillingError) => void,
+): Promise<void> {
+  if (!isNativeBillingAvailable()) {
+    onError({ code: "not_android", message: "Not running inside Android app" });
+    return;
+  }
+  const productId = TEAM_PRODUCT_IDS[tier][billing];
+  try {
+    const receipt = await tryNativePurchase(productId, "");
+    await onSuccess({ ...receipt, productId, basePlanId: billing }, { tier, billing });
+  } catch (e) {
+    const err = e as Partial<BillingError> | undefined;
+    onError({ code: err?.code ?? "unknown", message: err?.message ?? "Purchase failed" });
   }
 }

@@ -7,13 +7,22 @@ import {
   verifyActiveSubscription,
   verifyLifetimeOwnership,
   verifyActiveStarter,
+  verifyActiveTeam,
   isNativeBillingAvailable,
   LIFETIME_PRODUCT_ID,
   STARTER_PRODUCT_IDS,
+  TEAM_PRODUCT_IDS,
   type BillingPlan,
 } from "@/lib/billing";
 
-export type Plan = "free" | "starter" | "pro" | "lifetime";
+export type Plan =
+  | "free"
+  | "starter"
+  | "pro"
+  | "lifetime"
+  | "team_starter"
+  | "team_pro"
+  | "team_business";
 
 export type SubscriptionRow = {
   id: string;
@@ -52,6 +61,10 @@ export function getPlanLimits(plan: Plan) {
   if (plan === "pro" || plan === "lifetime") {
     return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity };
   }
+  if (plan === "team_starter" || plan === "team_pro" || plan === "team_business") {
+    // Team plans inherit Pro-level (unlimited) numeric caps.
+    return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity };
+  }
   if (plan === "starter") return STARTER_LIMITS;
   return FREE_LIMITS;
 }
@@ -62,6 +75,8 @@ type Ctx = {
   isPro: boolean;
   isStarter: boolean;
   isLifetime: boolean;
+  isTeam: boolean;
+  teamTier: "team_starter" | "team_pro" | "team_business" | null;
   /** True for both Pro subscribers and Lifetime owners. Use this for feature gates. */
   hasFullAccess: boolean;
   loading: boolean;
@@ -301,6 +316,25 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         await refresh();
         return;
       }
+      // Team subscriptions (any tier).
+      const teamOwned = await verifyActiveTeam();
+      if (teamOwned) {
+        await supabase.from("subscriptions").upsert(
+          {
+            user_id: user.id,
+            plan: teamOwned.tier,
+            status: "active",
+            provider: "google_play",
+            provider_product_id: `${teamOwned.receipt.productId}:${teamOwned.billing}`,
+            provider_transaction_id: teamOwned.receipt.transactionId,
+            provider_purchase_token: teamOwned.receipt.purchaseToken ?? null,
+            current_period_end: teamOwned.receipt.currentPeriodEnd ?? null,
+          },
+          { onConflict: "user_id" },
+        );
+        await refresh();
+        return;
+      }
       // Check Starter subscription next.
       const starterReceipt = await verifyActiveStarter();
       if (starterReceipt) {
@@ -402,9 +436,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // Lifetime never expires — no period check.
   const isLifetime = plan === "lifetime" && (sub?.status ?? "active") === "active";
   const isStarter = plan === "starter" && (sub?.status ?? "active") === "active" && isPeriodActive;
-  const hasFullAccess = isPro || isLifetime;
+  const teamTier: "team_starter" | "team_pro" | "team_business" | null =
+    (plan === "team_starter" || plan === "team_pro" || plan === "team_business") &&
+    (sub?.status ?? "active") === "active" &&
+    isPeriodActive
+      ? plan
+      : null;
+  const isTeam = teamTier !== null;
+  const hasFullAccess = isPro || isLifetime || isTeam;
   const limits = getPlanLimits(
-    isStarter ? "starter" : isPro ? "pro" : isLifetime ? "lifetime" : "free",
+    teamTier ? teamTier : isStarter ? "starter" : isPro ? "pro" : isLifetime ? "lifetime" : "free",
   );
   const ordersUsed = sub?.order_count ?? 0;
   const ordersLimit = limits.ordersPerMonth;
@@ -427,6 +468,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         isPro,
         isStarter,
         isLifetime,
+        isTeam,
+        teamTier,
         hasFullAccess,
         loading,
         ordersUsed,

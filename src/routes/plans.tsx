@@ -13,6 +13,7 @@ import {
   purchasePlan,
   purchaseLifetime,
   purchaseStarter,
+  purchaseTeam,
   restorePurchases,
   queryProductDetailsSafe,
   FALLBACK_PRICES,
@@ -22,6 +23,9 @@ import {
   BASE_PLAN_IDS,
   STARTER_PRODUCT_IDS,
   STARTER_FALLBACK_PRICES,
+  TEAM_PRODUCT_IDS,
+  TEAM_FALLBACK_PRICES,
+  type TeamTier,
   type BillingError,
 } from "@/lib/billing";
 
@@ -93,17 +97,37 @@ const TEAM_PLANS: TeamPlanDef[] = [
   },
 ];
 
-function TeamPlansSection({ lang, billing }: { lang: "en" | "ms" | "zh"; billing: "monthly" | "annual" }) {
+function TeamPlansSection({
+  lang,
+  billing,
+  storePrices,
+  onPurchase,
+  submittingTier,
+  currentTier,
+  currentBilling,
+}: {
+  lang: "en" | "ms" | "zh";
+  billing: "monthly" | "annual";
+  storePrices: Record<string, string>;
+  onPurchase: (tier: TeamTier) => void;
+  submittingTier: TeamTier | null;
+  currentTier: TeamTier | null;
+  currentBilling: "monthly" | "annual" | null;
+}) {
   const periodLabel = billing === "monthly"
     ? (lang === "zh" ? "/月" : lang === "ms" ? "/bulan" : "/month")
     : (lang === "zh" ? "/年" : lang === "ms" ? "/tahun" : "/year");
-  const comingSoon = lang === "zh" ? "即将推出" : lang === "ms" ? "Akan Datang" : "Coming Soon";
+  const subscribeLabel = lang === "zh" ? "订阅" : lang === "ms" ? "Langgan" : "Subscribe";
+  const currentLabel = lang === "zh" ? "当前方案 ✓" : lang === "ms" ? "Pelan Semasa ✓" : "Current Plan ✓";
 
   return (
     <>
       {TEAM_PLANS.map((p) => {
-        const price = billing === "monthly" ? p.monthly : p.yearly;
+        const priceKey = `${p.key}_${billing === "monthly" ? "monthly" : "annual"}`;
+        const price = storePrices[priceKey] ?? (billing === "monthly" ? p.monthly : p.yearly);
         const name = p.name[lang];
+        const isCurrent = currentTier === p.key && currentBilling === billing;
+        const isSubmitting = submittingTier === p.key;
         return (
           <section key={p.key} className={`relative rounded-3xl p-[2px] bg-gradient-to-br ${p.gradient}`}>
             <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
@@ -130,12 +154,19 @@ function TeamPlansSection({ lang, billing }: { lang: "en" | "ms" | "zh"; billing
                   </li>
                 ))}
               </ul>
-              <button
-                disabled
-                className="mt-5 w-full py-3 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm"
-              >
-                {comingSoon}
-              </button>
+              {isCurrent ? (
+                <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-100 text-emerald-700 font-semibold text-sm">
+                  {currentLabel}
+                </button>
+              ) : (
+                <button
+                  onClick={() => onPurchase(p.key)}
+                  disabled={submittingTier !== null}
+                  className={`mt-5 w-full py-3 rounded-2xl bg-gradient-to-r ${p.btnGradient} text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60`}
+                >
+                  {isSubmitting ? "..." : `${subscribeLabel} — ${price}`}
+                </button>
+              )}
             </div>
           </section>
         );
@@ -186,17 +217,30 @@ function PlansPage() {
   const eff = (bizType ?? "retail") as
     | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
   const { user } = useAuth();
-  const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan } = useSubscription();
+  const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan, teamTier } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [scope, setScope] = useState<"individual" | "team">("individual");
   const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | null>(null);
+  const [submittingTeam, setSubmittingTeam] = useState<TeamTier | null>(null);
   const [lifetimeConfirmOpen, setLifetimeConfirmOpen] = useState(false);
-  const [storePrices, setStorePrices] = useState<Record<"monthly" | "annual" | "lifetime" | "starter_monthly" | "starter_annual", string>>({
+  type PriceKey =
+    | "monthly" | "annual" | "lifetime"
+    | "starter_monthly" | "starter_annual"
+    | "team_starter_monthly" | "team_starter_annual"
+    | "team_pro_monthly" | "team_pro_annual"
+    | "team_business_monthly" | "team_business_annual";
+  const [storePrices, setStorePrices] = useState<Record<PriceKey, string>>({
     monthly: FALLBACK_PRICES.monthly,
     annual: FALLBACK_PRICES.annual,
     lifetime: LIFETIME_FALLBACK_PRICE,
     starter_monthly: STARTER_FALLBACK_PRICES.monthly,
     starter_annual: STARTER_FALLBACK_PRICES.annual,
+    team_starter_monthly: TEAM_FALLBACK_PRICES.team_starter.monthly,
+    team_starter_annual: TEAM_FALLBACK_PRICES.team_starter.annual,
+    team_pro_monthly: TEAM_FALLBACK_PRICES.team_pro.monthly,
+    team_pro_annual: TEAM_FALLBACK_PRICES.team_pro.annual,
+    team_business_monthly: TEAM_FALLBACK_PRICES.team_business.monthly,
+    team_business_annual: TEAM_FALLBACK_PRICES.team_business.annual,
   });
 
   // Pull locally-formatted prices from Google Play in the background and
@@ -854,7 +898,65 @@ function PlansPage() {
       )}
       </>)}
 
-      {scope === "team" && <TeamPlansSection lang={lang} billing={billing} />}
+      {scope === "team" && (
+        <TeamPlansSection
+          lang={lang}
+          billing={billing}
+          storePrices={storePrices}
+          submittingTier={submittingTeam}
+          currentTier={teamTier}
+          currentBilling={teamTier ? activeBillingPlan : null}
+          onPurchase={async (tier) => {
+            if (!user) return;
+            if (!isNativeBillingAvailable()) {
+              toast.message(t("google_play_only_android"));
+              return;
+            }
+            setSubmittingTeam(tier);
+            try {
+              await purchaseTeam(
+                tier,
+                billing,
+                async (receipt, info) => {
+                  const expiresAt = new Date();
+                  if (info.billing === "monthly") expiresAt.setMonth(expiresAt.getMonth() + 1);
+                  else expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+                  const { error: upsertError } = await supabase.from("subscriptions").upsert({
+                    user_id: user.id,
+                    plan: info.tier,
+                    status: "active",
+                    provider: "google_play",
+                    provider_product_id: `${receipt.productId}:${info.billing}`,
+                    provider_transaction_id: receipt.transactionId,
+                    provider_purchase_token: receipt.purchaseToken ?? null,
+                    current_period_end: receipt.currentPeriodEnd ?? expiresAt.toISOString(),
+                  }, { onConflict: "user_id" });
+                  if (upsertError) {
+                    toast.error(`${t("billing_unknown_error")}: ${upsertError.message}`);
+                    return;
+                  }
+                  await refresh();
+                  toast.success(
+                    lang === "zh" ? "团队方案已激活" :
+                    lang === "ms" ? "Pelan pasukan diaktifkan" :
+                    "Team plan activated",
+                  );
+                },
+                (err) => {
+                  if (err.code === "item_unavailable") toast.message(t("billing_item_unavailable"));
+                  else if (err.code === "user_cancelled") toast.message(t("billing_user_cancelled"));
+                  else if (err.code === "not_android") toast.message(t("google_play_only_android"));
+                  else toast.error(t("billing_unknown_error"));
+                },
+              );
+            } finally {
+              try { await syncFromStore(); } catch {}
+              try { await refresh(); } catch {}
+              setSubmittingTeam(null);
+            }
+          }}
+        />
+      )}
 
     </div>
   );
