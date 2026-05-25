@@ -40,6 +40,7 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
     return z.object({ code: z.string().regex(CODE_RE) }).parse(input);
   })
   .handler(async ({ data }) => {
+    try {
     const sb = getPublicOrderClient() as any;
     const { data: profile, error } = await sb
       .from("profiles")
@@ -49,7 +50,7 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
       .eq("order_form_code", data.code.toLowerCase())
       .maybeSingle();
 
-    if (error || !profile) return { ok: false as const, reason: "not_found" as const };
+    if (error || !profile) return { ok: false as const, reason: "not_found" as const, error: error?.message };
     if (profile.order_form_enabled === false) {
       return { ok: false as const, reason: "disabled" as const };
     }
@@ -113,6 +114,10 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
       },
       products,
     };
+    } catch (e: any) {
+      console.error("[getPublicOrderForm] threw", e);
+      return { ok: false as const, reason: "not_found" as const, error: String(e?.message ?? e) };
+    }
   });
 
 function genCode() {
@@ -123,16 +128,30 @@ function genCode() {
 }
 
 export const submitPublicOrder = createServerFn({ method: "POST" })
-  .inputValidator((input) => SubmitSchema.parse(input))
+  .inputValidator((input) => {
+    try {
+      return { __ok: true as const, value: SubmitSchema.parse(input) };
+    } catch (e: any) {
+      const msg = e?.issues
+        ? e.issues.map((i: any) => `${(i.path ?? []).join(".")}: ${i.message}`).join("; ")
+        : String(e?.message ?? e);
+      return { __ok: false as const, error: msg };
+    }
+  })
   .handler(async ({ data }) => {
+    if ((data as any).__ok === false) {
+      return { ok: false as const, reason: "insert_failed" as const, error: (data as any).error };
+    }
+    const payload = (data as any).__ok === true ? (data as any).value : data;
+    try {
     const sb = getPublicOrderClient() as any;
 
     const { data: profile, error: pErr } = await sb
       .from("profiles")
       .select("id, business_type, order_form_enabled, business_name")
-      .eq("order_form_code", data.code.toLowerCase())
+      .eq("order_form_code", payload.code.toLowerCase())
       .maybeSingle();
-    if (pErr || !profile) return { ok: false as const, reason: "not_found" as const };
+    if (pErr || !profile) return { ok: false as const, reason: "not_found" as const, error: pErr?.message };
     if (profile.order_form_enabled === false) {
       return { ok: false as const, reason: "disabled" as const };
     }
@@ -170,45 +189,46 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
       return priceMap.has(p) ? priceMap.get(p)! : null;
     };
 
+    const data2 = payload;
     // Build notes from biz-specific extras + user notes
     const extra: string[] = [];
-    if (bizType === "fnb" && data.fulfilment) {
+    if (bizType === "fnb" && data2.fulfilment) {
       const labelMap: Record<string, string> = {
         dine_in: "Dine-in",
         takeaway: "Takeaway",
         delivery: "Delivery",
       };
-      extra.push(`Type: ${labelMap[data.fulfilment] ?? data.fulfilment}`);
+      extra.push(`Type: ${labelMap[data2.fulfilment] ?? data2.fulfilment}`);
     }
-    if (bizType === "retail" && data.address) {
-      extra.push(`Address: ${data.address}`);
+    if (bizType === "retail" && data2.address) {
+      extra.push(`Address: ${data2.address}`);
     }
     if (bizType === "education") {
-      if (data.course_interest) extra.push(`Course: ${data.course_interest}`);
-      if (data.university_preference) extra.push(`University: ${data.university_preference}`);
+      if (data2.course_interest) extra.push(`Course: ${data2.course_interest}`);
+      if (data2.university_preference) extra.push(`University: ${data2.university_preference}`);
     } else if (bizType === "beauty") {
-      if (data.date_time) extra.push(`Preferred: ${data.date_time}`);
+      if (data2.date_time) extra.push(`Preferred: ${data2.date_time}`);
     } else if (bizType === "property") {
-      if (data.budget) extra.push(`Budget: ${data.budget}`);
-      if (data.location_interest) extra.push(`Location: ${data.location_interest}`);
+      if (data2.budget) extra.push(`Budget: ${data2.budget}`);
+      if (data2.location_interest) extra.push(`Location: ${data2.location_interest}`);
     } else if (bizType === "freelance") {
-      if (data.project_description) extra.push(`Project: ${data.project_description}`);
-      if (data.deadline) extra.push(`Deadline: ${data.deadline}`);
-      if (data.date_time) extra.push(`Preferred: ${data.date_time}`);
+      if (data2.project_description) extra.push(`Project: ${data2.project_description}`);
+      if (data2.deadline) extra.push(`Deadline: ${data2.deadline}`);
+      if (data2.date_time) extra.push(`Preferred: ${data2.date_time}`);
     }
 
     // Build product string + totals from cart (preferred) or legacy fields
     let productText = "";
     let totalQty = 1;
     let totalAmount = 0;
-    if (data.items && data.items.length > 0) {
+    if (data2.items && data2.items.length > 0) {
       // Resolve every item's price from the server-side mapping. Reject
       // items whose product cannot be matched to a real inventory/service row.
-      const resolved = data.items.map((it) => {
+      const resolved = data2.items.map((it: any) => {
         const serverPrice = lookupPrice(it.product, it.variant);
         return { it, serverPrice };
       });
-      const unknown = resolved.find((r) => r.serverPrice === null);
+      const unknown = resolved.find((r: any) => r.serverPrice === null);
       if (unknown) {
         return {
           ok: false as const,
@@ -216,22 +236,22 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
           error: `Unknown product: ${unknown.it.product}`,
         };
       }
-      productText = data.items
-        .map((it) => {
+      productText = data2.items
+        .map((it: any) => {
           const label = it.variant ? `${it.product} (${it.variant})` : it.product;
           return isRetailish ? `${label} × ${it.quantity}` : label;
         })
         .join(", ");
       totalQty = isRetailish
-        ? data.items.reduce((s, it) => s + (it.quantity || 1), 0)
+        ? data2.items.reduce((s: number, it: any) => s + (it.quantity || 1), 0)
         : 1;
       totalAmount = resolved.reduce(
-        (s, { it, serverPrice }) =>
+        (s: number, { it, serverPrice }: any) =>
           s + Number(serverPrice ?? 0) * (isRetailish ? (it.quantity || 1) : 1),
         0,
       );
       // Itemized lines added to notes for seller clarity
-      const lines = resolved.map(({ it, serverPrice }) => {
+      const lines = resolved.map(({ it, serverPrice }: any) => {
         const label = it.variant ? `${it.product} (${it.variant})` : it.product;
         const sub = Number(serverPrice ?? 0) * (isRetailish ? (it.quantity || 1) : 1);
         return isRetailish
@@ -240,8 +260,8 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
       });
       extra.unshift(`Items:\n${lines.join("\n")}`);
     } else {
-      productText = (data.product || "").trim();
-      totalQty = isRetailish ? Math.max(1, Number(data.quantity) || 1) : 1;
+      productText = (data2.product || "").trim();
+      totalQty = isRetailish ? Math.max(1, Number(data2.quantity) || 1) : 1;
       // Legacy single-item path: derive the price server-side too.
       const serverPrice = productText ? lookupPrice(productText) : null;
       if (productText && serverPrice === null) {
@@ -259,10 +279,10 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
     }
 
     const combinedNotes =
-      [extra.join("\n"), (data.notes || "").trim()].filter(Boolean).join("\n\n") || null;
+      [extra.join("\n"), (data2.notes || "").trim()].filter(Boolean).join("\n\n") || null;
 
     const code = genCode();
-    const phoneDigits = (data.phone || "").replace(/\D/g, "");
+    const phoneDigits = (data2.phone || "").replace(/\D/g, "");
     const qty = totalQty;
     const amount = totalAmount;
 
@@ -271,7 +291,7 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
       .insert({
         user_id: userId,
         code,
-        customer_name: data.customer_name.trim(),
+        customer_name: data2.customer_name.trim(),
         phone: phoneDigits || null,
         product: productText,
         quantity: qty,
@@ -284,11 +304,13 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
       .single();
 
     if (oErr || !inserted) {
-      return { ok: false as const, reason: "insert_failed" as const, error: oErr?.message };
+      console.error("[submitPublicOrder] orders insert failed", oErr);
+      return { ok: false as const, reason: "insert_failed" as const, error: oErr?.message ?? "Failed to insert order" };
     }
 
     // Upsert customer by phone
     if (phoneDigits) {
+      try {
       const { data: existing } = await sb
         .from("customers")
         .select("id,total_orders,total_spent")
@@ -307,12 +329,15 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
       } else {
         await sb.from("customers").insert({
           user_id: userId,
-          name: data.customer_name.trim(),
+          name: data2.customer_name.trim(),
           phone: phoneDigits,
           total_orders: 1,
           total_spent: amount,
           last_order_at: new Date().toISOString(),
         });
+      }
+      } catch (e) {
+        console.warn("[submitPublicOrder] customer upsert failed", e);
       }
     }
 
@@ -330,7 +355,7 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
             kind: "new_order",
             targetUserId: userId,
             title: "New order received! 🛍️",
-            body: `From ${data.customer_name} · ${productText}`,
+            body: `From ${data2.customer_name} · ${productText}`,
             link: "/orders",
           }),
         });
@@ -344,4 +369,12 @@ export const submitPublicOrder = createServerFn({ method: "POST" })
       code: inserted.code,
       business_name: profile.business_name ?? "",
     };
+    } catch (e: any) {
+      console.error("[submitPublicOrder] threw", e);
+      return {
+        ok: false as const,
+        reason: "insert_failed" as const,
+        error: String(e?.message ?? e),
+      };
+    }
   });
