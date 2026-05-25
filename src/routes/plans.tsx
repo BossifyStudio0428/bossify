@@ -51,11 +51,10 @@ const TEAM_PLANS: TeamPlanDef[] = [
     accent: "text-indigo-600",
     btnGradient: "from-indigo-500 to-violet-500",
     features: [
-      { zh: "3 位用户", ms: "3 pengguna", en: "3 users" },
       { zh: "包含所有专业版功能", ms: "Semua ciri Pro", en: "All Pro features" },
       { zh: "角色管理（拥有者/管理员/员工）", ms: "Pengurusan peranan (Pemilik/Admin/Staf)", en: "Role management (Owner/Admin/Staff)" },
       { zh: "共享订单、客户、库存", ms: "Kongsi pesanan, pelanggan, inventori", en: "Shared orders, customers, inventory" },
-      { zh: "每位用户 3 台设备", ms: "3 peranti setiap pengguna", en: "3 devices per user" },
+      { zh: "3 用户，每人 3 设备", ms: "3 Pengguna, 3 peranti setiap satu", en: "3 Users, 3 devices each" },
     ],
   },
   {
@@ -69,11 +68,10 @@ const TEAM_PLANS: TeamPlanDef[] = [
     accent: "text-primary",
     btnGradient: "from-primary to-primary/80",
     features: [
-      { zh: "10 位用户", ms: "10 pengguna", en: "10 users" },
       { zh: "包含所有团队入门版功能", ms: "Semua ciri Team Starter", en: "All Team Starter features" },
       { zh: "活动记录", ms: "Log aktiviti", en: "Activity log" },
       { zh: "优先支持", ms: "Sokongan keutamaan", en: "Priority support" },
-      { zh: "每位用户 3 台设备", ms: "3 peranti setiap pengguna", en: "3 devices per user" },
+      { zh: "10 用户，每人 3 设备", ms: "10 Pengguna, 3 peranti setiap satu", en: "10 Users, 3 devices each" },
     ],
   },
   {
@@ -87,11 +85,10 @@ const TEAM_PLANS: TeamPlanDef[] = [
     accent: "text-amber-600",
     btnGradient: "from-amber-500 to-yellow-500",
     features: [
-      { zh: "无限用户", ms: "Pengguna tanpa had", en: "Unlimited users" },
       { zh: "包含所有团队专业版功能", ms: "Semua ciri Team Pro", en: "All Team Pro features" },
       { zh: "专属支持", ms: "Sokongan khas", en: "Dedicated support" },
       { zh: "客制化入门指导", ms: "Onboarding tersuai", en: "Custom onboarding" },
-      { zh: "无限设备", ms: "Peranti tanpa had", en: "Unlimited devices" },
+      { zh: "无限用户，每人 3 设备", ms: "Pengguna tanpa had, 3 peranti setiap satu", en: "Unlimited Users, 3 devices each" },
     ],
   },
 ];
