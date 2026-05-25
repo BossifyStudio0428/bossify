@@ -406,3 +406,59 @@ function InviteModal({ open, onClose, teamId, myRole, teamPlan }: {
     </Dialog>
   );
 }
+
+function TransferModal({ open, onClose, teamId, admins }: {
+  open: boolean; onClose: () => void; teamId: string; admins: MemberRow[];
+}) {
+  const { t } = useI18n();
+  const [picked, setPicked] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!picked) return;
+    if (!confirm(t("team_transfer_confirm"))) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("transfer_team_ownership" as any, {
+      _team_id: teamId, _new_owner_id: picked,
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    await supabase.rpc("log_team_activity" as any, {
+      _team_id: teamId, _action: "ownership_transferred",
+      _target_user_id: picked, _target_email: null, _metadata: null,
+    });
+    toast.success(t("team_transfer_success"));
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{t("team_transfer")}</DialogTitle></DialogHeader>
+        {admins.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("team_no_admins")}</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">{t("team_transfer_pick")}</p>
+            <select
+              className="w-full border rounded-md p-2 bg-background"
+              value={picked}
+              onChange={(e) => setPicked(e.target.value)}
+            >
+              <option value="">—</option>
+              {admins.map((a) => (
+                <option key={a.id} value={a.user_id ?? ""}>
+                  {a.invited_email || a.user_id?.slice(0, 8)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("cancel")}</Button>
+          <Button onClick={submit} disabled={!picked || busy}>{t("team_transfer")}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
