@@ -51,6 +51,7 @@ import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-passwor
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
 import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
+import { Route as ApiPublicStripeCheckoutRouteImport } from './routes/api/public/stripe/checkout'
 import { Route as ApiPublicOauthTiktokCallbackRouteImport } from './routes/api/public/oauth/tiktok/callback'
 
 const UniversityInsightsRoute = UniversityInsightsRouteImport.update({
@@ -264,6 +265,11 @@ const ApiPublicWebhooksTiktokRoute = ApiPublicWebhooksTiktokRouteImport.update({
   path: '/api/public/webhooks/tiktok',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicStripeCheckoutRoute = ApiPublicStripeCheckoutRouteImport.update({
+  id: '/api/public/stripe/checkout',
+  path: '/api/public/stripe/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOauthTiktokCallbackRoute =
   ApiPublicOauthTiktokCallbackRouteImport.update({
     id: '/api/public/oauth/tiktok/callback',
@@ -313,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
 }
@@ -358,6 +365,7 @@ export interface FileRoutesByTo {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
 }
@@ -404,6 +412,7 @@ export interface FileRoutesById {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
 }
@@ -451,6 +460,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/stripe/checkout'
     | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
   fileRoutesByTo: FileRoutesByTo
@@ -496,6 +506,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/stripe/checkout'
     | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
   id:
@@ -541,6 +552,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/stripe/checkout'
     | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
   fileRoutesById: FileRoutesById
@@ -583,6 +595,7 @@ export interface RootRouteChildren {
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
+  ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
   ApiPublicWebhooksTiktokRoute: typeof ApiPublicWebhooksTiktokRoute
   ApiPublicOauthTiktokCallbackRoute: typeof ApiPublicOauthTiktokCallbackRoute
 }
@@ -883,6 +896,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksTiktokRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/stripe/checkout': {
+      id: '/api/public/stripe/checkout'
+      path: '/api/public/stripe/checkout'
+      fullPath: '/api/public/stripe/checkout'
+      preLoaderRoute: typeof ApiPublicStripeCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/oauth/tiktok/callback': {
       id: '/api/public/oauth/tiktok/callback'
       path: '/api/public/oauth/tiktok/callback'
@@ -968,9 +988,20 @@ const rootRouteChildren: RootRouteChildren = {
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
   OrderCodeRoute: OrderCodeRoute,
+  ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
   ApiPublicWebhooksTiktokRoute: ApiPublicWebhooksTiktokRoute,
   ApiPublicOauthTiktokCallbackRoute: ApiPublicOauthTiktokCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
