@@ -495,6 +495,26 @@ export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult
       } catch {}
       out.push({ plan: key, formattedPrice: STARTER_FALLBACK_PRICES[billing], currency: "MYR" });
     }
+    // Team subscription SKUs.
+    for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
+      for (const billing of ["monthly", "annual"] as BillingPlan[]) {
+        const planKey = `${tier}_${billing === "annual" ? "annual" : "monthly"}` as
+          | "team_starter_monthly" | "team_starter_annual"
+          | "team_pro_monthly"     | "team_pro_annual"
+          | "team_business_monthly" | "team_business_annual";
+        try {
+          const productId = TEAM_PRODUCT_IDS[tier][billing];
+          const teamProduct = store.get(productId);
+          const teamOffer = teamProduct?.offers?.[0];
+          const { price, currency } = readPrice(teamProduct, teamOffer);
+          if (price) {
+            out.push({ plan: planKey, formattedPrice: price, currency: currency ?? "MYR" });
+            continue;
+          }
+        } catch {}
+        out.push({ plan: planKey, formattedPrice: TEAM_FALLBACK_PRICES[tier][billing], currency: "MYR" });
+      }
+    }
     const hasRealPrice = out.some((p) => p.formattedPrice && p.formattedPrice !== "—");
     const isFallback = !hasRealPrice;
     billingLog(isFallback || stale ? "warn" : "info", "price fetch complete", { attemptId, fallback: isFallback, stale, prices: out });
