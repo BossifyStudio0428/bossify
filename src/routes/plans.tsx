@@ -898,7 +898,65 @@ function PlansPage() {
       )}
       </>)}
 
-      {scope === "team" && <TeamPlansSection lang={lang} billing={billing} />}
+      {scope === "team" && (
+        <TeamPlansSection
+          lang={lang}
+          billing={billing}
+          storePrices={storePrices}
+          submittingTier={submittingTeam}
+          currentTier={teamTier}
+          currentBilling={teamTier ? activeBillingPlan : null}
+          onPurchase={async (tier) => {
+            if (!user) return;
+            if (!isNativeBillingAvailable()) {
+              toast.message(t("google_play_only_android"));
+              return;
+            }
+            setSubmittingTeam(tier);
+            try {
+              await purchaseTeam(
+                tier,
+                billing,
+                async (receipt, info) => {
+                  const expiresAt = new Date();
+                  if (info.billing === "monthly") expiresAt.setMonth(expiresAt.getMonth() + 1);
+                  else expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+                  const { error: upsertError } = await supabase.from("subscriptions").upsert({
+                    user_id: user.id,
+                    plan: info.tier,
+                    status: "active",
+                    provider: "google_play",
+                    provider_product_id: `${receipt.productId}:${info.billing}`,
+                    provider_transaction_id: receipt.transactionId,
+                    provider_purchase_token: receipt.purchaseToken ?? null,
+                    current_period_end: receipt.currentPeriodEnd ?? expiresAt.toISOString(),
+                  }, { onConflict: "user_id" });
+                  if (upsertError) {
+                    toast.error(`${t("billing_unknown_error")}: ${upsertError.message}`);
+                    return;
+                  }
+                  await refresh();
+                  toast.success(
+                    lang === "zh" ? "团队方案已激活" :
+                    lang === "ms" ? "Pelan pasukan diaktifkan" :
+                    "Team plan activated",
+                  );
+                },
+                (err) => {
+                  if (err.code === "item_unavailable") toast.message(t("billing_item_unavailable"));
+                  else if (err.code === "user_cancelled") toast.message(t("billing_user_cancelled"));
+                  else if (err.code === "not_android") toast.message(t("google_play_only_android"));
+                  else toast.error(t("billing_unknown_error"));
+                },
+              );
+            } finally {
+              try { await syncFromStore(); } catch {}
+              try { await refresh(); } catch {}
+              setSubmittingTeam(null);
+            }
+          }}
+        />
+      )}
 
     </div>
   );
