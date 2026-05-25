@@ -146,9 +146,16 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
     if (!isValidEmail(email)) { setError(t("err_email_format")); return; }
     if (password.length < 6) { setError(t("err_invalid_creds")); return; }
     setLoading(true);
-    const { error: err } = await signIn(email, password);
+    const { error: err, code } = await signIn(email, password);
     setLoading(false);
-    if (err) { setError(authErrorText(err, t)); return; }
+    if (err) {
+      if (code === "device_limit_reached" || err === "device_limit_reached") {
+        setError(t("device_limit_reached"));
+      } else {
+        setError(authErrorText(err, t));
+      }
+      return;
+    }
     router.invalidate();
     navigate({ to: "/" });
   };

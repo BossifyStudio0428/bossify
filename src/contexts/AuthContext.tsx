@@ -2,12 +2,13 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { safeLocalStorage } from "@/lib/safeStorage";
+import { registerDeviceSession } from "@/lib/deviceSession";
 
 type AuthCtx = {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null; code?: "device_limit_reached" }>;
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 };
@@ -26,6 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
+      if (s?.user) {
+        // Best-effort touch — keeps last_active fresh and (re)registers if missing.
+        registerDeviceSession().catch(() => {});
+      }
     });
     supabase.auth.getSession()
       .then(({ data }) => {
@@ -49,7 +54,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn: AuthCtx["signIn"] = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error?.message ?? null };
+    if (error) return { error: error.message };
+    const reg = await registerDeviceSession();
+    if (!reg.ok && reg.error === "limit_reached") {
+      await supabase.auth.signOut();
+      return { error: "device_limit_reached", code: "device_limit_reached" };
+    }
+    return { error: null };
   };
 
   const signUp: AuthCtx["signUp"] = async (email, password) => {
