@@ -87,6 +87,56 @@ export const Route = createFileRoute("/api/public/stripe/activate")({
             .upsert(row as any, { onConflict: "user_id" });
           if (error) throw error;
 
+          // For team plans, ensure a team + owner team_member row exist.
+          if (
+            planInfo.plan === "team_starter" ||
+            planInfo.plan === "team_pro" ||
+            planInfo.plan === "team_business"
+          ) {
+            const { data: existingTeam } = await externalSupabaseAdmin
+              .from("teams")
+              .select("id")
+              .eq("owner_id", userData.user.id)
+              .maybeSingle();
+            let teamId = existingTeam?.id as string | undefined;
+            if (!teamId) {
+              const { data: newTeam, error: tErr } = await externalSupabaseAdmin
+                .from("teams")
+                .insert({
+                  owner_id: userData.user.id,
+                  name: (userData.user.user_metadata?.business_name as string) || "My Team",
+                  plan: planInfo.plan,
+                  current_period_end: currentPeriodEnd,
+                  stripe_subscription_id: subscriptionId,
+                } as any)
+                .select("id")
+                .single();
+              if (tErr) throw tErr;
+              teamId = newTeam!.id as string;
+            } else {
+              await externalSupabaseAdmin
+                .from("teams")
+                .update({
+                  plan: planInfo.plan,
+                  current_period_end: currentPeriodEnd,
+                  stripe_subscription_id: subscriptionId,
+                } as any)
+                .eq("id", teamId);
+            }
+            await externalSupabaseAdmin
+              .from("team_members")
+              .upsert(
+                {
+                  team_id: teamId,
+                  user_id: userData.user.id,
+                  role: "owner",
+                  status: "active",
+                  invited_by: userData.user.id,
+                } as any,
+                { onConflict: "team_id,user_id" },
+              );
+          }
+
           return json(200, { activated: true, plan: planInfo.plan });
         } catch (e) {
           console.error("[stripe/activate]", e);
