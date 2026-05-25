@@ -311,15 +311,17 @@ function PlansPage() {
   };
 
   const freePositive: TKey[] = FREE[eff];
+  const freeDeviceLabel = lang === "zh" ? "1 台设备" : lang === "ms" ? "1 Peranti" : "1 Device";
+  const starterDeviceLabel = lang === "zh" ? "2 台设备" : lang === "ms" ? "2 Peranti" : "2 Devices";
   const freeRows: { ok: boolean; label: string }[] = [
-    { ok: true, label: "1 设备 / 1 Device / 1 Peranti" },
+    { ok: true, label: freeDeviceLabel },
     ...freePositive.map((k) => ({ ok: true, label: t(k) })),
     // upsell hints (what you don't get on Free)
     { ok: false, label: t("sales_reports") },
     { ok: false, label: t("export_pdf") },
     { ok: false, label: t("wa_template") },
   ];
-  const starterRows = ["2 设备 / 2 Devices / 2 Peranti", ...STARTER[eff].map((k) => t(k))];
+  const starterRows = [starterDeviceLabel, ...STARTER[eff].map((k) => t(k))];
   const proRows = PRO[eff].map((k) => t(k));
 
   const handleGooglePlayPurchase = async () => {
