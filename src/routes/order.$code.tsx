@@ -10,6 +10,26 @@ import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe } fr
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
 
+async function readJsonResponse<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  if (!response.ok) throw new Error(text || `HTTP ${response.status}`);
+  return JSON.parse(text) as T;
+}
+
+async function fetchPublicOrderForm(code: string) {
+  const response = await fetch(`/api/public/order-form?code=${encodeURIComponent(code)}`);
+  return readJsonResponse<Awaited<ReturnType<typeof getPublicOrderForm>>>(response);
+}
+
+async function postPublicOrder(payload: Record<string, unknown>) {
+  const response = await fetch("/api/public/order-form", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return readJsonResponse<Awaited<ReturnType<typeof submitPublicOrder>>>(response);
+}
+
 export const Route = createFileRoute("/order/$code")({
   component: PublicOrderFormPage,
 });
@@ -52,8 +72,6 @@ type LoadState =
 function PublicOrderFormPage() {
   const { code } = Route.useParams();
   const { t, lang } = useI18n();
-  const loadFn = useServerFn(getPublicOrderForm);
-  const submitFn = useServerFn(submitPublicOrder);
   const { setLang } = useI18n();
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [submitting, setSubmitting] = useState(false);
@@ -111,7 +129,7 @@ function PublicOrderFormPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await loadFn({ data: { code } });
+        const res = await fetchPublicOrderForm(code);
         if (cancelled) return;
         if (!res.ok) {
           setState({ status: "error", reason: res.reason });
@@ -136,7 +154,7 @@ function PublicOrderFormPage() {
     return () => {
       cancelled = true;
     };
-  }, [code, loadFn, setLang]);
+  }, [code, setLang]);
 
   const categories = useMemo(() => {
     if (state.status !== "ready") return [] as string[];
@@ -184,8 +202,7 @@ function PublicOrderFormPage() {
     if (!form.customer_name.trim() || !form.phone.trim() || cart.length === 0) return;
     setSubmitting(true);
     try {
-      const res = await submitFn({
-        data: {
+      const res = await postPublicOrder({
           code,
           customer_name: form.customer_name.trim(),
           phone: form.phone.trim(),
@@ -205,7 +222,6 @@ function PublicOrderFormPage() {
           location_interest: form.location_interest,
           project_description: form.project_description,
           deadline: form.deadline,
-        },
       });
       if (res.ok) {
         setDone({

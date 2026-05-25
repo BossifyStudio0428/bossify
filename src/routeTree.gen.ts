@@ -50,6 +50,7 @@ import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-passwo
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
+import { Route as ApiPublicOrderFormRouteImport } from './routes/api/public/order-form'
 import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe/webhook'
 import { Route as ApiPublicStripeCheckoutRouteImport } from './routes/api/public/stripe/checkout'
@@ -262,6 +263,11 @@ const ConnectedPlatformsPlatformRoute =
     path: '/connected-platforms/$platform',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicOrderFormRoute = ApiPublicOrderFormRouteImport.update({
+  id: '/api/public/order-form',
+  path: '/api/public/order-form',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhooksTiktokRoute = ApiPublicWebhooksTiktokRouteImport.update({
   id: '/api/public/webhooks/tiktok',
   path: '/api/public/webhooks/tiktok',
@@ -331,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
@@ -379,6 +386,7 @@ export interface FileRoutesByTo {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
@@ -428,6 +436,7 @@ export interface FileRoutesById {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
@@ -478,6 +487,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/order-form'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/stripe/webhook'
@@ -526,6 +536,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/order-form'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/stripe/webhook'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/api/public/order-form'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/stripe/webhook'
@@ -619,6 +631,7 @@ export interface RootRouteChildren {
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
+  ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
   ApiPublicStripeActivateRoute: typeof ApiPublicStripeActivateRoute
   ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
@@ -915,6 +928,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnectedPlatformsPlatformRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/order-form': {
+      id: '/api/public/order-form'
+      path: '/api/public/order-form'
+      fullPath: '/api/public/order-form'
+      preLoaderRoute: typeof ApiPublicOrderFormRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/tiktok': {
       id: '/api/public/webhooks/tiktok'
       path: '/api/public/webhooks/tiktok'
@@ -1028,6 +1048,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
   OrderCodeRoute: OrderCodeRoute,
+  ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
   ApiPublicStripeActivateRoute: ApiPublicStripeActivateRoute,
   ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
