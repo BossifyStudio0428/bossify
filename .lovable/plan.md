@@ -1,95 +1,68 @@
-# Web Push 通知 for Bossify Web
 
-让 web 用户跟 Android app 一样能收到推送通知（订单、follow-up 提醒），就算关掉网页也能收到。
+## 问题诊断
 
-## 策略
+客户在 `/order/<code>` 表单点 Submit 时显示 `Failed to save order. Failed to fetch`。
 
-复用现有的 **FCM (Firebase Cloud Messaging)** 基础设施 —— 因为：
-- `FCM_SERVICE_ACCOUNT_JSON` secret 已经存在 ✅
-- `send-push` edge function 已经在跑，已支持按 `device_tokens` 推送 ✅
-- `device_tokens` 表已有 `platform` 字段（目前默认 `android`） ✅
-- 只需加 `web` 这一种 platform，FCM 同一个项目同时管 Android + Web
+我直接打了一下 production 的 server function（`/_serverFn/<submitPublicOrder id>`），返回：
 
-不用买 domain、不用新加 secret（除了一次性的 VAPID public key），不用做 backend rewrite。
+```
+HTTP/2 500
+content-type: application/json
+x-tss-serialized: true
 
-## 实施步骤
-
-### 1. 你需要从 Firebase Console 拿两样东西（一次性）
-你已经有 FCM project（Android 在用），只需进 Firebase Console：
-- **Project Settings → General → Your apps** → 加一个 **Web App** → 复制 `firebaseConfig`（apiKey, projectId, messagingSenderId, appId 这些都是公开的，可放 code）
-- **Project Settings → Cloud Messaging → Web Push certificates** → Generate key pair → 复制 **VAPID public key**（也是公开的，放 code）
-
-我会在实施时让你贴进来。
-
-### 2. 加 Firebase Web SDK
-
-```text
-bun add firebase
+{"t":25,"i":0,"s":{"message":{"t":1,"s":"Seroval Error (step: 3)"}},"c":"$TSR/Error"}
 ```
 
-### 3. 新建 Service Worker
+意思是：
+1. `submitPublicOrder` 的 handler 在服务器抛出了一个异常（不是正常 `return { ok:false, ... }`）。
+2. TanStack 在把这个 Error 序列化回浏览器时也失败了（Seroval 解不开里面某个对象，比如 Supabase 客户端实例 / 循环引用 / 函数）。
+3. 浏览器拿到一个 corrupt 的 500 响应，`fetch()` 直接 reject → toast 显示 `Failed to fetch`。
 
-`public/firebase-messaging-sw.js` —— Firebase 需要这个文件在 root，浏览器关了网页时由它接收 push 并弹通知。
+最可能的根因（按概率排序）：
 
-### 4. 新建 web push 注册逻辑
+1. `getPublicOrderClient()` 在 Worker 里抛错 —— 比如 `APP_SUPABASE_SERVICE_ROLE_KEY` 在生产 runtime 里读不到 / 值不对，或外部 Supabase（`knouahqwazerjiyiqgmh`）不可达。这个 throw 发生在 `createClient(...)` 调用栈里，错误对象带着 Supabase 的内部状态，seroval 序列化失败。
+2. `inputValidator(SubmitSchema.parse)` 抛 ZodError —— ZodError 带 `issues` 数组，理论上能序列化，但 seroval 有时对它会报 step 3 错误。
+3. handler 后面 `sb.from("orders").insert(...)` / `sb.from("customers")...` / `fetch(send-push)` 之中某一步抛了带循环引用的对象。
 
-`src/lib/webPush.ts`：
-- 检查浏览器是否支持（Chrome/Edge/Firefox/Safari 16.4+ 都行）
-- 注册 service worker
-- 请求 Notification 权限
-- 用 Firebase Messaging `getToken(vapidKey)` 拿到 FCM web token
-- 把 token 插入 `device_tokens` 表，`platform = 'web'`
+## 修复计划
 
-### 5. 改 `src/lib/notifications.ts`
+### 1. 把 handler 包成"永远只 return 普通对象"，绝不让异常逃出去
 
-`requestNotifPermission()` 现在只处理 Capacitor 原生。加一个分支：
-- 如果是 web（非 Capacitor），调 `webPush.ts` 的注册函数
-- 现有的 `localStorage` 权限标记 + UI 提示弹窗都不动
+修改 `src/lib/public-order.functions.ts` 里的 `submitPublicOrder` 和 `getPublicOrderForm`：
 
-### 6. 改 `send-push` edge function
+- 整个 handler 主体用 `try { ... } catch (e) { return { ok:false, reason:"insert_failed", error: String(e?.message ?? e) } }` 包起来。
+- 每个 Supabase 调用（profiles / inventory / orders / customers）的 `error` 都明确返回字符串 `error.message`，不要把整个 `error` 对象返回。
+- `inputValidator` 也包一层 try/catch，把 ZodError 转成 `{ ok:false, reason:"invalid_input", error: issues.map(...).join(", ") }` 而不是 throw。
 
-目前推送代码已经按 device tokens 推送 → FCM 的 sendMulticast 同时支持 Android FCM token 和 Web FCM token（**同一个 API**），所以**不需要改逻辑**，只需确认它没过滤 `platform = 'android'`（要看一眼现有 code 来确定）。如果有过滤，就放宽成 `platform IN ('android', 'web')`。
+这样无论后端发生什么，浏览器都会拿到合法 JSON，不会再出现 `Failed to fetch`，客户至少能看到真实错误信息（比如 "Unknown product: Cendol" 或 "Missing APP_SUPABASE_SERVICE_ROLE_KEY"）。
 
-### 7. UI 改动（最小）
+### 2. 加 server-side 日志
 
-`NotifPermissionPrompt.tsx` 现有的"允许通知"弹窗在 web 也会触发（因为 `enabled` 判断的是 user 设置），只需保证 `requestNotifPermission()` 在 web 也能跑 → 步骤 5 做完就行。
+在 catch 里 `console.error("[submitPublicOrder]", e)`，配合 `supabase--edge_function_logs` / Cloudflare Worker logs 才好查到底是哪一步炸。
 
-## 触发点 —— 已经在跑，不用改
+### 3. 拿到真实错误后再修底层
 
-订单提交 (`submitPublicOrder`) 已经在调 `send-push` with `kind: 'new_order'` 和 `targetUserId`。Web push 注册后，同一个用户的 web token 也在 `device_tokens` 里 → **同一条订单会自动同时推送到 Android app 和 web 浏览器**。
+包好之后我重新 POST 一次 `/_serverFn/...`，就能从 JSON `error` 字段直接读到根因，然后对症修：
+- 如果是 `Missing APP_SUPABASE_SERVICE_ROLE_KEY` → 检查 / 重新设置 secret。
+- 如果是 `Unknown product: Cendol` → 客户选的产品名字在 `inventory.name` 找不到（大小写 / trim 不一致），调整 `lookupPrice` 的匹配规则。
+- 如果是 orders insert RLS / column 错误 → 修 schema / payload。
+- 如果是外部 Supabase URL 错 → 改 `APP_SUPABASE_URL` 常量。
 
-## 兼容性
+### 4. （可选）顺手把客户端 alert 改成显示 `error` 字段
 
-| 浏览器 | 支持 |
-|---|---|
-| Chrome (desktop + Android) | ✅ |
-| Edge | ✅ |
-| Firefox | ✅ |
-| Safari macOS 16+ | ✅ |
-| **Safari iOS 16.4+** | ✅（用户必须先把网页"加入主屏幕"才能收 push，iOS 限制） |
-| iOS Safari < 16.4 | ❌（fallback 到现有的页面打开时通知） |
+`src/routes/order.$code.tsx` 第 217 行已经在做 `(res as any).error || (res as any).reason`，不用动。修完后台后客户会自动看到清晰错误。
 
-## 文件改动清单
+## 不动什么
 
-**新增：**
-- `public/firebase-messaging-sw.js`
-- `src/lib/webPush.ts`
-- `src/lib/firebaseConfig.ts`（公开 config）
+- 不动 webPush / Firebase 配置 —— 那块跟这个表单无关，customer 也没登录所以不会注册 SW。
+- 不动 `/order/$code.tsx` 的 UI 逻辑。
+- 不动 RLS policies（先确认是哪一步出错再说）。
 
-**修改：**
-- `src/lib/notifications.ts`（加 web 分支）
-- `package.json`（加 firebase）
-- 可能改 `supabase/functions/send-push/index.ts`（如果有 platform 过滤）
+## 技术细节
 
-**不动：**
-- `device_tokens` 表（已经支持 platform 字段）
-- `submitPublicOrder` 触发逻辑
-- Android Capacitor 流程
+`submitPublicOrder` 当前的 return 类型是 union：
+```ts
+{ ok:true, code, business_name } | { ok:false, reason:"not_found"|"disabled"|"insert_failed", error?:string }
+```
 
-## 你需要做的
-
-1. **现在**：批准这个 plan
-2. **Plan 跑到一半时**：去 Firebase Console 拿 Web App config + VAPID public key 贴给我
-3. 我把 code 写完，你测试 → 在 web 上填个 order form，看通知会不会弹
-
-准备好就按 Implement，我先开始 1, 3, 4, 5, 6 的部分，等到第 4 步会跟你要 Firebase config。
+会新增一个 reason `"server_error"`（catch-all）和 `"invalid_input"`（zod 失败），保持 union 形态不变，前端逻辑无需改动。
