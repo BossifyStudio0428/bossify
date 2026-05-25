@@ -8,6 +8,7 @@ import {
 } from "@/lib/public-order.functions";
 import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe } from "lucide-react";
 import bossifyLogo from "@/assets/bossify-logo.png";
+import { PhoneInput } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/order/$code")({
   component: PublicOrderFormPage,
@@ -653,15 +654,10 @@ function PublicOrderFormPage() {
             />
           </Field>
           <Field label={`${t("phone_number")} *`}>
-            <input
-              required
-              type="tel"
-              inputMode="tel"
+            <PhoneInput
               value={form.phone}
-              onChange={upd("phone")}
-              placeholder="01X-XXX XXXX"
-              className="pof-input"
-              maxLength={32}
+              onChange={(full) => setForm((p) => ({ ...p, phone: full }))}
+              placeholder="123456789"
             />
           </Field>
 
