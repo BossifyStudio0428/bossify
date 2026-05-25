@@ -5,16 +5,17 @@
 // Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
 
 export const firebaseConfig = {
-  apiKey: "REPLACE_WITH_FIREBASE_API_KEY",
-  authDomain: "REPLACE_WITH_PROJECT_ID.firebaseapp.com",
-  projectId: "REPLACE_WITH_PROJECT_ID",
-  storageBucket: "REPLACE_WITH_PROJECT_ID.appspot.com",
-  messagingSenderId: "REPLACE_WITH_SENDER_ID",
-  appId: "REPLACE_WITH_APP_ID",
+  apiKey: "AIzaSyAGuMUIs5vybX0k_VsiQYs7-k2MtVFe63M",
+  authDomain: "bossify-9e5db.firebaseapp.com",
+  projectId: "bossify-9e5db",
+  storageBucket: "bossify-9e5db.firebasestorage.app",
+  messagingSenderId: "658401705186",
+  appId: "1:658401705186:web:44c65389f16913fd2ab2bb",
 };
 
 // VAPID public key for Web Push
-export const VAPID_PUBLIC_KEY = "REPLACE_WITH_VAPID_PUBLIC_KEY";
+export const VAPID_PUBLIC_KEY =
+  "BKQZ_4h1ZuRGfPm588HTiA3BndUEVT8YGVQCGrRax86EkJqxM_RlyFt2v6ZYSCj1py1Pxp-dGbm9ZigSK9x8JJ4";
 
 export const isFirebaseConfigured = () =>
   !firebaseConfig.apiKey.startsWith("REPLACE_") &&
