@@ -43,6 +43,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 import { Route as OrderCodeRouteImport } from './routes/order.$code'
 import { Route as InventoryItemIdRouteImport } from './routes/inventory.$itemId'
@@ -227,6 +228,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeamWelcomeRoute = TeamWelcomeRouteImport.update({
+  id: '/team/welcome',
+  path: '/team/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
   id: '/$orderId',
   path: '/$orderId',
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/team/welcome': typeof TeamWelcomeRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
@@ -386,6 +393,7 @@ export interface FileRoutesByTo {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/team/welcome': typeof TeamWelcomeRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
@@ -436,6 +444,7 @@ export interface FileRoutesById {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/team/welcome': typeof TeamWelcomeRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
@@ -487,6 +496,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/team/welcome'
     | '/api/public/order-form'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/team/welcome'
     | '/api/public/order-form'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
@@ -585,6 +596,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/team/welcome'
     | '/api/public/order-form'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
@@ -631,6 +643,7 @@ export interface RootRouteChildren {
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
+  TeamWelcomeRoute: typeof TeamWelcomeRoute
   ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
   ApiPublicStripeActivateRoute: typeof ApiPublicStripeActivateRoute
   ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
@@ -879,6 +892,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/team/welcome': {
+      id: '/team/welcome'
+      path: '/team/welcome'
+      fullPath: '/team/welcome'
+      preLoaderRoute: typeof TeamWelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders/$orderId': {
       id: '/orders/$orderId'
       path: '/$orderId'
@@ -1048,6 +1068,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
   OrderCodeRoute: OrderCodeRoute,
+  TeamWelcomeRoute: TeamWelcomeRoute,
   ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
   ApiPublicStripeActivateRoute: ApiPublicStripeActivateRoute,
   ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
