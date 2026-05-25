@@ -90,7 +90,7 @@ export const Route = createFileRoute("/api/public/stripe/activate")({
           return json(200, { activated: true, plan: planInfo.plan });
         } catch (e) {
           console.error("[stripe/activate]", e);
-          return json(500, { error: (e as Error).message });
+          return json(500, { error: "An unexpected error occurred. Please try again." });
         }
       },
     },
