@@ -93,7 +93,7 @@ export const setAdminSubscriptionPlan = createServerFn({ method: "POST" })
           const { error: memErr } = await supabaseAdmin
             .from("team_members" as any)
             .insert({
-              team_id: newTeam.id,
+              team_id: (newTeam as any).id,
               user_id: data.userId,
               role: "owner",
               status: "active",
