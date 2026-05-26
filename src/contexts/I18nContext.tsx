@@ -424,6 +424,7 @@ const dict = {
     admin_view: "View",
     admin_grant_to: "Grant Pro to",
     admin_choose_duration: "Choose duration:",
+    admin_choose_plan: "Choose plan:",
     admin_lifetime: "Lifetime",
     admin_revoke_confirm: "Revoke Pro?",
     admin_reverted_free: "Reverted to Free",
