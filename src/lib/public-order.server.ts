@@ -366,7 +366,11 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     try {
       const pushSecret = process.env.PUSH_WEBHOOK_SECRET;
       if (pushSecret) {
-        await fetch("https://utqlrdbhvnugqvemjegi.supabase.co/functions/v1/send-push", {
+        // Fire-and-forget: do NOT await. A slow/hanging push must not
+        // block (or fail) the order response to the customer.
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        fetch("https://utqlrdbhvnugqvemjegi.supabase.co/functions/v1/send-push", {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-cron-secret": pushSecret },
           body: JSON.stringify({
@@ -376,7 +380,10 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
             body: `From ${data2.customer_name} · ${productText}`,
             link: "/orders",
           }),
-        });
+          signal: controller.signal,
+        })
+          .catch((e) => console.error("[createPublicOrder] push error", e))
+          .finally(() => clearTimeout(timeoutId));
       }
     } catch (e) {
       console.error("[createPublicOrder] push error", e);
