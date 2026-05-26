@@ -408,13 +408,13 @@ async function resolveContent(
 }
 
 async function dispatch(userId: string, content: { title: string; body: string; link: string }) {
-  const { data: rows } = await admin.from("device_tokens").select("token").eq("user_id", userId);
+  const { data: rows } = await appAdmin.from("device_tokens").select("token").eq("user_id", userId);
   const tokens = (rows ?? []).map((r: { token: string }) => r.token);
   if (tokens.length === 0) return { sent: 0, removed: 0 };
   const results = await sendToTokens(tokens, content);
   const dead = results.filter((r) => r.invalid).map((r) => r.token);
   if (dead.length > 0) {
-    await admin.from("device_tokens").delete().in("token", dead);
+    await appAdmin.from("device_tokens").delete().in("token", dead);
   }
   return { sent: results.filter((r) => r.ok).length, removed: dead.length };
 }
@@ -487,7 +487,7 @@ Deno.serve(async (req) => {
 
     if (parsed.broadcast) {
       if (!isCron) return json(403, { error: "Broadcast requires cron secret" });
-      const { data: users } = await admin.from("device_tokens").select("user_id");
+      const { data: users } = await appAdmin.from("device_tokens").select("user_id");
       const uniq = Array.from(
         new Set((users ?? []).map((r: { user_id: string }) => r.user_id)),
       ) as string[];
