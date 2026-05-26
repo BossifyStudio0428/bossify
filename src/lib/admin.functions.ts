@@ -83,29 +83,29 @@ export const setAdminSubscriptionPlan = createServerFn({ method: "POST" })
         const name = (profile?.business_name as string | null)?.trim() || "My Team";
 
         const { data: newTeam, error: teamErr } = await supabaseAdmin
-          .from("teams")
-          .insert({ name, owner_id: data.userId, plan, current_period_end: periodEnd })
+          .from("teams" as any)
+          .insert({ name, owner_id: data.userId, plan, current_period_end: periodEnd } as any)
           .select("id")
           .single();
         if (teamErr) {
           console.error("auto-create team failed", teamErr);
         } else if (newTeam) {
           const { error: memErr } = await supabaseAdmin
-            .from("team_members")
+            .from("team_members" as any)
             .insert({
               team_id: newTeam.id,
               user_id: data.userId,
               role: "owner",
               status: "active",
               joined_at: new Date().toISOString(),
-            });
+            } as any);
           if (memErr) console.error("auto-create owner membership failed", memErr);
         }
       } else {
         // Keep plan + renewal in sync
         await supabaseAdmin
-          .from("teams")
-          .update({ plan, current_period_end: periodEnd })
+          .from("teams" as any)
+          .update({ plan, current_period_end: periodEnd } as any)
           .eq("id", existingTeam.id);
       }
     }
