@@ -92,6 +92,36 @@ export type Database = {
         }
         Relationships: []
       }
+      device_sessions: {
+        Row: {
+          created_at: string
+          device_id: string
+          device_name: string
+          device_type: string
+          id: string
+          last_active: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          device_name?: string
+          device_type?: string
+          id?: string
+          last_active?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          device_name?: string
+          device_type?: string
+          id?: string
+          last_active?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       device_tokens: {
         Row: {
           id: string
@@ -721,6 +751,10 @@ export type Database = {
         Returns: boolean
       }
       orders_limit_for_plan: { Args: { _plan: string }; Returns: number }
+      register_device_session: {
+        Args: { _device_id: string; _device_name: string; _device_type: string }
+        Returns: Json
+      }
       send_followup_reminders: { Args: never; Returns: undefined }
       trigger_push_kind: { Args: { _kind: string }; Returns: undefined }
     }
