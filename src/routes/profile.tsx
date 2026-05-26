@@ -51,7 +51,7 @@ function ProfilePage() {
   const { user, signOut } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
-  const { isPro, isStarter, isLifetime, hasFullAccess, ordersUsed, ordersLimit, showUpgrade } =
+  const { isPro, isStarter, isLifetime, isTeam, teamTier, hasFullAccess, ordersUsed, ordersLimit, showUpgrade } =
     useSubscription();
   const { theme, toggle: toggleTheme } = useTheme();
   const { type: bizType } = useBusinessType();
@@ -200,11 +200,13 @@ function ProfilePage() {
         label: t("subscription"),
         value: isLifetime
           ? t("plan_badge_lifetime")
-          : isPro
-            ? t("pro_plan")
-            : isStarter
-              ? t("starter_plan")
-              : t("free_plan"),
+          : isTeam && teamTier
+            ? t(`plan_badge_${teamTier}` as any)
+            : isPro
+              ? t("pro_plan")
+              : isStarter
+                ? t("starter_plan")
+                : t("free_plan"),
         onClick: () => navigate({ to: "/plans" }),
       },
       ...(!isNativeBillingAvailable() && (isStarter || isPro)
