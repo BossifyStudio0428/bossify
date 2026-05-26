@@ -232,8 +232,8 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       };
       extra.push(`Type: ${labelMap[data2.fulfilment] ?? data2.fulfilment}`);
     }
-    if (bizType === "retail" && data2.address) extra.push(`Address: ${data2.address}`);
-    // bizType branch continues below
+    // delivery_address is now persisted as a dedicated column on orders,
+    // so we no longer duplicate it into the notes field for retail.
     if (bizType === "education") {
       if (data2.course_interest) extra.push(`Course: ${data2.course_interest}`);
       if (data2.university_preference) extra.push(`University: ${data2.university_preference}`);
@@ -320,6 +320,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         amount,
         status: "Unpaid",
         notes: combinedNotes,
+        delivery_address: (data2.address || "").trim() || null,
         order_source: "online_form",
       })
       .select("id, code")
