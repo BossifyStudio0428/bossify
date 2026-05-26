@@ -314,7 +314,7 @@ async function resolveContent(
   kind: Kind,
   override: { title?: string; body?: string; link?: string },
 ) {
-  const { data: prefs } = await admin
+  const { data: prefs } = await appAdmin
     .from("profiles")
     .select(
       "notif_new_order,notif_unpaid,notif_inventory,notif_morning,notif_evening,notif_milestone,business_category,language",
@@ -350,7 +350,7 @@ async function resolveContent(
   if (!override.title || !override.body) {
     if (kind === "morning_summary") {
       const since = new Date(Date.now() - 86400000).toISOString();
-      const { data: rows } = await admin
+      const { data: rows } = await appAdmin
         .from("orders")
         .select("amount")
         .eq("user_id", userId)
@@ -364,7 +364,7 @@ async function resolveContent(
       body = fill(tpl.body, { count: rows?.length ?? 0, revenue: revenue.toFixed(2) });
       link = "/";
     } else if (kind === "unpaid_reminder") {
-      const { count } = await admin
+      const { count } = await appAdmin
         .from("orders")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
@@ -376,7 +376,7 @@ async function resolveContent(
     } else if (kind === "closing_report") {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const { data: rows } = await admin
+      const { data: rows } = await appAdmin
         .from("orders")
         .select("amount")
         .eq("user_id", userId)
@@ -392,7 +392,7 @@ async function resolveContent(
     } else if (kind === "follow_up_reminder") {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const { count } = await admin
+      const { count } = await appAdmin
         .from("follow_ups")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
@@ -475,7 +475,7 @@ Deno.serve(async (req) => {
           : parsed.platform === "web"
             ? "web"
             : "android";
-      const { error } = await admin
+      const { error } = await appAdmin
         .from("device_tokens")
         .upsert(
           { user_id: ownerId, token, platform, updated_at: new Date().toISOString() },
