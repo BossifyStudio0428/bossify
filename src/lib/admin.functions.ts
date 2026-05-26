@@ -49,15 +49,19 @@ export const setAdminSubscriptionPlan = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin
       .from("subscriptions")
-      .update({
+      .upsert({
+        user_id: data.userId,
         plan,
         status: "active",
         expires_at: expires.toISOString(),
+        current_period_end: data.months === "lifetime" ? null : expires.toISOString(),
         started_at: new Date().toISOString(),
-      })
-      .eq("user_id", data.userId);
+      }, { onConflict: "user_id" });
 
-    if (error) throw new Error("Unable to update subscription");
+    if (error) {
+      console.error("setAdminSubscriptionPlan failed", error);
+      throw new Error(`Unable to update subscription: ${error.message}`);
+    }
     return { ok: true };
   });
 
@@ -69,9 +73,12 @@ export const revokeAdminSubscriptionPlan = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin
       .from("subscriptions")
-      .update({ plan: "free", status: "active", expires_at: null })
+      .update({ plan: "free", status: "active", expires_at: null, current_period_end: null })
       .eq("user_id", data.userId);
 
-    if (error) throw new Error("Unable to update subscription");
+    if (error) {
+      console.error("revokeAdminSubscriptionPlan failed", error);
+      throw new Error(`Unable to update subscription: ${error.message}`);
+    }
     return { ok: true };
   });
