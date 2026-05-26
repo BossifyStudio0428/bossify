@@ -52,12 +52,14 @@ function TeamPage() {
     if (!user) return;
     setLoading(true);
     // Find a team where current user is owner or active member
-    const { data: ownedTeam } = await supabase
+    const { data: ownedTeam, error: ownedErr } = await supabase
       .from("teams")
       .select("id, name, plan, owner_id, current_period_end")
       .eq("owner_id", user.id)
       .maybeSingle();
+    if (ownedErr) console.error("team load (owned) failed", ownedErr);
     let t: TeamRow | null = (ownedTeam as any) ?? null;
+    console.log("[team] user.id=", user.id, "ownedTeam=", ownedTeam);
     if (!t) {
       const { data: myMembership } = await supabase
         .from("team_members")
