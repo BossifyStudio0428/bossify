@@ -6,9 +6,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FCM_SERVICE_ACCOUNT_JSON = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON");
 const PUSH_WEBHOOK_SECRET = Deno.env.get("PUSH_WEBHOOK_SECRET");
-const APP_SUPABASE_URL = Deno.env.get("APP_SUPABASE_URL") ?? SUPABASE_URL;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
-const APP_SUPABASE_ANON_KEY = Deno.env.get("APP_SUPABASE_ANON_KEY") ?? ANON_KEY;
 // Fallback to the known external app project (Bossify) if env vars are not
 // configured for this edge function. These are public values (URL + anon
 // key) that already ship in the client bundle, so it is safe to hardcode
@@ -17,6 +15,10 @@ const APP_SUPABASE_ANON_KEY = Deno.env.get("APP_SUPABASE_ANON_KEY") ?? ANON_KEY;
 const BOSSIFY_APP_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
 const BOSSIFY_APP_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
+const APP_SUPABASE_URL = Deno.env.get("APP_SUPABASE_URL") ?? BOSSIFY_APP_URL;
+const APP_SUPABASE_ANON_KEY = Deno.env.get("APP_SUPABASE_ANON_KEY") ?? BOSSIFY_APP_ANON_KEY ?? ANON_KEY;
+const APP_SUPABASE_SERVICE_ROLE_KEY =
+  Deno.env.get("APP_SUPABASE_SERVICE_ROLE_KEY") ?? SERVICE_ROLE_KEY;
 // CRON access must use a high-entropy server-side secret. The public anon key
 // MUST NOT be accepted here — it is exposed to every browser client and would
 // let any visitor broadcast push notifications.
@@ -36,6 +38,15 @@ function json(status: number, body: unknown): Response {
 }
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+// App data (device_tokens, profiles, orders, follow_ups) lives in the
+// EXTERNAL Bossify Supabase project, not in this edge function's host
+// project. All lookups against business data MUST go through `appAdmin`
+// or push notifications will silently send to zero devices because the
+// user_ids belong to a different auth.users table.
+const appAdmin = createClient(APP_SUPABASE_URL, APP_SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
@@ -303,7 +314,7 @@ async function resolveContent(
   kind: Kind,
   override: { title?: string; body?: string; link?: string },
 ) {
-  const { data: prefs } = await admin
+  const { data: prefs } = await appAdmin
     .from("profiles")
     .select(
       "notif_new_order,notif_unpaid,notif_inventory,notif_morning,notif_evening,notif_milestone,business_category,language",
@@ -339,7 +350,7 @@ async function resolveContent(
   if (!override.title || !override.body) {
     if (kind === "morning_summary") {
       const since = new Date(Date.now() - 86400000).toISOString();
-      const { data: rows } = await admin
+      const { data: rows } = await appAdmin
         .from("orders")
         .select("amount")
         .eq("user_id", userId)
@@ -353,7 +364,7 @@ async function resolveContent(
       body = fill(tpl.body, { count: rows?.length ?? 0, revenue: revenue.toFixed(2) });
       link = "/";
     } else if (kind === "unpaid_reminder") {
-      const { count } = await admin
+      const { count } = await appAdmin
         .from("orders")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
@@ -365,7 +376,7 @@ async function resolveContent(
     } else if (kind === "closing_report") {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const { data: rows } = await admin
+      const { data: rows } = await appAdmin
         .from("orders")
         .select("amount")
         .eq("user_id", userId)
@@ -381,7 +392,7 @@ async function resolveContent(
     } else if (kind === "follow_up_reminder") {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const { count } = await admin
+      const { count } = await appAdmin
         .from("follow_ups")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
@@ -397,13 +408,13 @@ async function resolveContent(
 }
 
 async function dispatch(userId: string, content: { title: string; body: string; link: string }) {
-  const { data: rows } = await admin.from("device_tokens").select("token").eq("user_id", userId);
+  const { data: rows } = await appAdmin.from("device_tokens").select("token").eq("user_id", userId);
   const tokens = (rows ?? []).map((r: { token: string }) => r.token);
   if (tokens.length === 0) return { sent: 0, removed: 0 };
   const results = await sendToTokens(tokens, content);
   const dead = results.filter((r) => r.invalid).map((r) => r.token);
   if (dead.length > 0) {
-    await admin.from("device_tokens").delete().in("token", dead);
+    await appAdmin.from("device_tokens").delete().in("token", dead);
   }
   return { sent: results.filter((r) => r.ok).length, removed: dead.length };
 }
@@ -464,7 +475,7 @@ Deno.serve(async (req) => {
           : parsed.platform === "web"
             ? "web"
             : "android";
-      const { error } = await admin
+      const { error } = await appAdmin
         .from("device_tokens")
         .upsert(
           { user_id: ownerId, token, platform, updated_at: new Date().toISOString() },
@@ -476,7 +487,7 @@ Deno.serve(async (req) => {
 
     if (parsed.broadcast) {
       if (!isCron) return json(403, { error: "Broadcast requires cron secret" });
-      const { data: users } = await admin.from("device_tokens").select("user_id");
+      const { data: users } = await appAdmin.from("device_tokens").select("user_id");
       const uniq = Array.from(
         new Set((users ?? []).map((r: { user_id: string }) => r.user_id)),
       ) as string[];
