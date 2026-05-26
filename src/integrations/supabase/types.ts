@@ -773,6 +773,16 @@ export type Database = {
       }
       device_limit_for_plan: { Args: { _plan: string }; Returns: number }
       device_limit_for_user: { Args: { _user_id: string }; Returns: number }
+      get_my_team: {
+        Args: never
+        Returns: {
+          current_period_end: string
+          id: string
+          name: string
+          owner_id: string
+          plan: string
+        }[]
+      }
       is_active_team_member: {
         Args: { _actor_id: string; _team_id: string }
         Returns: boolean
