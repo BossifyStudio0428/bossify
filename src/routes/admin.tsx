@@ -35,6 +35,7 @@ function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [allOrders, setAllOrders] = useState<any[]>([]);
   const [grantOpen, setGrantOpen] = useState<{ uid: string; name: string } | null>(null);
+  const [grantPlan, setGrantPlan] = useState<"pro" | "team_starter" | "team_pro" | "team_business">("pro");
   const [orderStatusFilter, setOrderStatusFilter] = useState<"All" | "Paid" | "Unpaid" | "Pending">("All");
 
   useEffect(() => {
@@ -72,9 +73,13 @@ function AdminPage() {
   const filteredOrders = orderStatusFilter === "All" ? allOrders : allOrders.filter((o) => o.status === orderStatusFilter);
   const userMap = new Map(users.map((u) => [u.id, u.business_name || u.id.slice(0, 8)]));
 
-  const grantPro = async (uid: string, months: number | "lifetime") => {
+  const grantPro = async (
+    uid: string,
+    months: number | "lifetime",
+    plan: "pro" | "team_starter" | "team_pro" | "team_business" = "pro",
+  ) => {
     try {
-      await setAdminSubscriptionPlanFn({ data: { userId: uid, months } });
+      await setAdminSubscriptionPlanFn({ data: { userId: uid, months, plan } });
       toast.success(`${t("admin_pro_granted")}${months === "lifetime" ? ` (${t("admin_lifetime")})` : ` ${months} ${t("months_short")}`}`);
       if (uid === user?.id) refreshSub();
       loadAll();
@@ -163,9 +168,9 @@ function AdminPage() {
                   {u.is_admin && <span className="text-primary font-semibold">👑 {t("admin_admin_badge")}</span>}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {u.plan === "pro"
+                  {u.plan && u.plan !== "free"
                     ? <button onClick={() => revokePro(u.id)} className="py-2 rounded-xl bg-muted text-muted-foreground text-[11px] font-semibold">{t("admin_revoke_pro")}</button>
-                    : <button onClick={() => setGrantOpen({ uid: u.id, name: u.business_name || u.id.slice(0, 8) })} className="py-2 rounded-xl bg-primary text-primary-foreground text-[11px] font-semibold">{t("admin_grant_pro")}</button>}
+                    : <button onClick={() => { setGrantPlan("pro"); setGrantOpen({ uid: u.id, name: u.business_name || u.id.slice(0, 8) }); }} className="py-2 rounded-xl bg-primary text-primary-foreground text-[11px] font-semibold">{t("admin_grant_pro")}</button>}
                   <button onClick={() => toast.info(`${t("admin_user_id_copy")} ${u.id}`)} className="py-2 rounded-xl bg-muted text-muted-foreground text-[11px] font-semibold">{t("admin_view")}</button>
                 </div>
               </div>
@@ -207,14 +212,34 @@ function AdminPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={() => setGrantOpen(null)}>
           <div className="w-full max-w-[390px] bg-card rounded-t-3xl sm:rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-base font-bold">{t("admin_grant_to")} {grantOpen.name}</h3>
-            <p className="text-xs text-muted-foreground">{t("admin_choose_duration")}</p>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground">{t("admin_choose_plan")}</p>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: "pro", label: "Pro" },
+                  { key: "team_starter", label: "Team Starter" },
+                  { key: "team_pro", label: "Team Pro" },
+                  { key: "team_business", label: "Team Business" },
+                ] as const).map((p) => (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setGrantPlan(p.key)}
+                    className={`py-2 rounded-xl text-xs font-semibold border ${grantPlan === p.key ? "bg-primary text-primary-foreground border-transparent" : "bg-card text-foreground border-border/60"}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground pt-1">{t("admin_choose_duration")}</p>
             <div className="grid grid-cols-2 gap-2">
               {[1, 3, 6, 12].map((m) => (
-                <button key={m} onClick={() => grantPro(grantOpen.uid, m)} className="py-3 rounded-xl bg-primary/10 text-primary font-semibold text-sm">
+                <button key={m} onClick={() => grantPro(grantOpen.uid, m, grantPlan)} className="py-3 rounded-xl bg-primary/10 text-primary font-semibold text-sm">
                   {m} {m>1 ? t("months_many") : t("month_one")}
                 </button>
               ))}
-              <button onClick={() => grantPro(grantOpen.uid, "lifetime")} className="col-span-2 py-3 rounded-xl bg-gradient-to-r from-primary to-primary/70 text-primary-foreground font-bold text-sm">
+              <button onClick={() => grantPro(grantOpen.uid, "lifetime", grantPlan)} className="col-span-2 py-3 rounded-xl bg-gradient-to-r from-primary to-primary/70 text-primary-foreground font-bold text-sm">
                 ✨ {t("admin_lifetime")}
               </button>
             </div>
