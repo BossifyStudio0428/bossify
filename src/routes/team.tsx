@@ -76,6 +76,13 @@ function TeamPage() {
         t = (tt as any) ?? null;
       }
     }
+    // Final fallback: SECURITY DEFINER RPC that bypasses any RLS edge cases.
+    if (!t) {
+      const { data: rpcTeam, error: rpcErr } = await supabase.rpc("get_my_team" as any);
+      if (rpcErr) console.error("get_my_team failed", rpcErr);
+      const row = Array.isArray(rpcTeam) ? rpcTeam[0] : rpcTeam;
+      if (row) t = row as any;
+    }
     setTeam(t);
     if (t) {
       const { data: m } = await supabase
