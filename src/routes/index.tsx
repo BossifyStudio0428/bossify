@@ -419,6 +419,14 @@ function Index() {
           >
             <span className="text-[10px] font-bold leading-none">{t("plan_badge_lifetime")}</span>
           </Link>
+        ) : isTeam && teamTier ? (
+          <Link
+            to="/team"
+            aria-label={t(`plan_badge_${teamTier}` as any)}
+            className="h-6 px-2.5 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white inline-flex items-center gap-1 shadow-[var(--shadow-soft)] active:scale-95 transition-transform shrink-0"
+          >
+            <span className="text-[10px] font-bold leading-none">{t(`plan_badge_${teamTier}` as any)}</span>
+          </Link>
         ) : (
           <Link
             to="/plans"
