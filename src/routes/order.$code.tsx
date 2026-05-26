@@ -63,7 +63,7 @@ type LoadState =
         avatar_url: string | null;
         business_type: string;
         whatsapp_number: string | null;
-        language?: "en" | "ms" | "zh";
+        language?: string;
       };
       products: Product[];
     };
