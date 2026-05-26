@@ -276,6 +276,11 @@ function CustomerDetail() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-mono text-muted-foreground">{o.code}</p>
                 <p className="text-sm font-semibold truncate">{o.product} {o.quantity > 1 ? `x${o.quantity}` : ""}</p>
+                {o.delivery_address && (
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    📍 {t("delivery_address" as any)}: {o.delivery_address}
+                  </p>
+                )}
                 <p className="text-[10px] text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</p>
               </div>
               <div className="text-right">
