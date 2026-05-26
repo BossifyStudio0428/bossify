@@ -34,6 +34,7 @@ export const setAdminSubscriptionPlan = createServerFn({ method: "POST" })
       .object({
         userId: z.string().uuid(),
         months: z.union([z.number().int().min(1).max(120), z.literal("lifetime")]),
+        plan: z.enum(["pro", "team_starter", "team_pro", "team_business"]).optional(),
       })
       .parse(input),
   )
@@ -44,10 +45,12 @@ export const setAdminSubscriptionPlan = createServerFn({ method: "POST" })
       ? new Date(2099, 0, 1)
       : new Date(Date.now() + data.months * 30 * 24 * 60 * 60 * 1000);
 
+    const plan = data.plan ?? "pro";
+
     const { error } = await supabaseAdmin
       .from("subscriptions")
       .update({
-        plan: "pro",
+        plan,
         status: "active",
         expires_at: expires.toISOString(),
         started_at: new Date().toISOString(),
