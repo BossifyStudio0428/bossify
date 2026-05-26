@@ -17,6 +17,7 @@ import { loadPrefs } from "@/lib/notifPrefs";
 import { rescheduleAll, runUnpaidNotifyNow } from "@/lib/notifSchedule";
 import { initBilling } from "@/lib/billing";
 import { registerPushForUser } from "@/lib/pushRegister";
+import { registerWebPush, isWebPushSupported } from "@/lib/webPush";
 import { BusinessTypeProvider, useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey, hasInventory } from "@/lib/businessType";
 
