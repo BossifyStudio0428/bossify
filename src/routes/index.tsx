@@ -46,6 +46,8 @@ function Index() {
     hasFullAccess,
     isLifetime,
     isStarter,
+    isTeam,
+    teamTier,
     ordersUsed,
     ordersLimit,
     refresh: refreshSubscription,
