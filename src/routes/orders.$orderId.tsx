@@ -75,6 +75,7 @@ function OrderDetailPage() {
       quantity: Number(form.quantity ?? 1),
       amount: Number(form.amount ?? 0),
       status: form.status,
+      delivery_address: (form.delivery_address as string)?.toString().trim() || null,
       notes: form.notes?.toString().trim() || null,
     }).eq("id", order.id).eq("user_id", user.id);
     setSaving(false);
@@ -142,6 +143,9 @@ function OrderDetailPage() {
             <Row label={`💰 ${t("price")}`} value={`RM ${Number(order.amount).toFixed(2)}`} />
             <Row label={`📅 ${t("date_label")}`} value={new Date(order.created_at).toLocaleString("en-MY")} />
             <Row label={`📋 ${t("code_label")}`} value={order.code} />
+            {order.delivery_address && (
+              <Row label={`📍 ${t("delivery_address" as any)}`} value={order.delivery_address} />
+            )}
             <Row label={`📝 ${t("notes")}`} value={order.notes || t("no_notes")} />
           </div>
 
@@ -169,6 +173,11 @@ function OrderDetailPage() {
               ))}
             </div>
           </div>
+          <Textarea
+            label={t("delivery_address" as any)}
+            value={(form.delivery_address as string) ?? ""}
+            onChange={(v) => setForm((p) => ({ ...p, delivery_address: v }))}
+          />
           <Input label={t("notes")} value={(form.notes as string) ?? ""} onChange={(v) => setForm((p) => ({ ...p, notes: v }))} />
           <div className="flex gap-2 pt-2">
             <button onClick={() => { setEditing(false); setForm(order); }} className="flex-1 py-3 rounded-2xl bg-muted font-semibold text-sm">{t("cancel")}</button>
@@ -195,6 +204,21 @@ function Input({ label, value, onChange, type = "text" }: { label: string; value
       <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{label}</label>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary" />
+    </div>
+  );
+}
+
+function Textarea({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{label}</label>
+      <textarea
+        rows={2}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        maxLength={500}
+        className="w-full resize-y rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+      />
     </div>
   );
 }

@@ -25,6 +25,7 @@ export type OrderRow = {
   amount: number;
   status: OrderStatus;
   notes: string | null;
+  delivery_address?: string | null;
   created_at: string;
   cost?: number;
   gross_profit?: number;

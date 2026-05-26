@@ -330,6 +330,7 @@ function OrdersPage() {
       quantity: Number(editForm.quantity ?? editingOrder.quantity),
       amount: Number(editForm.amount ?? editingOrder.amount),
       status: (editForm.status ?? editingOrder.status) as OrderStatus,
+      delivery_address: (editForm.delivery_address as string)?.toString().trim() || null,
       notes: editForm.notes?.toString().trim() || null,
     };
     const { error } = await supabase.from("orders").update(updates).eq("id", editingOrder.id).eq("user_id", user.id);
@@ -580,6 +581,9 @@ function OrdersPage() {
                   {detail.status}
                 </span>
               } />
+              {detail.delivery_address && (
+                <Row label={t("delivery_address" as any)} value={detail.delivery_address} />
+              )}
               <Row label={t("notes")} value={detail.notes || "—"} />
               <Row label={t("date_label")} value={new Date(detail.created_at).toLocaleString("en-MY")} />
             </div>
@@ -666,6 +670,16 @@ function OrdersPage() {
                   </button>
                 ))}
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("delivery_address" as any)}</label>
+              <textarea
+                rows={2}
+                value={(editForm.delivery_address as string) ?? ""}
+                onChange={(e) => setEditForm((p) => ({ ...p, delivery_address: e.target.value }))}
+                maxLength={500}
+                className="w-full resize-y rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+              />
             </div>
             <EditInput label={t("notes")} value={(editForm.notes as string) ?? ""} onChange={(v) => setEditForm((p) => ({ ...p, notes: v }))} />
             <div className="flex gap-2 pt-2">
