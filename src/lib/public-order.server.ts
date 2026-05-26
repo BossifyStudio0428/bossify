@@ -233,6 +233,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       extra.push(`Type: ${labelMap[data2.fulfilment] ?? data2.fulfilment}`);
     }
     if (bizType === "retail" && data2.address) extra.push(`Address: ${data2.address}`);
+    // bizType branch continues below
     if (bizType === "education") {
       if (data2.course_interest) extra.push(`Course: ${data2.course_interest}`);
       if (data2.university_preference) extra.push(`University: ${data2.university_preference}`);
