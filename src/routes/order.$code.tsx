@@ -11,22 +11,43 @@ import { PhoneInput } from "@/components/PhoneInput";
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
-  if (!response.ok) throw new Error(text || `HTTP ${response.status}`);
-  return JSON.parse(text) as T;
+  if (!response.ok) throw new Error(text || `HTTP ${response.status} ${response.statusText}`);
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`Invalid response from server (HTTP ${response.status})`);
+  }
 }
 
 async function fetchPublicOrderForm(code: string) {
-  const response = await fetch(`/api/public/order-form?code=${encodeURIComponent(code)}`);
+  const response = await fetch(`/api/public/order-form?code=${encodeURIComponent(code)}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  });
   return readJsonResponse<Awaited<ReturnType<typeof getPublicOrderForm>>>(response);
 }
 
 async function postPublicOrder(payload: Record<string, unknown>) {
-  const response = await fetch("/api/public/order-form", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  return readJsonResponse<Awaited<ReturnType<typeof submitPublicOrder>>>(response);
+  // Retry once on network failure (status 0 / aborted connection).
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await fetch("/api/public/order-form", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+        credentials: "omit",
+      });
+      return await readJsonResponse<Awaited<ReturnType<typeof submitPublicOrder>>>(response);
+    } catch (err) {
+      lastErr = err;
+      // Small backoff before retry
+      await new Promise((r) => setTimeout(r, 600));
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("Network error");
 }
 
 export const Route = createFileRoute("/order/$code")({
