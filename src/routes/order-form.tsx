@@ -30,9 +30,24 @@ function OrderFormPage() {
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
-      setCode(((data as any)?.order_form_code as string) ?? null);
+      let existing = ((data as any)?.order_form_code as string) ?? null;
       setEnabled(((data as any)?.order_form_enabled as boolean) ?? true);
       setBusinessType(((data as any)?.business_type as string) ?? null);
+
+      // Auto-generate a code if missing so the public link never 404s.
+      if (!existing) {
+        const fresh = Math.random().toString(16).slice(2, 10);
+        const { error: upErr } = await supabase
+          .from("profiles")
+          .update({ order_form_code: fresh, order_form_enabled: true } as any)
+          .eq("id", user.id);
+        if (!upErr) {
+          existing = fresh;
+          setEnabled(true);
+        }
+      }
+      if (cancelled) return;
+      setCode(existing);
       setLoading(false);
     })();
     return () => { cancelled = true; };
