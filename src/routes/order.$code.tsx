@@ -266,6 +266,12 @@ function PublicOrderFormPage() {
           <p className="text-sm text-muted-foreground mt-2">
             {state.reason === "disabled" ? t("pof_form_disabled_sub") : t("pof_not_found_sub")}
           </p>
+          <a
+            href="https://bossify-malaysia.lovable.app"
+            className="inline-block mt-6 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
+          >
+            Bossify
+          </a>
         </div>
       </div>
     );
