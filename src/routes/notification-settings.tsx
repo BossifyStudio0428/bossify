@@ -204,15 +204,13 @@ function NotifSettingsPage() {
         <Settings className="h-4 w-4" /> {t("open_system_settings")}
       </button>
 
-      {isAdmin && (
-        <button
-          onClick={sendTest}
-          disabled={sending}
-          className="w-full h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99] disabled:opacity-60"
-        >
-          <Bell className="h-4 w-4" /> {sending ? t("notif_test_sending") : t("notif_test_push")}
-        </button>
-      )}
+      <button
+        onClick={sendTest}
+        disabled={sending}
+        className="w-full h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99] disabled:opacity-60"
+      >
+        <Bell className="h-4 w-4" /> {sending ? t("notif_test_sending") : t("notif_test_push")}
+      </button>
     </div>
   );
 }
