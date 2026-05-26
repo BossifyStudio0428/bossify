@@ -40,8 +40,8 @@ export const getPublicOrderForm = createServerFn({ method: "GET" })
     return z.object({ code: z.string().regex(CODE_RE) }).parse(input);
   })
   .handler(async ({ data }) => {
-    try {
-    const sb = getPublicOrderClient() as any;
+    return loadPublicOrderForm(data.code);
+  });
     const { data: profile, error } = await sb
       .from("profiles")
       .select(
@@ -128,17 +128,10 @@ function genCode() {
 }
 
 export const submitPublicOrder = createServerFn({ method: "POST" })
-  .inputValidator((input) => {
-    try {
-      return { __ok: true as const, value: SubmitSchema.parse(input) };
-    } catch (e: any) {
-      const msg = e?.issues
-        ? e.issues.map((i: any) => `${(i.path ?? []).join(".")}: ${i.message}`).join("; ")
-        : String(e?.message ?? e);
-      return { __ok: false as const, error: msg };
-    }
-  })
+  .inputValidator((input: unknown) => input)
   .handler(async ({ data }) => {
+    return createPublicOrder(data);
+  });
     if ((data as any).__ok === false) {
       return { ok: false as const, reason: "insert_failed" as const, error: (data as any).error };
     }
