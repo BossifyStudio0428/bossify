@@ -382,10 +382,12 @@ function ProfilePage() {
         </div>
         <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">{businessName}</h1>
         <span
-          className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isLifetime ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white" : isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : isStarter ? "bg-gradient-to-r from-sky-500 to-teal-500 text-white" : "bg-muted text-muted-foreground"}`}
+          className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isLifetime ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white" : isTeam ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white" : isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : isStarter ? "bg-gradient-to-r from-sky-500 to-teal-500 text-white" : "bg-muted text-muted-foreground"}`}
         >
           {isLifetime ? (
             t("plan_badge_lifetime")
+          ) : isTeam && teamTier ? (
+            t(`plan_badge_${teamTier}` as any)
           ) : isPro ? (
             <>
               {t("pro_plan")} <Sparkles className="h-3 w-3" />
