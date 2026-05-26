@@ -62,6 +62,54 @@ export const setAdminSubscriptionPlan = createServerFn({ method: "POST" })
       console.error("setAdminSubscriptionPlan failed", error);
       throw new Error(`Unable to update subscription: ${error.message}`);
     }
+
+    // Auto-create team + owner membership for team plans so the user
+    // immediately sees the team management page.
+    if (plan === "team_starter" || plan === "team_pro" || plan === "team_business") {
+      const { data: existingTeam } = await supabaseAdmin
+        .from("teams")
+        .select("id, plan")
+        .eq("owner_id", data.userId)
+        .maybeSingle();
+
+      const periodEnd = data.months === "lifetime" ? null : expires.toISOString();
+
+      if (!existingTeam) {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("business_name")
+          .eq("id", data.userId)
+          .maybeSingle();
+        const name = (profile?.business_name as string | null)?.trim() || "My Team";
+
+        const { data: newTeam, error: teamErr } = await supabaseAdmin
+          .from("teams" as any)
+          .insert({ name, owner_id: data.userId, plan, current_period_end: periodEnd } as any)
+          .select("id")
+          .single();
+        if (teamErr) {
+          console.error("auto-create team failed", teamErr);
+        } else if (newTeam) {
+          const { error: memErr } = await supabaseAdmin
+            .from("team_members" as any)
+            .insert({
+              team_id: (newTeam as any).id,
+              user_id: data.userId,
+              role: "owner",
+              status: "active",
+              joined_at: new Date().toISOString(),
+            } as any);
+          if (memErr) console.error("auto-create owner membership failed", memErr);
+        }
+      } else {
+        // Keep plan + renewal in sync
+        await supabaseAdmin
+          .from("teams" as any)
+          .update({ plan, current_period_end: periodEnd } as any)
+          .eq("id", existingTeam.id);
+      }
+    }
+
     return { ok: true };
   });
 
