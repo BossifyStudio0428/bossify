@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { getPublicOrderForm, submitPublicOrder } from "@/lib/public-order.functions";
+import { loadPublicOrderForm, createPublicOrder } from "@/lib/public-order.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/public/order-form")({
         const parsed = CodeSchema.safeParse(url.searchParams.get("code") ?? "");
         if (!parsed.success) return json(400, { ok: false, reason: "not_found" });
 
-        const result = await getPublicOrderForm({ data: { code: parsed.data } });
+        const result = await loadPublicOrderForm(parsed.data);
         return json(200, result);
       },
       POST: async ({ request }) => {
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/api/public/order-form")({
           return json(400, { ok: false, reason: "insert_failed", error: "Invalid JSON" });
         }
 
-        const result = await submitPublicOrder({ data: body });
+        const result = await createPublicOrder(body);
         return json(200, result);
       },
     },

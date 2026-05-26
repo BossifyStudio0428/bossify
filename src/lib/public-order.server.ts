@@ -100,7 +100,16 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     const bizType: string = profile.business_type ?? "retail";
     const isRetailish = bizType === "retail" || bizType === "fnb";
 
-    let products: LoadPublicOrderFormResult extends { ok: true; products: infer P } ? P : never;
+    let products: Array<{
+      id: string;
+      name: string;
+      price: number;
+      image_url: string | null;
+      category: string | null;
+      description: string | null;
+      variants: Array<{ id?: string; name: string; price: number }>;
+      duration_minutes?: number | null;
+    }> = [];
     if (isRetailish) {
       const { data: inv } = await sb
         .from("inventory")
