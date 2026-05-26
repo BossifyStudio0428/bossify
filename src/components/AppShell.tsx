@@ -17,6 +17,7 @@ import { loadPrefs } from "@/lib/notifPrefs";
 import { rescheduleAll, runUnpaidNotifyNow } from "@/lib/notifSchedule";
 import { initBilling } from "@/lib/billing";
 import { registerPushForUser } from "@/lib/pushRegister";
+import { registerWebPush, isWebPushSupported } from "@/lib/webPush";
 import { BusinessTypeProvider, useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey, hasInventory } from "@/lib/businessType";
 
@@ -293,6 +294,21 @@ function ShellInner() {
     }
     // Register Android FCM token (no-op on web / preview)
     registerPushForUser(session.user.id).catch(() => {});
+    // Register Web Push (FCM Web) token whenever the user is signed in
+    // and the browser has previously granted Notification permission.
+    // This is idempotent — FCM returns the same token, and the
+    // device_tokens upsert dedupes by (user_id, token). Without this,
+    // a user who granted permission on a previous session never gets a
+    // token re-registered after the table is cleared or a fresh browser
+    // session, so no web push arrives when a new order is created.
+    if (
+      typeof window !== "undefined" &&
+      isWebPushSupported() &&
+      typeof Notification !== "undefined" &&
+      Notification.permission === "granted"
+    ) {
+      registerWebPush(session.user.id).catch(() => {});
+    }
   }, [session?.user?.id, onboardingChecked, needsOnboarding]);
 
   // While first-time splash is queued (or navigation hasn't completed yet), render the
