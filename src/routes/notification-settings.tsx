@@ -6,6 +6,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { isNotifGranted, openAppNotificationSettings, notify } from "@/lib/notifications";
 import { sendPushToSelf } from "@/lib/sendPush";
 import { registerPushForUser } from "@/lib/pushRegister";
+import { registerWebPush, isWebPushSupported } from "@/lib/webPush";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -34,6 +35,17 @@ function NotifSettingsPage() {
     setGranted(isNotifGranted());
     // Fire-and-forget device registration so the button doesn't have to wait.
     registerPushForUser(user.id).catch(() => {});
+    // Also auto-register a web push token if the user is on a browser and
+    // has already granted permission — otherwise the device_tokens table
+    // stays empty on web and pushes silently send to 0 devices.
+    if (
+      typeof window !== "undefined" &&
+      isWebPushSupported() &&
+      typeof Notification !== "undefined" &&
+      Notification.permission === "granted"
+    ) {
+      registerWebPush(user.id).catch(() => {});
+    }
     supabase
       .from("profiles")
       .select("is_admin")
@@ -43,8 +55,34 @@ function NotifSettingsPage() {
   }, [user]);
 
   const openSysSettings = async () => {
-    const ok = await openAppNotificationSettings();
-    setGranted(ok || isNotifGranted());
+    // On native, open the OS app-notification page. On web, that helper
+    // only asks for Notification.permission, which is not enough — we also
+    // need to register an FCM web push token, otherwise `device_tokens`
+    // stays empty and the user never receives any push.
+    let isNative = false;
+    try {
+      const { Capacitor } = await import("@capacitor/core");
+      isNative = Capacitor.isNativePlatform();
+    } catch {}
+
+    if (isNative) {
+      const ok = await openAppNotificationSettings();
+      setGranted(ok || isNotifGranted());
+      return;
+    }
+
+    if (!user) return;
+    if (!isWebPushSupported()) {
+      toast.error(t("notif_send_failed") + "Browser does not support push");
+      return;
+    }
+    const ok = await registerWebPush(user.id);
+    if (ok) {
+      setGranted(true);
+      toast.success(t("notif_sent_check"));
+    } else {
+      toast.error(t("notif_send_failed") + "Could not enable web push");
+    }
   };
 
   const sendTest = async () => {
@@ -60,10 +98,32 @@ function NotifSettingsPage() {
         { data: null, error: new Error("Request timed out") },
       );
       if (res?.error) throw res.error;
-      const sent = res?.data?.sent ?? res?.sent ?? null;
+      let sent = res?.data?.sent ?? res?.sent ?? null;
       void withTimeout(notify(title, body), 2000, undefined);
       if (sent === 0) {
-        toast.warning(t("notif_no_device"));
+        // No device registered yet — auto-register this device and retry once.
+        let registered = false;
+        try {
+          const { Capacitor } = await import("@capacitor/core");
+          if (Capacitor.isNativePlatform()) {
+            registered = await registerPushForUser(user.id);
+          } else if (isWebPushSupported()) {
+            registered = await registerWebPush(user.id);
+          }
+        } catch {}
+        if (registered) {
+          const retry: any = await withTimeout(
+            sendPushToSelf({ kind: "custom", title, body }),
+            12000,
+            { data: null, error: new Error("Request timed out") },
+          );
+          sent = retry?.data?.sent ?? retry?.sent ?? 0;
+        }
+        if (!sent) {
+          toast.warning(t("notif_no_device"));
+        } else {
+          toast.success(t("notif_sent_to").replace("{n}", String(sent)));
+        }
       } else if (typeof sent === "number") {
         toast.success(t("notif_sent_to").replace("{n}", String(sent)));
       } else {
