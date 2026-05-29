@@ -66,8 +66,16 @@ function NotifSettingsPage() {
     } catch {}
 
     if (isNative) {
-      const ok = await openAppNotificationSettings();
-      setGranted(ok || isNotifGranted());
+      const registered = await registerPushForUser(user.id);
+      if (registered) {
+        setGranted(true);
+        toast.success(t("notif_sent_check"));
+        return;
+      }
+
+      await openAppNotificationSettings();
+      setGranted(isNotifGranted());
+      toast.warning(t("notif_perm_off_desc"));
       return;
     }
 
