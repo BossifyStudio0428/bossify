@@ -65,13 +65,22 @@ function NotifSettingsPage() {
       isNative = Capacitor.isNativePlatform();
     } catch {}
 
+    if (!user) return;
+
     if (isNative) {
-      const ok = await openAppNotificationSettings();
-      setGranted(ok || isNotifGranted());
+      const registered = await registerPushForUser(user.id);
+      if (registered) {
+        setGranted(true);
+        toast.success(t("notif_sent_check"));
+        return;
+      }
+
+      await openAppNotificationSettings();
+      setGranted(isNotifGranted());
+      toast.warning(t("notif_perm_off_desc"));
       return;
     }
 
-    if (!user) return;
     if (!isWebPushSupported()) {
       toast.error(t("notif_send_failed") + "Browser does not support push");
       return;
