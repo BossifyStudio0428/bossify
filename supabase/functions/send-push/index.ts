@@ -65,7 +65,6 @@ async function getCallerIdFromBearer(token: string): Promise<string | null> {
   const issuerUrl = supabaseUrlFromIssuer(decodeJwtPayload(token)?.iss);
   let issuerAnonKey: string | null = null;
   if (issuerUrl === APP_SUPABASE_URL) issuerAnonKey = APP_SUPABASE_ANON_KEY ?? null;
-  else if (issuerUrl === BOSSIFY_APP_URL) issuerAnonKey = BOSSIFY_APP_ANON_KEY;
   if (!issuerUrl || !issuerAnonKey) return null;
 
   const authClient = createClient(issuerUrl, issuerAnonKey, {
@@ -400,6 +399,7 @@ async function resolveContent(
 async function dispatch(userId: string, content: { title: string; body: string; link: string }) {
   const { data: rows } = await appAdmin.from("device_tokens").select("token").eq("user_id", userId);
   const tokens = (rows ?? []).map((r: { token: string }) => r.token);
+  console.log("dispatch push", { userId, tokens: tokens.length, title: content.title });
   if (tokens.length === 0) return { sent: 0, removed: 0 };
   const results = await sendToTokens(tokens, content);
   const dead = results.filter((r) => r.invalid).map((r) => r.token);
