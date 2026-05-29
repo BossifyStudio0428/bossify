@@ -65,6 +65,8 @@ function NotifSettingsPage() {
       isNative = Capacitor.isNativePlatform();
     } catch {}
 
+    if (!user) return;
+
     if (isNative) {
       const registered = await registerPushForUser(user.id);
       if (registered) {
@@ -79,7 +81,6 @@ function NotifSettingsPage() {
       return;
     }
 
-    if (!user) return;
     if (!isWebPushSupported()) {
       toast.error(t("notif_send_failed") + "Browser does not support push");
       return;
