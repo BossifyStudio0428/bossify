@@ -32,7 +32,7 @@ function json(status: number, body: unknown): Response {
   });
 }
 
-// App notification data lives in this Lovable Cloud backend.
+// App notification data lives in the external Bossify backend.
 const appAdmin = createClient(APP_SUPABASE_URL, APP_SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
