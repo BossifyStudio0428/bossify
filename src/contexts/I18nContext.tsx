@@ -3212,6 +3212,11 @@ const dict = {
     device_last_active: "最后活跃",
     device_limit_reached: "已达到设备上限，请在「我的设备」页面移除一台设备后再登录。",
     device_limit_warning: "已达到设备上限。请先移除一台设备再添加新设备。",
+    device_limit_title: "设备已达上限",
+    device_limit_message: "你的 {plan} 计划最多允许 {limit} 台设备。请移除一台设备后再继续。",
+    device_limit_manage: "管理我的设备",
+    device_limit_continue: "继续使用",
+    device_limit_plans_hint: "Free：1 · Starter：2 · Pro：3 · Lifetime：5 · Team：每位成员 3 台",
   },
 } as const;
 
