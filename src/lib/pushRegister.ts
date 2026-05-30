@@ -8,18 +8,19 @@ import { notify } from "@/lib/notifications";
 
 let currentUserId: string | null = null;
 let listenersAdded = false;
-let tokenRegistered = false;
 let registrationPromise: Promise<boolean> | null = null;
 let resolveRegistration: ((ok: boolean) => void) | null = null;
+let lastRegisteredUserId: string | null = null;
+let lastRegisteredToken: string | null = null;
 
-export async function registerPushForUser(userId: string): Promise<boolean> {
+export async function registerPushForUser(userId: string, options: { force?: boolean } = {}): Promise<boolean> {
   currentUserId = userId;
-  if (tokenRegistered) return true;
+  if (!options.force && lastRegisteredUserId === userId && lastRegisteredToken) return true;
   if (typeof window === "undefined") return false;
   if (registrationPromise) return registrationPromise;
 
-  registrationPromise = withTimeout(registerPushForUserOnce(), 9000, false).finally(() => {
-    if (!tokenRegistered) registrationPromise = null;
+  registrationPromise = withTimeout(registerPushForUserOnce(), 15000, false).finally(() => {
+    registrationPromise = null;
     resolveRegistration = null;
   });
   return registrationPromise;
@@ -52,17 +53,16 @@ async function registerPushForUserOnce(): Promise<boolean> {
             platform,
           });
           if (res.error) throw res.error;
-          tokenRegistered = true;
+          lastRegisteredUserId = currentUserId;
+          lastRegisteredToken = token.value;
           resolveRegistration?.(true);
         } catch (e) {
-          tokenRegistered = false;
           console.warn("device token registration failed", e);
           resolveRegistration?.(false);
         }
       });
 
       await PushNotifications.addListener("registrationError", (err) => {
-        tokenRegistered = false;
         console.warn("FCM registration error", err);
         resolveRegistration?.(false);
       });
@@ -84,11 +84,10 @@ async function registerPushForUserOnce(): Promise<boolean> {
 
     const result = new Promise<boolean>((resolve) => {
       resolveRegistration = resolve;
-      window.setTimeout(() => resolve(tokenRegistered), 8000);
+      window.setTimeout(() => resolve(lastRegisteredUserId === currentUserId && !!lastRegisteredToken), 12000);
     });
 
     PushNotifications.register().catch((e) => {
-      tokenRegistered = false;
       console.warn("FCM register call failed", e);
       resolveRegistration?.(false);
     });
