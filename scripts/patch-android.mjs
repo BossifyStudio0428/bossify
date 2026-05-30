@@ -272,6 +272,16 @@ function patchManifestPermissions() {
   writeFileSync(manifestPath, manifest);
 }
 
+function verifyFirebaseConfig() {
+  const googleServicesPath = "android/app/google-services.json";
+  if (!existsSync("android/app")) return;
+  if (!existsSync(googleServicesPath)) {
+    console.warn(
+      "WARNING: android/app/google-services.json is missing. Android push notifications cannot register an FCM token until this Firebase file is added.",
+    );
+  }
+}
+
 function patchStyles() {
   if (!existsSync(stylesPath)) {
     console.warn(`Skipped: ${stylesPath} not found. Run npx cap add android first.`);
@@ -322,4 +332,5 @@ patchMainActivityPackage();
 patchMainActivityAutofill();
 writeAutofillHintsXml();
 dedupeLauncherIcons();
+verifyFirebaseConfig();
 console.log("Bossify Android patch applied.");
