@@ -38,7 +38,7 @@ function planLimit(plan: string) {
 function TeamPage() {
   const { user } = useAuth();
   const { t } = useI18n();
-  const { plan } = useSubscription();
+  const { plan, teamTier, isTeam } = useSubscription();
   const [team, setTeam] = useState<TeamRow | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
@@ -83,6 +83,33 @@ function TeamPage() {
       const row = Array.isArray(rpcTeam) ? rpcTeam[0] : rpcTeam;
       if (row) t = row as any;
     }
+    // Auto-provision: user has a Team subscription but no team row yet.
+    if (!t && isTeam && teamTier) {
+      const defaultName =
+        (user.user_metadata as any)?.business_name ||
+        user.email?.split("@")[0] ||
+        "My Team";
+      const { data: created, error: createErr } = await supabase
+        .from("teams")
+        .insert({ name: `${defaultName}'s Team`, owner_id: user.id, plan: teamTier } as any)
+        .select("id, name, plan, owner_id, current_period_end")
+        .single();
+      if (createErr) {
+        console.error("auto-create team failed", createErr);
+      } else if (created) {
+        t = created as any;
+        const { error: memberErr } = await supabase
+          .from("team_members")
+          .insert({
+            team_id: created.id,
+            user_id: user.id,
+            role: "owner",
+            status: "active",
+            invited_by: user.id,
+          } as any);
+        if (memberErr) console.error("auto-create owner member failed", memberErr);
+      }
+    }
     setTeam(t);
     if (t) {
       const { data: m } = await supabase
@@ -114,7 +141,7 @@ function TeamPage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [user?.id]);
+  useEffect(() => { load(); }, [user?.id, isTeam, teamTier]);
 
   const me = members.find((m) => m.user_id === user?.id);
   const myRole = team?.owner_id === user?.id ? "owner" : me?.role ?? "staff";
