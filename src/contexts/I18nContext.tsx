@@ -2149,6 +2149,11 @@ const dict = {
     device_last_active: "Aktif terakhir",
     device_limit_reached: "Had peranti telah dicapai. Sila buang peranti di halaman \"Peranti Saya\" sebelum log masuk.",
     device_limit_warning: "Anda telah mencapai had peranti. Buang satu peranti untuk menambah yang baru.",
+    device_limit_title: "Had Peranti Dicapai",
+    device_limit_message: "Pelan {plan} anda membenarkan maksimum {limit} peranti. Sila buang satu peranti untuk meneruskan.",
+    device_limit_manage: "Urus Peranti Saya",
+    device_limit_continue: "Teruskan ke Aplikasi",
+    device_limit_plans_hint: "Free: 1 · Starter: 2 · Pro: 3 · Lifetime: 5 · Team: 3 setiap ahli",
   },
   zh: {
     continue: "继续", back: "返回", save: "保存", cancel: "取消", delete: "删除",
