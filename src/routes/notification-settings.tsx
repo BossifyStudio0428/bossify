@@ -111,7 +111,10 @@ function NotifSettingsPage() {
     const title = t("notif_test_title");
     const body = t("notif_test_body");
     try {
-      await registerCurrentDevice();
+      const registration = await registerCurrentDevice();
+      if (!registration.ok) {
+        throw new Error(registration.reason || "Could not register this device for push");
+      }
       const res: any = await withTimeout(
         sendPushToSelf({ kind: "custom", title, body }),
         12000,

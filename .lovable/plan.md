@@ -1,45 +1,28 @@
-我已经定位到不是单一按钮问题，而是三条通知链路都不稳。
+我已经查到这次截图里的真正错误，不是 Firebase token 了，而是数据库 trigger 把 `device_tokens` 也当成“登录设备限制”来拦截：
 
-Do I know what the issue is? Yes — 目前证据显示：
-- 你的截图里 Android 走到了 `web push` 分支，所以当前安装/打开的版本没有被识别成 native push，才会出现 `Could not enable web push`。
-- 数据库里只有 1 个 Android token，而且最后更新时间是 5月22日，说明现在这台设备没有成功重新注册 token。
-- 每日提醒的 cron job 表面显示成功，但最近没有新的 HTTP push 回应记录，表示定时任务没有真正送到 push function。
-- 晚上通知默认值目前是关的，跟页面显示“每天晚上通知”不一致。
-- 新订单通知只在部分入口触发；外部/平台订单路径没有统一保证 push。
+- 日志真实错误：`device_limit_reached: plan allows 1 device(s); already registered 1`
+- 现在用户已经有 1 台登录设备，网站 push token 要保存进 `device_tokens` 时被旧 trigger 拦住，所以前端只看到 `An unexpected error occurred.`
+- 正确逻辑应该是：`device_sessions` 管登录设备限制；`device_tokens` 只管通知 token，不应该限制数量，否则一个手机浏览器/FCM token 更新就会失败。
 
-Plan:
-1. 修复设备注册
-   - 改 `registerPushForUser`，不要因为旧的全局 `tokenRegistered` 就跳过重新注册。
-   - 每次登录、打开 Notification Settings、Send Test Push 前，都强制重新拿当前 Android FCM token 并 upsert 到 `device_tokens`。
-   - Android native 失败时显示真正原因，不再误报 `Could not enable web push`。
-   - Web push 保留，但只在真正浏览器使用，并修正 service worker scope / 错误回传。
+实施计划：
 
-2. 修复 Notification Settings 按钮
-   - `Allow notifications` 和 `Send Test Push` 都先注册当前设备，再发送测试。
-   - 成功授权后立即安排本机 9:00 AM / 9:00 PM / unpaid reminder local notifications。
-   - 把 `Send Test Push (Admin)` 文案改成普通测试按钮，避免误导。
+1. 修数据库规则
+   - 移除 `device_tokens` 上的 `trg_enforce_device_limit` trigger。
+   - 保留 `device_sessions` 的设备限制逻辑，让登录设备限制仍然有效。
+   - 确认通知 token 不再被 plan device limit 拦住。
 
-3. 修复每日 9点早上和晚上通知
-   - 把 evening 默认通知改为开启。
-   - 修复 native local schedule：权限、取消旧 schedule、重新安排 9:00 AM 和 9:00 PM。
-   - 修复 Lovable Cloud 定时任务：重新创建/更新 daily push jobs，确保 9:00 AM Malaysia 和 9:00 PM Malaysia 会调用正确 push endpoint。
-   - 增加可查的 job 执行记录，之后不会再只看到 cron “成功”但不知道有没有真的发送。
+2. 修 `send-push` 的错误处理
+   - `register_device` 保存失败时返回真实错误，不再统一变成 `An unexpected error occurred.`。
+   - 如果以后真的遇到 device limit，会返回可读信息，而不是误导用户。
 
-4. 修复新订单自动通知
-   - 新增统一的 order-push helper。
-   - 手动新增订单、public order form、TikTok/platform webhook 创建订单后，都调用同一套 push 逻辑。
-   - 避免重复通知，同时确保不是只在当前打开 app 时才有。
+3. 修通知设置页流程
+   - “Send Test Push” 必须先检查 `registerCurrentDevice()` 结果。
+   - 如果注册失败，停止发送并显示真实原因；不能继续 send push。
+   - 网站模式如果当前浏览器不能稳定支持 web push，会显示清楚原因，不再一直尝试失败。
 
-5. 验证
-   - 检查 `device_tokens` 是否更新为当前设备。
-   - 测试 `send-push` 真实返回 sent 数量。
-   - 检查 push function logs 和 scheduled job responses。
-   - Android 需要重新 build / 安装新版；如果 `google-services.json` 不在 Android 项目里，我会把检查写进 build patch，让它明确报错而不是静默失败。
+4. 验证
+   - 部署 `send-push`。
+   - 用日志确认没有新的 `device_limit_reached`。
+   - 确认同一登录设备下，web push token 可以保存，测试推送不会再出现截图里的错误。
 
-<presentation-actions>
-  <presentation-open-history>View History</presentation-open-history>
-</presentation-actions>
-
-<presentation-actions>
-<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
-</presentation-actions>
+这次修复重点：登录设备限制只影响 `/devices` 和登录流程；通知 token 不再被设备限制误杀。
