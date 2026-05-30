@@ -22,17 +22,21 @@ export function isWebPushSupported(): boolean {
   );
 }
 
-export async function registerWebPush(userId: string): Promise<boolean> {
+export type WebPushResult = { ok: boolean; reason?: string };
+
+export async function registerWebPush(userId: string): Promise<WebPushResult> {
   try {
     if (!isWebPushSupported()) {
-      console.info("[webPush] not supported in this browser");
-      return false;
+      const reason = !("Notification" in (globalThis as any))
+        ? "Browser has no Notification API"
+        : !("serviceWorker" in navigator)
+          ? "Service workers unavailable (private mode?)"
+          : "Push API unavailable in this browser";
+      console.info("[webPush] not supported:", reason);
+      return { ok: false, reason };
     }
     if (!isFirebaseConfigured()) {
-      console.warn(
-        "[webPush] Firebase not configured — edit src/lib/firebaseConfig.ts with your Firebase Web App config + VAPID key",
-      );
-      return false;
+      return { ok: false, reason: "Firebase web config missing" };
     }
 
     // Lazy-load Firebase SDK so it never runs during SSR
@@ -43,16 +47,23 @@ export async function registerWebPush(userId: string): Promise<boolean> {
 
     const supported = await isSupported().catch(() => false);
     if (!supported) {
-      console.info("[webPush] firebase/messaging not supported here");
-      return false;
+      return { ok: false, reason: "Firebase messaging not supported in this WebView" };
     }
 
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
     // Register the service worker explicitly so we know its scope
-    const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
-      scope: "/",
-    });
+    let reg: ServiceWorkerRegistration;
+    try {
+      reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+        scope: "/",
+      });
+      // Wait until the SW is actually ready — getToken() needs an active worker.
+      await navigator.serviceWorker.ready;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ok: false, reason: `Service worker registration failed: ${msg}` };
+    }
 
     // Ask permission if not already granted
     const perm =
@@ -60,19 +71,28 @@ export async function registerWebPush(userId: string): Promise<boolean> {
         ? await Notification.requestPermission()
         : Notification.permission;
     if (perm !== "granted") {
-      console.info("[webPush] permission not granted:", perm);
-      return false;
+      return {
+        ok: false,
+        reason:
+          perm === "denied"
+            ? "Notifications blocked in browser settings"
+            : "Notification permission not granted",
+      };
     }
 
     const messaging = getMessaging(app);
-    const token = await getToken(messaging, {
-      vapidKey: VAPID_PUBLIC_KEY,
-      serviceWorkerRegistration: reg,
-    });
-
+    let token: string;
+    try {
+      token = await getToken(messaging, {
+        vapidKey: VAPID_PUBLIC_KEY,
+        serviceWorkerRegistration: reg,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ok: false, reason: `FCM getToken failed: ${msg}` };
+    }
     if (!token) {
-      console.warn("[webPush] no FCM token returned");
-      return false;
+      return { ok: false, reason: "FCM returned no token" };
     }
 
     // Foreground messages: SW only fires when tab is hidden/closed.
@@ -97,23 +117,19 @@ export async function registerWebPush(userId: string): Promise<boolean> {
     });
 
     // Persist as platform = 'web' in device_tokens
-    const res = await registerDeviceForPush({
-      userId,
-      token,
-      platform: "web",
-    });
+    const res = await registerDeviceForPush({ userId, token, platform: "web" });
     if (res.error) {
-      console.warn("[webPush] registerDeviceForPush failed", res.error);
-      return false;
+      return { ok: false, reason: `Save token failed: ${res.error.message}` };
     }
 
     try {
       localStorage.setItem("bossify_notif_granted", "1");
     } catch {}
-    return true;
+    return { ok: true };
   } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
     console.warn("[webPush] register failed", e);
-    return false;
+    return { ok: false, reason: msg };
   }
 }
 
