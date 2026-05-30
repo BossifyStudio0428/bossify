@@ -100,8 +100,8 @@ export async function requestNotifPermission(): Promise<boolean> {
       const { data } = await supabase.auth.getSession();
       const userId = data.session?.user?.id ?? null;
       if (userId && isWebPushSupported()) {
-        const ok = await registerWebPush(userId);
-        if (ok) {
+        const result = await registerWebPush(userId);
+        if (result.ok) {
           localStorage.setItem(PERM_GRANTED_KEY, "1");
           return true;
         }
