@@ -1085,6 +1085,11 @@ const dict = {
     device_last_active: "Last active",
     device_limit_reached: "Device limit reached. Please remove a device in \"My Devices\" page before logging in.",
     device_limit_warning: "You are at your device limit. Remove a device to add a new one.",
+    device_limit_title: "Device Limit Reached",
+    device_limit_message: "Your {plan} plan allows maximum {limit} devices. Please remove a device to continue.",
+    device_limit_manage: "Manage My Devices",
+    device_limit_continue: "Continue to App",
+    device_limit_plans_hint: "Free: 1 · Starter: 2 · Pro: 3 · Lifetime: 5 · Team: 3 per member",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
@@ -2144,6 +2149,11 @@ const dict = {
     device_last_active: "Aktif terakhir",
     device_limit_reached: "Had peranti telah dicapai. Sila buang peranti di halaman \"Peranti Saya\" sebelum log masuk.",
     device_limit_warning: "Anda telah mencapai had peranti. Buang satu peranti untuk menambah yang baru.",
+    device_limit_title: "Had Peranti Dicapai",
+    device_limit_message: "Pelan {plan} anda membenarkan maksimum {limit} peranti. Sila buang satu peranti untuk meneruskan.",
+    device_limit_manage: "Urus Peranti Saya",
+    device_limit_continue: "Teruskan ke Aplikasi",
+    device_limit_plans_hint: "Free: 1 · Starter: 2 · Pro: 3 · Lifetime: 5 · Team: 3 setiap ahli",
   },
   zh: {
     continue: "继续", back: "返回", save: "保存", cancel: "取消", delete: "删除",
@@ -3202,6 +3212,11 @@ const dict = {
     device_last_active: "最后活跃",
     device_limit_reached: "已达到设备上限，请在「我的设备」页面移除一台设备后再登录。",
     device_limit_warning: "已达到设备上限。请先移除一台设备再添加新设备。",
+    device_limit_title: "设备已达上限",
+    device_limit_message: "你的 {plan} 计划最多允许 {limit} 台设备。请移除一台设备后再继续。",
+    device_limit_manage: "管理我的设备",
+    device_limit_continue: "继续使用",
+    device_limit_plans_hint: "Free：1 · Starter：2 · Pro：3 · Lifetime：5 · Team：每位成员 3 台",
   },
 } as const;
 

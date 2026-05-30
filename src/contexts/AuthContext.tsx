@@ -8,7 +8,13 @@ type AuthCtx = {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null; code?: "device_limit_reached" }>;
+  signIn: (email: string, password: string) => Promise<{
+    error: string | null;
+    code?: "device_limit_reached";
+    used?: number;
+    limit?: number;
+    plan?: string;
+  }>;
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 };
@@ -57,8 +63,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { error: error.message };
     const reg = await registerDeviceSession();
     if (!reg.ok && reg.error === "limit_reached") {
-      await supabase.auth.signOut();
-      return { error: "device_limit_reached", code: "device_limit_reached" };
+      // Keep the session alive so the user can open /devices and remove
+      // one. The login screen renders a blocking device-limit panel.
+      let plan = "free";
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const uid = sess.session?.user?.id;
+        if (uid) {
+          const { data: sub } = await supabase
+            .from("subscriptions")
+            .select("plan")
+            .eq("user_id", uid)
+            .eq("status", "active")
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (sub?.plan) plan = sub.plan;
+        }
+      } catch {}
+      return {
+        error: "device_limit_reached",
+        code: "device_limit_reached",
+        used: reg.used,
+        limit: reg.limit,
+        plan,
+      };
     }
     return { error: null };
   };
