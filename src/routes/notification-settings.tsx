@@ -7,6 +7,8 @@ import { isNotifGranted, openAppNotificationSettings, notify } from "@/lib/notif
 import { sendPushToSelf } from "@/lib/sendPush";
 import { registerPushForUser } from "@/lib/pushRegister";
 import { registerWebPush, isWebPushSupported } from "@/lib/webPush";
+import { loadPrefs } from "@/lib/notifPrefs";
+import { rescheduleAll } from "@/lib/notifSchedule";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +31,35 @@ function NotifSettingsPage() {
   const [granted, setGranted] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [sending, setSending] = useState(false);
+
+  const registerCurrentDevice = async () => {
+    if (!user) return { ok: false, native: false, reason: "Not signed in" };
+    let isNative = false;
+    try {
+      const { Capacitor } = await import("@capacitor/core");
+      isNative = Capacitor.isNativePlatform();
+    } catch {}
+
+    if (isNative) {
+      const ok = await registerPushForUser(user.id, { force: true });
+      if (ok) {
+        await loadPrefs(user.id).catch(() => undefined);
+        await rescheduleAll(user.id).catch(() => undefined);
+      }
+      return { ok, native: true, reason: ok ? "" : "Android push registration failed" };
+    }
+
+    if (!isWebPushSupported()) {
+      const permissionOnly = await openAppNotificationSettings();
+      return {
+        ok: permissionOnly,
+        native: false,
+        reason: permissionOnly ? "" : "Browser does not support push",
+      };
+    }
+    const ok = await registerWebPush(user.id);
+    return { ok, native: false, reason: ok ? "" : "Could not enable web push" };
+  };
 
   useEffect(() => {
     if (!user) return;
