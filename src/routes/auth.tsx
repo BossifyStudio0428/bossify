@@ -127,6 +127,20 @@ function BackArrow({ onClick }: { onClick: () => void }) {
   );
 }
 
+const PLAN_LABEL: Record<string, string> = {
+  free: "Free",
+  starter: "Starter",
+  pro: "Pro",
+  lifetime: "Lifetime",
+  team_starter: "Team Starter",
+  team_pro: "Team Pro",
+  team_business: "Team Business",
+};
+function planLabel(plan?: string) {
+  if (!plan) return "Free";
+  return PLAN_LABEL[plan.toLowerCase()] ?? plan;
+}
+
 /* ---------- 1. Login ---------- */
 
 function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
@@ -139,6 +153,7 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [limitInfo, setLimitInfo] = useState<{ used: number; limit: number; plan: string } | null>(null);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -146,11 +161,12 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
     if (!isValidEmail(email)) { setError(t("err_email_format")); return; }
     if (password.length < 6) { setError(t("err_invalid_creds")); return; }
     setLoading(true);
-    const { error: err, code } = await signIn(email, password);
+    const { error: err, code, used, limit, plan } = await signIn(email, password);
     setLoading(false);
     if (err) {
       if (code === "device_limit_reached" || err === "device_limit_reached") {
-        setError(t("device_limit_reached"));
+        setLimitInfo({ used: used ?? 0, limit: limit ?? 1, plan: plan ?? "free" });
+        setError(null);
       } else {
         setError(authErrorText(err, t));
       }
@@ -159,6 +175,17 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
     router.invalidate();
     navigate({ to: "/" });
   };
+
+  if (limitInfo) {
+    return (
+      <DeviceLimitBlock
+        used={limitInfo.used}
+        limit={limitInfo.limit}
+        planName={planLabel(limitInfo.plan)}
+        onManage={() => navigate({ to: "/devices" })}
+      />
+    );
+  }
 
   return (
     <div className="w-full max-w-[400px] mx-auto space-y-5 flex-1 flex flex-col">
@@ -220,6 +247,42 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
           {t("no_account")}{" "}
           <button onClick={onGoRegister} className="font-bold" style={{ color: "#7C3AED" }}>{t("register")}</button>
         </p>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Device Limit Block ---------- */
+
+function DeviceLimitBlock({
+  used, limit, planName, onManage,
+}: { used: number; limit: number; planName: string; onManage: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="w-full max-w-[400px] mx-auto space-y-5 flex-1 flex flex-col">
+      <Logo />
+      <div className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-4 text-center">
+        <div className="mx-auto h-14 w-14 rounded-2xl bg-amber-100 flex items-center justify-center text-2xl">📱</div>
+        <h1 className="text-[18px] font-bold" style={{ color: "#1E1333" }}>{t("device_limit_title")}</h1>
+        <p className="text-[13px]" style={{ color: "#6B7280" }}>
+          {t("device_limit_message")
+            .replace("{plan}", planName)
+            .replace("{limit}", String(limit))}
+        </p>
+        <div className="rounded-xl bg-[#F4F3F8] p-3">
+          <p className="text-[12px] font-semibold" style={{ color: "#1E1333" }}>
+            {used}/{limit}
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: "#6B7280" }}>{t("device_limit_plans_hint")}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onManage}
+          className="w-full text-white font-bold text-[14px] active:scale-[0.99]"
+          style={{ background: "#7C3AED", borderRadius: 12, padding: 13 }}
+        >
+          {t("device_limit_manage")}
+        </button>
       </div>
     </div>
   );
