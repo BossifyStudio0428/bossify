@@ -32,10 +32,6 @@ function json(status: number, body: unknown): Response {
   });
 }
 
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
-
 // App notification data lives in this Lovable Cloud backend.
 const appAdmin = createClient(APP_SUPABASE_URL, APP_SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -60,9 +56,6 @@ function supabaseUrlFromIssuer(issuer: unknown): string | null {
 }
 
 async function getCallerIdFromBearer(token: string): Promise<string | null> {
-  const local = await admin.auth.getUser(token);
-  if (!local.error && local.data.user) return local.data.user.id;
-
   const issuerUrl = supabaseUrlFromIssuer(decodeJwtPayload(token)?.iss);
   let issuerAnonKey: string | null = null;
   if (issuerUrl === APP_SUPABASE_URL) issuerAnonKey = APP_SUPABASE_ANON_KEY ?? null;
