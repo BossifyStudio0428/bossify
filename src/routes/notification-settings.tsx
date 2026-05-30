@@ -122,7 +122,11 @@ function NotifSettingsPage() {
       );
       if (res?.error) throw res.error;
       let sent = res?.data?.sent ?? res?.sent ?? null;
-      void withTimeout(notify(title, body), 2000, undefined);
+      // Always fire a local notification so the user actually sees something
+      // in the notification bar, even if the FCM token in device_tokens is
+      // stale or routed to another device (e.g. a previously-registered
+      // browser session). Awaited so it completes before we toast success.
+      await notify(title, body).catch(() => undefined);
       if (sent === 0) {
         // No device registered yet — auto-register this device and retry once.
         let registered = false;
