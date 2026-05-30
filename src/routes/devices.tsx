@@ -48,14 +48,23 @@ function DevicesPage() {
   const [limit, setLimit] = useState<number>(1);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [currentRegistered, setCurrentRegistered] = useState(false);
   const currentDeviceId = getDeviceId();
 
   const refresh = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    // Touch current device + get limit
+    // Touch current device + get limit. If we're at the limit and this
+    // device isn't registered yet, the RPC throws — that's fine, the user
+    // is here to remove a device.
     const reg = await registerDeviceSession();
-    if (reg.ok) setLimit(reg.limit);
+    if (reg.ok) {
+      setLimit(reg.limit);
+      setCurrentRegistered(true);
+    } else {
+      if (reg.limit) setLimit(reg.limit);
+      setCurrentRegistered(false);
+    }
     const { data, error } = await supabase
       .from("device_sessions")
       .select("id, device_id, device_name, device_type, last_active, created_at")
@@ -81,6 +90,14 @@ function DevicesPage() {
       await removeDeviceSession(row.id);
       setRows((prev) => prev.filter((r) => r.id !== row.id));
       toast.success(t("device_removed"));
+      // Try to register the current device now that there's room.
+      if (!currentRegistered) {
+        const reg = await registerDeviceSession();
+        if (reg.ok) {
+          setCurrentRegistered(true);
+          setLimit(reg.limit);
+        }
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Error");
     } finally {
@@ -89,6 +106,7 @@ function DevicesPage() {
   };
 
   const used = rows.length;
+  const canContinue = currentRegistered && used <= limit;
 
   return (
     <div className="px-5 pt-10 pb-8 space-y-5 max-w-[480px] mx-auto">
@@ -179,6 +197,16 @@ function DevicesPage() {
       <Link to="/profile" className="block text-center text-xs text-muted-foreground underline">
         {t("back")}
       </Link>
+
+      {canContinue && (
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/" })}
+          className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm active:scale-[0.99]"
+        >
+          {t("device_limit_continue")}
+        </button>
+      )}
     </div>
   );
 }
