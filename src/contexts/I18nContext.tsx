@@ -1085,6 +1085,11 @@ const dict = {
     device_last_active: "Last active",
     device_limit_reached: "Device limit reached. Please remove a device in \"My Devices\" page before logging in.",
     device_limit_warning: "You are at your device limit. Remove a device to add a new one.",
+    device_limit_title: "Device Limit Reached",
+    device_limit_message: "Your {plan} plan allows maximum {limit} devices. Please remove a device to continue.",
+    device_limit_manage: "Manage My Devices",
+    device_limit_continue: "Continue to App",
+    device_limit_plans_hint: "Free: 1 · Starter: 2 · Pro: 3 · Lifetime: 5 · Team: 3 per member",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
