@@ -10,7 +10,6 @@ import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchWAProfile } f
 import { createNotification } from "@/lib/notify";
 import { notify as deviceNotify } from "@/lib/notifications";
 import { isPrefEnabled } from "@/lib/notifPrefs";
-import { sendPushToSelf } from "@/lib/sendPush";
 import { notifySituation } from "@/lib/autoNotify";
 import { getNotifMessage } from "@/lib/notifMessages";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -383,13 +382,6 @@ function NewOrderPage() {
       });
     }
     isPrefEnabled("notif_new_order") && deviceNotify("New Order Added! 🎉", `Order from ${form.customer_name} — RM ${Number(form.amount).toFixed(2)} has been saved.`, { route: "/orders" }).catch(() => {});
-    if (isPrefEnabled("notif_new_order")) {
-      const m = getNotifMessage("new_order", bizType, lang, {
-        customer: form.customer_name,
-        amount: Number(form.amount).toFixed(2),
-      });
-      sendPushToSelf({ kind: "new_order", title: m.title, body: m.body, link: "/orders" });
-    }
     setForm({ customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "" });
     setStatus("Unpaid");
     setTimeout(() => navigate({ to: "/orders" }), 1500);
@@ -417,13 +409,6 @@ function NewOrderPage() {
       });
     }
     isPrefEnabled("notif_new_order") && deviceNotify("New Order Added! 🎉", `Order from ${form.customer_name} — RM ${Number(form.amount).toFixed(2)} has been saved.`, { route: "/orders" }).catch(() => {});
-    if (isPrefEnabled("notif_new_order")) {
-      const m = getNotifMessage("new_order", bizType, lang, {
-        customer: form.customer_name,
-        amount: Number(form.amount).toFixed(2),
-      });
-      sendPushToSelf({ kind: "new_order", title: m.title, body: m.body, link: "/orders" });
-    }
     window.open(buildWhatsAppLink(form.phone.replace(/\D/g, ""), msg), "_blank");
     setTimeout(() => navigate({ to: "/orders" }), 800);
   };
