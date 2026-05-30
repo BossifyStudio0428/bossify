@@ -7,12 +7,14 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FCM_SERVICE_ACCOUNT_JSON = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON");
 const PUSH_WEBHOOK_SECRET = Deno.env.get("PUSH_WEBHOOK_SECRET");
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
-// Push registration and delivery must use this Lovable Cloud backend. Legacy
-// external-project secrets must not override this, or device tokens are stored
-// in the wrong database and notifications report success without arriving.
-const APP_SUPABASE_URL = SUPABASE_URL;
-const APP_SUPABASE_ANON_KEY = ANON_KEY;
-const APP_SUPABASE_SERVICE_ROLE_KEY = SERVICE_ROLE_KEY;
+// Bossify app data/auth lives in the external production project. The Edge
+// Function may be hosted by the Lovable project, but user JWT validation and
+// device_tokens reads/writes must use the same project the website logs into.
+const APP_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
+const APP_SUPABASE_ANON_KEY =
+  Deno.env.get("APP_SUPABASE_ANON_KEY") ??
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXAiLCJyZWYiOiJrbm91YWhxd2F6ZXJqaXlpcWdtaCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzc3MzY4MzQxLCJleHAiOjIwOTI5NDQzNDF9.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
+const APP_SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("APP_SUPABASE_SERVICE_ROLE_KEY") ?? SERVICE_ROLE_KEY;
 // CRON access must use a high-entropy server-side secret. The public anon key
 // MUST NOT be accepted here — it is exposed to every browser client and would
 // let any visitor broadcast push notifications.
