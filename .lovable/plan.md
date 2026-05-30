@@ -1,52 +1,45 @@
-## Why notifications are broken
+我已经定位到不是单一按钮问题，而是三条通知链路都不稳。
 
-I checked the external Supabase `device_tokens` table — it is **completely empty (0 rows)** for every user. With no tokens registered, every push from `send-push` returns `sent: 0`, which is exactly what the edge function logs show.
+Do I know what the issue is? Yes — 目前证据显示：
+- 你的截图里 Android 走到了 `web push` 分支，所以当前安装/打开的版本没有被识别成 native push，才会出现 `Could not enable web push`。
+- 数据库里只有 1 个 Android token，而且最后更新时间是 5月22日，说明现在这台设备没有成功重新注册 token。
+- 每日提醒的 cron job 表面显示成功，但最近没有新的 HTTP push 回应记录，表示定时任务没有真正送到 push function。
+- 晚上通知默认值目前是关的，跟页面显示“每天晚上通知”不一致。
+- 新订单通知只在部分入口触发；外部/平台订单路径没有统一保证 push。
 
-Three independent root causes:
+Plan:
+1. 修复设备注册
+   - 改 `registerPushForUser`，不要因为旧的全局 `tokenRegistered` 就跳过重新注册。
+   - 每次登录、打开 Notification Settings、Send Test Push 前，都强制重新拿当前 Android FCM token 并 upsert 到 `device_tokens`。
+   - Android native 失败时显示真正原因，不再误报 `Could not enable web push`。
+   - Web push 保留，但只在真正浏览器使用，并修正 service worker scope / 错误回传。
 
-### 1. Web never registers an FCM web push token
-On the Notification Settings page, the "Allow notifications" / "Open system settings" button calls `openAppNotificationSettings()`. On web, that only calls `Notification.requestPermission()` — it **never calls `registerWebPush(user.id)`**, so no FCM web token is created and nothing lands in `device_tokens`. Result: web users can never receive pushes, even after granting permission.
+2. 修复 Notification Settings 按钮
+   - `Allow notifications` 和 `Send Test Push` 都先注册当前设备，再发送测试。
+   - 成功授权后立即安排本机 9:00 AM / 9:00 PM / unpaid reminder local notifications。
+   - 把 `Send Test Push (Admin)` 文案改成普通测试按钮，避免误导。
 
-### 2. Android tokens were previously written to the wrong project
-Earlier the edge function wrote `device_tokens` into the Lovable Cloud project (`utqlrdbhvnugqvemjegi`). The last fix routed it to the external Bossify project (`knouahqwazerjiyiqgmh`), but no Android device has re-opened the app since, so the table is still empty. We need to make registration retry automatically on app open and also on every visit to Notification Settings.
+3. 修复每日 9点早上和晚上通知
+   - 把 evening 默认通知改为开启。
+   - 修复 native local schedule：权限、取消旧 schedule、重新安排 9:00 AM 和 9:00 PM。
+   - 修复 Lovable Cloud 定时任务：重新创建/更新 daily push jobs，确保 9:00 AM Malaysia 和 9:00 PM Malaysia 会调用正确 push endpoint。
+   - 增加可查的 job 执行记录，之后不会再只看到 cron “成功”但不知道有没有真的发送。
 
-### 3. No scheduled job is calling follow-up / daily reminders
-The DB function `public.send_followup_reminders()` exists, but **no `pg_cron` job is scheduled** to run it. Same for the morning / evening summaries (`trigger_push_kind('morning_summary')` etc.). So those notifications can never fire by themselves.
+4. 修复新订单自动通知
+   - 新增统一的 order-push helper。
+   - 手动新增订单、public order form、TikTok/platform webhook 创建订单后，都调用同一套 push 逻辑。
+   - 避免重复通知，同时确保不是只在当前打开 app 时才有。
 
-New-order push (when a customer submits the public form) already works correctly via `createPublicOrder` → `send-push` → `appAdmin` — but only after at least one device token exists for the seller.
+5. 验证
+   - 检查 `device_tokens` 是否更新为当前设备。
+   - 测试 `send-push` 真实返回 sent 数量。
+   - 检查 push function logs 和 scheduled job responses。
+   - Android 需要重新 build / 安装新版；如果 `google-services.json` 不在 Android 项目里，我会把检查写进 build patch，让它明确报错而不是静默失败。
 
----
+<presentation-actions>
+  <presentation-open-history>View History</presentation-open-history>
+</presentation-actions>
 
-## Plan
-
-### A. Fix web push registration (`src/routes/notification-settings.tsx`)
-- When the user clicks "Allow notifications" on web, call `registerWebPush(user.id)` directly (not just `Notification.requestPermission`). On native, keep the current `openAppNotificationSettings()` behavior.
-- On page mount, in addition to `registerPushForUser` (native), also call `registerWebPush(user.id)` when running in a browser and permission is already granted, so existing web users auto-register their token.
-- Surface a toast when registration fails so we stop silently no-op'ing.
-
-### B. Make the "Send test push" reliable
-- After a successful test response with `sent: 0`, automatically attempt to register the current device (web or native) and re-send once, so the user doesn't have to dig through settings to bootstrap their first token.
-
-### C. Schedule daily reminders via `pg_cron` (new migration)
-Add a migration on the external Bossify Supabase project (`knouahqwazerjiyiqgmh`) that:
-1. `CREATE EXTENSION IF NOT EXISTS pg_cron;` and `pg_net;`
-2. Schedules:
-   - `send-followups-daily` — 09:00 MYT (01:00 UTC) → `SELECT public.send_followup_reminders();`
-   - `morning-summary-daily` — 09:00 MYT → `SELECT public.trigger_push_kind('morning_summary');`
-   - `closing-report-daily` — 21:00 MYT (13:00 UTC) → `SELECT public.trigger_push_kind('closing_report');`
-   - `unpaid-reminder-daily` — 10:00 MYT (02:00 UTC) → `SELECT public.trigger_push_kind('unpaid_reminder');`
-
-These DB functions already exist; they call the `send-push` edge function with the `PUSH_WEBHOOK_SECRET` (which is configured). The `send-push` function then resolves content per user (respecting their notification preferences) and dispatches.
-
-### D. Verify after deploy
-1. Re-open Notification Settings on web → expect a `device_tokens` row with `platform='web'`.
-2. Re-open the Android app → expect a `device_tokens` row with `platform='android'`.
-3. Press "Send test push" → expect `sent ≥ 1`.
-4. Manually run `SELECT public.send_followup_reminders();` in SQL → expect notifications to fire for any user with a due follow-up.
-
-### Files
-- `src/routes/notification-settings.tsx` — wire `registerWebPush` into the Allow button + auto re-register on test-send fail.
-- New migration `supabase/migrations/<ts>_schedule_push_jobs.sql` — pg_cron schedules (targets external Bossify project; will need to be run against `knouahqwazerjiyiqgmh` because `cron`/`net` live there).
-
-### Note on the cron migration
-Lovable Cloud migrations run on the Lovable project DB (`utqlrdbhvnugqvemjegi`), **not** on the external Bossify DB. So step C cannot be applied with the migration tool — I'll provide the SQL for you to run once in the external project's SQL editor (similar to how we handled the `delivery_address` column). Want me to proceed with A + B in code and give you the cron SQL to paste?
+<presentation-actions>
+<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
+</presentation-actions>
