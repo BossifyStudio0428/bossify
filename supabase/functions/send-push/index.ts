@@ -13,7 +13,7 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUB
 const APP_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
 const APP_SUPABASE_ANON_KEY =
   Deno.env.get("APP_SUPABASE_ANON_KEY") ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXAiLCJyZWYiOiJrbm91YWhxd2F6ZXJqaXlpcWdtaCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzc3MzY4MzQxLCJleHAiOjIwOTI5NDQzNDF9.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub3VhaHF3YXplcmppeWlxZ21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjgzNDEsImV4cCI6MjA5Mjk0NDM0MX0.VF6SsKKhnAZ9vbD1HeH3KoEpt_XYdjTJqITGBSg3yjs";
 const APP_SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("APP_SUPABASE_SERVICE_ROLE_KEY") ?? SERVICE_ROLE_KEY;
 // CRON access must use a high-entropy server-side secret. The public anon key
 // MUST NOT be accepted here — it is exposed to every browser client and would
