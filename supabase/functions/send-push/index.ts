@@ -465,7 +465,10 @@ Deno.serve(async (req) => {
           { user_id: ownerId, token, platform, updated_at: new Date().toISOString() },
           { onConflict: "user_id,token" },
         );
-      if (error) throw error;
+      if (error) {
+        console.error("register_device failed", error);
+        return json(409, { error: error.message || "Could not save this device token" });
+      }
       return json(200, { ok: true, registered: true });
     }
 
@@ -505,6 +508,7 @@ Deno.serve(async (req) => {
     return json(200, { ok: true, ...r });
   } catch (e) {
     console.error("send-push failed", e);
-    return json(500, { error: "An unexpected error occurred." });
+    const message = e instanceof Error ? e.message : "An unexpected error occurred.";
+    return json(500, { error: message });
   }
 });
