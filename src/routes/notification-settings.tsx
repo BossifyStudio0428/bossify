@@ -65,7 +65,7 @@ function NotifSettingsPage() {
     if (!user) return;
     setGranted(isNotifGranted());
     // Fire-and-forget device registration so the button doesn't have to wait.
-    registerPushForUser(user.id).catch(() => {});
+    registerPushForUser(user.id, { force: true }).catch(() => {});
     // Also auto-register a web push token if the user is on a browser and
     // has already granted permission — otherwise the device_tokens table
     // stays empty on web and pushes silently send to 0 devices.
@@ -86,42 +86,15 @@ function NotifSettingsPage() {
   }, [user]);
 
   const openSysSettings = async () => {
-    // On native, open the OS app-notification page. On web, that helper
-    // only asks for Notification.permission, which is not enough — we also
-    // need to register an FCM web push token, otherwise `device_tokens`
-    // stays empty and the user never receives any push.
-    let isNative = false;
-    try {
-      const { Capacitor } = await import("@capacitor/core");
-      isNative = Capacitor.isNativePlatform();
-    } catch {}
-
     if (!user) return;
-
-    if (isNative) {
-      const registered = await registerPushForUser(user.id);
-      if (registered) {
-        setGranted(true);
-        toast.success(t("notif_sent_check"));
-        return;
-      }
-
-      await openAppNotificationSettings();
-      setGranted(isNotifGranted());
-      toast.warning(t("notif_perm_off_desc"));
-      return;
-    }
-
-    if (!isWebPushSupported()) {
-      toast.error(t("notif_send_failed") + "Browser does not support push");
-      return;
-    }
-    const ok = await registerWebPush(user.id);
-    if (ok) {
+    const result = await registerCurrentDevice();
+    if (result.ok) {
       setGranted(true);
       toast.success(t("notif_sent_check"));
     } else {
-      toast.error(t("notif_send_failed") + "Could not enable web push");
+      if (result.native) await openAppNotificationSettings();
+      setGranted(isNotifGranted());
+      toast.error(t("notif_send_failed") + result.reason);
     }
   };
 
@@ -132,6 +105,7 @@ function NotifSettingsPage() {
     const title = t("notif_test_title");
     const body = t("notif_test_body");
     try {
+      await registerCurrentDevice();
       const res: any = await withTimeout(
         sendPushToSelf({ kind: "custom", title, body }),
         12000,
@@ -146,7 +120,7 @@ function NotifSettingsPage() {
         try {
           const { Capacitor } = await import("@capacitor/core");
           if (Capacitor.isNativePlatform()) {
-            registered = await registerPushForUser(user.id);
+            registered = await registerPushForUser(user.id, { force: true });
           } else if (isWebPushSupported()) {
             registered = await registerWebPush(user.id);
           }
