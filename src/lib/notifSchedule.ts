@@ -17,6 +17,17 @@ async function getPlugin() {
   } catch { return null; }
 }
 
+async function ensurePermission(plugin: NonNullable<Awaited<ReturnType<typeof getPlugin>>>) {
+  try {
+    const current = (await plugin.checkPermissions().catch(() => ({}))) as { display?: string };
+    if (current.display === "granted") return true;
+    const requested = (await plugin.requestPermissions().catch(() => ({}))) as { display?: string };
+    return requested.display === "granted";
+  } catch {
+    return false;
+  }
+}
+
 async function cancelIds(ids: number[]) {
   const plugin = await getPlugin();
   if (!plugin) return;
@@ -29,6 +40,7 @@ async function cancelIds(ids: number[]) {
 async function scheduleMorning(userId: string) {
   const plugin = await getPlugin();
   if (!plugin) return;
+  if (!(await ensurePermission(plugin))) return;
   const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - 1);
   const end = new Date(start); end.setDate(end.getDate() + 1);
   const { data } = await supabase
@@ -54,6 +66,7 @@ async function scheduleMorning(userId: string) {
 async function scheduleEvening(userId: string) {
   const plugin = await getPlugin();
   if (!plugin) return;
+  if (!(await ensurePermission(plugin))) return;
   const start = new Date(); start.setHours(0, 0, 0, 0);
   const { data } = await supabase
     .from("orders").select("amount,status,gross_profit,created_at").eq("user_id", userId)
@@ -76,12 +89,13 @@ async function scheduleEvening(userId: string) {
 async function scheduleUnpaidDaily() {
   const plugin = await getPlugin();
   if (!plugin) return;
+  if (!(await ensurePermission(plugin))) return;
   await plugin.schedule({
     notifications: [{
       id: ID_UNPAID_DAILY,
       title: "Bossify",
       body: "Checking unpaid orders…",
-      schedule: { on: { hour: 10, minute: 0 }, allowWhileIdle: true, repeats: true },
+      schedule: { on: { hour: 9, minute: 0 }, allowWhileIdle: true, repeats: true },
       extra: { kind: "daily_unpaid_check", route: "/orders" },
     }],
   });

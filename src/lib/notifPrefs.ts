@@ -15,7 +15,7 @@ export const DEFAULT_PREFS: NotifPrefs = {
   notif_unpaid: true,
   notif_inventory: true,
   notif_morning: true,
-  notif_evening: false,
+  notif_evening: true,
   notif_milestone: true,
 };
 

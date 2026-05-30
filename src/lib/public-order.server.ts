@@ -365,58 +365,6 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       }
     }
 
-    try {
-      const pushSecret = process.env.PUSH_WEBHOOK_SECRET;
-      if (pushSecret) {
-        // IMPORTANT: must await. In the Cloudflare Workers runtime,
-        // any in-flight fetch is cancelled the moment the handler
-        // returns its Response, so a fire-and-forget call never
-        // actually leaves the worker. Use a short timeout so a slow
-        // push still doesn't block the customer's response for long.
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-        try {
-          const pushRes = await fetch(
-            "https://utqlrdbhvnugqvemjegi.supabase.co/functions/v1/send-push",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-cron-secret": pushSecret,
-              },
-              body: JSON.stringify({
-                kind: "new_order",
-                targetUserId: userId,
-                title: "New order received! 🛍️",
-                body: `From ${data2.customer_name} · ${productText}`,
-                link: "/orders",
-              }),
-              signal: controller.signal,
-            },
-          );
-          if (!pushRes.ok) {
-            const txt = await pushRes.text().catch(() => "");
-            console.error(
-              "[createPublicOrder] push non-2xx",
-              pushRes.status,
-              txt.slice(0, 300),
-            );
-          } else {
-            const j = await pushRes.json().catch(() => null);
-            console.log("[createPublicOrder] push ok", j);
-          }
-        } catch (e) {
-          console.error("[createPublicOrder] push error", e);
-        } finally {
-          clearTimeout(timeoutId);
-        }
-      } else {
-        console.warn("[createPublicOrder] PUSH_WEBHOOK_SECRET not set — skipping push");
-      }
-    } catch (e) {
-      console.error("[createPublicOrder] push error", e);
-    }
-
     return { ok: true, code: inserted.code, business_name: profile.business_name ?? "" };
   } catch (e: any) {
     console.error("[createPublicOrder] threw", e);

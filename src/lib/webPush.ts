@@ -51,7 +51,7 @@ export async function registerWebPush(userId: string): Promise<boolean> {
 
     // Register the service worker explicitly so we know its scope
     const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
-      scope: "/firebase-cloud-messaging-push-scope",
+      scope: "/",
     });
 
     // Ask permission if not already granted

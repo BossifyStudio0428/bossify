@@ -293,7 +293,7 @@ function ShellInner() {
         .catch(() => {});
     }
     // Register Android FCM token (no-op on web / preview)
-    registerPushForUser(session.user.id).catch(() => {});
+    registerPushForUser(session.user.id, { force: true }).catch(() => {});
     // Register Web Push (FCM Web) token whenever the user is signed in
     // and the browser has previously granted Notification permission.
     // This is idempotent — FCM returns the same token, and the
