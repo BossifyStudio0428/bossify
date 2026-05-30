@@ -36,9 +36,15 @@ function NotifSettingsPage() {
     if (!user) return { ok: false, native: false, reason: "Not signed in" };
     let isNative = false;
     try {
-      const { Capacitor } = await import("@capacitor/core");
-      isNative = Capacitor.isNativePlatform();
+      const w = window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } };
+      if (w.Capacitor?.isNativePlatform?.()) isNative = true;
     } catch {}
+    if (!isNative) {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        isNative = Capacitor.isNativePlatform();
+      } catch {}
+    }
 
     if (isNative) {
       const ok = await registerPushForUser(user.id, { force: true });
@@ -57,8 +63,8 @@ function NotifSettingsPage() {
         reason: permissionOnly ? "" : "Browser does not support push",
       };
     }
-    const ok = await registerWebPush(user.id);
-    return { ok, native: false, reason: ok ? "" : "Could not enable web push" };
+    const result = await registerWebPush(user.id);
+    return { ok: result.ok, native: false, reason: result.ok ? "" : (result.reason ?? "Could not enable web push") };
   };
 
   useEffect(() => {
@@ -122,7 +128,8 @@ function NotifSettingsPage() {
           if (Capacitor.isNativePlatform()) {
             registered = await registerPushForUser(user.id, { force: true });
           } else if (isWebPushSupported()) {
-            registered = await registerWebPush(user.id);
+            const r = await registerWebPush(user.id);
+            registered = r.ok;
           }
         } catch {}
         if (registered) {
