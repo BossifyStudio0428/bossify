@@ -29,8 +29,9 @@ type InviteRow = {
 };
 type ActivityRow = {
   id: string; action: string; target_email: string | null;
-  actor_id: string | null; created_at: string;
+  actor_id: string | null; created_at: string; metadata?: any;
 };
+
 
 function planLimit(plan: string) {
   if (plan === "team_starter") return 3;
@@ -48,6 +49,7 @@ function TeamPage() {
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [actorNames, setActorNames] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<"members" | "activity">("members");
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -165,13 +167,30 @@ function TeamPage() {
       if (t.plan === "team_pro" || t.plan === "team_business") {
         const { data: log } = await supabase
           .from("team_activity_log")
-          .select("id, action, target_email, actor_id, created_at")
+          .select("id, action, target_email, actor_id, created_at, metadata")
           .eq("team_id", t.id)
           .order("created_at", { ascending: false })
           .limit(50);
-        setActivity((log as any[]) ?? []);
+        const activityList = (log as any[]) ?? [];
+        setActivity(activityList);
+        // Fetch actor profile names for name substitution
+        const actorIds = Array.from(new Set(activityList.map((a) => a.actor_id).filter(Boolean)));
+        if (actorIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id, business_name")
+            .in("id", actorIds);
+          const names: Record<string, string> = {};
+          for (const p of (profilesData as any[]) ?? []) {
+            names[p.id] = p.business_name || p.id.slice(0, 8);
+          }
+          setActorNames(names);
+        } else {
+          setActorNames({});
+        }
       } else {
         setActivity([]);
+        setActorNames({});
       }
     }
     setLoading(false);
@@ -405,17 +424,44 @@ function TeamPage() {
             ) : activity.length === 0 ? (
               <div className="text-center text-sm text-muted-foreground py-6">{t("team_activity_empty")}</div>
             ) : (
-              activity.map((a) => (
-                <div key={a.id} className="bg-card rounded-xl p-3 text-sm">
-                  <div className="font-medium">
-                    {t(`team_act_${a.action}` as any) || a.action}
-                    {a.target_email ? ` · ${a.target_email}` : ""}
+              activity.map((a) => {
+                const key = `team_act_${a.action}` as any;
+                let text = t(key);
+                // If new key not found, try legacy key mapping
+                if (text === key) {
+                  const legacyMap: Record<string, string> = {
+                    invite_sent: "team_act_invite_sent",
+                    member_removed: "team_act_member_removed",
+                    role_changed: "team_act_role_changed_legacy",
+                    member_joined: "team_act_member_joined",
+                    ownership_transferred: "team_act_ownership_transferred",
+                    invite_cancelled: "team_act_remove_member",
+                  };
+                  if (legacyMap[a.action]) {
+                    text = t(legacyMap[a.action] as any);
+                  }
+                }
+                if (text === key || !text) text = a.action;
+                // Parameter substitution
+                if (a.target_email) text = text.replace("{email}", a.target_email);
+                if (a.actor_id && actorNames[a.actor_id]) {
+                  text = text.replace("{name}", actorNames[a.actor_id]);
+                } else if (a.actor_id) {
+                  text = text.replace("{name}", a.actor_id.slice(0, 8));
+                }
+                if (a.metadata?.role) {
+                  const roleText = t(`team_role_${a.metadata.role}` as any);
+                  text = text.replace("{role}", roleText !== `team_role_${a.metadata.role}` ? roleText : a.metadata.role);
+                }
+                return (
+                  <div key={a.id} className="bg-card rounded-xl p-3 text-sm">
+                    <div className="font-medium">{text}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(a.created_at).toLocaleString()}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(a.created_at).toLocaleString()}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
