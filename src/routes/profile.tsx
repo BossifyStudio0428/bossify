@@ -125,128 +125,185 @@ function ProfilePage() {
     },
   ];
 
-  const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] =
-    [
-      ...(!hasInventory(bizType)
-        ? [
-            {
-              icon: bizType === "property" ? "📦" : "🧰",
-              key: "services",
-              label: t(bizType === "property" ? "packages_title" : "services_title"),
-              onClick: () => navigate({ to: "/services" }),
-            },
-          ]
-        : []),
-      {
-        icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
-        key: "biztype",
-        label: t("business_type_menu"),
-        value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
-        onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
-      },
-      {
-        icon: "🔗",
-        key: "orderform",
-        label: t(pofSectionTitleKey(bizType)),
-        onClick: () => navigate({ to: "/order-form" }),
-      },
-      {
-        icon: "📊",
-        key: "analytics",
-        label: t(analyticsLabelKey),
-        onClick: () => navigate({ to: "/analytics" }),
-      },
-      {
-        icon: "📊",
-        key: "rep",
-        label: t(reportsLabelKey),
-        onClick: () => navigate({ to: "/reports" }),
-      },
-      {
-        icon: "🔔",
-        key: "notif2",
-        label: t("notifications"),
-        onClick: () => navigate({ to: "/notifications" }),
-      },
-      {
-        icon: "⚙️",
-        key: "notifsettings",
-        label: t("notification_settings"),
-        onClick: () => navigate({ to: "/notification-settings" }),
-      },
-      {
-        icon: "🌐",
-        key: "lang",
-        label: t("language"),
-        value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`,
-        onClick: () => setLangOpen(true),
-      },
-      {
-        icon: "📱",
-        key: "devices",
-        label: t("my_devices"),
-        onClick: () => navigate({ to: "/devices" }),
-      },
-      {
-        icon: theme === "dark" ? "🌙" : "☀️",
-        key: "theme",
-        label: t("appearance"),
-        value: theme === "dark" ? t("dark") : t("light"),
-        onClick: toggleTheme,
-      },
-      {
-        icon: "💳",
-        key: "sub",
-        label: t("subscription"),
-        value: isLifetime
-          ? t("plan_badge_lifetime")
-          : isTeam && teamTier
-            ? t(`plan_badge_${teamTier}` as any)
-            : isPro
-              ? t("pro_plan")
-              : isStarter
-                ? t("starter_plan")
-                : t("free_plan"),
-        onClick: () => navigate({ to: "/plans" }),
-      },
-      ...(!isNativeBillingAvailable() && (isStarter || isPro)
-        ? [
-            {
-              icon: "🔗",
-              key: "stripeportal",
-              label: t("manage_subscription"),
-              value: t("manage_subscription_subtitle"),
-              onClick: () =>
-                window.open("https://billing.stripe.com/p/login/8x2bJ12Ya2sX9JKaIAeIw00", "_blank"),
-            },
-          ]
-        : []),
-      {
-        icon: "📲",
-        key: "wa",
-        label: t("wa_template"),
-        value: hasFullAccess ? undefined : "🔒",
-        onClick: () => (hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template"))),
-      },
-      { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
-      {
-        icon: "🗑️",
-        key: "deldata",
-        label: t("data_deletion"),
-        onClick: () => navigate({ to: "/data-deletion" }),
-      },
-      ...(isAdmin
-        ? [
-            {
-              icon: "⚙️",
-              key: "admin",
-              label: t("admin_panel"),
-              value: "PRO",
-              onClick: () => navigate({ to: "/admin" }),
-            },
-          ]
-        : []),
-    ];
+  type MenuItem = { icon: string; key: string; label: string; value?: string; onClick?: () => void };
+  type MenuSection = { key: string; title: string; emoji: string; items: MenuItem[] };
+
+  const servicesItem: MenuItem | null = !hasInventory(bizType)
+    ? {
+        icon: bizType === "property" ? "📦" : "🧰",
+        key: "services",
+        label: t(bizType === "property" ? "packages_title" : "services_title"),
+        onClick: () => navigate({ to: "/services" }),
+      }
+    : null;
+
+  const sections: MenuSection[] = [
+    {
+      key: "business",
+      title: t("section_business"),
+      emoji: "📊",
+      items: [
+        ...(servicesItem ? [servicesItem] : []),
+        {
+          icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
+          key: "biztype",
+          label: t("business_type_menu"),
+          value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
+          onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
+        },
+        {
+          icon: "🔗",
+          key: "orderform",
+          label: t(pofSectionTitleKey(bizType)),
+          onClick: () => navigate({ to: "/order-form" }),
+        },
+        {
+          icon: "📊",
+          key: "analytics",
+          label: t(analyticsLabelKey),
+          onClick: () => navigate({ to: "/analytics" }),
+        },
+        {
+          icon: "📊",
+          key: "rep",
+          label: t(reportsLabelKey),
+          onClick: () => navigate({ to: "/reports" }),
+        },
+      ],
+    },
+    {
+      key: "notifications",
+      title: t("section_notifications"),
+      emoji: "🔔",
+      items: [
+        {
+          icon: "🔔",
+          key: "notif2",
+          label: t("notifications"),
+          onClick: () => navigate({ to: "/notifications" }),
+        },
+        {
+          icon: "⚙️",
+          key: "notifsettings",
+          label: t("notification_settings"),
+          onClick: () => navigate({ to: "/notification-settings" }),
+        },
+      ],
+    },
+    {
+      key: "account",
+      title: t("section_account"),
+      emoji: "👥",
+      items: [
+        {
+          icon: "🌐",
+          key: "lang",
+          label: t("language"),
+          value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`,
+          onClick: () => setLangOpen(true),
+        },
+        {
+          icon: theme === "dark" ? "🌙" : "☀️",
+          key: "theme",
+          label: t("appearance"),
+          value: theme === "dark" ? t("dark") : t("light"),
+          onClick: toggleTheme,
+        },
+        {
+          icon: "📱",
+          key: "devices",
+          label: t("my_devices"),
+          onClick: () => navigate({ to: "/devices" }),
+        },
+        {
+          icon: "💳",
+          key: "sub",
+          label: t("subscription"),
+          value: isLifetime
+            ? t("plan_badge_lifetime")
+            : isTeam && teamTier
+              ? t(`plan_badge_${teamTier}` as any)
+              : isPro
+                ? t("pro_plan")
+                : isStarter
+                  ? t("starter_plan")
+                  : t("free_plan"),
+          onClick: () => navigate({ to: "/plans" }),
+        },
+        ...(!isNativeBillingAvailable() && (isStarter || isPro)
+          ? [
+              {
+                icon: "🔗",
+                key: "stripeportal",
+                label: t("manage_subscription"),
+                value: t("manage_subscription_subtitle"),
+                onClick: () =>
+                  window.open(
+                    "https://billing.stripe.com/p/login/8x2bJ12Ya2sX9JKaIAeIw00",
+                    "_blank",
+                  ),
+              } as MenuItem,
+            ]
+          : []),
+      ],
+    },
+    ...(isTeam
+      ? [
+          {
+            key: "team",
+            title: t("section_team"),
+            emoji: "👨‍👩‍👧",
+            items: [
+              {
+                icon: "👥",
+                key: "myteam",
+                label: t("team_my_team"),
+                onClick: () => navigate({ to: "/team" }),
+              },
+            ],
+          } as MenuSection,
+        ]
+      : []),
+    {
+      key: "integrations",
+      title: t("section_integrations"),
+      emoji: "🔗",
+      items: [
+        {
+          icon: "📲",
+          key: "wa",
+          label: t("wa_template"),
+          value: hasFullAccess ? undefined : "🔒",
+          onClick: () => (hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template"))),
+        },
+      ],
+    },
+    {
+      key: "advanced",
+      title: t("section_advanced"),
+      emoji: "⚙️",
+      items: [
+        { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
+        {
+          icon: "🗑️",
+          key: "deldata",
+          label: t("data_deletion"),
+          onClick: () => navigate({ to: "/data-deletion" }),
+        },
+        ...(isAdmin
+          ? [
+              {
+                icon: "⚙️",
+                key: "admin",
+                label: t("admin_panel"),
+                value: "PRO",
+                onClick: () => navigate({ to: "/admin" }),
+              } as MenuItem,
+            ]
+          : []),
+      ],
+    },
+  ];
 
   useEffect(() => {
     if (!user) return;
