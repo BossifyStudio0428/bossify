@@ -49,6 +49,7 @@ function TeamPage() {
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [actorNames, setActorNames] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<"members" | "activity">("members");
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
