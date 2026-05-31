@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { isNotifGranted, openAppNotificationSettings, notify } from "@/lib/notifications";
-import { sendPushToSelf } from "@/lib/sendPush";
+import { sendPushToSelf, diagnosePushSelf } from "@/lib/sendPush";
 import { registerPushForUser } from "@/lib/pushRegister";
 import { registerWebPush, isWebPushSupported } from "@/lib/webPush";
 import { loadPrefs } from "@/lib/notifPrefs";
@@ -331,6 +331,31 @@ function NotifSettingsPage() {
         className="w-full h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99] disabled:opacity-60"
       >
         <Bell className="h-4 w-4" /> {sending ? t("notif_test_sending") : t("notif_test_push")}
+      </button>
+
+      <button
+        onClick={async () => {
+          const res = await diagnosePushSelf();
+          const payload = (res.data ?? { error: res.error?.message ?? "Unknown error" }) as Record<string, unknown>;
+          const text = JSON.stringify(payload, null, 2);
+          try {
+            await navigator.clipboard?.writeText(text);
+            toast.success("Diagnostic copied to clipboard");
+          } catch {
+            // ignore
+          }
+          // Show a readable summary in a toast and full JSON via alert.
+          const d = payload as any;
+          const summary = d?.device_tokens
+            ? `FCM tokens: ${d.device_tokens.count}, Web subs: ${(d.device_sessions?.rows ?? []).filter((r: any) => r.has_web_sub).length}, VAPID: ${d.env?.has_vapid_keys ? "yes" : "no"}`
+            : (d?.error ?? "No data");
+          toast.message(summary);
+          // eslint-disable-next-line no-alert
+          window.alert(text);
+        }}
+        className="w-full h-10 rounded-2xl border border-border/60 bg-card text-xs font-semibold text-muted-foreground active:scale-[.99]"
+      >
+        Diagnose push (debug) · 诊断推送 · Diagnos tolakan
       </button>
     </div>
   );
