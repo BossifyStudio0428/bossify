@@ -391,32 +391,104 @@ async function resolveContent(
 }
 
 async function dispatch(userId: string, content: { title: string; body: string; link: string }) {
-  const { data: rows } = await appAdmin
-    .from("device_tokens")
-    .select("token, platform")
+  // Read from device_sessions (external Supabase). Fallback to legacy
+  // device_tokens for any device that hasn't migrated yet.
+  const { data: sessions } = await appAdmin
+    .from("device_sessions")
+    .select("id, device_type, fcm_token, push_subscription")
     .eq("user_id", userId);
-  const tokens = (rows ?? []).map((r: { token: string }) => r.token);
-  const platforms = (rows ?? []).map((r: { platform: string }) => r.platform);
+
+  const fcmTokens: string[] = [];
+  const webSubs: { id: string; sub: any }[] = [];
+  for (const row of (sessions ?? []) as Array<{
+    id: string;
+    device_type: string | null;
+    fcm_token: string | null;
+    push_subscription: string | Record<string, unknown> | null;
+  }>) {
+    if (row.fcm_token) {
+      fcmTokens.push(row.fcm_token);
+    } else if (row.push_subscription) {
+      let sub: any = row.push_subscription;
+      if (typeof sub === "string") {
+        try {
+          sub = JSON.parse(sub);
+        } catch {
+          sub = null;
+        }
+      }
+      if (sub && sub.endpoint) webSubs.push({ id: row.id, sub });
+    }
+  }
+
+  // Legacy fallback: also include any tokens stored in device_tokens that
+  // are not already accounted for by device_sessions.fcm_token.
+  try {
+    const { data: legacy } = await appAdmin
+      .from("device_tokens")
+      .select("token")
+      .eq("user_id", userId);
+    for (const r of (legacy ?? []) as Array<{ token: string }>) {
+      if (r.token && !fcmTokens.includes(r.token)) fcmTokens.push(r.token);
+    }
+  } catch {
+    // device_tokens may not exist in some environments
+  }
+
   console.log("dispatch push", {
     userId,
-    tokens: tokens.length,
-    platforms,
+    fcm: fcmTokens.length,
+    web: webSubs.length,
     title: content.title,
   });
-  if (tokens.length === 0) return { sent: 0, removed: 0, details: [] };
-  const results = await sendToTokens(tokens, content);
-  const details = results.map((r, i) => ({
-    platform: platforms[i],
-    ok: r.ok,
-    invalid: r.invalid ?? false,
-    error: r.error,
-  }));
-  console.log("dispatch results", details);
-  const dead = results.filter((r) => r.invalid).map((r) => r.token);
-  if (dead.length > 0) {
-    await appAdmin.from("device_tokens").delete().in("token", dead);
+
+  if (fcmTokens.length === 0 && webSubs.length === 0) {
+    return { sent: 0, removed: 0, details: [] };
   }
-  return { sent: results.filter((r) => r.ok).length, removed: dead.length, details };
+
+  const details: Array<{ kind: string; ok: boolean; invalid?: boolean; error?: string }> = [];
+  let sent = 0;
+  let removed = 0;
+
+  if (fcmTokens.length > 0) {
+    const results = await sendToTokens(fcmTokens, content);
+    for (const r of results) {
+      details.push({ kind: "fcm", ok: r.ok, invalid: r.invalid, error: r.error });
+      if (r.ok) sent++;
+    }
+    const dead = results.filter((r) => r.invalid).map((r) => r.token);
+    if (dead.length > 0) {
+      // Clear from device_sessions.fcm_token and remove legacy device_tokens rows.
+      await appAdmin
+        .from("device_sessions")
+        .update({ fcm_token: null })
+        .in("fcm_token", dead);
+      await appAdmin.from("device_tokens").delete().in("token", dead).then(
+        () => null,
+        () => null,
+      );
+      removed += dead.length;
+    }
+  }
+
+  if (webSubs.length > 0) {
+    const webResults = await sendWebPush(webSubs, content);
+    for (const r of webResults) {
+      details.push({ kind: "webpush", ok: r.ok, invalid: r.invalid, error: r.error });
+      if (r.ok) sent++;
+    }
+    const deadIds = webResults.filter((r) => r.invalid).map((r) => r.id);
+    if (deadIds.length > 0) {
+      await appAdmin
+        .from("device_sessions")
+        .update({ push_subscription: null })
+        .in("id", deadIds);
+      removed += deadIds.length;
+    }
+  }
+
+  console.log("dispatch results", details);
+  return { sent, removed, details };
 }
 
 // ---------- Handler ----------
