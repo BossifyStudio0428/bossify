@@ -77,7 +77,71 @@ export const acceptTeamInvite = createServerFn({ method: "POST" })
       .update({ status: "accepted" } as any)
       .eq("id", inv.id);
 
+    // Sync member's profile plan to team's plan so quota/features align.
+    const { data: team } = await externalSupabaseAdmin
+      .from("teams")
+      .select("plan")
+      .eq("id", inv.team_id)
+      .maybeSingle();
+    if (team?.plan) {
+      await externalSupabaseAdmin
+        .from("subscriptions")
+        .update({ plan: team.plan, status: "active" } as any)
+        .eq("user_id", userId);
+    }
+
     return { ok: true as const, teamId: inv.team_id };
+  });
+
+/**
+ * List pending invitations addressed to the authenticated user's email.
+ * Used to show an invite banner on Home after login.
+ */
+export const listMyPendingInvites = createServerFn({ method: "POST" })
+  .middleware([requireExternalSupabaseAuth])
+  .handler(async ({ context }) => {
+    const email = (context.claims as any)?.email as string | undefined;
+    if (!email) return { invites: [] as any[] };
+    const { data: invs } = await externalSupabaseAdmin
+      .from("team_invitations")
+      .select("id, team_id, email, role, status, expires_at, token")
+      .ilike("email", email)
+      .eq("status", "pending");
+    const fresh = (invs ?? []).filter(
+      (i) => new Date(i.expires_at).getTime() >= Date.now(),
+    );
+    if (fresh.length === 0) return { invites: [] };
+    const teamIds = Array.from(new Set(fresh.map((i) => i.team_id)));
+    const { data: teams } = await externalSupabaseAdmin
+      .from("teams")
+      .select("id, name, owner_id, plan")
+      .in("id", teamIds);
+    const ownerIds = Array.from(
+      new Set((teams ?? []).map((t) => t.owner_id).filter(Boolean)),
+    );
+    const { data: owners } =
+      ownerIds.length > 0
+        ? await externalSupabaseAdmin
+            .from("profiles")
+            .select("id, business_name")
+            .in("id", ownerIds as string[])
+        : { data: [] as any[] };
+    const teamMap = new Map((teams ?? []).map((t) => [t.id, t]));
+    const ownerMap = new Map((owners ?? []).map((o: any) => [o.id, o]));
+    return {
+      invites: fresh.map((i) => {
+        const team = teamMap.get(i.team_id) as any;
+        const owner = team ? ownerMap.get(team.owner_id) : null;
+        return {
+          id: i.id,
+          token: i.token,
+          role: i.role,
+          teamName: team?.name ?? "",
+          businessName: (owner as any)?.business_name ?? team?.name ?? "",
+          plan: team?.plan ?? null,
+        };
+      }),
+    };
   });
 
 export const declineTeamInvite = createServerFn({ method: "POST" })
