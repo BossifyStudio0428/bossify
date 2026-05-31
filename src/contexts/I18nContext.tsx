@@ -3277,6 +3277,12 @@ const dict = {
     device_limit_manage: "管理我的设备",
     device_limit_continue: "继续使用",
     device_limit_plans_hint: "Free：1 · Starter：2 · Pro：3 · Lifetime：5 · Team：每位成员 3 台",
+    section_business: "业务",
+    section_notifications: "通知",
+    section_account: "账户",
+    section_team: "团队",
+    section_integrations: "整合",
+    section_advanced: "高级",
   },
 } as const;
 
