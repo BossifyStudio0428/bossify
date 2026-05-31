@@ -212,6 +212,54 @@ async function sendToTokens(
   );
 }
 
+// ---- Web Push (VAPID) ----
+type WebPushResult = { id: string; ok: boolean; invalid?: boolean; error?: string };
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
+const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:support@bossify.app";
+
+async function sendWebPush(
+  subs: Array<{ id: string; sub: any }>,
+  payload: { title: string; body: string; link?: string },
+): Promise<WebPushResult[]> {
+  if (subs.length === 0) return [];
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    console.warn("VAPID keys missing — skipping web push subscriptions");
+    return subs.map((s) => ({ id: s.id, ok: false, error: "VAPID keys not configured" }));
+  }
+  let webpush: any;
+  try {
+    const mod = await import("npm:web-push@3.6.7");
+    webpush = (mod as any).default ?? mod;
+    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("Failed to load web-push", msg);
+    return subs.map((s) => ({ id: s.id, ok: false, error: `web-push load failed: ${msg}` }));
+  }
+  const body = JSON.stringify({
+    notification: {
+      title: payload.title,
+      body: payload.body,
+      icon: "/favicon.ico",
+      badge: "/favicon.ico",
+      data: { link: payload.link ?? "/" },
+    },
+  });
+  return await Promise.all(
+    subs.map(async ({ id, sub }) => {
+      try {
+        await webpush.sendNotification(sub, body, { TTL: 60 });
+        return { id, ok: true };
+      } catch (e: any) {
+        const status = e?.statusCode ?? 0;
+        const invalid = status === 404 || status === 410;
+        return { id, ok: false, invalid, error: e?.body || e?.message || String(e) };
+      }
+    }),
+  );
+}
+
 // ---------- Content resolution ----------
 type Kind =
   | "new_order"
