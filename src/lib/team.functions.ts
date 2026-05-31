@@ -206,3 +206,73 @@ export const declineTeamInvite = createServerFn({ method: "POST" })
       .eq("status", "pending");
     return { ok: true as const };
   });
+
+/**
+ * Sync the caller's team_members.status with their team owner's current plan.
+ * - Owner plan is a team_* plan → member status = 'active', member subscription
+ *   plan mirrors owner's plan.
+ * - Owner plan is NOT a team plan → member status = 'suspended', member
+ *   subscription plan = 'free'.
+ *
+ * Returns the resulting state so the UI can render an "expired" banner.
+ */
+const TEAM_PLAN_SET = new Set(["team_starter", "team_pro", "team_business"]);
+
+export const syncTeamMemberStatus = createServerFn({ method: "POST" })
+  .middleware([requireExternalSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+
+    // Find the team this user belongs to (most recent active/suspended row).
+    const { data: memRows } = await externalSupabaseAdmin
+      .from("team_members")
+      .select("id, team_id, status, role")
+      .eq("user_id", userId)
+      .in("status", ["active", "suspended"])
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    const mem = (memRows ?? [])[0] as any;
+    if (!mem) return { isMember: false as const };
+
+    const { data: team } = await externalSupabaseAdmin
+      .from("teams").select("id, owner_id").eq("id", mem.team_id).maybeSingle();
+    if (!team) return { isMember: false as const };
+
+    // Owner is never suspended via this path.
+    if ((team as any).owner_id === userId) {
+      return { isMember: true as const, isOwner: true, suspended: false };
+    }
+
+    const { data: ownerSub } = await externalSupabaseAdmin
+      .from("subscriptions")
+      .select("plan, status")
+      .eq("user_id", (team as any).owner_id)
+      .maybeSingle();
+    const ownerPlan = (ownerSub as any)?.plan as string | undefined;
+    const ownerActive = (ownerSub as any)?.status === "active";
+    const teamActive = !!ownerPlan && TEAM_PLAN_SET.has(ownerPlan) && ownerActive;
+
+    if (teamActive) {
+      if (mem.status !== "active") {
+        await externalSupabaseAdmin
+          .from("team_members").update({ status: "active" } as any).eq("id", mem.id);
+      }
+      // Mirror owner's plan for the member.
+      await externalSupabaseAdmin
+        .from("subscriptions")
+        .update({ plan: ownerPlan, status: "active" } as any)
+        .eq("user_id", userId);
+      return { isMember: true as const, isOwner: false, suspended: false };
+    }
+
+    // Owner plan expired / not a team plan → suspend.
+    if (mem.status !== "suspended") {
+      await externalSupabaseAdmin
+        .from("team_members").update({ status: "suspended" } as any).eq("id", mem.id);
+    }
+    await externalSupabaseAdmin
+      .from("subscriptions")
+      .update({ plan: "free", status: "active" } as any)
+      .eq("user_id", userId);
+    return { isMember: true as const, isOwner: false, suspended: true };
+  });
