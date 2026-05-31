@@ -424,17 +424,44 @@ function TeamPage() {
             ) : activity.length === 0 ? (
               <div className="text-center text-sm text-muted-foreground py-6">{t("team_activity_empty")}</div>
             ) : (
-              activity.map((a) => (
-                <div key={a.id} className="bg-card rounded-xl p-3 text-sm">
-                  <div className="font-medium">
-                    {t(`team_act_${a.action}` as any) || a.action}
-                    {a.target_email ? ` · ${a.target_email}` : ""}
+              activity.map((a) => {
+                const key = `team_act_${a.action}` as any;
+                let text = t(key);
+                // If new key not found, try legacy key mapping
+                if (text === key) {
+                  const legacyMap: Record<string, string> = {
+                    invite_sent: "team_act_invite_sent",
+                    member_removed: "team_act_member_removed",
+                    role_changed: "team_act_role_changed_legacy",
+                    member_joined: "team_act_member_joined",
+                    ownership_transferred: "team_act_ownership_transferred",
+                    invite_cancelled: "team_act_remove_member",
+                  };
+                  if (legacyMap[a.action]) {
+                    text = t(legacyMap[a.action] as any);
+                  }
+                }
+                if (text === key || !text) text = a.action;
+                // Parameter substitution
+                if (a.target_email) text = text.replace("{email}", a.target_email);
+                if (a.actor_id && actorNames[a.actor_id]) {
+                  text = text.replace("{name}", actorNames[a.actor_id]);
+                } else if (a.actor_id) {
+                  text = text.replace("{name}", a.actor_id.slice(0, 8));
+                }
+                if (a.metadata?.role) {
+                  const roleText = t(`team_role_${a.metadata.role}` as any);
+                  text = text.replace("{role}", roleText !== `team_role_${a.metadata.role}` ? roleText : a.metadata.role);
+                }
+                return (
+                  <div key={a.id} className="bg-card rounded-xl p-3 text-sm">
+                    <div className="font-medium">{text}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(a.created_at).toLocaleString()}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(a.created_at).toLocaleString()}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
