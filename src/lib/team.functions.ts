@@ -52,6 +52,15 @@ export const acceptTeamInvite = createServerFn({ method: "POST" })
       return { ok: false as const, reason: "expired" };
     }
 
+    // Remove any pre-existing pending placeholder row for this email so the
+    // accepted member is a single row, not a duplicate of the pending invite.
+    await externalSupabaseAdmin
+      .from("team_members")
+      .delete()
+      .eq("team_id", inv.team_id)
+      .eq("status", "pending")
+      .ilike("invited_email", inv.email);
+
     // Upsert team_members row for this user. The limit trigger may raise.
     const { error: mErr } = await externalSupabaseAdmin
       .from("team_members")
@@ -91,6 +100,47 @@ export const acceptTeamInvite = createServerFn({ method: "POST" })
     }
 
     return { ok: true as const, teamId: inv.team_id };
+  });
+
+/**
+ * Return emails for a set of user IDs (team members). Uses admin client to
+ * read from auth.users since the publishable client cannot. Restricted to
+ * users that share a team with the caller.
+ */
+export const getTeamMemberEmails = createServerFn({ method: "POST" })
+  .middleware([requireExternalSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      teamId: z.string().uuid(),
+      userIds: z.array(z.string().uuid()).max(100),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    // Verify caller is a member (or owner) of the team.
+    const { data: team } = await externalSupabaseAdmin
+      .from("teams").select("owner_id").eq("id", data.teamId).maybeSingle();
+    let allowed = team?.owner_id === userId;
+    if (!allowed) {
+      const { data: me } = await externalSupabaseAdmin
+        .from("team_members")
+        .select("id")
+        .eq("team_id", data.teamId)
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+      allowed = !!me;
+    }
+    if (!allowed) return { emails: {} as Record<string, string> };
+
+    const emails: Record<string, string> = {};
+    for (const uid of data.userIds) {
+      try {
+        const { data: u } = await externalSupabaseAdmin.auth.admin.getUserById(uid);
+        if (u?.user?.email) emails[uid] = u.user.email;
+      } catch {}
+    }
+    return { emails };
   });
 
 /**
