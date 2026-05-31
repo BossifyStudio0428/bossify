@@ -54,9 +54,32 @@ function DevicesPage() {
   const refresh = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    // Touch current device + get limit. If we're at the limit and this
-    // device isn't registered yet, the RPC throws — that's fine, the user
-    // is here to remove a device.
+    // Read plan from subscriptions to compute the limit locally (mirrors
+    // device_limit_for_plan) so the UI shows the correct number even if
+    // the RPC is rejected.
+    const planLimits: Record<string, number> = {
+      free: 1,
+      starter: 2,
+      pro: 3,
+      lifetime: 5,
+      team_starter: 3,
+      team_pro: 3,
+      team_business: 3,
+    };
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("plan")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const planKey = (sub?.plan ?? "free").toLowerCase();
+    setLimit(planLimits[planKey] ?? 1);
+
+    // Touch / register the current device. With the updated RPC this now
+    // also evicts the oldest session if needed so a fresh web login always
+    // shows up here.
     const reg = await registerDeviceSession();
     if (reg.ok) {
       setLimit(reg.limit);
