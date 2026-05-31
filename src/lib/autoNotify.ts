@@ -26,15 +26,22 @@ export async function notifySituation(params: {
     safeLocalStorage.setItem(key, "1");
   }
 
-  const [local, push] = await Promise.allSettled([
+  // new_order push is dispatched by a Postgres trigger on public.orders
+  // (covers merchant-created + public-form orders). Sending a self-push
+  // here too would duplicate the notification on the merchant's device.
+  const tasks: Promise<unknown>[] = [
     localNotify(params.title, params.body, { route: params.link ?? "/" }),
-    sendPushToSelf({
-      kind: params.kind,
-      title: params.title,
-      body: params.body,
-      link: params.link,
-    }),
-  ]);
-
-  return { local, push };
+  ];
+  if (params.kind !== "new_order") {
+    tasks.push(
+      sendPushToSelf({
+        kind: params.kind,
+        title: params.title,
+        body: params.body,
+        link: params.link,
+      }),
+    );
+  }
+  const results = await Promise.allSettled(tasks);
+  return { local: results[0], push: results[1] ?? null };
 }

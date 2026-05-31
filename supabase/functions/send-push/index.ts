@@ -382,6 +382,9 @@ async function resolveContent(
         .eq("user_id", userId)
         .eq("is_done", false)
         .lte("follow_up_date", today.toISOString().slice(0, 10));
+      if (!count || count === 0) {
+        return { title: "", body: "", link: "/customers", allowed: false };
+      }
       const tpl = T_FOLLOWUP[lang];
       title = tpl.title;
       body = fill(tpl.body, { count: count ?? 0 });

@@ -4,47 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 const APP_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
-const PUSH_FUNCTION_URL = "https://utqlrdbhvnugqvemjegi.supabase.co/functions/v1/send-push";
-
-async function notifyMerchantNewOrder(params: {
-  userId: string;
-  code: string;
-  customerName: string;
-  product: string;
-  amount: number;
-}) {
-  const secret = process.env.PUSH_WEBHOOK_SECRET;
-  if (!secret) {
-    console.warn("[notifyMerchantNewOrder] PUSH_WEBHOOK_SECRET missing — skipping push");
-    return;
-  }
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(PUSH_FUNCTION_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-cron-secret": secret,
-      },
-      body: JSON.stringify({
-        kind: "new_order",
-        targetUserId: params.userId,
-        title: "New order received 🛒",
-        body: `${params.customerName} ordered ${params.product} (RM ${params.amount.toFixed(2)}) — ${params.code}`,
-        link: "/orders",
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      console.warn("[notifyMerchantNewOrder] push failed", res.status, txt.slice(0, 200));
-    }
-  } catch (e) {
-    console.warn("[notifyMerchantNewOrder] threw", e);
-  }
-}
+// Push notifications for new orders are dispatched by a Postgres AFTER INSERT
+// trigger on public.orders (see external migration: notify_new_order_push).
+// That covers BOTH merchant-created orders and public order-form orders, so
+// we do not fire a separate push from the server function here.
 
 function createPublicOrderClient() {
   const serviceRoleKey = process.env.APP_SUPABASE_SERVICE_ROLE_KEY;
@@ -405,15 +368,6 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         console.warn("[createPublicOrder] customer upsert failed", e);
       }
     }
-
-    // Fire-and-forget push notification to merchant.
-    notifyMerchantNewOrder({
-      userId,
-      code: inserted.code,
-      customerName: data2.customer_name.trim(),
-      product: productText,
-      amount,
-    }).catch(() => {});
 
     return { ok: true, code: inserted.code, business_name: profile.business_name ?? "" };
   } catch (e: any) {
