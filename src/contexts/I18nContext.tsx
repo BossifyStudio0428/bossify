@@ -543,6 +543,8 @@ const dict = {
     coming_soon_title: "Coming Soon! 🚀",
     notif_perm_off_title: "System notifications are off",
     notif_perm_off_desc: "Turn on notifications in your phone settings to receive alerts.",
+    notif_web_enabled: "Notifications enabled",
+    notif_web_blocked: "Please enable notification permission in your browser settings",
     open_system_settings: "Open System Notification Settings",
     notif_setting_new_order: "New Order Alert",
     notif_setting_new_order_desc: "Notify me when a new order is added",
