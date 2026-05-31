@@ -55,10 +55,21 @@ async function registerPushForUserOnce(): Promise<boolean> {
           });
           if (res.error) throw res.error;
           // Also store the FCM token on the device_sessions row so the
-          // edge function can dispatch by device.
+          // edge function can dispatch by device. Use the real device
+          // model + native platform rather than the WebView UA string.
+          let deviceName: string | undefined;
+          try {
+            const { Device } = await import("@capacitor/device");
+            const info = await Device.getInfo();
+            deviceName = [info.manufacturer, info.model].filter(Boolean).join(" ").trim() || info.name || undefined;
+          } catch {
+            deviceName = undefined;
+          }
           await saveDeviceSessionPush({
             userId: currentUserId,
             fcmToken: token.value,
+            deviceName,
+            deviceType: platform,
           }).catch(() => null);
           lastRegisteredUserId = currentUserId;
           lastRegisteredToken = token.value;
