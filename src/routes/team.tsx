@@ -18,6 +18,7 @@ type MemberRow = {
   id: string; team_id: string; user_id: string | null; invited_email: string | null;
   role: "owner" | "admin" | "staff"; status: "active" | "pending" | "removed";
   updated_at: string; joined_at: string | null; invited_by: string | null;
+  business_name?: string | null;
 };
 type InviteRow = {
   id: string; email: string; role: string; status: string;
@@ -118,7 +119,24 @@ function TeamPage() {
         .eq("team_id", t.id)
         .neq("status", "removed")
         .order("created_at", { ascending: true });
-      setMembers((m as any[]) ?? []);
+      const rawMembers = (m as any[]) ?? [];
+      const memberUserIds = rawMembers.map((mm) => mm.user_id).filter(Boolean);
+      let profilesMap: Record<string, { business_name: string | null }> = {};
+      if (memberUserIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, business_name")
+          .in("id", memberUserIds);
+        for (const p of (profilesData as any[]) ?? []) {
+          profilesMap[p.id] = p;
+        }
+      }
+      setMembers(
+        rawMembers.map((mm) => ({
+          ...mm,
+          business_name: mm.user_id ? profilesMap[mm.user_id]?.business_name ?? null : null,
+        }))
+      );
       const { data: inv } = await supabase
         .from("team_invitations")
         .select("*")
@@ -248,10 +266,10 @@ function TeamPage() {
           {members.map((m) => (
             <div key={m.id} className="bg-card rounded-xl p-3 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                {(m.invited_email || m.user_id || "?").slice(0, 1).toUpperCase()}
+                {(m.business_name || m.invited_email || m.user_id || "?").slice(0, 1).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">{m.invited_email || m.user_id?.slice(0, 8)}</div>
+                <div className="font-medium truncate">{m.business_name || m.invited_email || m.user_id?.slice(0, 8)}</div>
                 <div className="text-xs text-muted-foreground flex gap-2">
                   <span className="capitalize">{t(`team_role_${m.role}` as any)}</span>
                   <span>·</span>
