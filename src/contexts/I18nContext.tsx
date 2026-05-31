@@ -2691,6 +2691,8 @@ const dict = {
     coming_soon_title: "即将推出！🚀",
     notif_perm_off_title: "系统通知已关闭",
     notif_perm_off_desc: "请在手机设置中开启通知以接收提醒。",
+    notif_web_enabled: "通知已开启",
+    notif_web_blocked: "请在浏览器设置中开启通知权限",
     open_system_settings: "打开系统通知设置",
     notif_setting_new_order: "新订单提醒",
     notif_setting_new_order_desc: "新订单加入时通知我",
