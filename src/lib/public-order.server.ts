@@ -406,6 +406,15 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       }
     }
 
+    // Fire-and-forget push notification to merchant.
+    notifyMerchantNewOrder({
+      userId,
+      code: inserted.code,
+      customerName: data2.customer_name.trim(),
+      product: productText,
+      amount,
+    }).catch(() => {});
+
     return { ok: true, code: inserted.code, business_name: profile.business_name ?? "" };
   } catch (e: any) {
     console.error("[createPublicOrder] threw", e);
