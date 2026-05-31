@@ -338,7 +338,7 @@ function TeamPage() {
           {members.map((m) => (
             <div key={m.id} className="bg-card rounded-xl p-3 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                {(m.business_name || m.invited_email || m.user_id || "?").slice(0, 1).toUpperCase()}
+                {(m.business_name || m.email || m.invited_email || m.user_id || "?").slice(0, 1).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-medium truncate">{m.business_name || m.email || m.invited_email || m.user_id?.slice(0, 8)}</div>
