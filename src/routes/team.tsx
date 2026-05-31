@@ -18,6 +18,7 @@ type MemberRow = {
   id: string; team_id: string; user_id: string | null; invited_email: string | null;
   role: "owner" | "admin" | "staff"; status: "active" | "pending" | "removed";
   updated_at: string; joined_at: string | null; invited_by: string | null;
+  business_name?: string | null;
 };
 type InviteRow = {
   id: string; email: string; role: string; status: string;
