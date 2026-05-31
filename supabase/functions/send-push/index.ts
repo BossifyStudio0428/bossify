@@ -391,16 +391,32 @@ async function resolveContent(
 }
 
 async function dispatch(userId: string, content: { title: string; body: string; link: string }) {
-  const { data: rows } = await appAdmin.from("device_tokens").select("token").eq("user_id", userId);
+  const { data: rows } = await appAdmin
+    .from("device_tokens")
+    .select("token, platform")
+    .eq("user_id", userId);
   const tokens = (rows ?? []).map((r: { token: string }) => r.token);
-  console.log("dispatch push", { userId, tokens: tokens.length, title: content.title });
-  if (tokens.length === 0) return { sent: 0, removed: 0 };
+  const platforms = (rows ?? []).map((r: { platform: string }) => r.platform);
+  console.log("dispatch push", {
+    userId,
+    tokens: tokens.length,
+    platforms,
+    title: content.title,
+  });
+  if (tokens.length === 0) return { sent: 0, removed: 0, details: [] };
   const results = await sendToTokens(tokens, content);
+  const details = results.map((r, i) => ({
+    platform: platforms[i],
+    ok: r.ok,
+    invalid: r.invalid ?? false,
+    error: r.error,
+  }));
+  console.log("dispatch results", details);
   const dead = results.filter((r) => r.invalid).map((r) => r.token);
   if (dead.length > 0) {
     await appAdmin.from("device_tokens").delete().in("token", dead);
   }
-  return { sent: results.filter((r) => r.ok).length, removed: dead.length };
+  return { sent: results.filter((r) => r.ok).length, removed: dead.length, details };
 }
 
 // ---------- Handler ----------
