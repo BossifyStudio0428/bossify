@@ -340,7 +340,12 @@ function TeamPage() {
           {/* Pending invites with expiry / resend */}
           {invites.length > 0 && canInvite && (
             <div className="pt-2 space-y-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase">Pending Invites</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase">Pending Invites</h3>
+                <Button size="sm" variant="ghost" className="text-destructive h-7 px-2 text-xs" onClick={cancelAllInvites}>
+                  <X className="w-3 h-3 mr-1" />{t("team_cancel_all")}
+                </Button>
+              </div>
               {invites.map((inv) => {
                 const expired = new Date(inv.expires_at).getTime() < Date.now();
                 return (
@@ -357,9 +362,14 @@ function TeamPage() {
                         )}
                       </div>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => resend(inv)}>
-                      <RefreshCw className="w-3 h-3 mr-1" />{t("team_resend")}
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button size="sm" variant="outline" onClick={() => resend(inv)}>
+                        <RefreshCw className="w-3 h-3 mr-1" />{t("team_resend")}
+                      </Button>
+                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => cancelInvite(inv)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
