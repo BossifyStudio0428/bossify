@@ -86,3 +86,12 @@ export async function registerDeviceForPush(params: {
   if (res.error) console.warn("registerDeviceForPush failed", res.error);
   return res;
 }
+
+/**
+ * Diagnostic: returns the server-side view of the current user's push
+ * targets (device_tokens rows + device_sessions rows) without sending
+ * anything. Useful for debugging "I don't get notifications" reports.
+ */
+export async function diagnosePushSelf() {
+  return callPushFunction({ kind: "diagnostic" });
+}
