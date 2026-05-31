@@ -1067,6 +1067,7 @@ const dict = {
     team_invite_expired_badge: "Expired",
     team_downgrade_blocked: "Please remove excess members before downgrading",
     team_banner_using: "You are using {owner}'s team account",
+    team_suspended_banner: "Your team plan has expired. Please contact your team owner to renew.",
     team_invite_pending: "You have a team invitation! {business} invited you to join their team as {role}",
     team_tab_members: "Members",
     team_tab_activity: "Activity Log",
