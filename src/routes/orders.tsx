@@ -445,8 +445,8 @@ function OrdersPage() {
                   {o.customer_name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{o.customer_name}</p>
+                  <div className="flex items-start gap-1.5 min-w-0">
+                    <p className="text-sm font-semibold text-foreground leading-tight">{o.customer_name}</p>
                     {(o as any).order_source === "online_form" && (
                       <span className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
                         🌐 {t("pof_source_online")}
