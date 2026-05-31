@@ -212,54 +212,6 @@ async function sendToTokens(
   );
 }
 
-// ---- Web Push (VAPID) ----
-type WebPushResult = { id: string; ok: boolean; invalid?: boolean; error?: string };
-const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
-const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
-const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:support@bossify.app";
-
-async function sendWebPush(
-  subs: Array<{ id: string; sub: any }>,
-  payload: { title: string; body: string; link?: string },
-): Promise<WebPushResult[]> {
-  if (subs.length === 0) return [];
-  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-    console.warn("VAPID keys missing — skipping web push subscriptions");
-    return subs.map((s) => ({ id: s.id, ok: false, error: "VAPID keys not configured" }));
-  }
-  let webpush: any;
-  try {
-    const mod = await import("npm:web-push@3.6.7");
-    webpush = (mod as any).default ?? mod;
-    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error("Failed to load web-push", msg);
-    return subs.map((s) => ({ id: s.id, ok: false, error: `web-push load failed: ${msg}` }));
-  }
-  const body = JSON.stringify({
-    notification: {
-      title: payload.title,
-      body: payload.body,
-      icon: "/favicon.ico",
-      badge: "/favicon.ico",
-      data: { link: payload.link ?? "/" },
-    },
-  });
-  return await Promise.all(
-    subs.map(async ({ id, sub }) => {
-      try {
-        await webpush.sendNotification(sub, body, { TTL: 60 });
-        return { id, ok: true };
-      } catch (e: any) {
-        const status = e?.statusCode ?? 0;
-        const invalid = status === 404 || status === 410;
-        return { id, ok: false, invalid, error: e?.body || e?.message || String(e) };
-      }
-    }),
-  );
-}
-
 // ---------- Content resolution ----------
 type Kind =
   | "new_order"
@@ -440,9 +392,9 @@ async function resolveContent(
 }
 
 async function dispatch(userId: string, content: { title: string; body: string; link: string }) {
-  // FCM (Android/iOS) tokens live in device_tokens — this is the proven path
-  // that has shipped for months and must keep working independently of any
-  // newer web-push logic.
+  // All push targets (Android / iOS / Web) live in device_tokens.
+  // Web is delivered via FCM-for-Web using the same HTTP v1 endpoint, so
+  // we have a single delivery path and don't need native VAPID web-push.
   const fcmTokens: string[] = [];
   {
     const { data: legacy, error: legacyErr } = await appAdmin
@@ -455,45 +407,9 @@ async function dispatch(userId: string, content: { title: string; body: string; 
     }
   }
 
-  // Web Push subscriptions live in device_sessions.push_subscription. Failure
-  // to read this table MUST NOT break FCM delivery.
-  const webSubs: { id: string; sub: any }[] = [];
-  try {
-    const { data: sessions, error: sessErr } = await appAdmin
-      .from("device_sessions")
-      .select("id, push_subscription, fcm_token")
-      .eq("user_id", userId);
-    if (sessErr) console.error("device_sessions select failed", sessErr);
-    for (const row of (sessions ?? []) as Array<{
-      id: string;
-      push_subscription: string | Record<string, unknown> | null;
-      fcm_token: string | null;
-    }>) {
-      // If a session row carries an fcm_token that we didn't already pick
-      // up from device_tokens, include it too (best-effort mirror).
-      if (row.fcm_token && !fcmTokens.includes(row.fcm_token)) {
-        fcmTokens.push(row.fcm_token);
-      }
-      if (row.push_subscription) {
-        let sub: any = row.push_subscription;
-        if (typeof sub === "string") {
-          try { sub = JSON.parse(sub); } catch { sub = null; }
-        }
-        if (sub && sub.endpoint) webSubs.push({ id: row.id, sub });
-      }
-    }
-  } catch (e) {
-    console.error("device_sessions read threw", e);
-  }
+  console.log("dispatch push", { userId, fcm: fcmTokens.length, title: content.title });
 
-  console.log("dispatch push", {
-    userId,
-    fcm: fcmTokens.length,
-    web: webSubs.length,
-    title: content.title,
-  });
-
-  if (fcmTokens.length === 0 && webSubs.length === 0) {
+  if (fcmTokens.length === 0) {
     return { sent: 0, removed: 0, details: [] };
   }
 
@@ -501,45 +417,22 @@ async function dispatch(userId: string, content: { title: string; body: string; 
   let sent = 0;
   let removed = 0;
 
-  if (fcmTokens.length > 0) {
-    const results = await sendToTokens(fcmTokens, content);
-    for (const r of results) {
-      details.push({ kind: "fcm", ok: r.ok, invalid: r.invalid, error: r.error });
-      if (r.ok) sent++;
-    }
-    const dead = results.filter((r) => r.invalid).map((r) => r.token);
-    if (dead.length > 0) {
-      // Clear from device_sessions.fcm_token and remove legacy device_tokens rows.
-      await appAdmin
-        .from("device_sessions")
-        .update({ fcm_token: null })
-        .in("fcm_token", dead);
-      await appAdmin.from("device_tokens").delete().in("token", dead).then(
-        () => null,
-        () => null,
-      );
-      removed += dead.length;
-    }
+  const results = await sendToTokens(fcmTokens, content);
+  for (const r of results) {
+    details.push({ kind: "fcm", ok: r.ok, invalid: r.invalid, error: r.error });
+    if (r.ok) sent++;
   }
-
-  if (webSubs.length > 0) {
-    const webResults = await sendWebPush(webSubs, content);
-    for (const r of webResults) {
-      details.push({ kind: "webpush", ok: r.ok, invalid: r.invalid, error: r.error });
-      if (r.ok) sent++;
-    }
-    const deadIds = webResults.filter((r) => r.invalid).map((r) => r.id);
-    if (deadIds.length > 0) {
-      await appAdmin
-        .from("device_sessions")
-        .update({ push_subscription: null })
-        .in("id", deadIds);
-      removed += deadIds.length;
-    }
+  const dead = results.filter((r) => r.invalid).map((r) => r.token);
+  if (dead.length > 0) {
+    await appAdmin.from("device_tokens").delete().in("token", dead).then(
+      () => null,
+      () => null,
+    );
+    removed += dead.length;
   }
 
   console.log("dispatch results", { userId, sent, removed, details });
-  return { sent, removed, details, fcm: fcmTokens.length, web: webSubs.length };
+  return { sent, removed, details, fcm: fcmTokens.length };
 }
 
 // ---------- Handler ----------
@@ -618,13 +511,19 @@ Deno.serve(async (req) => {
         return json(403, { error: "Can only diagnose self" });
       const [{ data: tokens, error: tokErr }, { data: sessions, error: sessErr }] = await Promise.all([
         appAdmin.from("device_tokens").select("token, platform, updated_at").eq("user_id", ownerId),
-        appAdmin.from("device_sessions").select("id, device_type, device_name, fcm_token, push_subscription, last_active").eq("user_id", ownerId),
+        appAdmin.from("device_sessions").select("id, device_type, device_name, last_active").eq("user_id", ownerId),
       ]);
+      const byPlatform: Record<string, number> = {};
+      for (const r of (tokens ?? []) as Array<{ platform?: string | null }>) {
+        const p = r.platform ?? "unknown";
+        byPlatform[p] = (byPlatform[p] ?? 0) + 1;
+      }
       return json(200, {
         ok: true,
         userId: ownerId,
         device_tokens: {
           count: tokens?.length ?? 0,
+          by_platform: byPlatform,
           error: tokErr?.message ?? null,
           rows: (tokens ?? []).map((r: any) => ({
             platform: r.platform,
@@ -639,14 +538,11 @@ Deno.serve(async (req) => {
             id: r.id,
             device_type: r.device_type,
             device_name: r.device_name,
-            has_fcm: !!r.fcm_token,
-            has_web_sub: !!r.push_subscription,
             last_active: r.last_active,
           })),
         },
         env: {
           has_fcm_service_account: !!FCM_SERVICE_ACCOUNT_JSON,
-          has_vapid_keys: !!VAPID_PUBLIC_KEY && !!VAPID_PRIVATE_KEY,
         },
       });
     }

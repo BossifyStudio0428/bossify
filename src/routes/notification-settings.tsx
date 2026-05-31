@@ -347,7 +347,7 @@ function NotifSettingsPage() {
           // Show a readable summary in a toast and full JSON via alert.
           const d = payload as any;
           const summary = d?.device_tokens
-            ? `FCM tokens: ${d.device_tokens.count}, Web subs: ${(d.device_sessions?.rows ?? []).filter((r: any) => r.has_web_sub).length}, VAPID: ${d.env?.has_vapid_keys ? "yes" : "no"}`
+            ? `FCM tokens: ${d.device_tokens.count} (${Object.entries(d.device_tokens.by_platform ?? {}).map(([k, v]) => `${k}:${v}`).join(", ") || "none"})`
             : (d?.error ?? "No data");
           toast.message(summary);
           // eslint-disable-next-line no-alert
