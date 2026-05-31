@@ -2192,6 +2192,12 @@ const dict = {
     device_limit_manage: "Urus Peranti Saya",
     device_limit_continue: "Teruskan ke Aplikasi",
     device_limit_plans_hint: "Free: 1 · Starter: 2 · Pro: 3 · Lifetime: 5 · Team: 3 setiap ahli",
+    section_business: "Perniagaan",
+    section_notifications: "Pemberitahuan",
+    section_account: "Akaun",
+    section_team: "Pasukan",
+    section_integrations: "Integrasi",
+    section_advanced: "Lanjutan",
   },
   zh: {
     continue: "继续", back: "返回", save: "保存", cancel: "取消", delete: "删除",
