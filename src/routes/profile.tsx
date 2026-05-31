@@ -543,56 +543,65 @@ function ProfilePage() {
         ))}
       </section>
 
-      <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
-        <div className="px-4 pt-4 pb-2">
-          <p className="text-[11px] uppercase font-semibold tracking-wider text-muted-foreground">
-            {t("connected_platforms")}
-          </p>
-        </div>
-        <div className="divide-y divide-border/60">
-          {PLATFORMS.map((p) => {
-            const isConn = !!connectedPlatforms[p.key];
-            return (
+      {sections.map((sec) => (
+        <section key={sec.key} className="space-y-2">
+          <div className="flex items-center gap-2 px-1">
+            <span className="text-base">{sec.emoji}</span>
+            <p className="text-[11px] uppercase font-bold tracking-wider text-muted-foreground">
+              {sec.title}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60 overflow-hidden">
+            {sec.items.map((m) => (
               <button
-                key={p.key}
+                key={m.key}
+                id={`tour-menu-${m.key}`}
                 type="button"
-                onClick={() =>
-                  navigate({ to: "/connected-platforms/$platform", params: { platform: p.key } })
-                }
+                onClick={m.onClick}
                 className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
               >
-                <PlatformIcon platform={p.key} size={32} />
-                <span className="flex-1 text-sm font-medium text-foreground">{p.name}</span>
-                <span
-                  className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
-                    isConn ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {isConn ? `${t("connected")} ✅` : t("not_connected")}
-                </span>
+                <span className="text-lg w-6 text-center">{m.icon}</span>
+                <span className="flex-1 text-sm font-medium text-foreground">{m.label}</span>
+                {m.value && <span className="text-xs text-muted-foreground">{m.value}</span>}
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60 overflow-hidden">
-        {menu.map((m) => (
-          <button
-            key={m.key}
-            id={`tour-menu-${m.key}`}
-            type="button"
-            onClick={m.onClick}
-            className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
-          >
-            <span className="text-lg w-6 text-center">{m.icon}</span>
-            <span className="flex-1 text-sm font-medium text-foreground">{m.label}</span>
-            {m.value && <span className="text-xs text-muted-foreground">{m.value}</span>}
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-        ))}
-      </section>
+            ))}
+            {sec.key === "integrations" && (
+              <div className="divide-y divide-border/60">
+                {PLATFORMS.map((p) => {
+                  const isConn = !!connectedPlatforms[p.key];
+                  return (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() =>
+                        navigate({
+                          to: "/connected-platforms/$platform",
+                          params: { platform: p.key },
+                        })
+                      }
+                      className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
+                    >
+                      <PlatformIcon platform={p.key} size={32} />
+                      <span className="flex-1 text-sm font-medium text-foreground">{p.name}</span>
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+                          isConn
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {isConn ? `${t("connected")} ✅` : t("not_connected")}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      ))}
 
       <button
         type="button"
