@@ -119,7 +119,24 @@ function TeamPage() {
         .eq("team_id", t.id)
         .neq("status", "removed")
         .order("created_at", { ascending: true });
-      setMembers((m as any[]) ?? []);
+      const rawMembers = (m as any[]) ?? [];
+      const memberUserIds = rawMembers.map((mm) => mm.user_id).filter(Boolean);
+      let profilesMap: Record<string, { business_name: string | null }> = {};
+      if (memberUserIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, business_name")
+          .in("id", memberUserIds);
+        for (const p of (profilesData as any[]) ?? []) {
+          profilesMap[p.id] = p;
+        }
+      }
+      setMembers(
+        rawMembers.map((mm) => ({
+          ...mm,
+          business_name: mm.user_id ? profilesMap[mm.user_id]?.business_name ?? null : null,
+        }))
+      );
       const { data: inv } = await supabase
         .from("team_invitations")
         .select("*")
