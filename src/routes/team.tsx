@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getPublicOrigin } from "@/lib/publicUrl";
+import { useServerFn } from "@tanstack/react-start";
+import { getTeamMemberEmails } from "@/lib/team.functions";
 
 export const Route = createFileRoute("/team")({ component: TeamPage });
 
@@ -19,6 +21,7 @@ type MemberRow = {
   role: "owner" | "admin" | "staff"; status: "active" | "pending" | "removed";
   updated_at: string; joined_at: string | null; invited_by: string | null;
   business_name?: string | null;
+  email?: string | null;
 };
 type InviteRow = {
   id: string; email: string; role: string; status: string;
@@ -40,6 +43,7 @@ function TeamPage() {
   const { user } = useAuth();
   const { t } = useI18n();
   const { plan, teamTier, isTeam } = useSubscription();
+  const fetchEmails = useServerFn(getTeamMemberEmails);
   const [team, setTeam] = useState<TeamRow | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
@@ -137,6 +141,20 @@ function TeamPage() {
           business_name: mm.user_id ? profilesMap[mm.user_id]?.business_name ?? null : null,
         }))
       );
+      // Fetch auth emails for members so we can fall back to email when
+      // business_name is null (e.g. owner without a profile name).
+      if (memberUserIds.length > 0) {
+        try {
+          const res = await fetchEmails({ data: { teamId: t.id, userIds: memberUserIds } });
+          const emails = (res as any)?.emails ?? {};
+          setMembers((prev) => prev.map((mm) => ({
+            ...mm,
+            email: mm.user_id ? emails[mm.user_id] ?? null : null,
+          })));
+        } catch (e) {
+          console.error("fetch member emails failed", e);
+        }
+      }
       const { data: inv } = await supabase
         .from("team_invitations")
         .select("*")
@@ -323,7 +341,7 @@ function TeamPage() {
                 {(m.business_name || m.invited_email || m.user_id || "?").slice(0, 1).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">{m.business_name || m.invited_email || m.user_id?.slice(0, 8)}</div>
+                <div className="font-medium truncate">{m.business_name || m.email || m.invited_email || m.user_id?.slice(0, 8)}</div>
                 <div className="text-xs text-muted-foreground flex gap-2">
                   <span className="capitalize">{t(`team_role_${m.role}` as any)}</span>
                   <span>·</span>
