@@ -31,6 +31,8 @@ function NotifSettingsPage() {
   const [granted, setGranted] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [sending, setSending] = useState(false);
+  const [webPermission, setWebPermission] = useState<NotificationPermission | "unsupported">("unsupported");
+  const [isNativeApp, setIsNativeApp] = useState(false);
 
   const registerCurrentDevice = async () => {
     if (!user) return { ok: false, native: false, reason: "Not signed in" };
@@ -72,17 +74,35 @@ function NotifSettingsPage() {
     setGranted(isNotifGranted());
     // Fire-and-forget device registration so the button doesn't have to wait.
     registerPushForUser(user.id, { force: true }).catch(() => {});
-    // Also auto-register a web push token if the user is on a browser and
-    // has already granted permission — otherwise the device_tokens table
-    // stays empty on web and pushes silently send to 0 devices.
-    if (
-      typeof window !== "undefined" &&
-      isWebPushSupported() &&
-      typeof Notification !== "undefined" &&
-      Notification.permission === "granted"
-    ) {
-      registerWebPush(user.id).catch(() => {});
+
+    // Detect native vs web
+    let native = false;
+    try {
+      const w = window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } };
+      if (w.Capacitor?.isNativePlatform?.()) native = true;
+    } catch {}
+    setIsNativeApp(native);
+
+    // Web flow: auto-prompt for permission when 'default'
+    if (!native && typeof window !== "undefined" && isWebPushSupported() && typeof Notification !== "undefined") {
+      const perm = Notification.permission;
+      setWebPermission(perm);
+      if (perm === "granted") {
+        registerWebPush(user.id).catch(() => {});
+      } else if (perm === "default") {
+        // Auto-trigger browser permission popup
+        Notification.requestPermission()
+          .then(async (result) => {
+            setWebPermission(result);
+            if (result === "granted") {
+              await registerWebPush(user.id).catch(() => {});
+              setGranted(true);
+            }
+          })
+          .catch(() => {});
+      }
     }
+
     supabase
       .from("profiles")
       .select("is_admin")
@@ -255,7 +275,20 @@ function NotifSettingsPage() {
         <h1 className="text-2xl font-bold">{t("notification_settings")}</h1>
       </header>
 
-      {!granted && (
+      {!isNativeApp && webPermission === "granted" && (
+        <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 flex items-center gap-2">
+          <span className="text-emerald-600 text-lg">✓</span>
+          <p className="text-sm font-semibold text-emerald-900">{t("notif_web_enabled" as any)}</p>
+        </div>
+      )}
+
+      {!isNativeApp && webPermission === "denied" && (
+        <div className="rounded-2xl border border-red-300 bg-red-50 p-4">
+          <p className="text-sm font-semibold text-red-900">{t("notif_web_blocked" as any)}</p>
+        </div>
+      )}
+
+      {(isNativeApp || webPermission === "unsupported") && !granted && (
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
           <p className="text-sm font-semibold text-amber-900">{t("notif_perm_off_title")}</p>
           <p className="text-xs text-amber-800 mt-1">{t("notif_perm_off_desc")}</p>
