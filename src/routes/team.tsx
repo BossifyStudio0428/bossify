@@ -203,6 +203,60 @@ function TeamPage() {
     load();
   };
 
+  const cancelInvite = async (inv: InviteRow) => {
+    if (!confirm(t("team_cancel_invite_confirm"))) return;
+    // Revoke the invitation
+    const { error: invErr } = await supabase
+      .from("team_invitations")
+      .update({ status: "revoked" } as any)
+      .eq("id", inv.id);
+    if (invErr) { toast.error(invErr.message); return; }
+    // Remove the matching pending team_members row so seat is freed
+    const { error: memErr } = await supabase
+      .from("team_members")
+      .update({ status: "removed" } as any)
+      .eq("team_id", team!.id)
+      .eq("invited_email", inv.email)
+      .eq("status", "pending");
+    if (memErr) console.error("cancel invite member err", memErr);
+    if (team && (team.plan === "team_pro" || team.plan === "team_business")) {
+      await supabase.rpc("log_team_activity" as any, {
+        _team_id: team.id, _action: "invite_cancelled",
+        _target_user_id: null, _target_email: inv.email, _metadata: null,
+      });
+    }
+    toast.success(t("team_cancelled"));
+    load();
+  };
+
+  const cancelAllInvites = async () => {
+    if (!team) return;
+    if (!confirm(t("team_cancel_all_confirm"))) return;
+    // Revoke all pending invitations for this team
+    const { error: invErr } = await supabase
+      .from("team_invitations")
+      .update({ status: "revoked" } as any)
+      .eq("team_id", team.id)
+      .eq("status", "pending");
+    if (invErr) { toast.error(invErr.message); return; }
+    // Remove all pending team_members rows so seats are freed
+    const { error: memErr } = await supabase
+      .from("team_members")
+      .update({ status: "removed" } as any)
+      .eq("team_id", team.id)
+      .eq("status", "pending");
+    if (memErr) console.error("cancel all members err", memErr);
+    if (team.plan === "team_pro" || team.plan === "team_business") {
+      await supabase.rpc("log_team_activity" as any, {
+        _team_id: team.id, _action: "all_invites_cancelled",
+        _target_user_id: null, _target_email: null, _metadata: null,
+      });
+    }
+    toast.success(t("team_cancelled"));
+    load();
+  };
+
+
   if (loading) return <div className="p-6">{t("loading")}</div>;
 
   if (!team) {
