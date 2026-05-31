@@ -88,3 +88,63 @@ export async function removeDeviceSession(sessionId: string) {
   const { error } = await supabase.from("device_sessions").delete().eq("id", sessionId);
   if (error) throw new Error(error.message);
 }
+
+/**
+ * Persists the device's push credentials (FCM token or Web Push subscription)
+ * onto the current device_sessions row and marks it as the "current" device
+ * for this user. The row is created on demand if registerDeviceSession() has
+ * not run yet.
+ */
+export async function saveDeviceSessionPush(params: {
+  userId: string;
+  fcmToken?: string | null;
+  pushSubscription?: unknown | null;
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const device_id = getDeviceId();
+    const device_name = getDeviceName();
+    const device_type = getDeviceType();
+
+    // Make sure the row exists (idempotent — RPC upserts by device_id).
+    await supabase
+      .rpc("register_device_session", {
+        _device_id: device_id,
+        _device_name: device_name,
+        _device_type: device_type,
+      })
+      .then(() => null, () => null);
+
+    const patch: Record<string, unknown> = {
+      is_current: true,
+      last_active: new Date().toISOString(),
+      device_name,
+      device_type,
+    };
+    if (params.fcmToken !== undefined) patch.fcm_token = params.fcmToken;
+    if (params.pushSubscription !== undefined) {
+      patch.push_subscription = params.pushSubscription
+        ? (typeof params.pushSubscription === "string"
+            ? params.pushSubscription
+            : JSON.stringify(params.pushSubscription))
+        : null;
+    }
+
+    const { error: upErr } = await supabase
+      .from("device_sessions")
+      .update(patch)
+      .eq("user_id", params.userId)
+      .eq("device_id", device_id);
+    if (upErr) return { ok: false, error: upErr.message };
+
+    // Clear is_current on other devices for this user.
+    await supabase
+      .from("device_sessions")
+      .update({ is_current: false })
+      .eq("user_id", params.userId)
+      .neq("device_id", device_id);
+
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}

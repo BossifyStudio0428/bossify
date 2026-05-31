@@ -5,6 +5,7 @@
  */
 import { registerDeviceForPush } from "@/lib/sendPush";
 import { notify } from "@/lib/notifications";
+import { saveDeviceSessionPush } from "@/lib/deviceSession";
 
 let currentUserId: string | null = null;
 let listenersAdded = false;
@@ -53,6 +54,12 @@ async function registerPushForUserOnce(): Promise<boolean> {
             platform,
           });
           if (res.error) throw res.error;
+          // Also store the FCM token on the device_sessions row so the
+          // edge function can dispatch by device.
+          await saveDeviceSessionPush({
+            userId: currentUserId,
+            fcmToken: token.value,
+          }).catch(() => null);
           lastRegisteredUserId = currentUserId;
           lastRegisteredToken = token.value;
           resolveRegistration?.(true);
