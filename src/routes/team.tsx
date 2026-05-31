@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Users, UserPlus, Trash2, Copy, ArrowLeft, LogOut, Crown, RefreshCw } from "lucide-react";
+import { Users, UserPlus, Trash2, Copy, ArrowLeft, LogOut, Crown, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
