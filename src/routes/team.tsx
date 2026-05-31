@@ -167,13 +167,30 @@ function TeamPage() {
       if (t.plan === "team_pro" || t.plan === "team_business") {
         const { data: log } = await supabase
           .from("team_activity_log")
-          .select("id, action, target_email, actor_id, created_at")
+          .select("id, action, target_email, actor_id, created_at, metadata")
           .eq("team_id", t.id)
           .order("created_at", { ascending: false })
           .limit(50);
-        setActivity((log as any[]) ?? []);
+        const activityList = (log as any[]) ?? [];
+        setActivity(activityList);
+        // Fetch actor profile names for name substitution
+        const actorIds = Array.from(new Set(activityList.map((a) => a.actor_id).filter(Boolean)));
+        if (actorIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id, business_name")
+            .in("id", actorIds);
+          const names: Record<string, string> = {};
+          for (const p of (profilesData as any[]) ?? []) {
+            names[p.id] = p.business_name || p.id.slice(0, 8);
+          }
+          setActorNames(names);
+        } else {
+          setActorNames({});
+        }
       } else {
         setActivity([]);
+        setActorNames({});
       }
     }
     setLoading(false);
