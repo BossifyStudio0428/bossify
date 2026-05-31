@@ -29,8 +29,9 @@ type InviteRow = {
 };
 type ActivityRow = {
   id: string; action: string; target_email: string | null;
-  actor_id: string | null; created_at: string;
+  actor_id: string | null; created_at: string; metadata?: any;
 };
+
 
 function planLimit(plan: string) {
   if (plan === "team_starter") return 3;
