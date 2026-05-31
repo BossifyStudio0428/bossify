@@ -3,7 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY")!;
 const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
-const APP_SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+// Bossify app data lives in the EXTERNAL Supabase project. Always target it
+// explicitly so the webhook never writes to the wrong DB if SUPABASE_URL is
+// pointed at the Lovable internal project.
+const APP_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
 const APP_SERVICE_ROLE_KEY =
   Deno.env.get("APP_SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 if (!APP_SUPABASE_URL || !APP_SERVICE_ROLE_KEY) {
@@ -11,6 +14,101 @@ if (!APP_SUPABASE_URL || !APP_SERVICE_ROLE_KEY) {
 }
 const supabase = createClient(APP_SUPABASE_URL, APP_SERVICE_ROLE_KEY);
 const stripe = new Stripe(stripeSecret, { apiVersion: "2024-11-20.acacia" });
+
+const PUSH_ENDPOINT = `${APP_SUPABASE_URL}/functions/v1/send-push`;
+const PUSH_WEBHOOK_SECRET = Deno.env.get("PUSH_WEBHOOK_SECRET");
+
+const TEAM_PLANS = new Set(["team_starter", "team_pro", "team_business"]);
+
+const SUSPEND_MSG: Record<string, { title: string; body: string }> = {
+  en: { title: "Team plan expired", body: "Team plan has expired. You have been moved back to the free plan." },
+  ms: { title: "Pelan pasukan tamat", body: "Pelan pasukan telah tamat, anda telah dipindahkan ke pelan percuma" },
+  zh: { title: "团队计划已到期", body: "团队计划已到期，你已被移回免费版" },
+};
+const RENEW_MSG: Record<string, { title: string; body: string }> = {
+  en: { title: "Team plan renewed", body: "Team plan renewed. Welcome back!" },
+  ms: { title: "Pelan pasukan diperbaharui", body: "Pelan pasukan telah diperbaharui, selamat kembali!" },
+  zh: { title: "团队计划已续订", body: "团队计划已续订，欢迎回来！" },
+};
+
+async function pushToMember(userId: string, msgMap: Record<string, { title: string; body: string }>) {
+  if (!PUSH_WEBHOOK_SECRET) return;
+  try {
+    const { data: prof } = await supabase
+      .from("profiles").select("language").eq("id", userId).maybeSingle();
+    const lang = (["en", "ms", "zh"].includes((prof as any)?.language) ? (prof as any).language : "en") as string;
+    const m = msgMap[lang] ?? msgMap.en;
+    await fetch(PUSH_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-cron-secret": PUSH_WEBHOOK_SECRET },
+      body: JSON.stringify({
+        kind: "team_status",
+        targetUserId: userId,
+        title: m.title,
+        body: m.body,
+        link: "/team",
+      }),
+    });
+  } catch (e) {
+    console.error("[stripe-webhook] team push failed", e);
+  }
+}
+
+async function suspendTeamMembers(ownerUserId: string) {
+  const { data: teams } = await supabase
+    .from("teams").select("id").eq("owner_id", ownerUserId);
+  for (const t of teams ?? []) {
+    const teamId = (t as any).id as string;
+    const { data: members } = await supabase
+      .from("team_members")
+      .select("user_id, status")
+      .eq("team_id", teamId)
+      .neq("user_id", ownerUserId);
+    const userIds = (members ?? [])
+      .map((m: any) => m.user_id)
+      .filter((u: string | null): u is string => !!u);
+    if (userIds.length === 0) continue;
+    await supabase
+      .from("team_members")
+      .update({ status: "suspended" } as any)
+      .eq("team_id", teamId)
+      .in("user_id", userIds);
+    await supabase
+      .from("subscriptions")
+      .update({ plan: "free", status: "active", current_period_end: null } as any)
+      .in("user_id", userIds);
+    for (const uid of userIds) await pushToMember(uid, SUSPEND_MSG);
+  }
+}
+
+async function reactivateTeamMembers(ownerUserId: string, newPlan: string) {
+  const { data: teams } = await supabase
+    .from("teams").select("id").eq("owner_id", ownerUserId);
+  for (const t of teams ?? []) {
+    const teamId = (t as any).id as string;
+    await supabase
+      .from("teams").update({ plan: newPlan } as any).eq("id", teamId);
+    const { data: members } = await supabase
+      .from("team_members")
+      .select("user_id")
+      .eq("team_id", teamId)
+      .neq("user_id", ownerUserId);
+    const userIds = (members ?? [])
+      .map((m: any) => m.user_id)
+      .filter((u: string | null): u is string => !!u);
+    if (userIds.length === 0) continue;
+    await supabase
+      .from("team_members")
+      .update({ status: "active" } as any)
+      .eq("team_id", teamId)
+      .in("user_id", userIds);
+    await supabase
+      .from("subscriptions")
+      .update({ plan: newPlan, status: "active" } as any)
+      .in("user_id", userIds);
+    for (const uid of userIds) await pushToMember(uid, RENEW_MSG);
+  }
+}
 
 function priceToPlan(
   priceId: string | null | undefined,
@@ -111,6 +209,13 @@ Deno.serve(async (req) => {
           .from("subscriptions")
           .upsert(row, { onConflict: "user_id" });
         if (error) console.error("[stripe-webhook] upsert failed", error);
+
+        // Team plan: cascade to members.
+        if (TEAM_PLANS.has(planInfo.plan)) {
+          await reactivateTeamMembers(userId, planInfo.plan).catch((e) =>
+            console.error("[stripe-webhook] reactivate failed", e),
+          );
+        }
         break;
       }
 
@@ -120,6 +225,15 @@ Deno.serve(async (req) => {
         if (!userId) {
           console.warn("[stripe-webhook] no userId on subscription");
           break;
+        }
+        // If user owned an active team plan, suspend all members first.
+        const { data: existing } = await supabase
+          .from("subscriptions").select("plan").eq("user_id", userId).maybeSingle();
+        const prevPlan = (existing as any)?.plan as string | undefined;
+        if (prevPlan && TEAM_PLANS.has(prevPlan)) {
+          await suspendTeamMembers(userId).catch((e) =>
+            console.error("[stripe-webhook] suspend failed", e),
+          );
         }
         const { error } = await supabase
           .from("subscriptions")
