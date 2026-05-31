@@ -1106,6 +1106,12 @@ const dict = {
     device_limit_manage: "Manage My Devices",
     device_limit_continue: "Continue to App",
     device_limit_plans_hint: "Free: 1 · Starter: 2 · Pro: 3 · Lifetime: 5 · Team: 3 per member",
+    section_business: "Business",
+    section_notifications: "Notifications",
+    section_account: "Account",
+    section_team: "Team",
+    section_integrations: "Integrations",
+    section_advanced: "Advanced",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
