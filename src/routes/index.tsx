@@ -29,6 +29,7 @@ import {
 } from "@/lib/paymentSetup";
 import { SetupChecklist } from "@/components/SetupChecklist";
 import { TeamBanner } from "@/components/TeamBanner";
+import { SuspendedTeamBanner } from "@/components/SuspendedTeamBanner";
 import { PendingInviteBanner } from "@/components/PendingInviteBanner";
 
 export const Route = createFileRoute("/")({ component: Index });
@@ -476,6 +477,7 @@ function Index() {
       <SetupChecklist />
       <PendingInviteBanner />
       <TeamBanner />
+      <SuspendedTeamBanner />
 
       <section id="tour-stats" className="grid grid-cols-2 gap-3">
         {stats.map((s, i) => (
