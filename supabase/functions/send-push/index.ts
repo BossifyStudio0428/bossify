@@ -439,48 +439,50 @@ async function resolveContent(
 }
 
 async function dispatch(userId: string, content: { title: string; body: string; link: string }) {
-  // Read from device_sessions (external Supabase). Fallback to legacy
-  // device_tokens for any device that hasn't migrated yet.
-  const { data: sessions } = await appAdmin
-    .from("device_sessions")
-    .select("id, device_type, fcm_token, push_subscription")
-    .eq("user_id", userId);
-
+  // FCM (Android/iOS) tokens live in device_tokens — this is the proven path
+  // that has shipped for months and must keep working independently of any
+  // newer web-push logic.
   const fcmTokens: string[] = [];
-  const webSubs: { id: string; sub: any }[] = [];
-  for (const row of (sessions ?? []) as Array<{
-    id: string;
-    device_type: string | null;
-    fcm_token: string | null;
-    push_subscription: string | Record<string, unknown> | null;
-  }>) {
-    if (row.fcm_token) {
-      fcmTokens.push(row.fcm_token);
-    } else if (row.push_subscription) {
-      let sub: any = row.push_subscription;
-      if (typeof sub === "string") {
-        try {
-          sub = JSON.parse(sub);
-        } catch {
-          sub = null;
-        }
-      }
-      if (sub && sub.endpoint) webSubs.push({ id: row.id, sub });
-    }
-  }
-
-  // Legacy fallback: also include any tokens stored in device_tokens that
-  // are not already accounted for by device_sessions.fcm_token.
-  try {
-    const { data: legacy } = await appAdmin
+  {
+    const { data: legacy, error: legacyErr } = await appAdmin
       .from("device_tokens")
       .select("token")
       .eq("user_id", userId);
-    for (const r of (legacy ?? []) as Array<{ token: string }>) {
+    if (legacyErr) console.error("device_tokens select failed", legacyErr);
+    for (const r of (legacy ?? []) as Array<{ token: string | null }>) {
       if (r.token && !fcmTokens.includes(r.token)) fcmTokens.push(r.token);
     }
-  } catch {
-    // device_tokens may not exist in some environments
+  }
+
+  // Web Push subscriptions live in device_sessions.push_subscription. Failure
+  // to read this table MUST NOT break FCM delivery.
+  const webSubs: { id: string; sub: any }[] = [];
+  try {
+    const { data: sessions, error: sessErr } = await appAdmin
+      .from("device_sessions")
+      .select("id, push_subscription, fcm_token")
+      .eq("user_id", userId);
+    if (sessErr) console.error("device_sessions select failed", sessErr);
+    for (const row of (sessions ?? []) as Array<{
+      id: string;
+      push_subscription: string | Record<string, unknown> | null;
+      fcm_token: string | null;
+    }>) {
+      // If a session row carries an fcm_token that we didn't already pick
+      // up from device_tokens, include it too (best-effort mirror).
+      if (row.fcm_token && !fcmTokens.includes(row.fcm_token)) {
+        fcmTokens.push(row.fcm_token);
+      }
+      if (row.push_subscription) {
+        let sub: any = row.push_subscription;
+        if (typeof sub === "string") {
+          try { sub = JSON.parse(sub); } catch { sub = null; }
+        }
+        if (sub && sub.endpoint) webSubs.push({ id: row.id, sub });
+      }
+    }
+  } catch (e) {
+    console.error("device_sessions read threw", e);
   }
 
   console.log("dispatch push", {
@@ -535,8 +537,8 @@ async function dispatch(userId: string, content: { title: string; body: string; 
     }
   }
 
-  console.log("dispatch results", details);
-  return { sent, removed, details };
+  console.log("dispatch results", { userId, sent, removed, details });
+  return { sent, removed, details, fcm: fcmTokens.length, web: webSubs.length };
 }
 
 // ---------- Handler ----------
