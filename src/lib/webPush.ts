@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { firebaseConfig, VAPID_PUBLIC_KEY, isFirebaseConfigured } from "./firebaseConfig";
 import { registerDeviceForPush } from "./sendPush";
+import { saveDeviceSessionPush } from "./deviceSession";
 
 /**
  * Web Push (FCM Web) registration.
@@ -121,6 +122,21 @@ export async function registerWebPush(userId: string): Promise<WebPushResult> {
     if (res.error) {
       return { ok: false, reason: `Save token failed: ${res.error.message}` };
     }
+
+    // Also persist into device_sessions: fcm_token for web FCM, and the
+    // raw PushSubscription JSON for VAPID web push fallback.
+    let pushSubJson: unknown = null;
+    try {
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) pushSubJson = sub.toJSON();
+    } catch {
+      // ignore
+    }
+    await saveDeviceSessionPush({
+      userId,
+      fcmToken: token,
+      pushSubscription: pushSubJson,
+    }).catch(() => null);
 
     try {
       localStorage.setItem("bossify_notif_granted", "1");
