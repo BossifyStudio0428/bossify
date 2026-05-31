@@ -270,7 +270,8 @@ type Kind =
   | "closing_report"
   | "follow_up_reminder"
   | "custom"
-  | "register_device";
+  | "register_device"
+  | "diagnostic";
 
 type Lang = "en" | "ms" | "zh";
 type Biz = "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
@@ -608,6 +609,46 @@ Deno.serve(async (req) => {
         return json(409, { error: error.message || "Could not save this device token" });
       }
       return json(200, { ok: true, registered: true });
+    }
+
+    if (parsed.kind === "diagnostic") {
+      const ownerId = callerId ?? parsed.targetUserId;
+      if (!ownerId) return json(401, { error: "Unauthorized" });
+      if (callerId && parsed.targetUserId && parsed.targetUserId !== callerId)
+        return json(403, { error: "Can only diagnose self" });
+      const [{ data: tokens, error: tokErr }, { data: sessions, error: sessErr }] = await Promise.all([
+        appAdmin.from("device_tokens").select("token, platform, updated_at").eq("user_id", ownerId),
+        appAdmin.from("device_sessions").select("id, device_type, device_name, fcm_token, push_subscription, last_active").eq("user_id", ownerId),
+      ]);
+      return json(200, {
+        ok: true,
+        userId: ownerId,
+        device_tokens: {
+          count: tokens?.length ?? 0,
+          error: tokErr?.message ?? null,
+          rows: (tokens ?? []).map((r: any) => ({
+            platform: r.platform,
+            token_prefix: typeof r.token === "string" ? r.token.slice(0, 16) + "…" : null,
+            updated_at: r.updated_at,
+          })),
+        },
+        device_sessions: {
+          count: sessions?.length ?? 0,
+          error: sessErr?.message ?? null,
+          rows: (sessions ?? []).map((r: any) => ({
+            id: r.id,
+            device_type: r.device_type,
+            device_name: r.device_name,
+            has_fcm: !!r.fcm_token,
+            has_web_sub: !!r.push_subscription,
+            last_active: r.last_active,
+          })),
+        },
+        env: {
+          has_fcm_service_account: !!FCM_SERVICE_ACCOUNT_JSON,
+          has_vapid_keys: !!VAPID_PUBLIC_KEY && !!VAPID_PRIVATE_KEY,
+        },
+      });
     }
 
     if (parsed.broadcast) {
