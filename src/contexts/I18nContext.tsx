@@ -1075,6 +1075,11 @@ const dict = {
     team_act_role_changed: "changed a member role",
     team_act_member_joined: "joined the team",
     team_act_ownership_transferred: "transferred ownership",
+    team_cancel_invite: "Cancel",
+    team_cancel_invite_confirm: "Cancel this invite?",
+    team_cancel_all: "Cancel All",
+    team_cancel_all_confirm: "Cancel all invites?",
+    team_cancelled: "Invite cancelled",
     // --- Devices ---
     my_devices: "My Devices",
     devices_subtitle: "Manage where you're signed in",
