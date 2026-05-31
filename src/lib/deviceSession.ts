@@ -99,11 +99,13 @@ export async function saveDeviceSessionPush(params: {
   userId: string;
   fcmToken?: string | null;
   pushSubscription?: unknown | null;
+  deviceName?: string;
+  deviceType?: "android" | "ios" | "web";
 }): Promise<{ ok: boolean; error?: string }> {
   try {
     const device_id = getDeviceId();
-    const device_name = getDeviceName();
-    const device_type = getDeviceType();
+    const device_name = params.deviceName || getDeviceName();
+    const device_type = params.deviceType || getDeviceType();
 
     // Make sure the row exists (idempotent — RPC upserts by device_id).
     await supabase
