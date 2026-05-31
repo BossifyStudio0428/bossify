@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Users, UserPlus, Trash2, Copy, ArrowLeft, LogOut, Crown, RefreshCw } from "lucide-react";
+import { Users, UserPlus, Trash2, Copy, ArrowLeft, LogOut, Crown, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -203,6 +203,60 @@ function TeamPage() {
     load();
   };
 
+  const cancelInvite = async (inv: InviteRow) => {
+    if (!confirm(t("team_cancel_invite_confirm"))) return;
+    // Revoke the invitation
+    const { error: invErr } = await supabase
+      .from("team_invitations")
+      .update({ status: "revoked" } as any)
+      .eq("id", inv.id);
+    if (invErr) { toast.error(invErr.message); return; }
+    // Remove the matching pending team_members row so seat is freed
+    const { error: memErr } = await supabase
+      .from("team_members")
+      .update({ status: "removed" } as any)
+      .eq("team_id", team!.id)
+      .eq("invited_email", inv.email)
+      .eq("status", "pending");
+    if (memErr) console.error("cancel invite member err", memErr);
+    if (team && (team.plan === "team_pro" || team.plan === "team_business")) {
+      await supabase.rpc("log_team_activity" as any, {
+        _team_id: team.id, _action: "invite_cancelled",
+        _target_user_id: null, _target_email: inv.email, _metadata: null,
+      });
+    }
+    toast.success(t("team_cancelled"));
+    load();
+  };
+
+  const cancelAllInvites = async () => {
+    if (!team) return;
+    if (!confirm(t("team_cancel_all_confirm"))) return;
+    // Revoke all pending invitations for this team
+    const { error: invErr } = await supabase
+      .from("team_invitations")
+      .update({ status: "revoked" } as any)
+      .eq("team_id", team.id)
+      .eq("status", "pending");
+    if (invErr) { toast.error(invErr.message); return; }
+    // Remove all pending team_members rows so seats are freed
+    const { error: memErr } = await supabase
+      .from("team_members")
+      .update({ status: "removed" } as any)
+      .eq("team_id", team.id)
+      .eq("status", "pending");
+    if (memErr) console.error("cancel all members err", memErr);
+    if (team.plan === "team_pro" || team.plan === "team_business") {
+      await supabase.rpc("log_team_activity" as any, {
+        _team_id: team.id, _action: "all_invites_cancelled",
+        _target_user_id: null, _target_email: null, _metadata: null,
+      });
+    }
+    toast.success(t("team_cancelled"));
+    load();
+  };
+
+
   if (loading) return <div className="p-6">{t("loading")}</div>;
 
   if (!team) {
@@ -286,7 +340,12 @@ function TeamPage() {
           {/* Pending invites with expiry / resend */}
           {invites.length > 0 && canInvite && (
             <div className="pt-2 space-y-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase">Pending Invites</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase">Pending Invites</h3>
+                <Button size="sm" variant="ghost" className="text-destructive h-7 px-2 text-xs" onClick={cancelAllInvites}>
+                  <X className="w-3 h-3 mr-1" />{t("team_cancel_all")}
+                </Button>
+              </div>
               {invites.map((inv) => {
                 const expired = new Date(inv.expires_at).getTime() < Date.now();
                 return (
@@ -303,9 +362,14 @@ function TeamPage() {
                         )}
                       </div>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => resend(inv)}>
-                      <RefreshCw className="w-3 h-3 mr-1" />{t("team_resend")}
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button size="sm" variant="outline" onClick={() => resend(inv)}>
+                        <RefreshCw className="w-3 h-3 mr-1" />{t("team_resend")}
+                      </Button>
+                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => cancelInvite(inv)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
