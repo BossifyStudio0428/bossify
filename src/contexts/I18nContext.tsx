@@ -1620,6 +1620,8 @@ const dict = {
     coming_soon_title: "Akan Datang! 🚀",
     notif_perm_off_title: "Pemberitahuan sistem dimatikan",
     notif_perm_off_desc: "Hidupkan pemberitahuan di tetapan telefon untuk menerima amaran.",
+    notif_web_enabled: "Pemberitahuan diaktifkan",
+    notif_web_blocked: "Sila aktifkan kebenaran notifikasi dalam tetapan pelayar",
     open_system_settings: "Buka Tetapan Pemberitahuan Sistem",
     notif_setting_new_order: "Amaran Pesanan Baru",
     notif_setting_new_order_desc: "Beritahu saya bila pesanan baru ditambah",
