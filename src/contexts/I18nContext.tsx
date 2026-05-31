@@ -1106,6 +1106,12 @@ const dict = {
     device_limit_manage: "Manage My Devices",
     device_limit_continue: "Continue to App",
     device_limit_plans_hint: "Free: 1 · Starter: 2 · Pro: 3 · Lifetime: 5 · Team: 3 per member",
+    section_business: "Business",
+    section_notifications: "Notifications",
+    section_account: "Account",
+    section_team: "Team",
+    section_integrations: "Integrations",
+    section_advanced: "Advanced",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
@@ -2186,6 +2192,12 @@ const dict = {
     device_limit_manage: "Urus Peranti Saya",
     device_limit_continue: "Teruskan ke Aplikasi",
     device_limit_plans_hint: "Free: 1 · Starter: 2 · Pro: 3 · Lifetime: 5 · Team: 3 setiap ahli",
+    section_business: "Perniagaan",
+    section_notifications: "Pemberitahuan",
+    section_account: "Akaun",
+    section_team: "Pasukan",
+    section_integrations: "Integrasi",
+    section_advanced: "Lanjutan",
   },
   zh: {
     continue: "继续", back: "返回", save: "保存", cancel: "取消", delete: "删除",
@@ -3265,6 +3277,12 @@ const dict = {
     device_limit_manage: "管理我的设备",
     device_limit_continue: "继续使用",
     device_limit_plans_hint: "Free：1 · Starter：2 · Pro：3 · Lifetime：5 · Team：每位成员 3 台",
+    section_business: "业务",
+    section_notifications: "通知",
+    section_account: "账户",
+    section_team: "团队",
+    section_integrations: "整合",
+    section_advanced: "高级",
   },
 } as const;
 

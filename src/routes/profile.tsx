@@ -125,128 +125,185 @@ function ProfilePage() {
     },
   ];
 
-  const menu: { icon: string; key: string; label: string; value?: string; onClick?: () => void }[] =
-    [
-      ...(!hasInventory(bizType)
-        ? [
-            {
-              icon: bizType === "property" ? "📦" : "🧰",
-              key: "services",
-              label: t(bizType === "property" ? "packages_title" : "services_title"),
-              onClick: () => navigate({ to: "/services" }),
-            },
-          ]
-        : []),
-      {
-        icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
-        key: "biztype",
-        label: t("business_type_menu"),
-        value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
-        onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
-      },
-      {
-        icon: "🔗",
-        key: "orderform",
-        label: t(pofSectionTitleKey(bizType)),
-        onClick: () => navigate({ to: "/order-form" }),
-      },
-      {
-        icon: "📊",
-        key: "analytics",
-        label: t(analyticsLabelKey),
-        onClick: () => navigate({ to: "/analytics" }),
-      },
-      {
-        icon: "📊",
-        key: "rep",
-        label: t(reportsLabelKey),
-        onClick: () => navigate({ to: "/reports" }),
-      },
-      {
-        icon: "🔔",
-        key: "notif2",
-        label: t("notifications"),
-        onClick: () => navigate({ to: "/notifications" }),
-      },
-      {
-        icon: "⚙️",
-        key: "notifsettings",
-        label: t("notification_settings"),
-        onClick: () => navigate({ to: "/notification-settings" }),
-      },
-      {
-        icon: "🌐",
-        key: "lang",
-        label: t("language"),
-        value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`,
-        onClick: () => setLangOpen(true),
-      },
-      {
-        icon: "📱",
-        key: "devices",
-        label: t("my_devices"),
-        onClick: () => navigate({ to: "/devices" }),
-      },
-      {
-        icon: theme === "dark" ? "🌙" : "☀️",
-        key: "theme",
-        label: t("appearance"),
-        value: theme === "dark" ? t("dark") : t("light"),
-        onClick: toggleTheme,
-      },
-      {
-        icon: "💳",
-        key: "sub",
-        label: t("subscription"),
-        value: isLifetime
-          ? t("plan_badge_lifetime")
-          : isTeam && teamTier
-            ? t(`plan_badge_${teamTier}` as any)
-            : isPro
-              ? t("pro_plan")
-              : isStarter
-                ? t("starter_plan")
-                : t("free_plan"),
-        onClick: () => navigate({ to: "/plans" }),
-      },
-      ...(!isNativeBillingAvailable() && (isStarter || isPro)
-        ? [
-            {
-              icon: "🔗",
-              key: "stripeportal",
-              label: t("manage_subscription"),
-              value: t("manage_subscription_subtitle"),
-              onClick: () =>
-                window.open("https://billing.stripe.com/p/login/8x2bJ12Ya2sX9JKaIAeIw00", "_blank"),
-            },
-          ]
-        : []),
-      {
-        icon: "📲",
-        key: "wa",
-        label: t("wa_template"),
-        value: hasFullAccess ? undefined : "🔒",
-        onClick: () => (hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template"))),
-      },
-      { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
-      {
-        icon: "🗑️",
-        key: "deldata",
-        label: t("data_deletion"),
-        onClick: () => navigate({ to: "/data-deletion" }),
-      },
-      ...(isAdmin
-        ? [
-            {
-              icon: "⚙️",
-              key: "admin",
-              label: t("admin_panel"),
-              value: "PRO",
-              onClick: () => navigate({ to: "/admin" }),
-            },
-          ]
-        : []),
-    ];
+  type MenuItem = { icon: string; key: string; label: string; value?: string; onClick?: () => void };
+  type MenuSection = { key: string; title: string; emoji: string; items: MenuItem[] };
+
+  const servicesItem: MenuItem | null = !hasInventory(bizType)
+    ? {
+        icon: bizType === "property" ? "📦" : "🧰",
+        key: "services",
+        label: t(bizType === "property" ? "packages_title" : "services_title"),
+        onClick: () => navigate({ to: "/services" }),
+      }
+    : null;
+
+  const sections: MenuSection[] = [
+    {
+      key: "business",
+      title: t("section_business"),
+      emoji: "📊",
+      items: [
+        ...(servicesItem ? [servicesItem] : []),
+        {
+          icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
+          key: "biztype",
+          label: t("business_type_menu"),
+          value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
+          onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
+        },
+        {
+          icon: "🔗",
+          key: "orderform",
+          label: t(pofSectionTitleKey(bizType)),
+          onClick: () => navigate({ to: "/order-form" }),
+        },
+        {
+          icon: "📊",
+          key: "analytics",
+          label: t(analyticsLabelKey),
+          onClick: () => navigate({ to: "/analytics" }),
+        },
+        {
+          icon: "📊",
+          key: "rep",
+          label: t(reportsLabelKey),
+          onClick: () => navigate({ to: "/reports" }),
+        },
+      ],
+    },
+    {
+      key: "notifications",
+      title: t("section_notifications"),
+      emoji: "🔔",
+      items: [
+        {
+          icon: "🔔",
+          key: "notif2",
+          label: t("notifications"),
+          onClick: () => navigate({ to: "/notifications" }),
+        },
+        {
+          icon: "⚙️",
+          key: "notifsettings",
+          label: t("notification_settings"),
+          onClick: () => navigate({ to: "/notification-settings" }),
+        },
+      ],
+    },
+    {
+      key: "account",
+      title: t("section_account"),
+      emoji: "👥",
+      items: [
+        {
+          icon: "🌐",
+          key: "lang",
+          label: t("language"),
+          value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`,
+          onClick: () => setLangOpen(true),
+        },
+        {
+          icon: theme === "dark" ? "🌙" : "☀️",
+          key: "theme",
+          label: t("appearance"),
+          value: theme === "dark" ? t("dark") : t("light"),
+          onClick: toggleTheme,
+        },
+        {
+          icon: "📱",
+          key: "devices",
+          label: t("my_devices"),
+          onClick: () => navigate({ to: "/devices" }),
+        },
+        {
+          icon: "💳",
+          key: "sub",
+          label: t("subscription"),
+          value: isLifetime
+            ? t("plan_badge_lifetime")
+            : isTeam && teamTier
+              ? t(`plan_badge_${teamTier}` as any)
+              : isPro
+                ? t("pro_plan")
+                : isStarter
+                  ? t("starter_plan")
+                  : t("free_plan"),
+          onClick: () => navigate({ to: "/plans" }),
+        },
+        ...(!isNativeBillingAvailable() && (isStarter || isPro)
+          ? [
+              {
+                icon: "🔗",
+                key: "stripeportal",
+                label: t("manage_subscription"),
+                value: t("manage_subscription_subtitle"),
+                onClick: () =>
+                  window.open(
+                    "https://billing.stripe.com/p/login/8x2bJ12Ya2sX9JKaIAeIw00",
+                    "_blank",
+                  ),
+              } as MenuItem,
+            ]
+          : []),
+      ],
+    },
+    ...(isTeam
+      ? [
+          {
+            key: "team",
+            title: t("section_team"),
+            emoji: "👨‍👩‍👧",
+            items: [
+              {
+                icon: "👥",
+                key: "myteam",
+                label: t("team_my_team"),
+                onClick: () => navigate({ to: "/team" }),
+              },
+            ],
+          } as MenuSection,
+        ]
+      : []),
+    {
+      key: "integrations",
+      title: t("section_integrations"),
+      emoji: "🔗",
+      items: [
+        {
+          icon: "📲",
+          key: "wa",
+          label: t("wa_template"),
+          value: hasFullAccess ? undefined : "🔒",
+          onClick: () => (hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template"))),
+        },
+      ],
+    },
+    {
+      key: "advanced",
+      title: t("section_advanced"),
+      emoji: "⚙️",
+      items: [
+        { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
+        {
+          icon: "🗑️",
+          key: "deldata",
+          label: t("data_deletion"),
+          onClick: () => navigate({ to: "/data-deletion" }),
+        },
+        ...(isAdmin
+          ? [
+              {
+                icon: "⚙️",
+                key: "admin",
+                label: t("admin_panel"),
+                value: "PRO",
+                onClick: () => navigate({ to: "/admin" }),
+              } as MenuItem,
+            ]
+          : []),
+      ],
+    },
+  ];
 
   useEffect(() => {
     if (!user) return;
@@ -486,56 +543,65 @@ function ProfilePage() {
         ))}
       </section>
 
-      <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
-        <div className="px-4 pt-4 pb-2">
-          <p className="text-[11px] uppercase font-semibold tracking-wider text-muted-foreground">
-            {t("connected_platforms")}
-          </p>
-        </div>
-        <div className="divide-y divide-border/60">
-          {PLATFORMS.map((p) => {
-            const isConn = !!connectedPlatforms[p.key];
-            return (
+      {sections.map((sec) => (
+        <section key={sec.key} className="space-y-2">
+          <div className="flex items-center gap-2 px-1">
+            <span className="text-base">{sec.emoji}</span>
+            <p className="text-[11px] uppercase font-bold tracking-wider text-muted-foreground">
+              {sec.title}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60 overflow-hidden">
+            {sec.items.map((m) => (
               <button
-                key={p.key}
+                key={m.key}
+                id={`tour-menu-${m.key}`}
                 type="button"
-                onClick={() =>
-                  navigate({ to: "/connected-platforms/$platform", params: { platform: p.key } })
-                }
+                onClick={m.onClick}
                 className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
               >
-                <PlatformIcon platform={p.key} size={32} />
-                <span className="flex-1 text-sm font-medium text-foreground">{p.name}</span>
-                <span
-                  className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
-                    isConn ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {isConn ? `${t("connected")} ✅` : t("not_connected")}
-                </span>
+                <span className="text-lg w-6 text-center">{m.icon}</span>
+                <span className="flex-1 text-sm font-medium text-foreground">{m.label}</span>
+                {m.value && <span className="text-xs text-muted-foreground">{m.value}</span>}
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60 overflow-hidden">
-        {menu.map((m) => (
-          <button
-            key={m.key}
-            id={`tour-menu-${m.key}`}
-            type="button"
-            onClick={m.onClick}
-            className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
-          >
-            <span className="text-lg w-6 text-center">{m.icon}</span>
-            <span className="flex-1 text-sm font-medium text-foreground">{m.label}</span>
-            {m.value && <span className="text-xs text-muted-foreground">{m.value}</span>}
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-        ))}
-      </section>
+            ))}
+            {sec.key === "integrations" && (
+              <div className="divide-y divide-border/60">
+                {PLATFORMS.map((p) => {
+                  const isConn = !!connectedPlatforms[p.key];
+                  return (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() =>
+                        navigate({
+                          to: "/connected-platforms/$platform",
+                          params: { platform: p.key },
+                        })
+                      }
+                      className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
+                    >
+                      <PlatformIcon platform={p.key} size={32} />
+                      <span className="flex-1 text-sm font-medium text-foreground">{p.name}</span>
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+                          isConn
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {isConn ? `${t("connected")} ✅` : t("not_connected")}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      ))}
 
       <button
         type="button"
