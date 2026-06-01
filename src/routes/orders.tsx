@@ -423,6 +423,99 @@ function OrdersPage() {
         </button>
       </header>
 
+      {/* Compact Public Order Form */}
+      {ofCode && (
+        <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3.5 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">🔗</span>
+              <div>
+                <p className="text-xs font-semibold text-foreground">{t(pofSectionTitleKey(ofBizType as BizType | null))}</p>
+                <p className={`text-[10px] ${ofEnabled ? "text-emerald-500" : "text-muted-foreground"}`}>
+                  {ofEnabled ? t("pof_enabled") : t("pof_disabled")}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!user) return;
+                const next = !ofEnabled;
+                setOfEnabled(next);
+                const { error } = await supabase
+                  .from("profiles")
+                  .update({ order_form_enabled: next } as any)
+                  .eq("id", user.id);
+                if (error) {
+                  setOfEnabled(!next);
+                  toast.error(error.message);
+                }
+              }}
+              role="switch"
+              aria-checked={ofEnabled}
+              className={`relative h-5 w-9 rounded-full transition-colors ${ofEnabled ? "bg-primary" : "bg-muted-foreground/30"}`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${ofEnabled ? "translate-x-4" : ""}`}
+              />
+            </button>
+          </div>
+          {ofEnabled && (
+            <>
+              <div className="rounded-lg bg-muted/50 border border-border/60 px-2.5 py-1.5 text-[10px] font-mono text-foreground break-all">
+                {`${getPublicOrigin()}/order/${ofCode}`}
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(`${getPublicOrigin()}/order/${ofCode}`);
+                    toast.success(t("pof_link_copied"));
+                  }}
+                  className="py-2 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold active:scale-95"
+                >
+                  📋
+                </button>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(t("pof_wa_share_msg").replace("{link}", `${getPublicOrigin()}/order/${ofCode}`))}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="py-2 rounded-lg bg-emerald-500 text-white text-[10px] font-semibold text-center active:scale-95"
+                >
+                  💬
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setOfQrOpen(true)}
+                  className="py-2 rounded-lg bg-card border border-border/60 text-[10px] font-semibold active:scale-95"
+                >
+                  📱
+                </button>
+                <a
+                  href={`${getPublicOrigin()}/order/${ofCode}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="py-2 rounded-lg bg-card border border-border/60 text-[10px] font-semibold text-center active:scale-95"
+                >
+                  👁
+                </a>
+              </div>
+            </>
+          )}
+          {ofQrOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6" onClick={() => setOfQrOpen(false)}>
+              <div className="bg-card rounded-3xl p-6 text-center max-w-xs" onClick={(e) => e.stopPropagation()}>
+                <p className="text-sm font-semibold mb-3">{t("pof_qr_title")}</p>
+                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(`${getPublicOrigin()}/order/${ofCode}`)}`} alt="QR" className="mx-auto h-60 w-60 rounded-xl" />
+                <p className="text-[10px] text-muted-foreground mt-3 break-all">{`${getPublicOrigin()}/order/${ofCode}`}</p>
+                <button onClick={() => setOfQrOpen(false)} className="mt-4 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">{t("pof_close")}</button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+
       {active === "Unpaid" && unpaidCount > 0 && (
         <button onClick={hasFullAccess ? remindAllUnpaid : () => showUpgrade(t("remind_all_unpaid"))} disabled={!!bulkProgress}
           className="w-full py-3 rounded-2xl bg-orange-500 text-white font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60">
