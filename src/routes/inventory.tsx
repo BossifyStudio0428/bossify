@@ -145,6 +145,36 @@ function InventoryPage() {
         />
       </div>
 
+      {categories.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setActiveCategory("__all")}
+            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+              activeCategory === "__all"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-foreground border-border"
+            }`}
+          >
+            {t("all")}
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setActiveCategory(c)}
+              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                activeCategory === c
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-foreground border-border"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="space-y-3">
         {loading && (
           <div className="flex justify-center py-10">
