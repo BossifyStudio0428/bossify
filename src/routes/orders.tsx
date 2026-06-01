@@ -5,7 +5,8 @@ import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supaba
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { bizKey } from "@/lib/businessType";
+import { bizKey, pofSectionTitleKey, pofDescKey, type BizType } from "@/lib/businessType";
+import { getPublicOrigin } from "@/lib/publicUrl";
 import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, fetchWAProfile } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
