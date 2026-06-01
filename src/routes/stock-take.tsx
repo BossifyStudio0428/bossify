@@ -375,37 +375,71 @@ function StockTakePage() {
 
       <div className="space-y-2">
         {takes.map((tk) => (
-          <Link
+          <div
             key={tk.id}
-            to="/stock-take/$id"
-            params={{ id: tk.id }}
-            className="block rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.99] transition-transform space-y-2"
+            className="relative rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.99] transition-transform space-y-2"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-primary" />
-                <p className="text-sm font-semibold text-foreground">
-                  {new Date(tk.started_at).toLocaleString()}
-                </p>
-              </div>
-              <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${tk.status === "completed" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-                {tk.status === "completed" ? t("stock_take_done") : t("stock_take_in_progress")}
-              </span>
-            </div>
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-xs text-muted-foreground">
-                {t("discrepancies")}:{" "}
-                <span className={`font-bold ${(discrepMap[tk.id] ?? 0) > 0 ? "text-amber-600" : "text-green-600"}`}>
-                  {discrepMap[tk.id] ?? 0}
+            <Link
+              to="/stock-take/$id"
+              params={{ id: tk.id }}
+              className="block space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-semibold text-foreground">
+                    {new Date(tk.started_at).toLocaleString()}
+                  </p>
+                </div>
+                <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${tk.status === "completed" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                  {tk.status === "completed" ? t("stock_take_done") : t("stock_take_in_progress")}
                 </span>
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                {t("view_report")} <ChevronRight className="h-3.5 w-3.5" />
-              </span>
-            </div>
-          </Link>
+              </div>
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs text-muted-foreground">
+                  {t("discrepancies")}:{" "}
+                  <span className={`font-bold ${(discrepMap[tk.id] ?? 0) > 0 ? "text-amber-600" : "text-green-600"}`}>
+                    {discrepMap[tk.id] ?? 0}
+                  </span>
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                  {t("view_report")} <ChevronRight className="h-3.5 w-3.5" />
+                </span>
+              </div>
+            </Link>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteTarget(tk.id);
+                setConfirmDeleteOpen(true);
+              }}
+              className="absolute top-3 right-3 p-1.5 rounded-full text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors"
+              aria-label={t("delete")}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         ))}
       </div>
+
+      {confirmDeleteOpen && deleteTarget && (
+        <ConfirmSheet
+          title={t("delete_stock_take_title")}
+          subtitle={t("delete_stock_take_warning")}
+          onClose={() => {
+            setConfirmDeleteOpen(false);
+            setDeleteTarget(null);
+          }}
+          onConfirm={deleteStockTake}
+          confirmLabel={t("delete_permanently")}
+          variant="destructive"
+        />
+      )}
+      {deleting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="h-8 w-8 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+        </div>
+      )}
     </div>
   );
 }
