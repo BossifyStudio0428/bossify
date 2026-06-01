@@ -35,6 +35,7 @@ import { Route as NotificationSettingsRouteImport } from './routes/notification-
 import { Route as NewOrderRouteImport } from './routes/new-order'
 import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as IngredientsRouteImport } from './routes/ingredients'
 import { Route as ImportOrdersRouteImport } from './routes/import-orders'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DevicesRouteImport } from './routes/devices'
@@ -194,6 +195,11 @@ const InventoryRoute = InventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IngredientsRoute = IngredientsRouteImport.update({
+  id: '/ingredients',
+  path: '/ingredients',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImportOrdersRoute = ImportOrdersRouteImport.update({
   id: '/import-orders',
   path: '/import-orders',
@@ -350,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/devices': typeof DevicesRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
+  '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
@@ -406,6 +413,7 @@ export interface FileRoutesByTo {
   '/devices': typeof DevicesRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
+  '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
@@ -463,6 +471,7 @@ export interface FileRoutesById {
   '/devices': typeof DevicesRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
+  '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
   '/new-order': typeof NewOrderRoute
@@ -521,6 +530,7 @@ export interface FileRouteTypes {
     | '/devices'
     | '/forgot-password'
     | '/import-orders'
+    | '/ingredients'
     | '/inventory'
     | '/language'
     | '/new-order'
@@ -577,6 +587,7 @@ export interface FileRouteTypes {
     | '/devices'
     | '/forgot-password'
     | '/import-orders'
+    | '/ingredients'
     | '/inventory'
     | '/language'
     | '/new-order'
@@ -633,6 +644,7 @@ export interface FileRouteTypes {
     | '/devices'
     | '/forgot-password'
     | '/import-orders'
+    | '/ingredients'
     | '/inventory'
     | '/language'
     | '/new-order'
@@ -690,6 +702,7 @@ export interface RootRouteChildren {
   DevicesRoute: typeof DevicesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
   ImportOrdersRoute: typeof ImportOrdersRoute
+  IngredientsRoute: typeof IngredientsRoute
   InventoryRoute: typeof InventoryRouteWithChildren
   LanguageRoute: typeof LanguageRoute
   NewOrderRoute: typeof NewOrderRoute
@@ -909,6 +922,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory'
       fullPath: '/inventory'
       preLoaderRoute: typeof InventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ingredients': {
+      id: '/ingredients'
+      path: '/ingredients'
+      fullPath: '/ingredients'
+      preLoaderRoute: typeof IngredientsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/import-orders': {
@@ -1184,6 +1204,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevicesRoute: DevicesRoute,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
   ImportOrdersRoute: ImportOrdersRoute,
+  IngredientsRoute: IngredientsRoute,
   InventoryRoute: InventoryRouteWithChildren,
   LanguageRoute: LanguageRoute,
   NewOrderRoute: NewOrderRoute,
