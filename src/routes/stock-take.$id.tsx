@@ -16,6 +16,7 @@ type Item = {
   system_quantity: number;
   actual_quantity: number;
   difference: number;
+  reason: string | null;
 };
 
 function StockTakeReportPage() {
@@ -40,6 +41,9 @@ function StockTakeReportPage() {
   }, [id]);
 
   const discrepancies = items.filter(i => i.difference !== 0).length;
+  const totalShortage = items.reduce((acc, i) => acc + (i.difference < 0 ? -i.difference : 0), 0);
+  const totalSurplus = items.reduce((acc, i) => acc + (i.difference > 0 ? i.difference : 0), 0);
+  const diffItems = items.filter(i => i.difference !== 0);
 
   const exportPdf = () => {
     const doc = new jsPDF();
@@ -53,8 +57,14 @@ function StockTakeReportPage() {
     doc.text(`${t("total_products")}: ${items.length}    ${t("discrepancies")}: ${discrepancies}`, 14, 40);
     autoTable(doc, {
       startY: 46,
-      head: [["Product", t("system_qty"), t("actual_qty"), t("difference")]],
-      body: items.map(i => [i.product_name, i.system_quantity, i.actual_quantity, (i.difference > 0 ? "+" : "") + i.difference]),
+      head: [["Product", t("system_qty"), t("actual_qty"), t("difference"), t("reason_for_difference")]],
+      body: items.map(i => [
+        i.product_name,
+        i.system_quantity,
+        i.actual_quantity,
+        (i.difference > 0 ? "+" : "") + i.difference,
+        i.reason ?? "",
+      ]),
     });
     doc.save(`stock-take-${id.slice(0, 8)}.pdf`);
   };
@@ -88,6 +98,14 @@ function StockTakeReportPage() {
               <p className="text-[10px] uppercase text-muted-foreground">{t("discrepancies")}</p>
               <p className={`text-2xl font-bold ${discrepancies > 0 ? "text-amber-600" : "text-green-600"}`}>{discrepancies}</p>
             </div>
+            <div className="rounded-2xl bg-card border border-border/60 p-4">
+              <p className="text-[10px] uppercase text-muted-foreground">{t("total_shortage")}</p>
+              <p className="text-2xl font-bold text-red-500">{totalShortage}</p>
+            </div>
+            <div className="rounded-2xl bg-card border border-border/60 p-4">
+              <p className="text-[10px] uppercase text-muted-foreground">{t("total_surplus")}</p>
+              <p className="text-2xl font-bold text-green-600">+{totalSurplus}</p>
+            </div>
           </div>
 
           <button
@@ -98,7 +116,7 @@ function StockTakeReportPage() {
           </button>
 
           <div className="space-y-2">
-            {items.map((it) => (
+            {(diffItems.length > 0 ? diffItems : items).map((it) => (
               <div key={it.id} className={`rounded-2xl bg-card border p-3 ${it.difference !== 0 ? "border-amber-300 bg-amber-50/40" : "border-border/60"}`}>
                 <p className="text-sm font-semibold text-foreground">{it.product_name}</p>
                 <div className="grid grid-cols-3 gap-2 mt-1 text-xs">
@@ -117,6 +135,9 @@ function StockTakeReportPage() {
                     </p>
                   </div>
                 </div>
+                {it.reason && (
+                  <p className="mt-2 text-xs"><span className="text-muted-foreground">{t("reason_for_difference")}:</span> <span className="font-semibold text-foreground">{it.reason}</span></p>
+                )}
               </div>
             ))}
           </div>
