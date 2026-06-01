@@ -263,3 +263,6 @@ textarea,
   0% { transform: translateX(-110%); }
   100% { transform: translateX(360%); }
 }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
