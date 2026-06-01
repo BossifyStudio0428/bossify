@@ -151,6 +151,34 @@ function StockTakePage() {
     navigate({ to: "/stock-take/$id", params: { id: takeId } });
   };
 
+  const deleteStockTake = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    // Delete items first, then the stock take record
+    const { error: e1 } = await supabase
+      .from("stock_take_items" as any)
+      .delete()
+      .eq("stock_take_id", deleteTarget);
+    if (e1) {
+      setDeleting(false);
+      toast.error(e1.message);
+      return;
+    }
+    const { error: e2 } = await supabase
+      .from("stock_takes" as any)
+      .delete()
+      .eq("id", deleteTarget);
+    setDeleting(false);
+    setConfirmDeleteOpen(false);
+    setDeleteTarget(null);
+    if (e2) {
+      toast.error(e2.message);
+      return;
+    }
+    toast.success(t("delete_success"));
+    load();
+  };
+
   if (!allowed) return null;
 
   if (counting) {
