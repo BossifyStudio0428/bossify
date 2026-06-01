@@ -40,7 +40,8 @@ function SuppliersPage() {
   const allowed = bizType === "retail" || bizType === "fnb";
 
   useEffect(() => {
-    if (!btLoading && !allowed) navigate({ to: "/inventory" });
+    // Guard disabled: allow all business types to access Suppliers
+    // if (!btLoading && !allowed) navigate({ to: "/inventory" });
   }, [btLoading, allowed, navigate]);
 
   const load = async () => {

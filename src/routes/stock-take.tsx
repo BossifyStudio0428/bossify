@@ -52,7 +52,8 @@ function StockTakePage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!btLoading && !allowed) navigate({ to: "/inventory" });
+    // Guard disabled: allow all business types to access Stock Take
+    // if (!btLoading && !allowed) navigate({ to: "/inventory" });
   }, [btLoading, allowed, navigate]);
 
   const load = async () => {

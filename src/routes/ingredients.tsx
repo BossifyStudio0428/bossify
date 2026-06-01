@@ -47,7 +47,8 @@ function IngredientsPage() {
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
 
   useEffect(() => {
-    if (!btLoading && !allowed) navigate({ to: "/inventory" });
+    // Guard disabled: allow all business types to access Ingredients
+    // if (!btLoading && !allowed) navigate({ to: "/inventory" });
   }, [btLoading, allowed, navigate]);
 
   const load = async () => {
