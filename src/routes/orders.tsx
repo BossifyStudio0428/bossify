@@ -70,6 +70,10 @@ function OrdersPage() {
     paymentDetails: "",
     businessName: "us",
   });
+  const [ofCode, setOfCode] = useState<string | null>(null);
+  const [ofEnabled, setOfEnabled] = useState<boolean>(true);
+  const [ofBizType, setOfBizType] = useState<string | null>(null);
+  const [ofQrOpen, setOfQrOpen] = useState(false);
 
   useEffect(() => { setHydrated(true); }, []);
 
