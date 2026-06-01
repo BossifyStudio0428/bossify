@@ -1154,7 +1154,6 @@ const dict = {
     unit: "Unit",
     min_stock: "Minimum Stock",
     cost_per_unit: "Cost per unit",
-    supplier: "Supplier",
     restock: "Restock",
     use: "Use",
     actual_qty: "Actual Qty",
