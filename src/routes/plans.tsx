@@ -688,7 +688,8 @@ function PlansPage() {
         </div>
       </section>
 
-      {/* Lifetime card */}
+      {/* Lifetime card — HIDDEN temporarily. Remove `{false && (` wrapper to bring back. */}
+      {false && (
       <section className="relative rounded-3xl p-[2px] bg-gradient-to-br from-amber-400 via-amber-300 to-yellow-500">
         <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
           <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow">
@@ -735,6 +736,7 @@ function PlansPage() {
           </Link>
         </div>
       </section>
+      )}
 
       <button
         onClick={async () => {
@@ -890,7 +892,8 @@ function PlansPage() {
         {t("restore_purchases")}
       </button>
 
-      {lifetimeConfirmOpen && (
+      {/* Lifetime confirmation modal — HIDDEN along with Lifetime card. */}
+      {false && lifetimeConfirmOpen && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 animate-fade-in p-5"
           onClick={() => setLifetimeConfirmOpen(false)}
