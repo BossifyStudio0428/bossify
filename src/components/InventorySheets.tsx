@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useEffect } from "react";
 import { X, Upload, Trash2, ImageIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,6 +107,22 @@ export function ProductFormSheet({
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [supplierId, setSupplierId] = useState<string>((item as any)?.supplier_id ?? "");
+  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
+  const showSuppliers = bizType === "retail" || bizType === "fnb";
+
+  useEffect(() => {
+    if (!showSuppliers) return;
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from("suppliers" as any)
+        .select("id,name")
+        .order("name", { ascending: true });
+      if (active) setSuppliers(((data ?? []) as unknown) as Array<{ id: string; name: string }>);
+    })();
+    return () => { active = false; };
+  }, [showSuppliers]);
 
   const categoryPresets = CATEGORY_PRESETS[bizType ?? "retail"];
 
@@ -155,6 +172,7 @@ export function ProductFormSheet({
       description: description.trim() || null,
       variants: cleanVariants,
       image_url: imageUrl,
+      ...(showSuppliers ? { supplier_id: supplierId || null } : {}),
     };
     const { error } = item
       ? await supabase.from("inventory").update(payload).eq("id", item.id)
@@ -297,6 +315,22 @@ export function ProductFormSheet({
 
       <SheetField label={t("selling_price")} value={price} onChange={setPrice} type="number" placeholder={t("price_ph")} />
       <SheetField label={t("cost_price")} value={costPrice} onChange={setCostPrice} type="number" placeholder={t("cost_price_placeholder")} />
+
+      {showSuppliers && (
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("supplier")}</label>
+          <select
+            value={supplierId}
+            onChange={(e) => setSupplierId(e.target.value)}
+            className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+          >
+            <option value="">{t("no_supplier")}</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Description */}
       <div className="space-y-1.5">
