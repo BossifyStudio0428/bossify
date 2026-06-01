@@ -348,7 +348,7 @@ function StockTakePage() {
             key={tk.id}
             to="/stock-take/$id"
             params={{ id: tk.id }}
-            className="block rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.99] transition-transform"
+            className="block rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.99] transition-transform space-y-2"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -357,12 +357,20 @@ function StockTakePage() {
                   {new Date(tk.started_at).toLocaleString()}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${tk.status === "completed" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-                  {tk.status === "completed" ? t("stock_take_done") : t("stock_take_in_progress")}
+              <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${tk.status === "completed" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                {tk.status === "completed" ? t("stock_take_done") : t("stock_take_in_progress")}
+              </span>
+            </div>
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-xs text-muted-foreground">
+                {t("discrepancies")}:{" "}
+                <span className={`font-bold ${(discrepMap[tk.id] ?? 0) > 0 ? "text-amber-600" : "text-green-600"}`}>
+                  {discrepMap[tk.id] ?? 0}
                 </span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </div>
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                {t("view_report")} <ChevronRight className="h-3.5 w-3.5" />
+              </span>
             </div>
           </Link>
         ))}
