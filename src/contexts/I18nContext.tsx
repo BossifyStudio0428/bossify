@@ -1189,6 +1189,8 @@ const dict = {
     insufficient_ingredients: "Insufficient ingredients to complete order",
     ingredients_count: "ingredients",
     estimated_cost: "Est. cost",
+    gross_profit: "Gross Profit",
+    profit_margin: "Profit Margin",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
@@ -3517,6 +3519,7 @@ const dict = {
     insufficient_ingredients: "食材不足，无法完成订单",
     ingredients_count: "种食材",
     estimated_cost: "预计成本",
+    profit_margin: "利润率",
   },
 } as const;
 
