@@ -46,6 +46,9 @@ function StockTakePage() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState<string>("__all__");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!btLoading && !allowed) navigate({ to: "/inventory" });
