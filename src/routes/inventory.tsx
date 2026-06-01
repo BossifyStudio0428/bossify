@@ -12,6 +12,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { notifySituation } from "@/lib/autoNotify";
 import { getNotifMessage } from "@/lib/notifMessages";
 import { ProductFormSheet, QtySheet, ConfirmSheet } from "@/components/InventorySheets";
+import { StockTabs } from "@/components/StockTabs";
 
 export const Route = createFileRoute("/inventory")({ component: InventoryPage });
 
@@ -123,37 +124,7 @@ function InventoryPage() {
         )}
       </header>
 
-      {(bizType === "retail" || bizType === "fnb") && (
-        <div className="grid grid-cols-3 gap-2">
-          <Link
-            to="/suppliers"
-            className="flex items-center justify-between rounded-2xl bg-card border border-border/60 p-3 active:scale-[0.99] transition-transform"
-          >
-            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <span>🏭</span>{t("suppliers")}
-            </span>
-            <span className="text-xs text-muted-foreground">›</span>
-          </Link>
-          <Link
-            to="/ingredients"
-            className="flex items-center justify-between rounded-2xl bg-card border border-border/60 p-3 active:scale-[0.99] transition-transform"
-          >
-            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <span>🥬</span>{t("ingredients")}
-            </span>
-            <span className="text-xs text-muted-foreground">›</span>
-          </Link>
-          <Link
-            to="/stock-take"
-            className="flex items-center justify-between rounded-2xl bg-card border border-border/60 p-3 active:scale-[0.99] transition-transform"
-          >
-            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <span>📋</span>{t("stock_take")}
-            </span>
-            <span className="text-xs text-muted-foreground">›</span>
-          </Link>
-        </div>
-      )}
+      {(bizType === "retail" || bizType === "fnb") && <StockTabs active="products" />}
 
       {lowItems.length > 0 && (
         <button
