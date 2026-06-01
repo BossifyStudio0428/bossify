@@ -85,6 +85,36 @@ function OrdersPage() {
     })();
   }, [user]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("order_form_code,order_form_enabled,business_type" as any)
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      let existing = ((data as any)?.order_form_code as string) ?? null;
+      setOfEnabled(((data as any)?.order_form_enabled as boolean) ?? true);
+      setOfBizType(((data as any)?.business_type as string) ?? null);
+      if (!existing) {
+        const fresh = Math.random().toString(16).slice(2, 10);
+        const { error: upErr } = await supabase
+          .from("profiles")
+          .update({ order_form_code: fresh, order_form_enabled: true } as any)
+          .eq("id", user.id);
+        if (!upErr) {
+          existing = fresh;
+          setOfEnabled(true);
+        }
+      }
+      if (cancelled) return;
+      setOfCode(existing);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
   const load = useCallback(async (silent = false) => {
     if (!user) {
       setOrders([]);
