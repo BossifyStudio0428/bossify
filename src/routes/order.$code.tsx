@@ -5,9 +5,10 @@ import type {
   getPublicOrderForm,
   submitPublicOrder,
 } from "@/lib/public-order.functions";
-import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe } from "lucide-react";
+import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Search } from "lucide-react";
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
+
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
