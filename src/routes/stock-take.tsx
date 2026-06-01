@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Plus, X, ClipboardList } from "lucide-react";
+import { ArrowLeft, Plus, X, ClipboardList, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -174,6 +174,8 @@ function StockTakePage() {
             title={t("complete_stock_take_confirm")}
             onClose={() => setConfirmDone(false)}
             onConfirm={completeTake}
+            confirmLabel={t("complete_stock_take")}
+            variant="primary"
           />
         )}
         {saving && (
@@ -226,9 +228,12 @@ function StockTakePage() {
                   {new Date(tk.started_at).toLocaleString()}
                 </p>
               </div>
-              <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${tk.status === "completed" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-                {tk.status === "completed" ? t("stock_take_done") : t("stock_take_in_progress")}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${tk.status === "completed" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                  {tk.status === "completed" ? t("stock_take_done") : t("stock_take_in_progress")}
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
             </div>
           </Link>
         ))}
