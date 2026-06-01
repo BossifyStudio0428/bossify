@@ -5,9 +5,10 @@ import type {
   getPublicOrderForm,
   submitPublicOrder,
 } from "@/lib/public-order.functions";
-import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe } from "lucide-react";
+import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Search } from "lucide-react";
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
+
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
@@ -122,9 +123,11 @@ function PublicOrderFormPage() {
   };
 
   const [activeCategory, setActiveCategory] = useState<string>("__all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
+
 
   const [form, setForm] = useState({
     customer_name: "",
@@ -185,9 +188,17 @@ function PublicOrderFormPage() {
 
   const filteredProducts = useMemo(() => {
     if (state.status !== "ready") return [] as Product[];
-    if (activeCategory === "__all") return state.products;
-    return state.products.filter((p) => (p.category ?? "") === activeCategory);
-  }, [state, activeCategory]);
+    let list = state.products;
+    if (activeCategory !== "__all") {
+      list = list.filter((p) => (p.category ?? "") === activeCategory);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
+    return list;
+  }, [state, activeCategory, searchQuery]);
+
 
   const bizType = state.status === "ready" ? state.profile.business_type : "retail";
   const isRetailish = bizType === "retail" || bizType === "fnb";
@@ -444,6 +455,14 @@ function PublicOrderFormPage() {
     isRetailish ? "购物车是空的" : "尚未选择",
   );
   const removeLabel = L("Remove", "Buang", "移除");
+  const searchPlaceholder = L("Search products...", "Cari produk...", "搜索产品...");
+  const noResultsLabel = L("No products found", "Produk tidak dijumpai", "找不到产品");
+  const contactSellerLabel = L("Contact Seller", "Hubungi Penjual", "联系卖家");
+  const waMessage = L(
+    "Hello, I would like to enquire about my order",
+    "Helo, saya ingin bertanya tentang pesanan saya",
+    "你好，我想询问关于订单的问题",
+  );
 
   // Detail sheet (product / service detail)
   const renderDetailSheet = () => {
@@ -494,6 +513,28 @@ function PublicOrderFormPage() {
           </header>
 
           <div className="px-5 pt-5 space-y-5">
+
+          {!noProducts && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={searchPlaceholder}
+                className="w-full rounded-xl border border-border bg-card pl-9 pr-3 py-2.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          )}
 
           {noProducts ? (
             <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-xs text-muted-foreground">
@@ -573,7 +614,26 @@ function PublicOrderFormPage() {
                   </div>
                 ))}
               </div>
+              {filteredProducts.length === 0 && searchQuery.trim() && (
+                <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-xs text-muted-foreground">
+                  {noResultsLabel}
+                </div>
+              )}
             </>
+          )}
+
+          {profile.whatsapp_number && (
+            <a
+              href={`https://wa.me/${profile.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent(waMessage)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-[#25D366] text-white font-semibold text-sm shadow-md active:scale-[0.99] transition-transform"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              {contactSellerLabel}
+            </a>
           )}
 
           <p className="text-[10px] text-center text-muted-foreground pt-2">
