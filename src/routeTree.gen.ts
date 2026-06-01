@@ -19,6 +19,7 @@ import { Route as ServicesSummaryRouteImport } from './routes/services-summary'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -113,6 +114,11 @@ const SearchRoute = SearchRouteImport.update({
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesRoute = RecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -373,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
+  '/recipes': typeof RecipesRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
@@ -430,6 +437,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
+  '/recipes': typeof RecipesRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
@@ -488,6 +496,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
+  '/recipes': typeof RecipesRoute
   '/reports': typeof ReportsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
@@ -547,6 +556,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/privacy-policy'
     | '/profile'
+    | '/recipes'
     | '/reports'
     | '/search'
     | '/services'
@@ -604,6 +614,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/privacy-policy'
     | '/profile'
+    | '/recipes'
     | '/reports'
     | '/search'
     | '/services'
@@ -661,6 +672,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/privacy-policy'
     | '/profile'
+    | '/recipes'
     | '/reports'
     | '/search'
     | '/services'
@@ -719,6 +731,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ProfileRoute: typeof ProfileRoute
+  RecipesRoute: typeof RecipesRoute
   ReportsRoute: typeof ReportsRoute
   SearchRoute: typeof SearchRoute
   ServicesRoute: typeof ServicesRoute
@@ -810,6 +823,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes': {
+      id: '/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof RecipesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -1221,6 +1241,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   ProfileRoute: ProfileRoute,
+  RecipesRoute: RecipesRoute,
   ReportsRoute: ReportsRoute,
   SearchRoute: SearchRoute,
   ServicesRoute: ServicesRoute,
