@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Trash2, Pencil, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -30,6 +30,7 @@ function InventoryPage() {
   const { user } = useAuth();
   const { hasFullAccess, showUpgrade, productsUsed, productsLimit } = useSubscription();
   const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string>("__all");
   const [items, setItems] = useState<InvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
@@ -91,7 +92,17 @@ function InventoryPage() {
     setSheet({ kind: "none" });
   };
 
-  const visible = items.filter((i) => i.name.toLowerCase().includes(query.toLowerCase()));
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const it of items) if (it.category) set.add(it.category);
+    return Array.from(set).sort();
+  }, [items]);
+
+  const visible = items.filter((i) => {
+    const matchesSearch = i.name.toLowerCase().includes(query.toLowerCase());
+    const matchesCategory = activeCategory === "__all" || (i.category ?? "") === activeCategory;
+    return matchesSearch && matchesCategory;
+  });
   const lowItems = items.filter((i) => i.stock <= LOW_THRESHOLD);
   const atLimit = !hasFullAccess && productsUsed >= productsLimit;
 
@@ -133,6 +144,36 @@ function InventoryPage() {
           className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
         />
       </div>
+
+      {categories.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setActiveCategory("__all")}
+            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+              activeCategory === "__all"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-foreground border-border"
+            }`}
+          >
+            {t("all")}
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setActiveCategory(c)}
+              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                activeCategory === c
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-foreground border-border"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="space-y-3">
         {loading && (
