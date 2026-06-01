@@ -64,16 +64,19 @@ export function QtySheet({
 }
 
 export function ConfirmSheet({
-  title, subtitle, onClose, onConfirm,
-}: { title: string; subtitle?: string; onClose: () => void; onConfirm: () => void }) {
+  title, subtitle, onClose, onConfirm, confirmLabel, variant = "destructive",
+}: { title: string; subtitle?: string; onClose: () => void; onConfirm: () => void; confirmLabel?: string; variant?: "destructive" | "primary" }) {
   const { t } = useI18n();
+  const btnClass = variant === "primary"
+    ? "py-3 rounded-2xl bg-primary text-primary-foreground font-semibold"
+    : "py-3 rounded-2xl bg-red-500 text-white font-semibold";
   return (
     <SheetShell onClose={onClose}>
       <h3 className="text-base font-bold">{title}</h3>
       {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
       <div className="grid grid-cols-2 gap-2 pt-2">
         <button onClick={onClose} className="py-3 rounded-2xl bg-muted text-foreground font-semibold">{t("cancel")}</button>
-        <button onClick={onConfirm} className="py-3 rounded-2xl bg-red-500 text-white font-semibold">{t("delete")}</button>
+        <button onClick={onConfirm} className={btnClass}>{confirmLabel ?? t("delete")}</button>
       </div>
     </SheetShell>
   );

@@ -174,6 +174,8 @@ function StockTakePage() {
             title={t("complete_stock_take_confirm")}
             onClose={() => setConfirmDone(false)}
             onConfirm={completeTake}
+            confirmLabel={t("complete_stock_take")}
+            variant="primary"
           />
         )}
         {saving && (
