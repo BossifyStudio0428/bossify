@@ -892,7 +892,8 @@ function PlansPage() {
         {t("restore_purchases")}
       </button>
 
-      {lifetimeConfirmOpen && (
+      {/* Lifetime confirmation modal — HIDDEN along with Lifetime card. */}
+      {false && lifetimeConfirmOpen && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 animate-fade-in p-5"
           onClick={() => setLifetimeConfirmOpen(false)}
