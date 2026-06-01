@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
 type TabKey = "products" | "ingredients" | "recipes" | "suppliers" | "stock-take";
 
@@ -21,7 +22,16 @@ const ROUTE_BY_KEY: Record<TabKey, "/inventory" | "/ingredients" | "/recipes" | 
 
 export function StockTabs({ active }: { active: TabKey }) {
   const { lang } = useI18n();
-  const tabs: TabKey[] = ["products", "ingredients", "recipes", "suppliers", "stock-take"];
+  const { type } = useBusinessType();
+  let tabs: TabKey[];
+  if (type === "fnb") {
+    tabs = ["products", "ingredients", "recipes", "suppliers", "stock-take"];
+  } else if (type === "retail") {
+    tabs = ["products", "suppliers", "stock-take"];
+  } else {
+    tabs = ["products"];
+  }
+  if (tabs.length <= 1) return null;
   return (
     <div className="-mx-5 px-5 overflow-x-auto no-scrollbar">
       <div className="flex gap-2 pb-1">
