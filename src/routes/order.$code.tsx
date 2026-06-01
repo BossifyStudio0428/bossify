@@ -188,9 +188,17 @@ function PublicOrderFormPage() {
 
   const filteredProducts = useMemo(() => {
     if (state.status !== "ready") return [] as Product[];
-    if (activeCategory === "__all") return state.products;
-    return state.products.filter((p) => (p.category ?? "") === activeCategory);
-  }, [state, activeCategory]);
+    let list = state.products;
+    if (activeCategory !== "__all") {
+      list = list.filter((p) => (p.category ?? "") === activeCategory);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
+    return list;
+  }, [state, activeCategory, searchQuery]);
+
 
   const bizType = state.status === "ready" ? state.profile.business_type : "retail";
   const isRetailish = bizType === "retail" || bizType === "fnb";
