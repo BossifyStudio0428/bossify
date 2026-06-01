@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Plus, X, ClipboardList, ChevronRight, Search, Package } from "lucide-react";
+import { ArrowLeft, Plus, X, ClipboardList, ChevronRight, Search, Package, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
