@@ -123,9 +123,11 @@ function PublicOrderFormPage() {
   };
 
   const [activeCategory, setActiveCategory] = useState<string>("__all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
+
 
   const [form, setForm] = useState({
     customer_name: "",
