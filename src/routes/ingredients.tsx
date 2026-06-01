@@ -215,7 +215,7 @@ function IngredientsPage() {
       {sheet.kind === "delete" && (
         <ConfirmSheet
           title={t("delete_ingredient")}
-          message={`${t("delete_confirm")} "${sheet.item.name}"?`}
+          subtitle={`${t("delete_confirm")} "${sheet.item.name}"?`}
           onClose={() => setSheet({ kind: "none" })}
           onConfirm={() => handleDelete(sheet.item)}
           variant="destructive"
