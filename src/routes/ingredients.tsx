@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { SheetShell, SheetField, ConfirmSheet } from "@/components/InventorySheets";
+import { StockTabs } from "@/components/StockTabs";
 
 export const Route = createFileRoute("/ingredients")({ component: IngredientsPage });
 
@@ -100,14 +101,12 @@ function IngredientsPage() {
 
   return (
     <div className="px-5 pt-10 pb-24 space-y-5 relative">
-      <Link to="/inventory" className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-        <ArrowLeft className="h-4 w-4" /> {t("inventory")}
-      </Link>
-
       <header className="flex items-center gap-3">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("ingredients")}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">{items.length}</span>
       </header>
+
+      <StockTabs active="ingredients" />
 
       {lowCount > 0 && (
         <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 flex items-start gap-2">
