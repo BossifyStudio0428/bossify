@@ -175,7 +175,7 @@ function StockTakePage() {
       toast.error(e2.message);
       return;
     }
-    toast.success(t("delete_success"));
+    toast.success(t("stock_take_deleted"));
     load();
   };
 
