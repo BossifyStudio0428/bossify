@@ -377,7 +377,7 @@ function StockTakePage() {
         {takes.map((tk) => (
           <div
             key={tk.id}
-            className="relative rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.99] transition-transform space-y-2"
+            className="rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.99] transition-transform"
           >
             <Link
               to="/stock-take/$id"
@@ -391,9 +391,11 @@ function StockTakePage() {
                     {new Date(tk.started_at).toLocaleString()}
                   </p>
                 </div>
-                <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${tk.status === "completed" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-                  {tk.status === "completed" ? t("stock_take_done") : t("stock_take_in_progress")}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${tk.status === "completed" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                    {tk.status === "completed" ? t("stock_take_done") : t("stock_take_in_progress")}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs text-muted-foreground">
@@ -407,17 +409,17 @@ function StockTakePage() {
                 </span>
               </div>
             </Link>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeleteTarget(tk.id);
-                setConfirmDeleteOpen(true);
-              }}
-              className="absolute top-3 right-3 p-1.5 rounded-full text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors"
-              aria-label={t("delete")}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => {
+                  setDeleteTarget(tk.id);
+                  setConfirmDeleteOpen(true);
+                }}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-xl transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> {t("delete")}
+              </button>
+            </div>
           </div>
         ))}
       </div>
