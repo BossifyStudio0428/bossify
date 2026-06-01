@@ -13,6 +13,7 @@ import { Route as UniversityInsightsRouteImport } from './routes/university-insi
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
+import { Route as StockTakeRouteImport } from './routes/stock-take'
 import { Route as SplashRouteImport } from './routes/splash'
 import { Route as ServicesSummaryRouteImport } from './routes/services-summary'
 import { Route as ServicesRouteImport } from './routes/services'
@@ -47,6 +48,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
+import { Route as StockTakeIdRouteImport } from './routes/stock-take.$id'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 import { Route as OrderCodeRouteImport } from './routes/order.$code'
 import { Route as InventoryItemIdRouteImport } from './routes/inventory.$itemId'
@@ -80,6 +82,11 @@ const TeamRoute = TeamRouteImport.update({
 const SuppliersRoute = SuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StockTakeRoute = StockTakeRouteImport.update({
+  id: '/stock-take',
+  path: '/stock-take',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SplashRoute = SplashRouteImport.update({
@@ -252,6 +259,11 @@ const TeamWelcomeRoute = TeamWelcomeRouteImport.update({
   path: '/welcome',
   getParentRoute: () => TeamRoute,
 } as any)
+const StockTakeIdRoute = StockTakeIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => StockTakeRoute,
+} as any)
 const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
   id: '/$orderId',
   path: '/$orderId',
@@ -359,6 +371,7 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
+  '/stock-take': typeof StockTakeRouteWithChildren
   '/suppliers': typeof SuppliersRoute
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
@@ -370,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
@@ -413,6 +427,7 @@ export interface FileRoutesByTo {
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
+  '/stock-take': typeof StockTakeRouteWithChildren
   '/suppliers': typeof SuppliersRoute
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
@@ -424,6 +439,7 @@ export interface FileRoutesByTo {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
@@ -468,6 +484,7 @@ export interface FileRoutesById {
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
+  '/stock-take': typeof StockTakeRouteWithChildren
   '/suppliers': typeof SuppliersRoute
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
@@ -479,6 +496,7 @@ export interface FileRoutesById {
   '/inventory/$itemId': typeof InventoryItemIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
@@ -524,6 +542,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/services-summary'
     | '/splash'
+    | '/stock-take'
     | '/suppliers'
     | '/team'
     | '/terms'
@@ -535,6 +554,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/stock-take/$id'
     | '/team/welcome'
     | '/api/public/order-form'
     | '/team/join/$token'
@@ -578,6 +598,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/services-summary'
     | '/splash'
+    | '/stock-take'
     | '/suppliers'
     | '/team'
     | '/terms'
@@ -589,6 +610,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/stock-take/$id'
     | '/team/welcome'
     | '/api/public/order-form'
     | '/team/join/$token'
@@ -632,6 +654,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/services-summary'
     | '/splash'
+    | '/stock-take'
     | '/suppliers'
     | '/team'
     | '/terms'
@@ -643,6 +666,7 @@ export interface FileRouteTypes {
     | '/inventory/$itemId'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/stock-take/$id'
     | '/team/welcome'
     | '/api/public/order-form'
     | '/team/join/$token'
@@ -687,6 +711,7 @@ export interface RootRouteChildren {
   ServicesRoute: typeof ServicesRoute
   ServicesSummaryRoute: typeof ServicesSummaryRoute
   SplashRoute: typeof SplashRoute
+  StockTakeRoute: typeof StockTakeRouteWithChildren
   SuppliersRoute: typeof SuppliersRoute
   TeamRoute: typeof TeamRouteWithChildren
   TermsRoute: typeof TermsRoute
@@ -730,6 +755,13 @@ declare module '@tanstack/react-router' {
       path: '/suppliers'
       fullPath: '/suppliers'
       preLoaderRoute: typeof SuppliersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stock-take': {
+      id: '/stock-take'
+      path: '/stock-take'
+      fullPath: '/stock-take'
+      preLoaderRoute: typeof StockTakeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/splash': {
@@ -970,6 +1002,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamWelcomeRouteImport
       parentRoute: typeof TeamRoute
     }
+    '/stock-take/$id': {
+      id: '/stock-take/$id'
+      path: '/$id'
+      fullPath: '/stock-take/$id'
+      preLoaderRoute: typeof StockTakeIdRouteImport
+      parentRoute: typeof StockTakeRoute
+    }
     '/orders/$orderId': {
       id: '/orders/$orderId'
       path: '/$orderId'
@@ -1108,6 +1147,18 @@ const OrdersRouteChildren: OrdersRouteChildren = {
 const OrdersRouteWithChildren =
   OrdersRoute._addFileChildren(OrdersRouteChildren)
 
+interface StockTakeRouteChildren {
+  StockTakeIdRoute: typeof StockTakeIdRoute
+}
+
+const StockTakeRouteChildren: StockTakeRouteChildren = {
+  StockTakeIdRoute: StockTakeIdRoute,
+}
+
+const StockTakeRouteWithChildren = StockTakeRoute._addFileChildren(
+  StockTakeRouteChildren,
+)
+
 interface TeamRouteChildren {
   TeamWelcomeRoute: typeof TeamWelcomeRoute
   TeamJoinTokenRoute: typeof TeamJoinTokenRoute
@@ -1154,6 +1205,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServicesRoute: ServicesRoute,
   ServicesSummaryRoute: ServicesSummaryRoute,
   SplashRoute: SplashRoute,
+  StockTakeRoute: StockTakeRouteWithChildren,
   SuppliersRoute: SuppliersRoute,
   TeamRoute: TeamRouteWithChildren,
   TermsRoute: TermsRoute,
