@@ -30,6 +30,7 @@ function InventoryPage() {
   const { user } = useAuth();
   const { hasFullAccess, showUpgrade, productsUsed, productsLimit } = useSubscription();
   const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string>("__all");
   const [items, setItems] = useState<InvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
@@ -91,7 +92,17 @@ function InventoryPage() {
     setSheet({ kind: "none" });
   };
 
-  const visible = items.filter((i) => i.name.toLowerCase().includes(query.toLowerCase()));
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const it of items) if (it.category) set.add(it.category);
+    return Array.from(set).sort();
+  }, [items]);
+
+  const visible = items.filter((i) => {
+    const matchesSearch = i.name.toLowerCase().includes(query.toLowerCase());
+    const matchesCategory = activeCategory === "__all" || (i.category ?? "") === activeCategory;
+    return matchesSearch && matchesCategory;
+  });
   const lowItems = items.filter((i) => i.stock <= LOW_THRESHOLD);
   const atLimit = !hasFullAccess && productsUsed >= productsLimit;
 
