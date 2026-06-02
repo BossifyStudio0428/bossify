@@ -375,7 +375,6 @@ const BottomNav = memo(function BottomNav() {
     type === "property"
       ? [
           { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
-          { to: "/viewings", labelKey: "nav_viewings", icon: Eye, id: "tour-tab-viewings" },
           { to: "/listings", labelKey: "nav_listings", icon: Building2, id: "tour-tab-listings" },
           { to: "/commissions", labelKey: "nav_commission", icon: Wallet, id: "tour-tab-commission" },
           { to: "/customers", labelKey: bizKey(type, "customers"), icon: Users, id: "tour-tab-customers" },
