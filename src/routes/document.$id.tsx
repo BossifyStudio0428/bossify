@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
-import { ChevronLeft, Plus, Trash2, X } from "lucide-react";
+import { ChevronLeft, Plus, Trash2, X, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { exportDocumentChecklistPDF } from "@/lib/propertyPdf";
 
 export const Route = createFileRoute("/document/$id")({ component: DocumentEditor });
 
@@ -33,9 +35,10 @@ function statusKey(s: DocStatus): TKey {
 function DocumentEditor() {
   const { id } = useParams({ from: "/document/$id" });
   const isNew = id === "new";
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType, loading: bizLoading } = useBusinessType();
+  const { hasFullAccess, showUpgrade } = useSubscription();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(!isNew);
@@ -124,6 +127,23 @@ function DocumentEditor() {
     navigate({ to: "/documents" });
   };
 
+  const onExport = async () => {
+    if (!hasFullAccess) { showUpgrade(t("pro_feature_required")); return; }
+    if (!user) return;
+    try {
+      const { data: prof } = await supabase.from("profiles").select("business_name").eq("id", user.id).maybeSingle();
+      const clientName = customers.find((c) => c.id === customerId)?.name || "—";
+      const propTitle = listings.find((l) => l.id === listingId)?.title || null;
+      await exportDocumentChecklistPDF({
+        lang,
+        businessName: (prof as any)?.business_name || "Bossify",
+        clientName,
+        propertyTitle: propTitle,
+        items: items.map((it) => ({ name: it.name, status: t(statusKey(it.status)) })),
+      });
+    } catch (e: any) { toast.error(e?.message || "Failed to export"); }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-20">
@@ -151,9 +171,14 @@ function DocumentEditor() {
         </Link>
         <h1 className="text-xl font-bold tracking-tight">{t(isNew ? "new_checklist" : "edit_checklist")}</h1>
         {!isNew && (
-          <button onClick={remove} className="ml-auto p-2 rounded-full text-red-500 active:bg-red-50" aria-label={t("delete")}>
-            <Trash2 className="h-5 w-5" />
-          </button>
+          <div className="ml-auto flex items-center gap-1">
+            <button onClick={onExport} className="p-2 rounded-full text-primary active:bg-primary/10" aria-label={t("export_pdf")}>
+              <Download className="h-5 w-5" />
+            </button>
+            <button onClick={remove} className="p-2 rounded-full text-red-500 active:bg-red-50" aria-label={t("delete")}>
+              <Trash2 className="h-5 w-5" />
+            </button>
+          </div>
         )}
       </header>
 
