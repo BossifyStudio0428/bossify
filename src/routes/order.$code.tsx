@@ -86,6 +86,14 @@ type LoadState =
         business_type: string;
         whatsapp_number: string | null;
         language?: string;
+        allow_cod?: boolean;
+        payment_methods?: Array<{
+          type: string | null;
+          bank: string | null;
+          number: string | null;
+          name: string | null;
+          qr_url: string | null;
+        }>;
       };
       products: Product[];
     };
@@ -143,6 +151,7 @@ function PublicOrderFormPage() {
     project_description: "",
     deadline: "",
   });
+  const [paymentMethod, setPaymentMethod] = useState<"bank_transfer" | "cash_on_delivery" | "">("");
   const upd =
     (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -231,6 +240,12 @@ function PublicOrderFormPage() {
     e.preventDefault();
     if (state.status !== "ready") return;
     if (!form.customer_name.trim() || !form.phone.trim() || cart.length === 0) return;
+    const bt = state.profile.business_type;
+    const needsPayment = bt === "retail" || bt === "fnb";
+    if (needsPayment && !paymentMethod) {
+      alert(t("select_payment_method"));
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await postPublicOrder({
@@ -253,6 +268,7 @@ function PublicOrderFormPage() {
         location_interest: form.location_interest,
         project_description: form.project_description,
         deadline: form.deadline,
+        payment_method: needsPayment ? paymentMethod : undefined,
       });
       if (res.ok) {
         setDone({
