@@ -22,10 +22,11 @@ type StockTake = {
 
 type InvItem = { id: string; name: string; stock: number; image_url: string | null; category: string | null };
 type CountRow = {
-  inventory_id: string;
+  inventory_id: string; // for fnb this stores ingredient_id (not inserted into stock_take_items.inventory_id)
   product_name: string;
   category: string | null;
   image_url: string | null;
+  unit: string | null;
   system_quantity: number;
   actual_quantity: number | "";
   reason: string;
@@ -37,6 +38,7 @@ function StockTakePage() {
   const { type: bizType, loading: btLoading } = useBusinessType();
   const navigate = useNavigate();
   const allowed = bizType === "retail" || bizType === "fnb";
+  const isFnb = bizType === "fnb";
 
   const [takes, setTakes] = useState<StockTake[]>([]);
   const [discrepMap, setDiscrepMap] = useState<Record<string, number>>({});
@@ -83,28 +85,48 @@ function StockTakePage() {
 
   const startNew = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("inventory")
-      .select("id, name, stock, image_url, category")
-      .order("name", { ascending: true });
-    if (error) { toast.error(error.message); return; }
-    const items = (data ?? []) as InvItem[];
-    setRows(items.map(i => ({
-      inventory_id: i.id,
-      product_name: i.name,
-      category: i.category,
-      image_url: i.image_url,
-      system_quantity: i.stock ?? 0,
-      actual_quantity: i.stock ?? 0,
-      reason: "",
-    })));
+    if (isFnb) {
+      const { data, error } = await supabase
+        .from("ingredients" as any)
+        .select("id, name, unit, current_stock")
+        .order("name", { ascending: true });
+      if (error) { toast.error(error.message); return; }
+      const items = ((data ?? []) as any[]);
+      setRows(items.map((i) => ({
+        inventory_id: i.id,
+        product_name: i.name,
+        category: null,
+        image_url: null,
+        unit: i.unit ?? null,
+        system_quantity: Number(i.current_stock ?? 0),
+        actual_quantity: Number(i.current_stock ?? 0),
+        reason: "",
+      })));
+    } else {
+      const { data, error } = await supabase
+        .from("inventory")
+        .select("id, name, stock, image_url, category")
+        .order("name", { ascending: true });
+      if (error) { toast.error(error.message); return; }
+      const items = (data ?? []) as InvItem[];
+      setRows(items.map(i => ({
+        inventory_id: i.id,
+        product_name: i.name,
+        category: i.category,
+        image_url: i.image_url,
+        unit: null,
+        system_quantity: i.stock ?? 0,
+        actual_quantity: i.stock ?? 0,
+        reason: "",
+      })));
+    }
     setSearch("");
     setActiveCat("__all__");
     setCounting(true);
   };
 
   const updateActual = (idx: number, v: string) => {
-    const n = v === "" ? "" : Math.max(0, parseInt(v, 10) || 0);
+    const n = v === "" ? "" : Math.max(0, isFnb ? (parseFloat(v) || 0) : (parseInt(v, 10) || 0));
     setRows(prev => prev.map((r, i) => i === idx ? { ...r, actual_quantity: n } : r));
   };
   const updateReason = (idx: number, v: string) => {
@@ -126,11 +148,11 @@ function StockTakePage() {
       const actual = typeof r.actual_quantity === "number" ? r.actual_quantity : r.system_quantity;
       return {
         stock_take_id: takeId,
-        inventory_id: r.inventory_id,
+        inventory_id: isFnb ? null : r.inventory_id,
         product_name: r.product_name,
-        system_quantity: r.system_quantity,
-        actual_quantity: actual,
-        difference: actual - r.system_quantity,
+        system_quantity: Math.round(r.system_quantity),
+        actual_quantity: Math.round(actual),
+        difference: Math.round(actual - r.system_quantity),
         reason: r.reason?.trim() ? r.reason.trim() : null,
       };
     });
@@ -138,11 +160,15 @@ function StockTakePage() {
       const { error: e2 } = await supabase.from("stock_take_items" as any).insert(items);
       if (e2) { setSaving(false); toast.error(e2.message); return; }
     }
-    // Update inventory quantities to actual
+    // Update stock quantities to actual
     for (const r of rows) {
       const actual = typeof r.actual_quantity === "number" ? r.actual_quantity : r.system_quantity;
       if (actual !== r.system_quantity) {
-        await supabase.from("inventory").update({ stock: actual }).eq("id", r.inventory_id);
+        if (isFnb) {
+          await supabase.from("ingredients" as any).update({ current_stock: actual }).eq("id", r.inventory_id);
+        } else {
+          await supabase.from("inventory").update({ stock: actual }).eq("id", r.inventory_id);
+        }
       }
     }
     setSaving(false);
