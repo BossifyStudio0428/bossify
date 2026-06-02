@@ -222,13 +222,15 @@ function ReportsPage() {
       ];
     }
     if (eff === "property") {
+      const commissionEarned = commissions.filter((c) => c.status === "received").reduce((s, c) => s + Number(c.commission_amount || 0), 0);
+      const commissionPending = commissions.filter((c) => c.status === "pending").reduce((s, c) => s + Number(c.commission_amount || 0), 0);
       return [
-        { label: t("rep_total_leads"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
+        { label: t("rep_total_enquiries"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
         { label: t("rep_completed"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
         { label: t("rep_in_progress"), value: String(pendingCount), color: "text-amber-600", bg: "bg-amber-50" },
         { label: t("rep_rejected"), value: String(unpaidCount), color: "text-red-500", bg: "bg-red-50" },
-        revenueCard,
-        unpaidCard,
+        { label: t("an_total_commission"), value: `RM ${commissionEarned.toFixed(0)}`, color: "text-emerald-600", bg: "bg-emerald-50" },
+        { label: t("an_pending_commission"), value: `RM ${commissionPending.toFixed(0)}`, color: "text-amber-600", bg: "bg-amber-50" },
       ];
     }
     if (eff === "freelance") {
