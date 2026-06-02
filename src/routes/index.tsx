@@ -65,6 +65,9 @@ function Index() {
   const [todaysViewings, setTodaysViewings] = useState<
     { id: string; listing_title: string; customer_name: string; viewing_at: string; status: string }[]
   >([]);
+  const [expiringRenewals, setExpiringRenewals] = useState<
+    { id: string; customer_name: string; reminder_type: string; expiry_date: string; days_left: number }[]
+  >([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [followUpsThisWeek, setFollowUpsThisWeek] = useState(0);
   const [followUpsOverdue, setFollowUpsOverdue] = useState(0);
