@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { ArrowLeft, X, Calendar as CalendarIcon, Check } from "lucide-react";
+import { ArrowLeft, X, Calendar as CalendarIcon, Check, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type OrderRow, type CustomerStatus, type FollowUpRow } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
@@ -9,6 +9,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { EducationDetailsForm } from "@/components/EducationDetailsForm";
 import { FollowupPipeline } from "@/components/FollowupPipeline";
 import { AdditionalServices } from "@/components/AdditionalServices";
+import { reqStatusKey } from "@/routes/requirements";
 
 export const Route = createFileRoute("/customer/$customerId")({ component: CustomerDetail });
 
@@ -222,6 +223,10 @@ function CustomerDetail() {
             <AdditionalServices clientId={customer.id} userId={customer.user_id} />
           </div>
         </>
+      )}
+
+      {bizType === "property" && (
+        <CustomerRequirements customerId={customer.id} />
       )}
 
       <section className="space-y-2">
