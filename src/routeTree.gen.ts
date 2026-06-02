@@ -19,6 +19,7 @@ import { Route as SplashRouteImport } from './routes/splash'
 import { Route as ServicesSummaryRouteImport } from './routes/services-summary'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as RequirementsRouteImport } from './routes/requirements'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RenewalsRouteImport } from './routes/renewals'
 import { Route as RecipesRouteImport } from './routes/recipes'
@@ -36,12 +37,14 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NotificationSettingsRouteImport } from './routes/notification-settings'
 import { Route as NewOrderRouteImport } from './routes/new-order'
+import { Route as LoanCalculatorRouteImport } from './routes/loan-calculator'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as IngredientsRouteImport } from './routes/ingredients'
 import { Route as ImportOrdersRouteImport } from './routes/import-orders'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as DevicesRouteImport } from './routes/devices'
 import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as CustomersRouteImport } from './routes/customers'
@@ -56,6 +59,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ViewingIdRouteImport } from './routes/viewing.$id'
 import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as StockTakeIdRouteImport } from './routes/stock-take_.$id'
+import { Route as RequirementIdRouteImport } from './routes/requirement.$id'
 import { Route as RenewalIdRouteImport } from './routes/renewal.$id'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 import { Route as OrderCodeRouteImport } from './routes/order.$code'
@@ -63,6 +67,7 @@ import { Route as ListingIdRouteImport } from './routes/listing.$id'
 import { Route as InventoryItemIdRouteImport } from './routes/inventory.$itemId'
 import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
+import { Route as DocumentIdRouteImport } from './routes/document.$id'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
 import { Route as CommissionIdRouteImport } from './routes/commission.$id'
@@ -122,6 +127,11 @@ const ServicesRoute = ServicesRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RequirementsRoute = RequirementsRouteImport.update({
+  id: '/requirements',
+  path: '/requirements',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsRoute = ReportsRouteImport.update({
@@ -209,6 +219,11 @@ const NewOrderRoute = NewOrderRouteImport.update({
   path: '/new-order',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoanCalculatorRoute = LoanCalculatorRouteImport.update({
+  id: '/loan-calculator',
+  path: '/loan-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListingsRoute = ListingsRouteImport.update({
   id: '/listings',
   path: '/listings',
@@ -237,6 +252,11 @@ const ImportOrdersRoute = ImportOrdersRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsRoute = DocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevicesRoute = DevicesRouteImport.update({
@@ -309,6 +329,11 @@ const StockTakeIdRoute = StockTakeIdRouteImport.update({
   path: '/stock-take/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RequirementIdRoute = RequirementIdRouteImport.update({
+  id: '/requirement/$id',
+  path: '/requirement/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RenewalIdRoute = RenewalIdRouteImport.update({
   id: '/renewal/$id',
   path: '/renewal/$id',
@@ -343,6 +368,11 @@ const ForgotPasswordResetRoute = ForgotPasswordResetRouteImport.update({
   id: '/reset',
   path: '/reset',
   getParentRoute: () => ForgotPasswordRoute,
+} as any)
+const DocumentIdRoute = DocumentIdRouteImport.update({
+  id: '/document/$id',
+  path: '/document/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CustomerCustomerIdRoute = CustomerCustomerIdRouteImport.update({
   id: '/customer/$customerId',
@@ -409,12 +439,14 @@ export interface FileRoutesByFullPath {
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/devices': typeof DevicesRoute
+  '/documents': typeof DocumentsRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
+  '/loan-calculator': typeof LoanCalculatorRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -432,6 +464,7 @@ export interface FileRoutesByFullPath {
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
+  '/requirements': typeof RequirementsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
@@ -445,6 +478,7 @@ export interface FileRoutesByFullPath {
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
+  '/document/$id': typeof DocumentIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/inventory/$itemId': typeof InventoryItemIdRoute
@@ -452,6 +486,7 @@ export interface FileRoutesByFullPath {
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/renewal/$id': typeof RenewalIdRoute
+  '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
@@ -475,12 +510,14 @@ export interface FileRoutesByTo {
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/devices': typeof DevicesRoute
+  '/documents': typeof DocumentsRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
+  '/loan-calculator': typeof LoanCalculatorRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -498,6 +535,7 @@ export interface FileRoutesByTo {
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
+  '/requirements': typeof RequirementsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
@@ -511,6 +549,7 @@ export interface FileRoutesByTo {
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
+  '/document/$id': typeof DocumentIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/inventory/$itemId': typeof InventoryItemIdRoute
@@ -518,6 +557,7 @@ export interface FileRoutesByTo {
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/renewal/$id': typeof RenewalIdRoute
+  '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
@@ -542,12 +582,14 @@ export interface FileRoutesById {
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/devices': typeof DevicesRoute
+  '/documents': typeof DocumentsRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
+  '/loan-calculator': typeof LoanCalculatorRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -565,6 +607,7 @@ export interface FileRoutesById {
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
+  '/requirements': typeof RequirementsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
@@ -578,6 +621,7 @@ export interface FileRoutesById {
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
+  '/document/$id': typeof DocumentIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/inventory/$itemId': typeof InventoryItemIdRoute
@@ -585,6 +629,7 @@ export interface FileRoutesById {
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/renewal/$id': typeof RenewalIdRoute
+  '/requirement/$id': typeof RequirementIdRoute
   '/stock-take_/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
@@ -610,12 +655,14 @@ export interface FileRouteTypes {
     | '/customers'
     | '/data-deletion'
     | '/devices'
+    | '/documents'
     | '/forgot-password'
     | '/import-orders'
     | '/ingredients'
     | '/inventory'
     | '/language'
     | '/listings'
+    | '/loan-calculator'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -633,6 +680,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/renewals'
     | '/reports'
+    | '/requirements'
     | '/search'
     | '/services'
     | '/services-summary'
@@ -646,6 +694,7 @@ export interface FileRouteTypes {
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
+    | '/document/$id'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/inventory/$itemId'
@@ -653,6 +702,7 @@ export interface FileRouteTypes {
     | '/order/$code'
     | '/orders/$orderId'
     | '/renewal/$id'
+    | '/requirement/$id'
     | '/stock-take/$id'
     | '/team/welcome'
     | '/viewing/$id'
@@ -676,12 +726,14 @@ export interface FileRouteTypes {
     | '/customers'
     | '/data-deletion'
     | '/devices'
+    | '/documents'
     | '/forgot-password'
     | '/import-orders'
     | '/ingredients'
     | '/inventory'
     | '/language'
     | '/listings'
+    | '/loan-calculator'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -699,6 +751,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/renewals'
     | '/reports'
+    | '/requirements'
     | '/search'
     | '/services'
     | '/services-summary'
@@ -712,6 +765,7 @@ export interface FileRouteTypes {
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
+    | '/document/$id'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/inventory/$itemId'
@@ -719,6 +773,7 @@ export interface FileRouteTypes {
     | '/order/$code'
     | '/orders/$orderId'
     | '/renewal/$id'
+    | '/requirement/$id'
     | '/stock-take/$id'
     | '/team/welcome'
     | '/viewing/$id'
@@ -742,12 +797,14 @@ export interface FileRouteTypes {
     | '/customers'
     | '/data-deletion'
     | '/devices'
+    | '/documents'
     | '/forgot-password'
     | '/import-orders'
     | '/ingredients'
     | '/inventory'
     | '/language'
     | '/listings'
+    | '/loan-calculator'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -765,6 +822,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/renewals'
     | '/reports'
+    | '/requirements'
     | '/search'
     | '/services'
     | '/services-summary'
@@ -778,6 +836,7 @@ export interface FileRouteTypes {
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
+    | '/document/$id'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/inventory/$itemId'
@@ -785,6 +844,7 @@ export interface FileRouteTypes {
     | '/order/$code'
     | '/orders/$orderId'
     | '/renewal/$id'
+    | '/requirement/$id'
     | '/stock-take_/$id'
     | '/team/welcome'
     | '/viewing/$id'
@@ -809,12 +869,14 @@ export interface RootRouteChildren {
   CustomersRoute: typeof CustomersRoute
   DataDeletionRoute: typeof DataDeletionRoute
   DevicesRoute: typeof DevicesRoute
+  DocumentsRoute: typeof DocumentsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
   ImportOrdersRoute: typeof ImportOrdersRoute
   IngredientsRoute: typeof IngredientsRoute
   InventoryRoute: typeof InventoryRouteWithChildren
   LanguageRoute: typeof LanguageRoute
   ListingsRoute: typeof ListingsRoute
+  LoanCalculatorRoute: typeof LoanCalculatorRoute
   NewOrderRoute: typeof NewOrderRoute
   NotificationSettingsRoute: typeof NotificationSettingsRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -832,6 +894,7 @@ export interface RootRouteChildren {
   RecipesRoute: typeof RecipesRoute
   RenewalsRoute: typeof RenewalsRoute
   ReportsRoute: typeof ReportsRoute
+  RequirementsRoute: typeof RequirementsRoute
   SearchRoute: typeof SearchRoute
   ServicesRoute: typeof ServicesRoute
   ServicesSummaryRoute: typeof ServicesSummaryRoute
@@ -845,9 +908,11 @@ export interface RootRouteChildren {
   CommissionIdRoute: typeof CommissionIdRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
+  DocumentIdRoute: typeof DocumentIdRoute
   ListingIdRoute: typeof ListingIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
   RenewalIdRoute: typeof RenewalIdRoute
+  RequirementIdRoute: typeof RequirementIdRoute
   StockTakeIdRoute: typeof StockTakeIdRoute
   ViewingIdRoute: typeof ViewingIdRoute
   ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
@@ -928,6 +993,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/requirements': {
+      id: '/requirements'
+      path: '/requirements'
+      fullPath: '/requirements'
+      preLoaderRoute: typeof RequirementsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports': {
@@ -1049,6 +1121,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/loan-calculator': {
+      id: '/loan-calculator'
+      path: '/loan-calculator'
+      fullPath: '/loan-calculator'
+      preLoaderRoute: typeof LoanCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/listings': {
       id: '/listings'
       path: '/listings'
@@ -1089,6 +1168,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents': {
+      id: '/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/devices': {
@@ -1189,6 +1275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StockTakeIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/requirement/$id': {
+      id: '/requirement/$id'
+      path: '/requirement/$id'
+      fullPath: '/requirement/$id'
+      preLoaderRoute: typeof RequirementIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/renewal/$id': {
       id: '/renewal/$id'
       path: '/renewal/$id'
@@ -1237,6 +1330,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/forgot-password/reset'
       preLoaderRoute: typeof ForgotPasswordResetRouteImport
       parentRoute: typeof ForgotPasswordRoute
+    }
+    '/document/$id': {
+      id: '/document/$id'
+      path: '/document/$id'
+      fullPath: '/document/$id'
+      preLoaderRoute: typeof DocumentIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/customer/$customerId': {
       id: '/customer/$customerId'
@@ -1372,12 +1472,14 @@ const rootRouteChildren: RootRouteChildren = {
   CustomersRoute: CustomersRoute,
   DataDeletionRoute: DataDeletionRoute,
   DevicesRoute: DevicesRoute,
+  DocumentsRoute: DocumentsRoute,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
   ImportOrdersRoute: ImportOrdersRoute,
   IngredientsRoute: IngredientsRoute,
   InventoryRoute: InventoryRouteWithChildren,
   LanguageRoute: LanguageRoute,
   ListingsRoute: ListingsRoute,
+  LoanCalculatorRoute: LoanCalculatorRoute,
   NewOrderRoute: NewOrderRoute,
   NotificationSettingsRoute: NotificationSettingsRoute,
   NotificationsRoute: NotificationsRoute,
@@ -1395,6 +1497,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecipesRoute: RecipesRoute,
   RenewalsRoute: RenewalsRoute,
   ReportsRoute: ReportsRoute,
+  RequirementsRoute: RequirementsRoute,
   SearchRoute: SearchRoute,
   ServicesRoute: ServicesRoute,
   ServicesSummaryRoute: ServicesSummaryRoute,
@@ -1408,9 +1511,11 @@ const rootRouteChildren: RootRouteChildren = {
   CommissionIdRoute: CommissionIdRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
+  DocumentIdRoute: DocumentIdRoute,
   ListingIdRoute: ListingIdRoute,
   OrderCodeRoute: OrderCodeRoute,
   RenewalIdRoute: RenewalIdRoute,
+  RequirementIdRoute: RequirementIdRoute,
   StockTakeIdRoute: StockTakeIdRoute,
   ViewingIdRoute: ViewingIdRoute,
   ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
