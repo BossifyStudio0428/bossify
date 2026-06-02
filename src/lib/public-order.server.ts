@@ -99,13 +99,24 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
   const code = codeParsed.data.code;
   try {
     const sb = getPublicOrderClient() as any;
-    const { data: profile, error } = await sb
+    // Use `*` so missing optional columns (e.g. payment_method_*, allow_cod
+    // on external Supabase projects that haven't run the latest migration)
+    // don't cause the whole lookup to fail and surface as "Order form not found".
+    let { data: profile, error } = await sb
       .from("profiles")
-      .select(
-        "id, business_name, avatar_url, business_type, whatsapp_number, order_form_enabled, order_form_code, allow_cod, payment_method_1_type, payment_method_1_bank, payment_method_1_number, payment_method_1_name, payment_method_1_qr_url, payment_method_2_type, payment_method_2_bank, payment_method_2_number, payment_method_2_name, payment_method_2_qr_url, language",
-      )
+      .select("*")
       .eq("order_form_code", code.toLowerCase())
       .maybeSingle();
+    if (error) {
+      console.error("[loadPublicOrderForm] profiles select * failed, retrying minimal", error);
+      const fallback = await sb
+        .from("profiles")
+        .select("id, business_name, avatar_url, business_type, whatsapp_number, order_form_enabled, order_form_code, language")
+        .eq("order_form_code", code.toLowerCase())
+        .maybeSingle();
+      profile = fallback.data;
+      error = fallback.error;
+    }
 
     if (error || !profile) return { ok: false, reason: "not_found", error: error?.message };
     if (profile.order_form_enabled === false) return { ok: false, reason: "disabled" };
