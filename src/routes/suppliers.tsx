@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Plus, Pencil, Trash2, Phone, Mail, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Phone, Mail, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -158,13 +158,39 @@ function SupplierFormSheet({
   item, userId, onClose, onSaved,
 }: { item?: Supplier; userId: string; onClose: () => void; onSaved: () => void }) {
   const { t } = useI18n();
+  const { type: bizType } = useBusinessType();
+  const isFnb = bizType === "fnb";
   const [name, setName] = useState(item?.name ?? "");
   const [phone, setPhone] = useState(item?.phone ?? "");
   const [email, setEmail] = useState(item?.email ?? "");
   const [address, setAddress] = useState(item?.address ?? "");
-  const [products, setProducts] = useState(item?.products_supplied ?? "");
+  const initialSelected = (item?.products_supplied ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const [selected, setSelected] = useState<string[]>(initialSelected);
+  const [options, setOptions] = useState<string[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [notes, setNotes] = useState(item?.notes ?? "");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const table = isFnb ? "ingredients" : "inventory";
+      const { data } = await supabase
+        .from(table as any)
+        .select("name")
+        .order("name", { ascending: true });
+      const names = ((data ?? []) as any[])
+        .map((r) => r?.name)
+        .filter((n): n is string => typeof n === "string" && n.trim().length > 0);
+      setOptions(Array.from(new Set(names)));
+    })();
+  }, [isFnb]);
+
+  const toggle = (n: string) => {
+    setSelected((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
+  };
 
   const save = async () => {
     if (!name.trim()) { toast.error(t("required_field")); return; }
@@ -175,7 +201,7 @@ function SupplierFormSheet({
       phone: phone.trim() || null,
       email: email.trim() || null,
       address: address.trim() || null,
-      products_supplied: products.trim() || null,
+      products_supplied: selected.length > 0 ? selected.join(", ") : null,
       notes: notes.trim() || null,
     };
     const { error } = item
@@ -198,13 +224,51 @@ function SupplierFormSheet({
       <SheetField label={t("supplier_email")} value={email} onChange={setEmail} type="email" />
       <SheetField label={t("supplier_address")} value={address} onChange={setAddress} />
       <div className="space-y-1.5">
-        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("supplier_products")}</label>
-        <textarea
-          value={products}
-          onChange={(e) => setProducts(e.target.value)}
-          rows={2}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
-        />
+        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
+          {isFnb ? t("supplier_ingredients") : t("supplier_products")}
+        </label>
+        <button
+          type="button"
+          onClick={() => setPickerOpen((v) => !v)}
+          className="w-full min-h-[48px] rounded-2xl bg-muted/40 border border-border/60 px-3 py-2 text-left text-sm text-foreground focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+        >
+          {selected.length === 0 ? (
+            <span className="text-muted-foreground">—</span>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {selected.map((n) => (
+                <span key={n} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                  {n}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); toggle(n); }}
+                  />
+                </span>
+              ))}
+            </div>
+          )}
+        </button>
+        {pickerOpen && (
+          <div className="rounded-2xl border border-border/60 bg-card max-h-56 overflow-y-auto divide-y divide-border/40">
+            {options.length === 0 && (
+              <p className="text-xs text-muted-foreground p-3 text-center">—</p>
+            )}
+            {options.map((n) => {
+              const active = selected.includes(n);
+              return (
+                <button
+                  type="button"
+                  key={n}
+                  onClick={() => toggle(n)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-foreground hover:bg-muted/40 text-left"
+                >
+                  <span className="truncate">{n}</span>
+                  {active && <Check className="h-4 w-4 text-primary shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("supplier_notes")}</label>
