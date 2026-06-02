@@ -4,6 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { registerDeviceSession } from "@/lib/deviceSession";
 
+const DEVICE_LIMIT_BLOCK_KEY = "bossify_device_limit_block";
+
+function setDeviceLimitBlock(on: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    if (on) sessionStorage.setItem(DEVICE_LIMIT_BLOCK_KEY, "1");
+    else sessionStorage.removeItem(DEVICE_LIMIT_BLOCK_KEY);
+  } catch {}
+}
+
 type AuthCtx = {
   session: Session | null;
   user: User | null;
@@ -35,7 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       if (s?.user) {
         // Best-effort touch — keeps last_active fresh and (re)registers if missing.
-        registerDeviceSession().catch(() => {});
+        registerDeviceSession()
+          .then((reg) => {
+            if (reg.ok) setDeviceLimitBlock(false);
+          })
+          .catch(() => {});
       }
     });
     supabase.auth.getSession()
@@ -65,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!reg.ok && reg.error === "limit_reached") {
       // Keep the session alive so the user can open /devices and remove
       // one. The login screen renders a blocking device-limit panel.
+      setDeviceLimitBlock(true);
       let plan = "free";
       try {
         const { data: sess } = await supabase.auth.getSession();
@@ -89,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         plan,
       };
     }
+    setDeviceLimitBlock(false);
     return { error: null };
   };
 
@@ -103,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    setDeviceLimitBlock(false);
     // Reset theme to light so the auth screen never flashes a dark background
     if (typeof window !== "undefined") {
       try {
