@@ -1,0 +1,2 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_method TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS allow_cod BOOLEAN NOT NULL DEFAULT true;

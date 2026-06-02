@@ -16,6 +16,7 @@ function OrderFormPage() {
   const navigate = useNavigate();
   const [code, setCode] = useState<string | null>(null);
   const [enabled, setEnabled] = useState<boolean>(true);
+  const [allowCod, setAllowCod] = useState<boolean>(true);
   const [businessType, setBusinessType] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -26,12 +27,13 @@ function OrderFormPage() {
       if (!user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("order_form_code,order_form_enabled,business_type" as any)
+        .select("order_form_code,order_form_enabled,business_type,allow_cod" as any)
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
       let existing = ((data as any)?.order_form_code as string) ?? null;
       setEnabled(((data as any)?.order_form_enabled as boolean) ?? true);
+      setAllowCod(((data as any)?.allow_cod as boolean) ?? true);
       setBusinessType(((data as any)?.business_type as string) ?? null);
 
       // Auto-generate a code if missing so the public link never 404s.
@@ -112,6 +114,37 @@ function OrderFormPage() {
           <div className="rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-[11px] font-mono text-foreground break-all">
             {link}
           </div>
+          {(businessType === "retail" || businessType === "fnb") && (
+            <div className="flex items-center justify-between rounded-xl bg-muted/40 border border-border/60 px-3 py-2">
+              <div className="min-w-0 pr-3">
+                <p className="text-xs font-medium">💵 {t("allow_cod_label")}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{t("allow_cod_sub")}</p>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!user) return;
+                  const next = !allowCod;
+                  setAllowCod(next);
+                  const { error } = await supabase
+                    .from("profiles")
+                    .update({ allow_cod: next } as any)
+                    .eq("id", user.id);
+                  if (error) {
+                    setAllowCod(!next);
+                    toast.error(error.message);
+                  }
+                }}
+                role="switch"
+                aria-checked={allowCod}
+                className={`relative h-6 w-11 rounded-full transition-colors shrink-0 ${allowCod ? "bg-primary" : "bg-muted-foreground/30"}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${allowCod ? "translate-x-5" : ""}`}
+                />
+              </button>
+            </div>
+          )}
           <p className="text-[12px] italic text-[#888] leading-relaxed">
             {t(pofDescKey(businessType as BizType | null))}
           </p>
