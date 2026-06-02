@@ -386,14 +386,17 @@ const BottomNav = memo(function BottomNav() {
   ];
   const leftCount = 2;
   const rightTabs = tabs.slice(leftCount);
-  const gridCols = `grid-cols-${leftCount + 1 + rightTabs.length}`;
+  const totalCols = leftCount + 1 + rightTabs.length;
   return (
     <nav
       className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40"
       style={{ bottom: "max(env(safe-area-inset-bottom), 0px)" }}
     >
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
-        <ul className={`grid ${gridCols} items-center h-16 px-1`}>
+        <ul
+          className="grid items-center h-16 px-1"
+          style={{ gridTemplateColumns: `repeat(${totalCols}, minmax(0, 1fr))` }}
+        >
           {tabs.slice(0, leftCount).map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
