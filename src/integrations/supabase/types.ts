@@ -221,6 +221,63 @@ export type Database = {
         }
         Relationships: []
       }
+      listings: {
+        Row: {
+          address: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          created_at: string
+          description: string | null
+          id: string
+          images: Json
+          interested_customer_id: string | null
+          listing_type: string
+          price: number
+          property_type: string
+          size_sqft: number | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: Json
+          interested_customer_id?: string | null
+          listing_type?: string
+          price?: number
+          property_type?: string
+          size_sqft?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: Json
+          interested_customer_id?: string | null
+          listing_type?: string
+          price?: number
+          property_type?: string
+          size_sqft?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
