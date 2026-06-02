@@ -43,6 +43,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DevicesRouteImport } from './routes/devices'
 import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as CommissionsRouteImport } from './routes/commissions'
 import { Route as ClientsCompareRouteImport } from './routes/clients-compare'
 import { Route as BusinessTypeRouteImport } from './routes/business-type'
 import { Route as BusinessProfileRouteImport } from './routes/business-profile'
@@ -60,6 +61,7 @@ import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-passwo
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
+import { Route as CommissionIdRouteImport } from './routes/commission.$id'
 import { Route as TeamJoinTokenRouteImport } from './routes/team.join.$token'
 import { Route as ApiPublicOrderFormRouteImport } from './routes/api/public/order-form'
 import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
@@ -238,6 +240,11 @@ const CustomersRoute = CustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommissionsRoute = CommissionsRouteImport.update({
+  id: '/commissions',
+  path: '/commissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientsCompareRoute = ClientsCompareRouteImport.update({
   id: '/clients-compare',
   path: '/clients-compare',
@@ -324,6 +331,11 @@ const ConnectedPlatformsPlatformRoute =
     path: '/connected-platforms/$platform',
     getParentRoute: () => rootRouteImport,
   } as any)
+const CommissionIdRoute = CommissionIdRouteImport.update({
+  id: '/commission/$id',
+  path: '/commission/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamJoinTokenRoute = TeamJoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -369,6 +381,7 @@ export interface FileRoutesByFullPath {
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
+  '/commissions': typeof CommissionsRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/devices': typeof DevicesRoute
@@ -403,6 +416,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
@@ -429,6 +443,7 @@ export interface FileRoutesByTo {
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
+  '/commissions': typeof CommissionsRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/devices': typeof DevicesRoute
@@ -463,6 +478,7 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
@@ -490,6 +506,7 @@ export interface FileRoutesById {
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
+  '/commissions': typeof CommissionsRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/devices': typeof DevicesRoute
@@ -524,6 +541,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
@@ -552,6 +570,7 @@ export interface FileRouteTypes {
     | '/business-profile'
     | '/business-type'
     | '/clients-compare'
+    | '/commissions'
     | '/customers'
     | '/data-deletion'
     | '/devices'
@@ -586,6 +605,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
     | '/forgot-password/reset'
@@ -612,6 +632,7 @@ export interface FileRouteTypes {
     | '/business-profile'
     | '/business-type'
     | '/clients-compare'
+    | '/commissions'
     | '/customers'
     | '/data-deletion'
     | '/devices'
@@ -646,6 +667,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
     | '/forgot-password/reset'
@@ -672,6 +694,7 @@ export interface FileRouteTypes {
     | '/business-profile'
     | '/business-type'
     | '/clients-compare'
+    | '/commissions'
     | '/customers'
     | '/data-deletion'
     | '/devices'
@@ -706,6 +729,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
     | '/forgot-password/reset'
@@ -733,6 +757,7 @@ export interface RootRouteChildren {
   BusinessProfileRoute: typeof BusinessProfileRoute
   BusinessTypeRoute: typeof BusinessTypeRoute
   ClientsCompareRoute: typeof ClientsCompareRoute
+  CommissionsRoute: typeof CommissionsRoute
   CustomersRoute: typeof CustomersRoute
   DataDeletionRoute: typeof DataDeletionRoute
   DevicesRoute: typeof DevicesRoute
@@ -767,6 +792,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRouteWithChildren
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
+  CommissionIdRoute: typeof CommissionIdRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
   ListingIdRoute: typeof ListingIdRoute
@@ -1020,6 +1046,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/commissions': {
+      id: '/commissions'
+      path: '/commissions'
+      fullPath: '/commissions'
+      preLoaderRoute: typeof CommissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clients-compare': {
       id: '/clients-compare'
       path: '/clients-compare'
@@ -1139,6 +1172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnectedPlatformsPlatformRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/commission/$id': {
+      id: '/commission/$id'
+      path: '/commission/$id'
+      fullPath: '/commission/$id'
+      preLoaderRoute: typeof CommissionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team/join/$token': {
       id: '/team/join/$token'
       path: '/join/$token'
@@ -1248,6 +1288,7 @@ const rootRouteChildren: RootRouteChildren = {
   BusinessProfileRoute: BusinessProfileRoute,
   BusinessTypeRoute: BusinessTypeRoute,
   ClientsCompareRoute: ClientsCompareRoute,
+  CommissionsRoute: CommissionsRoute,
   CustomersRoute: CustomersRoute,
   DataDeletionRoute: DataDeletionRoute,
   DevicesRoute: DevicesRoute,
@@ -1282,6 +1323,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRouteWithChildren,
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
+  CommissionIdRoute: CommissionIdRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
   ListingIdRoute: ListingIdRoute,

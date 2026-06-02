@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2 } from "lucide-react";
+import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -377,18 +377,26 @@ const BottomNav = memo(function BottomNav() {
     ...(hasInventory(type)
       ? [{ to: "/inventory", labelKey: bizKey(type, "inventory"), icon: Package, id: "tour-tab-inventory" } as TabDef]
       : type === "property"
-      ? [{ to: "/listings", labelKey: "nav_listings", icon: Building2, id: "tour-tab-listings" } as TabDef]
+      ? [
+          { to: "/listings", labelKey: "nav_listings", icon: Building2, id: "tour-tab-listings" } as TabDef,
+          { to: "/commissions", labelKey: "nav_commission", icon: Wallet, id: "tour-tab-commission" } as TabDef,
+        ]
       : [{ to: "/services", labelKey: "nav_services", icon: Briefcase, id: "tour-tab-services" } as TabDef]),
     { to: "/customers", labelKey: bizKey(type, "customers"), icon: Users, id: "tour-tab-customers" },
   ];
   const leftCount = 2;
+  const rightTabs = tabs.slice(leftCount);
+  const totalCols = leftCount + 1 + rightTabs.length;
   return (
     <nav
       className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40"
       style={{ bottom: "max(env(safe-area-inset-bottom), 0px)" }}
     >
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
-        <ul className="grid grid-cols-5 items-center h-16 px-1">
+        <ul
+          className="grid items-center h-16 px-1"
+          style={{ gridTemplateColumns: `repeat(${totalCols}, minmax(0, 1fr))` }}
+        >
           {tabs.slice(0, leftCount).map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
@@ -402,7 +410,7 @@ const BottomNav = memo(function BottomNav() {
               <Plus className="h-7 w-7" strokeWidth={2.5} />
             </Link>
           </li>
-          {tabs.slice(leftCount).map((tab) => (
+          {rightTabs.map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
         </ul>
