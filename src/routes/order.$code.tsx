@@ -599,7 +599,13 @@ function PublicOrderFormPage() {
 
           {noProducts ? (
             <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-xs text-muted-foreground">
-              {isRetailish
+              {bizType === "property"
+                ? L(
+                    "No listings available right now. Please contact the agent.",
+                    "Tiada hartanah tersedia buat masa ini. Sila hubungi ejen.",
+                    "目前没有可售房源，请联系经纪。",
+                  )
+                : isRetailish
                 ? L(
                     "The seller hasn't added any products yet. Please try again later.",
                     "Penjual belum menambah produk. Sila cuba semula nanti.",
