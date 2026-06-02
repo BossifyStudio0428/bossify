@@ -226,7 +226,13 @@ function CustomerDetail() {
       )}
 
       {bizType === "property" && (
-        <CustomerRequirements customerId={customer.id} />
+        <>
+          <PackageSection
+            customer={customer}
+            onChange={() => setEditing(true)}
+          />
+          <CustomerRequirements customerId={customer.id} />
+        </>
       )}
 
       <section className="space-y-2">
@@ -326,6 +332,7 @@ function CustomerDetail() {
       {editing && (
         <EditSheet
           customer={customer}
+          bizType={bizType}
           onClose={() => setEditing(false)}
           onSaved={(c) => { setCustomer(c); setEditing(false); }}
         />
