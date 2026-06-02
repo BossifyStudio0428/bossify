@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ViewingsRouteImport } from './routes/viewings'
 import { Route as UniversityInsightsRouteImport } from './routes/university-insights'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
@@ -70,6 +71,11 @@ import { Route as ApiPublicStripeCheckoutRouteImport } from './routes/api/public
 import { Route as ApiPublicStripeActivateRouteImport } from './routes/api/public/stripe/activate'
 import { Route as ApiPublicOauthTiktokCallbackRouteImport } from './routes/api/public/oauth/tiktok/callback'
 
+const ViewingsRoute = ViewingsRouteImport.update({
+  id: '/viewings',
+  path: '/viewings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UniversityInsightsRoute = UniversityInsightsRouteImport.update({
   id: '/university-insights',
   path: '/university-insights',
@@ -416,6 +422,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/viewings': typeof ViewingsRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -478,6 +485,7 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/viewings': typeof ViewingsRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -541,6 +549,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/viewings': typeof ViewingsRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -605,6 +614,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/viewings'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -667,6 +677,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/viewings'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -729,6 +740,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/viewings'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -792,6 +804,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRouteWithChildren
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
+  ViewingsRoute: typeof ViewingsRoute
   CommissionIdRoute: typeof CommissionIdRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
@@ -808,6 +821,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/viewings': {
+      id: '/viewings'
+      path: '/viewings'
+      fullPath: '/viewings'
+      preLoaderRoute: typeof ViewingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/university-insights': {
       id: '/university-insights'
       path: '/university-insights'
@@ -1323,6 +1343,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRouteWithChildren,
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
+  ViewingsRoute: ViewingsRoute,
   CommissionIdRoute: CommissionIdRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
@@ -1339,3 +1360,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
