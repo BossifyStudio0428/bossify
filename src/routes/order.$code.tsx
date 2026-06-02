@@ -821,7 +821,7 @@ function PublicOrderFormPage() {
             />
           </Field>
 
-          {bizType === "retail" && (
+          {(bizType === "retail" || bizType === "fnb") && (
             <Field label={addressLabel}>
               <textarea rows={2} value={form.address} onChange={upd("address")} className="pof-input" maxLength={500} />
             </Field>
