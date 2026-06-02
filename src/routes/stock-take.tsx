@@ -22,10 +22,11 @@ type StockTake = {
 
 type InvItem = { id: string; name: string; stock: number; image_url: string | null; category: string | null };
 type CountRow = {
-  inventory_id: string;
+  inventory_id: string; // for fnb this stores ingredient_id (not inserted into stock_take_items.inventory_id)
   product_name: string;
   category: string | null;
   image_url: string | null;
+  unit: string | null;
   system_quantity: number;
   actual_quantity: number | "";
   reason: string;
@@ -37,6 +38,7 @@ function StockTakePage() {
   const { type: bizType, loading: btLoading } = useBusinessType();
   const navigate = useNavigate();
   const allowed = bizType === "retail" || bizType === "fnb";
+  const isFnb = bizType === "fnb";
 
   const [takes, setTakes] = useState<StockTake[]>([]);
   const [discrepMap, setDiscrepMap] = useState<Record<string, number>>({});
@@ -83,28 +85,48 @@ function StockTakePage() {
 
   const startNew = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("inventory")
-      .select("id, name, stock, image_url, category")
-      .order("name", { ascending: true });
-    if (error) { toast.error(error.message); return; }
-    const items = (data ?? []) as InvItem[];
-    setRows(items.map(i => ({
-      inventory_id: i.id,
-      product_name: i.name,
-      category: i.category,
-      image_url: i.image_url,
-      system_quantity: i.stock ?? 0,
-      actual_quantity: i.stock ?? 0,
-      reason: "",
-    })));
+    if (isFnb) {
+      const { data, error } = await supabase
+        .from("ingredients" as any)
+        .select("id, name, unit, current_stock")
+        .order("name", { ascending: true });
+      if (error) { toast.error(error.message); return; }
+      const items = ((data ?? []) as any[]);
+      setRows(items.map((i) => ({
+        inventory_id: i.id,
+        product_name: i.name,
+        category: null,
+        image_url: null,
+        unit: i.unit ?? null,
+        system_quantity: Number(i.current_stock ?? 0),
+        actual_quantity: Number(i.current_stock ?? 0),
+        reason: "",
+      })));
+    } else {
+      const { data, error } = await supabase
+        .from("inventory")
+        .select("id, name, stock, image_url, category")
+        .order("name", { ascending: true });
+      if (error) { toast.error(error.message); return; }
+      const items = (data ?? []) as InvItem[];
+      setRows(items.map(i => ({
+        inventory_id: i.id,
+        product_name: i.name,
+        category: i.category,
+        image_url: i.image_url,
+        unit: null,
+        system_quantity: i.stock ?? 0,
+        actual_quantity: i.stock ?? 0,
+        reason: "",
+      })));
+    }
     setSearch("");
     setActiveCat("__all__");
     setCounting(true);
   };
 
   const updateActual = (idx: number, v: string) => {
-    const n = v === "" ? "" : Math.max(0, parseInt(v, 10) || 0);
+    const n = v === "" ? "" : Math.max(0, isFnb ? (parseFloat(v) || 0) : (parseInt(v, 10) || 0));
     setRows(prev => prev.map((r, i) => i === idx ? { ...r, actual_quantity: n } : r));
   };
   const updateReason = (idx: number, v: string) => {
@@ -126,11 +148,11 @@ function StockTakePage() {
       const actual = typeof r.actual_quantity === "number" ? r.actual_quantity : r.system_quantity;
       return {
         stock_take_id: takeId,
-        inventory_id: r.inventory_id,
+        inventory_id: isFnb ? null : r.inventory_id,
         product_name: r.product_name,
-        system_quantity: r.system_quantity,
-        actual_quantity: actual,
-        difference: actual - r.system_quantity,
+        system_quantity: Math.round(r.system_quantity),
+        actual_quantity: Math.round(actual),
+        difference: Math.round(actual - r.system_quantity),
         reason: r.reason?.trim() ? r.reason.trim() : null,
       };
     });
@@ -138,11 +160,15 @@ function StockTakePage() {
       const { error: e2 } = await supabase.from("stock_take_items" as any).insert(items);
       if (e2) { setSaving(false); toast.error(e2.message); return; }
     }
-    // Update inventory quantities to actual
+    // Update stock quantities to actual
     for (const r of rows) {
       const actual = typeof r.actual_quantity === "number" ? r.actual_quantity : r.system_quantity;
       if (actual !== r.system_quantity) {
-        await supabase.from("inventory").update({ stock: actual }).eq("id", r.inventory_id);
+        if (isFnb) {
+          await supabase.from("ingredients" as any).update({ current_stock: actual }).eq("id", r.inventory_id);
+        } else {
+          await supabase.from("inventory").update({ stock: actual }).eq("id", r.inventory_id);
+        }
       }
     }
     setSaving(false);
@@ -268,17 +294,20 @@ function StockTakePage() {
             return (
               <div key={r.inventory_id} className="rounded-2xl bg-card border border-border/60 p-3 space-y-2">
                 <div className="flex items-center gap-3">
-                  {r.image_url ? (
+                  {!isFnb && r.image_url ? (
                     <img src={r.image_url} alt={r.product_name} className="h-12 w-12 rounded-xl object-cover bg-muted" />
-                  ) : (
+                  ) : !isFnb ? (
                     <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
                       <Package className="h-5 w-5 text-muted-foreground" />
                     </div>
-                  )}
+                  ) : null}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-foreground truncate">{r.product_name}</p>
-                    {r.category && (
+                    {!isFnb && r.category && (
                       <span className="inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{r.category}</span>
+                    )}
+                    {isFnb && r.unit && (
+                      <span className="inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{r.unit}</span>
                     )}
                   </div>
                 </div>
@@ -291,7 +320,8 @@ function StockTakePage() {
                     <p className="text-[10px] uppercase text-muted-foreground">{t("actual_qty")}</p>
                     <input
                       type="number"
-                      inputMode="numeric"
+                      inputMode={isFnb ? "decimal" : "numeric"}
+                      step={isFnb ? "0.01" : "1"}
                       value={r.actual_quantity}
                       onChange={(e) => updateActual(idx, e.target.value)}
                       className="w-full rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
@@ -352,7 +382,7 @@ function StockTakePage() {
   return (
     <div className="px-5 pt-10 pb-24 space-y-5 relative">
       <header className="flex items-center gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("stock_take")}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t(isFnb ? "ingredient_stock_take" : "product_stock_take")}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">{takes.length}</span>
       </header>
 
