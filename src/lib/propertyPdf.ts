@@ -1,10 +1,12 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { savePdf } from "@/lib/pdf";
+import html2pdf from "html2pdf.js";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
+import { FileOpener } from "@capacitor-community/file-opener";
 import type { Lang } from "@/contexts/I18nContext";
 
-const PURPLE: [number, number, number] = [108, 63, 214];
-const ALT_ROW: [number, number, number] = [240, 238, 248];
+const PURPLE = "#6C3FD6";
+const ALT_ROW = "#F0EEF8";
 
 const T = {
   en: {
@@ -64,36 +66,100 @@ function rm(n: number) {
   return `RM ${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function drawHeader(doc: jsPDF, businessName: string, title: string, subtitle: string, lang: Lang) {
-  const l = T[lang];
-  doc.setFillColor(...PURPLE);
-  doc.rect(0, 0, 210, 26, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
-  doc.text(businessName || "Bossify", 14, 13);
-  doc.setFontSize(11);
-  doc.text(title, 14, 20);
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
-  if (subtitle) doc.text(subtitle, 14, 34);
-  doc.setFontSize(9);
-  doc.setTextColor(110, 110, 110);
-  doc.text(`${l.generated}: ${new Date().toLocaleString("en-MY")}`, 14, subtitle ? 39 : 34);
-  doc.setTextColor(0, 0, 0);
+function esc(v: unknown): string {
+  return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }
 
-function drawFooters(doc: jsPDF, lang: Lang) {
+function pageShell(title: string, subtitle: string, businessName: string, lang: Lang, bodyHtml: string): string {
   const l = T[lang];
-  const total = doc.getNumberOfPages();
-  for (let i = 1; i <= total; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(120, 120, 120);
-    const w = doc.internal.pageSize.getWidth();
-    const h = doc.internal.pageSize.getHeight();
-    doc.text("Powered by Bossify — bossify-malaysia.lovable.app", 14, h - 8);
-    doc.text(`${l.page} ${i}/${total}`, w - 14, h - 8, { align: "right" });
+  const generatedAt = new Date().toLocaleString("en-MY");
+  // Inline CSS, use widely supported fallback fonts. html2canvas uses the
+  // browser's font stack so CJK glyphs render natively via the OS fonts.
+  return `<!doctype html>
+<html lang="${lang}">
+<head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px; color: #111;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
+      "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans", "Segoe UI", Arial, sans-serif;
+    font-size: 12px; line-height: 1.4;
+    width: 760px;
   }
+  .hdr { background: ${PURPLE}; color: #fff; padding: 16px 20px; border-radius: 8px; }
+  .hdr h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  .hdr .sub { margin-top: 4px; font-size: 13px; opacity: 0.95; }
+  .meta { color: #555; font-size: 11px; margin: 10px 4px 16px; display: flex; justify-content: space-between; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  th { background: ${PURPLE}; color: #fff; text-align: left; padding: 8px 10px; font-weight: 600; font-size: 11px; }
+  td { padding: 7px 10px; border-bottom: 1px solid #e6e2f0; font-size: 11px; vertical-align: top; }
+  tr:nth-child(even) td { background: ${ALT_ROW}; }
+  tfoot td { background: ${ALT_ROW}; font-weight: 700; }
+  .footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; color: #777; font-size: 10px; text-align: center; }
+</style></head>
+<body>
+  <div class="hdr">
+    <h1>${esc(businessName || "Bossify")}</h1>
+    <div class="sub">${esc(title)}${subtitle ? " — " + esc(subtitle) : ""}</div>
+  </div>
+  <div class="meta"><span>${esc(l.generated)}: ${esc(generatedAt)}</span><span></span></div>
+  ${bodyHtml}
+  <div class="footer">Powered by Bossify — bossify-malaysia.lovable.app</div>
+</body></html>`;
+}
+
+async function renderAndSave(html: string, filename: string): Promise<void> {
+  // Render into an offscreen container; html2canvas needs the node attached.
+  const container = document.createElement("div");
+  container.style.position = "fixed";
+  container.style.left = "-10000px";
+  container.style.top = "0";
+  container.innerHTML = html;
+  document.body.appendChild(container);
+  try {
+    const worker = (html2pdf as any)()
+      .set({
+        margin: 10,
+        filename,
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["css", "legacy"] },
+      })
+      .from(container);
+
+    if (Capacitor.isNativePlatform()) {
+      const blob: Blob = await worker.outputPdf("blob");
+      const base64 = await blobToBase64(blob);
+      const res = await Filesystem.writeFile({
+        path: filename, data: base64,
+        directory: Directory.Documents, recursive: true,
+      });
+      try {
+        await FileOpener.open({ filePath: res.uri, contentType: "application/pdf", openWithDefault: true });
+      } catch {
+        await Share.share({ title: filename, url: res.uri, dialogTitle: filename });
+      }
+    } else {
+      await worker.save();
+    }
+  } finally {
+    container.remove();
+  }
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const s = String(fr.result || "");
+      const i = s.indexOf(",");
+      resolve(i >= 0 ? s.slice(i + 1) : s);
+    };
+    fr.onerror = reject;
+    fr.readAsDataURL(blob);
+  });
 }
 
 function ymd() {
@@ -118,42 +184,45 @@ export async function exportCommissionsPDF(opts: {
   summary: { total: number; pending: number; received: number; month: number };
 }) {
   const l = T[opts.lang];
-  const doc = new jsPDF();
-  drawHeader(doc, opts.businessName, l.commissionReport, "", opts.lang);
-
-  autoTable(doc, {
-    startY: 44,
-    head: [[l.summary.totalCommissions, l.summary.thisMonth, l.summary.pending, l.summary.received]],
-    body: [[rm(opts.summary.total), rm(opts.summary.month), rm(opts.summary.pending), rm(opts.summary.received)]],
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255 },
-    styles: { fontSize: 9 },
-  });
-
-  const y = (doc as any).lastAutoTable.finalY + 6;
-  autoTable(doc, {
-    startY: y,
-    head: [[l.th.property, l.th.client, l.th.type, l.th.price, l.th.rate, l.th.commission, l.th.status, l.th.date]],
-    body: opts.rows.map((r) => [
-      r.listing_title || "—",
-      r.client_name || "—",
-      r.transaction_type,
-      rm(r.transaction_price),
-      `${r.commission_rate}%`,
-      rm(r.commission_amount),
-      r.status,
-      r.transaction_date,
-    ]),
-    foot: [["", "", "", "", l.total, rm(opts.summary.total), "", ""]],
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255 },
-    footStyles: { fillColor: ALT_ROW, textColor: 0, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 8 },
-  });
-
-  drawFooters(doc, opts.lang);
-  await savePdf(doc, `Bossify_Commissions_${ymd()}.pdf`);
+  const summaryHtml = `
+    <table>
+      <thead><tr>
+        <th>${esc(l.summary.totalCommissions)}</th>
+        <th>${esc(l.summary.thisMonth)}</th>
+        <th>${esc(l.summary.pending)}</th>
+        <th>${esc(l.summary.received)}</th>
+      </tr></thead>
+      <tbody><tr>
+        <td>${rm(opts.summary.total)}</td>
+        <td>${rm(opts.summary.month)}</td>
+        <td>${rm(opts.summary.pending)}</td>
+        <td>${rm(opts.summary.received)}</td>
+      </tr></tbody>
+    </table>`;
+  const rowsHtml = opts.rows.map((r) => `<tr>
+    <td>${esc(r.listing_title || "—")}</td>
+    <td>${esc(r.client_name || "—")}</td>
+    <td>${esc(r.transaction_type)}</td>
+    <td>${rm(r.transaction_price)}</td>
+    <td>${esc(r.commission_rate)}%</td>
+    <td>${rm(r.commission_amount)}</td>
+    <td>${esc(r.status)}</td>
+    <td>${esc(r.transaction_date)}</td>
+  </tr>`).join("");
+  const tableHtml = `
+    <table>
+      <thead><tr>
+        <th>${esc(l.th.property)}</th><th>${esc(l.th.client)}</th><th>${esc(l.th.type)}</th>
+        <th>${esc(l.th.price)}</th><th>${esc(l.th.rate)}</th><th>${esc(l.th.commission)}</th>
+        <th>${esc(l.th.status)}</th><th>${esc(l.th.date)}</th>
+      </tr></thead>
+      <tbody>${rowsHtml || `<tr><td colspan="8" style="text-align:center;color:#999;">—</td></tr>`}</tbody>
+      <tfoot><tr>
+        <td colspan="4"></td><td>${esc(l.total)}</td><td>${rm(opts.summary.total)}</td><td colspan="2"></td>
+      </tr></tfoot>
+    </table>`;
+  const html = pageShell(l.commissionReport, "", opts.businessName, opts.lang, summaryHtml + tableHtml);
+  await renderAndSave(html, `Bossify_Commissions_${ymd()}.pdf`);
 }
 
 // ----- Listings report -----
@@ -167,38 +236,40 @@ export async function exportListingsPDF(opts: {
   lang: Lang; businessName: string; rows: ListingPdfRow[];
 }) {
   const l = T[opts.lang];
-  const doc = new jsPDF();
-  drawHeader(doc, opts.businessName, l.listingsReport, "", opts.lang);
-
   const total = opts.rows.length;
   const available = opts.rows.filter((r) => r.status === "available").length;
   const sold = opts.rows.filter((r) => r.status === "sold").length;
   const rented = opts.rows.filter((r) => r.status === "rented").length;
-
-  autoTable(doc, {
-    startY: 44,
-    head: [[l.summary.totalListings, l.summary.available, l.summary.sold, l.summary.rented]],
-    body: [[String(total), String(available), String(sold), String(rented)]],
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255 },
-    styles: { fontSize: 9 },
-  });
-
-  const y = (doc as any).lastAutoTable.finalY + 6;
-  autoTable(doc, {
-    startY: y,
-    head: [[l.th.title, l.th.type, l.th.forSaleRent, l.th.price, l.th.bedrooms, l.th.status]],
-    body: opts.rows.map((r) => [
-      r.title, r.property_type, r.listing_type, rm(r.price), String(r.bedrooms ?? "—"), r.status,
-    ]),
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255 },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 8 },
-  });
-
-  drawFooters(doc, opts.lang);
-  await savePdf(doc, `Bossify_Listings_${ymd()}.pdf`);
+  const summaryHtml = `
+    <table>
+      <thead><tr>
+        <th>${esc(l.summary.totalListings)}</th>
+        <th>${esc(l.summary.available)}</th>
+        <th>${esc(l.summary.sold)}</th>
+        <th>${esc(l.summary.rented)}</th>
+      </tr></thead>
+      <tbody><tr>
+        <td>${total}</td><td>${available}</td><td>${sold}</td><td>${rented}</td>
+      </tr></tbody>
+    </table>`;
+  const rowsHtml = opts.rows.map((r) => `<tr>
+    <td>${esc(r.title)}</td>
+    <td>${esc(r.property_type)}</td>
+    <td>${esc(r.listing_type)}</td>
+    <td>${rm(r.price)}</td>
+    <td>${esc(r.bedrooms ?? "—")}</td>
+    <td>${esc(r.status)}</td>
+  </tr>`).join("");
+  const tableHtml = `
+    <table>
+      <thead><tr>
+        <th>${esc(l.th.title)}</th><th>${esc(l.th.type)}</th><th>${esc(l.th.forSaleRent)}</th>
+        <th>${esc(l.th.price)}</th><th>${esc(l.th.bedrooms)}</th><th>${esc(l.th.status)}</th>
+      </tr></thead>
+      <tbody>${rowsHtml || `<tr><td colspan="6" style="text-align:center;color:#999;">—</td></tr>`}</tbody>
+    </table>`;
+  const html = pageShell(l.listingsReport, "", opts.businessName, opts.lang, summaryHtml + tableHtml);
+  await renderAndSave(html, `Bossify_Listings_${ymd()}.pdf`);
 }
 
 // ----- Viewings report -----
@@ -216,28 +287,24 @@ export async function exportViewingsPDF(opts: {
   lang: Lang; businessName: string; rows: ViewingPdfRow[];
 }) {
   const l = T[opts.lang];
-  const doc = new jsPDF();
-  drawHeader(doc, opts.businessName, l.viewingsReport, "", opts.lang);
-
-  autoTable(doc, {
-    startY: 44,
-    head: [[l.th.property, l.th.client, l.th.viewingDate, l.th.status, l.th.interest, l.th.feedback]],
-    body: opts.rows.map((r) => [
-      r.listing_title || "—",
-      r.customer_name || "—",
-      new Date(r.viewing_at).toLocaleString("en-MY", { dateStyle: "medium", timeStyle: "short" }),
-      r.status,
-      r.interest_level || "—",
-      r.feedback || "—",
-    ]),
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255 },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 8 },
-  });
-
-  drawFooters(doc, opts.lang);
-  await savePdf(doc, `Bossify_Viewings_${ymd()}.pdf`);
+  const rowsHtml = opts.rows.map((r) => `<tr>
+    <td>${esc(r.listing_title || "—")}</td>
+    <td>${esc(r.customer_name || "—")}</td>
+    <td>${esc(new Date(r.viewing_at).toLocaleString("en-MY", { dateStyle: "medium", timeStyle: "short" }))}</td>
+    <td>${esc(r.status)}</td>
+    <td>${esc(r.interest_level || "—")}</td>
+    <td>${esc(r.feedback || "—")}</td>
+  </tr>`).join("");
+  const tableHtml = `
+    <table>
+      <thead><tr>
+        <th>${esc(l.th.property)}</th><th>${esc(l.th.client)}</th><th>${esc(l.th.viewingDate)}</th>
+        <th>${esc(l.th.status)}</th><th>${esc(l.th.interest)}</th><th>${esc(l.th.feedback)}</th>
+      </tr></thead>
+      <tbody>${rowsHtml || `<tr><td colspan="6" style="text-align:center;color:#999;">—</td></tr>`}</tbody>
+    </table>`;
+  const html = pageShell(l.viewingsReport, "", opts.businessName, opts.lang, tableHtml);
+  await renderAndSave(html, `Bossify_Viewings_${ymd()}.pdf`);
 }
 
 // ----- Document checklist -----
@@ -250,20 +317,19 @@ export async function exportDocumentChecklistPDF(opts: {
   items: DocChecklistItem[];
 }) {
   const l = T[opts.lang];
-  const doc = new jsPDF();
-  const subtitle = `${opts.clientName}${opts.propertyTitle ? ` — ${opts.propertyTitle}` : ""}`;
-  drawHeader(doc, opts.businessName, l.docReport, subtitle, opts.lang);
-
-  autoTable(doc, {
-    startY: 46,
-    head: [[l.th.document, l.th.status, l.th.notes]],
-    body: opts.items.map((it) => [it.name, it.status, it.notes || "—"]),
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255 },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 9 },
-  });
-
-  drawFooters(doc, opts.lang);
-  await savePdf(doc, `Bossify_Documents_${ymd()}.pdf`);
+  const subtitle = `${opts.clientName}${opts.propertyTitle ? " — " + opts.propertyTitle : ""}`;
+  const rowsHtml = opts.items.map((it) => `<tr>
+    <td>${esc(it.name)}</td>
+    <td>${esc(it.status)}</td>
+    <td>${esc(it.notes || "—")}</td>
+  </tr>`).join("");
+  const tableHtml = `
+    <table>
+      <thead><tr>
+        <th>${esc(l.th.document)}</th><th>${esc(l.th.status)}</th><th>${esc(l.th.notes)}</th>
+      </tr></thead>
+      <tbody>${rowsHtml || `<tr><td colspan="3" style="text-align:center;color:#999;">—</td></tr>`}</tbody>
+    </table>`;
+  const html = pageShell(l.docReport, subtitle, opts.businessName, opts.lang, tableHtml);
+  await renderAndSave(html, `Bossify_Documents_${ymd()}.pdf`);
 }
