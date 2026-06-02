@@ -34,6 +34,27 @@ function NotifSettingsPage() {
   const [webPermission, setWebPermission] = useState<NotificationPermission | "unsupported">("unsupported");
   const [isNativeApp, setIsNativeApp] = useState(false);
 
+  // Re-check native notification permission status (e.g. after returning from
+  // the system settings page). Updates local `granted` state + localStorage
+  // so the warning banner disappears / re-appears correctly.
+  const recheckNativePermission = async () => {
+    try {
+      const { Capacitor } = await import("@capacitor/core");
+      if (!Capacitor.isNativePlatform()) return;
+      const { LocalNotifications } = await import("@capacitor/local-notifications");
+      const res = await LocalNotifications.checkPermissions().catch(() => ({ display: "denied" as const }));
+      const ok = res.display === "granted";
+      try {
+        if (ok) localStorage.setItem("bossify_notif_granted", "1");
+        else localStorage.removeItem("bossify_notif_granted");
+      } catch {}
+      setGranted(ok);
+      if (ok && user) {
+        registerPushForUser(user.id, { force: true }).catch(() => {});
+      }
+    } catch {}
+  };
+
   const registerCurrentDevice = async () => {
     if (!user) return { ok: false, native: false, reason: "Not signed in" };
     let isNative = false;
@@ -83,6 +104,27 @@ function NotifSettingsPage() {
     } catch {}
     setIsNativeApp(native);
 
+    // Native: re-check permission on mount and whenever app returns from
+    // background (user may have toggled the system notification setting).
+    if (native) {
+      recheckNativePermission();
+      let cleanup: (() => void) | null = null;
+      import("@capacitor/app")
+        .then(({ App }) => {
+          const handle = App.addListener("appStateChange", ({ isActive }) => {
+            if (isActive) recheckNativePermission();
+          });
+          cleanup = () => {
+            // handle is a Promise<PluginListenerHandle> in v8
+            Promise.resolve(handle).then((h) => h.remove()).catch(() => {});
+          };
+        })
+        .catch(() => {});
+      return () => {
+        if (cleanup) cleanup();
+      };
+    }
+
     // Web flow: auto-prompt for permission when 'default'
     if (!native && typeof window !== "undefined" && isWebPushSupported() && typeof Notification !== "undefined") {
       const perm = Notification.permission;
@@ -113,14 +155,60 @@ function NotifSettingsPage() {
 
   const openSysSettings = async () => {
     if (!user) return;
-    const result = await registerCurrentDevice();
-    if (result.ok) {
-      setGranted(true);
-      toast.success(t("notif_sent_check"));
-    } else {
-      if (result.native) await openAppNotificationSettings();
-      setGranted(isNotifGranted());
-      toast.error(t("notif_send_failed") + result.reason);
+
+    // Detect platform
+    let isNative = false;
+    try {
+      const { Capacitor } = await import("@capacitor/core");
+      isNative = Capacitor.isNativePlatform();
+    } catch {}
+
+    if (isNative) {
+      // Step 1: try the in-app permission prompt first. If notifications were
+      // never asked or the OS still allows a prompt, this is the friendliest
+      // path and avoids bouncing the user out of the app.
+      try {
+        const { LocalNotifications } = await import("@capacitor/local-notifications");
+        const current = await LocalNotifications.checkPermissions().catch(() => ({ display: "denied" as const }));
+        if (current.display !== "granted" && current.display !== "denied") {
+          const res = await LocalNotifications.requestPermissions().catch(() => ({ display: "denied" as const }));
+          if (res.display === "granted") {
+            await recheckNativePermission();
+            registerPushForUser(user.id, { force: true }).catch(() => {});
+            toast.success(t("notif_sent_check"));
+            return;
+          }
+        }
+      } catch {}
+
+      // Step 2: permission is denied or otherwise unavailable — bounce the
+      // user to the OS app-notification settings page for Bossify.
+      await openAppNotificationSettings();
+      // Status will be re-checked automatically by the appStateChange
+      // listener when the user returns to the app.
+      return;
+    }
+
+    // Web browser: trigger the browser permission popup and register web push.
+    try {
+      if (typeof Notification === "undefined") {
+        toast.error(t("notif_send_failed") + "unsupported");
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      setWebPermission(perm);
+      if (perm === "granted") {
+        if (isWebPushSupported()) {
+          await registerWebPush(user.id).catch(() => {});
+        }
+        try { localStorage.setItem("bossify_notif_granted", "1"); } catch {}
+        setGranted(true);
+        toast.success(t("notif_sent_check"));
+      } else {
+        toast.error(t("notif_send_failed") + perm);
+      }
+    } catch (e) {
+      toast.error(t("notif_send_failed") + (e as Error).message);
     }
   };
 
