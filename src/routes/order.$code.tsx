@@ -403,6 +403,33 @@ function PublicOrderFormPage() {
             <p className="text-sm font-mono font-semibold mt-1">{done.code}</p>
             <p className="text-xs text-muted-foreground mt-2">— {done.business}</p>
           </div>
+          {done.paymentMethod === "bank_transfer" && done.whatsapp && (() => {
+            const amountStr = done.amount.toFixed(2);
+            const msg =
+              lang === "zh"
+                ? `你好 ${done.business}，我已完成订单 ${done.code} 的付款 RM${amountStr}，请查收我的转账收据。`
+                : lang === "ms"
+                ? `Hai ${done.business}, saya telah membuat pembayaran untuk pesanan ${done.code} sebanyak RM${amountStr}. Sila semak resit saya.`
+                : `Hi ${done.business}, I have made payment for order ${done.code} amounting to RM${amountStr}. Please find my receipt attached.`;
+            const phone = done.whatsapp.replace(/[^0-9]/g, "");
+            const href = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+            const label =
+              lang === "zh"
+                ? "📎 发送付款收据"
+                : lang === "ms"
+                ? "📎 Hantar Resit Pembayaran"
+                : "📎 Send Payment Receipt";
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex w-full items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm shadow-md active:scale-[0.99] transition"
+              >
+                {label}
+              </a>
+            );
+          })()}
         </div>
         <p className="text-[11px] text-muted-foreground mt-10">
           {lang === "ms" ? "Dikuasakan oleh" : lang === "zh" ? "由" : "Powered by"} Bossify 💜
