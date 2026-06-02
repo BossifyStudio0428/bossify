@@ -7,7 +7,7 @@ import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
 
-export const Route = createFileRoute("/stock-take/$id")({ component: StockTakeReportPage });
+export const Route = createFileRoute("/stock-take_/$id")({ component: StockTakeReportPage });
 
 type Take = { id: string; started_at: string; completed_at: string | null; status: string };
 type Item = {
