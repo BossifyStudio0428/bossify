@@ -302,21 +302,33 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     }
 
     const priceMap = new Map<string, number>();
-    const sourceTable = isRetailish ? "inventory" : "services";
-    const { data: priceRows } = await sb
-      .from(sourceTable)
-      .select("name, price, variants")
-      .eq("user_id", userId);
-    for (const row of (priceRows ?? []) as any[]) {
-      const baseName = String(row.name ?? "").trim().toLowerCase();
-      const basePrice = Number(row.price ?? 0);
-      if (baseName) priceMap.set(baseName, basePrice);
-      const variants = Array.isArray(row.variants) ? row.variants : [];
-      for (const v of variants) {
-        const vName = String(v?.name ?? "").trim();
-        if (!vName) continue;
-        const vPrice = Number(v?.price ?? basePrice);
-        priceMap.set(`${baseName} (${vName.toLowerCase()})`, vPrice);
+    if (bizType === "property") {
+      const { data: priceRows } = await sb
+        .from("property_listings")
+        .select("title, price")
+        .eq("user_id", userId);
+      for (const row of (priceRows ?? []) as any[]) {
+        const baseName = String(row.title ?? "").trim().toLowerCase();
+        const basePrice = Number(row.price ?? 0);
+        if (baseName) priceMap.set(baseName, basePrice);
+      }
+    } else {
+      const sourceTable = isRetailish ? "inventory" : "services";
+      const { data: priceRows } = await sb
+        .from(sourceTable)
+        .select("name, price, variants")
+        .eq("user_id", userId);
+      for (const row of (priceRows ?? []) as any[]) {
+        const baseName = String(row.name ?? "").trim().toLowerCase();
+        const basePrice = Number(row.price ?? 0);
+        if (baseName) priceMap.set(baseName, basePrice);
+        const variants = Array.isArray(row.variants) ? row.variants : [];
+        for (const v of variants) {
+          const vName = String(v?.name ?? "").trim();
+          if (!vName) continue;
+          const vPrice = Number(v?.price ?? basePrice);
+          priceMap.set(`${baseName} (${vName.toLowerCase()})`, vPrice);
+        }
       }
     }
     const lookupPrice = (product: string, variant?: string): number | null => {
