@@ -827,6 +827,43 @@ function Index() {
           </div>
         </section>
       )}
+
+      {eff === "property" && (
+        <section>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+              {t("viewings_today_title")}
+            </p>
+            <Link to="/viewings" className="text-[11px] font-semibold text-primary">
+              {t("viewings_title")} →
+            </Link>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+            {todaysViewings.length === 0 && (
+              <p className="text-center text-xs text-muted-foreground py-6">—</p>
+            )}
+            {todaysViewings.map((v) => (
+              <Link
+                key={v.id}
+                to="/viewing/$id"
+                params={{ id: v.id }}
+                className="flex items-center gap-3 p-4"
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                  🏠
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{v.listing_title}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {v.customer_name} · {new Date(v.viewing_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
