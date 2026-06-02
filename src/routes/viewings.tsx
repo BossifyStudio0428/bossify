@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Plus, Search } from "lucide-react";
+import { ChevronLeft, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -236,15 +236,6 @@ function ViewingsPage() {
         ))}
       </div>
 
-      <Link
-        to="/viewing/$id"
-        params={{ id: "new" }}
-        aria-label={t("add_viewing")}
-        className="fixed bottom-24 z-30 h-14 w-14 rounded-full text-primary-foreground shadow-[var(--shadow-soft)] flex items-center justify-center active:scale-95 transition-transform bg-gradient-to-br from-primary to-primary/80"
-        style={{ right: "max(1.5rem, calc(50vw - 180px + 1rem))" }}
-      >
-        <Plus className="h-6 w-6" strokeWidth={2.5} />
-      </Link>
     </div>
   );
 }
