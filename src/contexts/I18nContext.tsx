@@ -4086,6 +4086,7 @@ const dict = {
     lc_total_interest: "总利息",
     lc_share_wa: "通过 WhatsApp 分享",
     lc_down_amount: "首付金额",
+    pro_feature_required: "此功能需要专业版或以上计划",
   },
 } as const;
 
