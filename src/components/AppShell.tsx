@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet, Eye } from "lucide-react";
+import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -375,7 +375,6 @@ const BottomNav = memo(function BottomNav() {
     type === "property"
       ? [
           { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
-          { to: "/viewings", labelKey: "nav_viewings", icon: Eye, id: "tour-tab-viewings" },
           { to: "/listings", labelKey: "nav_listings", icon: Building2, id: "tour-tab-listings" },
           { to: "/commissions", labelKey: "nav_commission", icon: Wallet, id: "tour-tab-commission" },
           { to: "/customers", labelKey: bizKey(type, "customers"), icon: Users, id: "tour-tab-customers" },

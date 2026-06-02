@@ -75,6 +75,22 @@ function RequirementEditor() {
     })();
   }, [id, isNew, user?.id]);
 
+  // When creating a new requirement from a customer profile, prefill the
+  // selected client via ?customerId=... so the user doesn't re-pick it.
+  useEffect(() => {
+    if (!isNew || typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const cid = sp.get("customerId");
+    if (cid) setCustomerId(cid);
+  }, [isNew]);
+
+  const returnTo = (): { to: string } | null => {
+    if (typeof window === "undefined") return null;
+    const sp = new URLSearchParams(window.location.search);
+    const r = sp.get("returnTo");
+    return r ? { to: r } : null;
+  };
+
   const save = async () => {
     if (!user) return;
     if (!customerId) { toast.error(t("fld_select_client")); return; }
@@ -98,7 +114,9 @@ function RequirementEditor() {
     setSaving(false);
     if (res.error) { toast.error(res.error.message); return; }
     toast.success(t("requirement_saved"));
-    navigate({ to: "/requirements" });
+    const back = returnTo();
+    if (back) navigate({ to: back.to as any, replace: true });
+    else navigate({ to: "/requirements" });
   };
 
   const remove = async () => {
@@ -106,7 +124,9 @@ function RequirementEditor() {
     const { error } = await supabase.from("property_client_requirements" as never).delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success(t("requirement_deleted"));
-    navigate({ to: "/requirements" });
+    const back = returnTo();
+    if (back) navigate({ to: back.to as any, replace: true });
+    else navigate({ to: "/requirements" });
   };
 
   if (loading) {
@@ -125,9 +145,17 @@ function RequirementEditor() {
   return (
     <div className="px-5 pt-10 pb-28 space-y-4">
       <header className="flex items-center gap-2">
-        <Link to="/requirements" className="-ml-2 p-2 rounded-full active:bg-muted">
+        <button
+          onClick={() => {
+            const back = returnTo();
+            if (back) navigate({ to: back.to as any });
+            else navigate({ to: "/requirements" });
+          }}
+          className="-ml-2 p-2 rounded-full active:bg-muted"
+          aria-label="back"
+        >
           <ChevronLeft className="h-5 w-5" />
-        </Link>
+        </button>
         <h1 className="text-xl font-bold tracking-tight">{t(isNew ? "new_requirement" : "edit_requirement")}</h1>
         {!isNew && (
           <button onClick={remove} className="ml-auto p-2 rounded-full text-red-500 active:bg-red-50" aria-label={t("delete")}>
