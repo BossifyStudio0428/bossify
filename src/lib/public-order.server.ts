@@ -59,6 +59,7 @@ const SubmitSchema = z.object({
   location_interest: z.string().trim().max(160).optional().default(""),
   project_description: z.string().trim().max(2000).optional().default(""),
   deadline: z.string().trim().max(64).optional().default(""),
+  payment_method: z.enum(["bank_transfer", "cash_on_delivery"]).optional(),
 });
 
 export type LoadPublicOrderFormResult =
@@ -215,7 +216,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
 
     const { data: profile, error: pErr } = await sb
       .from("profiles")
-      .select("id, business_type, order_form_enabled, business_name")
+      .select("id, business_type, order_form_enabled, business_name, allow_cod")
       .eq("order_form_code", data2.code.toLowerCase())
       .maybeSingle();
     if (pErr || !profile) return { ok: false, reason: "not_found", error: pErr?.message };
@@ -224,6 +225,15 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     const bizType: string = profile.business_type ?? "retail";
     const isRetailish = bizType === "retail" || bizType === "fnb";
     const userId: string = profile.id;
+
+    // Payment method only applies to retail/fnb. Validate seller actually allows the chosen option.
+    let paymentMethod: string | null = null;
+    if (isRetailish && data2.payment_method) {
+      if (data2.payment_method === "cash_on_delivery" && (profile as any).allow_cod === false) {
+        return { ok: false, reason: "insert_failed", error: "Cash on delivery not allowed" };
+      }
+      paymentMethod = data2.payment_method;
+    }
 
     const priceMap = new Map<string, number>();
     const sourceTable = isRetailish ? "inventory" : "services";
@@ -350,6 +360,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         status: "Unpaid",
         notes: combinedNotes,
         delivery_address: (data2.address || "").trim() || null,
+        payment_method: paymentMethod,
         order_source: "online_form",
       })
       .select("id, code")
