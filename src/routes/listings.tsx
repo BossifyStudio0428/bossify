@@ -52,7 +52,7 @@ function ListingsPage() {
     if (!user) return;
     setLoading(true);
     const { data, error } = await supabase
-      .from("listings" as never)
+      .from("property_listings" as never)
       .select("id,title,property_type,listing_type,price,address,bedrooms,bathrooms,size_sqft,status,images")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
