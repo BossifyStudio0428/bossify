@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet, Eye } from "lucide-react";
+import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
