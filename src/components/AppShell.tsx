@@ -244,6 +244,17 @@ function ShellInner() {
     }
     const isRegistering =
       typeof window !== "undefined" && safeSessionStorage.getItem("bossify_registering") === "1";
+    const isDeviceLimitBlocked =
+      typeof window !== "undefined" && sessionStorage.getItem("bossify_device_limit_block") === "1";
+    // Device limit reached at login → keep the user pinned to the auth
+    // screen (which shows the DeviceLimitBlock) or /devices, where they
+    // can free up a slot. Block all other in-app routes.
+    if (session && isDeviceLimitBlocked) {
+      if (locationPathname !== "/auth" && locationPathname !== "/devices") {
+        navigate({ to: "/devices" });
+      }
+      return;
+    }
     if (session && isLoginRoute && !isRegistering) {
       navigate({ to: "/" });
       return;
