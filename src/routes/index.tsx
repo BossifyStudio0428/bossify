@@ -65,6 +65,9 @@ function Index() {
   const [todaysViewings, setTodaysViewings] = useState<
     { id: string; listing_title: string; customer_name: string; viewing_at: string; status: string }[]
   >([]);
+  const [expiringRenewals, setExpiringRenewals] = useState<
+    { id: string; customer_name: string; reminder_type: string; expiry_date: string; days_left: number }[]
+  >([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [followUpsThisWeek, setFollowUpsThisWeek] = useState(0);
   const [followUpsOverdue, setFollowUpsOverdue] = useState(0);
@@ -203,6 +206,41 @@ function Index() {
       } catch (e) {
         setTodaysViewings([]);
       }
+      // Upcoming renewal reminders (expiring within 30 days) — property only
+      try {
+        const todayStr2 = today.toISOString().slice(0, 10);
+        const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+        const in30Str = in30.toISOString().slice(0, 10);
+        const { data: rrRows } = await supabase
+          .from("renewal_reminders" as never)
+          .select("id,customer_id,reminder_type,expiry_date")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .gte("expiry_date", todayStr2)
+          .lte("expiry_date", in30Str)
+          .order("expiry_date", { ascending: true })
+          .limit(5);
+        const rrs = ((rrRows as any[]) ?? []) as { id: string; customer_id: string | null; reminder_type: string; expiry_date: string }[];
+        const rIds = Array.from(new Set(rrs.map((r) => r.customer_id).filter(Boolean))) as string[];
+        let rMap = new Map<string, string>();
+        if (rIds.length) {
+          const { data: cs } = await supabase.from("customers").select("id,name").in("id", rIds);
+          (cs ?? []).forEach((c: any) => rMap.set(c.id, c.name));
+        }
+        setExpiringRenewals(rrs.map((r) => {
+          const d = new Date(r.expiry_date + "T00:00:00");
+          const days = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          return {
+            id: r.id,
+            customer_name: (r.customer_id && rMap.get(r.customer_id)) || "—",
+            reminder_type: r.reminder_type,
+            expiry_date: r.expiry_date,
+            days_left: days,
+          };
+        }));
+      } catch (e) {
+        setExpiringRenewals([]);
+      }
       // Customer counts (total + by status)
       const [{ count: totalC }, { count: inProg }, { count: completedC }] = await Promise.all([
         supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
@@ -223,6 +261,7 @@ function Index() {
       setLatestClients([]);
       setFollowUpsTodayList([]);
       setTodaysViewings([]);
+      setExpiringRenewals([]);
       setUnreadNotif(0);
       setAvatarUrl((user.user_metadata as any)?.avatar_url || null);
     }
@@ -856,6 +895,43 @@ function Index() {
                   <p className="text-sm font-semibold text-foreground truncate">{v.listing_title}</p>
                   <p className="text-[11px] text-muted-foreground truncate">
                     {v.customer_name} · {new Date(v.viewing_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {eff === "property" && (
+        <section>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+              {t("renewals_expiring_soon")}
+            </p>
+            <Link to="/renewals" className="text-[11px] font-semibold text-primary">
+              {t("renewals_title")} →
+            </Link>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+            {expiringRenewals.length === 0 && (
+              <p className="text-center text-xs text-muted-foreground py-6">—</p>
+            )}
+            {expiringRenewals.map((r) => (
+              <Link
+                key={r.id}
+                to="/renewal/$id"
+                params={{ id: r.id }}
+                className="flex items-center gap-3 p-4"
+              >
+                <div className="h-10 w-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold">
+                  ⚠️
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{r.customer_name}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {r.reminder_type} · {t("rr_days_left").replace("{n}", String(r.days_left))}
                   </p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
