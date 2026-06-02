@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet } from "lucide-react";
+import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet, Eye } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -371,19 +371,23 @@ function ShellInner() {
 const BottomNav = memo(function BottomNav() {
   const { t } = useI18n();
   const { type } = useBusinessType();
-  const tabs: TabDef[] = [
-    { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
-    { to: "/orders", labelKey: bizKey(type, "orders"), icon: ClipboardList, id: "tour-tab-orders" },
-    ...(hasInventory(type)
-      ? [{ to: "/inventory", labelKey: bizKey(type, "inventory"), icon: Package, id: "tour-tab-inventory" } as TabDef]
-      : type === "property"
+  const tabs: TabDef[] =
+    type === "property"
       ? [
-          { to: "/listings", labelKey: "nav_listings", icon: Building2, id: "tour-tab-listings" } as TabDef,
-          { to: "/commissions", labelKey: "nav_commission", icon: Wallet, id: "tour-tab-commission" } as TabDef,
+          { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
+          { to: "/viewings", labelKey: "nav_viewings", icon: Eye, id: "tour-tab-viewings" },
+          { to: "/listings", labelKey: "nav_listings", icon: Building2, id: "tour-tab-listings" },
+          { to: "/commissions", labelKey: "nav_commission", icon: Wallet, id: "tour-tab-commission" },
+          { to: "/customers", labelKey: bizKey(type, "customers"), icon: Users, id: "tour-tab-customers" },
         ]
-      : [{ to: "/services", labelKey: "nav_services", icon: Briefcase, id: "tour-tab-services" } as TabDef]),
-    { to: "/customers", labelKey: bizKey(type, "customers"), icon: Users, id: "tour-tab-customers" },
-  ];
+      : [
+          { to: "/", labelKey: "nav_home", icon: Home, id: "tour-tab-home" },
+          { to: "/orders", labelKey: bizKey(type, "orders"), icon: ClipboardList, id: "tour-tab-orders" },
+          ...(hasInventory(type)
+            ? [{ to: "/inventory", labelKey: bizKey(type, "inventory"), icon: Package, id: "tour-tab-inventory" } as TabDef]
+            : [{ to: "/services", labelKey: "nav_services", icon: Briefcase, id: "tour-tab-services" } as TabDef]),
+          { to: "/customers", labelKey: bizKey(type, "customers"), icon: Users, id: "tour-tab-customers" },
+        ];
   const leftCount = 2;
   const rightTabs = tabs.slice(leftCount);
   const totalCols = leftCount + 1 + rightTabs.length;
