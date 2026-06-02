@@ -1120,6 +1120,7 @@ const dict = {
     supplier_email: "Email",
     supplier_address: "Address",
     supplier_products: "Products Supplied",
+    supplier_ingredients: "Ingredients Supplied",
     supplier_notes: "Notes",
     supplier_saved: "Supplier saved",
     supplier_deleted: "Supplier deleted",
