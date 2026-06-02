@@ -263,6 +263,7 @@ export type Database = {
           id: string
           notes: string | null
           order_source: string
+          payment_method: string | null
           phone: string | null
           platform_metadata: Json | null
           platform_order_id: string | null
@@ -280,6 +281,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_source?: string
+          payment_method?: string | null
           phone?: string | null
           platform_metadata?: Json | null
           platform_order_id?: string | null
@@ -297,6 +299,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_source?: string
+          payment_method?: string | null
           phone?: string | null
           platform_metadata?: Json | null
           platform_order_id?: string | null
@@ -394,6 +397,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          allow_cod: boolean
           avatar_url: string | null
           business_category: string | null
           business_name: string | null
@@ -426,6 +430,7 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          allow_cod?: boolean
           avatar_url?: string | null
           business_category?: string | null
           business_name?: string | null
@@ -458,6 +463,7 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          allow_cod?: boolean
           avatar_url?: string | null
           business_category?: string | null
           business_name?: string | null
