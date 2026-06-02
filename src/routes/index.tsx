@@ -62,6 +62,9 @@ function Index() {
   const [followUpsTodayList, setFollowUpsTodayList] = useState<
     { id: string; customer_name: string; note: string | null }[]
   >([]);
+  const [todaysViewings, setTodaysViewings] = useState<
+    { id: string; listing_title: string; customer_name: string; viewing_at: string; status: string }[]
+  >([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [followUpsThisWeek, setFollowUpsThisWeek] = useState(0);
   const [followUpsOverdue, setFollowUpsOverdue] = useState(0);
@@ -164,6 +167,42 @@ function Index() {
           note: r.note,
         })),
       );
+      // Today's & upcoming property viewings (for property dashboard)
+      try {
+        const startISO = today.toISOString();
+        const endDate = new Date(today); endDate.setDate(endDate.getDate() + 7);
+        const { data: vwRows } = await supabase
+          .from("property_viewings" as never)
+          .select("id,listing_id,customer_id,viewing_at,status")
+          .eq("user_id", user.id)
+          .eq("status", "scheduled")
+          .gte("viewing_at", startISO)
+          .lt("viewing_at", endDate.toISOString())
+          .order("viewing_at", { ascending: true })
+          .limit(5);
+        const vws = ((vwRows as any[]) ?? []) as { id: string; listing_id: string | null; customer_id: string | null; viewing_at: string; status: string }[];
+        const lIds = Array.from(new Set(vws.map((v) => v.listing_id).filter(Boolean))) as string[];
+        const cIds = Array.from(new Set(vws.map((v) => v.customer_id).filter(Boolean))) as string[];
+        let lMap = new Map<string, string>();
+        let cMap = new Map<string, string>();
+        if (lIds.length) {
+          const { data: ls } = await supabase.from("property_listings" as never).select("id,title").in("id", lIds);
+          ((ls as any[]) ?? []).forEach((l) => lMap.set(l.id, l.title));
+        }
+        if (cIds.length) {
+          const { data: cs } = await supabase.from("customers").select("id,name").in("id", cIds);
+          (cs ?? []).forEach((c: any) => cMap.set(c.id, c.name));
+        }
+        setTodaysViewings(vws.map((v) => ({
+          id: v.id,
+          listing_title: (v.listing_id && lMap.get(v.listing_id)) || "—",
+          customer_name: (v.customer_id && cMap.get(v.customer_id)) || "—",
+          viewing_at: v.viewing_at,
+          status: v.status,
+        })));
+      } catch (e) {
+        setTodaysViewings([]);
+      }
       // Customer counts (total + by status)
       const [{ count: totalC }, { count: inProg }, { count: completedC }] = await Promise.all([
         supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
@@ -183,6 +222,7 @@ function Index() {
       setTopCustomers([]);
       setLatestClients([]);
       setFollowUpsTodayList([]);
+      setTodaysViewings([]);
       setUnreadNotif(0);
       setAvatarUrl((user.user_metadata as any)?.avatar_url || null);
     }
@@ -780,6 +820,43 @@ function Index() {
                   {f.note && (
                     <p className="text-[11px] text-muted-foreground truncate">{f.note}</p>
                   )}
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {eff === "property" && (
+        <section>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+              {t("viewings_today_title")}
+            </p>
+            <Link to="/viewings" className="text-[11px] font-semibold text-primary">
+              {t("viewings_title")} →
+            </Link>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+            {todaysViewings.length === 0 && (
+              <p className="text-center text-xs text-muted-foreground py-6">—</p>
+            )}
+            {todaysViewings.map((v) => (
+              <Link
+                key={v.id}
+                to="/viewing/$id"
+                params={{ id: v.id }}
+                className="flex items-center gap-3 p-4"
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                  🏠
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{v.listing_title}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {v.customer_name} · {new Date(v.viewing_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </Link>

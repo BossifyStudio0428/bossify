@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ViewingsRouteImport } from './routes/viewings'
 import { Route as UniversityInsightsRouteImport } from './routes/university-insights'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
@@ -51,6 +52,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ViewingIdRouteImport } from './routes/viewing.$id'
 import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as StockTakeIdRouteImport } from './routes/stock-take_.$id'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
@@ -70,6 +72,11 @@ import { Route as ApiPublicStripeCheckoutRouteImport } from './routes/api/public
 import { Route as ApiPublicStripeActivateRouteImport } from './routes/api/public/stripe/activate'
 import { Route as ApiPublicOauthTiktokCallbackRouteImport } from './routes/api/public/oauth/tiktok/callback'
 
+const ViewingsRoute = ViewingsRouteImport.update({
+  id: '/viewings',
+  path: '/viewings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UniversityInsightsRoute = UniversityInsightsRouteImport.update({
   id: '/university-insights',
   path: '/university-insights',
@@ -280,6 +287,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ViewingIdRoute = ViewingIdRouteImport.update({
+  id: '/viewing/$id',
+  path: '/viewing/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamWelcomeRoute = TeamWelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
@@ -416,6 +428,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/viewings': typeof ViewingsRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -427,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/viewing/$id': typeof ViewingIdRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -478,6 +492,7 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/viewings': typeof ViewingsRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -489,6 +504,7 @@ export interface FileRoutesByTo {
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/viewing/$id': typeof ViewingIdRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -541,6 +557,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/viewings': typeof ViewingsRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -552,6 +569,7 @@ export interface FileRoutesById {
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/stock-take_/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/viewing/$id': typeof ViewingIdRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -605,6 +623,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/viewings'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -616,6 +635,7 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/stock-take/$id'
     | '/team/welcome'
+    | '/viewing/$id'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -667,6 +687,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/viewings'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -678,6 +699,7 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/stock-take/$id'
     | '/team/welcome'
+    | '/viewing/$id'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -729,6 +751,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/viewings'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -740,6 +763,7 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/stock-take_/$id'
     | '/team/welcome'
+    | '/viewing/$id'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -792,12 +816,14 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRouteWithChildren
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
+  ViewingsRoute: typeof ViewingsRoute
   CommissionIdRoute: typeof CommissionIdRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
   ListingIdRoute: typeof ListingIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
   StockTakeIdRoute: typeof StockTakeIdRoute
+  ViewingIdRoute: typeof ViewingIdRoute
   ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
   ApiPublicStripeActivateRoute: typeof ApiPublicStripeActivateRoute
   ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
@@ -808,6 +834,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/viewings': {
+      id: '/viewings'
+      path: '/viewings'
+      fullPath: '/viewings'
+      preLoaderRoute: typeof ViewingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/university-insights': {
       id: '/university-insights'
       path: '/university-insights'
@@ -1102,6 +1135,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/viewing/$id': {
+      id: '/viewing/$id'
+      path: '/viewing/$id'
+      fullPath: '/viewing/$id'
+      preLoaderRoute: typeof ViewingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team/welcome': {
       id: '/team/welcome'
       path: '/welcome'
@@ -1323,12 +1363,14 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRouteWithChildren,
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
+  ViewingsRoute: ViewingsRoute,
   CommissionIdRoute: CommissionIdRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
   ListingIdRoute: ListingIdRoute,
   OrderCodeRoute: OrderCodeRoute,
   StockTakeIdRoute: StockTakeIdRoute,
+  ViewingIdRoute: ViewingIdRoute,
   ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
   ApiPublicStripeActivateRoute: ApiPublicStripeActivateRoute,
   ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
