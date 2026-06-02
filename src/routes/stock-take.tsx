@@ -294,17 +294,20 @@ function StockTakePage() {
             return (
               <div key={r.inventory_id} className="rounded-2xl bg-card border border-border/60 p-3 space-y-2">
                 <div className="flex items-center gap-3">
-                  {r.image_url ? (
+                  {!isFnb && r.image_url ? (
                     <img src={r.image_url} alt={r.product_name} className="h-12 w-12 rounded-xl object-cover bg-muted" />
-                  ) : (
+                  ) : !isFnb ? (
                     <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
                       <Package className="h-5 w-5 text-muted-foreground" />
                     </div>
-                  )}
+                  ) : null}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-foreground truncate">{r.product_name}</p>
-                    {r.category && (
+                    {!isFnb && r.category && (
                       <span className="inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{r.category}</span>
+                    )}
+                    {isFnb && r.unit && (
+                      <span className="inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{r.unit}</span>
                     )}
                   </div>
                 </div>
@@ -317,7 +320,8 @@ function StockTakePage() {
                     <p className="text-[10px] uppercase text-muted-foreground">{t("actual_qty")}</p>
                     <input
                       type="number"
-                      inputMode="numeric"
+                      inputMode={isFnb ? "decimal" : "numeric"}
+                      step={isFnb ? "0.01" : "1"}
                       value={r.actual_quantity}
                       onChange={(e) => updateActual(idx, e.target.value)}
                       className="w-full rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
@@ -378,7 +382,7 @@ function StockTakePage() {
   return (
     <div className="px-5 pt-10 pb-24 space-y-5 relative">
       <header className="flex items-center gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("stock_take")}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t(isFnb ? "ingredient_stock_take" : "product_stock_take")}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">{takes.length}</span>
       </header>
 
