@@ -34,6 +34,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NotificationSettingsRouteImport } from './routes/notification-settings'
 import { Route as NewOrderRouteImport } from './routes/new-order'
+import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as IngredientsRouteImport } from './routes/ingredients'
@@ -53,6 +54,7 @@ import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as StockTakeIdRouteImport } from './routes/stock-take_.$id'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 import { Route as OrderCodeRouteImport } from './routes/order.$code'
+import { Route as ListingIdRouteImport } from './routes/listing.$id'
 import { Route as InventoryItemIdRouteImport } from './routes/inventory.$itemId'
 import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
@@ -191,6 +193,11 @@ const NewOrderRoute = NewOrderRouteImport.update({
   path: '/new-order',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListingsRoute = ListingsRouteImport.update({
+  id: '/listings',
+  path: '/listings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LanguageRoute = LanguageRouteImport.update({
   id: '/language',
   path: '/language',
@@ -286,6 +293,11 @@ const OrderCodeRoute = OrderCodeRouteImport.update({
   path: '/order/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListingIdRoute = ListingIdRouteImport.update({
+  id: '/listing/$id',
+  path: '/listing/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InventoryItemIdRoute = InventoryItemIdRouteImport.update({
   id: '/$itemId',
   path: '/$itemId',
@@ -365,6 +377,7 @@ export interface FileRoutesByFullPath {
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
+  '/listings': typeof ListingsRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -395,6 +408,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/inventory/$itemId': typeof InventoryItemIdRoute
+  '/listing/$id': typeof ListingIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
@@ -423,6 +437,7 @@ export interface FileRoutesByTo {
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
+  '/listings': typeof ListingsRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -453,6 +468,7 @@ export interface FileRoutesByTo {
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/inventory/$itemId': typeof InventoryItemIdRoute
+  '/listing/$id': typeof ListingIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
@@ -482,6 +498,7 @@ export interface FileRoutesById {
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
+  '/listings': typeof ListingsRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -512,6 +529,7 @@ export interface FileRoutesById {
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/inventory/$itemId': typeof InventoryItemIdRoute
+  '/listing/$id': typeof ListingIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/stock-take_/$id': typeof StockTakeIdRoute
@@ -542,6 +560,7 @@ export interface FileRouteTypes {
     | '/ingredients'
     | '/inventory'
     | '/language'
+    | '/listings'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -572,6 +591,7 @@ export interface FileRouteTypes {
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/inventory/$itemId'
+    | '/listing/$id'
     | '/order/$code'
     | '/orders/$orderId'
     | '/stock-take/$id'
@@ -600,6 +620,7 @@ export interface FileRouteTypes {
     | '/ingredients'
     | '/inventory'
     | '/language'
+    | '/listings'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -630,6 +651,7 @@ export interface FileRouteTypes {
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/inventory/$itemId'
+    | '/listing/$id'
     | '/order/$code'
     | '/orders/$orderId'
     | '/stock-take/$id'
@@ -658,6 +680,7 @@ export interface FileRouteTypes {
     | '/ingredients'
     | '/inventory'
     | '/language'
+    | '/listings'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -688,6 +711,7 @@ export interface FileRouteTypes {
     | '/forgot-password/reset'
     | '/forgot-password/verify'
     | '/inventory/$itemId'
+    | '/listing/$id'
     | '/order/$code'
     | '/orders/$orderId'
     | '/stock-take_/$id'
@@ -717,6 +741,7 @@ export interface RootRouteChildren {
   IngredientsRoute: typeof IngredientsRoute
   InventoryRoute: typeof InventoryRouteWithChildren
   LanguageRoute: typeof LanguageRoute
+  ListingsRoute: typeof ListingsRoute
   NewOrderRoute: typeof NewOrderRoute
   NotificationSettingsRoute: typeof NotificationSettingsRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -744,6 +769,7 @@ export interface RootRouteChildren {
   UniversityInsightsRoute: typeof UniversityInsightsRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
+  ListingIdRoute: typeof ListingIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
   StockTakeIdRoute: typeof StockTakeIdRoute
   ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
@@ -931,6 +957,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/listings': {
+      id: '/listings'
+      path: '/listings'
+      fullPath: '/listings'
+      preLoaderRoute: typeof ListingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/language': {
       id: '/language'
       path: '/language'
@@ -1062,6 +1095,13 @@ declare module '@tanstack/react-router' {
       path: '/order/$code'
       fullPath: '/order/$code'
       preLoaderRoute: typeof OrderCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listing/$id': {
+      id: '/listing/$id'
+      path: '/listing/$id'
+      fullPath: '/listing/$id'
+      preLoaderRoute: typeof ListingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inventory/$itemId': {
@@ -1216,6 +1256,7 @@ const rootRouteChildren: RootRouteChildren = {
   IngredientsRoute: IngredientsRoute,
   InventoryRoute: InventoryRouteWithChildren,
   LanguageRoute: LanguageRoute,
+  ListingsRoute: ListingsRoute,
   NewOrderRoute: NewOrderRoute,
   NotificationSettingsRoute: NotificationSettingsRoute,
   NotificationsRoute: NotificationsRoute,
@@ -1243,6 +1284,7 @@ const rootRouteChildren: RootRouteChildren = {
   UniversityInsightsRoute: UniversityInsightsRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
+  ListingIdRoute: ListingIdRoute,
   OrderCodeRoute: OrderCodeRoute,
   StockTakeIdRoute: StockTakeIdRoute,
   ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
@@ -1255,3 +1297,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
