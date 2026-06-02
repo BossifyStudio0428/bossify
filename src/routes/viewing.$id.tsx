@@ -140,16 +140,12 @@ function ViewingEditor() {
   };
 
   const goCreateCommission = async () => {
-    const customer = customers.find((c) => c.id === customerId);
-    const params = new URLSearchParams();
-    if (listingId) params.set("listing_id", listingId);
-    if (customer?.name) params.set("client_name", customer.name);
     // Persist current state first if new
     if (isNew) {
       const r = await persist();
       if (!r) return;
     }
-    navigate({ to: "/commission/$id", params: { id: "new" }, search: Object.fromEntries(params) as any });
+    navigate({ to: "/commission/$id", params: { id: "new" } });
   };
 
   if (loading) {
