@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Plus, Search, ImageIcon } from "lucide-react";
+import { ChevronLeft, Plus, Search, ImageIcon, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { exportListingsPDF } from "@/lib/propertyPdf";
 
 export const Route = createFileRoute("/listings")({ component: ListingsPage });
 
@@ -33,9 +35,10 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 function ListingsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType, loading: bizLoading } = useBusinessType();
+  const { hasFullAccess, showUpgrade } = useSubscription();
   const navigate = useNavigate();
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +88,18 @@ function ListingsPage() {
     { key: "sold", labelKey: "status_sold" },
   ];
 
+  const onExport = async () => {
+    if (!hasFullAccess) { showUpgrade(t("pro_feature_required")); return; }
+    if (!user) return;
+    try {
+      const { data: prof } = await supabase.from("profiles").select("business_name").eq("id", user.id).maybeSingle();
+      await exportListingsPDF({
+        lang, businessName: (prof as any)?.business_name || "Bossify",
+        rows: items,
+      });
+    } catch (e: any) { toast.error(e?.message || "Failed to export"); }
+  };
+
   return (
     <div className="px-5 pt-10 pb-28 space-y-4">
       <header className="flex items-center gap-2">
@@ -95,6 +110,13 @@ function ListingsPage() {
         <span className="ml-auto text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {items.length}
         </span>
+        <button
+          onClick={onExport}
+          aria-label={t("export_pdf")}
+          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-full bg-primary/10 text-primary active:scale-95"
+        >
+          <Download className="h-3.5 w-3.5" /> {t("export_pdf")}
+        </button>
       </header>
 
       <div className="grid grid-cols-3 gap-2">

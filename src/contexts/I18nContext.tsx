@@ -1381,6 +1381,7 @@ const dict = {
     lc_total_interest: "Total Interest",
     lc_share_wa: "Share via WhatsApp",
     lc_down_amount: "Down Payment",
+    pro_feature_required: "This feature requires Pro plan or above",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
@@ -2733,6 +2734,7 @@ const dict = {
     lc_total_interest: "Jumlah Faedah",
     lc_share_wa: "Kongsi via WhatsApp",
     lc_down_amount: "Bayaran Muka",
+    pro_feature_required: "Ciri ini memerlukan pelan Pro atau lebih tinggi",
   },
   zh: {
     continue: "继续", back: "返回", save: "保存", cancel: "取消", delete: "删除",
@@ -4084,6 +4086,7 @@ const dict = {
     lc_total_interest: "总利息",
     lc_share_wa: "通过 WhatsApp 分享",
     lc_down_amount: "首付金额",
+    pro_feature_required: "此功能需要专业版或以上计划",
   },
 } as const;
 

@@ -176,7 +176,7 @@ function labels(lang: Lang, biz: BizType): ReportLabels {
 // File save helper
 // ---------------------------------------------------------------------------
 
-async function savePdf(doc: jsPDF, filename: string): Promise<void> {
+export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
   if (Capacitor.isNativePlatform()) {
     const dataUri = doc.output("datauristring");
     const base64 = dataUri.split(",")[1];
