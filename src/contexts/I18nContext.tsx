@@ -2734,6 +2734,7 @@ const dict = {
     lc_total_interest: "Jumlah Faedah",
     lc_share_wa: "Kongsi via WhatsApp",
     lc_down_amount: "Bayaran Muka",
+    pro_feature_required: "Ciri ini memerlukan pelan Pro atau lebih tinggi",
   },
   zh: {
     continue: "继续", back: "返回", save: "保存", cancel: "取消", delete: "删除",
