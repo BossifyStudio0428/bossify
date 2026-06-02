@@ -1,0 +1,3 @@
+ALTER TABLE public.customers
+ADD COLUMN IF NOT EXISTS package_id UUID REFERENCES public.services(id) ON DELETE SET NULL,
+ADD COLUMN IF NOT EXISTS package_name TEXT;

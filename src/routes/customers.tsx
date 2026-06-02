@@ -51,6 +51,7 @@ function CustomersPage() {
   const [confirmDelete, setConfirmDelete] = useState<CustomerRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<CustomerStatus | "all">("all");
+  const [packageFilter, setPackageFilter] = useState<string>("all");
   const [eduDetails, setEduDetails] = useState<Record<string, { university_preference: string | null; application_status: string | null }>>({});
   const [eduInfo, setEduInfo] = useState<Record<string, EduStageInfo>>({});
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
@@ -169,8 +170,25 @@ function CustomersPage() {
   const visible = customers.filter((c) => {
     const q = query.toLowerCase();
     if (statusFilter !== "all" && (c.customer_status ?? "enquiry") !== statusFilter) return false;
+    if (bizType === "property" && packageFilter !== "all") {
+      if (packageFilter === "__none__") {
+        if (c.package_id) return false;
+      } else if (c.package_id !== packageFilter) {
+        return false;
+      }
+    }
     return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q);
   });
+
+  const packageOptions = bizType === "property"
+    ? Array.from(
+        new Map(
+          customers
+            .filter((c) => c.package_id && c.package_name)
+            .map((c) => [c.package_id as string, c.package_name as string]),
+        ).entries(),
+      )
+    : [];
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-5">
@@ -246,6 +264,32 @@ function CustomersPage() {
         ))}
       </div>
 
+      {bizType === "property" && packageOptions.length > 0 && (
+        <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
+          <button
+            onClick={() => setPackageFilter("all")}
+            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${packageFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+          >
+            📦 {t("all_packages")}
+          </button>
+          <button
+            onClick={() => setPackageFilter("__none__")}
+            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${packageFilter === "__none__" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+          >
+            {t("no_package")}
+          </button>
+          {packageOptions.map(([id, name]) => (
+            <button
+              key={id}
+              onClick={() => setPackageFilter(id)}
+              className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${packageFilter === id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="space-y-3">
         {loading && (
           <div className="flex justify-center py-10">
@@ -296,6 +340,11 @@ function CustomersPage() {
                   <p className="text-[11px] text-muted-foreground mt-0.5">
                     {c.total_orders} {t(ordersWordKey)} · {t("last")}: {relTime(c.last_order_at, t)}
                   </p>
+                )}
+                {bizType === "property" && c.package_name && (
+                  <span className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    📦 {c.package_name}
+                  </span>
                 )}
                 {c.remarks && (
                   <p className="text-[11px] text-muted-foreground/90 mt-1 truncate italic">

@@ -54,6 +54,8 @@ export type CustomerRow = {
   created_at: string;
   remarks?: string | null;
   customer_status?: CustomerStatus | null;
+  package_id?: string | null;
+  package_name?: string | null;
 };
 
 export type CustomerStatus = "enquiry" | "in_progress" | "completed" | "rejected";

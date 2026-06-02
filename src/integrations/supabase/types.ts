@@ -62,6 +62,8 @@ export type Database = {
           id: string
           last_order_at: string | null
           name: string
+          package_id: string | null
+          package_name: string | null
           phone: string | null
           total_orders: number
           total_spent: number
@@ -73,6 +75,8 @@ export type Database = {
           id?: string
           last_order_at?: string | null
           name: string
+          package_id?: string | null
+          package_name?: string | null
           phone?: string | null
           total_orders?: number
           total_spent?: number
@@ -84,13 +88,23 @@ export type Database = {
           id?: string
           last_order_at?: string | null
           name?: string
+          package_id?: string | null
+          package_name?: string | null
           phone?: string | null
           total_orders?: number
           total_spent?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       device_sessions: {
         Row: {

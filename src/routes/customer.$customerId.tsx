@@ -226,7 +226,13 @@ function CustomerDetail() {
       )}
 
       {bizType === "property" && (
-        <CustomerRequirements customerId={customer.id} />
+        <>
+          <PackageSection
+            customer={customer}
+            onChange={() => setEditing(true)}
+          />
+          <CustomerRequirements customerId={customer.id} />
+        </>
       )}
 
       <section className="space-y-2">
@@ -326,6 +332,7 @@ function CustomerDetail() {
       {editing && (
         <EditSheet
           customer={customer}
+          bizType={bizType}
           onClose={() => setEditing(false)}
           onSaved={(c) => { setCustomer(c); setEditing(false); }}
         />
@@ -469,19 +476,46 @@ function CustomerRequirements({ customerId }: { customerId: string }) {
 }
 
 function EditSheet({
-  customer, onClose, onSaved,
-}: { customer: CustomerRow; onClose: () => void; onSaved: (c: CustomerRow) => void }) {
+  customer, bizType, onClose, onSaved,
+}: { customer: CustomerRow; bizType: string | null; onClose: () => void; onSaved: (c: CustomerRow) => void }) {
   const { t } = useI18n();
   const [name, setName] = useState(customer.name);
   const [phone, setPhone] = useState(customer.phone ?? "");
+  const [packageId, setPackageId] = useState<string>(customer.package_id ?? "");
+  const [packages, setPackages] = useState<{ id: string; name: string; price: number }[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (bizType !== "property") return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("services")
+        .select("id,name,price")
+        .eq("user_id", customer.user_id)
+        .eq("is_active", true)
+        .order("name", { ascending: true });
+      if (cancelled) return;
+      setPackages(((data as any[]) ?? []) as { id: string; name: string; price: number }[]);
+    })();
+    return () => { cancelled = true; };
+  }, [bizType, customer.user_id]);
 
   const save = async () => {
     if (!name.trim()) { toast.error(t("required_field")); return; }
     setSaving(true);
+    const pkg = packages.find((p) => p.id === packageId);
+    const update: Record<string, any> = {
+      name: name.trim(),
+      phone: phone.trim() || null,
+    };
+    if (bizType === "property") {
+      update.package_id = packageId || null;
+      update.package_name = pkg ? pkg.name : null;
+    }
     const { data, error } = await supabase
       .from("customers")
-      .update({ name: name.trim(), phone: phone.trim() || null })
+      .update(update)
       .eq("id", customer.id)
       .select("*")
       .single();
@@ -504,6 +538,23 @@ function EditSheet({
             className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15" />
         </div>
         <PhoneInput label={t("phone_number")} value={phone} onChange={setPhone} />
+        {bizType === "property" && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("package_optional")}</label>
+            <select
+              value={packageId}
+              onChange={(e) => setPackageId(e.target.value)}
+              className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15"
+            >
+              <option value="">{t("no_package")}</option>
+              {packages.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} — RM {Number(p.price).toFixed(0)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <button
           onClick={save} disabled={saving}
           className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60"
@@ -512,5 +563,54 @@ function EditSheet({
         </button>
       </div>
     </div>
+  );
+}
+
+function PackageSection({ customer, onChange }: { customer: CustomerRow; onChange: () => void }) {
+  const { t } = useI18n();
+  const [price, setPrice] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!customer.package_id) { setPrice(null); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("services")
+        .select("price")
+        .eq("id", customer.package_id)
+        .maybeSingle();
+      if (cancelled) return;
+      setPrice(data ? Number((data as any).price) : null);
+    })();
+    return () => { cancelled = true; };
+  }, [customer.package_id]);
+
+  return (
+    <section className="space-y-2">
+      <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
+        {t("package_label")}
+      </p>
+      <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-lg">📦</div>
+        <div className="flex-1 min-w-0">
+          {customer.package_name ? (
+            <>
+              <p className="text-sm font-semibold truncate">{customer.package_name}</p>
+              {price !== null && (
+                <p className="text-[11px] font-semibold text-primary">RM {price.toFixed(0)}</p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("no_package")}</p>
+          )}
+        </div>
+        <button
+          onClick={onChange}
+          className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary active:scale-95"
+        >
+          {t("change_package")}
+        </button>
+      </div>
+    </section>
   );
 }
