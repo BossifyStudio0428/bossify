@@ -331,6 +331,42 @@ function ReportsPage() {
         </div>
       </section>
 
+      {eff === "property" && (
+        <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
+          <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2">{t("rep_commission_revenue")}</p>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={(() => {
+                const buckets = new Map<string, number>();
+                const days = Math.ceil((toDate.getTime() - fromDate.getTime()) / 86400000);
+                const step = days <= 31 ? 1 : 7;
+                for (let i = 0; i <= days; i += step) {
+                  const d = new Date(fromDate); d.setDate(d.getDate() + i);
+                  buckets.set(`${d.getMonth() + 1}/${d.getDate()}`, 0);
+                }
+                commissions
+                  .filter((c) => {
+                    if (c.status !== "received") return false;
+                    const d = new Date(c.transaction_date);
+                    return d >= fromDate && d <= toDate;
+                  })
+                  .forEach((c) => {
+                    const d = new Date(c.transaction_date);
+                    const key = `${d.getMonth() + 1}/${d.getDate()}`;
+                    buckets.set(key, (buckets.get(key) ?? 0) + Number(c.commission_amount || 0));
+                  });
+                return [...buckets.entries()].map(([day, value]) => ({ day, value }));
+              })()}>
+                <XAxis dataKey="day" fontSize={10} />
+                <YAxis fontSize={10} />
+                <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+                <Bar dataKey="value" fill="#10B981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
+
       {topProducts.length > 0 && (
         <section>
           <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2 px-1">{t("top_products")}</p>
