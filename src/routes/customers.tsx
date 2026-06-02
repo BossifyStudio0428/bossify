@@ -341,6 +341,11 @@ function CustomersPage() {
                     {c.total_orders} {t(ordersWordKey)} · {t("last")}: {relTime(c.last_order_at, t)}
                   </p>
                 )}
+                {bizType === "property" && c.package_name && (
+                  <span className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    📦 {c.package_name}
+                  </span>
+                )}
                 {c.remarks && (
                   <p className="text-[11px] text-muted-foreground/90 mt-1 truncate italic">
                     💬 {c.remarks.length > 50 ? c.remarks.slice(0, 50) + "…" : c.remarks}
