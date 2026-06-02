@@ -61,6 +61,7 @@ import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-passwo
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
+import { Route as CommissionIdRouteImport } from './routes/commission.$id'
 import { Route as TeamJoinTokenRouteImport } from './routes/team.join.$token'
 import { Route as ApiPublicOrderFormRouteImport } from './routes/api/public/order-form'
 import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
@@ -330,6 +331,11 @@ const ConnectedPlatformsPlatformRoute =
     path: '/connected-platforms/$platform',
     getParentRoute: () => rootRouteImport,
   } as any)
+const CommissionIdRoute = CommissionIdRouteImport.update({
+  id: '/commission/$id',
+  path: '/commission/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamJoinTokenRoute = TeamJoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -410,6 +416,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
@@ -471,6 +478,7 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
@@ -533,6 +541,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
+  '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
@@ -596,6 +605,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
     | '/forgot-password/reset'
@@ -657,6 +667,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
     | '/forgot-password/reset'
@@ -718,6 +729,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/university-insights'
+    | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
     | '/forgot-password/reset'
@@ -780,6 +792,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRouteWithChildren
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
+  CommissionIdRoute: typeof CommissionIdRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
   ListingIdRoute: typeof ListingIdRoute
@@ -1159,6 +1172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnectedPlatformsPlatformRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/commission/$id': {
+      id: '/commission/$id'
+      path: '/commission/$id'
+      fullPath: '/commission/$id'
+      preLoaderRoute: typeof CommissionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team/join/$token': {
       id: '/team/join/$token'
       path: '/join/$token'
@@ -1303,6 +1323,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRouteWithChildren,
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
+  CommissionIdRoute: CommissionIdRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
   ListingIdRoute: ListingIdRoute,
