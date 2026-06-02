@@ -146,6 +146,18 @@ function OrderDetailPage() {
             {order.delivery_address && (
               <Row label={`📍 ${t("delivery_address" as any)}`} value={order.delivery_address} />
             )}
+            {(order as any).payment_method && (
+              <Row
+                label={`💳 ${t("pof_payment_method" as any)}`}
+                value={
+                  (order as any).payment_method === "cash_on_delivery"
+                    ? t("cash_on_delivery" as any)
+                    : (order as any).payment_method === "bank_transfer"
+                      ? t("bank_transfer" as any)
+                      : (order as any).payment_method
+                }
+              />
+            )}
             <Row label={`📝 ${t("notes")}`} value={order.notes || t("no_notes")} />
           </div>
 
