@@ -31,6 +31,7 @@ function ReportsPage() {
   const [from, setFrom] = useState<string>(() => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   const [to, setTo] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [exporting, setExporting] = useState(false);
+  const [commissions, setCommissions] = useState<Array<{ commission_amount: number; status: string; transaction_date: string }>>([]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -59,6 +60,19 @@ function ReportsPage() {
       supabase.removeChannel(ch);
     };
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || eff !== "property") return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("commissions")
+        .select("commission_amount,status,transaction_date")
+        .eq("user_id", user.id);
+      if (!cancelled) setCommissions((data ?? []) as any);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, eff]);
 
   const { fromDate, toDate, label } = useMemo(() => {
     const now = new Date();
