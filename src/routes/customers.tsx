@@ -51,6 +51,7 @@ function CustomersPage() {
   const [confirmDelete, setConfirmDelete] = useState<CustomerRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<CustomerStatus | "all">("all");
+  const [packageFilter, setPackageFilter] = useState<string>("all");
   const [eduDetails, setEduDetails] = useState<Record<string, { university_preference: string | null; application_status: string | null }>>({});
   const [eduInfo, setEduInfo] = useState<Record<string, EduStageInfo>>({});
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
