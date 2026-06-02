@@ -167,6 +167,42 @@ function Index() {
           note: r.note,
         })),
       );
+      // Today's & upcoming property viewings (for property dashboard)
+      try {
+        const startISO = today.toISOString();
+        const endDate = new Date(today); endDate.setDate(endDate.getDate() + 7);
+        const { data: vwRows } = await supabase
+          .from("property_viewings" as never)
+          .select("id,listing_id,customer_id,viewing_at,status")
+          .eq("user_id", user.id)
+          .eq("status", "scheduled")
+          .gte("viewing_at", startISO)
+          .lt("viewing_at", endDate.toISOString())
+          .order("viewing_at", { ascending: true })
+          .limit(5);
+        const vws = ((vwRows as any[]) ?? []) as { id: string; listing_id: string | null; customer_id: string | null; viewing_at: string; status: string }[];
+        const lIds = Array.from(new Set(vws.map((v) => v.listing_id).filter(Boolean))) as string[];
+        const cIds = Array.from(new Set(vws.map((v) => v.customer_id).filter(Boolean))) as string[];
+        let lMap = new Map<string, string>();
+        let cMap = new Map<string, string>();
+        if (lIds.length) {
+          const { data: ls } = await supabase.from("property_listings" as never).select("id,title").in("id", lIds);
+          ((ls as any[]) ?? []).forEach((l) => lMap.set(l.id, l.title));
+        }
+        if (cIds.length) {
+          const { data: cs } = await supabase.from("customers").select("id,name").in("id", cIds);
+          (cs ?? []).forEach((c: any) => cMap.set(c.id, c.name));
+        }
+        setTodaysViewings(vws.map((v) => ({
+          id: v.id,
+          listing_title: (v.listing_id && lMap.get(v.listing_id)) || "—",
+          customer_name: (v.customer_id && cMap.get(v.customer_id)) || "—",
+          viewing_at: v.viewing_at,
+          status: v.status,
+        })));
+      } catch (e) {
+        setTodaysViewings([]);
+      }
       // Customer counts (total + by status)
       const [{ count: totalC }, { count: inProg }, { count: completedC }] = await Promise.all([
         supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
