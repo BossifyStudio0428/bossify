@@ -170,8 +170,25 @@ function CustomersPage() {
   const visible = customers.filter((c) => {
     const q = query.toLowerCase();
     if (statusFilter !== "all" && (c.customer_status ?? "enquiry") !== statusFilter) return false;
+    if (bizType === "property" && packageFilter !== "all") {
+      if (packageFilter === "__none__") {
+        if (c.package_id) return false;
+      } else if (c.package_id !== packageFilter) {
+        return false;
+      }
+    }
     return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q);
   });
+
+  const packageOptions = bizType === "property"
+    ? Array.from(
+        new Map(
+          customers
+            .filter((c) => c.package_id && c.package_name)
+            .map((c) => [c.package_id as string, c.package_name as string]),
+        ).entries(),
+      )
+    : [];
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-5">
