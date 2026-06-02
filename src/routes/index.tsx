@@ -62,6 +62,9 @@ function Index() {
   const [followUpsTodayList, setFollowUpsTodayList] = useState<
     { id: string; customer_name: string; note: string | null }[]
   >([]);
+  const [todaysViewings, setTodaysViewings] = useState<
+    { id: string; listing_title: string; customer_name: string; viewing_at: string; status: string }[]
+  >([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [followUpsThisWeek, setFollowUpsThisWeek] = useState(0);
   const [followUpsOverdue, setFollowUpsOverdue] = useState(0);
