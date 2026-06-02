@@ -821,28 +821,7 @@ function PublicOrderFormPage() {
             />
           </Field>
 
-          {bizType === "fnb" && (
-            <Field label={fulfilmentLabel}>
-              <div className="grid grid-cols-3 gap-2">
-                {([
-                  ["dine_in", dineIn],
-                  ["takeaway", takeaway],
-                  ["delivery", delivery],
-                ] as const).map(([val, label]) => (
-                  <button
-                    type="button"
-                    key={val}
-                    onClick={() => setForm((p) => ({ ...p, fulfilment: val }))}
-                    className={`py-2.5 rounded-xl text-xs font-semibold border ${form.fulfilment === val ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border"}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </Field>
-          )}
-
-          {(bizType === "retail" || (bizType === "fnb" && form.fulfilment === "delivery")) && (
+          {bizType === "retail" && (
             <Field label={addressLabel}>
               <textarea rows={2} value={form.address} onChange={upd("address")} className="pof-input" maxLength={500} />
             </Field>
