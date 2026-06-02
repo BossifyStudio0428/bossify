@@ -46,6 +46,10 @@ function AnalyticsPage() {
     })();
   }, [user?.id, eff]);
 
+  if (eff === "property") {
+    return <PropertyAnalytics />;
+  }
+
   const now = new Date();
   const cutoff = (() => {
     const d = new Date(now);
@@ -177,12 +181,11 @@ function AnalyticsPage() {
   const dayTitleKey = eff === "beauty" ? "an_busiest_day" : "best_selling_days";
   const statusTitleKey =
     eff === "education" ? "an_application_status_breakdown"
-    : eff === "property" ? "an_lead_status_breakdown"
     : eff === "freelance" ? "an_project_status_breakdown"
     : "status_breakdown";
 
-  const showTopItems = eff !== "property";
-  const showTopPeople = eff !== "property";
+  const showTopItems = true;
+  const showTopPeople = true;
   const showDayOfWeek = eff === "retail" || eff === "fnb" || eff === "beauty";
   const showPeakHours = eff === "retail" || eff === "fnb";
   const showStatus = eff !== "retail" && eff !== "fnb" ? true : true; // keep for all
@@ -299,26 +302,6 @@ function AnalyticsPage() {
             </>
           )}
 
-          {eff === "property" && (
-            <>
-              <Card title={t("an_conversion_rate")} subtitle={`${paid.length}/${filtered.length}`}>
-                <p className="text-4xl font-bold text-primary">{conversionRate.toFixed(1)}%</p>
-              </Card>
-              <Card title={t("an_top_areas")}>
-                {topAreas.length === 0 ? <p className="text-xs text-muted-foreground">{t("no_data")}</p> : (
-                  <ul className="divide-y divide-border/60">
-                    {topAreas.map((a) => (
-                      <li key={a.name} className="flex justify-between py-2 text-sm">
-                        <span className="font-medium">{a.name}</span>
-                        <span className="text-muted-foreground">{a.count}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </Card>
-            </>
-          )}
-
           {showDayOfWeek && (
           <Card title={t(dayTitleKey)}>
             <ResponsiveContainer width="100%" height={150}>
@@ -375,5 +358,150 @@ function Card({ title, subtitle, children }: { title: string; subtitle?: string;
       </div>
       {children}
     </section>
+  );
+}
+
+function PropertyAnalytics() {
+  const { user } = useAuth();
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [commissions, setCommissions] = useState<Array<{ commission_amount: number; status: string; transaction_date: string }>>([]);
+  const [listings, setListings] = useState<Array<{ status: string; address: string | null }>>([]);
+  const [viewings, setViewings] = useState<Array<{ status: string }>>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const [c, l, v] = await Promise.all([
+        supabase.from("commissions").select("commission_amount,status,transaction_date").eq("user_id", user.id),
+        supabase.from("listings").select("status,address").eq("user_id", user.id),
+        supabase.from("property_viewings").select("status").eq("user_id", user.id),
+      ]);
+      if (cancelled) return;
+      setCommissions((c.data ?? []) as any);
+      setListings((l.data ?? []) as any);
+      setViewings((v.data ?? []) as any);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  const totalCommission = commissions.filter((c) => c.status === "received").reduce((s, c) => s + Number(c.commission_amount || 0), 0);
+  const pendingCommission = commissions.filter((c) => c.status === "pending").reduce((s, c) => s + Number(c.commission_amount || 0), 0);
+  const totalListings = listings.length;
+  const activeListings = listings.filter((l) => l.status === "available" || l.status === "reserved").length;
+  const closedListings = listings.filter((l) => l.status === "sold" || l.status === "rented").length;
+  const totalViewings = viewings.length;
+  const completedViewings = viewings.filter((v) => v.status === "completed").length;
+  const conversionRate = totalViewings > 0 ? (completedViewings / totalViewings) * 100 : 0;
+
+  // Top areas — derive from address (first comma-separated token)
+  const areaMap = new Map<string, number>();
+  listings.forEach((l) => {
+    const raw = (l.address ?? "").trim();
+    if (!raw) return;
+    const key = raw.split(",").pop()?.trim() || raw;
+    areaMap.set(key, (areaMap.get(key) ?? 0) + 1);
+  });
+  const topAreas = [...areaMap.entries()]
+    .map(([name, count]) => ({ name: name.length > 18 ? name.slice(0, 18) + "…" : name, count }))
+    .sort((a, b) => b.count - a.count).slice(0, 5);
+
+  // Commission trend last 30 days
+  const now = new Date();
+  const trend: { date: string; value: number }[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const v = commissions
+      .filter((c) => c.status === "received" && c.transaction_date === key)
+      .reduce((s, c) => s + Number(c.commission_amount || 0), 0);
+    trend.push({ date: `${d.getDate()}/${d.getMonth() + 1}`, value: v });
+  }
+
+  const statusData = [
+    { name: t("an_active_listings"), value: activeListings, color: "#10B981" },
+    { name: t("an_closed_listings"), value: closedListings, color: "#7C3AED" },
+  ].filter((s) => s.value > 0);
+
+  return (
+    <div className="px-5 pt-10 pb-8 space-y-5">
+      <header className="flex items-center gap-3">
+        <button onClick={() => navigate({ to: "/" })} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <h1 className="text-2xl font-bold">📊 {t("analytics_label")}</h1>
+      </header>
+
+      {loading ? <p className="text-sm text-muted-foreground">{t("loading")}</p> : (
+        <>
+          <section className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-card border border-border/60 p-4">
+              <p className="text-xl font-bold text-emerald-600">RM {totalCommission.toFixed(0)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("an_total_commission")}</p>
+            </div>
+            <div className="rounded-2xl bg-card border border-border/60 p-4">
+              <p className="text-xl font-bold text-amber-600">RM {pendingCommission.toFixed(0)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("an_pending_commission")}</p>
+            </div>
+            <div className="rounded-2xl bg-card border border-border/60 p-4">
+              <p className="text-xl font-bold text-primary">{totalListings}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("an_total_listings")}</p>
+            </div>
+            <div className="rounded-2xl bg-card border border-border/60 p-4">
+              <p className="text-xl font-bold text-primary">{conversionRate.toFixed(1)}%</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("an_conversion_rate")} ({completedViewings}/{totalViewings})</p>
+            </div>
+          </section>
+
+          <Card title={t("rep_commission_revenue")} subtitle={`RM ${totalCommission.toFixed(0)}`}>
+            <ResponsiveContainer width="100%" height={180}>
+              <AreaChart data={trend}>
+                <defs>
+                  <linearGradient id="pg1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10B981" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#10B981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" fontSize={10} tick={{ fill: "currentColor" }} />
+                <YAxis fontSize={10} tick={{ fill: "currentColor" }} />
+                <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} formatter={(v: number) => `RM ${Number(v).toFixed(2)}`} />
+                <Area type="monotone" dataKey="value" stroke="#10B981" strokeWidth={2} fill="url(#pg1)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </Card>
+
+          {statusData.length > 0 && (
+            <Card title={t("an_listings_status")}>
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="45%" innerRadius={45} outerRadius={70} paddingAngle={3}>
+                    {statusData.map((s, i) => <Cell key={i} fill={s.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: 11 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+          )}
+
+          <Card title={t("an_top_areas")}>
+            {topAreas.length === 0 ? <p className="text-xs text-muted-foreground">{t("no_data")}</p> : (
+              <ResponsiveContainer width="100%" height={Math.max(120, topAreas.length * 40)}>
+                <BarChart data={topAreas} layout="vertical">
+                  <XAxis type="number" fontSize={10} tick={{ fill: "currentColor" }} />
+                  <YAxis type="category" dataKey="name" fontSize={10} width={110} tick={{ fill: "currentColor" }} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Bar dataKey="count" fill="#7C3AED" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+        </>
+      )}
+    </div>
   );
 }

@@ -31,6 +31,7 @@ function ReportsPage() {
   const [from, setFrom] = useState<string>(() => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   const [to, setTo] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [exporting, setExporting] = useState(false);
+  const [commissions, setCommissions] = useState<Array<{ commission_amount: number; status: string; transaction_date: string }>>([]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -59,6 +60,19 @@ function ReportsPage() {
       supabase.removeChannel(ch);
     };
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || eff !== "property") return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("commissions")
+        .select("commission_amount,status,transaction_date")
+        .eq("user_id", user.id);
+      if (!cancelled) setCommissions((data ?? []) as any);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, eff]);
 
   const { fromDate, toDate, label } = useMemo(() => {
     const now = new Date();
@@ -208,13 +222,15 @@ function ReportsPage() {
       ];
     }
     if (eff === "property") {
+      const commissionEarned = commissions.filter((c) => c.status === "received").reduce((s, c) => s + Number(c.commission_amount || 0), 0);
+      const commissionPending = commissions.filter((c) => c.status === "pending").reduce((s, c) => s + Number(c.commission_amount || 0), 0);
       return [
-        { label: t("rep_total_leads"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
+        { label: t("rep_total_enquiries"), value: String(totalOrders), color: "text-primary", bg: "bg-primary/10" },
         { label: t("rep_completed"), value: String(paidOrders), color: "text-emerald-600", bg: "bg-emerald-50" },
         { label: t("rep_in_progress"), value: String(pendingCount), color: "text-amber-600", bg: "bg-amber-50" },
         { label: t("rep_rejected"), value: String(unpaidCount), color: "text-red-500", bg: "bg-red-50" },
-        revenueCard,
-        unpaidCard,
+        { label: t("an_total_commission"), value: `RM ${commissionEarned.toFixed(0)}`, color: "text-emerald-600", bg: "bg-emerald-50" },
+        { label: t("an_pending_commission"), value: `RM ${commissionPending.toFixed(0)}`, color: "text-amber-600", bg: "bg-amber-50" },
       ];
     }
     if (eff === "freelance") {
@@ -314,6 +330,42 @@ function ReportsPage() {
           </ResponsiveContainer>
         </div>
       </section>
+
+      {eff === "property" && (
+        <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
+          <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2">{t("rep_commission_revenue")}</p>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={(() => {
+                const buckets = new Map<string, number>();
+                const days = Math.ceil((toDate.getTime() - fromDate.getTime()) / 86400000);
+                const step = days <= 31 ? 1 : 7;
+                for (let i = 0; i <= days; i += step) {
+                  const d = new Date(fromDate); d.setDate(d.getDate() + i);
+                  buckets.set(`${d.getMonth() + 1}/${d.getDate()}`, 0);
+                }
+                commissions
+                  .filter((c) => {
+                    if (c.status !== "received") return false;
+                    const d = new Date(c.transaction_date);
+                    return d >= fromDate && d <= toDate;
+                  })
+                  .forEach((c) => {
+                    const d = new Date(c.transaction_date);
+                    const key = `${d.getMonth() + 1}/${d.getDate()}`;
+                    buckets.set(key, (buckets.get(key) ?? 0) + Number(c.commission_amount || 0));
+                  });
+                return [...buckets.entries()].map(([day, value]) => ({ day, value }));
+              })()}>
+                <XAxis dataKey="day" fontSize={10} />
+                <YAxis fontSize={10} />
+                <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+                <Bar dataKey="value" fill="#10B981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
 
       {topProducts.length > 0 && (
         <section>
