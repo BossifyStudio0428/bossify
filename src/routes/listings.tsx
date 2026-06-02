@@ -92,7 +92,13 @@ function ListingsPage() {
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">{t("listings_title")}</h1>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary ml-auto">
+        <Link
+          to="/viewings"
+          className="ml-auto text-xs font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary active:scale-95 transition-transform"
+        >
+          📅 {t("viewings_title")}
+        </Link>
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {items.length}
         </span>
       </header>

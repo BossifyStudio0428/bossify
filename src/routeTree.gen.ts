@@ -52,6 +52,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ViewingIdRouteImport } from './routes/viewing.$id'
 import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as StockTakeIdRouteImport } from './routes/stock-take_.$id'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
@@ -286,6 +287,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ViewingIdRoute = ViewingIdRouteImport.update({
+  id: '/viewing/$id',
+  path: '/viewing/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamWelcomeRoute = TeamWelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
@@ -434,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/viewing/$id': typeof ViewingIdRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -497,6 +504,7 @@ export interface FileRoutesByTo {
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/viewing/$id': typeof ViewingIdRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -561,6 +569,7 @@ export interface FileRoutesById {
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/stock-take_/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/viewing/$id': typeof ViewingIdRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -626,6 +635,7 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/stock-take/$id'
     | '/team/welcome'
+    | '/viewing/$id'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -689,6 +699,7 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/stock-take/$id'
     | '/team/welcome'
+    | '/viewing/$id'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -752,6 +763,7 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/stock-take_/$id'
     | '/team/welcome'
+    | '/viewing/$id'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -811,6 +823,7 @@ export interface RootRouteChildren {
   ListingIdRoute: typeof ListingIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
   StockTakeIdRoute: typeof StockTakeIdRoute
+  ViewingIdRoute: typeof ViewingIdRoute
   ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
   ApiPublicStripeActivateRoute: typeof ApiPublicStripeActivateRoute
   ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
@@ -1122,6 +1135,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/viewing/$id': {
+      id: '/viewing/$id'
+      path: '/viewing/$id'
+      fullPath: '/viewing/$id'
+      preLoaderRoute: typeof ViewingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team/welcome': {
       id: '/team/welcome'
       path: '/welcome'
@@ -1350,6 +1370,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListingIdRoute: ListingIdRoute,
   OrderCodeRoute: OrderCodeRoute,
   StockTakeIdRoute: StockTakeIdRoute,
+  ViewingIdRoute: ViewingIdRoute,
   ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
   ApiPublicStripeActivateRoute: ApiPublicStripeActivateRoute,
   ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
