@@ -89,6 +89,14 @@ export type LoadPublicOrderFormResult =
         description: string | null;
         variants: Array<{ id?: string; name: string; price: number }>;
         duration_minutes?: number | null;
+        property?: {
+          property_type: string | null;
+          listing_type: string | null;
+          bedrooms: number | null;
+          bathrooms: number | null;
+          size_sqft: number | null;
+          address: string | null;
+        };
       }>;
     }
   | { ok: false; reason: "not_found" | "disabled"; error?: string };
@@ -133,6 +141,14 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
       description: string | null;
       variants: Array<{ id?: string; name: string; price: number }>;
       duration_minutes?: number | null;
+      property?: {
+        property_type: string | null;
+        listing_type: string | null;
+        bedrooms: number | null;
+        bathrooms: number | null;
+        size_sqft: number | null;
+        address: string | null;
+      };
     }> = [];
     if (isRetailish) {
       const { data: inv } = await sb
@@ -149,6 +165,35 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         description: x.description ?? null,
         variants: Array.isArray(x.variants) ? x.variants : [],
       })) as any;
+    } else if (bizType === "property") {
+      const { data: rows } = await sb
+        .from("property_listings")
+        .select("id,title,price,images,property_type,listing_type,bedrooms,bathrooms,size_sqft,address,description,status")
+        .eq("user_id", profile.id)
+        .eq("status", "available")
+        .order("created_at", { ascending: false });
+      products = ((rows ?? []) as any[]).map((x) => {
+        const imgs = Array.isArray(x.images) ? x.images : [];
+        const firstImg = imgs.length > 0 ? String(imgs[0]) : null;
+        const listingType = String(x.listing_type ?? "sale");
+        return {
+          id: String(x.id),
+          name: String(x.title ?? ""),
+          price: Number(x.price ?? 0),
+          image_url: firstImg,
+          category: listingType === "rent" ? "For Rent" : "For Sale",
+          description: x.description ?? null,
+          variants: [],
+          property: {
+            property_type: x.property_type ?? null,
+            listing_type: listingType,
+            bedrooms: x.bedrooms ?? null,
+            bathrooms: x.bathrooms ?? null,
+            size_sqft: x.size_sqft ?? null,
+            address: x.address ?? null,
+          },
+        };
+      }) as any;
     } else {
       const { data: svc } = await sb
         .from("services")
