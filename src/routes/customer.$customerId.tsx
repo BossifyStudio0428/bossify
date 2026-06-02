@@ -387,6 +387,87 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+type ReqRow = {
+  id: string;
+  property_type: string;
+  listing_type: string;
+  budget_min: number;
+  budget_max: number;
+  preferred_location: string | null;
+  status: string;
+};
+
+function CustomerRequirements({ customerId }: { customerId: string }) {
+  const { t } = useI18n();
+  const [rows, setRows] = useState<ReqRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("property_client_requirements" as never)
+        .select("id,property_type,listing_type,budget_min,budget_max,preferred_location,status")
+        .eq("customer_id", customerId)
+        .order("created_at", { ascending: false });
+      if (cancelled) return;
+      setRows(((data as any[]) ?? []) as ReqRow[]);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [customerId]);
+
+  const newHref = `/requirement/new?customerId=${customerId}&returnTo=${encodeURIComponent(`/customer/${customerId}`)}`;
+
+  return (
+    <section className="space-y-2">
+      <div className="flex items-center justify-between px-1">
+        <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+          {t("requirements_title")}
+        </p>
+        <a href={newHref} className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95">
+          <Plus className="h-3.5 w-3.5" /> {t("new_requirement")}
+        </a>
+      </div>
+      <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+        {loading && (
+          <div className="flex justify-center py-5">
+            <div className="h-5 w-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          </div>
+        )}
+        {!loading && rows.length === 0 && (
+          <p className="text-center text-xs text-muted-foreground py-5">{t("no_requirements_yet")}</p>
+        )}
+        {!loading && rows.map((r) => (
+          <a
+            key={r.id}
+            href={`/requirement/${r.id}?returnTo=${encodeURIComponent(`/customer/${customerId}`)}`}
+            className="block p-3 active:bg-muted/40"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">
+                  {r.property_type} · {r.listing_type === "rent" ? t("lt_rent") : t("lt_buy")}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {r.preferred_location || "—"}
+                </p>
+                <p className="text-[11px] font-semibold text-primary mt-0.5">
+                  RM {Number(r.budget_min || 0).toLocaleString()} - {Number(r.budget_max || 0).toLocaleString()}
+                </p>
+              </div>
+              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 bg-muted text-foreground">
+                {t(reqStatusKey(r.status))}
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function EditSheet({
   customer, onClose, onSaved,
 }: { customer: CustomerRow; onClose: () => void; onSaved: (c: CustomerRow) => void }) {
