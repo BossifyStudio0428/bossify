@@ -238,7 +238,7 @@ function ListingEditor() {
         />
       </div>
 
-      <TextField label={`${t("price")} (RM)`} value={price} onChange={setPrice} type="number" />
+      <TextField label={t("price")} value={price} onChange={setPrice} type="number" />
       <TextField label={t("fld_address")} value={address} onChange={setAddress} />
 
       <div className="grid grid-cols-3 gap-2">
@@ -260,7 +260,7 @@ function ListingEditor() {
         <select
           value={interestedCustomerId ?? ""}
           onChange={(e) => setInterestedCustomerId(e.target.value || null)}
-          className="w-full px-3 py-3 rounded-2xl bg-muted/60 text-sm outline-none focus:bg-muted"
+          className="w-full px-3 py-3 rounded-2xl bg-background border border-border text-sm outline-none focus:border-primary"
         >
           <option value="">{t("no_interested_customer")}</option>
           {customers.map((c) => (
@@ -309,14 +309,14 @@ function TextField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           rows={3}
-          className="w-full px-3 py-3 rounded-2xl bg-muted/60 text-sm outline-none focus:bg-muted resize-none"
+          className="w-full px-3 py-3 rounded-2xl bg-background border border-border text-sm outline-none focus:border-primary resize-none"
         />
       ) : (
         <input
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-3 rounded-2xl bg-muted/60 text-sm outline-none focus:bg-muted"
+          className="w-full px-3 py-3 rounded-2xl bg-background border border-border text-sm outline-none focus:border-primary"
         />
       )}
     </div>
@@ -332,7 +332,7 @@ function SelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-3 rounded-2xl bg-muted/60 text-sm outline-none focus:bg-muted"
+        className="w-full px-3 py-3 rounded-2xl bg-background border border-border text-sm outline-none focus:border-primary"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
