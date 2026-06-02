@@ -222,6 +222,7 @@ function Index() {
       setTopCustomers([]);
       setLatestClients([]);
       setFollowUpsTodayList([]);
+      setTodaysViewings([]);
       setUnreadNotif(0);
       setAvatarUrl((user.user_metadata as any)?.avatar_url || null);
     }
