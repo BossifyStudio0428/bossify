@@ -854,6 +854,66 @@ function PublicOrderFormPage() {
             <textarea rows={3} value={form.notes} onChange={upd("notes")} className="pof-input" maxLength={2000} />
           </Field>
 
+          {isRetailish && (
+            <Field label={`${t("pof_payment_method")} *`}>
+              <div className="space-y-2">
+                {(() => {
+                  const methods = state.profile.payment_methods ?? [];
+                  const allowCod = state.profile.allow_cod !== false;
+                  return (
+                    <>
+                      <label
+                        className={`flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition-colors ${paymentMethod === "bank_transfer" ? "border-primary bg-primary/5" : "border-border bg-card"}`}
+                      >
+                        <input
+                          type="radio"
+                          name="pof_payment"
+                          value="bank_transfer"
+                          checked={paymentMethod === "bank_transfer"}
+                          onChange={() => setPaymentMethod("bank_transfer")}
+                          className="mt-1 accent-primary"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold">🏦 {t("bank_transfer")}</p>
+                          {methods.length > 0 ? (
+                            <ul className="mt-1.5 space-y-1">
+                              {methods.map((m, i) => (
+                                <li key={i} className="text-[12px] text-muted-foreground leading-tight">
+                                  <span className="font-medium text-foreground">{m.bank || m.type || "Bank"}</span>
+                                  {m.number ? <span> · {m.number}</span> : null}
+                                  {m.name ? <span> · {m.name}</span> : null}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-[11px] text-muted-foreground mt-1">{t("no_bank_set")}</p>
+                          )}
+                        </div>
+                      </label>
+                      {allowCod && (
+                        <label
+                          className={`flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition-colors ${paymentMethod === "cash_on_delivery" ? "border-primary bg-primary/5" : "border-border bg-card"}`}
+                        >
+                          <input
+                            type="radio"
+                            name="pof_payment"
+                            value="cash_on_delivery"
+                            checked={paymentMethod === "cash_on_delivery"}
+                            onChange={() => setPaymentMethod("cash_on_delivery")}
+                            className="mt-1 accent-primary"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold">💵 {t("cash_on_delivery")}</p>
+                          </div>
+                        </label>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            </Field>
+          )}
+
           <button
             type="submit"
             disabled={submitting || cart.length === 0}
