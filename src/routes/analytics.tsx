@@ -181,12 +181,11 @@ function AnalyticsPage() {
   const dayTitleKey = eff === "beauty" ? "an_busiest_day" : "best_selling_days";
   const statusTitleKey =
     eff === "education" ? "an_application_status_breakdown"
-    : eff === "property" ? "an_lead_status_breakdown"
     : eff === "freelance" ? "an_project_status_breakdown"
     : "status_breakdown";
 
-  const showTopItems = eff !== "property";
-  const showTopPeople = eff !== "property";
+  const showTopItems = true;
+  const showTopPeople = true;
   const showDayOfWeek = eff === "retail" || eff === "fnb" || eff === "beauty";
   const showPeakHours = eff === "retail" || eff === "fnb";
   const showStatus = eff !== "retail" && eff !== "fnb" ? true : true; // keep for all
@@ -300,26 +299,6 @@ function AnalyticsPage() {
                   </ResponsiveContainer>
                 </Card>
               )}
-            </>
-          )}
-
-          {eff === "property" && (
-            <>
-              <Card title={t("an_conversion_rate")} subtitle={`${paid.length}/${filtered.length}`}>
-                <p className="text-4xl font-bold text-primary">{conversionRate.toFixed(1)}%</p>
-              </Card>
-              <Card title={t("an_top_areas")}>
-                {topAreas.length === 0 ? <p className="text-xs text-muted-foreground">{t("no_data")}</p> : (
-                  <ul className="divide-y divide-border/60">
-                    {topAreas.map((a) => (
-                      <li key={a.name} className="flex justify-between py-2 text-sm">
-                        <span className="font-medium">{a.name}</span>
-                        <span className="text-muted-foreground">{a.count}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </Card>
             </>
           )}
 
