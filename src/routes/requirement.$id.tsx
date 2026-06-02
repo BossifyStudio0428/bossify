@@ -145,9 +145,17 @@ function RequirementEditor() {
   return (
     <div className="px-5 pt-10 pb-28 space-y-4">
       <header className="flex items-center gap-2">
-        <Link to="/requirements" className="-ml-2 p-2 rounded-full active:bg-muted">
+        <button
+          onClick={() => {
+            const back = returnTo();
+            if (back) navigate({ to: back.to as any });
+            else navigate({ to: "/requirements" });
+          }}
+          className="-ml-2 p-2 rounded-full active:bg-muted"
+          aria-label="back"
+        >
           <ChevronLeft className="h-5 w-5" />
-        </Link>
+        </button>
         <h1 className="text-xl font-bold tracking-tight">{t(isNew ? "new_requirement" : "edit_requirement")}</h1>
         {!isNew && (
           <button onClick={remove} className="ml-auto p-2 rounded-full text-red-500 active:bg-red-50" aria-label={t("delete")}>
