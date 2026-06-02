@@ -65,6 +65,14 @@ type Product = {
   description: string | null;
   variants: Variant[];
   duration_minutes?: number | null;
+  property?: {
+    property_type: string | null;
+    listing_type: string | null;
+    bedrooms: number | null;
+    bathrooms: number | null;
+    size_sqft: number | null;
+    address: string | null;
+  };
 };
 type CartLine = {
   productId: string;
