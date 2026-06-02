@@ -92,16 +92,29 @@ function ListingsPage() {
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">{t("listings_title")}</h1>
-        <Link
-          to="/viewings"
-          className="ml-auto text-xs font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary active:scale-95 transition-transform"
-        >
-          📅 {t("viewings_title")}
-        </Link>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+        <span className="ml-auto text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {items.length}
         </span>
       </header>
+
+      <div className="grid grid-cols-4 gap-2">
+        <Link to="/viewings" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
+          <div className="text-lg">📅</div>
+          <p className="text-[10px] font-semibold text-foreground truncate">{t("viewings_title")}</p>
+        </Link>
+        <Link to="/requirements" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
+          <div className="text-lg">🎯</div>
+          <p className="text-[10px] font-semibold text-foreground truncate">{t("requirements_title")}</p>
+        </Link>
+        <Link to="/documents" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
+          <div className="text-lg">📄</div>
+          <p className="text-[10px] font-semibold text-foreground truncate">{t("documents_title")}</p>
+        </Link>
+        <Link to="/loan-calculator" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
+          <div className="text-lg">🧮</div>
+          <p className="text-[10px] font-semibold text-foreground truncate">{t("loan_calc_title")}</p>
+        </Link>
+      </div>
 
       <div className="relative">
         <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
