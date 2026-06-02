@@ -75,6 +75,22 @@ function RequirementEditor() {
     })();
   }, [id, isNew, user?.id]);
 
+  // When creating a new requirement from a customer profile, prefill the
+  // selected client via ?customerId=... so the user doesn't re-pick it.
+  useEffect(() => {
+    if (!isNew || typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const cid = sp.get("customerId");
+    if (cid) setCustomerId(cid);
+  }, [isNew]);
+
+  const returnTo = (): { to: string } | null => {
+    if (typeof window === "undefined") return null;
+    const sp = new URLSearchParams(window.location.search);
+    const r = sp.get("returnTo");
+    return r ? { to: r } : null;
+  };
+
   const save = async () => {
     if (!user) return;
     if (!customerId) { toast.error(t("fld_select_client")); return; }
@@ -98,7 +114,9 @@ function RequirementEditor() {
     setSaving(false);
     if (res.error) { toast.error(res.error.message); return; }
     toast.success(t("requirement_saved"));
-    navigate({ to: "/requirements" });
+    const back = returnTo();
+    if (back) navigate({ to: back.to as any, replace: true });
+    else navigate({ to: "/requirements" });
   };
 
   const remove = async () => {
@@ -106,7 +124,9 @@ function RequirementEditor() {
     const { error } = await supabase.from("property_client_requirements" as never).delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success(t("requirement_deleted"));
-    navigate({ to: "/requirements" });
+    const back = returnTo();
+    if (back) navigate({ to: back.to as any, replace: true });
+    else navigate({ to: "/requirements" });
   };
 
   if (loading) {
