@@ -70,6 +70,14 @@ export type LoadPublicOrderFormResult =
         business_type: string;
         whatsapp_number: string | null;
         language: string;
+        allow_cod: boolean;
+        payment_methods: Array<{
+          type: string | null;
+          bank: string | null;
+          number: string | null;
+          name: string | null;
+          qr_url: string | null;
+        }>;
       };
       products: Array<{
         id: string;
@@ -93,7 +101,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     const { data: profile, error } = await sb
       .from("profiles")
       .select(
-        "id, business_name, avatar_url, business_type, whatsapp_number, order_form_enabled, order_form_code",
+        "id, business_name, avatar_url, business_type, whatsapp_number, order_form_enabled, order_form_code, allow_cod, payment_method_1_type, payment_method_1_bank, payment_method_1_number, payment_method_1_name, payment_method_1_qr_url, payment_method_2_type, payment_method_2_bank, payment_method_2_number, payment_method_2_name, payment_method_2_qr_url, language",
       )
       .eq("order_form_code", code.toLowerCase())
       .maybeSingle();
@@ -156,6 +164,23 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         business_type: bizType,
         whatsapp_number: profile.whatsapp_number ?? null,
         language: (profile as any).language ?? "en",
+        allow_cod: (profile as any).allow_cod !== false,
+        payment_methods: [
+          {
+            type: (profile as any).payment_method_1_type ?? null,
+            bank: (profile as any).payment_method_1_bank ?? null,
+            number: (profile as any).payment_method_1_number ?? null,
+            name: (profile as any).payment_method_1_name ?? null,
+            qr_url: (profile as any).payment_method_1_qr_url ?? null,
+          },
+          {
+            type: (profile as any).payment_method_2_type ?? null,
+            bank: (profile as any).payment_method_2_bank ?? null,
+            number: (profile as any).payment_method_2_number ?? null,
+            name: (profile as any).payment_method_2_name ?? null,
+            qr_url: (profile as any).payment_method_2_qr_url ?? null,
+          },
+        ].filter((m) => m.type || m.bank || m.number || m.name || m.qr_url),
       },
       products: products as any,
     };
