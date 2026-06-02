@@ -20,6 +20,9 @@ function AnalyticsPage() {
   const navigate = useNavigate();
   const { type: bizType } = useBusinessType();
   const eff = bizType ?? "retail";
+  if (eff === "property") {
+    return <PropertyAnalytics />;
+  }
   const [range, setRange] = useState<Range>("month");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
