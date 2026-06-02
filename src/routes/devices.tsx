@@ -84,6 +84,7 @@ function DevicesPage() {
     if (reg.ok) {
       setLimit(reg.limit);
       setCurrentRegistered(true);
+      try { sessionStorage.removeItem("bossify_device_limit_block"); } catch {}
     } else {
       if (reg.limit) setLimit(reg.limit);
       setCurrentRegistered(false);
@@ -119,6 +120,7 @@ function DevicesPage() {
         if (reg.ok) {
           setCurrentRegistered(true);
           setLimit(reg.limit);
+          try { sessionStorage.removeItem("bossify_device_limit_block"); } catch {}
         }
       }
     } catch (e: any) {
