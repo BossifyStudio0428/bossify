@@ -104,7 +104,14 @@ function PublicOrderFormPage() {
   const { setLang } = useI18n();
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState<null | { name: string; code: string; business: string }>(null);
+  const [done, setDone] = useState<null | {
+    name: string;
+    code: string;
+    business: string;
+    amount: number;
+    paymentMethod: string;
+    whatsapp: string | null;
+  }>(null);
 
   // Language picker: shown first if customer hasn't chosen for this session
   const [langPicked, setLangPicked] = useState<boolean>(() => {
@@ -275,6 +282,9 @@ function PublicOrderFormPage() {
           name: form.customer_name.trim(),
           code: res.code,
           business: res.business_name || state.profile.business_name,
+          amount: cartTotal,
+          paymentMethod: needsPayment ? paymentMethod : "",
+          whatsapp: state.profile.whatsapp_number || null,
         });
       } else {
         const reason = (res as any).reason;
