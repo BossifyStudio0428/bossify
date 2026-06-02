@@ -12,16 +12,15 @@ export type PaymentSummary = {
 export async function loadPaymentSummary(userId: string): Promise<PaymentSummary> {
   const { data } = await supabase
     .from("profiles")
-    .select("payment_method_1_type,payment_method_1_number,payment_method_2_type,payment_method_2_number")
+    .select("payment_method_1_type,payment_method_1_number,payment_method_1_name,payment_method_1_bank,payment_method_1_qr_url,payment_method_2_type,payment_method_2_number,payment_method_2_name,payment_method_2_bank,payment_method_2_qr_url")
     .eq("id", userId)
     .maybeSingle();
   if (!data) return { hasMethod: false, type: null, number: null };
-  const t1 = (data as any).payment_method_1_type as string | null;
-  const n1 = (data as any).payment_method_1_number as string | null;
-  const t2 = (data as any).payment_method_2_type as string | null;
-  const n2 = (data as any).payment_method_2_number as string | null;
-  if (t1 || n1) return { hasMethod: true, type: t1, number: n1 };
-  if (t2 || n2) return { hasMethod: true, type: t2, number: n2 };
+  const d = data as any;
+  const has1 = !!(d.payment_method_1_type || d.payment_method_1_number || d.payment_method_1_name || d.payment_method_1_bank || d.payment_method_1_qr_url);
+  const has2 = !!(d.payment_method_2_type || d.payment_method_2_number || d.payment_method_2_name || d.payment_method_2_bank || d.payment_method_2_qr_url);
+  if (has1) return { hasMethod: true, type: d.payment_method_1_type ?? d.payment_method_1_bank ?? null, number: d.payment_method_1_number ?? null };
+  if (has2) return { hasMethod: true, type: d.payment_method_2_type ?? d.payment_method_2_bank ?? null, number: d.payment_method_2_number ?? null };
   return { hasMethod: false, type: null, number: null };
 }
 

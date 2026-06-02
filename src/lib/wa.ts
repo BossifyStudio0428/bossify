@@ -449,13 +449,14 @@ export function formatPaymentBlock(
   methods: PaymentMethod[],
   lang: Lang = getActiveLang(),
 ): string {
-  const valid = methods.filter((m) => m && m.type);
+  const valid = methods.filter((m) => m && (m.type || m.number || m.bank || m.name || m.qr_url));
   if (valid.length === 0) return "";
   const sep = lang === "zh" ? "：" : ": ";
   const labels = PAYMENT_LABELS[lang];
   const lines: string[] = ["━━━━━━━━━━━━━━━", `💳 ${labels.header}${sep}`];
   for (const m of valid) {
-    lines.push(m.number ? `${m.type}${sep}${m.number}` : String(m.type));
+    const heading = m.type || m.bank || labels.bank;
+    lines.push(m.number ? `${heading}${sep}${m.number}` : String(heading));
     if (m.bank) lines.push(`${labels.bank}${sep}${m.bank}`);
     if (m.name) lines.push(`${labels.name}${sep}${m.name}`);
     if (m.qr_url) lines.push(`📷 ${labels.qr}${sep}${m.qr_url}`);
