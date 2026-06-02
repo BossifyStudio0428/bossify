@@ -1381,6 +1381,8 @@ const dict = {
     lc_total_interest: "Total Interest",
     lc_share_wa: "Share via WhatsApp",
     lc_down_amount: "Down Payment",
+    export_pdf: "Export PDF",
+    pro_feature_required: "This feature requires Pro plan or above",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
