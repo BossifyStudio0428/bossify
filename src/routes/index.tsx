@@ -206,6 +206,41 @@ function Index() {
       } catch (e) {
         setTodaysViewings([]);
       }
+      // Upcoming renewal reminders (expiring within 30 days) — property only
+      try {
+        const todayStr2 = today.toISOString().slice(0, 10);
+        const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+        const in30Str = in30.toISOString().slice(0, 10);
+        const { data: rrRows } = await supabase
+          .from("renewal_reminders" as never)
+          .select("id,customer_id,reminder_type,expiry_date")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .gte("expiry_date", todayStr2)
+          .lte("expiry_date", in30Str)
+          .order("expiry_date", { ascending: true })
+          .limit(5);
+        const rrs = ((rrRows as any[]) ?? []) as { id: string; customer_id: string | null; reminder_type: string; expiry_date: string }[];
+        const rIds = Array.from(new Set(rrs.map((r) => r.customer_id).filter(Boolean))) as string[];
+        let rMap = new Map<string, string>();
+        if (rIds.length) {
+          const { data: cs } = await supabase.from("customers").select("id,name").in("id", rIds);
+          (cs ?? []).forEach((c: any) => rMap.set(c.id, c.name));
+        }
+        setExpiringRenewals(rrs.map((r) => {
+          const d = new Date(r.expiry_date + "T00:00:00");
+          const days = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          return {
+            id: r.id,
+            customer_name: (r.customer_id && rMap.get(r.customer_id)) || "—",
+            reminder_type: r.reminder_type,
+            expiry_date: r.expiry_date,
+            days_left: days,
+          };
+        }));
+      } catch (e) {
+        setExpiringRenewals([]);
+      }
       // Customer counts (total + by status)
       const [{ count: totalC }, { count: inProg }, { count: completedC }] = await Promise.all([
         supabase.from("customers").select("*", { count: "exact", head: true }).eq("user_id", user.id),
