@@ -97,14 +97,10 @@ function ListingsPage() {
         </span>
       </header>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <Link to="/viewings" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
           <div className="text-lg">📅</div>
           <p className="text-[10px] font-semibold text-foreground truncate">{t("viewings_title")}</p>
-        </Link>
-        <Link to="/requirements" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
-          <div className="text-lg">🎯</div>
-          <p className="text-[10px] font-semibold text-foreground truncate">{t("requirements_title")}</p>
         </Link>
         <Link to="/documents" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
           <div className="text-lg">📄</div>
