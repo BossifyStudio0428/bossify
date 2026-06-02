@@ -261,6 +261,7 @@ function Index() {
       setLatestClients([]);
       setFollowUpsTodayList([]);
       setTodaysViewings([]);
+      setExpiringRenewals([]);
       setUnreadNotif(0);
       setAvatarUrl((user.user_metadata as any)?.avatar_url || null);
     }
