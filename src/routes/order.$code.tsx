@@ -65,6 +65,14 @@ type Product = {
   description: string | null;
   variants: Variant[];
   duration_minutes?: number | null;
+  property?: {
+    property_type: string | null;
+    listing_type: string | null;
+    bedrooms: number | null;
+    bathrooms: number | null;
+    size_sqft: number | null;
+    address: string | null;
+  };
 };
 type CartLine = {
   productId: string;
@@ -591,7 +599,13 @@ function PublicOrderFormPage() {
 
           {noProducts ? (
             <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-xs text-muted-foreground">
-              {isRetailish
+              {bizType === "property"
+                ? L(
+                    "No listings available right now. Please contact the agent.",
+                    "Tiada hartanah tersedia buat masa ini. Sila hubungi ejen.",
+                    "目前没有可售房源，请联系经纪。",
+                  )
+                : isRetailish
                 ? L(
                     "The seller hasn't added any products yet. Please try again later.",
                     "Penjual belum menambah produk. Sila cuba semula nanti.",
@@ -623,6 +637,71 @@ function PublicOrderFormPage() {
                 </div>
               )}
 
+              {bizType === "property" ? (
+                <div className="space-y-3">
+                  {filteredProducts.map((p) => {
+                    const prop = p.property;
+                    const isRent = prop?.listing_type === "rent";
+                    const typeLabel = isRent
+                      ? L("For Rent", "Untuk Disewa", "出租")
+                      : L("For Sale", "Untuk Dijual", "出售");
+                    const enquireLabel = L("Enquire", "Pertanyaan", "查询");
+                    return (
+                      <div key={p.id} className="rounded-2xl bg-card overflow-hidden pof-card">
+                        <button
+                          type="button"
+                          onClick={() => setOpenProduct(p)}
+                          className="block w-full text-left"
+                        >
+                          <div className="aspect-[16/10] w-full bg-muted/40 overflow-hidden">
+                            {p.image_url ? (
+                              <img src={p.image_url} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-muted-foreground/40">
+                                <ShoppingBag size={32} />
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                        <div className="p-3 space-y-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                              {typeLabel}
+                            </span>
+                            {prop?.property_type && (
+                              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                {prop.property_type}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[14px] font-semibold leading-tight line-clamp-2">{p.name}</p>
+                          {prop?.address && (
+                            <p className="text-[11px] text-muted-foreground line-clamp-1">📍 {prop.address}</p>
+                          )}
+                          <p className="text-base font-bold text-primary">
+                            RM {Number(p.price || 0).toLocaleString("en-MY", { minimumFractionDigits: 0 })}
+                            {isRent && <span className="text-[11px] font-normal text-muted-foreground"> / {L("mo", "bln", "月")}</span>}
+                          </p>
+                          {(prop?.bedrooms || prop?.bathrooms || prop?.size_sqft) && (
+                            <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-0.5">
+                              {prop?.bedrooms ? <span>🛏 {prop.bedrooms}</span> : null}
+                              {prop?.bathrooms ? <span>🛁 {prop.bathrooms}</span> : null}
+                              {prop?.size_sqft ? <span>📐 {prop.size_sqft} sqft</span> : null}
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setOpenProduct(p)}
+                            className="mt-2 w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.99] transition-transform"
+                          >
+                            {enquireLabel}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
               <div className="grid grid-cols-2 gap-3">
                 {filteredProducts.map((p) => (
                   <div
@@ -667,6 +746,7 @@ function PublicOrderFormPage() {
                   </div>
                 ))}
               </div>
+              )}
               {filteredProducts.length === 0 && searchQuery.trim() && (
                 <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-xs text-muted-foreground">
                   {noResultsLabel}
