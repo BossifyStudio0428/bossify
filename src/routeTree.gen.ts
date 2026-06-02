@@ -19,6 +19,7 @@ import { Route as SplashRouteImport } from './routes/splash'
 import { Route as ServicesSummaryRouteImport } from './routes/services-summary'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as RequirementsRouteImport } from './routes/requirements'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RenewalsRouteImport } from './routes/renewals'
 import { Route as RecipesRouteImport } from './routes/recipes'
@@ -122,6 +123,11 @@ const ServicesRoute = ServicesRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RequirementsRoute = RequirementsRouteImport.update({
+  id: '/requirements',
+  path: '/requirements',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsRoute = ReportsRouteImport.update({
@@ -432,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
+  '/requirements': typeof RequirementsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
@@ -498,6 +505,7 @@ export interface FileRoutesByTo {
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
+  '/requirements': typeof RequirementsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
@@ -565,6 +573,7 @@ export interface FileRoutesById {
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
+  '/requirements': typeof RequirementsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
@@ -633,6 +642,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/renewals'
     | '/reports'
+    | '/requirements'
     | '/search'
     | '/services'
     | '/services-summary'
@@ -699,6 +709,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/renewals'
     | '/reports'
+    | '/requirements'
     | '/search'
     | '/services'
     | '/services-summary'
@@ -765,6 +776,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/renewals'
     | '/reports'
+    | '/requirements'
     | '/search'
     | '/services'
     | '/services-summary'
@@ -832,6 +844,7 @@ export interface RootRouteChildren {
   RecipesRoute: typeof RecipesRoute
   RenewalsRoute: typeof RenewalsRoute
   ReportsRoute: typeof ReportsRoute
+  RequirementsRoute: typeof RequirementsRoute
   SearchRoute: typeof SearchRoute
   ServicesRoute: typeof ServicesRoute
   ServicesSummaryRoute: typeof ServicesSummaryRoute
@@ -928,6 +941,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/requirements': {
+      id: '/requirements'
+      path: '/requirements'
+      fullPath: '/requirements'
+      preLoaderRoute: typeof RequirementsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports': {
@@ -1395,6 +1415,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecipesRoute: RecipesRoute,
   RenewalsRoute: RenewalsRoute,
   ReportsRoute: ReportsRoute,
+  RequirementsRoute: RequirementsRoute,
   SearchRoute: SearchRoute,
   ServicesRoute: ServicesRoute,
   ServicesSummaryRoute: ServicesSummaryRoute,
