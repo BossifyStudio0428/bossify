@@ -251,6 +251,7 @@ function NewOrderPage() {
     const userNote = form.notes.trim();
     const combinedNotes = [extraLines.join("\n"), userNote].filter(Boolean).join("\n\n") || null;
     const effectiveStatus: OrderStatus = eff === "property" ? "Pending" : status;
+    let savedCustomerId: string | null = null;
 
     const { data: inserted, error: orderErr } = await supabase
       .from("orders")
@@ -320,8 +321,9 @@ function NewOrderPage() {
             ? { interested_listing_id: interestedListingId }
             : {}),
         }).eq("id", existing.id);
+        savedCustomerId = existing.id;
       } else if (nameTrim) {
-        await (supabase as any).from("customers").insert({
+        const { data: createdCustomer } = await (supabase as any).from("customers").insert({
           user_id: user.id,
           name: nameTrim,
           phone: fullPhone || null,
@@ -331,7 +333,8 @@ function NewOrderPage() {
           ...(eff === "property" && interestedListingId
             ? { interested_listing_id: interestedListingId }
             : {}),
-        });
+        }).select("id").single();
+        savedCustomerId = createdCustomer?.id ?? null;
       }
     }
 
@@ -354,18 +357,14 @@ function NewOrderPage() {
     }
 
     // Property: persist follow-up reminder
-    if (eff === "property" && extras.followup_date && fullPhone) {
+    if (eff === "property" && extras.followup_date && savedCustomerId) {
       try {
-        const { data: cust } = await supabase
-          .from("customers").select("id").eq("user_id", user.id).eq("phone", fullPhone).maybeSingle();
-        if (cust?.id) {
-          await (supabase as any).from("follow_ups").insert({
-            user_id: user.id,
-            customer_id: cust.id,
-            follow_up_date: extras.followup_date,
-            note: form.product.trim() || null,
-          });
-        }
+        await (supabase as any).from("follow_ups").insert({
+          user_id: user.id,
+          customer_id: savedCustomerId,
+          follow_up_date: extras.followup_date,
+          note: form.product.trim() || null,
+        });
       } catch { /* non-fatal */ }
     }
 
@@ -416,7 +415,7 @@ function NewOrderPage() {
     isPrefEnabled("notif_new_order") && deviceNotify("New Order Added! 🎉", `Order from ${form.customer_name} — RM ${Number(form.amount).toFixed(2)} has been saved.`, { route: "/orders" }).catch(() => {});
     setForm({ customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "" });
     setStatus("Unpaid");
-    setTimeout(() => navigate({ to: "/orders" }), 1500);
+    setTimeout(() => navigate({ to: eff === "property" ? "/customers" : "/orders" }), 1500);
   };
 
   const saveAndWhatsApp = async () => {
@@ -442,7 +441,7 @@ function NewOrderPage() {
     }
     isPrefEnabled("notif_new_order") && deviceNotify("New Order Added! 🎉", `Order from ${form.customer_name} — RM ${Number(form.amount).toFixed(2)} has been saved.`, { route: "/orders" }).catch(() => {});
     window.open(buildWhatsAppLink(form.phone.replace(/\D/g, ""), msg), "_blank");
-    setTimeout(() => navigate({ to: "/orders" }), 800);
+    setTimeout(() => navigate({ to: eff === "property" ? "/customers" : "/orders" }), 800);
   };
 
   const productMatches =

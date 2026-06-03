@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type CustomerStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
 import { CasesKanban, type EduStageInfo } from "@/components/CasesKanban";
+import { PhoneInput } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/customers")({ component: CustomersPage });
 
@@ -55,6 +56,11 @@ function CustomersPage() {
   const [eduDetails, setEduDetails] = useState<Record<string, { university_preference: string | null; application_status: string | null }>>({});
   const [eduInfo, setEduInfo] = useState<Record<string, EduStageInfo>>({});
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", followup_date: "", note: "" });
+  const [newCustomerErrors, setNewCustomerErrors] = useState<Record<string, string>>({});
+  const [savingNewCustomer, setSavingNewCustomer] = useState(false);
+  const [followUpByCustomerId, setFollowUpByCustomerId] = useState<Record<string, string>>({});
 
   const ordersWordKey: TKey =
     bizType === "education" ? "case_word"
@@ -95,15 +101,75 @@ function CustomersPage() {
   };
 
   const load = async () => {
+    if (!user) { setCustomers([]); setFollowUpByCustomerId({}); setLoading(false); return; }
+    setLoading(true);
     const { data, error } = await supabase
       .from("customers")
       .select("*")
-      .order("last_order_at", { ascending: false, nullsFirst: false });
+      .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
-    setCustomers((data ?? []) as CustomerRow[]);
+    const rows = (data ?? []) as CustomerRow[];
+    setCustomers(rows);
+    if (rows.length) {
+      const { data: fuRows } = await supabase
+        .from("follow_ups")
+        .select("customer_id,follow_up_date,is_done")
+        .in("customer_id", rows.map((c) => c.id))
+        .eq("is_done", false)
+        .order("follow_up_date", { ascending: true });
+      const map: Record<string, string> = {};
+      ((fuRows ?? []) as { customer_id: string; follow_up_date: string }[]).forEach((f) => {
+        if (!map[f.customer_id]) map[f.customer_id] = f.follow_up_date;
+      });
+      setFollowUpByCustomerId(map);
+    } else {
+      setFollowUpByCustomerId({});
+    }
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [user?.id]);
+
+  useEffect(() => {
+    const open = () => setNewCustomerOpen(true);
+    window.addEventListener("bossify:add-customer", open);
+    return () => window.removeEventListener("bossify:add-customer", open);
+  }, []);
+
+  const saveNewCustomer = async () => {
+    if (!user) return;
+    const name = newCustomer.name.trim();
+    if (!name) { setNewCustomerErrors({ name: t("required_field") }); return; }
+    setSavingNewCustomer(true);
+    const fullPhone = newCustomer.phone.replace(/\D/g, "");
+    const { data, error } = await (supabase as any).from("customers").insert({
+      user_id: user.id,
+      name,
+      phone: fullPhone || null,
+      total_orders: 0,
+      total_spent: 0,
+    }).select("*").single();
+    if (error || !data) {
+      setSavingNewCustomer(false);
+      toast.error(error?.message ?? "Failed");
+      return;
+    }
+    if (newCustomer.followup_date) {
+      const { error: fuError } = await (supabase as any).from("follow_ups").insert({
+        user_id: user.id,
+        customer_id: data.id,
+        follow_up_date: newCustomer.followup_date,
+        note: newCustomer.note.trim() || null,
+        is_done: false,
+      });
+      if (!fuError) setFollowUpByCustomerId((prev) => ({ ...prev, [data.id]: newCustomer.followup_date }));
+    }
+    setCustomers((prev) => [data as CustomerRow, ...prev.filter((c) => c.id !== data.id)]);
+    setNewCustomer({ name: "", phone: "", followup_date: "", note: "" });
+    setNewCustomerErrors({});
+    setNewCustomerOpen(false);
+    setSavingNewCustomer(false);
+    toast.success(t("bl_new_customer"));
+  };
 
   useEffect(() => {
     if (bizType !== "education" || !user) { setEduDetails({}); return; }
@@ -204,6 +270,14 @@ function CustomersPage() {
           >
             📦 {t("bl_packages")}
           </Link>
+        )}
+        {bizType !== "property" && (
+          <button
+            onClick={() => setNewCustomerOpen(true)}
+            className="ml-auto inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95 transition"
+          >
+            + {t("bl_new_customer")}
+          </button>
         )}
       </header>
 
@@ -330,6 +404,11 @@ function CustomersPage() {
                 {c.phone && (
                   <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>
                 )}
+                {followUpByCustomerId[c.id] && (
+                  <p className="text-[11px] text-amber-600 font-medium mt-0.5 truncate">
+                    📅 {new Date(followUpByCustomerId[c.id] + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
+                  </p>
+                )}
                 {bizType === "education" ? (
                   <>
                     <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
@@ -416,6 +495,60 @@ function CustomersPage() {
           <p className="text-center text-sm text-muted-foreground py-10">{t("no_customers")}</p>
         )}
       </div>
+
+      {newCustomerOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setNewCustomerOpen(false)}>
+          <div className="w-full max-w-[420px] bg-card rounded-t-3xl p-5 space-y-4 animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-foreground">{t("bl_new_customer")}</h2>
+              <button onClick={() => setNewCustomerOpen(false)} className="p-2 rounded-full hover:bg-muted" aria-label={t("cancel")}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("customer_name")}</label>
+              <input
+                value={newCustomer.name}
+                onChange={(e) => { setNewCustomer((p) => ({ ...p, name: e.target.value })); setNewCustomerErrors({}); }}
+                placeholder={t("f_client_name_ph")}
+                className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${newCustomerErrors.name ? "border-red-400" : "border-border/60"}`}
+              />
+              {newCustomerErrors.name && <p className="text-[11px] text-red-500 px-1">{newCustomerErrors.name}</p>}
+            </div>
+            <PhoneInput
+              label={t("phone_number")}
+              value={newCustomer.phone}
+              onChange={(v) => setNewCustomer((p) => ({ ...p, phone: v }))}
+            />
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_followup_date")}</label>
+              <input
+                type="date"
+                value={newCustomer.followup_date}
+                onChange={(e) => setNewCustomer((p) => ({ ...p, followup_date: e.target.value }))}
+                className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("remarks")}</label>
+              <textarea
+                rows={3}
+                value={newCustomer.note}
+                onChange={(e) => setNewCustomer((p) => ({ ...p, note: e.target.value }))}
+                placeholder={t("remarks_placeholder")}
+                className="w-full rounded-2xl bg-muted/60 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
+              />
+            </div>
+            <button
+              onClick={saveNewCustomer}
+              disabled={savingNewCustomer}
+              className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm active:scale-[0.99] transition-transform disabled:opacity-60"
+            >
+              {savingNewCustomer ? t("saving") : t("save")}
+            </button>
+          </div>
+        </div>
+      )}
 
       {menuFor && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setMenuFor(null)}>
