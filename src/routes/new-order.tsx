@@ -469,7 +469,7 @@ function NewOrderPage() {
       </header>
 
       <form className="space-y-5" onSubmit={save} noValidate>
-        {eff === "property" && existingCustomers.length > 0 && (
+        {eff === "property" && (
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
               👥 {t("f_select_existing_customer" as any)}
