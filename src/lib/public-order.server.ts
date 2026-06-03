@@ -39,6 +39,7 @@ const CartItemSchema = z.object({
   variant: z.string().trim().max(120).optional().default(""),
   quantity: z.number().int().min(1).max(9999).optional().default(1),
   unit_price: z.number().min(0).max(10_000_000).optional().default(0),
+  listing_id: z.string().uuid().optional(),
 });
 
 const SubmitSchema = z.object({
@@ -60,6 +61,7 @@ const SubmitSchema = z.object({
   project_description: z.string().trim().max(2000).optional().default(""),
   deadline: z.string().trim().max(64).optional().default(""),
   payment_method: z.enum(["bank_transfer", "cash_on_delivery"]).optional(),
+  listing_id: z.string().uuid().optional(),
 });
 
 export type LoadPublicOrderFormResult =
@@ -460,24 +462,50 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
           .eq("user_id", userId)
           .eq("phone", phoneDigits)
           .maybeSingle();
+        // For property businesses, capture the listing_id the buyer enquired about
+        let propertyListingId: string | null = null;
+        if (bizType === "property") {
+          propertyListingId =
+            data2.listing_id ||
+            (data2.items.find((it: any) => it.listing_id)?.listing_id ?? null) ||
+            null;
+        }
         if (existing) {
-          await sb
-            .from("customers")
-            .update({
-              total_orders: (existing.total_orders ?? 0) + 1,
-              total_spent: Number(existing.total_spent ?? 0) + amount,
-              last_order_at: new Date().toISOString(),
-            })
-            .eq("id", existing.id);
+          const upd: Record<string, any> = {
+            total_orders: (existing.total_orders ?? 0) + 1,
+            total_spent: Number(existing.total_spent ?? 0) + amount,
+            last_order_at: new Date().toISOString(),
+          };
+          if (propertyListingId) upd.interested_listing_id = propertyListingId;
+          await sb.from("customers").update(upd).eq("id", existing.id);
+          if (propertyListingId) {
+            await sb
+              .from("listings")
+              .update({ interested_customer_id: existing.id })
+              .eq("id", propertyListingId);
+          }
         } else {
-          await sb.from("customers").insert({
+          const ins: Record<string, any> = {
             user_id: userId,
             name: data2.customer_name.trim(),
             phone: phoneDigits,
             total_orders: 1,
             total_spent: amount,
             last_order_at: new Date().toISOString(),
-          });
+            customer_status: "enquiry",
+          };
+          if (propertyListingId) ins.interested_listing_id = propertyListingId;
+          const { data: newCust } = await sb
+            .from("customers")
+            .insert(ins)
+            .select("id")
+            .maybeSingle();
+          if (propertyListingId && newCust?.id) {
+            await sb
+              .from("listings")
+              .update({ interested_customer_id: newCust.id })
+              .eq("id", propertyListingId);
+          }
         }
       } catch (e) {
         console.warn("[createPublicOrder] customer upsert failed", e);
