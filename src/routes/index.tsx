@@ -863,22 +863,35 @@ function Index() {
               <p className="text-center text-xs text-muted-foreground py-6">—</p>
             )}
             {followUpsTodayList.map((f) => (
-              <Link
-                key={f.id}
-                to="/customers"
-                className="flex items-center gap-3 p-4"
-              >
+              <div key={f.id} className="flex items-center gap-3 p-4">
                 <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
                   📅
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">{f.customer_name}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    📅 {new Date(f.follow_up_date).toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
+                  </p>
+                  {f.phone && (
+                    <p className="text-[11px] text-primary font-medium truncate">📱 {f.phone}</p>
+                  )}
                   {f.note && (
                     <p className="text-[11px] text-muted-foreground truncate">{f.note}</p>
                   )}
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Link>
+                {f.phone ? (
+                  <a
+                    href={`https://wa.me/${f.phone.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500 text-white active:scale-95"
+                  >
+                    📲 WA
+                  </a>
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
             ))}
           </div>
         </section>
