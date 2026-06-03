@@ -469,6 +469,32 @@ function NewOrderPage() {
       </header>
 
       <form className="space-y-5" onSubmit={save} noValidate>
+        {eff === "property" && existingCustomers.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
+              👥 {t("f_select_existing_customer" as any)}
+            </label>
+            <select
+              value={selectedCustomerId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedCustomerId(id);
+                if (!id) {
+                  setForm((p) => ({ ...p, customer_name: "", phone: "" }));
+                  return;
+                }
+                const c = existingCustomers.find((x) => x.id === id);
+                if (c) setForm((p) => ({ ...p, customer_name: c.name, phone: c.phone ?? "" }));
+              }}
+              className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+            >
+              <option value="">{t("f_new_customer_option" as any)}</option>
+              {existingCustomers.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}{c.phone ? ` · ${c.phone}` : ""}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <Field label={customerLabel} icon="👤" placeholder={customerPh} value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
         <PhoneInput
           label={t("phone_number")}
