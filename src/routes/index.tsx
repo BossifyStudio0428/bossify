@@ -229,7 +229,7 @@ function Index() {
         let lMap = new Map<string, string>();
         let cMap = new Map<string, string>();
         if (lIds.length) {
-          const { data: ls } = await supabase.from("property_listings" as never).select("id,title").in("id", lIds);
+          const { data: ls } = await supabase.from("listings").select("id,title").in("id", lIds);
           ((ls as any[]) ?? []).forEach((l) => lMap.set(l.id, l.title));
         }
         if (cIds.length) {

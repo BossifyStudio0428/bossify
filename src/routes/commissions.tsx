@@ -73,7 +73,7 @@ function CommissionsPage() {
     const ids = Array.from(new Set(rows.map((r) => r.listing_id).filter(Boolean))) as string[];
     if (ids.length) {
       const { data: listings } = await supabase
-        .from("property_listings" as never)
+        .from("listings")
         .select("id,title")
         .in("id", ids);
       const map = new Map<string, string>(((listings as any[]) ?? []).map((l) => [l.id, l.title]));

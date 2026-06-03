@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
-import { ChevronLeft, ImagePlus, Trash2, X } from "lucide-react";
+import { ChevronLeft, ImagePlus, Trash2, X, Calendar as CalendarIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -138,11 +138,27 @@ function ListingEditor() {
       images,
       interested_customer_id: interestedCustomerId,
     };
-    const { error } = isNew
-      ? await supabase.from("listings").insert({ ...payload, user_id: user.id } as never)
-      : await supabase.from("listings").update(payload as never).eq("id", id);
+    let listingId: string | undefined = isNew ? undefined : id;
+    if (isNew) {
+      const { data, error } = await supabase
+        .from("listings")
+        .insert({ ...payload, user_id: user.id } as never)
+        .select("id")
+        .maybeSingle();
+      if (error) { setSaving(false); toast.error(error.message); return; }
+      listingId = (data as any)?.id;
+    } else {
+      const { error } = await supabase.from("listings").update(payload as never).eq("id", id);
+      if (error) { setSaving(false); toast.error(error.message); return; }
+    }
+    // Two-way sync: mark the customer as interested in this listing
+    if (interestedCustomerId && listingId) {
+      await supabase
+        .from("customers")
+        .update({ interested_listing_id: listingId } as never)
+        .eq("id", interestedCustomerId);
+    }
     setSaving(false);
-    if (error) { toast.error(error.message); return; }
     toast.success(t("listing_saved"));
     navigate({ to: "/listings" });
   };
@@ -278,6 +294,8 @@ function ListingEditor() {
         )}
       </Section>
 
+      {!isNew && <ListingViewings listingId={id} />}
+
       <button
         onClick={save}
         disabled={saving}
@@ -285,6 +303,70 @@ function ListingEditor() {
       >
         {saving ? t("saving") : t("save")}
       </button>
+    </div>
+  );
+}
+
+function ListingViewings({ listingId }: { listingId: string }) {
+  const { t } = useI18n();
+  const [rows, setRows] = useState<Array<{ id: string; viewing_at: string; status: string; customer_id: string | null; customer_name: string | null }>>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("property_viewings" as never)
+        .select("id,viewing_at,status,customer_id")
+        .eq("listing_id", listingId)
+        .order("viewing_at", { ascending: false });
+      const list = ((data as any[]) ?? []);
+      const ids = Array.from(new Set(list.map((r) => r.customer_id).filter(Boolean)));
+      let nameMap = new Map<string, string>();
+      if (ids.length > 0) {
+        const { data: cs } = await supabase.from("customers").select("id,name").in("id", ids as any);
+        for (const c of (cs as any[]) ?? []) nameMap.set(c.id, c.name);
+      }
+      if (cancelled) return;
+      setRows(list.map((r) => ({ ...r, customer_name: r.customer_id ? nameMap.get(r.customer_id) ?? null : null })));
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [listingId]);
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between px-1">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("viewings_title")}</p>
+        <a
+          href={`/viewing/new?listingId=${listingId}`}
+          className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95"
+        >
+          <Plus className="h-3.5 w-3.5" /> {t("new_viewing")}
+        </a>
+      </div>
+      <div className="rounded-2xl bg-card border border-border divide-y divide-border">
+        {loading && <div className="p-4 flex justify-center"><div className="h-4 w-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /></div>}
+        {!loading && rows.length === 0 && <p className="text-center text-xs text-muted-foreground py-5">{t("no_viewings_yet")}</p>}
+        {!loading && rows.map((r) => (
+          <a key={r.id} href={`/viewing/${r.id}`} className="block p-3 active:bg-muted/40">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <CalendarIcon className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">
+                  {new Date(r.viewing_at).toLocaleString("en-MY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </p>
+                {r.customer_name && <p className="text-[11px] text-muted-foreground truncate">{r.customer_name}</p>}
+              </div>
+              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-muted shrink-0">
+                {t(r.status === "completed" ? "vw_status_completed" : r.status === "cancelled" ? "vw_status_cancelled" : "vw_status_scheduled")}
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }

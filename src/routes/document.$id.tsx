@@ -62,7 +62,7 @@ function DocumentEditor() {
     if (!user) return;
     supabase.from("customers").select("id,name").eq("user_id", user.id).order("created_at", { ascending: false })
       .then(({ data }) => setCustomers((data as Customer[]) ?? []));
-    supabase.from("property_listings" as never).select("id,title").eq("user_id", user.id).order("created_at", { ascending: false })
+    supabase.from("listings").select("id,title").eq("user_id", user.id).order("created_at", { ascending: false })
       .then(({ data }) => setListings(((data as any[]) ?? []) as Listing[]));
   }, [user?.id]);
 

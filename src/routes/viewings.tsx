@@ -89,7 +89,7 @@ function ViewingsPage() {
     const custIds = Array.from(new Set(rows.map((r) => r.customer_id).filter(Boolean))) as string[];
     if (listingIds.length) {
       const { data: ls } = await supabase
-        .from("property_listings" as never)
+        .from("listings")
         .select("id,title,address")
         .in("id", listingIds);
       const map = new Map<string, { title: string; address: string | null }>(
