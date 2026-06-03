@@ -616,3 +616,153 @@ function PackageSection({ customer, onChange }: { customer: CustomerRow; onChang
     </section>
   );
 }
+
+function InterestedListings({ customer }: { customer: CustomerRow }) {
+  const { t } = useI18n();
+  type L = { id: string; title: string; price: number; status: string; address: string | null };
+  const [rows, setRows] = useState<L[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const collected = new Map<string, L>();
+      // Listings that point to this customer as their interested customer
+      const { data: a } = await supabase
+        .from("listings")
+        .select("id,title,price,status,address")
+        .eq("user_id", customer.user_id)
+        .eq("interested_customer_id", customer.id);
+      for (const r of (a as any[]) ?? []) collected.set(r.id, r as L);
+      // Listing this customer has marked as interested (from enquiry form)
+      const cAny = customer as any;
+      if (cAny.interested_listing_id && !collected.has(cAny.interested_listing_id)) {
+        const { data: b } = await supabase
+          .from("listings")
+          .select("id,title,price,status,address")
+          .eq("id", cAny.interested_listing_id)
+          .maybeSingle();
+        if (b) collected.set((b as any).id, b as L);
+      }
+      if (cancelled) return;
+      setRows(Array.from(collected.values()));
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [customer.id]);
+
+  return (
+    <section className="space-y-2">
+      <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
+        {t("f_interested_listing")}
+      </p>
+      <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+        {loading && (
+          <div className="flex justify-center py-5">
+            <div className="h-5 w-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          </div>
+        )}
+        {!loading && rows.length === 0 && (
+          <p className="text-center text-xs text-muted-foreground py-5">{t("no_interested_customer")}</p>
+        )}
+        {!loading && rows.map((r) => (
+          <a key={r.id} href={`/listing/${r.id}`} className="block p-3 active:bg-muted/40">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                🏠
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{r.title}</p>
+                {r.address && <p className="text-[11px] text-muted-foreground truncate">📍 {r.address}</p>}
+                <p className="text-[11px] font-semibold text-primary mt-0.5">
+                  RM {Number(r.price || 0).toLocaleString()}
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-muted shrink-0">
+                {r.status}
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CustomerViewings({ customerId, customerName }: { customerId: string; customerName: string }) {
+  const { t } = useI18n();
+  type V = { id: string; viewing_at: string; status: string; listing_id: string | null; listing_title: string | null };
+  const [rows, setRows] = useState<V[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("property_viewings" as never)
+        .select("id,viewing_at,status,listing_id")
+        .eq("customer_id", customerId)
+        .order("viewing_at", { ascending: false });
+      const list = ((data as any[]) ?? []);
+      const ids = Array.from(new Set(list.map((r) => r.listing_id).filter(Boolean)));
+      const tmap = new Map<string, string>();
+      if (ids.length > 0) {
+        const { data: ls } = await supabase.from("listings").select("id,title").in("id", ids as any);
+        for (const l of (ls as any[]) ?? []) tmap.set(l.id, l.title);
+      }
+      if (cancelled) return;
+      setRows(list.map((r) => ({ ...r, listing_title: r.listing_id ? tmap.get(r.listing_id) ?? null : null })));
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [customerId]);
+
+  const newHref = `/viewing/new?customerId=${customerId}`;
+
+  return (
+    <section className="space-y-2">
+      <div className="flex items-center justify-between px-1">
+        <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+          {t("viewings_title")}
+        </p>
+        <a href={newHref} className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95">
+          <Plus className="h-3.5 w-3.5" /> {t("new_viewing")}
+        </a>
+      </div>
+      <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+        {loading && (
+          <div className="flex justify-center py-5">
+            <div className="h-5 w-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          </div>
+        )}
+        {!loading && rows.length === 0 && (
+          <p className="text-center text-xs text-muted-foreground py-5">{t("no_viewings_yet")}</p>
+        )}
+        {!loading && rows.map((r) => (
+          <a key={r.id} href={`/viewing/${r.id}`} className="block p-3 active:bg-muted/40">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <CalendarIcon className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">
+                  {new Date(r.viewing_at).toLocaleString("en-MY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </p>
+                {r.listing_title && (
+                  <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
+                    <Home className="h-3 w-3" /> {r.listing_title}
+                  </p>
+                )}
+              </div>
+              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-muted shrink-0">
+                {t(r.status === "completed" ? "vw_status_completed" : r.status === "cancelled" ? "vw_status_cancelled" : "vw_status_scheduled")}
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
