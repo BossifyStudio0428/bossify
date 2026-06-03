@@ -456,6 +456,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const productsUsed = sub?.inventory_created_total ?? 0;
   const productsLimit = limits.inventory;
   const productsRemaining = Math.max(0, productsLimit - productsUsed);
+  const listingsLimit = (limits as any).listings ?? Infinity;
 
   const showUpgrade = (reason?: string) => {
     setUpgradeReason(reason ?? "");
@@ -481,6 +482,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         productsUsed,
         productsLimit,
         productsRemaining,
+        listingsLimit,
         activeBillingPlan,
         refresh,
         syncFromStore,
