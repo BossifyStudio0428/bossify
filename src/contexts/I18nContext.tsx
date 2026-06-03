@@ -602,6 +602,7 @@ const dict = {
     setup_step_inv: "Add your first product",
     setup_step_service: "Add your first service",
     setup_step_package: "Add your first package",
+    setup_step_listing: "Add your first listing",
     setup_step_pay: "Set up payment method",
     setup_step_order: "Create your first order",
     setup_step_case: "Create your first case",
