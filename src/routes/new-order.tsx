@@ -297,7 +297,7 @@ function NewOrderPage() {
         .eq("phone", phone)
         .maybeSingle();
       if (existing) {
-        await supabase.from("customers").update({
+        await (supabase as any).from("customers").update({
           total_orders: (existing.total_orders ?? 0) + 1,
           total_spent: Number(existing.total_spent ?? 0) + amount,
           last_order_at: new Date().toISOString(),
@@ -307,7 +307,7 @@ function NewOrderPage() {
             : {}),
         }).eq("id", existing.id);
       } else {
-        await supabase.from("customers").insert({
+        await (supabase as any).from("customers").insert({
           user_id: user.id,
           name: form.customer_name.trim(),
           phone,
