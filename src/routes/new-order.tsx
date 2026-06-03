@@ -415,7 +415,7 @@ function NewOrderPage() {
     isPrefEnabled("notif_new_order") && deviceNotify("New Order Added! 🎉", `Order from ${form.customer_name} — RM ${Number(form.amount).toFixed(2)} has been saved.`, { route: "/orders" }).catch(() => {});
     setForm({ customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "" });
     setStatus("Unpaid");
-    setTimeout(() => navigate({ to: "/orders" }), 1500);
+    setTimeout(() => navigate({ to: eff === "property" ? "/customers" : "/orders" }), 1500);
   };
 
   const saveAndWhatsApp = async () => {
@@ -441,7 +441,7 @@ function NewOrderPage() {
     }
     isPrefEnabled("notif_new_order") && deviceNotify("New Order Added! 🎉", `Order from ${form.customer_name} — RM ${Number(form.amount).toFixed(2)} has been saved.`, { route: "/orders" }).catch(() => {});
     window.open(buildWhatsAppLink(form.phone.replace(/\D/g, ""), msg), "_blank");
-    setTimeout(() => navigate({ to: "/orders" }), 800);
+    setTimeout(() => navigate({ to: eff === "property" ? "/customers" : "/orders" }), 800);
   };
 
   const productMatches =
