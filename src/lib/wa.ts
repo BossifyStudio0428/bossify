@@ -321,7 +321,7 @@ const REMINDER_TPL: TplMap = {
       `Hi [customer_name]! 👋\n\n` +
       `Reminder for your outstanding payment.\n\n` +
       `🏠 Reference: [code]\n` +
-      `📋 Package: [product]\n` +
+      `🏠 Listing: [product]\n` +
       `💰 Amount Due: RM [amount]\n\n` +
       `[payment_details]` +
       `Please make payment. Thank you! 🙏`,
@@ -329,7 +329,7 @@ const REMINDER_TPL: TplMap = {
       `Hi [customer_name]! 👋\n\n` +
       `Peringatan pembayaran tertunggak anda.\n\n` +
       `🏠 Rujukan: [code]\n` +
-      `📋 Pakej: [product]\n` +
+      `🏠 Hartanah: [product]\n` +
       `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
       `[payment_details]` +
       `Sila buat pembayaran. Terima kasih! 🙏`,
@@ -337,7 +337,7 @@ const REMINDER_TPL: TplMap = {
       `你好 [customer_name]！👋\n\n` +
       `您的未付款项提醒。\n\n` +
       `🏠 参考编号：[code]\n` +
-      `📋 配套：[product]\n` +
+      `🏠 房源：[product]\n` +
       `💰 待付金额：RM [amount]\n\n` +
       `[payment_details]` +
       `请尽快付款，谢谢！🙏`,
