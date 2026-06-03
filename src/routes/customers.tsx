@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type CustomerStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
 import { CasesKanban, type EduStageInfo } from "@/components/CasesKanban";
+import { PhoneInput } from "@/components/PhoneInput";
 
 export const Route = createFileRoute("/customers")({ component: CustomersPage });
 
@@ -55,6 +56,11 @@ function CustomersPage() {
   const [eduDetails, setEduDetails] = useState<Record<string, { university_preference: string | null; application_status: string | null }>>({});
   const [eduInfo, setEduInfo] = useState<Record<string, EduStageInfo>>({});
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", followup_date: "", note: "" });
+  const [newCustomerErrors, setNewCustomerErrors] = useState<Record<string, string>>({});
+  const [savingNewCustomer, setSavingNewCustomer] = useState(false);
+  const [followUpByCustomerId, setFollowUpByCustomerId] = useState<Record<string, string>>({});
 
   const ordersWordKey: TKey =
     bizType === "education" ? "case_word"
@@ -95,15 +101,75 @@ function CustomersPage() {
   };
 
   const load = async () => {
+    if (!user) { setCustomers([]); setFollowUpByCustomerId({}); setLoading(false); return; }
+    setLoading(true);
     const { data, error } = await supabase
       .from("customers")
       .select("*")
-      .order("last_order_at", { ascending: false, nullsFirst: false });
+      .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
-    setCustomers((data ?? []) as CustomerRow[]);
+    const rows = (data ?? []) as CustomerRow[];
+    setCustomers(rows);
+    if (rows.length) {
+      const { data: fuRows } = await supabase
+        .from("follow_ups")
+        .select("customer_id,follow_up_date,is_done")
+        .in("customer_id", rows.map((c) => c.id))
+        .eq("is_done", false)
+        .order("follow_up_date", { ascending: true });
+      const map: Record<string, string> = {};
+      ((fuRows ?? []) as { customer_id: string; follow_up_date: string }[]).forEach((f) => {
+        if (!map[f.customer_id]) map[f.customer_id] = f.follow_up_date;
+      });
+      setFollowUpByCustomerId(map);
+    } else {
+      setFollowUpByCustomerId({});
+    }
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [user?.id]);
+
+  useEffect(() => {
+    const open = () => setNewCustomerOpen(true);
+    window.addEventListener("bossify:add-customer", open);
+    return () => window.removeEventListener("bossify:add-customer", open);
+  }, []);
+
+  const saveNewCustomer = async () => {
+    if (!user) return;
+    const name = newCustomer.name.trim();
+    if (!name) { setNewCustomerErrors({ name: t("required_field") }); return; }
+    setSavingNewCustomer(true);
+    const fullPhone = newCustomer.phone.replace(/\D/g, "");
+    const { data, error } = await (supabase as any).from("customers").insert({
+      user_id: user.id,
+      name,
+      phone: fullPhone || null,
+      total_orders: 0,
+      total_spent: 0,
+    }).select("*").single();
+    if (error || !data) {
+      setSavingNewCustomer(false);
+      toast.error(error?.message ?? "Failed");
+      return;
+    }
+    if (newCustomer.followup_date) {
+      const { error: fuError } = await (supabase as any).from("follow_ups").insert({
+        user_id: user.id,
+        customer_id: data.id,
+        follow_up_date: newCustomer.followup_date,
+        note: newCustomer.note.trim() || null,
+        is_done: false,
+      });
+      if (!fuError) setFollowUpByCustomerId((prev) => ({ ...prev, [data.id]: newCustomer.followup_date }));
+    }
+    setCustomers((prev) => [data as CustomerRow, ...prev.filter((c) => c.id !== data.id)]);
+    setNewCustomer({ name: "", phone: "", followup_date: "", note: "" });
+    setNewCustomerErrors({});
+    setNewCustomerOpen(false);
+    setSavingNewCustomer(false);
+    toast.success(t("bl_new_customer"));
+  };
 
   useEffect(() => {
     if (bizType !== "education" || !user) { setEduDetails({}); return; }
