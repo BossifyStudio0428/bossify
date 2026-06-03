@@ -127,6 +127,24 @@ function Index() {
       setLowStock((inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length);
       setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
       setUnreadNotif(notificationsRes.count ?? 0);
+      // Property: load sold listings (past 7 days) for weekly income chart
+      try {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 6);
+        weekAgo.setHours(0, 0, 0, 0);
+        const { data: soldRows } = await supabase
+          .from("listings")
+          .select("price,updated_at")
+          .eq("user_id", user.id)
+          .eq("status", "sold")
+          .gte("updated_at", weekAgo.toISOString());
+        setSoldListings(((soldRows as any[]) ?? []).map((r) => ({
+          price: Number(r.price ?? 0),
+          updated_at: r.updated_at,
+        })));
+      } catch {
+        setSoldListings([]);
+      }
       // Latest clients (recently added)
       const { data: latestC } = await supabase
         .from("customers")
