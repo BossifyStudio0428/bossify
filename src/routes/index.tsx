@@ -150,23 +150,26 @@ function Index() {
       // Today's follow-up list (for property dashboard)
       const { data: fuTodayRows } = await supabase
         .from("follow_ups")
-        .select("id, note, customer_id")
+        .select("id, note, customer_id, follow_up_date")
         .eq("user_id", user.id)
         .eq("is_done", false)
         .eq("follow_up_date", todayStr)
         .limit(5);
-      const fuRows = (fuTodayRows ?? []) as { id: string; note: string | null; customer_id: string | null }[];
+      const fuRows = (fuTodayRows ?? []) as { id: string; note: string | null; customer_id: string | null; follow_up_date: string }[];
       const custIds = Array.from(new Set(fuRows.map((r) => r.customer_id).filter(Boolean))) as string[];
       let nameById = new Map<string, string>();
+      let phoneById = new Map<string, string | null>();
       if (custIds.length) {
         const { data: cs } = await supabase
-          .from("customers").select("id,name").in("id", custIds);
-        (cs ?? []).forEach((c: any) => nameById.set(c.id, c.name));
+          .from("customers").select("id,name,phone").in("id", custIds);
+        (cs ?? []).forEach((c: any) => { nameById.set(c.id, c.name); phoneById.set(c.id, c.phone ?? null); });
       }
       setFollowUpsTodayList(
         fuRows.map((r) => ({
           id: r.id,
           customer_name: (r.customer_id && nameById.get(r.customer_id)) || "—",
+          phone: r.customer_id ? (phoneById.get(r.customer_id) ?? null) : null,
+          follow_up_date: r.follow_up_date,
           note: r.note,
         })),
       );
