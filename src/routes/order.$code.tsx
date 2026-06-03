@@ -65,6 +65,7 @@ type Product = {
   description: string | null;
   variants: Variant[];
   duration_minutes?: number | null;
+  images?: string[];
   property?: {
     property_type: string | null;
     listing_type: string | null;
@@ -147,6 +148,7 @@ function PublicOrderFormPage() {
 
   const [activeCategory, setActiveCategory] = useState<string>("__all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeLocation, setActiveLocation] = useState<string>("__all");
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
@@ -210,18 +212,42 @@ function PublicOrderFormPage() {
     return Array.from(set).sort();
   }, [state]);
 
+  // Extract a short area label from a full address (take last comma segment,
+  // strip postcodes). Falls back to the trimmed address itself.
+  const extractArea = (addr: string | null | undefined): string => {
+    if (!addr) return "";
+    const cleaned = addr.replace(/\b\d{4,6}\b/g, "").trim();
+    const parts = cleaned.split(",").map((s) => s.trim()).filter(Boolean);
+    if (parts.length === 0) return "";
+    // Prefer second-to-last segment (city/area), fallback to last.
+    return parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1];
+  };
+
+  const locations = useMemo(() => {
+    if (state.status !== "ready") return [] as string[];
+    const set = new Set<string>();
+    for (const p of state.products) {
+      const area = extractArea(p.property?.address);
+      if (area) set.add(area);
+    }
+    return Array.from(set).sort();
+  }, [state]);
+
   const filteredProducts = useMemo(() => {
     if (state.status !== "ready") return [] as Product[];
     let list = state.products;
     if (activeCategory !== "__all") {
       list = list.filter((p) => (p.category ?? "") === activeCategory);
     }
+    if (activeLocation !== "__all") {
+      list = list.filter((p) => extractArea(p.property?.address) === activeLocation);
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
     return list;
-  }, [state, activeCategory, searchQuery]);
+  }, [state, activeCategory, activeLocation, searchQuery]);
 
 
   const bizType = state.status === "ready" ? state.profile.business_type : "retail";
@@ -516,7 +542,9 @@ function PublicOrderFormPage() {
     isRetailish ? "购物车是空的" : "尚未选择",
   );
   const removeLabel = L("Remove", "Buang", "移除");
-  const searchPlaceholder = L("Search products...", "Cari produk...", "搜索产品...");
+  const searchPlaceholder = bizType === "property"
+    ? L("Search properties...", "Cari hartanah...", "搜索房源...")
+    : L("Search products...", "Cari produk...", "搜索产品...");
   const noResultsLabel = L("No products found", "Produk tidak dijumpai", "找不到产品");
   const contactSellerLabel = L("Contact Seller", "Hubungi Penjual", "联系卖家");
   const waMessage = L(
@@ -632,6 +660,24 @@ function PublicOrderFormPage() {
                       label={c}
                       active={activeCategory === c}
                       onClick={() => setActiveCategory(c)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {bizType === "property" && locations.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
+                  <CategoryChip
+                    label={`📍 ${allLabel}`}
+                    active={activeLocation === "__all"}
+                    onClick={() => setActiveLocation("__all")}
+                  />
+                  {locations.map((loc) => (
+                    <CategoryChip
+                      key={loc}
+                      label={loc}
+                      active={activeLocation === loc}
+                      onClick={() => setActiveLocation(loc)}
                     />
                   ))}
                 </div>
@@ -1163,6 +1209,21 @@ function DetailSheet({
   const durationLabel = lang === "ms" ? "Tempoh" : lang === "zh" ? "时长" : "Duration";
   const mins = lang === "ms" ? "minit" : lang === "zh" ? "分钟" : "min";
 
+  const prop = product.property;
+  const isProperty = !!prop;
+  const gallery = (product.images && product.images.length > 0)
+    ? product.images
+    : (product.image_url ? [product.image_url] : []);
+  const [galleryIdx, setGalleryIdx] = useState(0);
+  const isRent = prop?.listing_type === "rent";
+  const propStatusLabel = isRent
+    ? (lang === "ms" ? "Untuk Disewa" : lang === "zh" ? "出租" : "For Rent")
+    : (lang === "ms" ? "Untuk Dijual" : lang === "zh" ? "出售" : "For Sale");
+  const bedLabel = lang === "ms" ? "Bilik" : lang === "zh" ? "卧室" : "Bed";
+  const bathLabel = lang === "ms" ? "Bilik air" : lang === "zh" ? "浴室" : "Bath";
+  const sizeLabel = lang === "ms" ? "Keluasan" : lang === "zh" ? "面积" : "Size";
+  const typeLabel = lang === "ms" ? "Jenis" : lang === "zh" ? "类型" : "Type";
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
       <div
@@ -1170,15 +1231,42 @@ function DetailSheet({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative">
-          <div className="aspect-square w-full bg-muted/40 overflow-hidden">
-            {product.image_url ? (
-              <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+          <div className={`${isProperty ? "aspect-[16/10]" : "aspect-square"} w-full bg-muted/40 overflow-hidden relative`}>
+            {gallery.length > 0 ? (
+              <img src={gallery[Math.min(galleryIdx, gallery.length - 1)]} alt={product.name} className="h-full w-full object-cover" />
             ) : (
               <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
                 <ShoppingBag size={64} />
               </div>
             )}
+            {isProperty && gallery.length > 1 && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 px-2 py-1 rounded-full">
+                {gallery.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setGalleryIdx(i)}
+                    className={`h-1.5 w-1.5 rounded-full ${i === galleryIdx ? "bg-white" : "bg-white/50"}`}
+                    aria-label={`Image ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
+          {isProperty && gallery.length > 1 && (
+            <div className="px-5 mt-2 flex gap-2 overflow-x-auto no-scrollbar">
+              {gallery.map((src, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setGalleryIdx(i)}
+                  className={`shrink-0 h-14 w-20 rounded-lg overflow-hidden border-2 ${i === galleryIdx ? "border-primary" : "border-transparent"}`}
+                >
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -1190,12 +1278,60 @@ function DetailSheet({
         </div>
 
         <div className="px-5 pt-4 space-y-3">
-          {product.category && (
+          {isProperty ? (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                {propStatusLabel}
+              </span>
+              {prop?.property_type && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                  {prop.property_type}
+                </span>
+              )}
+            </div>
+          ) : product.category && (
             <p className="text-[10px] font-semibold tracking-wider uppercase text-primary/80">
               {product.category}
             </p>
           )}
           <h2 className="text-xl font-bold leading-tight">{product.name}</h2>
+          {isProperty && (
+            <>
+              <p className="text-2xl font-bold text-primary">
+                RM {Number(product.price || 0).toLocaleString("en-MY", { minimumFractionDigits: 0 })}
+                {isRent && <span className="text-sm font-normal text-muted-foreground"> / {lang === "ms" ? "bln" : lang === "zh" ? "月" : "mo"}</span>}
+              </p>
+              {prop?.address && (
+                <p className="text-sm text-muted-foreground">📍 {prop.address}</p>
+              )}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                {prop?.bedrooms ? (
+                  <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                    <p className="text-muted-foreground">🛏 {bedLabel}</p>
+                    <p className="font-semibold">{prop.bedrooms}</p>
+                  </div>
+                ) : null}
+                {prop?.bathrooms ? (
+                  <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                    <p className="text-muted-foreground">🛁 {bathLabel}</p>
+                    <p className="font-semibold">{prop.bathrooms}</p>
+                  </div>
+                ) : null}
+                {prop?.size_sqft ? (
+                  <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                    <p className="text-muted-foreground">📐 {sizeLabel}</p>
+                    <p className="font-semibold">{prop.size_sqft} sqft</p>
+                  </div>
+                ) : null}
+                {prop?.property_type ? (
+                  <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                    <p className="text-muted-foreground">🏠 {typeLabel}</p>
+                    <p className="font-semibold">{prop.property_type}</p>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          )}
           {product.duration_minutes ? (
             <p className="text-xs text-muted-foreground">
               {durationLabel}: {product.duration_minutes} {mins}
@@ -1248,7 +1384,9 @@ function DetailSheet({
             className="w-full mt-3 py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg flex items-center justify-between px-5 active:scale-[0.99] transition-transform"
           >
             <span>{addLabel}</span>
-            <span>RM {(unitPrice * (isRetailish ? qty : 1)).toFixed(2)}</span>
+            {!isProperty && (
+              <span>RM {(unitPrice * (isRetailish ? qty : 1)).toFixed(2)}</span>
+            )}
           </button>
         </div>
       </div>

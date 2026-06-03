@@ -151,7 +151,6 @@ const ORDER_TPL: TplMap = {
       `💰 Budget: RM [amount]\n` +
       `[follow_up_line]` +
       `[notes]` +
-      `[payment_details]` +
       `We will contact you soon! 🙏`,
     ms:
       `Hi [customer_name]! 👋\n\n` +
@@ -161,7 +160,6 @@ const ORDER_TPL: TplMap = {
       `💰 Anggaran: RM [amount]\n` +
       `[follow_up_line]` +
       `[notes]` +
-      `[payment_details]` +
       `Kami akan menghubungi anda tidak lama lagi! 🙏`,
     zh:
       `你好 [customer_name]！👋\n\n` +
@@ -171,7 +169,6 @@ const ORDER_TPL: TplMap = {
       `💰 预算：RM [amount]\n` +
       `[follow_up_line]` +
       `[notes]` +
-      `[payment_details]` +
       `我们将尽快与您联系！🙏`,
   },
   freelance: {
@@ -323,7 +320,6 @@ const REMINDER_TPL: TplMap = {
       `🏠 Reference: [code]\n` +
       `🏠 Listing: [product]\n` +
       `💰 Amount Due: RM [amount]\n\n` +
-      `[payment_details]` +
       `Please make payment. Thank you! 🙏`,
     ms:
       `Hi [customer_name]! 👋\n\n` +
@@ -331,7 +327,6 @@ const REMINDER_TPL: TplMap = {
       `🏠 Rujukan: [code]\n` +
       `🏠 Hartanah: [product]\n` +
       `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
-      `[payment_details]` +
       `Sila buat pembayaran. Terima kasih! 🙏`,
     zh:
       `你好 [customer_name]！👋\n\n` +
@@ -339,7 +334,6 @@ const REMINDER_TPL: TplMap = {
       `🏠 参考编号：[code]\n` +
       `🏠 房源：[product]\n` +
       `💰 待付金额：RM [amount]\n\n` +
-      `[payment_details]` +
       `请尽快付款，谢谢！🙏`,
   },
   freelance: {

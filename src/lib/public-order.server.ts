@@ -184,6 +184,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
           category: listingType === "rent" ? "For Rent" : "For Sale",
           description: x.description ?? null,
           variants: [],
+          images: imgs.map((u: unknown) => String(u)),
           property: {
             property_type: x.property_type ?? null,
             listing_type: listingType,
