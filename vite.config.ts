@@ -9,6 +9,18 @@ import { defineConfig as defineLovableConfig } from "@lovable.dev/vite-tanstack-
 const isBuildCommand = process.argv.slice(2).includes("build");
 
 export default defineLovableConfig({
+  // Force Nitro to emit the worker entry as `server.js` instead of the default
+  // `index.mjs`. The TanStack Start preview-server plugin (used during SPA
+  // prerender) hard-codes the lookup to `<serverInput>.js` (default `server.js`),
+  // so without this rename the prerender step throws ERR_MODULE_NOT_FOUND and
+  // the production build exits with code 1.
+  nitro: {
+    rollupConfig: {
+      output: {
+        entryFileNames: "server.js",
+      },
+    },
+  } as any,
   tanstackStart: {
     spa: {
       enabled: true,
