@@ -987,6 +987,9 @@ const dict = {
     pof_section_title_order: "My Order Form",
     pof_section_title_enquiry: "My Enquiry Form",
     pof_section_title_booking: "My Booking Form",
+    pof_section_sub_order: "Share this link so customers can place orders directly.",
+    pof_section_sub_enquiry: "Share this link so prospects can submit enquiries directly.",
+    pof_section_sub_booking: "Share this link so clients can book directly.",
     // Public order form titles by business type
     pof_title_retail: "Order Form",
     pof_title_enquiry: "Enquiry Form",
@@ -2375,6 +2378,9 @@ const dict = {
     pof_section_title_order: "Borang Pesanan Saya",
     pof_section_title_enquiry: "Borang Pertanyaan Saya",
     pof_section_title_booking: "Borang Tempahan Saya",
+    pof_section_sub_order: "Kongsi pautan ini supaya pelanggan boleh membuat pesanan secara terus.",
+    pof_section_sub_enquiry: "Kongsi pautan ini supaya bakal pelanggan boleh menghantar pertanyaan secara terus.",
+    pof_section_sub_booking: "Kongsi pautan ini supaya klien boleh membuat tempahan secara terus.",
     // Public order form titles by business type
     pof_title_retail: "Borang Pesanan",
     pof_title_enquiry: "Borang Pertanyaan",
@@ -3755,6 +3761,9 @@ const dict = {
     pof_section_title_order: "我的订单表格",
     pof_section_title_enquiry: "我的询问表格",
     pof_section_title_booking: "我的预约表格",
+    pof_section_sub_order: "分享此链接，顾客可直接下单。",
+    pof_section_sub_enquiry: "分享此链接，潜在客户可直接提交询问。",
+    pof_section_sub_booking: "分享此链接，客户可直接预约。",
     // Public order form titles by business type
     pof_title_retail: "订单表格",
     pof_title_enquiry: "询问表格",
