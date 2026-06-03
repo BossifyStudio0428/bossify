@@ -40,13 +40,17 @@ export function SetupChecklist() {
     try {
       const eff = (bizType ?? "retail") as string;
       const usesInventory = eff === "retail" || eff === "fnb";
-      const [profileRes, invRes, svcRes, ordersRes, custRes, paySummary] = await Promise.all([
+      const isProperty = eff === "property";
+      const [profileRes, invRes, svcRes, lstRes, ordersRes, custRes, paySummary] = await Promise.all([
         supabase.from("profiles").select("business_name,business_type,whatsapp_number").eq("id", user.id).maybeSingle(),
         usesInventory
           ? supabase.from("inventory").select("id", { count: "exact", head: true }).eq("user_id", user.id)
           : Promise.resolve({ count: 0 } as any),
-        !usesInventory
+        !usesInventory && !isProperty
           ? supabase.from("services").select("id", { count: "exact", head: true }).eq("user_id", user.id)
+          : Promise.resolve({ count: 0 } as any),
+        isProperty
+          ? (supabase as any).from("listings").select("id", { count: "exact", head: true }).eq("user_id", user.id)
           : Promise.resolve({ count: 0 } as any),
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("customers").select("id", { count: "exact", head: true }).eq("user_id", user.id),
@@ -59,11 +63,15 @@ export function SetupChecklist() {
         !!p.whatsapp_number?.trim();
 
       const item2Label =
-        eff === "property" ? t("setup_step_package")
+        isProperty ? t("setup_step_listing")
         : usesInventory ? t("setup_step_inv")
         : t("setup_step_service");
-      const item2To = usesInventory ? "/inventory" : "/services";
-      const item2Done = usesInventory ? (invRes.count ?? 0) > 0 : (svcRes.count ?? 0) > 0;
+      const item2To = isProperty ? "/listings" : usesInventory ? "/inventory" : "/services";
+      const item2Done = isProperty
+        ? (lstRes.count ?? 0) > 0
+        : usesInventory
+          ? (invRes.count ?? 0) > 0
+          : (svcRes.count ?? 0) > 0;
 
       const item4Label =
         eff === "education" ? t("setup_step_case")
@@ -122,6 +130,7 @@ export function SetupChecklist() {
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "inventory", filter: `user_id=eq.${user.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "services", filter: `user_id=eq.${user.id}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "listings", filter: `user_id=eq.${user.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "customers", filter: `user_id=eq.${user.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` }, load)
       .subscribe();
