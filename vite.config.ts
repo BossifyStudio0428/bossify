@@ -33,14 +33,6 @@ export default defineLovableConfig({
     },
   },
   vite: {
-    resolve: {
-      alias: {
-        // html2pdf depends on upstream html2canvas, which cannot parse Tailwind v4
-        // oklch/lab colors and crashes during export. html2canvas-pro is a
-        // compatible drop-in renderer with CSS Color 4 support.
-        html2canvas: "html2canvas-pro",
-      },
-    },
     ssr: {
       // Cloudflare Worker has no runtime npm resolution — bundle all
       // SSR deps into the worker. The package.json uses npm: aliases
