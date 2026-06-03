@@ -751,6 +751,9 @@ function Index() {
                 <p className="text-xs text-muted-foreground truncate">
                   {o.product} {o.quantity > 1 ? `(x${o.quantity})` : ""}
                 </p>
+                {o.phone && (
+                  <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {o.phone}</p>
+                )}
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-foreground">
@@ -761,6 +764,17 @@ function Index() {
                 >
                   {o.status}
                 </span>
+                {o.phone && (
+                  <a
+                    href={`https://wa.me/${o.phone.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500 text-white active:scale-95"
+                  >
+                    📲 WA
+                  </a>
+                )}
               </div>
             </div>
           ))}
