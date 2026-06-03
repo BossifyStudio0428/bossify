@@ -99,6 +99,8 @@ function NewOrderPage() {
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
   const [services, setServices] = useState<Array<{ id: string; name: string; price: number }>>([]);
+  const [listings, setListings] = useState<Array<{ id: string; title: string }>>([]);
+  const [interestedListingId, setInterestedListingId] = useState<string>("");
   const [unitPrice, setUnitPrice] = useState<number | null>(null);
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
   const [paymentPreviewBlock, setPaymentPreviewBlock] = useState<string>("");
@@ -125,8 +127,17 @@ function NewOrderPage() {
           .order("created_at", { ascending: false });
         setServices(((svc ?? []) as any).map((s: any) => ({ ...s, price: Number(s.price) })));
       }
+      if (eff === "property") {
+        const { data: lst } = await (supabase as any)
+          .from("listings")
+          .select("id,title,status")
+          .eq("user_id", user.id)
+          .eq("status", "available")
+          .order("created_at", { ascending: false });
+        setListings(((lst ?? []) as any).map((l: any) => ({ id: l.id, title: l.title })));
+      }
     })();
-  }, [lang, user, isRetailish]);
+  }, [lang, user, isRetailish, eff]);
 
   const upd = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((p) => ({ ...p, [k]: e.target.value }));
@@ -291,6 +302,9 @@ function NewOrderPage() {
           total_spent: Number(existing.total_spent ?? 0) + amount,
           last_order_at: new Date().toISOString(),
           name: existing.name || form.customer_name.trim(),
+          ...(eff === "property" && interestedListingId
+            ? { interested_listing_id: interestedListingId }
+            : {}),
         }).eq("id", existing.id);
       } else {
         await supabase.from("customers").insert({
@@ -300,6 +314,9 @@ function NewOrderPage() {
           total_orders: 1,
           total_spent: amount,
           last_order_at: new Date().toISOString(),
+          ...(eff === "property" && interestedListingId
+            ? { interested_listing_id: interestedListingId }
+            : {}),
         });
       }
     }
