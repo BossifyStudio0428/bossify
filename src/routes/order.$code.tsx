@@ -120,6 +120,13 @@ function PublicOrderFormPage() {
     amount: number;
     paymentMethod: string;
     whatsapp: string | null;
+    paymentMethods?: Array<{
+      type: string | null;
+      bank: string | null;
+      number: string | null;
+      name: string | null;
+      qr_url: string | null;
+    }>;
   }>(null);
 
   // Language picker: shown first if customer hasn't chosen for this session
@@ -321,6 +328,7 @@ function PublicOrderFormPage() {
           amount: cartTotal,
           paymentMethod: needsPayment ? paymentMethod : "",
           whatsapp: state.profile.whatsapp_number || null,
+          paymentMethods: state.profile.payment_methods ?? [],
         });
       } else {
         const reason = (res as any).reason;
