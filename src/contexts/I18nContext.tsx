@@ -2378,6 +2378,9 @@ const dict = {
     pof_section_title_order: "Borang Pesanan Saya",
     pof_section_title_enquiry: "Borang Pertanyaan Saya",
     pof_section_title_booking: "Borang Tempahan Saya",
+    pof_section_sub_order: "Kongsi pautan ini supaya pelanggan boleh membuat pesanan secara terus.",
+    pof_section_sub_enquiry: "Kongsi pautan ini supaya bakal pelanggan boleh menghantar pertanyaan secara terus.",
+    pof_section_sub_booking: "Kongsi pautan ini supaya klien boleh membuat tempahan secara terus.",
     // Public order form titles by business type
     pof_title_retail: "Borang Pesanan",
     pof_title_enquiry: "Borang Pertanyaan",
