@@ -147,7 +147,7 @@ const ORDER_TPL: TplMap = {
       `Hi [customer_name]! 👋\n\n` +
       `Thank you for your interest in [business_name]!\n\n` +
       `🏠 Reference: [code]\n` +
-      `📋 Package: [product]\n` +
+      `🏠 Listing: [product]\n` +
       `💰 Budget: RM [amount]\n` +
       `[follow_up_line]` +
       `[notes]` +
@@ -157,7 +157,7 @@ const ORDER_TPL: TplMap = {
       `Hi [customer_name]! 👋\n\n` +
       `Terima kasih atas minat anda dengan [business_name]!\n\n` +
       `🏠 Rujukan: [code]\n` +
-      `📋 Pakej: [product]\n` +
+      `🏠 Hartanah: [product]\n` +
       `💰 Anggaran: RM [amount]\n` +
       `[follow_up_line]` +
       `[notes]` +
@@ -167,7 +167,7 @@ const ORDER_TPL: TplMap = {
       `你好 [customer_name]！👋\n\n` +
       `感谢您对 [business_name] 的关注！\n\n` +
       `🏠 参考编号：[code]\n` +
-      `📋 配套：[product]\n` +
+      `🏠 房源：[product]\n` +
       `💰 预算：RM [amount]\n` +
       `[follow_up_line]` +
       `[notes]` +
