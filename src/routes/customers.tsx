@@ -94,6 +94,18 @@ function CustomersPage() {
         setRemovingId(null);
         return;
       }
+      // Cascade: remove related orders & follow-ups so they don't reappear on home.
+      try {
+        const ordersQ = supabase.from("orders").delete().eq("user_id", user.id);
+        if (c.phone) {
+          await ordersQ.eq("phone", c.phone);
+        } else {
+          await ordersQ.is("phone", null).eq("customer_name", c.name);
+        }
+      } catch { /* non-fatal */ }
+      try {
+        await supabase.from("follow_ups").delete().eq("user_id", user.id).eq("customer_id", c.id);
+      } catch { /* non-fatal */ }
       setCustomers((prev) => prev.filter((x) => x.id !== c.id));
       setRemovingId(null);
       toast.success(t("customer_deleted"));
