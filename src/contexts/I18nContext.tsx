@@ -987,6 +987,9 @@ const dict = {
     pof_section_title_order: "My Order Form",
     pof_section_title_enquiry: "My Enquiry Form",
     pof_section_title_booking: "My Booking Form",
+    pof_section_sub_order: "Share this link so customers can place orders directly.",
+    pof_section_sub_enquiry: "Share this link so prospects can submit enquiries directly.",
+    pof_section_sub_booking: "Share this link so clients can book directly.",
     // Public order form titles by business type
     pof_title_retail: "Order Form",
     pof_title_enquiry: "Enquiry Form",
