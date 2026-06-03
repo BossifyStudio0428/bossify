@@ -405,25 +405,14 @@ const BottomNav = memo(function BottomNav() {
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
           ))}
           <li className="flex justify-center">
-            {location.pathname === "/customers" ? (
-              <button
-                id="tour-new-order"
-                onClick={() => window.dispatchEvent(new CustomEvent("bossify:add-customer"))}
-                aria-label={t("bl_new_customer")}
-                className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
-              >
-                <Plus className="h-7 w-7" strokeWidth={2.5} />
-              </button>
-            ) : (
-              <Link
-                id="tour-new-order"
-                to="/new-order"
-                aria-label={t(bizKey(type, "new_order"))}
-                className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
-              >
-                <Plus className="h-7 w-7" strokeWidth={2.5} />
-              </Link>
-            )}
+            <Link
+              id="tour-new-order"
+              to="/new-order"
+              aria-label={t(bizKey(type, "new_order"))}
+              className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
+            >
+              <Plus className="h-7 w-7" strokeWidth={2.5} />
+            </Link>
           </li>
           {rightTabs.map((tab) => (
             <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />

@@ -276,12 +276,21 @@ function CustomersPage() {
           {customers.length} {t("total")}
         </span>
         {bizType === "property" && (
-          <Link
-            to="/services"
-            className="ml-auto inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95 transition"
-          >
-            📦 {t("bl_packages")}
-          </Link>
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              to="/services"
+              className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95 transition"
+            >
+              📦 {t("bl_packages")}
+            </Link>
+            <button
+              onClick={() => setNewCustomerOpen(true)}
+              aria-label={t("bl_new_customer")}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground text-base font-bold active:scale-95 transition"
+            >
+              +
+            </button>
+          </div>
         )}
         {bizType !== "property" && (
           <button
