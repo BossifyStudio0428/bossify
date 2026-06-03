@@ -567,6 +567,23 @@ function NewOrderPage() {
         {eff === "property" && (
           <Field label={t("f_location_interest")} icon="📍" placeholder={t("f_location_ph")} value={extras.location_interest} onChange={updExtra("location_interest")} />
         )}
+        {eff === "property" && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
+              🏠 {t("f_interested_listing" as any)}
+            </label>
+            <select
+              value={interestedListingId}
+              onChange={(e) => setInterestedListingId(e.target.value)}
+              className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+            >
+              <option value="">{t("f_no_listing" as any)}</option>
+              {listings.map((l) => (
+                <option key={l.id} value={l.id}>{l.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
         {eff === "freelance" && (
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_project_description")}</label>
