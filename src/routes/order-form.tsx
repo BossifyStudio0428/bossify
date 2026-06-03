@@ -160,7 +160,7 @@ function OrderFormPage() {
               📋 {t("pof_copy_link")}
             </button>
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(t("pof_wa_share_msg").replace("{link}", link))}`}
+              href={`https://wa.me/?text=${encodeURIComponent(t(businessType === "property" ? ("pof_wa_share_msg_property" as any) : "pof_wa_share_msg").replace("{link}", link))}`}
               target="_blank"
               rel="noreferrer"
               className="py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-semibold text-center active:scale-95"
