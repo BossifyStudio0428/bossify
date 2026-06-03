@@ -3558,7 +3558,7 @@ const dict = {
     save_project: "保存项目",
     sec_recent_cases: "最新案例",
     sec_recent_appointments: "最新预约",
-    sec_recent_leads: "最新潜在客户",
+    sec_recent_leads: "最新客户",
     sec_recent_projects: "最新项目",
     sec_latest_clients: "最新客户",
     sec_followups_today: "今日跟进",
