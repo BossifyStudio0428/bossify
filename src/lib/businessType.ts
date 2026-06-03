@@ -61,7 +61,7 @@ const LABEL_MAP: Record<BizType, Partial<Record<SemanticKey, TKey>>> = {
     new_order: "bl_new_client",
     customers: "bl_clients",
     new_customer: "bl_new_client",
-    products: "bl_packages",
+    products: "bl_listings",
   },
   freelance: {
     orders: "bl_projects",

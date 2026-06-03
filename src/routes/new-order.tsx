@@ -469,7 +469,7 @@ function NewOrderPage() {
       </header>
 
       <form className="space-y-5" onSubmit={save} noValidate>
-        {eff === "property" && existingCustomers.length > 0 && (
+        {eff === "property" && (
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
               👥 {t("f_select_existing_customer" as any)}
@@ -505,6 +505,24 @@ function NewOrderPage() {
         <div className="space-y-1.5 relative" id="tour-no-product">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{productLabel}</label>
           {(() => {
+            // Property: use a plain text input — listings are picked in the dropdown below.
+            if (eff === "property") {
+              return (
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base z-10 pointer-events-none">🏠</span>
+                  <input
+                    type="text"
+                    value={form.product}
+                    onChange={(e) => {
+                      setForm((p) => ({ ...p, product: e.target.value }));
+                      if (errors.product) setErrors((p) => ({ ...p, product: "" }));
+                    }}
+                    placeholder={productPh}
+                    className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${errors.product ? "border-red-400" : "border-border/60"}`}
+                  />
+                </div>
+              );
+            }
             const hasList = isRetailish ? inventory.length > 0 : services.length > 0;
             if (!hasList) {
               return (
@@ -536,7 +554,7 @@ function NewOrderPage() {
             }
             return (
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base z-10 pointer-events-none">{eff === "education" ? "🎓" : eff === "beauty" ? "✨" : eff === "property" ? "🏠" : eff === "freelance" ? "💼" : "🛍️"}</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base z-10 pointer-events-none">{eff === "education" ? "🎓" : eff === "beauty" ? "✨" : eff === "freelance" ? "💼" : "🛍️"}</span>
                 <select
                   value={form.product}
                   onChange={(e) => {
