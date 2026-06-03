@@ -38,7 +38,7 @@ function ListingsPage() {
   const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType, loading: bizLoading } = useBusinessType();
-  const { hasFullAccess, showUpgrade } = useSubscription();
+  const { hasFullAccess, showUpgrade, listingsLimit } = useSubscription();
   const navigate = useNavigate();
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +55,7 @@ function ListingsPage() {
     if (!user) return;
     setLoading(true);
     const { data, error } = await supabase
-      .from("property_listings" as never)
+      .from("listings")
       .select("id,title,property_type,listing_type,price,address,bedrooms,bathrooms,size_sqft,status,images")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
@@ -118,6 +118,12 @@ function ListingsPage() {
           <Download className="h-3.5 w-3.5" /> {t("export_pdf")}
         </button>
       </header>
+
+      {!hasFullAccess && Number.isFinite(listingsLimit) && (
+        <p className="text-[11px] text-muted-foreground -mt-2 px-1">
+          {items.length}/{listingsLimit} {t("nav_listings")}
+        </p>
+      )}
 
       <div className="grid grid-cols-3 gap-2">
         <Link to="/viewings" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
@@ -212,15 +218,21 @@ function ListingsPage() {
         ))}
       </div>
 
-      <Link
-        to="/listing/$id"
-        params={{ id: "new" }}
+      <button
+        type="button"
+        onClick={() => {
+          if (!hasFullAccess && items.length >= listingsLimit) {
+            showUpgrade(t("upgrade_message"));
+            return;
+          }
+          navigate({ to: "/listing/$id", params: { id: "new" } });
+        }}
         aria-label={t("add_listing")}
         className="fixed bottom-24 z-30 h-14 w-14 rounded-full text-primary-foreground shadow-[var(--shadow-soft)] flex items-center justify-center active:scale-95 transition-transform bg-gradient-to-br from-primary to-primary/80"
         style={{ right: "max(1.5rem, calc(50vw - 180px + 1rem))" }}
       >
         <Plus className="h-6 w-6" strokeWidth={2.5} />
-      </Link>
+      </button>
     </div>
   );
 }

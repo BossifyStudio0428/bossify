@@ -1,56 +1,64 @@
-## 目标
+# Property 业务类型修复计划
 
-把上一轮误加的「原生 VAPID Web Push」路径删掉，让 Android + Web 都统一走 FCM。这样你不用再去找 VAPID secret，逻辑也更简单——只有一条推送通道。
+## 根本原因（一句话）
+代码里所有"房源"操作都连到了 **不存在的 `property_listings` 表**，而 `listings` 表才是真实存在的（你之前那条 SQL 把 `customers.interested_listing_id` 也指向了 `listings`）。所以你在 /listings 页面添加的房源根本没存进数据库，下拉自然是空的。
 
-## 背景
+**关于 SQL：这次不需要新的 SQL migration。** `listings` 表、`customers.interested_listing_id` 外键、所有 RLS policies 都已经存在并正确。只需要改前端代码把表名从 `property_listings` 改成 `listings`，你之前加的房源就会真的保存进去。
 
-你的 Web 推送一直走的是 **FCM for Web**（`firebase-messaging-sw.js` + Firebase 的 VAPID public key 写在 `src/lib/firebaseConfig.ts`，public 值，非 secret）。Server 端用 `FCM_SERVICE_ACCOUNT_JSON` 通过 FCM HTTP v1 一并推送 Android + Web。
+---
 
-上一轮我额外加了一条「server 用 `npm:web-push` + VAPID 私钥直接 push 浏览器」的路径，需要 `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` 三个 secret。这条路径与现有 FCM 路径功能重叠，是多余的——所以你今天看到「VAPID 哪里弄」就是因为我多加的代码在找它们。
+## 改动清单
 
-## 改动
+### 1. 修房源表名错误（这是 dropdown 没东西的真正原因）
+- `src/routes/listings.tsx` — 把 `from("property_listings" as never)` 改成 `from("listings")`
+- `src/routes/listing.$id.tsx` — 同样 3 处 (`select` / `insert` / `update` / `delete`) 改成 `listings`
 
-### 1. `supabase/functions/send-push/index.ts`
-- 删掉 `sendWebPush` 函数、`VAPID_*` env 读取、`npm:web-push` import。
-- `dispatch` 只保留：
-  - 从 `device_tokens` 读所有 FCM token（Android + iOS + Web 都在这里，platform 字段区分）。
-  - 调 `sendToTokens` 统一通过 FCM HTTP v1 发送（message body 里 `webpush.notification` 块已经覆盖浏览器渲染）。
-- 删掉读 `device_sessions.push_subscription`、`webSubs` 这条分支。
-- `device_sessions` 不再参与发送决策，只用作"哪些设备登录过"的展示（设备管理页用）。
-- `diagnostic` 模式继续保留，但只汇报 `device_tokens` 计数 + 每行 platform；删掉 `has_vapid_keys` 字段。
+改完后你之前在 /listings 添加的房源会真的保存，新增客户表单里的房源下拉会出现。
 
-### 2. `src/lib/deviceSession.ts`
-- 删掉 `saveDeviceSessionPush` 函数。它原本写入 `fcm_token` / `push_subscription` / `is_current` 三个外部 DB 列，现在不需要——FCM token 已经通过 `registerDeviceForPush` 写进 `device_tokens` 了。
-- 保留 `registerDeviceSession`、`getDeviceId`、`getDeviceName`、`getDeviceType`、`removeDeviceSession`（设备登录管理仍然要用）。
+### 2. 客户页 "配套" 按钮 → 改成 "房源"
+- `src/routes/customers.tsx`（property 业务类型）：
+  - 图标 📦 → 🏠
+  - 文案 `packages_title` → `nav_listings`（CN 房源 / BM Hartanah / EN Listings — 翻译已存在）
+  - 链接 `/services` → `/listings`
 
-### 3. `src/lib/pushRegister.ts`（Android）
-- 删掉 `saveDeviceSessionPush` 调用和 `@capacitor/device` 的 import。
-- Android 注册只做：FCM 注册 → `registerDeviceForPush({ platform: "android" })` → 写入 `device_tokens`。结束。
+### 3. 把订阅计划的限制从"配套"改成"房源"（property 专属）
+- `src/contexts/SubscriptionContext.tsx`：
+  - `FREE_LIMITS` / `STARTER_LIMITS` 新增 `listings` 字段（建议沿用现有数字：Free 10、Starter 25、Pro/Lifetime/Team 无限）
+  - 暴露 `listingsUsed` / `listingsLimit` / `listingsRemaining`
+- `src/routes/listings.tsx`：参考 `inventory.tsx` 的 `atLimit` 写法 —— 达到上限时禁用 + 按钮并提示升级
+- `src/routes/plans.tsx`：property 业务的特性列表 `pf_packages_10` / `ps_packages_25` 改成"10 个房源 / 25 个房源"对应的 key（如果需要新 key 我会加进 I18nContext）
 
-### 4. `src/lib/webPush.ts`（浏览器）
-- 删掉 `saveDeviceSessionPush` 调用和 `pushManager.getSubscription()` 那段。
-- 浏览器注册只做：service worker → `getToken(vapidKey)` → `registerDeviceForPush({ platform: "web" })` → 写入 `device_tokens`。结束。
+### 4. "+" 按钮表单（property 业务）真正能用
+现在 `/new-order` 对 property 业务来说叫"新潜在客户"，你说潜在客户已经删掉了 + 这里也不是创建订单 + 没有客户下拉。修复：
+- `src/lib/businessType.ts`：property 的 `new_order` 从 `bl_new_lead` 改成 `bl_new_client`（"新客户"）
+- `src/routes/new-order.tsx`（仅 property 分支）：
+  - 在 "客户姓名" 字段上方加一个**已有客户下拉**：选了就自动填名字+电话+互动历史；选 "+ 新客户" 才显示姓名/电话输入
+  - 房源下拉保持现状（修了 #1 之后就会有数据）
+  - 移除"金额/数量"等订单字段对 property 的强制要求（property 流程是登记客户+感兴趣房源，不是收钱）
+  - 保存时写入 `customers` 表（带 `interested_listing_id`），不再写 `orders`
+- 客户页底部空状态文案 "当您创建订单时，客户会自动添加" 改成 "点击 + 添加新客户"（property 业务）
 
-### 5. 通知设置页 `Diagnose push` 按钮
-保留按钮和摘要 toast；摘要文案改成只显示 FCM token 数（按 platform 分组：android / web / ios），不再提 VAPID。
+### 5. （顺手）AppShell 底部导航
+property 业务类型下"订单"标签可考虑改为"客户"或"房源"。**不在本次默认范围内** —— 如果你要我改请告诉我。
 
-### 6. 不动的部分
-- `device_sessions` 表本身和 `register_device_session` RPC 不删——它仍然驱动「我登录了哪些设备 / 设备数量限制」。
-- `firebase-messaging-sw.js`、`src/lib/firebaseConfig.ts`、Firebase VAPID public key 不动。
-- 现有 3 语言（中文 / BM / English）逻辑不动。
+---
 
-## 不需要做的事
+## 数据库（确认无需 migration）
+| 表 / 字段 | 状态 |
+|---|---|
+| `public.listings` | ✅ 已存在 |
+| `customers.interested_listing_id` → `listings(id) ON DELETE SET NULL` | ✅ 已存在 |
+| `listings` RLS（`can_access_user_data`）| ✅ 已存在 |
 
-- ❌ 不需要再创建 / 添加任何 `VAPID_*` secret。
-- ❌ 不需要 npm 安装 `web-push`（Deno edge function 也不再 import 它）。
-- ❌ 不需要外部 DB 加 `is_current` / `fcm_token` / `push_subscription` 列（之前误加的 client 写入会一并删掉）。
+唯一需要的"SQL"是把代码里写错的表名改回来 —— 这是 TypeScript 代码改动，不是数据库改动。
 
-## 验证步骤
+---
 
-清理完后：
-1. 浏览器打开通知设置 → 允许 → 点 **Diagnose push** → 应该看到至少 1 个 `platform='web'` token。
-2. 点 **Test push** → 浏览器应收到通知。
-3. Android app 启动 → 登录 → 自动注册 → Diagnose push 应该多出 `platform='android'` token。
-4. Android app 发 test push → 手机通知栏应收到。
+## 不在本次范围
+- 把订阅 Plan 在 Stripe/Paddle 那边的产品改名（只动 app 内的文案和数值上限）
+- 重写 `/new-order` 整个表单使其变成纯客户管理页（只在 property 分支做最小改动让流程通顺）
+- AppShell 底部导航的标签调整（除非你确认要改）
 
-整套不再依赖 VAPID secret，逻辑回到「加 web 之前」的稳定形态。
+---
+
+确认 OK 我就开始改。如果第 4 点的"客户下拉是否要保留'新客户'选项"或第 3 点的"具体数字 10 / 25 是否沿用"想调整，告诉我数字。
