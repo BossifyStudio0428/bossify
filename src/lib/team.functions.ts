@@ -52,6 +52,12 @@ export const acceptTeamInvite = createServerFn({ method: "POST" })
       return { ok: false as const, reason: "expired" };
     }
 
+    // Verify the authenticated caller is the intended recipient.
+    const callerEmail = (context.claims as any)?.email as string | undefined;
+    if (!callerEmail || callerEmail.toLowerCase() !== inv.email.toLowerCase()) {
+      return { ok: false as const, reason: "email_mismatch" };
+    }
+
     // Remove any pre-existing pending placeholder row for this email so the
     // accepted member is a single row, not a duplicate of the pending invite.
     await externalSupabaseAdmin
@@ -195,14 +201,26 @@ export const listMyPendingInvites = createServerFn({ method: "POST" })
   });
 
 export const declineTeamInvite = createServerFn({ method: "POST" })
+  .middleware([requireExternalSupabaseAuth])
   .inputValidator((input) =>
     z.object({ token: z.string().min(8).max(64) }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { data: inv } = await externalSupabaseAdmin
+      .from("team_invitations")
+      .select("id, email, status")
+      .eq("token", data.token)
+      .maybeSingle();
+    if (!inv) return { ok: false as const, reason: "not_found" };
+    if (inv.status !== "pending") return { ok: false as const, reason: "used" };
+    const callerEmail = (context.claims as any)?.email as string | undefined;
+    if (!callerEmail || callerEmail.toLowerCase() !== inv.email.toLowerCase()) {
+      return { ok: false as const, reason: "email_mismatch" };
+    }
     await externalSupabaseAdmin
       .from("team_invitations")
       .update({ status: "revoked" } as any)
-      .eq("token", data.token)
+      .eq("id", inv.id)
       .eq("status", "pending");
     return { ok: true as const };
   });
