@@ -2349,6 +2349,8 @@ const dict = {
     f_interested_listing: "Hartanah Diminati",
     f_interested_listing_ph: "Pilih hartanah (pilihan)",
     f_no_listing: "Tiada",
+    f_select_existing_customer: "Pelanggan Sedia Ada",
+    f_new_customer_option: "+ Pelanggan baru",
     pof_desc_retail: "Kongsi pautan ini kepada pelanggan anda. Mereka boleh membuat pesanan terus tanpa memuat turun sebarang aplikasi.",
     pof_desc_education: "Kongsi pautan ini kepada pelajar anda. Mereka boleh menghantar pertanyaan terus tanpa memuat turun sebarang aplikasi.",
     pof_desc_beauty: "Kongsi pautan ini kepada pelanggan anda. Mereka boleh membuat tempahan terus tanpa memuat turun sebarang aplikasi.",
