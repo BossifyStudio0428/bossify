@@ -123,14 +123,43 @@ function pageShell(title: string, subtitle: string, businessName: string, lang: 
 }
 
 async function renderAndSave(html: string, filename: string): Promise<void> {
-  // Render into an offscreen container; html2canvas needs the node attached.
-  const container = document.createElement("div");
-  container.style.position = "fixed";
-  container.style.left = "-10000px";
-  container.style.top = "0";
-  container.innerHTML = html;
-  document.body.appendChild(container);
+  // Render inside a sandboxed iframe so the PDF document inherits NO styles
+  // from the live app. The app's global stylesheet uses oklch() CSS variables
+  // for color/border/background which html2canvas (used by html2pdf) cannot
+  // parse — it throws "Attempting to parse an unsupported color function 'lab'".
+  // An isolated iframe document is the only reliable fix; scoping styles on the
+  // main page still lets html2canvas read inherited oklch via getComputedStyle.
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.position = "fixed";
+  iframe.style.left = "-10000px";
+  iframe.style.top = "0";
+  iframe.style.width = "820px";
+  iframe.style.height = "10px";
+  iframe.style.border = "0";
+  iframe.style.background = "#ffffff";
+  document.body.appendChild(iframe);
+
   try {
+    const doc = iframe.contentDocument;
+    if (!doc) throw new Error("Could not create PDF iframe document");
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    // Wait for the iframe document and its resources (images, fonts) to load.
+    await new Promise<void>((resolve) => {
+      if (doc.readyState === "complete") return resolve();
+      const onReady = () => resolve();
+      iframe.addEventListener("load", onReady, { once: true });
+      // Safety timeout — never hang the export.
+      setTimeout(onReady, 2500);
+    });
+
+    // Resize the iframe to fit content so html2canvas captures everything.
+    const body = doc.body;
+    iframe.style.height = Math.max(body.scrollHeight, body.offsetHeight) + "px";
+
     const worker = (html2pdf as any)()
       .set({
         margin: 10,
@@ -140,7 +169,7 @@ async function renderAndSave(html: string, filename: string): Promise<void> {
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         pagebreak: { mode: ["css", "legacy"] },
       })
-      .from(container);
+      .from(body);
 
     if (Capacitor.isNativePlatform()) {
       const blob: Blob = await worker.outputPdf("blob");
@@ -158,7 +187,7 @@ async function renderAndSave(html: string, filename: string): Promise<void> {
       await worker.save();
     }
   } finally {
-    container.remove();
+    iframe.remove();
   }
 }
 
