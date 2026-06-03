@@ -148,6 +148,7 @@ function PublicOrderFormPage() {
 
   const [activeCategory, setActiveCategory] = useState<string>("__all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeLocation, setActiveLocation] = useState<string>("__all");
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
