@@ -80,6 +80,9 @@ function pageShell(title: string, subtitle: string, businessName: string, lang: 
 <head><meta charset="utf-8"><title>${esc(title)}</title>
 <style>
   * { box-sizing: border-box; }
+  /* html2canvas cannot parse oklch/lab colors inherited from app CSS. */
+  * { border-color: #e6e2f0 !important; }
+  html, body { background: #ffffff !important; color: #111 !important; }
   body {
     margin: 0; padding: 24px; color: #111;
     font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
