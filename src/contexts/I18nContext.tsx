@@ -3721,6 +3721,8 @@ const dict = {
     f_interested_listing: "感兴趣的房源",
     f_interested_listing_ph: "选择房源（可选）",
     f_no_listing: "无",
+    f_select_existing_customer: "已有客户",
+    f_new_customer_option: "+ 新客户",
     pof_desc_retail: "将此链接分享给您的客户。他们无需下载任何应用程序即可直接下单。",
     pof_desc_education: "将此链接分享给您的学生。他们无需下载任何应用程序即可直接提交询问。",
     pof_desc_beauty: "将此链接分享给您的客户。他们无需下载任何应用程序即可直接预约。",
