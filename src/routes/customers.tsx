@@ -271,6 +271,14 @@ function CustomersPage() {
             📦 {t("bl_packages")}
           </Link>
         )}
+        {bizType !== "property" && (
+          <button
+            onClick={() => setNewCustomerOpen(true)}
+            className="ml-auto inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95 transition"
+          >
+            + {t("bl_new_customer")}
+          </button>
+        )}
       </header>
 
       {bizType === "education" && (
@@ -396,6 +404,11 @@ function CustomersPage() {
                 {c.phone && (
                   <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>
                 )}
+                {followUpByCustomerId[c.id] && (
+                  <p className="text-[11px] text-amber-600 font-medium mt-0.5 truncate">
+                    📅 {new Date(followUpByCustomerId[c.id] + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
+                  </p>
+                )}
                 {bizType === "education" ? (
                   <>
                     <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
@@ -482,6 +495,60 @@ function CustomersPage() {
           <p className="text-center text-sm text-muted-foreground py-10">{t("no_customers")}</p>
         )}
       </div>
+
+      {newCustomerOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setNewCustomerOpen(false)}>
+          <div className="w-full max-w-[420px] bg-card rounded-t-3xl p-5 space-y-4 animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-foreground">{t("bl_new_customer")}</h2>
+              <button onClick={() => setNewCustomerOpen(false)} className="p-2 rounded-full hover:bg-muted" aria-label={t("cancel")}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("customer_name")}</label>
+              <input
+                value={newCustomer.name}
+                onChange={(e) => { setNewCustomer((p) => ({ ...p, name: e.target.value })); setNewCustomerErrors({}); }}
+                placeholder={t("f_client_name_ph")}
+                className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${newCustomerErrors.name ? "border-red-400" : "border-border/60"}`}
+              />
+              {newCustomerErrors.name && <p className="text-[11px] text-red-500 px-1">{newCustomerErrors.name}</p>}
+            </div>
+            <PhoneInput
+              label={t("phone_number")}
+              value={newCustomer.phone}
+              onChange={(v) => setNewCustomer((p) => ({ ...p, phone: v }))}
+            />
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_followup_date")}</label>
+              <input
+                type="date"
+                value={newCustomer.followup_date}
+                onChange={(e) => setNewCustomer((p) => ({ ...p, followup_date: e.target.value }))}
+                className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("remarks")}</label>
+              <textarea
+                rows={3}
+                value={newCustomer.note}
+                onChange={(e) => setNewCustomer((p) => ({ ...p, note: e.target.value }))}
+                placeholder={t("remarks_placeholder")}
+                className="w-full rounded-2xl bg-muted/60 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
+              />
+            </div>
+            <button
+              onClick={saveNewCustomer}
+              disabled={savingNewCustomer}
+              className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm active:scale-[0.99] transition-transform disabled:opacity-60"
+            >
+              {savingNewCustomer ? t("saving") : t("save")}
+            </button>
+          </div>
+        </div>
+      )}
 
       {menuFor && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setMenuFor(null)}>
