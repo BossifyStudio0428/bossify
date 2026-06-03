@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { ArrowLeft, X, Calendar as CalendarIcon, Check, Plus } from "lucide-react";
+import { ArrowLeft, X, Calendar as CalendarIcon, Check, Plus, Home } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type OrderRow, type CustomerStatus, type FollowUpRow } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
@@ -232,6 +232,8 @@ function CustomerDetail() {
             onChange={() => setEditing(true)}
           />
           <CustomerRequirements customerId={customer.id} />
+          <InterestedListings customer={customer} />
+          <CustomerViewings customerId={customer.id} customerName={customer.name} />
         </>
       )}
 
