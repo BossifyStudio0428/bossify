@@ -52,7 +52,7 @@ function ViewingEditor() {
   useEffect(() => {
     if (!user) return;
     supabase
-      .from("property_listings" as never)
+      .from("listings")
       .select("id,title")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
