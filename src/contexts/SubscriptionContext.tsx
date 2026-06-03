@@ -88,6 +88,7 @@ type Ctx = {
   productsUsed: number;
   productsLimit: number;
   productsRemaining: number;
+  listingsLimit: number;
   activeBillingPlan: BillingPlan | null;
   refresh: () => Promise<SubscriptionRow | null>;
   /**
