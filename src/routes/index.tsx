@@ -771,19 +771,21 @@ function Index() {
             <p className="text-center text-xs text-muted-foreground py-6">{t(eff === "education" ? "no_cases_yet" : eff === "beauty" ? "no_appointments_yet" : eff === "property" ? "no_leads_yet" : eff === "freelance" ? "no_projects_yet" : "no_orders_yet")}</p>
           )}
           {eff === "property" && latestClients.map((c) => (
-            <Link key={c.id} to="/customer/$customerId" params={{ customerId: c.id }} className="flex items-center gap-3 p-4">
-              <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
-                {c.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
-                {c.phone && <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>}
-                {latestClientFollowUps[c.id] && (
-                  <p className="text-[11px] text-amber-600 font-medium mt-0.5 truncate">
-                    📅 {new Date(latestClientFollowUps[c.id] + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
-                  </p>
-                )}
-              </div>
+            <div key={c.id} className="flex items-center gap-3 p-4">
+              <Link to="/customer/$customerId" params={{ customerId: c.id }} className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                  {c.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                  {c.phone && <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>}
+                  {latestClientFollowUps[c.id] && (
+                    <p className="text-[11px] text-amber-600 font-medium mt-0.5 truncate">
+                      📅 {new Date(latestClientFollowUps[c.id] + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
+                    </p>
+                  )}
+                </div>
+              </Link>
               <div className="text-right shrink-0">
                 <p className="text-sm font-bold text-primary">RM {Number(c.total_spent ?? 0).toFixed(0)}</p>
                 {c.phone && (
@@ -798,7 +800,7 @@ function Index() {
                   </a>
                 )}
               </div>
-            </Link>
+            </div>
           ))}
           {eff !== "property" && recent.map((o) => (
             <div key={o.id} className="flex items-center gap-3 p-4">
