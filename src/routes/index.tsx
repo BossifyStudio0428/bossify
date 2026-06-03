@@ -449,11 +449,15 @@ function Index() {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const total = orders
-        .filter(
-          (o) => o.status === "Paid" && new Date(o.created_at).toDateString() === d.toDateString(),
-        )
-        .reduce((s, o) => s + Number(o.amount), 0);
+      const total = eff === "property"
+        ? soldListings
+            .filter((l) => new Date(l.updated_at).toDateString() === d.toDateString())
+            .reduce((s, l) => s + Number(l.price), 0)
+        : orders
+            .filter(
+              (o) => o.status === "Paid" && new Date(o.created_at).toDateString() === d.toDateString(),
+            )
+            .reduce((s, o) => s + Number(o.amount), 0);
       weekly.push({ day: t(dowKeys[d.getDay()]), value: total });
     }
   } else {
