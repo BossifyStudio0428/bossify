@@ -554,7 +554,7 @@ function NewOrderPage() {
             }
             return (
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base z-10 pointer-events-none">{eff === "education" ? "🎓" : eff === "beauty" ? "✨" : eff === "property" ? "🏠" : eff === "freelance" ? "💼" : "🛍️"}</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base z-10 pointer-events-none">{eff === "education" ? "🎓" : eff === "beauty" ? "✨" : eff === "freelance" ? "💼" : "🛍️"}</span>
                 <select
                   value={form.product}
                   onChange={(e) => {
