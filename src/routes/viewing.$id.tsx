@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { ChevronLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
-export const Route = createFileRoute("/viewing/$id")({ component: ViewingEditor });
+export const Route = createFileRoute("/viewing/$id")({
+  component: ViewingEditor,
+  validateSearch: (s: Record<string, unknown>) => ({
+    customerId: typeof s.customerId === "string" ? s.customerId : undefined,
+    listingId: typeof s.listingId === "string" ? s.listingId : undefined,
+  }),
+});
 
 type Listing = { id: string; title: string };
 type Customer = { id: string; name: string };
@@ -25,6 +31,7 @@ function defaultLocalInput(): string {
 
 function ViewingEditor() {
   const { id } = useParams({ from: "/viewing/$id" });
+  const search = useSearch({ from: "/viewing/$id" });
   const isNew = id === "new";
   const { t } = useI18n();
   const { user } = useAuth();
@@ -42,6 +49,13 @@ function ViewingEditor() {
   const [feedback, setFeedback] = useState("");
   const [listings, setListings] = useState<Listing[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+
+  // Prefill from URL params when creating a new viewing
+  useEffect(() => {
+    if (!isNew) return;
+    if (search.customerId) setCustomerId(search.customerId);
+    if (search.listingId) setListingId(search.listingId);
+  }, [isNew, search.customerId, search.listingId]);
 
   useEffect(() => {
     if (!bizLoading && bizType && bizType !== "property") {
