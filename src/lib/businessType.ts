@@ -17,6 +17,43 @@ export const BIZ_TYPES: { key: BizType; emoji: string; nameKey: TKey }[] = [
   { key: "freelance", emoji: "💪", nameKey: "bt_freelance" },
 ];
 
+const BIZ_TYPE_KEYS: ReadonlySet<string> = new Set(BIZ_TYPES.map((b) => b.key));
+
+const LEGACY_BIZ_TYPE_MAP: Record<string, BizType> = {
+  food: "fnb",
+  foods: "fnb",
+  food_beverage: "fnb",
+  food_and_beverage: "fnb",
+  f_b: "fnb",
+  restaurant: "fnb",
+  cafe: "fnb",
+  dessert: "fnb",
+  desserts: "fnb",
+  real_estate: "property",
+  real_estate_agent: "property",
+  property_agent: "property",
+  housing: "property",
+  ecommerce: "retail",
+  e_commerce: "retail",
+  online_store: "retail",
+  shop: "retail",
+  salon: "beauty",
+  spa: "beauty",
+  tuition: "education",
+  tutor: "education",
+  tutoring: "education",
+  service: "freelance",
+  services: "freelance",
+};
+
+export function normalizeBizType(value: unknown): BizType | null {
+  if (typeof value !== "string") return null;
+  const key = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  if (!key) return null;
+  if (BIZ_TYPE_KEYS.has(key)) return key as BizType;
+  return LEGACY_BIZ_TYPE_MAP[key] ?? null;
+}
+
 export const BIZ_TYPES_WITH_INVENTORY: ReadonlySet<BizType> = new Set([
   "retail",
   "fnb",
