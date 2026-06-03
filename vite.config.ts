@@ -26,6 +26,7 @@ export default defineLovableConfig({
       enabled: true,
       prerender: {
         outputPath: "/index.html",
+        enabled: false,
       },
     },
   },
