@@ -202,7 +202,7 @@ function CustomersPage() {
             to="/listings"
             className="ml-auto inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95 transition"
           >
-            🏠 {t("nav_listings")}
+            📦 {t("bl_packages")}
           </Link>
         )}
       </header>
