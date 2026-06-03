@@ -60,6 +60,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          interested_listing_id: string | null
           last_order_at: string | null
           name: string
           package_id: string | null
@@ -73,6 +74,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          interested_listing_id?: string | null
           last_order_at?: string | null
           name: string
           package_id?: string | null
@@ -86,6 +88,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          interested_listing_id?: string | null
           last_order_at?: string | null
           name?: string
           package_id?: string | null
@@ -97,6 +100,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "customers_interested_listing_id_fkey"
+            columns: ["interested_listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "customers_package_id_fkey"
             columns: ["package_id"]
