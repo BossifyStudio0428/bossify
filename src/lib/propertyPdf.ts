@@ -1,9 +1,7 @@
-import html2pdf from "html2pdf.js";
-import { Capacitor } from "@capacitor/core";
-import { Filesystem, Directory } from "@capacitor/filesystem";
-import { Share } from "@capacitor/share";
-import { FileOpener } from "@capacitor-community/file-opener";
+import html2canvas from "html2canvas-pro";
+import jsPDF from "jspdf";
 import type { Lang } from "@/contexts/I18nContext";
+import { savePdf } from "@/lib/pdf";
 
 const PURPLE = "#6C3FD6";
 const ALT_ROW = "#F0EEF8";
@@ -123,12 +121,9 @@ function pageShell(title: string, subtitle: string, businessName: string, lang: 
 }
 
 async function renderAndSave(html: string, filename: string): Promise<void> {
-  // Render inside a sandboxed iframe so the PDF document inherits NO styles
-  // from the live app. The app's global stylesheet uses oklch() CSS variables
-  // for color/border/background which html2canvas (used by html2pdf) cannot
-  // parse — it throws "Attempting to parse an unsupported color function 'lab'".
-  // An isolated iframe document is the only reliable fix; scoping styles on the
-  // main page still lets html2canvas read inherited oklch via getComputedStyle.
+  // Render inside an isolated iframe and capture it with html2canvas-pro.
+  // Do NOT use html2pdf.js here: it bundles the older html2canvas parser that
+  // crashes on Tailwind v4's lab()/oklch() colors in the live app.
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
   iframe.style.position = "fixed";
@@ -156,52 +151,42 @@ async function renderAndSave(html: string, filename: string): Promise<void> {
       setTimeout(onReady, 2500);
     });
 
-    // Resize the iframe to fit content so html2canvas captures everything.
+    await doc.fonts?.ready?.catch(() => undefined);
+
+    // Resize the iframe to fit content so the renderer captures everything.
     const body = doc.body;
-    iframe.style.height = Math.max(body.scrollHeight, body.offsetHeight) + "px";
+    const fullHeight = Math.max(body.scrollHeight, body.offsetHeight, body.clientHeight);
+    iframe.style.height = `${fullHeight}px`;
 
-    const worker = (html2pdf as any)()
-      .set({
-        margin: 10,
-        filename,
-        image: { type: "jpeg", quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"] },
-      })
-      .from(body);
+    const canvas = await html2canvas(body, {
+      scale: Math.min(2, window.devicePixelRatio || 1),
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      windowWidth: body.scrollWidth,
+      windowHeight: fullHeight,
+      logging: false,
+    });
 
-    if (Capacitor.isNativePlatform()) {
-      const blob: Blob = await worker.outputPdf("blob");
-      const base64 = await blobToBase64(blob);
-      const res = await Filesystem.writeFile({
-        path: filename, data: base64,
-        directory: Directory.Documents, recursive: true,
-      });
-      try {
-        await FileOpener.open({ filePath: res.uri, contentType: "application/pdf", openWithDefault: true });
-      } catch {
-        await Share.share({ title: filename, url: res.uri, dialogTitle: filename });
-      }
-    } else {
-      await worker.save();
+    const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const imageWidth = pageWidth - margin * 2;
+    const imageHeight = (canvas.height * imageWidth) / canvas.width;
+    const pageContentHeight = pageHeight - margin * 2;
+    const image = canvas.toDataURL("image/jpeg", 0.96);
+
+    let renderedHeight = 0;
+    while (renderedHeight < imageHeight) {
+      if (renderedHeight > 0) pdf.addPage();
+      pdf.addImage(image, "JPEG", margin, margin - renderedHeight, imageWidth, imageHeight);
+      renderedHeight += pageContentHeight;
     }
+
+    await savePdf(pdf, filename);
   } finally {
     iframe.remove();
   }
-}
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onload = () => {
-      const s = String(fr.result || "");
-      const i = s.indexOf(",");
-      resolve(i >= 0 ? s.slice(i + 1) : s);
-    };
-    fr.onerror = reject;
-    fr.readAsDataURL(blob);
-  });
 }
 
 function ymd() {
