@@ -212,18 +212,42 @@ function PublicOrderFormPage() {
     return Array.from(set).sort();
   }, [state]);
 
+  // Extract a short area label from a full address (take last comma segment,
+  // strip postcodes). Falls back to the trimmed address itself.
+  const extractArea = (addr: string | null | undefined): string => {
+    if (!addr) return "";
+    const cleaned = addr.replace(/\b\d{4,6}\b/g, "").trim();
+    const parts = cleaned.split(",").map((s) => s.trim()).filter(Boolean);
+    if (parts.length === 0) return "";
+    // Prefer second-to-last segment (city/area), fallback to last.
+    return parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1];
+  };
+
+  const locations = useMemo(() => {
+    if (state.status !== "ready") return [] as string[];
+    const set = new Set<string>();
+    for (const p of state.products) {
+      const area = extractArea(p.property?.address);
+      if (area) set.add(area);
+    }
+    return Array.from(set).sort();
+  }, [state]);
+
   const filteredProducts = useMemo(() => {
     if (state.status !== "ready") return [] as Product[];
     let list = state.products;
     if (activeCategory !== "__all") {
       list = list.filter((p) => (p.category ?? "") === activeCategory);
     }
+    if (activeLocation !== "__all") {
+      list = list.filter((p) => extractArea(p.property?.address) === activeLocation);
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
     return list;
-  }, [state, activeCategory, searchQuery]);
+  }, [state, activeCategory, activeLocation, searchQuery]);
 
 
   const bizType = state.status === "ready" ? state.profile.business_type : "retail";
