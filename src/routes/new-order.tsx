@@ -370,7 +370,8 @@ function NewOrderPage() {
     const name = form.customer_name || "Customer";
     const amt = form.amount ? Number(form.amount).toFixed(2) : "0.00";
     const svc = form.product || "—";
-    const pay = status !== "Paid" ? paymentDetails : "";
+    // Property is enquiry-only — never include payment details in the message.
+    const pay = eff === "property" ? "" : (status !== "Paid" ? paymentDetails : "");
     return renderTemplate(getOrderTemplate(lang, bizType, customOrderTpl), {
       customer_name: name,
       business_name: businessName || "us",
@@ -736,7 +737,6 @@ function NewOrderPage() {
               )}
             </p>
           )}
-          {eff !== "property" && (
           <button
             type="button"
             onClick={saveAndWhatsApp}
@@ -746,7 +746,6 @@ function NewOrderPage() {
           >
             📲 {t("save_whatsapp")}
           </button>
-          )}
         </div>
 
         {(form.customer_name || form.product) && (
