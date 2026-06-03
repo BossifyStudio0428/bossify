@@ -289,7 +289,7 @@ function PlansPage() {
     fnb:       ["free_orders_per_month", "free_inventory_count", "pf_basic_dashboard", "pf_wa_order_confirms"],
     education: ["pf_cases_20", "pf_services_10", "pf_basic_dashboard", "pf_wa_confirm_tpl"],
     beauty:    ["pf_appointments_20", "pf_services_10", "pf_basic_dashboard", "pf_wa_confirm_tpl"],
-    property:  ["pf_leads_20", "pf_packages_10", "pf_basic_dashboard", "pf_followup_reminders"],
+    property:  ["pf_clients_20", "pf_listings_10", "pf_basic_dashboard", "pf_followup_reminders"],
     freelance: ["pf_projects_20", "pf_services_10", "pf_basic_dashboard", "pf_wa_confirm_tpl"],
   };
   const STARTER: Record<typeof eff, TKey[]> = {
@@ -297,7 +297,7 @@ function PlansPage() {
     fnb:       ["starter_orders_per_month", "starter_products_count", "basic_sales_reports", "ps_wa_confirmations"],
     education: ["ps_cases_40", "ps_services_25", "ps_basic_case_reports", "ps_uni_insights_basic", "ps_wa_confirmations"],
     beauty:    ["ps_appointments_40", "ps_services_25", "ps_basic_appointment_reports", "ps_wa_confirmations"],
-    property:  ["ps_leads_40", "ps_packages_25", "ps_basic_lead_reports", "pf_followup_reminders"],
+    property:  ["ps_clients_40", "ps_listings_25", "ps_basic_lead_reports", "pf_followup_reminders"],
     freelance: ["ps_projects_40", "ps_services_25", "ps_basic_project_reports", "ps_wa_confirmations"],
   };
   const PRO: Record<typeof eff, TKey[]> = {
@@ -305,7 +305,7 @@ function PlansPage() {
     fnb:       ["unlimited_orders_feat", "pp_unlimited_products", "full_reports_feat", "export_pdf", "wa_template", "remind_all_unpaid", "priority_support_feat"],
     education: ["pp_unlimited_cases", "pp_unlimited_services", "pp_full_case_reports", "pp_uni_insights_full", "pp_client_comparison", "export_pdf", "wa_template", "priority_support_feat"],
     beauty:    ["pp_unlimited_appointments", "pp_unlimited_services", "pp_full_appointment_reports", "pp_client_analytics", "export_pdf", "wa_template", "remind_all_unpaid", "priority_support_feat"],
-    property:  ["pp_unlimited_leads", "pp_unlimited_packages", "pp_full_lead_reports", "pp_followup_analytics", "export_pdf", "priority_support_feat"],
+    property:  ["pp_unlimited_clients", "pp_unlimited_listings", "pp_full_lead_reports", "pp_followup_analytics", "export_pdf", "priority_support_feat"],
     freelance: ["pp_unlimited_projects", "pp_unlimited_services", "pp_full_project_reports", "pp_client_analytics", "export_pdf", "wa_template", "priority_support_feat"],
   };
 
