@@ -295,30 +295,36 @@ function NewOrderPage() {
       }
     }
 
-    // Upsert customer by phone (only if phone provided)
-    if (fullPhone) {
-      const phone = fullPhone;
-      const { data: existing } = await supabase
-        .from("customers")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("phone", phone)
-        .maybeSingle();
+    // Upsert customer — match by phone if provided, else by name.
+    {
+      const nameTrim = form.customer_name.trim();
+      let existing: any = null;
+      if (fullPhone) {
+        const { data } = await supabase
+          .from("customers").select("*")
+          .eq("user_id", user.id).eq("phone", fullPhone).maybeSingle();
+        existing = data;
+      } else if (nameTrim) {
+        const { data } = await supabase
+          .from("customers").select("*")
+          .eq("user_id", user.id).is("phone", null).eq("name", nameTrim).maybeSingle();
+        existing = data;
+      }
       if (existing) {
         await (supabase as any).from("customers").update({
           total_orders: (existing.total_orders ?? 0) + 1,
           total_spent: Number(existing.total_spent ?? 0) + amount,
           last_order_at: new Date().toISOString(),
-          name: existing.name || form.customer_name.trim(),
+          name: existing.name || nameTrim,
           ...(eff === "property" && interestedListingId
             ? { interested_listing_id: interestedListingId }
             : {}),
         }).eq("id", existing.id);
-      } else {
+      } else if (nameTrim) {
         await (supabase as any).from("customers").insert({
           user_id: user.id,
-          name: form.customer_name.trim(),
-          phone,
+          name: nameTrim,
+          phone: fullPhone || null,
           total_orders: 1,
           total_spent: amount,
           last_order_at: new Date().toISOString(),
