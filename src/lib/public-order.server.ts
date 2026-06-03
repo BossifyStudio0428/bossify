@@ -167,7 +167,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
       })) as any;
     } else if (bizType === "property") {
       const { data: rows } = await sb
-        .from("property_listings")
+        .from("listings")
         .select("id,title,price,images,property_type,listing_type,bedrooms,bathrooms,size_sqft,address,description,status")
         .eq("user_id", profile.id)
         .eq("status", "available")
@@ -305,7 +305,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     const priceMap = new Map<string, number>();
     if (bizType === "property") {
       const { data: priceRows } = await sb
-        .from("property_listings")
+        .from("listings")
         .select("title, price")
         .eq("user_id", userId);
       for (const row of (priceRows ?? []) as any[]) {
