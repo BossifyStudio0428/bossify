@@ -1223,7 +1223,6 @@ function DetailSheet({
   const bathLabel = lang === "ms" ? "Bilik air" : lang === "zh" ? "浴室" : "Bath";
   const sizeLabel = lang === "ms" ? "Keluasan" : lang === "zh" ? "面积" : "Size";
   const typeLabel = lang === "ms" ? "Jenis" : lang === "zh" ? "类型" : "Type";
-  const locLabel = lang === "ms" ? "Lokasi" : lang === "zh" ? "位置" : "Location";
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
