@@ -22,6 +22,12 @@ export default defineLovableConfig({
     },
   } as any,
   tanstackStart: {
+    // This app is a client-rendered dashboard. Disable TanStack's production
+    // prerender pass completely; otherwise the build tries to fetch `/` from a
+    // temporary preview server and fails before publishing.
+    prerender: {
+      enabled: false,
+    },
     spa: {
       enabled: false,
     },
