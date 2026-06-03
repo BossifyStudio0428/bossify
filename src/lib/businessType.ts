@@ -57,8 +57,8 @@ const LABEL_MAP: Record<BizType, Partial<Record<SemanticKey, TKey>>> = {
     products: "bl_services",
   },
   property: {
-    orders: "bl_leads",
-    new_order: "bl_new_lead",
+    orders: "bl_clients",
+    new_order: "bl_new_client",
     customers: "bl_clients",
     new_customer: "bl_new_client",
     products: "bl_packages",
