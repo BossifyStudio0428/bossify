@@ -60,7 +60,7 @@ function Index() {
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
   const [latestClients, setLatestClients] = useState<CustomerRow[]>([]);
   const [followUpsTodayList, setFollowUpsTodayList] = useState<
-    { id: string; customer_name: string; note: string | null }[]
+    { id: string; customer_name: string; phone: string | null; follow_up_date: string; note: string | null }[]
   >([]);
   const [todaysViewings, setTodaysViewings] = useState<
     { id: string; listing_title: string; customer_name: string; viewing_at: string; status: string }[]
@@ -150,23 +150,26 @@ function Index() {
       // Today's follow-up list (for property dashboard)
       const { data: fuTodayRows } = await supabase
         .from("follow_ups")
-        .select("id, note, customer_id")
+        .select("id, note, customer_id, follow_up_date")
         .eq("user_id", user.id)
         .eq("is_done", false)
         .eq("follow_up_date", todayStr)
         .limit(5);
-      const fuRows = (fuTodayRows ?? []) as { id: string; note: string | null; customer_id: string | null }[];
+      const fuRows = (fuTodayRows ?? []) as { id: string; note: string | null; customer_id: string | null; follow_up_date: string }[];
       const custIds = Array.from(new Set(fuRows.map((r) => r.customer_id).filter(Boolean))) as string[];
       let nameById = new Map<string, string>();
+      let phoneById = new Map<string, string | null>();
       if (custIds.length) {
         const { data: cs } = await supabase
-          .from("customers").select("id,name").in("id", custIds);
-        (cs ?? []).forEach((c: any) => nameById.set(c.id, c.name));
+          .from("customers").select("id,name,phone").in("id", custIds);
+        (cs ?? []).forEach((c: any) => { nameById.set(c.id, c.name); phoneById.set(c.id, c.phone ?? null); });
       }
       setFollowUpsTodayList(
         fuRows.map((r) => ({
           id: r.id,
           customer_name: (r.customer_id && nameById.get(r.customer_id)) || "—",
+          phone: r.customer_id ? (phoneById.get(r.customer_id) ?? null) : null,
+          follow_up_date: r.follow_up_date,
           note: r.note,
         })),
       );
@@ -748,6 +751,9 @@ function Index() {
                 <p className="text-xs text-muted-foreground truncate">
                   {o.product} {o.quantity > 1 ? `(x${o.quantity})` : ""}
                 </p>
+                {o.phone && (
+                  <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {o.phone}</p>
+                )}
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-foreground">
@@ -758,6 +764,17 @@ function Index() {
                 >
                   {o.status}
                 </span>
+                {o.phone && (
+                  <a
+                    href={`https://wa.me/${o.phone.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500 text-white active:scale-95"
+                  >
+                    📲 WA
+                  </a>
+                )}
               </div>
             </div>
           ))}
@@ -846,22 +863,35 @@ function Index() {
               <p className="text-center text-xs text-muted-foreground py-6">—</p>
             )}
             {followUpsTodayList.map((f) => (
-              <Link
-                key={f.id}
-                to="/customers"
-                className="flex items-center gap-3 p-4"
-              >
+              <div key={f.id} className="flex items-center gap-3 p-4">
                 <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
                   📅
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">{f.customer_name}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    📅 {new Date(f.follow_up_date).toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
+                  </p>
+                  {f.phone && (
+                    <p className="text-[11px] text-primary font-medium truncate">📱 {f.phone}</p>
+                  )}
                   {f.note && (
                     <p className="text-[11px] text-muted-foreground truncate">{f.note}</p>
                   )}
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Link>
+                {f.phone ? (
+                  <a
+                    href={`https://wa.me/${f.phone.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500 text-white active:scale-95"
+                  >
+                    📲 WA
+                  </a>
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
             ))}
           </div>
         </section>
