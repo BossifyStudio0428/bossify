@@ -65,6 +65,7 @@ type Product = {
   description: string | null;
   variants: Variant[];
   duration_minutes?: number | null;
+  images?: string[];
   property?: {
     property_type: string | null;
     listing_type: string | null;
