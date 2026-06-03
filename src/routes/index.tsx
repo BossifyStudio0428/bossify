@@ -80,6 +80,7 @@ function Index() {
   const [selectedWeeklyIndex, setSelectedWeeklyIndex] = useState<number>(6);
   const [hasPayment, setHasPayment] = useState<boolean | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [soldListings, setSoldListings] = useState<{ price: number; updated_at: string }[]>([]);
 
   useEffect(() => {
     setBannerDismissed(isPaymentBannerDismissed());
