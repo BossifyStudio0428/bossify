@@ -111,6 +111,22 @@ export function pofSectionTitleKey(type: BizType | null | undefined): TKey {
   }
 }
 
+/** Subtitle shown under the form section title, per business type. */
+export function pofSectionSubKey(type: BizType | null | undefined): TKey {
+  switch (type) {
+    case "education":
+    case "property":
+      return "pof_section_sub_enquiry";
+    case "beauty":
+    case "freelance":
+      return "pof_section_sub_booking";
+    case "retail":
+    case "fnb":
+    default:
+      return "pof_section_sub_order";
+  }
+}
+
 /** Description shown below the public form link, per business type. */
 export function pofDescKey(type: BizType | null | undefined): TKey {
   switch (type) {
