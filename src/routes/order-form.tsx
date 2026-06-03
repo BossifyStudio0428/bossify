@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { pofSectionTitleKey, pofDescKey, type BizType } from "@/lib/businessType";
+import { pofSectionTitleKey, pofSectionSubKey, pofDescKey, type BizType } from "@/lib/businessType";
 import { getPublicOrigin } from "@/lib/publicUrl";
 
 export const Route = createFileRoute("/order-form")({ component: OrderFormPage });
@@ -71,7 +71,7 @@ function OrderFormPage() {
         </button>
         <div>
           <h1 className="text-lg font-bold text-foreground">🔗 {t(pofSectionTitleKey(businessType as BizType | null))}</h1>
-          <p className="text-[11px] text-muted-foreground">{t("pof_section_sub")}</p>
+          <p className="text-[11px] text-muted-foreground">{t(pofSectionSubKey(businessType as BizType | null))}</p>
         </div>
       </header>
 
