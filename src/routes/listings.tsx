@@ -159,7 +159,7 @@ function ListingsPage() {
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-bold text-foreground">📝 {t("pof_title_enquiry")}</p>
             <Link to="/order-form" className="text-[10px] font-semibold text-primary active:opacity-70">
-              {t("manage") ?? "Manage"}
+              ⚙️
             </Link>
           </div>
           <div className="rounded-lg bg-background/70 border border-border/60 px-2.5 py-1.5 text-[10px] font-mono text-foreground break-all">
