@@ -665,6 +665,24 @@ function PublicOrderFormPage() {
                 </div>
               )}
 
+              {bizType === "property" && locations.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
+                  <CategoryChip
+                    label={`📍 ${allLabel}`}
+                    active={activeLocation === "__all"}
+                    onClick={() => setActiveLocation("__all")}
+                  />
+                  {locations.map((loc) => (
+                    <CategoryChip
+                      key={loc}
+                      label={loc}
+                      active={activeLocation === loc}
+                      onClick={() => setActiveLocation(loc)}
+                    />
+                  ))}
+                </div>
+              )}
+
               {bizType === "property" ? (
                 <div className="space-y-3">
                   {filteredProducts.map((p) => {
