@@ -2289,7 +2289,7 @@ const dict = {
     package_deleted: "Pakej dipadam",
     delete_service_confirm: "Padam perkhidmatan ini?",
     delete_package_confirm: "Padam pakej ini?",
-    case_word: "kes", appointment_word: "temujanji", lead_word: "prospek", project_word: "projek",
+    case_word: "kes", appointment_word: "temujanji", lead_word: "pelanggan", project_word: "projek",
     search_clients: "Cari klien...",
     no_university_set: "Tiada universiti ditetapkan",
     today_count_cases: "kes hari ini",
