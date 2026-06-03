@@ -42,9 +42,9 @@ const NEW_ORDER: BizPack = {
     zh: { title: "新预约！💄", body: "{customer} — RM {amount}" },
   },
   property: {
-    en: { title: "New lead! 🏠", body: "{customer} — RM {amount}" },
-    ms: { title: "Prospek baru! 🏠", body: "{customer} — RM {amount}" },
-    zh: { title: "新潜在客户！🏠", body: "{customer} — RM {amount}" },
+    en: { title: "New customer! 🏠", body: "{customer} — RM {amount}" },
+    ms: { title: "Pelanggan baru! 🏠", body: "{customer} — RM {amount}" },
+    zh: { title: "新客户！🏠", body: "{customer} — RM {amount}" },
   },
   freelance: {
     en: { title: "New project received! 💼", body: "{customer} — RM {amount}" },
