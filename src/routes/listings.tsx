@@ -38,7 +38,7 @@ function ListingsPage() {
   const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType, loading: bizLoading } = useBusinessType();
-  const { hasFullAccess, showUpgrade } = useSubscription();
+  const { hasFullAccess, showUpgrade, listingsLimit } = useSubscription();
   const navigate = useNavigate();
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,6 +118,12 @@ function ListingsPage() {
           <Download className="h-3.5 w-3.5" /> {t("export_pdf")}
         </button>
       </header>
+
+      {!hasFullAccess && Number.isFinite(listingsLimit) && (
+        <p className="text-[11px] text-muted-foreground -mt-2 px-1">
+          {items.length}/{listingsLimit} {t("nav_listings")}
+        </p>
+      )}
 
       <div className="grid grid-cols-3 gap-2">
         <Link to="/viewings" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
