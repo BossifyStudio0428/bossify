@@ -125,7 +125,7 @@ function ListingsPage() {
         </p>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         <Link to="/viewings" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
           <div className="text-lg">📅</div>
           <p className="text-[10px] font-semibold text-foreground truncate">{t("viewings_title")}</p>
@@ -137,6 +137,10 @@ function ListingsPage() {
         <Link to="/loan-calculator" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
           <div className="text-lg">🧮</div>
           <p className="text-[10px] font-semibold text-foreground truncate">{t("loan_calc_title")}</p>
+        </Link>
+        <Link to="/order-form" className="rounded-2xl bg-card border border-border/60 p-2 text-center active:scale-95 transition-transform">
+          <div className="text-lg">📝</div>
+          <p className="text-[10px] font-semibold text-foreground truncate">{t("pof_title_enquiry")}</p>
         </Link>
       </div>
 
