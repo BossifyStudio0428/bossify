@@ -48,22 +48,24 @@ export const FREE_LIMITS = {
   ordersPerMonth: 20,
   inventory: 10,
   customers: 50,
+  listings: 10,
 } as const;
 
 export const STARTER_LIMITS = {
   ordersPerMonth: 40,
   inventory: 25,
   customers: 200,
+  listings: 25,
 } as const;
 
 /** Per-plan caps used by gates across the app. Infinity = no limit. */
 export function getPlanLimits(plan: Plan) {
   if (plan === "pro" || plan === "lifetime") {
-    return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity };
+    return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity, listings: Infinity };
   }
   if (plan === "team_starter" || plan === "team_pro" || plan === "team_business") {
     // Team plans inherit Pro-level (unlimited) numeric caps.
-    return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity };
+    return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity, listings: Infinity };
   }
   if (plan === "starter") return STARTER_LIMITS;
   return FREE_LIMITS;
