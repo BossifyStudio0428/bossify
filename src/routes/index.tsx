@@ -60,7 +60,7 @@ function Index() {
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
   const [latestClients, setLatestClients] = useState<CustomerRow[]>([]);
   const [followUpsTodayList, setFollowUpsTodayList] = useState<
-    { id: string; customer_name: string; note: string | null }[]
+    { id: string; customer_name: string; phone: string | null; follow_up_date: string; note: string | null }[]
   >([]);
   const [todaysViewings, setTodaysViewings] = useState<
     { id: string; listing_title: string; customer_name: string; viewing_at: string; status: string }[]
