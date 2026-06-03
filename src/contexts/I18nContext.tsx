@@ -3761,6 +3761,9 @@ const dict = {
     pof_section_title_order: "我的订单表格",
     pof_section_title_enquiry: "我的询问表格",
     pof_section_title_booking: "我的预约表格",
+    pof_section_sub_order: "分享此链接，顾客可直接下单。",
+    pof_section_sub_enquiry: "分享此链接，潜在客户可直接提交询问。",
+    pof_section_sub_booking: "分享此链接，客户可直接预约。",
     // Public order form titles by business type
     pof_title_retail: "订单表格",
     pof_title_enquiry: "询问表格",
