@@ -542,7 +542,9 @@ function PublicOrderFormPage() {
     isRetailish ? "购物车是空的" : "尚未选择",
   );
   const removeLabel = L("Remove", "Buang", "移除");
-  const searchPlaceholder = L("Search products...", "Cari produk...", "搜索产品...");
+  const searchPlaceholder = bizType === "property"
+    ? L("Search properties...", "Cari hartanah...", "搜索房源...")
+    : L("Search products...", "Cari produk...", "搜索产品...");
   const noResultsLabel = L("No products found", "Produk tidak dijumpai", "找不到产品");
   const contactSellerLabel = L("Contact Seller", "Hubungi Penjual", "联系卖家");
   const waMessage = L(
