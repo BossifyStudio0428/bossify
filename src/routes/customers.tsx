@@ -197,6 +197,14 @@ function CustomersPage() {
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
           {customers.length} {t("total")}
         </span>
+        {bizType === "property" && (
+          <Link
+            to="/services"
+            className="ml-auto inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95 transition"
+          >
+            📦 {t("packages_title")}
+          </Link>
+        )}
       </header>
 
       {bizType === "education" && (
