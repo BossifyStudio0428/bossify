@@ -323,6 +323,16 @@ function Index() {
       )
       .on(
         "postgres_changes",
+        { event: "*", schema: "public", table: "customers", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "follow_ups", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
         { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
         () => load(),
       )
