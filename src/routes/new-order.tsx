@@ -101,6 +101,8 @@ function NewOrderPage() {
   const [services, setServices] = useState<Array<{ id: string; name: string; price: number }>>([]);
   const [listings, setListings] = useState<Array<{ id: string; title: string }>>([]);
   const [interestedListingId, setInterestedListingId] = useState<string>("");
+  const [existingCustomers, setExistingCustomers] = useState<Array<{ id: string; name: string; phone: string | null }>>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [unitPrice, setUnitPrice] = useState<number | null>(null);
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
   const [paymentPreviewBlock, setPaymentPreviewBlock] = useState<string>("");
@@ -135,6 +137,12 @@ function NewOrderPage() {
           .eq("status", "available")
           .order("created_at", { ascending: false });
         setListings(((lst ?? []) as any).map((l: any) => ({ id: l.id, title: l.title })));
+        const { data: cs } = await supabase
+          .from("customers")
+          .select("id,name,phone")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        setExistingCustomers(((cs ?? []) as any).map((c: any) => ({ id: c.id, name: c.name, phone: c.phone })));
       }
     })();
   }, [lang, user, isRetailish, eff]);
