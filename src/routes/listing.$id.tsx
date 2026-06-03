@@ -76,7 +76,7 @@ function ListingEditor() {
     if (isNew || !user) return;
     (async () => {
       const { data, error } = await supabase
-        .from("property_listings" as never)
+        .from("listings")
         .select("*")
         .eq("id", id)
         .maybeSingle();
@@ -139,8 +139,8 @@ function ListingEditor() {
       interested_customer_id: interestedCustomerId,
     };
     const { error } = isNew
-      ? await supabase.from("property_listings" as never).insert({ ...payload, user_id: user.id } as never)
-      : await supabase.from("property_listings" as never).update(payload as never).eq("id", id);
+      ? await supabase.from("listings").insert({ ...payload, user_id: user.id } as never)
+      : await supabase.from("listings").update(payload as never).eq("id", id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success(t("listing_saved"));
@@ -149,7 +149,7 @@ function ListingEditor() {
 
   const remove = async () => {
     if (isNew || !confirm(t("delete_listing_confirm"))) return;
-    const { error } = await supabase.from("property_listings" as never).delete().eq("id", id);
+    const { error } = await supabase.from("listings").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success(t("listing_deleted"));
     navigate({ to: "/listings" });
