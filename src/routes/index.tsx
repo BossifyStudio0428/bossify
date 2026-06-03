@@ -59,6 +59,7 @@ function Index() {
   const [lowStock, setLowStock] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
   const [latestClients, setLatestClients] = useState<CustomerRow[]>([]);
+  const [latestClientFollowUps, setLatestClientFollowUps] = useState<Record<string, string>>({});
   const [followUpsTodayList, setFollowUpsTodayList] = useState<
     { id: string; customer_name: string; phone: string | null; follow_up_date: string; note: string | null }[]
   >([]);
@@ -132,7 +133,24 @@ function Index() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(3);
-      setLatestClients((latestC ?? []) as CustomerRow[]);
+      const latestRows = (latestC ?? []) as CustomerRow[];
+      setLatestClients(latestRows);
+      if (latestRows.length) {
+        const { data: latestFu } = await supabase
+          .from("follow_ups")
+          .select("customer_id,follow_up_date")
+          .eq("user_id", user.id)
+          .eq("is_done", false)
+          .in("customer_id", latestRows.map((c) => c.id))
+          .order("follow_up_date", { ascending: true });
+        const latestFuMap: Record<string, string> = {};
+        ((latestFu ?? []) as { customer_id: string; follow_up_date: string }[]).forEach((f) => {
+          if (!latestFuMap[f.customer_id]) latestFuMap[f.customer_id] = f.follow_up_date;
+        });
+        setLatestClientFollowUps(latestFuMap);
+      } else {
+        setLatestClientFollowUps({});
+      }
       // Follow-ups: this week + overdue
       const today = new Date(); today.setHours(0,0,0,0);
       const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
@@ -262,6 +280,7 @@ function Index() {
       setLowStock(0);
       setTopCustomers([]);
       setLatestClients([]);
+      setLatestClientFollowUps({});
       setFollowUpsTodayList([]);
       setTodaysViewings([]);
       setExpiringRenewals([]);
@@ -300,6 +319,16 @@ function Index() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "customers", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "follow_ups", filter: `user_id=eq.${user.id}` },
         () => load(),
       )
       .on(
@@ -738,10 +767,40 @@ function Index() {
           )}
         </p>
         <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
-          {recent.length === 0 && (
+          {(eff === "property" ? latestClients.length === 0 : recent.length === 0) && (
             <p className="text-center text-xs text-muted-foreground py-6">{t(eff === "education" ? "no_cases_yet" : eff === "beauty" ? "no_appointments_yet" : eff === "property" ? "no_leads_yet" : eff === "freelance" ? "no_projects_yet" : "no_orders_yet")}</p>
           )}
-          {recent.map((o) => (
+          {eff === "property" && latestClients.map((c) => (
+            <Link key={c.id} to="/customer/$customerId" params={{ customerId: c.id }} className="flex items-center gap-3 p-4">
+              <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                {c.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                {c.phone && <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>}
+                {latestClientFollowUps[c.id] && (
+                  <p className="text-[11px] text-amber-600 font-medium mt-0.5 truncate">
+                    📅 {new Date(latestClientFollowUps[c.id] + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
+                  </p>
+                )}
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-sm font-bold text-primary">RM {Number(c.total_spent ?? 0).toFixed(0)}</p>
+                {c.phone && (
+                  <a
+                    href={`https://wa.me/${c.phone.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500 text-white active:scale-95"
+                  >
+                    📲 WA
+                  </a>
+                )}
+              </div>
+            </Link>
+          ))}
+          {eff !== "property" && recent.map((o) => (
             <div key={o.id} className="flex items-center gap-3 p-4">
               <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
                 {o.customer_name.charAt(0)}
