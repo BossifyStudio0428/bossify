@@ -23,10 +23,7 @@ export default defineLovableConfig({
   } as any,
   tanstackStart: {
     spa: {
-      enabled: true,
-      prerender: {
-        outputPath: "/index.html",
-      },
+      enabled: false,
     },
   },
   vite: {
