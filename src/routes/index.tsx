@@ -80,6 +80,7 @@ function Index() {
   const [selectedWeeklyIndex, setSelectedWeeklyIndex] = useState<number>(6);
   const [hasPayment, setHasPayment] = useState<boolean | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [soldListings, setSoldListings] = useState<{ price: number; updated_at: string }[]>([]);
 
   useEffect(() => {
     setBannerDismissed(isPaymentBannerDismissed());
@@ -126,6 +127,24 @@ function Index() {
       setLowStock((inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length);
       setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
       setUnreadNotif(notificationsRes.count ?? 0);
+      // Property: load sold listings (past 7 days) for weekly income chart
+      try {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 6);
+        weekAgo.setHours(0, 0, 0, 0);
+        const { data: soldRows } = await supabase
+          .from("listings")
+          .select("price,updated_at")
+          .eq("user_id", user.id)
+          .eq("status", "sold")
+          .gte("updated_at", weekAgo.toISOString());
+        setSoldListings(((soldRows as any[]) ?? []).map((r) => ({
+          price: Number(r.price ?? 0),
+          updated_at: r.updated_at,
+        })));
+      } catch {
+        setSoldListings([]);
+      }
       // Latest clients (recently added)
       const { data: latestC } = await supabase
         .from("customers")
@@ -430,11 +449,15 @@ function Index() {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const total = orders
-        .filter(
-          (o) => o.status === "Paid" && new Date(o.created_at).toDateString() === d.toDateString(),
-        )
-        .reduce((s, o) => s + Number(o.amount), 0);
+      const total = eff === "property"
+        ? soldListings
+            .filter((l) => new Date(l.updated_at).toDateString() === d.toDateString())
+            .reduce((s, l) => s + Number(l.price), 0)
+        : orders
+            .filter(
+              (o) => o.status === "Paid" && new Date(o.created_at).toDateString() === d.toDateString(),
+            )
+            .reduce((s, o) => s + Number(o.amount), 0);
       weekly.push({ day: t(dowKeys[d.getDay()]), value: total });
     }
   } else {
