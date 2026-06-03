@@ -2811,7 +2811,7 @@ const dict = {
     welcome: "欢迎",
     todays_revenue: "今日收入", new_orders: "新订单", unpaid: "未付款",
     low_stock: "库存不足", weekly_sales: "本周销售 (RM)", recent_orders: "最近订单",
-    no_orders_yet: "暂无订单。", weekly_revenue: "每周收入 (RM)", no_cases_yet: "暂无案例。", no_appointments_yet: "暂无预约。", no_leads_yet: "暂无潜在客户。", no_projects_yet: "暂无项目。",
+    no_orders_yet: "暂无订单。", weekly_revenue: "每周收入 (RM)", no_cases_yet: "暂无案例。", no_appointments_yet: "暂无预约。", no_leads_yet: "暂无客户。", no_projects_yet: "暂无项目。",
     orders: "订单", all: "全部", paid: "已付款", pending: "待处理",
     today_count: "今日", mark_paid: "标记已付 ✓", no_orders_here: "暂无订单。",
     new_order: "新订单", customer_name: "客户姓名", phone_number: "电话号码",
