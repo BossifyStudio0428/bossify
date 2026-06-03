@@ -682,6 +682,7 @@ const dict = {
     bl_leads: "Leads", bl_new_lead: "New Lead",
     bl_projects: "Projects", bl_new_project: "New Project",
     bl_services: "Services", bl_packages: "Packages",
+    bl_listings: "Listings",
     bl_menu: "Menu", bl_stock: "Stock",
     bl_clients: "Clients", bl_new_client: "New Client",
     bl_new_customer: "New Customer",
