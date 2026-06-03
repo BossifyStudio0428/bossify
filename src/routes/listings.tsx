@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Plus, Search, ImageIcon, Download } from "lucide-react";
+import { ChevronLeft, Plus, Search, ImageIcon, Download, Copy, MessageCircle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { exportListingsPDF } from "@/lib/propertyPdf";
+import { getPublicOrigin } from "@/lib/publicUrl";
 
 export const Route = createFileRoute("/listings")({ component: ListingsPage });
 
@@ -44,6 +45,7 @@ function ListingsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [q, setQ] = useState("");
+  const [enquiryCode, setEnquiryCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (!bizLoading && bizType && bizType !== "property") {
@@ -64,6 +66,33 @@ function ListingsPage() {
     setLoading(false);
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("order_form_code,order_form_enabled" as any)
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      let code = ((data as any)?.order_form_code as string) ?? null;
+      const enabled = ((data as any)?.order_form_enabled as boolean) ?? true;
+      if (!code) {
+        const fresh = Math.random().toString(16).slice(2, 10);
+        const { error } = await supabase
+          .from("profiles")
+          .update({ order_form_code: fresh, order_form_enabled: true } as any)
+          .eq("id", user.id);
+        if (!error) code = fresh;
+      }
+      if (!cancelled && enabled !== false) setEnquiryCode(code);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  const enquiryLink = enquiryCode ? `${getPublicOrigin()}/order/${enquiryCode}` : "";
 
   const visible = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -123,6 +152,48 @@ function ListingsPage() {
         <p className="text-[11px] text-muted-foreground -mt-2 px-1">
           {items.length}/{listingsLimit} {t("nav_listings")}
         </p>
+      )}
+
+      {enquiryLink && (
+        <section className="rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-bold text-foreground">📝 {t("pof_title_enquiry")}</p>
+            <Link to="/order-form" className="text-[10px] font-semibold text-primary active:opacity-70">
+              ⚙️
+            </Link>
+          </div>
+          <div className="rounded-lg bg-background/70 border border-border/60 px-2.5 py-1.5 text-[10px] font-mono text-foreground break-all">
+            {enquiryLink}
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText(enquiryLink);
+                toast.success(t("pof_link_copied"));
+              }}
+              className="flex items-center justify-center gap-1 py-2 rounded-lg bg-primary text-primary-foreground text-[11px] font-semibold active:scale-95"
+            >
+              <Copy className="h-3 w-3" /> {t("pof_copy_link")}
+            </button>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(t("pof_wa_share_msg_property" as any).replace("{link}", enquiryLink))}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-1 py-2 rounded-lg bg-emerald-500 text-white text-[11px] font-semibold active:scale-95"
+            >
+              <MessageCircle className="h-3 w-3" /> WhatsApp
+            </a>
+            <a
+              href={enquiryLink}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-1 py-2 rounded-lg bg-card border border-border/60 text-[11px] font-semibold active:scale-95"
+            >
+              <ExternalLink className="h-3 w-3" /> {t("pof_view_form")}
+            </a>
+          </div>
+        </section>
       )}
 
       <div className="grid grid-cols-4 gap-2">
