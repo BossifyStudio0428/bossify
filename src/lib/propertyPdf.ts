@@ -1,12 +1,12 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import html2pdf from "html2pdf.js";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
+import { FileOpener } from "@capacitor-community/file-opener";
 import type { Lang } from "@/contexts/I18nContext";
-import { savePdf } from "@/lib/pdf";
 
-const PURPLE: [number, number, number] = [108, 63, 214];
-const ALT_ROW: [number, number, number] = [240, 238, 248];
-const PAGE_WIDTH = 210;
-const MARGIN_X = 14;
+const PURPLE = "#6C3FD6";
+const ALT_ROW = "#F0EEF8";
 
 const T = {
   en: {
