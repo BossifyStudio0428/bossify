@@ -59,6 +59,7 @@ function Index() {
   const [lowStock, setLowStock] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
   const [latestClients, setLatestClients] = useState<CustomerRow[]>([]);
+  const [latestClientFollowUps, setLatestClientFollowUps] = useState<Record<string, string>>({});
   const [followUpsTodayList, setFollowUpsTodayList] = useState<
     { id: string; customer_name: string; phone: string | null; follow_up_date: string; note: string | null }[]
   >([]);
@@ -132,7 +133,24 @@ function Index() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(3);
-      setLatestClients((latestC ?? []) as CustomerRow[]);
+      const latestRows = (latestC ?? []) as CustomerRow[];
+      setLatestClients(latestRows);
+      if (latestRows.length) {
+        const { data: latestFu } = await supabase
+          .from("follow_ups")
+          .select("customer_id,follow_up_date")
+          .eq("user_id", user.id)
+          .eq("is_done", false)
+          .in("customer_id", latestRows.map((c) => c.id))
+          .order("follow_up_date", { ascending: true });
+        const latestFuMap: Record<string, string> = {};
+        ((latestFu ?? []) as { customer_id: string; follow_up_date: string }[]).forEach((f) => {
+          if (!latestFuMap[f.customer_id]) latestFuMap[f.customer_id] = f.follow_up_date;
+        });
+        setLatestClientFollowUps(latestFuMap);
+      } else {
+        setLatestClientFollowUps({});
+      }
       // Follow-ups: this week + overdue
       const today = new Date(); today.setHours(0,0,0,0);
       const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
@@ -262,6 +280,7 @@ function Index() {
       setLowStock(0);
       setTopCustomers([]);
       setLatestClients([]);
+      setLatestClientFollowUps({});
       setFollowUpsTodayList([]);
       setTodaysViewings([]);
       setExpiringRenewals([]);
