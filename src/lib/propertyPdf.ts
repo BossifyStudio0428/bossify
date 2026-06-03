@@ -79,29 +79,38 @@ function pageShell(title: string, subtitle: string, businessName: string, lang: 
 <html lang="${lang}">
 <head><meta charset="utf-8"><title>${esc(title)}</title>
 <style>
-  * { box-sizing: border-box; }
-  /* html2canvas cannot parse oklch/lab colors inherited from app CSS. */
-  * { border-color: #e6e2f0 !important; }
-  html, body { background: #ffffff !important; color: #111 !important; }
-  body {
-    margin: 0; padding: 24px; color: #111;
+  /* All rules scoped under #bossify-pdf-root so they don't leak to the live app.
+     html2canvas cannot parse oklch/lab colors, so we hard-reset inherited
+     border/color/background to plain hex values. */
+  #bossify-pdf-root, #bossify-pdf-root * {
+    box-sizing: border-box;
+    border-color: #e6e2f0 !important;
+    color: #111 !important;
+  }
+  #bossify-pdf-root {
+    background: #ffffff !important;
+    margin: 0; padding: 24px;
     font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
       "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans", "Segoe UI", Arial, sans-serif;
     font-size: 12px; line-height: 1.4;
     width: 760px;
   }
-  .hdr { background: ${PURPLE}; color: #fff; padding: 16px 20px; border-radius: 8px; }
-  .hdr h1 { margin: 0; font-size: 20px; font-weight: 700; }
-  .hdr .sub { margin-top: 4px; font-size: 13px; opacity: 0.95; }
-  .meta { color: #555; font-size: 11px; margin: 10px 4px 16px; display: flex; justify-content: space-between; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
-  th { background: ${PURPLE}; color: #fff; text-align: left; padding: 8px 10px; font-weight: 600; font-size: 11px; }
-  td { padding: 7px 10px; border-bottom: 1px solid #e6e2f0; font-size: 11px; vertical-align: top; }
-  tr:nth-child(even) td { background: ${ALT_ROW}; }
-  tfoot td { background: ${ALT_ROW}; font-weight: 700; }
-  .footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; color: #777; font-size: 10px; text-align: center; }
+  #bossify-pdf-root .hdr { background: ${PURPLE} !important; padding: 16px 20px; border-radius: 8px; }
+  #bossify-pdf-root .hdr, #bossify-pdf-root .hdr * { color: #ffffff !important; }
+  #bossify-pdf-root .hdr h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  #bossify-pdf-root .hdr .sub { margin-top: 4px; font-size: 13px; opacity: 0.95; }
+  #bossify-pdf-root .meta { font-size: 11px; margin: 10px 4px 16px; display: flex; justify-content: space-between; }
+  #bossify-pdf-root .meta, #bossify-pdf-root .meta * { color: #555 !important; }
+  #bossify-pdf-root table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  #bossify-pdf-root th { background: ${PURPLE} !important; color: #ffffff !important; text-align: left; padding: 8px 10px; font-weight: 600; font-size: 11px; }
+  #bossify-pdf-root td { padding: 7px 10px; border-bottom: 1px solid #e6e2f0; font-size: 11px; vertical-align: top; }
+  #bossify-pdf-root tr:nth-child(even) td { background: ${ALT_ROW} !important; }
+  #bossify-pdf-root tfoot td { background: ${ALT_ROW} !important; font-weight: 700; }
+  #bossify-pdf-root .footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 10px; text-align: center; }
+  #bossify-pdf-root .footer, #bossify-pdf-root .footer * { color: #777 !important; }
 </style></head>
 <body>
+<div id="bossify-pdf-root">
   <div class="hdr">
     <h1>${esc(businessName || "Bossify")}</h1>
     <div class="sub">${esc(title)}${subtitle ? " — " + esc(subtitle) : ""}</div>
@@ -109,6 +118,7 @@ function pageShell(title: string, subtitle: string, businessName: string, lang: 
   <div class="meta"><span>${esc(l.generated)}: ${esc(generatedAt)}</span><span></span></div>
   ${bodyHtml}
   <div class="footer">Powered by Bossify — bossify-malaysia.lovable.app</div>
+</div>
 </body></html>`;
 }
 
