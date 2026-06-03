@@ -120,6 +120,13 @@ function PublicOrderFormPage() {
     amount: number;
     paymentMethod: string;
     whatsapp: string | null;
+    paymentMethods?: Array<{
+      type: string | null;
+      bank: string | null;
+      number: string | null;
+      name: string | null;
+      qr_url: string | null;
+    }>;
   }>(null);
 
   // Language picker: shown first if customer hasn't chosen for this session
@@ -321,6 +328,7 @@ function PublicOrderFormPage() {
           amount: cartTotal,
           paymentMethod: needsPayment ? paymentMethod : "",
           whatsapp: state.profile.whatsapp_number || null,
+          paymentMethods: state.profile.payment_methods ?? [],
         });
       } else {
         const reason = (res as any).reason;
@@ -439,6 +447,33 @@ function PublicOrderFormPage() {
             <p className="text-sm font-mono font-semibold mt-1">{done.code}</p>
             <p className="text-xs text-muted-foreground mt-2">— {done.business}</p>
           </div>
+          {done.paymentMethod !== "cash_on_delivery" && (done.paymentMethods?.some((m) => m && m.type)) && (
+            <div className="mt-4 rounded-2xl border border-border bg-card px-5 py-4 text-left">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground text-center">
+                💳 {lang === "zh" ? "付款方式" : lang === "ms" ? "Maklumat Pembayaran" : "Payment Details"}
+              </p>
+              <div className="mt-3 space-y-3">
+                {done.paymentMethods!.filter((m) => m && m.type).map((m, i) => (
+                  <div key={i} className="rounded-xl bg-muted/40 border border-border/60 px-3 py-2.5 space-y-0.5">
+                    <p className="text-sm font-semibold">{m.type}</p>
+                    {m.bank && <p className="text-xs text-muted-foreground">{lang === "zh" ? "银行" : "Bank"}: {m.bank}</p>}
+                    {m.number && <p className="text-xs font-mono break-all">{m.number}</p>}
+                    {m.name && <p className="text-xs text-muted-foreground">{lang === "zh" ? "户名" : lang === "ms" ? "Nama" : "Name"}: {m.name}</p>}
+                    {m.qr_url && (
+                      <img src={m.qr_url} alt="QR" className="mt-2 h-32 w-32 rounded-lg object-contain bg-white p-1 border border-border/60" />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-3 text-center">
+                {lang === "zh"
+                  ? `请支付 RM${done.amount.toFixed(2)} 并发送收据`
+                  : lang === "ms"
+                  ? `Sila bayar RM${done.amount.toFixed(2)} dan hantar resit`
+                  : `Please pay RM${done.amount.toFixed(2)} and send your receipt`}
+              </p>
+            </div>
+          )}
           {done.paymentMethod === "bank_transfer" && done.whatsapp && (() => {
             const amountStr = done.amount.toFixed(2);
             const msg =
