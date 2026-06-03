@@ -968,6 +968,8 @@ const dict = {
     f_interested_listing: "Interested Listing",
     f_interested_listing_ph: "Select a listing (optional)",
     f_no_listing: "None",
+    f_select_existing_customer: "Existing Customer",
+    f_new_customer_option: "+ New customer",
     pof_desc_retail: "Share this link with your customers. They can place orders directly without downloading any app.",
     pof_desc_education: "Share this link with your students. They can submit enquiries directly without downloading any app.",
     pof_desc_beauty: "Share this link with your clients. They can book appointments directly without downloading any app.",
