@@ -6,11 +6,9 @@
  * ./dist/client" and the APK never updates with new web changes.
  *
  * This script:
- *   1. Ensures dist/client exists. If the builder placed static files in
- *      .output/public instead, copy them into dist/client for Capacitor.
- *   2. Finds the client entry chunk via the TanStack Start manifest in
- *      dist/server/_tanstack-start-manifest_v-*.mjs (the __root__ route's
- *      first preload).
+ *   1. Recreates dist/client from .output/public when that build output is
+ *      available. This is the static folder TanStack Start/Nitro emits locally.
+ *   2. Finds the built client entry under dist/client/assets/index-*.js.
  *   3. Finds the built stylesheet under dist/client/assets/*.css.
  *   4. Writes dist/client/index.html — a minimal shell that loads both,
  *      mirroring the prepaint splash from src/routes/__root.tsx so the
@@ -18,55 +16,40 @@
  *
  * Run it AFTER `npm run build` and BEFORE `npx cap sync android`.
  */
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const clientDir = "dist/client";
-const serverDir = "dist/server";
 const fallbackPublicDir = ".output/public";
 
-if (!existsSync(clientDir)) {
-  if (existsSync(fallbackPublicDir)) {
-    mkdirSync(clientDir, { recursive: true });
-    cpSync(fallbackPublicDir, clientDir, { recursive: true });
-    console.log(`[generate-spa-html] Copied ${fallbackPublicDir} -> ${clientDir}`);
-  } else {
-    console.error(`[generate-spa-html] Missing ${clientDir}. Run 'npm run build' first.`);
-    process.exit(1);
-  }
-}
-
-// 1. Find the client entry chunk via the newest start manifest.
-if (!existsSync(serverDir)) {
-  console.error(`[generate-spa-html] Missing ${serverDir}. Run 'npm run build' first.`);
-  process.exit(1);
-}
-const manifestFile = readdirSync(serverDir)
-  .filter((f) => /^_tanstack-start-manifest_v-.*\.mjs$/.test(f))
-  .sort((a, b) => statSync(join(serverDir, b)).mtimeMs - statSync(join(serverDir, a)).mtimeMs)[0];
-if (!manifestFile) {
-  console.error(`[generate-spa-html] Could not find tanstack start manifest in ${serverDir}.`);
-  process.exit(1);
-}
-const manifestSrc = readFileSync(join(serverDir, manifestFile), "utf8");
-const rootPreloadMatch = manifestSrc.match(/__root__:\s*\{[^}]*preloads:\s*\[\s*"([^"]+\.js)"/);
-if (!rootPreloadMatch) {
-  console.error("[generate-spa-html] Could not parse __root__ preloads from manifest.");
-  process.exit(1);
-}
-const entryHref = rootPreloadMatch[1]; // e.g. /assets/index-XXXX.js
-const entryPath = join(clientDir, entryHref.replace(/^\//, ""));
-if (!existsSync(entryPath)) {
-  console.error(`[generate-spa-html] Entry chunk listed in manifest does not exist: ${entryPath}`);
+if (existsSync(fallbackPublicDir)) {
+  rmSync(clientDir, { recursive: true, force: true });
+  mkdirSync(clientDir, { recursive: true });
+  cpSync(fallbackPublicDir, clientDir, { recursive: true });
+  console.log(`[generate-spa-html] Copied ${fallbackPublicDir} -> ${clientDir}`);
+} else if (!existsSync(clientDir)) {
+  console.error(`[generate-spa-html] Missing ${clientDir} and ${fallbackPublicDir}. Run 'npm run build' first.`);
   process.exit(1);
 }
 
-// 2. Find the stylesheet.
 const assetsDir = join(clientDir, "assets");
 if (!existsSync(assetsDir)) {
   console.error(`[generate-spa-html] Missing ${assetsDir}. Run 'npm run build' first.`);
   process.exit(1);
 }
+
+// 1. Find the client entry directly from built static assets. This avoids
+// depending on dist/server, which is not emitted in the user's local build.
+const newest = (files) => files.sort((a, b) => statSync(join(assetsDir, b)).mtimeMs - statSync(join(assetsDir, a)).mtimeMs)[0];
+const assetFiles = readdirSync(assetsDir);
+const entryFile = newest(assetFiles.filter((f) => /^index-[\w-]+\.js$/.test(f)));
+if (!entryFile) {
+  console.error(`[generate-spa-html] No client entry found in ${assetsDir}. Expected assets/index-*.js after 'npm run build'.`);
+  process.exit(1);
+}
+const entryHref = `/assets/${entryFile}`;
+
+// 2. Find the stylesheet.
 const cssFile = readdirSync(assetsDir)
   .filter((f) => f.endsWith(".css"))
   .sort((a, b) => statSync(join(assetsDir, b)).mtimeMs - statSync(join(assetsDir, a)).mtimeMs)[0];
