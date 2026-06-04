@@ -29,12 +29,7 @@ export default defineLovableConfig({
       enabled: false,
     },
     spa: {
-      // Required for Capacitor (offline Android APK): produces a static
-      // dist/client/index.html shell so `npx cap sync android` can copy
-      // the web bundle into the APK. Without this, dist/client has no
-      // index.html and Capacitor errors with "Could not find the web
-      // assets directory".
-      enabled: true,
+      enabled: false,
     },
   },
   vite: {
