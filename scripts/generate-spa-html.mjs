@@ -36,10 +36,14 @@ if (!existsSync(clientDir)) {
   }
 }
 
-// 1. Find the client entry chunk via the start manifest.
-const manifestFile = readdirSync(serverDir).find((f) =>
-  /^_tanstack-start-manifest_v-.*\.mjs$/.test(f),
-);
+// 1. Find the client entry chunk via the newest start manifest.
+if (!existsSync(serverDir)) {
+  console.error(`[generate-spa-html] Missing ${serverDir}. Run 'npm run build' first.`);
+  process.exit(1);
+}
+const manifestFile = readdirSync(serverDir)
+  .filter((f) => /^_tanstack-start-manifest_v-.*\.mjs$/.test(f))
+  .sort((a, b) => statSync(join(serverDir, b)).mtimeMs - statSync(join(serverDir, a)).mtimeMs)[0];
 if (!manifestFile) {
   console.error(`[generate-spa-html] Could not find tanstack start manifest in ${serverDir}.`);
   process.exit(1);
@@ -51,10 +55,21 @@ if (!rootPreloadMatch) {
   process.exit(1);
 }
 const entryHref = rootPreloadMatch[1]; // e.g. /assets/index-XXXX.js
+const entryPath = join(clientDir, entryHref.replace(/^\//, ""));
+if (!existsSync(entryPath)) {
+  console.error(`[generate-spa-html] Entry chunk listed in manifest does not exist: ${entryPath}`);
+  process.exit(1);
+}
 
 // 2. Find the stylesheet.
 const assetsDir = join(clientDir, "assets");
-const cssFile = readdirSync(assetsDir).find((f) => f.endsWith(".css"));
+if (!existsSync(assetsDir)) {
+  console.error(`[generate-spa-html] Missing ${assetsDir}. Run 'npm run build' first.`);
+  process.exit(1);
+}
+const cssFile = readdirSync(assetsDir)
+  .filter((f) => f.endsWith(".css"))
+  .sort((a, b) => statSync(join(assetsDir, b)).mtimeMs - statSync(join(assetsDir, a)).mtimeMs)[0];
 if (!cssFile) {
   console.error(`[generate-spa-html] No CSS file found in ${assetsDir}.`);
   process.exit(1);
