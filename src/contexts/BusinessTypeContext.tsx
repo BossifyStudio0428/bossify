@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import type { BizType } from "@/lib/businessType";
+import { normalizeBizType, type BizType } from "@/lib/businessType";
 
 type Ctx = {
   type: BizType | null;
@@ -31,7 +31,7 @@ export function BusinessTypeProvider({ children }: { children: ReactNode }) {
       .maybeSingle();
     const cat = (data as any)?.business_category ?? null;
     const bt = (data as any)?.business_type ?? null;
-    setTypeState((cat || bt) as BizType | null);
+    setTypeState(normalizeBizType(bt) ?? normalizeBizType(cat));
     setLoading(false);
   };
 

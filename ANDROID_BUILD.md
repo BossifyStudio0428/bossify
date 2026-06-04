@@ -70,16 +70,21 @@ npx cap open android
 
 ## 以后 Lovable 改了东西
 
-**每次改动都要 git pull → 重新 build → 重新上传 Play**（因为是离线 SPA，不是远程 WebView）：
+**每次改动都要 git pull → 干净重新打包 → 重新上传 Play**（因为是离线 SPA，不是远程 WebView）：
 
 ```bash
 cd bossify
 git pull
-bun install
-bun run build
-npx cap sync android
-npm run android:patch
+npm run android:clean-apk
 ```
+
+这个脚本会自动删除旧的 `dist/`、Android 已复制的旧 web assets、Gradle build cache，重新 build、`cap sync`、套用 Android patch，并产出：
+
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+如果你要在 Android Studio 里打 release APK/AAB，也先跑上面的 `npm run android:clean-apk`，再打开 Android Studio。这样不会继续打到旧画面。
 
 确认 `capacitor.config.ts` 里必须是：
 
@@ -89,7 +94,7 @@ webDir: 'dist/client'
 
 不要加 `server.url`，否则就会变成远程 WebView，不适合上传 Google Play。
 
-然后在 Android Studio：
+然后在 Android Studio 打正式版：
 1. 打开 `android/app/build.gradle`
 2. `versionCode` +1，`versionName` 改成新版本（例如 `1.0.1`）
 3. **Build → Generate Signed App Bundle**（用同一个 keystore！）

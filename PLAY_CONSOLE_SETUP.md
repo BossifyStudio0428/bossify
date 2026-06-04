@@ -7,11 +7,10 @@
 ## 1. 在本机 build AAB
 
 ```bash
-bun install
-bun run build
-npx cap sync android
-bun run android:patch    # 加 BILLING + 通知权限到 AndroidManifest
+npm run android:clean-apk
 ```
+
+这个脚本会清掉旧 web bundle、Android 旧 assets 和 Gradle cache，再重新 build + sync + patch，避免 Android Studio 继续打到旧画面。
 
 然后用 Android Studio 打开 `android/` 文件夹：
 
