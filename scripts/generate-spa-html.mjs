@@ -16,7 +16,7 @@
  *
  * Run it AFTER `npm run build` and BEFORE `npx cap sync android`.
  */
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const clientDir = "dist/client";
@@ -42,7 +42,12 @@ if (!existsSync(assetsDir)) {
 // depending on dist/server, which is not emitted in the user's local build.
 const newest = (files) => files.sort((a, b) => statSync(join(assetsDir, b)).mtimeMs - statSync(join(assetsDir, a)).mtimeMs)[0];
 const assetFiles = readdirSync(assetsDir);
-const entryFile = newest(assetFiles.filter((f) => /^index-[\w-]+\.js$/.test(f)));
+const indexJsFiles = assetFiles.filter((f) => /^index-[\w-]+\.js$/.test(f));
+const appEntryFiles = indexJsFiles.filter((f) => {
+  const src = readFileSync(join(assetsDir, f), "utf8");
+  return src.includes("hydrateRoot") || src.includes("createRoot(") || src.includes("StartClient");
+});
+const entryFile = newest(appEntryFiles.length > 0 ? appEntryFiles : indexJsFiles);
 if (!entryFile) {
   console.error(`[generate-spa-html] No client entry found in ${assetsDir}. Expected assets/index-*.js after 'npm run build'.`);
   process.exit(1);
