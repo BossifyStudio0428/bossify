@@ -6,31 +6,44 @@
  * ./dist/client" and the APK never updates with new web changes.
  *
  * This script:
- *   1. Finds the client entry chunk via the TanStack Start manifest in
+ *   1. Ensures dist/client exists. If the builder placed static files in
+ *      .output/public instead, copy them into dist/client for Capacitor.
+ *   2. Finds the client entry chunk via the TanStack Start manifest in
  *      dist/server/_tanstack-start-manifest_v-*.mjs (the __root__ route's
  *      first preload).
- *   2. Finds the built stylesheet under dist/client/assets/*.css.
- *   3. Writes dist/client/index.html — a minimal shell that loads both,
+ *   3. Finds the built stylesheet under dist/client/assets/*.css.
+ *   4. Writes dist/client/index.html — a minimal shell that loads both,
  *      mirroring the prepaint splash from src/routes/__root.tsx so the
  *      Android app shows the Bossify splash instead of a white flash.
  *
- * Run it AFTER `bun run build` and BEFORE `npx cap sync android`.
+ * Run it AFTER `npm run build` and BEFORE `npx cap sync android`.
  */
-import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const clientDir = "dist/client";
 const serverDir = "dist/server";
+const fallbackPublicDir = ".output/public";
 
 if (!existsSync(clientDir)) {
-  console.error(`[generate-spa-html] Missing ${clientDir}. Run 'bun run build' first.`);
-  process.exit(1);
+  if (existsSync(fallbackPublicDir)) {
+    mkdirSync(clientDir, { recursive: true });
+    cpSync(fallbackPublicDir, clientDir, { recursive: true });
+    console.log(`[generate-spa-html] Copied ${fallbackPublicDir} -> ${clientDir}`);
+  } else {
+    console.error(`[generate-spa-html] Missing ${clientDir}. Run 'npm run build' first.`);
+    process.exit(1);
+  }
 }
 
-// 1. Find the client entry chunk via the start manifest.
-const manifestFile = readdirSync(serverDir).find((f) =>
-  /^_tanstack-start-manifest_v-.*\.mjs$/.test(f),
-);
+// 1. Find the client entry chunk via the newest start manifest.
+if (!existsSync(serverDir)) {
+  console.error(`[generate-spa-html] Missing ${serverDir}. Run 'npm run build' first.`);
+  process.exit(1);
+}
+const manifestFile = readdirSync(serverDir)
+  .filter((f) => /^_tanstack-start-manifest_v-.*\.mjs$/.test(f))
+  .sort((a, b) => statSync(join(serverDir, b)).mtimeMs - statSync(join(serverDir, a)).mtimeMs)[0];
 if (!manifestFile) {
   console.error(`[generate-spa-html] Could not find tanstack start manifest in ${serverDir}.`);
   process.exit(1);
@@ -42,10 +55,21 @@ if (!rootPreloadMatch) {
   process.exit(1);
 }
 const entryHref = rootPreloadMatch[1]; // e.g. /assets/index-XXXX.js
+const entryPath = join(clientDir, entryHref.replace(/^\//, ""));
+if (!existsSync(entryPath)) {
+  console.error(`[generate-spa-html] Entry chunk listed in manifest does not exist: ${entryPath}`);
+  process.exit(1);
+}
 
 // 2. Find the stylesheet.
 const assetsDir = join(clientDir, "assets");
-const cssFile = readdirSync(assetsDir).find((f) => f.endsWith(".css"));
+if (!existsSync(assetsDir)) {
+  console.error(`[generate-spa-html] Missing ${assetsDir}. Run 'npm run build' first.`);
+  process.exit(1);
+}
+const cssFile = readdirSync(assetsDir)
+  .filter((f) => f.endsWith(".css"))
+  .sort((a, b) => statSync(join(assetsDir, b)).mtimeMs - statSync(join(assetsDir, a)).mtimeMs)[0];
 if (!cssFile) {
   console.error(`[generate-spa-html] No CSS file found in ${assetsDir}.`);
   process.exit(1);

@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "android:patch": "node scripts/patch-android.mjs",
+    "android:prep": "npm run build && npm run android:spa-html",
     "android:spa-html": "node scripts/generate-spa-html.mjs",
     "android:clean-apk": "powershell -ExecutionPolicy Bypass -File scripts/build-android-apk.ps1",
     "android:fresh": "powershell -ExecutionPolicy Bypass -File scripts/reset-android.ps1",
