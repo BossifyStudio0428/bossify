@@ -7,10 +7,14 @@
 ## 1. 在本机 build AAB
 
 ```bash
-npm run android:clean-apk
+git pull
+npm install
+npm run android:prep
+npx cap sync android
+npm run android:patch
 ```
 
-这个脚本会清掉旧 web bundle、Android 旧 assets 和 Gradle cache，再重新 build + sync + patch，避免 Android Studio 继续打到旧画面。
+`npm run android:prep` 会重新 build web，并生成 Capacitor 需要的 `dist/client/index.html`。`npx cap sync android` 成功后，Android Studio 才会打到最新 web 画面，避免继续打到旧内容。
 
 然后用 Android Studio 打开 `android/` 文件夹：
 
