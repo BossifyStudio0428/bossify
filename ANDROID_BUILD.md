@@ -70,21 +70,32 @@ npx cap open android
 
 ## 以后 Lovable 改了东西
 
-**每次改动都要 git pull → 干净重新打包 → 重新上传 Play**（因为是离线 SPA，不是远程 WebView）：
+**每次改动都要 git pull → 重新 build web assets → sync 进 Android → 用 Android Studio 重新打 APK/AAB → 重新上传 Play**（因为是离线 SPA，不是远程 WebView）：
 
 ```bash
 cd bossify
 git pull
-npm run android:clean-apk
+npm install
+npm run android:prep
+npx cap sync android
+npm run android:patch
 ```
 
-这个脚本会自动删除旧的 `dist/`、Android 已复制的旧 web assets、Gradle build cache，重新 build、`cap sync`、套用 Android patch，并产出：
+`npm run android:prep` 会重新 build web，并确保 Capacitor 需要的文件存在：
 
 ```text
-android/app/build/outputs/apk/debug/app-debug.apk
+dist/client/index.html
+dist/client/assets/*.js
+dist/client/assets/*.css
 ```
 
-如果你要在 Android Studio 里打 release APK/AAB，也先跑上面的 `npm run android:clean-apk`，再打开 Android Studio。这样不会继续打到旧画面。
+`npx cap sync android` 成功后，Android 项目里也必须有：
+
+```text
+android/app/src/main/assets/public/index.html
+```
+
+然后才打开 Android Studio 打 release APK/AAB。这样打出来的包才会跟着最新 web 更新，不会继续打到旧画面。
 
 确认 `capacitor.config.ts` 里必须是：
 
