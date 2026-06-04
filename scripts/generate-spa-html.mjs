@@ -98,6 +98,48 @@ const html = `<!doctype html>
     <div id="bossify-prepaint" aria-hidden="true">
       <div class="col"><p>Bossify</p></div>
     </div>
+    <script>
+      // TanStack Start client expects a bootstrap object on window.$_TSR
+      // even in SPA mode (defaultSsr: false). Without it, hydrate() throws
+      // "Expected to find bootstrap data on window.\$_TSR" and the entire
+      // page renders blank inside the Android WebView. We seed a minimal
+      // SPA-mode bootstrap so the router can take over client-side.
+      (function () {
+        if (typeof self === "undefined") return;
+        if (self.$R == null) self.$R = {};
+        self.$_TSR = {
+          h: function () { this.hydrated = true; this.c(); },
+          e: function () { this.streamEnded = true; this.c(); },
+          c: function () {
+            if (this.hydrated && this.streamEnded) {
+              try { delete self.$_TSR; } catch (e) {}
+              try { if (self.$R) delete self.$R["tsr"]; } catch (e) {}
+            }
+          },
+          p: function (script) {
+            if (!this.initialized) this.buffer.push(script);
+            else script();
+          },
+          buffer: [],
+          router: { manifest: undefined, matches: [] }
+        };
+      })();
+      // Safety net: if the JS bundle never mounts after 12s, show a tap
+      // hint instead of a silent blank page. Useful when an Android APK
+      // ships a stale or broken bundle.
+      setTimeout(function () {
+        if (document.body.classList.contains("bossify-mounted")) return;
+        var el = document.getElementById("bossify-prepaint");
+        if (!el) return;
+        var hint = document.createElement("p");
+        hint.style.cssText =
+          "margin-top:12px;font-size:13px;font-weight:500;color:#6B7280;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;";
+        hint.textContent = "Loading… tap to retry";
+        el.style.pointerEvents = "auto";
+        el.onclick = function () { location.reload(); };
+        el.querySelector(".col").appendChild(hint);
+      }, 12000);
+    </script>
     <script type="module" src="${entryHref}"></script>
   </body>
 </html>

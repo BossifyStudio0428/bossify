@@ -1,51 +1,21 @@
-## 真正问题
+我会把这次 Android 空白页按“离线 APK 启动失败”来修，不再只修 `dist/client` 有没有生成。
 
-你截图里的新错误是：
+计划：
 
-```text
-Copied .output/public -> dist/client
-Could not find tanstack start manifest in dist/server.
-```
+1. 修 `scripts/generate-spa-html.mjs`
+   - 在生成的 `dist/client/index.html` 里加入 TanStack Start 客户端需要的最小启动数据。
+   - 现在的离线 HTML 只有 JS/CSS，但没有服务端注入的 `window.$_TSR` bootstrap；Android 里会导致客户端启动失败或挂载后空白。
+   - 同时把页面根路径强制兼容 Capacitor 的离线路径，避免 WebView 打开 `/index.html` 时路由不匹配。
 
-也就是说你的电脑上 `npm run build` 产物是：
+2. 加 Android 空白保护
+   - 保留 Bossify 预加载画面，直到 React 真正渲染出页面后才隐藏。
+   - 如果 JS 启动失败，不会再只剩一整片浅色背景，会显示 Bossify 和重新加载提示。
 
-```text
-.output/public/assets/...
-```
-
-不是我上次假设的：
-
-```text
-dist/server/_tanstack-start-manifest...
-```
-
-所以脚本复制 web files 成功了，但下一步又去找不存在的 `dist/server`，导致失败。
-
-## 这次修法
-
-### 1. 改 `scripts/generate-spa-html.mjs`
-
-不再依赖 `dist/server` manifest。
-
-新逻辑：
+3. 修文档/命令一致性
+   - 保持你要的流程不变：Web 更新后，你手动在 Android Studio 打包新 APK/AAB。
+   - 命令仍然是：
 
 ```text
-1. 清理旧 dist/client
-2. 从 .output/public 复制到 dist/client
-3. 在 dist/client/assets 里找最新的：
-   - index-*.js 作为 app 入口
-   - *.css 作为样式
-4. 写入 dist/client/index.html
-5. 验证这些文件真的存在，不存在就直接报清楚错误
-```
-
-这样就跟你电脑截图里的实际 build output 对上了。
-
-### 2. 更新命令说明
-
-保留你要的手动 Google Play 流程：
-
-```bash
 git pull
 npm install
 npm run android:prep
@@ -53,26 +23,7 @@ npx cap sync android
 npm run android:patch
 ```
 
-然后才去 Android Studio 打 APK/AAB。
-
-### 3. 加防旧包机制
-
-脚本每次都会先删除旧的 `dist/client`，再从 `.output/public` 复制新的，避免 `npx cap sync android` 拿到上一次的旧 assets。
-
-## 验证
-
-我会在这边验证：
-
-```text
-dist/client/index.html 存在
-index.html 里引用的 /assets/index-*.js 存在
-index.html 里引用的 /assets/*.css 存在
-```
-
-你本机跑完后再跑：
-
-```bash
-npx cap sync android
-```
-
-就不会再出现 `dist/client` 或 `dist/server` 的错误。
+4. 验证重点
+   - 验证生成的 `dist/client/index.html` 有：CSS、entry JS、TanStack bootstrap、Bossify fallback。
+   - 确认不会再依赖 `dist/server`。
+   - 确认 Android Studio 打包时复制进去的是新 `dist/client/index.html`。
