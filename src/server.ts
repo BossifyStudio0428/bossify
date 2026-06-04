@@ -20,6 +20,10 @@ async function normalizeServerError(response: Response): Promise<Response> {
   if (response.status < 500) return response;
 
   const contentType = response.headers.get("content-type") ?? "";
+  try {
+    const debugBody = await response.clone().text();
+    console.error("[server.ts] 500 response body:", debugBody.slice(0, 4000));
+  } catch {}
   if (!contentType.includes("application/json")) return response;
 
   const body = await response.clone().text();
