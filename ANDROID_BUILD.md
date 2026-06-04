@@ -29,8 +29,8 @@ cd bossify
 # 2. 装依赖
 bun install
 
-# 3. Build 真正的网页进 dist/
-bun run build
+# 3. Build 真正的网页进 dist/client/
+npm run android:prep
 
 # 4. 加 Android 平台（第一次）
 npx cap add android
@@ -215,7 +215,7 @@ npm run android:logcat
 ### 每次重新 build
 
 ```bash
-bun run build
+npm run android:prep
 npx cap sync android
 npx cap open android
 # 然后在 Android Studio Build → Generate Signed App Bundle
