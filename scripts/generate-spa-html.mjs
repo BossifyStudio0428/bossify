@@ -6,25 +6,34 @@
  * ./dist/client" and the APK never updates with new web changes.
  *
  * This script:
- *   1. Finds the client entry chunk via the TanStack Start manifest in
+ *   1. Ensures dist/client exists. If the builder placed static files in
+ *      .output/public instead, copy them into dist/client for Capacitor.
+ *   2. Finds the client entry chunk via the TanStack Start manifest in
  *      dist/server/_tanstack-start-manifest_v-*.mjs (the __root__ route's
  *      first preload).
- *   2. Finds the built stylesheet under dist/client/assets/*.css.
- *   3. Writes dist/client/index.html — a minimal shell that loads both,
+ *   3. Finds the built stylesheet under dist/client/assets/*.css.
+ *   4. Writes dist/client/index.html — a minimal shell that loads both,
  *      mirroring the prepaint splash from src/routes/__root.tsx so the
  *      Android app shows the Bossify splash instead of a white flash.
  *
- * Run it AFTER `bun run build` and BEFORE `npx cap sync android`.
+ * Run it AFTER `npm run build` and BEFORE `npx cap sync android`.
  */
-import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const clientDir = "dist/client";
 const serverDir = "dist/server";
+const fallbackPublicDir = ".output/public";
 
 if (!existsSync(clientDir)) {
-  console.error(`[generate-spa-html] Missing ${clientDir}. Run 'bun run build' first.`);
-  process.exit(1);
+  if (existsSync(fallbackPublicDir)) {
+    mkdirSync(clientDir, { recursive: true });
+    cpSync(fallbackPublicDir, clientDir, { recursive: true });
+    console.log(`[generate-spa-html] Copied ${fallbackPublicDir} -> ${clientDir}`);
+  } else {
+    console.error(`[generate-spa-html] Missing ${clientDir}. Run 'npm run build' first.`);
+    process.exit(1);
+  }
 }
 
 // 1. Find the client entry chunk via the start manifest.
