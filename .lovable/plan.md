@@ -1,76 +1,78 @@
-## 你的流程（保持不变）
+## 真正问题
 
-```
-web 更新 → git pull → 本机 build → npx cap sync android → Android Studio 打新 APK/AAB → 上传 Play
-```
+你截图里的新错误是：
 
-Web 和 Android **完全分开**，不会自动同步，符合 Google Play 上架要求。
-
----
-
-## 问题根源
-
-截图里 `npx cap sync android` 失败：
-
-```
-Could not find the web assets directory: .\dist\client
+```text
+Copied .output/public -> dist/client
+Could not find tanstack start manifest in dist/server.
 ```
 
-不是 Android Studio 的问题，是 build 出来的网页文件**没有落在 `dist/client/` 里 + 没有 `index.html`**，所以 Capacitor 没东西可以复制进 Android 项目。Android Studio 当然就还是打到旧的 APK。
+也就是说你的电脑上 `npm run build` 产物是：
 
-技术原因：现在的 Vite 配置（TanStack Start + Cloudflare）build 出来的 SPA 入口是分散在 `dist/client/assets/*` 和 `.output/public/` 里的，**Vite 本身不会生成 `dist/client/index.html`**。Capacitor 需要那个 `index.html` 才肯 sync。
+```text
+.output/public/assets/...
+```
 
----
+不是我上次假设的：
 
-## 解决方案
+```text
+dist/server/_tanstack-start-manifest...
+```
 
-不动你的工作流，只修「build 完之后、`cap sync` 之前」这一步。
+所以脚本复制 web files 成功了，但下一步又去找不存在的 `dist/server`，导致失败。
 
-### 1. 加一个简单命令：`npm run android:prep`
+## 这次修法
 
-它做两件事：
-- `bun run build`（或 `npm run build`）
-- 跑 `scripts/generate-spa-html.mjs`，确保 `dist/client/index.html` 存在并指向最新的 hashed JS / CSS
+### 1. 改 `scripts/generate-spa-html.mjs`
 
-### 2. 修 `scripts/generate-spa-html.mjs` 让它更耐用
+不再依赖 `dist/server` manifest。
 
-- 如果 `dist/client` 不存在 → 从 `.output/public/` 自动复制
-- 找不到入口 chunk / CSS → 直接报清楚错误，不写一个坏的 HTML（避免你又打到一个白屏 APK）
-- 检查通过后写 `dist/client/index.html`
+新逻辑：
 
-### 3. 你以后的固定命令（4 行，不会错）
+```text
+1. 清理旧 dist/client
+2. 从 .output/public 复制到 dist/client
+3. 在 dist/client/assets 里找最新的：
+   - index-*.js 作为 app 入口
+   - *.css 作为样式
+4. 写入 dist/client/index.html
+5. 验证这些文件真的存在，不存在就直接报清楚错误
+```
+
+这样就跟你电脑截图里的实际 build output 对上了。
+
+### 2. 更新命令说明
+
+保留你要的手动 Google Play 流程：
 
 ```bash
 git pull
 npm install
 npm run android:prep
 npx cap sync android
+npm run android:patch
 ```
 
-然后照常打开 Android Studio → Build → Generate Signed Bundle → 上传 Play。
+然后才去 Android Studio 打 APK/AAB。
 
-Web 和 Android 还是分开，Google Play 审核没问题。
+### 3. 加防旧包机制
 
-### 4. 更新 `ANDROID_BUILD.md` 和 `PLAY_CONSOLE_SETUP.md`
-
-把那条「以后 web 改了怎么办」段落改成上面的 4 行命令，不再叫你用 PowerShell 脚本。
-
----
+脚本每次都会先删除旧的 `dist/client`，再从 `.output/public` 复制新的，避免 `npx cap sync android` 拿到上一次的旧 assets。
 
 ## 验证
 
-跑完 `npm run android:prep` 后必须存在：
+我会在这边验证：
 
-```
-dist/client/index.html
-dist/client/assets/*.js
-dist/client/assets/*.css
-```
-
-然后 `npx cap sync android` 不再报错，并且：
-
-```
-android/app/src/main/assets/public/index.html
+```text
+dist/client/index.html 存在
+index.html 里引用的 /assets/index-*.js 存在
+index.html 里引用的 /assets/*.css 存在
 ```
 
-是新的（mtime 是刚才）。这时 Android Studio 打出来的 APK 才会是最新版。
+你本机跑完后再跑：
+
+```bash
+npx cap sync android
+```
+
+就不会再出现 `dist/client` 或 `dist/server` 的错误。
