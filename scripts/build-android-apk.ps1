@@ -23,6 +23,9 @@ bun install
 Write-Host "Building fresh web bundle..." -ForegroundColor Yellow
 bun run build
 
+Write-Host "Generating dist/client/index.html SPA shell for Capacitor..." -ForegroundColor Yellow
+node scripts/generate-spa-html.mjs
+
 Write-Host "Copying fresh bundle into Android..." -ForegroundColor Yellow
 npx cap sync android
 
