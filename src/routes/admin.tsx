@@ -285,7 +285,7 @@ function AdminPage() {
                   onClick={() => setOrderStatusFilter(s)}
                   className={`px-3 py-1.5 rounded-full text-[11px] font-semibold ${orderStatusFilter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
                 >
-                  {t(`admin_filter_${s.toLowerCase()}` as any)}
+                  {t(`admin_filter_${s.toLowerCase()}` as TKey)}
                 </button>
               ))}
             </div>
