@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
 import {
   loadAdminOverview,
   revokeAdminSubscriptionPlan,
@@ -22,7 +23,7 @@ type AdminUser = {
 };
 
 function AdminPage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { refresh: refreshSub } = useSubscription();
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -37,6 +38,19 @@ function AdminPage() {
   const [grantOpen, setGrantOpen] = useState<{ uid: string; name: string } | null>(null);
   const [grantPlan, setGrantPlan] = useState<"pro" | "team_starter" | "team_pro" | "team_business">("pro");
   const [orderStatusFilter, setOrderStatusFilter] = useState<"All" | "Paid" | "Unpaid" | "Pending">("All");
+
+  const callAdminApi = async (body: Record<string, unknown>) => {
+    const token = session?.access_token;
+    if (!token) throw new Error("Unauthorized");
+    const response = await fetch(`${getPublicOrigin()}/api/public/admin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.error ?? "Request failed");
+    return data;
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -54,7 +68,9 @@ function AdminPage() {
   }, [user?.id]);
 
   const loadAll = async () => {
-    const data = await loadAdminOverviewFn();
+    const data = isNativeWebView()
+      ? await callAdminApi({ action: "overview" })
+      : await loadAdminOverviewFn();
     setUsers((data.users ?? []) as unknown as AdminUser[]);
     setAllOrders((data.orders ?? []) as unknown as any[]);
   };
@@ -79,7 +95,11 @@ function AdminPage() {
     plan: "pro" | "team_starter" | "team_pro" | "team_business" = "pro",
   ) => {
     try {
-      await setAdminSubscriptionPlanFn({ data: { userId: uid, months, plan } });
+      if (isNativeWebView()) {
+        await callAdminApi({ action: "set_plan", userId: uid, months, plan });
+      } else {
+        await setAdminSubscriptionPlanFn({ data: { userId: uid, months, plan } });
+      }
       toast.success(`${t("admin_pro_granted")}${months === "lifetime" ? ` (${t("admin_lifetime")})` : ` ${months} ${t("months_short")}`}`);
       if (uid === user?.id) refreshSub();
       loadAll();
@@ -92,7 +112,11 @@ function AdminPage() {
   const revokePro = async (uid: string) => {
     if (!confirm(t("admin_revoke_confirm"))) return;
     try {
-      await revokeAdminSubscriptionPlanFn({ data: { userId: uid } });
+      if (isNativeWebView()) {
+        await callAdminApi({ action: "revoke_plan", userId: uid });
+      } else {
+        await revokeAdminSubscriptionPlanFn({ data: { userId: uid } });
+      }
       toast.success(t("admin_reverted_free"));
       if (uid === user?.id) refreshSub();
       loadAll();

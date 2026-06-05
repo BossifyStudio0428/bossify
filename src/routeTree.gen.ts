@@ -73,6 +73,7 @@ import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connect
 import { Route as CommissionIdRouteImport } from './routes/commission.$id'
 import { Route as TeamJoinTokenRouteImport } from './routes/team.join.$token'
 import { Route as ApiPublicOrderFormRouteImport } from './routes/api/public/order-form'
+import { Route as ApiPublicAdminRouteImport } from './routes/api/public/admin'
 import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe/webhook'
 import { Route as ApiPublicStripeCheckoutRouteImport } from './routes/api/public/stripe/checkout'
@@ -400,6 +401,11 @@ const ApiPublicOrderFormRoute = ApiPublicOrderFormRouteImport.update({
   path: '/api/public/order-form',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdminRoute = ApiPublicAdminRouteImport.update({
+  id: '/api/public/admin',
+  path: '/api/public/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhooksTiktokRoute = ApiPublicWebhooksTiktokRouteImport.update({
   id: '/api/public/webhooks/tiktok',
   path: '/api/public/webhooks/tiktok',
@@ -490,6 +496,7 @@ export interface FileRoutesByFullPath {
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
+  '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -561,6 +568,7 @@ export interface FileRoutesByTo {
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
+  '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -633,6 +641,7 @@ export interface FileRoutesById {
   '/stock-take_/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
+  '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -706,6 +715,7 @@ export interface FileRouteTypes {
     | '/stock-take/$id'
     | '/team/welcome'
     | '/viewing/$id'
+    | '/api/public/admin'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -777,6 +787,7 @@ export interface FileRouteTypes {
     | '/stock-take/$id'
     | '/team/welcome'
     | '/viewing/$id'
+    | '/api/public/admin'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -848,6 +859,7 @@ export interface FileRouteTypes {
     | '/stock-take_/$id'
     | '/team/welcome'
     | '/viewing/$id'
+    | '/api/public/admin'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -915,6 +927,7 @@ export interface RootRouteChildren {
   RequirementIdRoute: typeof RequirementIdRoute
   StockTakeIdRoute: typeof StockTakeIdRoute
   ViewingIdRoute: typeof ViewingIdRoute
+  ApiPublicAdminRoute: typeof ApiPublicAdminRoute
   ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
   ApiPublicStripeActivateRoute: typeof ApiPublicStripeActivateRoute
   ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
@@ -1373,6 +1386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOrderFormRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/admin': {
+      id: '/api/public/admin'
+      path: '/api/public/admin'
+      fullPath: '/api/public/admin'
+      preLoaderRoute: typeof ApiPublicAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/tiktok': {
       id: '/api/public/webhooks/tiktok'
       path: '/api/public/webhooks/tiktok'
@@ -1518,6 +1538,7 @@ const rootRouteChildren: RootRouteChildren = {
   RequirementIdRoute: RequirementIdRoute,
   StockTakeIdRoute: StockTakeIdRoute,
   ViewingIdRoute: ViewingIdRoute,
+  ApiPublicAdminRoute: ApiPublicAdminRoute,
   ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
   ApiPublicStripeActivateRoute: ApiPublicStripeActivateRoute,
   ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
