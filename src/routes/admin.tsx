@@ -5,7 +5,7 @@ import { ChevronLeft, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { useI18n } from "@/contexts/I18nContext";
+import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
 import {
   loadAdminOverview,
@@ -16,10 +16,27 @@ import {
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
 type AdminUser = {
-  id: string; business_name: string | null; is_admin: boolean | null;
-  created_at: string; plan: string | null; status: string | null;
-  expires_at: string | null; order_count: number | null;
-  total_orders: number; total_revenue: number;
+  id: string;
+  business_name: string | null;
+  is_admin: boolean | null;
+  created_at: string;
+  plan: string | null;
+  status: string | null;
+  expires_at: string | null;
+  order_count: number | null;
+  total_orders: number;
+  total_revenue: number;
+};
+
+type AdminOrder = {
+  id: string;
+  code: string;
+  user_id: string;
+  customer_name: string;
+  product: string;
+  amount: number;
+  status: "Paid" | "Unpaid" | "Pending" | string;
+  created_at: string;
 };
 
 function AdminPage() {
@@ -34,7 +51,7 @@ function AdminPage() {
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [allOrders, setAllOrders] = useState<any[]>([]);
+  const [allOrders, setAllOrders] = useState<AdminOrder[]>([]);
   const [grantOpen, setGrantOpen] = useState<{ uid: string; name: string } | null>(null);
   const [grantPlan, setGrantPlan] = useState<"pro" | "team_starter" | "team_pro" | "team_business">("pro");
   const [orderStatusFilter, setOrderStatusFilter] = useState<"All" | "Paid" | "Unpaid" | "Pending">("All");
@@ -47,8 +64,8 @@ function AdminPage() {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(body),
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data?.error ?? "Request failed");
+    const data = (await response.json().catch(() => ({}))) as { error?: string } & Record<string, unknown>;
+    if (!response.ok) throw new Error(data.error ?? "Request failed");
     return data;
   };
 
@@ -72,7 +89,7 @@ function AdminPage() {
       ? await callAdminApi({ action: "overview" })
       : await loadAdminOverviewFn();
     setUsers((data.users ?? []) as unknown as AdminUser[]);
-    setAllOrders((data.orders ?? []) as unknown as any[]);
+    setAllOrders((data.orders ?? []) as unknown as AdminOrder[]);
   };
 
   if (checking) return <p className="p-6 text-sm text-muted-foreground">{t("admin_checking")}</p>;
