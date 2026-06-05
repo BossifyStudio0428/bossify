@@ -12,6 +12,7 @@ import { savePdf } from "@/lib/pdf";
 export const Route = createFileRoute("/stock-take_/$id")({ component: StockTakeReportPage });
 
 type Take = { id: string; started_at: string; completed_at: string | null; status: string };
+type ProfileResult = { data: { business_name: string | null } | null; error: unknown };
 type Item = {
   id: string;
   product_name: string;
@@ -35,24 +36,24 @@ function StockTakeReportPage() {
     (async () => {
       const [tk, its, prof] = await Promise.all([
         supabase
-          .from("stock_takes" as any)
+          .from("stock_takes" as never)
           .select("*")
           .eq("id", id)
           .single(),
         supabase
-          .from("stock_take_items" as any)
+          .from("stock_take_items" as never)
           .select("*")
           .eq("stock_take_id", id)
           .order("product_name", { ascending: true }),
         user
           ? supabase.from("profiles").select("business_name").eq("id", user.id).maybeSingle()
-          : Promise.resolve({ data: null, error: null } as any),
+          : Promise.resolve({ data: null, error: null } as ProfileResult),
       ]);
       if (tk.error) toast.error(tk.error.message);
       else setTake(tk.data as unknown as Take);
       if (its.error) toast.error(its.error.message);
       else setItems((its.data ?? []) as unknown as Item[]);
-      if ((prof as any)?.data?.business_name) setBusinessName((prof as any).data.business_name);
+      if (prof.data?.business_name) setBusinessName(prof.data.business_name);
       setLoading(false);
     })();
   }, [id, user]);
@@ -128,7 +129,7 @@ function StockTakeReportPage() {
         }),
       });
       // Watermark on every page
-      const pageCount = (doc as any).internal.getNumberOfPages();
+      const pageCount = doc.getNumberOfPages();
       for (let p = 1; p <= pageCount; p++) {
         doc.setPage(p);
         doc.setFontSize(9);
@@ -137,8 +138,8 @@ function StockTakeReportPage() {
         doc.setTextColor(0);
       }
       await savePdf(doc, `stock-take-${id.slice(0, 8)}.pdf`);
-    } catch (error: any) {
-      toast.error(error?.message ?? t("pdf_failed"));
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : t("pdf_failed"));
     }
   };
 
