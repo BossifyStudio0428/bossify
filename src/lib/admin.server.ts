@@ -14,10 +14,14 @@ export async function assertAdmin(userId: string) {
 export async function loadAdminOverviewForUser(userId: string) {
   await assertAdmin(userId);
 
-  const [{ data: users, error: usersError }, { data: orders, error: ordersError }] = await Promise.all([
-    supabaseAdmin.from("admin_users_view" as any).select("*").order("created_at", { ascending: false }),
-    supabaseAdmin.from("orders").select("*").order("created_at", { ascending: false }).limit(20),
-  ]);
+  const [{ data: users, error: usersError }, { data: orders, error: ordersError }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("admin_users_view" as never)
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabaseAdmin.from("orders").select("*").order("created_at", { ascending: false }).limit(20),
+    ]);
 
   if (usersError || ordersError) throw new Error("Unable to load admin data");
   return { isAdmin: true, users: users ?? [], orders: orders ?? [] };
@@ -31,20 +35,22 @@ export async function setAdminSubscriptionPlanForUser(
 ) {
   await assertAdmin(adminUserId);
 
-  const expires = months === "lifetime"
-    ? new Date(2099, 0, 1)
-    : new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000);
+  const expires =
+    months === "lifetime"
+      ? new Date(2099, 0, 1)
+      : new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000);
 
-  const { error } = await supabaseAdmin
-    .from("subscriptions")
-    .upsert({
+  const { error } = await supabaseAdmin.from("subscriptions").upsert(
+    {
       user_id: targetUserId,
       plan,
       status: "active",
       expires_at: expires.toISOString(),
       current_period_end: months === "lifetime" ? null : expires.toISOString(),
       started_at: new Date().toISOString(),
-    }, { onConflict: "user_id" });
+    },
+    { onConflict: "user_id" },
+  );
 
   if (error) {
     console.error("setAdminSubscriptionPlan failed", error);
@@ -69,28 +75,26 @@ export async function setAdminSubscriptionPlanForUser(
       const name = (profile?.business_name as string | null)?.trim() || "My Team";
 
       const { data: newTeam, error: teamErr } = await supabaseAdmin
-        .from("teams" as any)
-        .insert({ name, owner_id: targetUserId, plan, current_period_end: periodEnd } as any)
+        .from("teams" as never)
+        .insert({ name, owner_id: targetUserId, plan, current_period_end: periodEnd } as never)
         .select("id")
         .single();
       if (teamErr) {
         console.error("auto-create team failed", teamErr);
       } else if (newTeam) {
-        const { error: memErr } = await supabaseAdmin
-          .from("team_members" as any)
-          .insert({
-            team_id: (newTeam as any).id,
-            user_id: targetUserId,
-            role: "owner",
-            status: "active",
-            joined_at: new Date().toISOString(),
-          } as any);
+        const { error: memErr } = await supabaseAdmin.from("team_members" as never).insert({
+          team_id: (newTeam as { id: string }).id,
+          user_id: targetUserId,
+          role: "owner",
+          status: "active",
+          joined_at: new Date().toISOString(),
+        } as never);
         if (memErr) console.error("auto-create owner membership failed", memErr);
       }
     } else {
       await supabaseAdmin
-        .from("teams" as any)
-        .update({ plan, current_period_end: periodEnd } as any)
+        .from("teams" as never)
+        .update({ plan, current_period_end: periodEnd } as never)
         .eq("id", existingTeam.id);
     }
   }
@@ -98,7 +102,10 @@ export async function setAdminSubscriptionPlanForUser(
   return { ok: true };
 }
 
-export async function revokeAdminSubscriptionPlanForUser(adminUserId: string, targetUserId: string) {
+export async function revokeAdminSubscriptionPlanForUser(
+  adminUserId: string,
+  targetUserId: string,
+) {
   await assertAdmin(adminUserId);
 
   const { error } = await supabaseAdmin
