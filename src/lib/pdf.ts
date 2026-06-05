@@ -180,10 +180,23 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
   if (Capacitor.isNativePlatform()) {
     const dataUri = doc.output("datauristring");
     const base64 = dataUri.split(",")[1];
-    const res = await Filesystem.writeFile({
-      path: filename, data: base64,
-      directory: Directory.Documents, recursive: true,
-    });
+    let res;
+    try {
+      res = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Documents,
+        recursive: true,
+      });
+    } catch (writeErr) {
+      console.error("[pdf] documents write failed, falling back to cache", writeErr);
+      res = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Cache,
+        recursive: true,
+      });
+    }
     try {
       await FileOpener.open({
         filePath: res.uri, contentType: "application/pdf", openWithDefault: true,
