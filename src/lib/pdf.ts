@@ -10,6 +10,7 @@ import type { BizType } from "@/lib/businessType";
 // Brand purple (#6C3FD6) and alt-row tint (#F0EEF8)
 const PURPLE: [number, number, number] = [108, 63, 214];
 const ALT_ROW: [number, number, number] = [240, 238, 248];
+type AutoTablePdf = jsPDF & { lastAutoTable?: { finalY: number } };
 
 // ---------------------------------------------------------------------------
 // Localized labels
@@ -76,95 +77,179 @@ type ReportLabels = {
 };
 
 const REPORT_TITLE: Record<BizType, Record<Lang, string>> = {
-  retail:    { en: "SALES REPORT",       ms: "LAPORAN JUALAN",   zh: "销售报告" },
-  fnb:       { en: "SALES REPORT",       ms: "LAPORAN JUALAN",   zh: "销售报告" },
-  education: { en: "CASE REPORT",        ms: "LAPORAN KES",      zh: "案例报告" },
-  beauty:    { en: "APPOINTMENT REPORT", ms: "LAPORAN TEMUJANJI",zh: "预约报告" },
-  property:  { en: "LEAD REPORT",        ms: "LAPORAN PROSPEK",  zh: "潜在客户报告" },
-  freelance: { en: "PROJECT REPORT",     ms: "LAPORAN PROJEK",   zh: "项目报告" },
+  retail: { en: "SALES REPORT", ms: "LAPORAN JUALAN", zh: "销售报告" },
+  fnb: { en: "SALES REPORT", ms: "LAPORAN JUALAN", zh: "销售报告" },
+  education: { en: "CASE REPORT", ms: "LAPORAN KES", zh: "案例报告" },
+  beauty: { en: "APPOINTMENT REPORT", ms: "LAPORAN TEMUJANJI", zh: "预约报告" },
+  property: { en: "LEAD REPORT", ms: "LAPORAN PROSPEK", zh: "潜在客户报告" },
+  freelance: { en: "PROJECT REPORT", ms: "LAPORAN PROJEK", zh: "项目报告" },
 };
 
 const L: Record<Lang, Omit<ReportLabels, "reportTitle">> = {
   en: {
-    dateRange: "Date Range", generated: "Generated", page: "Page",
-    summary: "Summary", value: "Value",
-    totalRevenue: "Total Revenue", totalCost: "Total Cost",
-    grossProfit: "Gross Profit", profitMargin: "Profit Margin",
-    totalOrders: "Total Orders", paidOrders: "Paid Orders",
+    dateRange: "Date Range",
+    generated: "Generated",
+    page: "Page",
+    summary: "Summary",
+    value: "Value",
+    totalRevenue: "Total Revenue",
+    totalCost: "Total Cost",
+    grossProfit: "Gross Profit",
+    profitMargin: "Profit Margin",
+    totalOrders: "Total Orders",
+    paidOrders: "Paid Orders",
     unpaidAmount: "Unpaid Amount",
-    totalCases: "Total Cases", paidCases: "Paid Cases",
-    completedCases: "Completed Cases", inProgress: "In Progress",
-    totalAppointments: "Total Appointments", paidAppointments: "Paid Appointments",
+    totalCases: "Total Cases",
+    paidCases: "Paid Cases",
+    completedCases: "Completed Cases",
+    inProgress: "In Progress",
+    totalAppointments: "Total Appointments",
+    paidAppointments: "Paid Appointments",
     paid: "Paid",
-    totalLeads: "Total Leads", completed: "Completed", rejected: "Rejected",
+    totalLeads: "Total Leads",
+    completed: "Completed",
+    rejected: "Rejected",
     conversionRate: "Conversion Rate",
-    totalProjects: "Total Projects", activeProjects: "Active Projects",
+    totalProjects: "Total Projects",
+    activeProjects: "Active Projects",
     completedProjects: "Completed Projects",
     th: {
-      date: "Date", orderId: "Order ID", caseId: "Case ID",
-      appointmentId: "Appointment ID", leadId: "Lead ID", projectId: "Project ID",
-      customer: "Customer", client: "Client",
-      product: "Product", service: "Service", package: "Package",
-      qty: "Qty", price: "Price", fee: "Fee", amount: "Amount", budget: "Budget",
-      duration: "Duration", status: "Status",
-      paymentStatus: "Payment Status", applicationStatus: "Application Status",
-      followUpDate: "Follow-up Date", deadline: "Deadline",
+      date: "Date",
+      orderId: "Order ID",
+      caseId: "Case ID",
+      appointmentId: "Appointment ID",
+      leadId: "Lead ID",
+      projectId: "Project ID",
+      customer: "Customer",
+      client: "Client",
+      product: "Product",
+      service: "Service",
+      package: "Package",
+      qty: "Qty",
+      price: "Price",
+      fee: "Fee",
+      amount: "Amount",
+      budget: "Budget",
+      duration: "Duration",
+      status: "Status",
+      paymentStatus: "Payment Status",
+      applicationStatus: "Application Status",
+      followUpDate: "Follow-up Date",
+      deadline: "Deadline",
     },
-    topProducts: "Top Products", bestCustomers: "Best Customers", orders: "Orders",
+    topProducts: "Top Products",
+    bestCustomers: "Best Customers",
+    orders: "Orders",
   },
   ms: {
-    dateRange: "Julat Tarikh", generated: "Dijana", page: "Halaman",
-    summary: "Ringkasan", value: "Nilai",
-    totalRevenue: "Jumlah Pendapatan", totalCost: "Jumlah Kos",
-    grossProfit: "Untung Kasar", profitMargin: "Margin Untung",
-    totalOrders: "Jumlah Pesanan", paidOrders: "Pesanan Berbayar",
+    dateRange: "Julat Tarikh",
+    generated: "Dijana",
+    page: "Halaman",
+    summary: "Ringkasan",
+    value: "Nilai",
+    totalRevenue: "Jumlah Pendapatan",
+    totalCost: "Jumlah Kos",
+    grossProfit: "Untung Kasar",
+    profitMargin: "Margin Untung",
+    totalOrders: "Jumlah Pesanan",
+    paidOrders: "Pesanan Berbayar",
     unpaidAmount: "Jumlah Tertunggak",
-    totalCases: "Jumlah Kes", paidCases: "Kes Berbayar",
-    completedCases: "Kes Selesai", inProgress: "Dalam Proses",
-    totalAppointments: "Jumlah Temujanji", paidAppointments: "Temujanji Berbayar",
+    totalCases: "Jumlah Kes",
+    paidCases: "Kes Berbayar",
+    completedCases: "Kes Selesai",
+    inProgress: "Dalam Proses",
+    totalAppointments: "Jumlah Temujanji",
+    paidAppointments: "Temujanji Berbayar",
     paid: "Berbayar",
-    totalLeads: "Jumlah Prospek", completed: "Selesai", rejected: "Ditolak",
+    totalLeads: "Jumlah Prospek",
+    completed: "Selesai",
+    rejected: "Ditolak",
     conversionRate: "Kadar Penukaran",
-    totalProjects: "Jumlah Projek", activeProjects: "Projek Aktif",
+    totalProjects: "Jumlah Projek",
+    activeProjects: "Projek Aktif",
     completedProjects: "Projek Selesai",
     th: {
-      date: "Tarikh", orderId: "ID Pesanan", caseId: "ID Kes",
-      appointmentId: "ID Temujanji", leadId: "ID Prospek", projectId: "ID Projek",
-      customer: "Pelanggan", client: "Klien",
-      product: "Produk", service: "Perkhidmatan", package: "Pakej",
-      qty: "Kuantiti", price: "Harga", fee: "Yuran", amount: "Jumlah", budget: "Anggaran",
-      duration: "Tempoh", status: "Status",
-      paymentStatus: "Status Bayaran", applicationStatus: "Status Permohonan",
-      followUpDate: "Tarikh Susulan", deadline: "Tarikh Akhir",
+      date: "Tarikh",
+      orderId: "ID Pesanan",
+      caseId: "ID Kes",
+      appointmentId: "ID Temujanji",
+      leadId: "ID Prospek",
+      projectId: "ID Projek",
+      customer: "Pelanggan",
+      client: "Klien",
+      product: "Produk",
+      service: "Perkhidmatan",
+      package: "Pakej",
+      qty: "Kuantiti",
+      price: "Harga",
+      fee: "Yuran",
+      amount: "Jumlah",
+      budget: "Anggaran",
+      duration: "Tempoh",
+      status: "Status",
+      paymentStatus: "Status Bayaran",
+      applicationStatus: "Status Permohonan",
+      followUpDate: "Tarikh Susulan",
+      deadline: "Tarikh Akhir",
     },
-    topProducts: "Produk Terlaris", bestCustomers: "Pelanggan Terbaik", orders: "Pesanan",
+    topProducts: "Produk Terlaris",
+    bestCustomers: "Pelanggan Terbaik",
+    orders: "Pesanan",
   },
   zh: {
-    dateRange: "日期范围", generated: "生成时间", page: "页",
-    summary: "摘要", value: "数值",
-    totalRevenue: "总收入", totalCost: "总成本",
-    grossProfit: "毛利润", profitMargin: "利润率",
-    totalOrders: "总订单", paidOrders: "已付订单",
+    dateRange: "日期范围",
+    generated: "生成时间",
+    page: "页",
+    summary: "摘要",
+    value: "数值",
+    totalRevenue: "总收入",
+    totalCost: "总成本",
+    grossProfit: "毛利润",
+    profitMargin: "利润率",
+    totalOrders: "总订单",
+    paidOrders: "已付订单",
     unpaidAmount: "未付金额",
-    totalCases: "总案例", paidCases: "已付案例",
-    completedCases: "已完成案例", inProgress: "处理中",
-    totalAppointments: "总预约", paidAppointments: "已付预约",
+    totalCases: "总案例",
+    paidCases: "已付案例",
+    completedCases: "已完成案例",
+    inProgress: "处理中",
+    totalAppointments: "总预约",
+    paidAppointments: "已付预约",
     paid: "已付",
-    totalLeads: "总潜在客户", completed: "已完成", rejected: "已拒绝",
+    totalLeads: "总潜在客户",
+    completed: "已完成",
+    rejected: "已拒绝",
     conversionRate: "转化率",
-    totalProjects: "总项目", activeProjects: "活跃项目",
+    totalProjects: "总项目",
+    activeProjects: "活跃项目",
     completedProjects: "已完成项目",
     th: {
-      date: "日期", orderId: "订单编号", caseId: "案例编号",
-      appointmentId: "预约编号", leadId: "潜在客户编号", projectId: "项目编号",
-      customer: "客户", client: "客户",
-      product: "产品", service: "服务", package: "配套",
-      qty: "数量", price: "价格", fee: "费用", amount: "金额", budget: "预算",
-      duration: "时长", status: "状态",
-      paymentStatus: "付款状态", applicationStatus: "申请状态",
-      followUpDate: "跟进日期", deadline: "截止日期",
+      date: "日期",
+      orderId: "订单编号",
+      caseId: "案例编号",
+      appointmentId: "预约编号",
+      leadId: "潜在客户编号",
+      projectId: "项目编号",
+      customer: "客户",
+      client: "客户",
+      product: "产品",
+      service: "服务",
+      package: "配套",
+      qty: "数量",
+      price: "价格",
+      fee: "费用",
+      amount: "金额",
+      budget: "预算",
+      duration: "时长",
+      status: "状态",
+      paymentStatus: "付款状态",
+      applicationStatus: "申请状态",
+      followUpDate: "跟进日期",
+      deadline: "截止日期",
     },
-    topProducts: "热门产品", bestCustomers: "顶级客户", orders: "订单",
+    topProducts: "热门产品",
+    bestCustomers: "顶级客户",
+    orders: "订单",
   },
 };
 
@@ -180,13 +265,28 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
   if (Capacitor.isNativePlatform()) {
     const dataUri = doc.output("datauristring");
     const base64 = dataUri.split(",")[1];
-    const res = await Filesystem.writeFile({
-      path: filename, data: base64,
-      directory: Directory.Documents, recursive: true,
-    });
+    let res;
+    try {
+      res = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Documents,
+        recursive: true,
+      });
+    } catch (writeErr) {
+      console.error("[pdf] documents write failed, falling back to cache", writeErr);
+      res = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Cache,
+        recursive: true,
+      });
+    }
     try {
       await FileOpener.open({
-        filePath: res.uri, contentType: "application/pdf", openWithDefault: true,
+        filePath: res.uri,
+        contentType: "application/pdf",
+        openWithDefault: true,
       });
       return;
     } catch (openErr) {
@@ -199,8 +299,12 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
     const blob = doc.output("blob");
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = filename; a.rel = "noopener";
-    document.body.appendChild(a); a.click(); a.remove();
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   } catch {
     doc.save(filename);
@@ -211,7 +315,13 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
 // Header / footer chrome
 // ---------------------------------------------------------------------------
 
-function drawHeader(doc: jsPDF, l: ReportLabels, businessName: string, rangeLabel: string, logoDataUrl?: string | null) {
+function drawHeader(
+  doc: jsPDF,
+  l: ReportLabels,
+  businessName: string,
+  rangeLabel: string,
+  logoDataUrl?: string | null,
+) {
   doc.setFillColor(...PURPLE);
   doc.rect(0, 0, 210, 26, "F");
   doc.setTextColor(255, 255, 255);
@@ -221,7 +331,9 @@ function drawHeader(doc: jsPDF, l: ReportLabels, businessName: string, rangeLabe
     try {
       doc.addImage(logoDataUrl, "PNG", 12, 5, 16, 16);
       textX = 32;
-    } catch { /* ignore bad image */ }
+    } catch {
+      /* ignore bad image */
+    }
   }
 
   doc.setFontSize(16);
@@ -353,7 +465,15 @@ function tableHeadersForBiz(biz: BizType, l: ReportLabels): string[] {
   const th = l.th;
   switch (biz) {
     case "education":
-      return [th.date, th.caseId, th.client, th.service, th.fee, th.paymentStatus, th.applicationStatus];
+      return [
+        th.date,
+        th.caseId,
+        th.client,
+        th.service,
+        th.fee,
+        th.paymentStatus,
+        th.applicationStatus,
+      ];
     case "beauty":
       return [th.date, th.appointmentId, th.client, th.service, th.duration, th.price, th.status];
     case "property":
@@ -398,7 +518,7 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
     styles: { fontSize: 10 },
   });
 
-  let y = (doc as any).lastAutoTable.finalY + 8;
+  let y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
 
   if (d.topProducts && d.topProducts.length) {
     autoTable(doc, {
@@ -410,7 +530,7 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
       alternateRowStyles: { fillColor: ALT_ROW },
       styles: { fontSize: 10 },
     });
-    y = (doc as any).lastAutoTable.finalY + 8;
+    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
   }
 
   if (d.topCustomers && d.topCustomers.length) {
@@ -423,7 +543,7 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
       alternateRowStyles: { fillColor: ALT_ROW },
       styles: { fontSize: 10 },
     });
-    y = (doc as any).lastAutoTable.finalY + 8;
+    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
   }
 
   if (d.rows.length) {

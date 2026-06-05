@@ -1,0 +1,121 @@
+import { externalSupabaseAdmin as supabaseAdmin } from "@/integrations/supabase/external-admin.server";
+
+export async function assertAdmin(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error("Unable to verify admin access");
+  if (!data?.is_admin) throw new Response("Forbidden", { status: 403 });
+}
+
+export async function loadAdminOverviewForUser(userId: string) {
+  await assertAdmin(userId);
+
+  const [{ data: users, error: usersError }, { data: orders, error: ordersError }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("admin_users_view" as never)
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabaseAdmin.from("orders").select("*").order("created_at", { ascending: false }).limit(20),
+    ]);
+
+  if (usersError || ordersError) throw new Error("Unable to load admin data");
+  return { isAdmin: true, users: users ?? [], orders: orders ?? [] };
+}
+
+export async function setAdminSubscriptionPlanForUser(
+  adminUserId: string,
+  targetUserId: string,
+  months: number | "lifetime",
+  plan: "pro" | "team_starter" | "team_pro" | "team_business" = "pro",
+) {
+  await assertAdmin(adminUserId);
+
+  const expires =
+    months === "lifetime"
+      ? new Date(2099, 0, 1)
+      : new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000);
+
+  const { error } = await supabaseAdmin.from("subscriptions").upsert(
+    {
+      user_id: targetUserId,
+      plan,
+      status: "active",
+      expires_at: expires.toISOString(),
+      current_period_end: months === "lifetime" ? null : expires.toISOString(),
+      started_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+
+  if (error) {
+    console.error("setAdminSubscriptionPlan failed", error);
+    throw new Error(`Unable to update subscription: ${error.message}`);
+  }
+
+  if (plan === "team_starter" || plan === "team_pro" || plan === "team_business") {
+    const { data: existingTeam } = await supabaseAdmin
+      .from("teams")
+      .select("id, plan")
+      .eq("owner_id", targetUserId)
+      .maybeSingle();
+
+    const periodEnd = months === "lifetime" ? null : expires.toISOString();
+
+    if (!existingTeam) {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("business_name")
+        .eq("id", targetUserId)
+        .maybeSingle();
+      const name = (profile?.business_name as string | null)?.trim() || "My Team";
+
+      const { data: newTeam, error: teamErr } = await supabaseAdmin
+        .from("teams" as never)
+        .insert({ name, owner_id: targetUserId, plan, current_period_end: periodEnd } as never)
+        .select("id")
+        .single();
+      if (teamErr) {
+        console.error("auto-create team failed", teamErr);
+      } else if (newTeam) {
+        const { error: memErr } = await supabaseAdmin.from("team_members" as never).insert({
+          team_id: (newTeam as { id: string }).id,
+          user_id: targetUserId,
+          role: "owner",
+          status: "active",
+          joined_at: new Date().toISOString(),
+        } as never);
+        if (memErr) console.error("auto-create owner membership failed", memErr);
+      }
+    } else {
+      await supabaseAdmin
+        .from("teams" as never)
+        .update({ plan, current_period_end: periodEnd } as never)
+        .eq("id", existingTeam.id);
+    }
+  }
+
+  return { ok: true };
+}
+
+export async function revokeAdminSubscriptionPlanForUser(
+  adminUserId: string,
+  targetUserId: string,
+) {
+  await assertAdmin(adminUserId);
+
+  const { error } = await supabaseAdmin
+    .from("subscriptions")
+    .update({ plan: "free", status: "active", expires_at: null, current_period_end: null })
+    .eq("user_id", targetUserId);
+
+  if (error) {
+    console.error("revokeAdminSubscriptionPlan failed", error);
+    throw new Error(`Unable to update subscription: ${error.message}`);
+  }
+  return { ok: true };
+}
