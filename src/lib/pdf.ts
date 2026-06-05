@@ -10,6 +10,7 @@ import type { BizType } from "@/lib/businessType";
 // Brand purple (#6C3FD6) and alt-row tint (#F0EEF8)
 const PURPLE: [number, number, number] = [108, 63, 214];
 const ALT_ROW: [number, number, number] = [240, 238, 248];
+type AutoTablePdf = jsPDF & { lastAutoTable?: { finalY: number } };
 
 // ---------------------------------------------------------------------------
 // Localized labels
@@ -517,7 +518,7 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
     styles: { fontSize: 10 },
   });
 
-  let y = (doc as any).lastAutoTable.finalY + 8;
+  let y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
 
   if (d.topProducts && d.topProducts.length) {
     autoTable(doc, {
@@ -529,7 +530,7 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
       alternateRowStyles: { fillColor: ALT_ROW },
       styles: { fontSize: 10 },
     });
-    y = (doc as any).lastAutoTable.finalY + 8;
+    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
   }
 
   if (d.topCustomers && d.topCustomers.length) {
@@ -542,7 +543,7 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
       alternateRowStyles: { fillColor: ALT_ROW },
       styles: { fontSize: 10 },
     });
-    y = (doc as any).lastAutoTable.finalY + 8;
+    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
   }
 
   if (d.rows.length) {
