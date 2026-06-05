@@ -25,7 +25,12 @@ export const setAdminSubscriptionPlan = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    return setAdminSubscriptionPlanForUser(context.userId, data.userId, data.months, data.plan ?? "pro");
+    return setAdminSubscriptionPlanForUser(
+      context.userId,
+      data.userId,
+      data.months,
+      data.plan ?? "pro",
+    );
   });
 
 export const revokeAdminSubscriptionPlan = createServerFn({ method: "POST" })
