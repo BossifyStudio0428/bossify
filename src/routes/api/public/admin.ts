@@ -86,10 +86,7 @@ export const Route = createFileRoute("/api/public/admin")({
               ),
             );
           }
-          return json(
-            200,
-            await revokeAdminSubscriptionPlanForUser(userId, parsed.data.userId),
-          );
+          return json(200, await revokeAdminSubscriptionPlanForUser(userId, parsed.data.userId));
         } catch (error) {
           if (error instanceof Response) {
             return json(error.status, { error: await error.text() });

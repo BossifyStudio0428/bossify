@@ -34,9 +34,19 @@ function StockTakeReportPage() {
   useEffect(() => {
     (async () => {
       const [tk, its, prof] = await Promise.all([
-        supabase.from("stock_takes" as any).select("*").eq("id", id).single(),
-        supabase.from("stock_take_items" as any).select("*").eq("stock_take_id", id).order("product_name", { ascending: true }),
-        user ? supabase.from("profiles").select("business_name").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null, error: null } as any),
+        supabase
+          .from("stock_takes" as any)
+          .select("*")
+          .eq("id", id)
+          .single(),
+        supabase
+          .from("stock_take_items" as any)
+          .select("*")
+          .eq("stock_take_id", id)
+          .order("product_name", { ascending: true }),
+        user
+          ? supabase.from("profiles").select("business_name").eq("id", user.id).maybeSingle()
+          : Promise.resolve({ data: null, error: null } as any),
       ]);
       if (tk.error) toast.error(tk.error.message);
       else setTake(tk.data as unknown as Take);
@@ -47,11 +57,11 @@ function StockTakeReportPage() {
     })();
   }, [id, user]);
 
-  const discrepancies = items.filter(i => i.difference !== 0).length;
+  const discrepancies = items.filter((i) => i.difference !== 0).length;
   const totalShortage = items.reduce((acc, i) => acc + (i.difference < 0 ? -i.difference : 0), 0);
   const totalSurplus = items.reduce((acc, i) => acc + (i.difference > 0 ? i.difference : 0), 0);
-  const diffItems = items.filter(i => i.difference !== 0);
-  const hasReasons = items.some(i => i.reason && i.reason.trim());
+  const diffItems = items.filter((i) => i.difference !== 0);
+  const hasReasons = items.some((i) => i.reason && i.reason.trim());
 
   const exportPdf = async () => {
     try {
@@ -64,21 +74,48 @@ function StockTakeReportPage() {
       doc.text(t("stock_take_report"), 14, 24);
       doc.setFontSize(10);
       let y = 32;
-      if (businessName) { doc.text(`${t("business_name")}: ${businessName}`, 14, y); y += 6; }
-      if (take) {
-        doc.text(`${t("started_at")}: ${new Date(take.started_at).toLocaleString()}`, 14, y); y += 6;
-        if (take.completed_at) { doc.text(`${t("completed_at")}: ${new Date(take.completed_at).toLocaleString()}`, 14, y); y += 6; }
-        doc.text(`Status: ${t("status_completed")}`, 14, y); y += 6;
+      if (businessName) {
+        doc.text(`${t("business_name")}: ${businessName}`, 14, y);
+        y += 6;
       }
-      doc.text(`${t("items_checked_label")}: ${items.length}    ${t("items_with_discrepancies")}: ${discrepancies}`, 14, y); y += 6;
-      doc.text(`${t("total_shortage")}: ${totalShortage}    ${t("total_surplus")}: +${totalSurplus}`, 14, y); y += 4;
+      if (take) {
+        doc.text(`${t("started_at")}: ${new Date(take.started_at).toLocaleString()}`, 14, y);
+        y += 6;
+        if (take.completed_at) {
+          doc.text(`${t("completed_at")}: ${new Date(take.completed_at).toLocaleString()}`, 14, y);
+          y += 6;
+        }
+        doc.text(`Status: ${t("status_completed")}`, 14, y);
+        y += 6;
+      }
+      doc.text(
+        `${t("items_checked_label")}: ${items.length}    ${t("items_with_discrepancies")}: ${discrepancies}`,
+        14,
+        y,
+      );
+      y += 6;
+      doc.text(
+        `${t("total_shortage")}: ${totalShortage}    ${t("total_surplus")}: +${totalSurplus}`,
+        14,
+        y,
+      );
+      y += 4;
       const head = hasReasons
-        ? [["Item", t("unit"), t("system_qty"), t("actual_qty"), t("difference"), t("reason_for_difference")]]
+        ? [
+            [
+              "Item",
+              t("unit"),
+              t("system_qty"),
+              t("actual_qty"),
+              t("difference"),
+              t("reason_for_difference"),
+            ],
+          ]
         : [["Item", t("unit"), t("system_qty"), t("actual_qty"), t("difference")]];
       autoTable(doc, {
         startY: y + 4,
         head,
-        body: items.map(i => {
+        body: items.map((i) => {
           const row = [
             i.product_name,
             i.unit ?? "",
@@ -107,7 +144,10 @@ function StockTakeReportPage() {
 
   return (
     <div className="px-5 pt-10 pb-24 space-y-5">
-      <Link to="/stock-take" className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+      <Link
+        to="/stock-take"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground"
+      >
         <ArrowLeft className="h-4 w-4" /> {t("stock_take")}
       </Link>
       <header className="space-y-1">
@@ -115,7 +155,9 @@ function StockTakeReportPage() {
         {businessName && <p className="text-sm font-semibold text-foreground">{businessName}</p>}
         {take && (
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-xs text-muted-foreground">{new Date(take.started_at).toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground">
+              {new Date(take.started_at).toLocaleString()}
+            </p>
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
               {t("status_completed")}
             </span>
@@ -133,12 +175,20 @@ function StockTakeReportPage() {
         <>
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-2xl bg-card border border-border/60 p-4">
-              <p className="text-[10px] uppercase text-muted-foreground">{t("items_checked_label")}</p>
+              <p className="text-[10px] uppercase text-muted-foreground">
+                {t("items_checked_label")}
+              </p>
               <p className="text-2xl font-bold text-foreground">{items.length}</p>
             </div>
             <div className="rounded-2xl bg-card border border-border/60 p-4">
-              <p className="text-[10px] uppercase text-muted-foreground">{t("items_with_discrepancies")}</p>
-              <p className={`text-2xl font-bold ${discrepancies > 0 ? "text-amber-600" : "text-green-600"}`}>{discrepancies}</p>
+              <p className="text-[10px] uppercase text-muted-foreground">
+                {t("items_with_discrepancies")}
+              </p>
+              <p
+                className={`text-2xl font-bold ${discrepancies > 0 ? "text-amber-600" : "text-green-600"}`}
+              >
+                {discrepancies}
+              </p>
             </div>
             <div className="rounded-2xl bg-card border border-border/60 p-4">
               <p className="text-[10px] uppercase text-muted-foreground">{t("total_shortage")}</p>
@@ -159,11 +209,18 @@ function StockTakeReportPage() {
 
           <div className="space-y-2">
             {(diffItems.length > 0 ? diffItems : items).map((it) => (
-              <div key={it.id} className={`rounded-2xl bg-card border p-3 ${it.difference !== 0 ? "border-amber-300 bg-amber-50/40" : "border-border/60"}`}>
+              <div
+                key={it.id}
+                className={`rounded-2xl bg-card border p-3 ${it.difference !== 0 ? "border-amber-300 bg-amber-50/40" : "border-border/60"}`}
+              >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-foreground truncate">{it.product_name}</p>
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {it.product_name}
+                  </p>
                   {it.unit && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">{it.unit}</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
+                      {it.unit}
+                    </span>
                   )}
                 </div>
                 <div className="grid grid-cols-3 gap-2 mt-1 text-xs">
@@ -177,19 +234,27 @@ function StockTakeReportPage() {
                   </div>
                   <div>
                     <p className="text-[10px] uppercase text-muted-foreground">{t("difference")}</p>
-                    <p className={`font-bold ${it.difference < 0 ? "text-red-500" : it.difference > 0 ? "text-green-600" : "text-muted-foreground"}`}>
-                      {it.difference > 0 ? "+" : ""}{it.difference}
+                    <p
+                      className={`font-bold ${it.difference < 0 ? "text-red-500" : it.difference > 0 ? "text-green-600" : "text-muted-foreground"}`}
+                    >
+                      {it.difference > 0 ? "+" : ""}
+                      {it.difference}
                     </p>
                   </div>
                 </div>
                 {it.reason && (
-                  <p className="mt-2 text-xs"><span className="text-muted-foreground">{t("reason_for_difference")}:</span> <span className="font-semibold text-foreground">{it.reason}</span></p>
+                  <p className="mt-2 text-xs">
+                    <span className="text-muted-foreground">{t("reason_for_difference")}:</span>{" "}
+                    <span className="font-semibold text-foreground">{it.reason}</span>
+                  </p>
                 )}
               </div>
             ))}
           </div>
 
-          <p className="text-center text-[10px] text-muted-foreground pt-4">{t("generated_by_bossify")}</p>
+          <p className="text-center text-[10px] text-muted-foreground pt-4">
+            {t("generated_by_bossify")}
+          </p>
         </>
       )}
     </div>
