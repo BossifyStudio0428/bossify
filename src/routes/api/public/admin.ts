@@ -31,7 +31,11 @@ const Schema = z.discriminatedUnion("action", [
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...CORS },
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      ...CORS,
+    },
   });
 }
 
@@ -72,16 +76,24 @@ export const Route = createFileRoute("/api/public/admin")({
             return json(200, await loadAdminOverviewForUser(userId));
           }
           if (parsed.data.action === "set_plan") {
-            return json(200, await setAdminSubscriptionPlanForUser(
-              userId,
-              parsed.data.userId,
-              parsed.data.months,
-              parsed.data.plan ?? "pro",
-            ));
+            return json(
+              200,
+              await setAdminSubscriptionPlanForUser(
+                userId,
+                parsed.data.userId,
+                parsed.data.months,
+                parsed.data.plan ?? "pro",
+              ),
+            );
           }
-          return json(200, await revokeAdminSubscriptionPlanForUser(userId, parsed.data.userId));
+          return json(
+            200,
+            await revokeAdminSubscriptionPlanForUser(userId, parsed.data.userId),
+          );
         } catch (error) {
-          if (error instanceof Response) return json(error.status, { error: await error.text() });
+          if (error instanceof Response) {
+            return json(error.status, { error: await error.text() });
+          }
           console.error("[api/public/admin]", error);
           return json(500, { error: "Unable to load admin data" });
         }
