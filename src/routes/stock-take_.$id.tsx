@@ -7,6 +7,7 @@ import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { savePdf } from "@/lib/pdf";
 
 export const Route = createFileRoute("/stock-take_/$id")({ component: StockTakeReportPage });
 
@@ -52,52 +53,56 @@ function StockTakeReportPage() {
   const diffItems = items.filter(i => i.difference !== 0);
   const hasReasons = items.some(i => i.reason && i.reason.trim());
 
-  const exportPdf = () => {
-    const doc = new jsPDF();
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    doc.setFontSize(16);
-    doc.text("Bossify", 14, 16);
-    doc.setFontSize(13);
-    doc.text(t("stock_take_report"), 14, 24);
-    doc.setFontSize(10);
-    let y = 32;
-    if (businessName) { doc.text(`${t("business_name")}: ${businessName}`, 14, y); y += 6; }
-    if (take) {
-      doc.text(`${t("started_at")}: ${new Date(take.started_at).toLocaleString()}`, 14, y); y += 6;
-      if (take.completed_at) { doc.text(`${t("completed_at")}: ${new Date(take.completed_at).toLocaleString()}`, 14, y); y += 6; }
-      doc.text(`Status: ${t("status_completed")}`, 14, y); y += 6;
+  const exportPdf = async () => {
+    try {
+      const doc = new jsPDF();
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      doc.setFontSize(16);
+      doc.text("Bossify", 14, 16);
+      doc.setFontSize(13);
+      doc.text(t("stock_take_report"), 14, 24);
+      doc.setFontSize(10);
+      let y = 32;
+      if (businessName) { doc.text(`${t("business_name")}: ${businessName}`, 14, y); y += 6; }
+      if (take) {
+        doc.text(`${t("started_at")}: ${new Date(take.started_at).toLocaleString()}`, 14, y); y += 6;
+        if (take.completed_at) { doc.text(`${t("completed_at")}: ${new Date(take.completed_at).toLocaleString()}`, 14, y); y += 6; }
+        doc.text(`Status: ${t("status_completed")}`, 14, y); y += 6;
+      }
+      doc.text(`${t("items_checked_label")}: ${items.length}    ${t("items_with_discrepancies")}: ${discrepancies}`, 14, y); y += 6;
+      doc.text(`${t("total_shortage")}: ${totalShortage}    ${t("total_surplus")}: +${totalSurplus}`, 14, y); y += 4;
+      const head = hasReasons
+        ? [["Item", t("unit"), t("system_qty"), t("actual_qty"), t("difference"), t("reason_for_difference")]]
+        : [["Item", t("unit"), t("system_qty"), t("actual_qty"), t("difference")]];
+      autoTable(doc, {
+        startY: y + 4,
+        head,
+        body: items.map(i => {
+          const row = [
+            i.product_name,
+            i.unit ?? "",
+            i.system_quantity,
+            i.actual_quantity,
+            (i.difference > 0 ? "+" : "") + i.difference,
+          ];
+          if (hasReasons) row.push(i.reason ?? "");
+          return row;
+        }),
+      });
+      // Watermark on every page
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let p = 1; p <= pageCount; p++) {
+        doc.setPage(p);
+        doc.setFontSize(9);
+        doc.setTextColor(150);
+        doc.text(t("generated_by_bossify"), pageW / 2, pageH - 8, { align: "center" });
+        doc.setTextColor(0);
+      }
+      await savePdf(doc, `stock-take-${id.slice(0, 8)}.pdf`);
+    } catch (error: any) {
+      toast.error(error?.message ?? t("pdf_failed"));
     }
-    doc.text(`${t("items_checked_label")}: ${items.length}    ${t("items_with_discrepancies")}: ${discrepancies}`, 14, y); y += 6;
-    doc.text(`${t("total_shortage")}: ${totalShortage}    ${t("total_surplus")}: +${totalSurplus}`, 14, y); y += 4;
-    const head = hasReasons
-      ? [["Item", t("unit"), t("system_qty"), t("actual_qty"), t("difference"), t("reason_for_difference")]]
-      : [["Item", t("unit"), t("system_qty"), t("actual_qty"), t("difference")]];
-    autoTable(doc, {
-      startY: y + 4,
-      head,
-      body: items.map(i => {
-        const row = [
-          i.product_name,
-          i.unit ?? "",
-          i.system_quantity,
-          i.actual_quantity,
-          (i.difference > 0 ? "+" : "") + i.difference,
-        ];
-        if (hasReasons) row.push(i.reason ?? "");
-        return row;
-      }),
-    });
-    // Watermark on every page
-    const pageCount = (doc as any).internal.getNumberOfPages();
-    for (let p = 1; p <= pageCount; p++) {
-      doc.setPage(p);
-      doc.setFontSize(9);
-      doc.setTextColor(150);
-      doc.text(t("generated_by_bossify"), pageW / 2, pageH - 8, { align: "center" });
-      doc.setTextColor(0);
-    }
-    doc.save(`stock-take-${id.slice(0, 8)}.pdf`);
   };
 
   return (
