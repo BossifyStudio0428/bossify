@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
+import { supabase } from "@/integrations/supabase/client";
 import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
 import {
   loadAdminOverview,
@@ -76,6 +77,40 @@ function AdminPage() {
     return data;
   };
 
+  const loadNativeAdminOverview = async () => {
+    try {
+      const apiData = await callAdminApi({ action: "overview" });
+      const apiUsers = (apiData.users ?? []) as unknown[];
+      const apiOrders = (apiData.orders ?? []) as unknown[];
+      if (apiUsers.length > 0 || apiOrders.length > 0) return apiData;
+    } catch (error) {
+      console.warn("[admin] public API failed, falling back to direct admin reads", error);
+    }
+
+    if (!user?.id) throw new Error("Unauthorized");
+    const { data: me, error: meError } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (meError || !me?.is_admin) throw new Error("Forbidden");
+
+    const [{ data: directUsers, error: usersError }, { data: directOrders, error: ordersError }] =
+      await Promise.all([
+        supabase
+          .from("admin_users_view" as never)
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(20),
+      ]);
+
+    if (usersError || ordersError) {
+      console.error("[admin] direct fallback failed", { usersError, ordersError });
+      throw new Error("Unable to load admin data");
+    }
+    return { isAdmin: true, users: directUsers ?? [], orders: directOrders ?? [] };
+  };
+
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -93,7 +128,7 @@ function AdminPage() {
 
   const loadAll = async () => {
     const data = isNativeWebView()
-      ? await callAdminApi({ action: "overview" })
+      ? await loadNativeAdminOverview()
       : await loadAdminOverviewFn();
     setUsers((data.users ?? []) as unknown as AdminUser[]);
     setAllOrders((data.orders ?? []) as unknown as AdminOrder[]);
