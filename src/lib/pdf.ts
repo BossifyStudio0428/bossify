@@ -333,7 +333,8 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
     a.rel = "noopener";
     document.body.appendChild(a);
     if (/Android/i.test(navigator.userAgent)) {
-      window.open(url, "_blank", "noopener") ?? a.click();
+      const opened = window.open(url, "_blank", "noopener");
+      if (!opened) a.click();
     } else {
       a.click();
     }
