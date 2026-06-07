@@ -87,21 +87,21 @@ function AdminPage() {
         .maybeSingle();
       if (meError || !me?.is_admin) throw new Error("Forbidden");
 
-    const [
-      { data: profiles, error: profilesError },
-      { data: subscriptions, error: subscriptionsError },
-      { data: orders, error: ordersError },
-    ] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id,business_name,is_admin,created_at")
-        .order("created_at", { ascending: false }),
-      supabase.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
-      supabase
-        .from("orders")
-        .select("id,code,user_id,customer_name,product,amount,status,created_at")
-        .order("created_at", { ascending: false }),
-    ]);
+      const [
+        { data: profiles, error: profilesError },
+        { data: subscriptions, error: subscriptionsError },
+        { data: orders, error: ordersError },
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id,business_name,is_admin,created_at")
+          .order("created_at", { ascending: false }),
+        supabase.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
+        supabase
+          .from("orders")
+          .select("id,code,user_id,customer_name,product,amount,status,created_at")
+          .order("created_at", { ascending: false }),
+      ]);
 
       if (profilesError || subscriptionsError || ordersError) {
         throw { profilesError, subscriptionsError, ordersError };
