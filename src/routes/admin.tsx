@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
+import { supabase } from "@/integrations/supabase/client";
 import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
 import {
   loadAdminOverview,
@@ -76,6 +77,66 @@ function AdminPage() {
     return data;
   };
 
+  const loadNativeAdminOverview = async () => {
+    if (!user?.id) throw new Error("Unauthorized");
+    try {
+      const { data: me, error: meError } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (meError || !me?.is_admin) throw new Error("Forbidden");
+
+      const [
+        { data: profiles, error: profilesError },
+        { data: subscriptions, error: subscriptionsError },
+        { data: orders, error: ordersError },
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id,business_name,is_admin,created_at")
+          .order("created_at", { ascending: false }),
+        supabase.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
+        supabase
+          .from("orders")
+          .select("id,code,user_id,customer_name,product,amount,status,created_at")
+          .order("created_at", { ascending: false }),
+      ]);
+
+      if (profilesError || subscriptionsError || ordersError) {
+        throw { profilesError, subscriptionsError, ordersError };
+      }
+
+      const subscriptionsByUser = new Map(
+        (subscriptions ?? []).map((sub) => [sub.user_id, sub] as const),
+      );
+      const userRows = (profiles ?? []).map((profile) => {
+        const sub = subscriptionsByUser.get(profile.id);
+        const userOrders = (orders ?? []).filter((order) => order.user_id === profile.id);
+        return {
+          id: profile.id,
+          business_name: profile.business_name,
+          is_admin: profile.is_admin,
+          created_at: profile.created_at,
+          plan: sub?.plan ?? "free",
+          status: sub?.status ?? null,
+          expires_at: sub?.expires_at ?? null,
+          order_count: sub?.order_count ?? null,
+          total_orders: userOrders.length,
+          total_revenue: userOrders.reduce(
+            (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
+            0,
+          ),
+        };
+      });
+
+      return { isAdmin: true, users: userRows, orders: (orders ?? []).slice(0, 20) };
+    } catch (error) {
+      console.error("[admin] direct admin reads failed, falling back to public API", error);
+      return callAdminApi({ action: "overview" });
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -92,9 +153,7 @@ function AdminPage() {
   }, [user?.id]);
 
   const loadAll = async () => {
-    const data = isNativeWebView()
-      ? await callAdminApi({ action: "overview" })
-      : await loadAdminOverviewFn();
+    const data = isNativeWebView() ? await loadNativeAdminOverview() : await loadAdminOverviewFn();
     setUsers((data.users ?? []) as unknown as AdminUser[]);
     setAllOrders((data.orders ?? []) as unknown as AdminOrder[]);
   };

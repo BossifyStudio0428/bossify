@@ -265,45 +265,79 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
   if (Capacitor.isNativePlatform()) {
     const dataUri = doc.output("datauristring");
     const base64 = dataUri.split(",")[1];
-    let res;
+    if (!base64) throw new Error("Unable to generate PDF data");
+
+    const safeFilename = filename.replace(/[^a-zA-Z0-9._ -]/g, "_");
+    const cachePath = `bossify/${safeFilename}`;
+    const documentsPath = `Bossify/${safeFilename}`;
+
+    const res = await Filesystem.writeFile({
+      path: cachePath,
+      data: base64,
+      directory: Directory.Cache,
+      recursive: true,
+    });
+
     try {
-      res = await Filesystem.writeFile({
-        path: filename,
+      await Filesystem.writeFile({
+        path: documentsPath,
         data: base64,
         directory: Directory.Documents,
         recursive: true,
       });
-    } catch (writeErr) {
-      console.error("[pdf] documents write failed, falling back to cache", writeErr);
-      res = await Filesystem.writeFile({
-        path: filename,
-        data: base64,
-        directory: Directory.Cache,
-        recursive: true,
-      });
+    } catch (documentsErr) {
+      console.warn("[pdf] documents copy skipped; using app cache file", documentsErr);
     }
+
     try {
       await FileOpener.open({
         filePath: res.uri,
         contentType: "application/pdf",
-        openWithDefault: true,
+        openWithDefault: false,
       });
       return;
     } catch (openErr) {
       console.error("[pdf] open failed, falling back to share", openErr);
-      await Share.share({ title: filename, url: res.uri, dialogTitle: filename });
+      try {
+        await Share.share({
+          title: safeFilename,
+          text: safeFilename,
+          files: [res.uri],
+          dialogTitle: safeFilename,
+        });
+      } catch (shareErr) {
+        console.error("[pdf] share files failed, falling back to url share", shareErr);
+        await Share.share({ title: safeFilename, url: res.uri, dialogTitle: safeFilename });
+      }
       return;
     }
   }
   try {
     const blob = doc.output("blob");
+    const safeFilename = filename.replace(/[^a-zA-Z0-9._ -]/g, "_");
+
+    const shareFile = new File([blob], safeFilename, { type: "application/pdf" });
+    const webShare = navigator as Navigator & {
+      canShare?: (data: ShareData & { files?: File[] }) => boolean;
+      share?: (data: ShareData & { files?: File[] }) => Promise<void>;
+    };
+    if (webShare.share && webShare.canShare?.({ files: [shareFile] })) {
+      await webShare.share({ title: safeFilename, text: safeFilename, files: [shareFile] });
+      return;
+    }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename;
+    a.download = safeFilename;
     a.rel = "noopener";
     document.body.appendChild(a);
-    a.click();
+    if (/Android/i.test(navigator.userAgent)) {
+      const opened = window.open(url, "_blank", "noopener");
+      if (!opened) a.click();
+    } else {
+      a.click();
+    }
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   } catch {
