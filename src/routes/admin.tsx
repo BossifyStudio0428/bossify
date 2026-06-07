@@ -78,22 +78,14 @@ function AdminPage() {
   };
 
   const loadNativeAdminOverview = async () => {
-    try {
-      const apiData = await callAdminApi({ action: "overview" });
-      const apiUsers = (apiData.users ?? []) as unknown[];
-      const apiOrders = (apiData.orders ?? []) as unknown[];
-      if (apiUsers.length > 0 || apiOrders.length > 0) return apiData;
-    } catch (error) {
-      console.warn("[admin] public API failed, falling back to direct admin reads", error);
-    }
-
     if (!user?.id) throw new Error("Unauthorized");
-    const { data: me, error: meError } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (meError || !me?.is_admin) throw new Error("Forbidden");
+    try {
+      const { data: me, error: meError } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (meError || !me?.is_admin) throw new Error("Forbidden");
 
     const [
       { data: profiles, error: profilesError },
@@ -111,39 +103,38 @@ function AdminPage() {
         .order("created_at", { ascending: false }),
     ]);
 
-    if (profilesError || subscriptionsError || ordersError) {
-      console.error("[admin] direct fallback failed", {
-        profilesError,
-        subscriptionsError,
-        ordersError,
+      if (profilesError || subscriptionsError || ordersError) {
+        throw { profilesError, subscriptionsError, ordersError };
+      }
+
+      const subscriptionsByUser = new Map(
+        (subscriptions ?? []).map((sub) => [sub.user_id, sub] as const),
+      );
+      const userRows = (profiles ?? []).map((profile) => {
+        const sub = subscriptionsByUser.get(profile.id);
+        const userOrders = (orders ?? []).filter((order) => order.user_id === profile.id);
+        return {
+          id: profile.id,
+          business_name: profile.business_name,
+          is_admin: profile.is_admin,
+          created_at: profile.created_at,
+          plan: sub?.plan ?? "free",
+          status: sub?.status ?? null,
+          expires_at: sub?.expires_at ?? null,
+          order_count: sub?.order_count ?? null,
+          total_orders: userOrders.length,
+          total_revenue: userOrders.reduce(
+            (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
+            0,
+          ),
+        };
       });
-      throw new Error("Unable to load admin data");
+
+      return { isAdmin: true, users: userRows, orders: (orders ?? []).slice(0, 20) };
+    } catch (error) {
+      console.error("[admin] direct admin reads failed, falling back to public API", error);
+      return callAdminApi({ action: "overview" });
     }
-
-    const subscriptionsByUser = new Map(
-      (subscriptions ?? []).map((sub) => [sub.user_id, sub] as const),
-    );
-    const userRows = (profiles ?? []).map((profile) => {
-      const sub = subscriptionsByUser.get(profile.id);
-      const userOrders = (orders ?? []).filter((order) => order.user_id === profile.id);
-      return {
-        id: profile.id,
-        business_name: profile.business_name,
-        is_admin: profile.is_admin,
-        created_at: profile.created_at,
-        plan: sub?.plan ?? "free",
-        status: sub?.status ?? null,
-        expires_at: sub?.expires_at ?? null,
-        order_count: sub?.order_count ?? null,
-        total_orders: userOrders.length,
-        total_revenue: userOrders.reduce(
-          (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
-          0,
-        ),
-      };
-    });
-
-    return { isAdmin: true, users: userRows, orders: (orders ?? []).slice(0, 20) };
   };
 
   useEffect(() => {
