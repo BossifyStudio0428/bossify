@@ -314,13 +314,29 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
   }
   try {
     const blob = doc.output("blob");
+    const safeFilename = filename.replace(/[^a-zA-Z0-9._ -]/g, "_");
+
+    const shareFile = new File([blob], safeFilename, { type: "application/pdf" });
+    const webShare = navigator as Navigator & {
+      canShare?: (data: ShareData & { files?: File[] }) => boolean;
+      share?: (data: ShareData & { files?: File[] }) => Promise<void>;
+    };
+    if (webShare.share && webShare.canShare?.({ files: [shareFile] })) {
+      await webShare.share({ title: safeFilename, text: safeFilename, files: [shareFile] });
+      return;
+    }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename;
+    a.download = safeFilename;
     a.rel = "noopener";
     document.body.appendChild(a);
-    a.click();
+    if (/Android/i.test(navigator.userAgent)) {
+      window.open(url, "_blank", "noopener") ?? a.click();
+    } else {
+      a.click();
+    }
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   } catch {
