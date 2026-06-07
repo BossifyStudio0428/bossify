@@ -95,14 +95,16 @@ function AdminPage() {
       .maybeSingle();
     if (meError || !me?.is_admin) throw new Error("Forbidden");
 
-    const [{ data: directUsers, error: usersError }, { data: directOrders, error: ordersError }] =
-      await Promise.all([
-        supabase
-          .from("admin_users_view" as never)
-          .select("*")
-          .order("created_at", { ascending: false }),
-        supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(20),
-      ]);
+    const [
+      { data: directUsers, error: usersError },
+      { data: directOrders, error: ordersError },
+    ] = await Promise.all([
+      supabase
+        .from("admin_users_view" as never)
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(20),
+    ]);
 
     if (usersError || ordersError) {
       console.error("[admin] direct fallback failed", { usersError, ordersError });
