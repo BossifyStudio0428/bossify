@@ -31,6 +31,7 @@ function StockTakeReportPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [businessName, setBusinessName] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -65,6 +66,8 @@ function StockTakeReportPage() {
   const hasReasons = items.some((i) => i.reason && i.reason.trim());
 
   const exportPdf = async () => {
+    if (exporting) return;
+    setExporting(true);
     try {
       const doc = new jsPDF();
       const pageW = doc.internal.pageSize.getWidth();
@@ -140,6 +143,8 @@ function StockTakeReportPage() {
       await savePdf(doc, `stock-take-${id.slice(0, 8)}.pdf`);
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : t("pdf_failed"));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -203,9 +208,10 @@ function StockTakeReportPage() {
 
           <button
             onClick={exportPdf}
+            disabled={exporting}
             className="w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.99]"
           >
-            <Download className="h-4 w-4" /> {t("export_pdf")}
+            <Download className="h-4 w-4" /> {exporting ? "…" : t("export_pdf")}
           </button>
 
           <div className="space-y-2">
