@@ -95,20 +95,55 @@ function AdminPage() {
       .maybeSingle();
     if (meError || !me?.is_admin) throw new Error("Forbidden");
 
-    const [{ data: directUsers, error: usersError }, { data: directOrders, error: ordersError }] =
-      await Promise.all([
-        supabase
-          .from("admin_users_view" as never)
-          .select("*")
-          .order("created_at", { ascending: false }),
-        supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(20),
-      ]);
+    const [
+      { data: profiles, error: profilesError },
+      { data: subscriptions, error: subscriptionsError },
+      { data: orders, error: ordersError },
+    ] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id,business_name,is_admin,created_at")
+        .order("created_at", { ascending: false }),
+      supabase.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
+      supabase
+        .from("orders")
+        .select("id,code,user_id,customer_name,product,amount,status,created_at")
+        .order("created_at", { ascending: false }),
+    ]);
 
-    if (usersError || ordersError) {
-      console.error("[admin] direct fallback failed", { usersError, ordersError });
+    if (profilesError || subscriptionsError || ordersError) {
+      console.error("[admin] direct fallback failed", {
+        profilesError,
+        subscriptionsError,
+        ordersError,
+      });
       throw new Error("Unable to load admin data");
     }
-    return { isAdmin: true, users: directUsers ?? [], orders: directOrders ?? [] };
+
+    const subscriptionsByUser = new Map(
+      (subscriptions ?? []).map((sub) => [sub.user_id, sub] as const),
+    );
+    const userRows = (profiles ?? []).map((profile) => {
+      const sub = subscriptionsByUser.get(profile.id);
+      const userOrders = (orders ?? []).filter((order) => order.user_id === profile.id);
+      return {
+        id: profile.id,
+        business_name: profile.business_name,
+        is_admin: profile.is_admin,
+        created_at: profile.created_at,
+        plan: sub?.plan ?? "free",
+        status: sub?.status ?? null,
+        expires_at: sub?.expires_at ?? null,
+        order_count: sub?.order_count ?? null,
+        total_orders: userOrders.length,
+        total_revenue: userOrders.reduce(
+          (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
+          0,
+        ),
+      };
+    });
+
+    return { isAdmin: true, users: userRows, orders: (orders ?? []).slice(0, 20) };
   };
 
   useEffect(() => {
