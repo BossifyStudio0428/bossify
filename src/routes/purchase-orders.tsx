@@ -50,6 +50,12 @@ function PurchaseOrdersPage() {
   const [counts, setCounts] = useState<Counts>({});
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [aiSourceOpen, setAiSourceOpen] = useState(false);
+  const [aiTextOpen, setAiTextOpen] = useState(false);
+  const [aiText, setAiText] = useState("");
+  const [aiScanning, setAiScanning] = useState(false);
+  const [aiResult, setAiResult] = useState<ParsedPoResult | null>(null);
+  const parseFn = useServerFn(parsePurchaseOrderWithAi);
 
   const supplierMap = useMemo(() => {
     const m = new Map<string, string>();
