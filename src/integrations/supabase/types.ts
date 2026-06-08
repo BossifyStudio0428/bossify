@@ -410,6 +410,8 @@ export type Database = {
           platform_order_id: string | null
           product: string
           quantity: number
+          receipt_confirmed: boolean
+          receipt_url: string | null
           status: string
           updated_at: string
           user_id: string
@@ -428,6 +430,8 @@ export type Database = {
           platform_order_id?: string | null
           product: string
           quantity?: number
+          receipt_confirmed?: boolean
+          receipt_url?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -446,6 +450,8 @@ export type Database = {
           platform_order_id?: string | null
           product?: string
           quantity?: number
+          receipt_confirmed?: boolean
+          receipt_url?: string | null
           status?: string
           updated_at?: string
           user_id?: string

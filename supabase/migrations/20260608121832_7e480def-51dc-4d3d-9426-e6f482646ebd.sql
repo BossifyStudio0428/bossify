@@ -1,0 +1,3 @@
+ALTER TABLE public.orders 
+  ADD COLUMN IF NOT EXISTS receipt_url text,
+  ADD COLUMN IF NOT EXISTS receipt_confirmed boolean NOT NULL DEFAULT false;
