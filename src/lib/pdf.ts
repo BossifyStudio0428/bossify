@@ -282,7 +282,9 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
       path: cachePath,
       directory: Directory.Cache,
     });
-    const fileUri = cacheUri.uri.startsWith("file://") ? cacheUri.uri : `file://${cacheUri.uri}`;
+    const fileUri = /^(file|content):\/\//.test(cacheUri.uri)
+      ? cacheUri.uri
+      : `file://${cacheUri.uri}`;
 
     try {
       await Filesystem.writeFile({
