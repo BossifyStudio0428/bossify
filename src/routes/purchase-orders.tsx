@@ -236,8 +236,13 @@ function PurchaseOrdersPage() {
       {formOpen && (
         <PurchaseOrderForm
           userId={user?.id ?? ""}
+          mode={mode}
           suppliers={suppliers}
-          ingredients={ingredients}
+          ingredients={
+            mode === "inventory"
+              ? inventoryItems.map((i) => ({ id: i.id, name: i.name, unit: "pcs", cost_per_unit: i.price }))
+              : ingredients
+          }
           onClose={() => setFormOpen(false)}
           onSaved={() => {
             setFormOpen(false);
