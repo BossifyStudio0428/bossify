@@ -26,7 +26,7 @@ export async function logAiUsage(input: LogAiUsageInput) {
     const inputTokens = Math.max(0, Math.floor(input.inputTokens ?? 0));
     const outputTokens = Math.max(0, Math.floor(input.outputTokens ?? 0));
     const cost = estimateCostUsd(input.model, inputTokens, outputTokens);
-    await supabaseAdmin.from("ai_usage_logs").insert({
+    await supabaseAdmin.from("ai_usage_logs" as never).insert({
       user_id: input.userId,
       feature: input.feature,
       model: input.model,
@@ -35,7 +35,7 @@ export async function logAiUsage(input: LogAiUsageInput) {
       est_cost_usd: cost,
       status: input.status ?? "ok",
       error_msg: input.errorMsg ?? null,
-    });
+    } as never);
   } catch (err) {
     console.warn("[ai-usage] log failed", err);
   }
