@@ -2986,6 +2986,7 @@ const dict = {
     receipt_unconfirmed: "标记收据未确认",
     view_receipt: "查看收据",
     receipt_remove: "删除收据",
+    thank_customer_msg: "你好 {name}，感谢您一直以来的支持！",
     delete_order: "删除订单",
     pull_refresh: "下拉刷新",
     no_orders_create: "暂无订单。点击 + 创建您的第一个订单！",
