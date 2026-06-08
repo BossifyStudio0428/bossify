@@ -56,7 +56,36 @@ function StockTakeReportPage() {
       if (tk.error) toast.error(tk.error.message);
       else setTake(tk.data as unknown as Take);
       if (its.error) toast.error(its.error.message);
-      else setItems((its.data ?? []) as unknown as Item[]);
+      else {
+        const rawItems = (its.data ?? []) as unknown as Item[];
+        // Older stock-take records didn't persist `unit` on stock_take_items.
+        // Back-fill from the ingredients table by product name so the PDF /
+        // on-screen report shows the unit column instead of being blank.
+        const missingUnitNames = Array.from(
+          new Set(
+            rawItems
+              .filter((it) => !it.unit || !String(it.unit).trim())
+              .map((it) => it.product_name),
+          ),
+        );
+        let unitMap: Record<string, string> = {};
+        if (missingUnitNames.length > 0) {
+          const { data: ingr } = await supabase
+            .from("ingredients" as never)
+            .select("name, unit")
+            .in("name", missingUnitNames);
+          ((ingr ?? []) as unknown as { name: string; unit: string | null }[]).forEach((row) => {
+            if (row.unit) unitMap[row.name] = row.unit;
+          });
+        }
+        setItems(
+          rawItems.map((it) =>
+            it.unit && String(it.unit).trim()
+              ? it
+              : { ...it, unit: unitMap[it.product_name] ?? it.unit ?? null },
+          ),
+        );
+      }
       if (prof.data?.business_name) setBusinessName(prof.data.business_name);
       setLoading(false);
     })();
