@@ -1429,6 +1429,7 @@ const dict = {
     po_item_count: "items",
     po_add_item: "+ Add Item",
     po_select_ingredient: "Select ingredient",
+    po_select_product: "Select product",
     po_quantity: "Quantity",
     po_unit: "Unit",
     po_unit_price: "Unit Price (RM)",
