@@ -186,6 +186,41 @@ function PurchaseOrdersPage() {
 
       <StockTabs active="purchase-orders" />
 
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`${t("search")}...`}
+            className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-muted/40 border border-border/60 text-sm outline-none focus:border-primary"
+          />
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs outline-none focus:border-primary"
+          />
+          <span className="text-xs text-muted-foreground self-center">–</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs outline-none focus:border-primary"
+          />
+          {(dateFrom || dateTo) && (
+            <button
+              onClick={() => { setDateFrom(""); setDateTo(""); }}
+              className="px-2 rounded-xl text-xs text-muted-foreground hover:bg-muted"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
       <button
         onClick={() => setAiSourceOpen(true)}
         className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-primary/15 to-primary/5 border border-primary/30 text-primary font-semibold text-sm active:scale-[0.99] transition-transform"
@@ -200,12 +235,12 @@ function PurchaseOrdersPage() {
         </div>
       )}
 
-      {!loading && orders.length === 0 && (
+      {!loading && filteredOrders.length === 0 && (
         <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("po_no_orders")}</p>
       )}
 
       <div className="space-y-2">
-        {orders.map((o) => {
+        {filteredOrders.map((o) => {
           const cnt = counts[o.id]?.items ?? 0;
           const supplierName = (o.supplier_id && supplierMap.get(o.supplier_id)) || "—";
           const label =
