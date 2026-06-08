@@ -1,15 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireExternalSupabaseAuth as requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
-import {
-  loadAdminOverviewForUser,
-  revokeAdminSubscriptionPlanForUser,
-  setAdminSubscriptionPlanForUser,
-} from "@/lib/admin.server";
 
 export const loadAdminOverview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { loadAdminOverviewForUser } = await import("@/lib/admin.server");
     return loadAdminOverviewForUser(context.userId);
   });
 
@@ -25,6 +21,7 @@ export const setAdminSubscriptionPlan = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { setAdminSubscriptionPlanForUser } = await import("@/lib/admin.server");
     return setAdminSubscriptionPlanForUser(
       context.userId,
       data.userId,
@@ -37,5 +34,6 @@ export const revokeAdminSubscriptionPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    const { revokeAdminSubscriptionPlanForUser } = await import("@/lib/admin.server");
     return revokeAdminSubscriptionPlanForUser(context.userId, data.userId);
   });

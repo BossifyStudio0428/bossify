@@ -72,6 +72,8 @@ npx cap open android
 
 **每次改动都要 git pull → 重新 build web assets → sync 进 Android → 用 Android Studio 重新打 APK/AAB → 重新上传 Play**（因为是离线 SPA，不是远程 WebView）：
 
+如果改动包含 Android 里要调用的后端 API（例如 Admin Panel）或 PDF/native 功能，先在 Lovable 点 **Publish / Update** 一次，再打新 APK。否则 APK 可能还在调用旧的线上 API，Admin 会继续显示 0。
+
 ```bash
 cd bossify
 git pull

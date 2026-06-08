@@ -271,12 +271,20 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
     const cachePath = `bossify/${safeFilename}`;
     const documentsPath = `Bossify/${safeFilename}`;
 
-    const res = await Filesystem.writeFile({
+    await Filesystem.writeFile({
       path: cachePath,
       data: base64,
       directory: Directory.Cache,
       recursive: true,
     });
+
+    const cacheUri = await Filesystem.getUri({
+      path: cachePath,
+      directory: Directory.Cache,
+    });
+    const fileUri = /^(file|content):\/\//.test(cacheUri.uri)
+      ? cacheUri.uri
+      : `file://${cacheUri.uri}`;
 
     try {
       await Filesystem.writeFile({
@@ -291,9 +299,9 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
 
     try {
       await FileOpener.open({
-        filePath: res.uri,
+        filePath: fileUri,
         contentType: "application/pdf",
-        openWithDefault: false,
+        openWithDefault: true,
       });
       return;
     } catch (openErr) {
@@ -302,12 +310,14 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
         await Share.share({
           title: safeFilename,
           text: safeFilename,
-          files: [res.uri],
+          files: [fileUri],
           dialogTitle: safeFilename,
         });
       } catch (shareErr) {
-        console.error("[pdf] share files failed, falling back to url share", shareErr);
-        await Share.share({ title: safeFilename, url: res.uri, dialogTitle: safeFilename });
+        console.error("[pdf] share files failed", shareErr);
+        throw new Error(
+          "PDF created, but Android could not open or share it. Please install a PDF viewer and try again.",
+        );
       }
       return;
     }
