@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, Lock } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { savePdf } from "@/lib/pdf";
 
 export const Route = createFileRoute("/stock-take_/$id")({ component: StockTakeReportPage });
@@ -27,6 +28,7 @@ function StockTakeReportPage() {
   const { id } = Route.useParams();
   const { t } = useI18n();
   const { user } = useAuth();
+  const { hasFullAccess, showUpgrade } = useSubscription();
   const [take, setTake] = useState<Take | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [businessName, setBusinessName] = useState<string>("");
@@ -67,6 +69,10 @@ function StockTakeReportPage() {
 
   const exportPdf = async () => {
     if (exporting) return;
+    if (!hasFullAccess) {
+      showUpgrade(t("pro_feature_required"));
+      return;
+    }
     setExporting(true);
     try {
       const doc = new jsPDF();
@@ -212,7 +218,8 @@ function StockTakeReportPage() {
             disabled={exporting}
             className="w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.99]"
           >
-            <Download className="h-4 w-4" /> {exporting ? "…" : t("export_pdf")}
+            {hasFullAccess ? <Download className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            {exporting ? "…" : t("export_pdf")}
           </button>
 
           <div className="space-y-2">
