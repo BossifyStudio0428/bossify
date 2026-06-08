@@ -8,8 +8,10 @@ import type jsPDF from "jspdf";
 // The font is ~17MB so the download is slow on first use, but it's served
 // from jsDelivr's CDN (cached) and the browser/WebView caches it after.
 
+// Use a static Regular weight TTF — jsPDF doesn't honor variable-font weight
+// axes, so a VF file renders at the thinnest master (looks washed out).
 const FONT_URL =
-  "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/Variable/TTF/Subset/NotoSansSC-VF.ttf";
+  "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-sc@5.0.5/files/noto-sans-sc-chinese-simplified-400-normal.woff";
 const FONT_VFS_NAME = "NotoSansSC.ttf";
 const FONT_FAMILY = "NotoSansSC";
 
