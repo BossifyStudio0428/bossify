@@ -99,7 +99,7 @@ function SuppliersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={`${t("search")}...`}
-          className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-muted/40 border border-border/60 text-sm outline-none focus:border-primary"
+          className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-card border border-border shadow-sm text-sm outline-none focus:border-primary"
         />
       </div>
 
@@ -252,7 +252,7 @@ function SupplierFormSheet({
         <button
           type="button"
           onClick={() => setPickerOpen((v) => !v)}
-          className="w-full min-h-[48px] rounded-2xl bg-muted/40 border border-border/60 px-3 py-2 text-left text-sm text-foreground focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+          className="w-full min-h-[48px] rounded-2xl bg-card border border-border shadow-sm px-3 py-2 text-left text-sm text-foreground focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
         >
           {selected.length === 0 ? (
             <span className="text-muted-foreground">—</span>
@@ -298,7 +298,7 @@ function SupplierFormSheet({
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
+          className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
         />
       </div>
       <button

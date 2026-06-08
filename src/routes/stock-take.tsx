@@ -257,7 +257,7 @@ function StockTakePage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("search_products")}
-              className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-muted/40 border border-border/60 text-sm outline-none focus:border-primary"
+              className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-card border border-border shadow-sm text-sm outline-none focus:border-primary"
             />
           </div>
         )}
@@ -326,7 +326,7 @@ function StockTakePage() {
                       step={isFnb ? "0.01" : "1"}
                       value={r.actual_quantity}
                       onChange={(e) => updateActual(idx, e.target.value)}
-                      className="w-full rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
+                      className="w-full rounded-xl bg-card border border-border shadow-sm px-3 py-2 text-sm outline-none focus:border-primary"
                     />
                   </div>
                   <div>
@@ -343,7 +343,7 @@ function StockTakePage() {
                       value={r.reason}
                       onChange={(e) => updateReason(idx, e.target.value)}
                       placeholder={t("reason_placeholder")}
-                      className="w-full rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
+                      className="w-full rounded-xl bg-card border border-border shadow-sm px-3 py-2 text-sm outline-none focus:border-primary"
                     />
                   </div>
                 )}
@@ -403,14 +403,14 @@ function StockTakePage() {
             type="date"
             value={listDateFrom}
             onChange={(e) => setListDateFrom(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs outline-none focus:border-primary"
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-card border border-border shadow-sm text-xs outline-none focus:border-primary"
           />
           <span className="text-xs text-muted-foreground">–</span>
           <input
             type="date"
             value={listDateTo}
             onChange={(e) => setListDateTo(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs outline-none focus:border-primary"
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-card border border-border shadow-sm text-xs outline-none focus:border-primary"
           />
           {(listDateFrom || listDateTo) && (
             <button
