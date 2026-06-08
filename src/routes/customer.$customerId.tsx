@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { ArrowLeft, X, Calendar as CalendarIcon, Check, Plus, Home } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type OrderRow, type CustomerStatus, type FollowUpRow } from "@/integrations/supabase/client";
-import { useI18n } from "@/contexts/I18nContext";
+import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { PhoneInput } from "@/components/PhoneInput";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { EducationDetailsForm } from "@/components/EducationDetailsForm";
@@ -311,7 +311,7 @@ function CustomerDetail() {
         <button
           onClick={() => {
             if (!customer.phone) { toast.error(t("no_phone_for_wa")); return; }
-            window.open(buildWA(customer.phone, `Hi ${customer.name}! 👋 Thank you for being a valued customer! 😊`), "_blank");
+            window.open(buildWA(customer.phone, t("thank_customer_msg" as TKey).replace("{name}", customer.name)), "_blank");
           }}
           className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white font-semibold active:scale-[0.99]"
         >
