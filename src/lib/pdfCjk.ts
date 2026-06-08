@@ -8,10 +8,13 @@ import type jsPDF from "jspdf";
 // The font is ~17MB so the download is slow on first use, but it's served
 // from jsDelivr's CDN (cached) and the browser/WebView caches it after.
 
+// jsPDF only accepts real TTF files. Noto Sans SC ships as a Variable Font
+// or OTF (CFF), both of which jsPDF renders at the thinnest weight (washed
+// out) or refuses outright. Use a solid Regular-weight TTF instead.
 const FONT_URL =
-  "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/Variable/TTF/Subset/NotoSansSC-VF.ttf";
-const FONT_VFS_NAME = "NotoSansSC.ttf";
-const FONT_FAMILY = "NotoSansSC";
+  "https://cdn.jsdelivr.net/gh/StellarCN/scp_zh/fonts/SimHei.ttf";
+const FONT_VFS_NAME = "SimHei.ttf";
+const FONT_FAMILY = "SimHei";
 
 let cached: Promise<string> | null = null;
 
