@@ -374,29 +374,29 @@ export const DEFAULT_REMINDER_TPL = REMINDER_TPL.retail.en;
 // ---------------------------------------------------------------------------
 const RECEIPT_TPL: Record<Lang, string> = {
   en:
-    `Hi [customer_name]! 👋\n\n` +
-    `Thank you, your payment has been received! ✅\n\n` +
-    `🧾 Order: [code]\n` +
-    `📦 Item: [product] x[quantity]\n` +
-    `💰 Paid: RM [amount]\n` +
+    `Hi [customer_name],\n\n` +
+    `Thank you! Your payment has been received.\n\n` +
+    `- Order: [code]\n` +
+    `- Item: [product] x[quantity]\n` +
+    `- Paid: RM [amount]\n` +
     `[receipt_line]` +
-    `Thank you for your business with [business_name]! 🙏`,
+    `Thank you for your business with [business_name].`,
   ms:
-    `Hi [customer_name]! 👋\n\n` +
-    `Terima kasih, pembayaran anda telah diterima! ✅\n\n` +
-    `🧾 Pesanan: [code]\n` +
-    `📦 Item: [product] x[quantity]\n` +
-    `💰 Dibayar: RM [amount]\n` +
+    `Hi [customer_name],\n\n` +
+    `Terima kasih! Pembayaran anda telah diterima.\n\n` +
+    `- Pesanan: [code]\n` +
+    `- Item: [product] x[quantity]\n` +
+    `- Dibayar: RM [amount]\n` +
     `[receipt_line]` +
-    `Terima kasih kerana berurusan dengan [business_name]! 🙏`,
+    `Terima kasih kerana berurusan dengan [business_name].`,
   zh:
-    `你好 [customer_name]！👋\n\n` +
-    `已收到您的付款，谢谢！✅\n\n` +
-    `🧾 订单：[code]\n` +
-    `📦 商品：[product] x[quantity]\n` +
-    `💰 已付：RM [amount]\n` +
+    `你好 [customer_name]，\n\n` +
+    `已收到您的付款，谢谢！\n\n` +
+    `- 订单：[code]\n` +
+    `- 商品：[product] x[quantity]\n` +
+    `- 已付：RM [amount]\n` +
     `[receipt_line]` +
-    `感谢您光顾 [business_name]！🙏`,
+    `感谢您光顾 [business_name]！`,
 };
 
 const RECEIPT_LABEL: Record<Lang, string> = { en: "Receipt", ms: "Resit", zh: "收据" };
@@ -626,7 +626,7 @@ export function renderTemplate(tpl: string, vars: TplVars, lang: Lang = getActiv
   const dateTimeLine = vars.date_time ? `📅 ${DATE_TIME_LABEL[lang]}: ${vars.date_time}\n` : "";
   const followUpLine = vars.follow_up_date ? `📅 ${FOLLOW_UP_LABEL[lang]}: ${vars.follow_up_date}\n` : "";
   const deadlineLine = vars.deadline ? `📅 ${DEADLINE_LABEL[lang]}: ${vars.deadline}\n` : "";
-  const receiptLine = vars.receipt_url ? `🧾 ${RECEIPT_LABEL[lang]}: ${vars.receipt_url}\n\n` : "";
+  const receiptLine = vars.receipt_url ? `${RECEIPT_LABEL[lang]}: ${vars.receipt_url}\n\n` : "";
   out = out.replace(/\[date_time_line\]/g, dateTimeLine);
   out = out.replace(/\[follow_up_line\]/g, followUpLine);
   out = out.replace(/\[deadline_line\]/g, deadlineLine);
