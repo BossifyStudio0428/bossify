@@ -6,6 +6,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { SheetShell, SheetField } from "@/components/InventorySheets";
 import type { ParsedPoResult } from "@/lib/ai-parse-po.functions";
 import { applyReceivedStock, applyReceivedStockInventory } from "@/routes/purchase-orders";
+import { mergeCategories } from "@/lib/ingredientCategories";
 
 type Supplier = { id: string; name: string };
 type StockRef = { id: string; name: string; unit?: string; cost_per_unit?: number };
@@ -20,6 +21,7 @@ type ReviewItem = {
   unit: string;
   unit_price: string;
   confidence: number;
+  category: string;
 };
 
 type POStatus = "pending" | "received" | "cancelled";
@@ -29,6 +31,7 @@ export function PurchaseOrderAiReview({
   mode,
   suppliers,
   stockItems,
+  customCategories = [],
   parsed,
   onClose,
   onSaved,
@@ -37,6 +40,7 @@ export function PurchaseOrderAiReview({
   mode: Mode;
   suppliers: Supplier[];
   stockItems: StockRef[];
+  customCategories?: string[];
   parsed: ParsedPoResult;
   onClose: () => void;
   onSaved: () => void;
@@ -70,8 +74,23 @@ export function PurchaseOrderAiReview({
       unit: it.unit ?? "",
       unit_price: String(it.unit_price ?? 0),
       confidence: it.confidence ?? 0,
+      category: (it.category ?? "").trim(),
     })),
   );
+
+  const categoryOptions = useMemo(() => {
+    const merged = mergeCategories(customCategories);
+    // Also include any AI-suggested categories not yet in list
+    const set = new Set(merged.map((c) => c.toLowerCase()));
+    items.forEach((i) => {
+      const c = i.category.trim();
+      if (c && !set.has(c.toLowerCase())) {
+        set.add(c.toLowerCase());
+        merged.push(c);
+      }
+    });
+    return merged;
+  }, [customCategories, items]);
 
   const ingMap = useMemo(() => {
     const m = new Map<string, StockRef>();
@@ -134,6 +153,8 @@ export function PurchaseOrderAiReview({
     // Insert new stock items (those without matched id).
     const newOnes = chosen.filter((l) => !l.matched_id);
     const created: Record<string, string> = {};
+    const newCatsToPersist = new Set<string>();
+    const knownCatsLower = new Set(mergeCategories(customCategories).map((c) => c.toLowerCase()));
     for (const l of newOnes) {
       const insertPayload =
         mode === "inventory"
@@ -149,6 +170,7 @@ export function PurchaseOrderAiReview({
               unit: l.unit || "pcs",
               cost_per_unit: Number(l.unit_price) || 0,
               current_stock: 0,
+              category: l.category.trim() || null,
             };
       const { data: row, error: e } = await supabase
         .from((mode === "inventory" ? "inventory" : "ingredients") as any)
@@ -161,6 +183,34 @@ export function PurchaseOrderAiReview({
         return;
       }
       created[l.key] = (row as any).id;
+      if (mode === "ingredients") {
+        const c = l.category.trim();
+        if (c && !knownCatsLower.has(c.toLowerCase())) {
+          newCatsToPersist.add(c);
+        }
+      }
+    }
+
+    // Also update category for matched ingredients if user changed it and matched ingredient lacks one
+    if (mode === "ingredients") {
+      for (const l of chosen) {
+        if (!l.matched_id) continue;
+        const c = l.category.trim();
+        if (!c) continue;
+        if (!knownCatsLower.has(c.toLowerCase())) newCatsToPersist.add(c);
+        await supabase
+          .from("ingredients" as any)
+          .update({ category: c })
+          .eq("id", l.matched_id);
+      }
+    }
+
+    // Persist any newly invented categories so they appear in future pickers
+    if (newCatsToPersist.size > 0) {
+      const rows = Array.from(newCatsToPersist).map((name) => ({ user_id: userId, name }));
+      await supabase
+        .from("ingredient_categories" as any)
+        .upsert(rows, { onConflict: "user_id,name", ignoreDuplicates: true });
     }
 
     // Build PO insert.
@@ -391,6 +441,36 @@ export function PurchaseOrderAiReview({
                   />
                 </div>
               </div>
+
+              {mode === "ingredients" && (
+                <div className="pl-6">
+                  <p className="text-[10px] uppercase text-muted-foreground mb-1">{t("category")}</p>
+                  <div className="flex gap-2">
+                    <select
+                      value={categoryOptions.some((c) => c.toLowerCase() === l.category.toLowerCase()) ? l.category : (l.category ? "__custom__" : "")}
+                      onChange={(e) => {
+                        if (e.target.value === "__custom__") return;
+                        updateItem(l.key, { category: e.target.value });
+                      }}
+                      className="flex-1 rounded-xl bg-card border border-border/60 px-2 py-2 text-sm outline-none focus:border-primary"
+                    >
+                      <option value="">—</option>
+                      {categoryOptions.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                      {l.category && !categoryOptions.some((c) => c.toLowerCase() === l.category.toLowerCase()) && (
+                        <option value="__custom__">{l.category} ({t("new_category")})</option>
+                      )}
+                    </select>
+                    <input
+                      value={l.category}
+                      onChange={(e) => updateItem(l.key, { category: e.target.value })}
+                      placeholder={t("new_category")}
+                      className="w-24 rounded-xl bg-card border border-border/60 px-2 py-2 text-xs outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -409,6 +489,7 @@ export function PurchaseOrderAiReview({
                 unit: "",
                 unit_price: "0",
                 confidence: 1,
+                category: "",
               },
             ])
           }

@@ -200,8 +200,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ingredient_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ingredients: {
         Row: {
+          category: string | null
           cost_per_unit: number
           created_at: string
           current_stock: number
@@ -213,6 +235,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string | null
           cost_per_unit?: number
           created_at?: string
           current_stock?: number
@@ -224,6 +247,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string | null
           cost_per_unit?: number
           created_at?: string
           current_stock?: number

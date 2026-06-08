@@ -12,6 +12,7 @@ const InputSchema = z.object({
     .array(z.object({ id: z.string(), name: z.string(), unit: z.string().optional().nullable() }))
     .max(2000),
   suppliers: z.array(z.object({ id: z.string(), name: z.string() })).max(500),
+  existingCategories: z.array(z.string().min(1).max(80)).max(200).default([]),
 });
 
 export type ParsedPoItem = {
@@ -21,6 +22,7 @@ export type ParsedPoItem = {
   unit: string;
   unit_price: number;
   confidence: number;
+  category: string | null;
 };
 
 export type ParsedPoResult = {
@@ -46,7 +48,8 @@ Return STRICT JSON only matching this TypeScript type:
     "quantity": number,
     "unit": string,
     "unit_price": number,
-    "confidence": number
+    "confidence": number,
+    "category": string | null
   }>,
   "order_date": string | null,   // ISO date YYYY-MM-DD if visible
   "notes": string | null
@@ -60,6 +63,7 @@ Rules:
 - "quantity" must be a number (default 1 if unclear).
 - "unit" examples: ${mode === "inventory" ? "pcs, pair, set, box, ctn, pack" : "kg, g, pcs, box, ctn, L, ml, pack"}. Use the most likely unit; empty string if unknown.
 - "unit_price" is RM per unit. 0 if unknown.
+- "category" (${mode === "ingredients" ? "ingredients only" : "leave null for retail products"}): ${mode === "ingredients" ? "pick a short category. Prefer reusing one from the EXISTING CATEGORIES list (exact spelling). Only invent a new short category (1-3 words, same primary language as the name) when none fit. Null only when truly unclear." : "always null."}
 - Ignore subtotals, tax lines, totals, delivery fees, discounts.
 - Output JSON only, no prose, no markdown fences.`;
 }
@@ -68,18 +72,22 @@ function buildUserText(
   mode: "ingredients" | "inventory",
   items: { id: string; name: string }[],
   suppliers: { id: string; name: string }[],
+  categories: string[],
   textPayload?: string,
 ) {
   const ingList = items.map((i) => `- ${i.id} :: ${i.name}`).join("\n");
   const supList = suppliers.map((s) => `- ${s.id} :: ${s.name}`).join("\n");
   const label = mode === "inventory" ? "PRODUCTS" : "INGREDIENTS";
+  const catBlock = mode === "ingredients"
+    ? `EXISTING CATEGORIES: ${categories.length ? categories.join(", ") : "(none)"}\n\n`
+    : "";
   return `EXISTING ${label} (id :: name):
 ${ingList || "(none)"}
 
 EXISTING SUPPLIERS (id :: name):
 ${supList || "(none)"}
 
-${textPayload ? `DOCUMENT TEXT:\n${textPayload}\n` : "Extract the purchase order from the attached file."}`;
+${catBlock}${textPayload ? `DOCUMENT TEXT:\n${textPayload}\n` : "Extract the purchase order from the attached file."}`;
 }
 
 export const parsePurchaseOrderWithAi = createServerFn({ method: "POST" })
@@ -94,6 +102,7 @@ export const parsePurchaseOrderWithAi = createServerFn({ method: "POST" })
       data.mode,
       data.items,
       data.suppliers,
+      data.existingCategories ?? [],
       data.kind === "text" ? data.payload : undefined,
     );
 
@@ -186,6 +195,7 @@ export const parsePurchaseOrderWithAi = createServerFn({ method: "POST" })
             unit: z.string().optional().default(""),
             unit_price: z.coerce.number().optional().default(0),
             confidence: z.coerce.number().min(0).max(1).optional().default(0.5),
+            category: z.string().nullable().optional().default(null),
           }),
         )
         .default([]),
@@ -217,6 +227,7 @@ export const parsePurchaseOrderWithAi = createServerFn({ method: "POST" })
           unit: it.unit ?? "",
           unit_price: Number.isFinite(it.unit_price) ? Number(it.unit_price) : 0,
           confidence: it.confidence ?? 0.5,
+          category: (it.category ?? "").toString().trim() || null,
         };
       }),
       order_date: safe.order_date ?? null,

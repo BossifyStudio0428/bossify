@@ -11,6 +11,7 @@ import { StockTabs } from "@/components/StockTabs";
 import { useServerFn } from "@tanstack/react-start";
 import { parsePurchaseOrderWithAi, type ParsedPoResult } from "@/lib/ai-parse-po.functions";
 import { PurchaseOrderAiReview } from "@/components/PurchaseOrderAiReview";
+import { mergeCategories } from "@/lib/ingredientCategories";
 
 export const Route = createFileRoute("/purchase-orders")({ component: PurchaseOrdersPage });
 
@@ -49,6 +50,7 @@ function PurchaseOrdersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [inventoryItems, setInventoryItems] = useState<{ id: string; name: string; price: number }[]>([]);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [counts, setCounts] = useState<Counts>({});
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
@@ -67,7 +69,7 @@ function PurchaseOrdersPage() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: po }, { data: sup }, { data: ing }, { data: inv }] = await Promise.all([
+    const [{ data: po }, { data: sup }, { data: ing }, { data: inv }, { data: cats }] = await Promise.all([
       supabase
         .from("purchase_orders" as any)
         .select("*")
@@ -79,12 +81,14 @@ function PurchaseOrdersPage() {
         .select("id, name, unit, cost_per_unit")
         .order("name"),
       supabase.from("inventory").select("id, name, price").order("name"),
+      supabase.from("ingredient_categories" as any).select("name").order("name"),
     ]);
     const list = (po ?? []) as unknown as PurchaseOrder[];
     setOrders(list);
     setSuppliers((sup ?? []) as unknown as Supplier[]);
     setIngredients((ing ?? []) as unknown as Ingredient[]);
     setInventoryItems((inv ?? []) as any);
+    setCustomCategories(((cats ?? []) as any[]).map((c) => c.name as string).filter(Boolean));
     if (list.length) {
       const ids = list.map((o) => o.id);
       const { data: items } = await supabase
@@ -129,6 +133,7 @@ function PurchaseOrdersPage() {
           mode,
           items: aiItems,
           suppliers: suppliers.map((s) => ({ id: s.id, name: s.name })),
+          existingCategories: mode === "ingredients" ? mergeCategories(customCategories) : [],
         },
       });
       setAiResult(result);
@@ -312,6 +317,7 @@ function PurchaseOrdersPage() {
               ? inventoryItems.map((i) => ({ id: i.id, name: i.name, cost_per_unit: i.price }))
               : ingredients
           }
+          customCategories={customCategories}
           parsed={aiResult}
           onClose={() => setAiResult(null)}
           onSaved={() => {
