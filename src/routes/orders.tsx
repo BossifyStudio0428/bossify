@@ -7,12 +7,12 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey, pofSectionTitleKey, pofDescKey, type BizType } from "@/lib/businessType";
 import { getPublicOrigin } from "@/lib/publicUrl";
-import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, fetchWAProfile } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, getReceiptTemplate, fetchWAProfile } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2, Check, Upload } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import {
@@ -238,6 +238,86 @@ function OrdersPage() {
     const cleaned = o.phone.replace(/[^0-9]/g, "");
     const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank");
+  };
+
+  // ---- Receipt: upload, send, confirm ----
+  const [receiptUploadingId, setReceiptUploadingId] = useState<string | null>(null);
+
+  const uploadReceipt = async (o: OrderRow, file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+    setReceiptUploadingId(o.id);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const path = `${user.id}/${o.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("order-receipts")
+        .upload(path, file, { upsert: true, contentType: file.type || undefined });
+      if (upErr) throw upErr;
+      const { error: dbErr } = await supabase
+        .from("orders")
+        .update({ receipt_url: path } as any)
+        .eq("id", o.id);
+      if (dbErr) throw dbErr;
+      setOrders((p) => p.map((x) => (x.id === o.id ? ({ ...x, receipt_url: path } as any) : x)));
+      toast.success(t("receipt_uploaded"));
+    } catch (e: any) {
+      toast.error(e?.message || "Upload failed");
+    } finally {
+      setReceiptUploadingId(null);
+    }
+  };
+
+  const removeReceipt = async (o: OrderRow) => {
+    if (!user) return;
+    const url = (o as any).receipt_url as string | null;
+    if (url) {
+      await supabase.storage.from("order-receipts").remove([url]).catch(() => {});
+    }
+    await supabase.from("orders").update({ receipt_url: null, receipt_confirmed: false } as any).eq("id", o.id);
+    setOrders((p) => p.map((x) => (x.id === o.id ? ({ ...x, receipt_url: null, receipt_confirmed: false } as any) : x)));
+  };
+
+  const toggleReceiptConfirmed = async (o: OrderRow) => {
+    const next = !((o as any).receipt_confirmed as boolean);
+    setOrders((p) => p.map((x) => (x.id === o.id ? ({ ...x, receipt_confirmed: next } as any) : x)));
+    const { error } = await supabase.from("orders").update({ receipt_confirmed: next } as any).eq("id", o.id);
+    if (error) {
+      setOrders((p) => p.map((x) => (x.id === o.id ? ({ ...x, receipt_confirmed: !next } as any) : x)));
+      toast.error(t("update_failed"));
+    }
+  };
+
+  const viewReceipt = async (o: OrderRow) => {
+    const path = (o as any).receipt_url as string | null;
+    if (!path) return;
+    const { data, error } = await supabase.storage.from("order-receipts").createSignedUrl(path, 60 * 60);
+    if (error || !data?.signedUrl) { toast.error(error?.message || "Failed"); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const sendReceipt = async (o: OrderRow) => {
+    if (!o.phone) { alert(t("no_phone_for_wa")); return; }
+    if (!user) return;
+    let receiptUrl = "";
+    const path = (o as any).receipt_url as string | null;
+    if (path) {
+      const { data } = await supabase.storage
+        .from("order-receipts")
+        .createSignedUrl(path, 60 * 60 * 24 * 30); // 30 days
+      receiptUrl = data?.signedUrl ?? "";
+    }
+    const msg = renderTemplate(getReceiptTemplate(lang), {
+      customer_name: o.customer_name,
+      business_name: waProfile.businessName,
+      code: o.code,
+      product: o.product,
+      quantity: o.quantity,
+      amount: Number(o.amount).toFixed(2),
+      receipt_url: receiptUrl,
+    }, lang);
+    const cleaned = o.phone.replace(/[^0-9]/g, "");
+    window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   const remindAllUnpaid = async () => {
@@ -672,6 +752,67 @@ function OrdersPage() {
                     {t("mark_paid")}
                   </button>
                 )}
+                {o.status === "Paid" && (() => {
+                  const url = (o as any).receipt_url as string | null;
+                  const confirmed = ((o as any).receipt_confirmed as boolean) ?? false;
+                  const uploading = receiptUploadingId === o.id;
+                  return (
+                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => toggleReceiptConfirmed(o)}
+                        aria-label={confirmed ? t("receipt_unconfirmed") : t("receipt_confirmed")}
+                        title={confirmed ? t("receipt_confirmed") : t("upload_receipt")}
+                        className={`h-9 w-9 rounded-xl flex items-center justify-center active:scale-95 transition ${confirmed ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}`}
+                      >
+                        <FileCheck2 className="h-4 w-4" />
+                      </button>
+                      {url ? (
+                        <>
+                          <button
+                            onClick={() => viewReceipt(o)}
+                            aria-label={t("view_receipt")}
+                            title={t("view_receipt")}
+                            className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center active:scale-95"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => removeReceipt(o)}
+                            aria-label={t("receipt_remove")}
+                            title={t("receipt_remove")}
+                            className="h-9 w-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center active:scale-95"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <label
+                          className={`h-9 w-9 rounded-xl bg-muted text-muted-foreground flex items-center justify-center cursor-pointer active:scale-95 ${uploading ? "opacity-60 pointer-events-none" : ""}`}
+                          title={t("upload_receipt")}
+                          aria-label={t("upload_receipt")}
+                        >
+                          <Upload className="h-4 w-4" />
+                          <input
+                            type="file"
+                            accept="image/*,application/pdf"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) uploadReceipt(o, f);
+                              e.currentTarget.value = "";
+                            }}
+                          />
+                        </label>
+                      )}
+                      <button
+                        onClick={() => sendReceipt(o)}
+                        className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500 text-white shadow-sm active:scale-95 transition-transform"
+                      >
+                        {t("send_receipt")}
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </article>
           );

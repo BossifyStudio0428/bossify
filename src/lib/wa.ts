@@ -368,6 +368,47 @@ const REMINDER_TPL: TplMap = {
 export const DEFAULT_ORDER_TPL = ORDER_TPL.retail.en;
 export const DEFAULT_REMINDER_TPL = REMINDER_TPL.retail.en;
 
+// ---------------------------------------------------------------------------
+// Receipt template (Paid orders). One template per language — works for all
+// business types since the wording is generic enough.
+// ---------------------------------------------------------------------------
+const RECEIPT_TPL: Record<Lang, string> = {
+  en:
+    `Hi [customer_name]! 👋\n\n` +
+    `Thank you, your payment has been received! ✅\n\n` +
+    `🧾 Order: [code]\n` +
+    `📦 Item: [product] x[quantity]\n` +
+    `💰 Paid: RM [amount]\n` +
+    `[receipt_line]` +
+    `Thank you for your business with [business_name]! 🙏`,
+  ms:
+    `Hi [customer_name]! 👋\n\n` +
+    `Terima kasih, pembayaran anda telah diterima! ✅\n\n` +
+    `🧾 Pesanan: [code]\n` +
+    `📦 Item: [product] x[quantity]\n` +
+    `💰 Dibayar: RM [amount]\n` +
+    `[receipt_line]` +
+    `Terima kasih kerana berurusan dengan [business_name]! 🙏`,
+  zh:
+    `你好 [customer_name]！👋\n\n` +
+    `已收到您的付款，谢谢！✅\n\n` +
+    `🧾 订单：[code]\n` +
+    `📦 商品：[product] x[quantity]\n` +
+    `💰 已付：RM [amount]\n` +
+    `[receipt_line]` +
+    `感谢您光顾 [business_name]！🙏`,
+};
+
+const RECEIPT_LABEL: Record<Lang, string> = { en: "Receipt", ms: "Resit", zh: "收据" };
+
+export function getReceiptTemplate(lang: Lang): string {
+  return RECEIPT_TPL[lang] ?? RECEIPT_TPL.en;
+}
+
+export function receiptLineLabel(lang: Lang): string {
+  return RECEIPT_LABEL[lang];
+}
+
 /** True if `tpl` matches any built-in order template across biz × lang. */
 export function isBuiltInOrderTpl(tpl: string | null | undefined): boolean {
   if (!tpl) return true;
@@ -570,6 +611,7 @@ export type TplVars = {
   date_time?: string;
   follow_up_date?: string;
   deadline?: string;
+  receipt_url?: string;
 };
 
 export function renderTemplate(tpl: string, vars: TplVars, lang: Lang = getActiveLang()): string {
@@ -584,9 +626,11 @@ export function renderTemplate(tpl: string, vars: TplVars, lang: Lang = getActiv
   const dateTimeLine = vars.date_time ? `📅 ${DATE_TIME_LABEL[lang]}: ${vars.date_time}\n` : "";
   const followUpLine = vars.follow_up_date ? `📅 ${FOLLOW_UP_LABEL[lang]}: ${vars.follow_up_date}\n` : "";
   const deadlineLine = vars.deadline ? `📅 ${DEADLINE_LABEL[lang]}: ${vars.deadline}\n` : "";
+  const receiptLine = vars.receipt_url ? `🧾 ${RECEIPT_LABEL[lang]}: ${vars.receipt_url}\n\n` : "";
   out = out.replace(/\[date_time_line\]/g, dateTimeLine);
   out = out.replace(/\[follow_up_line\]/g, followUpLine);
   out = out.replace(/\[deadline_line\]/g, deadlineLine);
+  out = out.replace(/\[receipt_line\]/g, receiptLine);
 
   // payment details (insert as-is; templates already include the placeholder)
   const payBlock = vars.payment_details ?? "";
@@ -598,7 +642,7 @@ export function renderTemplate(tpl: string, vars: TplVars, lang: Lang = getActiv
 
   // remaining scalar vars
   for (const [k, v] of Object.entries(vars)) {
-    if (k === "notes" || k === "payment_details" || k === "date_time" || k === "follow_up_date" || k === "deadline") continue;
+    if (k === "notes" || k === "payment_details" || k === "date_time" || k === "follow_up_date" || k === "deadline" || k === "receipt_url") continue;
     out = out.replace(new RegExp(`\\[${k}\\]`, "g"), String(v ?? ""));
   }
 
