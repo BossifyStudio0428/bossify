@@ -388,9 +388,8 @@ function IngredientForm({
   onSaved: () => void;
   userId: string;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const classifyFn = useServerFn(classifyIngredientsWithAi);
-  const { lang } = useI18n();
   const [name, setName] = useState(item?.name ?? "");
   const [unit, setUnit] = useState(item?.unit ?? "kg");
   const [currentStock, setCurrentStock] = useState(String(item?.current_stock ?? "0"));
