@@ -141,6 +141,7 @@ function StockTakeReportPage() {
         doc.setTextColor(0);
       }
       await savePdf(doc, `stock-take-${id.slice(0, 8)}.pdf`);
+      toast.success("PDF ready");
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : t("pdf_failed"));
     } finally {
