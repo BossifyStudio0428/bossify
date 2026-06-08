@@ -5,6 +5,7 @@ import type {
   getPublicOrderForm,
   submitPublicOrder,
 } from "@/lib/public-order.functions";
+import { stripEmoji } from "@/lib/wa";
 import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Search } from "lucide-react";
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
