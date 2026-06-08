@@ -182,6 +182,19 @@ export function pofDescKey(type: BizType | null | undefined): TKey {
   }
 }
 
+/** WhatsApp share message key for the public order form link, per business type. */
+export function pofWaShareKey(type: BizType | null | undefined): TKey {
+  switch (type) {
+    case "fnb":       return "pof_wa_share_msg_fnb";
+    case "education": return "pof_wa_share_msg_education";
+    case "beauty":    return "pof_wa_share_msg_beauty";
+    case "property":  return "pof_wa_share_msg_property";
+    case "freelance": return "pof_wa_share_msg_freelance";
+    case "retail":
+    default:          return "pof_wa_share_msg";
+  }
+}
+
 /** Default category suggestions per business type. */
 export const CATEGORY_PRESETS: Record<BizType, string[]> = {
   retail:    ["Clothing", "Accessories", "Electronics", "Beauty", "Home", "Food"],

@@ -5,7 +5,7 @@ import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supaba
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { bizKey, pofSectionTitleKey, pofDescKey, type BizType } from "@/lib/businessType";
+import { bizKey, pofSectionTitleKey, pofDescKey, pofWaShareKey, type BizType } from "@/lib/businessType";
 import { getPublicOrigin } from "@/lib/publicUrl";
 import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, getReceiptTemplate, fetchWAProfile, stripEmoji } from "@/lib/wa";
 import { buildReceiptPdf } from "@/lib/receiptPdf";
@@ -584,7 +584,7 @@ function OrdersPage() {
                   📋
                 </button>
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(stripEmoji(t("pof_wa_share_msg").replace("{link}", `${getPublicOrigin()}/order/${ofCode}`)))}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(stripEmoji(t(pofWaShareKey(ofBizType as BizType | null)).replace("{link}", `${getPublicOrigin()}/order/${ofCode}`)))}`}
                   target="_blank"
                   rel="noreferrer"
                   className="py-2 rounded-lg bg-emerald-500 text-white text-[10px] font-semibold text-center active:scale-95"
