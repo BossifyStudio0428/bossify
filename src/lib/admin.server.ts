@@ -14,17 +14,45 @@ export async function assertAdmin(userId: string) {
 export async function loadAdminOverviewForUser(userId: string) {
   await assertAdmin(userId);
 
-  const [{ data: users, error: usersError }, { data: orders, error: ordersError }] =
+  const [profilesResult, subscriptionsResult, ordersResult] =
     await Promise.all([
       supabaseAdmin
-        .from("admin_users_view" as never)
-        .select("*")
+        .from("profiles")
+        .select("id,business_name,is_admin,created_at")
         .order("created_at", { ascending: false }),
-      supabaseAdmin.from("orders").select("*").order("created_at", { ascending: false }).limit(20),
+      supabaseAdmin.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
+      supabaseAdmin.from("orders").select("*").order("created_at", { ascending: false }),
     ]);
 
-  if (usersError || ordersError) throw new Error("Unable to load admin data");
-  return { isAdmin: true, users: users ?? [], orders: orders ?? [] };
+  if (profilesResult.error || subscriptionsResult.error || ordersResult.error) {
+    console.error("loadAdminOverviewForUser failed", {
+      profiles: profilesResult.error,
+      subscriptions: subscriptionsResult.error,
+      orders: ordersResult.error,
+    });
+    throw new Error("Unable to load admin data");
+  }
+
+  const orders = ordersResult.data ?? [];
+  const subMap = new Map((subscriptionsResult.data ?? []).map((s) => [s.user_id, s]));
+  const users = (profilesResult.data ?? []).map((profile) => {
+    const sub = subMap.get(profile.id);
+    const userOrders = orders.filter((order) => order.user_id === profile.id);
+    return {
+      ...profile,
+      plan: sub?.plan ?? "free",
+      status: sub?.status ?? null,
+      expires_at: sub?.expires_at ?? null,
+      order_count: sub?.order_count ?? 0,
+      total_orders: userOrders.length,
+      total_revenue: userOrders.reduce(
+        (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
+        0,
+      ),
+    };
+  });
+
+  return { isAdmin: true, users, orders };
 }
 
 export async function setAdminSubscriptionPlanForUser(
