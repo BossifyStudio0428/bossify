@@ -60,35 +60,38 @@ function AdminPage() {
     "All",
   );
 
-  const callAdminApi = useCallback(async (body: Record<string, unknown>) => {
-    const token = session?.access_token;
-    if (!token) throw new Error("Unauthorized");
-    const response = await fetch(`${getPublicOrigin()}/api/public/admin`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "Cache-Control": "no-store",
-      },
-      body: JSON.stringify(body),
-    });
-    const text = await response.text();
-    const data = (
-      text
-        ? (() => {
-            try {
-              return JSON.parse(text);
-            } catch {
-              return { error: text.slice(0, 180) };
-            }
-          })()
-        : {}
-    ) as { error?: string } & Record<string, unknown>;
-    if (!response.ok) {
-      throw new Error(data.error ?? `Admin API failed (${response.status})`);
-    }
-    return data;
-  }, [session?.access_token]);
+  const callAdminApi = useCallback(
+    async (body: Record<string, unknown>) => {
+      const token = session?.access_token;
+      if (!token) throw new Error("Unauthorized");
+      const response = await fetch(`${getPublicOrigin()}/api/public/admin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-store",
+        },
+        body: JSON.stringify(body),
+      });
+      const text = await response.text();
+      const data = (
+        text
+          ? (() => {
+              try {
+                return JSON.parse(text);
+              } catch {
+                return { error: text.slice(0, 180) };
+              }
+            })()
+          : {}
+      ) as { error?: string } & Record<string, unknown>;
+      if (!response.ok) {
+        throw new Error(data.error ?? `Admin API failed (${response.status})`);
+      }
+      return data;
+    },
+    [session?.access_token],
+  );
 
   const loadAll = useCallback(async () => {
     const data = isNativeWebView()
