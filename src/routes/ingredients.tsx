@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Plus, Pencil, Trash2, Minus, AlertTriangle, X, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, Minus, AlertTriangle, X, Sparkles, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,6 +49,7 @@ function IngredientsPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("__all__");
+  const [search, setSearch] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
@@ -97,10 +98,25 @@ function IngredientsPage() {
   }, [customCategories, items]);
 
   const filteredItems = useMemo(() => {
-    if (activeCategory === "__all__") return items;
-    if (activeCategory === "__none__") return items.filter((i) => !i.category || !i.category.trim());
-    return items.filter((i) => (i.category ?? "").toLowerCase() === activeCategory.toLowerCase());
-  }, [items, activeCategory]);
+    const q = search.trim().toLowerCase();
+    let list = items;
+    if (activeCategory === "__none__") {
+      list = list.filter((i) => !i.category || !i.category.trim());
+    } else if (activeCategory !== "__all__") {
+      list = list.filter((i) => (i.category ?? "").toLowerCase() === activeCategory.toLowerCase());
+    }
+    if (q) {
+      list = list.filter((i) => {
+        const sup = i.supplier_id ? (supplierMap.get(i.supplier_id) ?? "") : "";
+        return (
+          i.name.toLowerCase().includes(q) ||
+          (i.category ?? "").toLowerCase().includes(q) ||
+          sup.toLowerCase().includes(q)
+        );
+      });
+    }
+    return list;
+  }, [items, activeCategory, search, supplierMap]);
 
   const handleBulkCategorize = async () => {
     const targets = items.filter((i) => !i.category || !i.category.trim());
@@ -129,7 +145,14 @@ function IngredientsPage() {
             newCats.add(c);
             knownLower.add(c.toLowerCase());
           }
-          await supabase.from("ingredients" as any).update({ category: c }).eq("id", batch[j].id);
+          const { error: upErr } = await supabase
+            .from("ingredients" as any)
+            .update({ category: c })
+            .eq("id", batch[j].id);
+          if (upErr) {
+            console.error("[bulk-categorize] update failed", upErr);
+            throw new Error(upErr.message);
+          }
           done += 1;
         }
       }
