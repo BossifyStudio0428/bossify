@@ -441,6 +441,36 @@ export function PurchaseOrderAiReview({
                   />
                 </div>
               </div>
+
+              {mode === "ingredients" && (
+                <div className="pl-6">
+                  <p className="text-[10px] uppercase text-muted-foreground mb-1">{t("category")}</p>
+                  <div className="flex gap-2">
+                    <select
+                      value={categoryOptions.some((c) => c.toLowerCase() === l.category.toLowerCase()) ? l.category : (l.category ? "__custom__" : "")}
+                      onChange={(e) => {
+                        if (e.target.value === "__custom__") return;
+                        updateItem(l.key, { category: e.target.value });
+                      }}
+                      className="flex-1 rounded-xl bg-card border border-border/60 px-2 py-2 text-sm outline-none focus:border-primary"
+                    >
+                      <option value="">—</option>
+                      {categoryOptions.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                      {l.category && !categoryOptions.some((c) => c.toLowerCase() === l.category.toLowerCase()) && (
+                        <option value="__custom__">{l.category} ({t("new_category")})</option>
+                      )}
+                    </select>
+                    <input
+                      value={l.category}
+                      onChange={(e) => updateItem(l.key, { category: e.target.value })}
+                      placeholder={t("new_category")}
+                      className="w-24 rounded-xl bg-card border border-border/60 px-2 py-2 text-xs outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
