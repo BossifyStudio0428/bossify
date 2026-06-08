@@ -6,6 +6,7 @@ import { Share } from "@capacitor/share";
 import { FileOpener } from "@capacitor-community/file-opener";
 import type { Lang } from "@/contexts/I18nContext";
 import type { BizType } from "@/lib/businessType";
+import { applyCjkFont, CJK_FONT_FAMILY } from "@/lib/pdfCjk";
 
 // Brand purple (#6C3FD6) and alt-row tint (#F0EEF8)
 const PURPLE: [number, number, number] = [108, 63, 214];
@@ -375,12 +376,14 @@ function drawHeader(
     }
   }
 
+  doc.setFont(CJK_FONT_FAMILY, "bold");
   doc.setFontSize(16);
   doc.text(businessName || "Bossify", textX, 13);
   doc.setFontSize(11);
   doc.text(l.reportTitle, textX, 20);
 
   doc.setTextColor(0, 0, 0);
+  doc.setFont(CJK_FONT_FAMILY, "normal");
   doc.setFontSize(10);
   doc.text(`${l.dateRange}: ${rangeLabel}`, 14, 34);
   doc.setFontSize(9);
@@ -544,6 +547,8 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
   const doc = new jsPDF();
   const l = labels(d.lang, d.bizType);
 
+  await applyCjkFont(doc);
+
   drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
 
   // Summary table
@@ -552,9 +557,9 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
     head: [[l.summary, l.value]],
     body: summaryForBiz(d, l),
     theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255 },
+    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
     alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 10 },
+    styles: { fontSize: 10, font: CJK_FONT_FAMILY },
   });
 
   let y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
@@ -565,9 +570,9 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
       head: [[l.topProducts, l.th.qty, l.th.amount]],
       body: d.topProducts.map((p) => [p.name, String(p.qty), p.revenue.toFixed(2)]),
       theme: "striped",
-      headStyles: { fillColor: PURPLE, textColor: 255 },
+      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
       alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 10 },
+      styles: { fontSize: 10, font: CJK_FONT_FAMILY },
     });
     y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
   }
@@ -578,9 +583,9 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
       head: [[l.bestCustomers, l.orders, l.th.amount]],
       body: d.topCustomers.map((c) => [c.name, String(c.orders), c.spent.toFixed(2)]),
       theme: "striped",
-      headStyles: { fillColor: PURPLE, textColor: 255 },
+      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
       alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 10 },
+      styles: { fontSize: 10, font: CJK_FONT_FAMILY },
     });
     y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
   }
@@ -591,9 +596,9 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
       head: [tableHeadersForBiz(d.bizType, l)],
       body: d.rows.map((r) => tableRowForBiz(d.bizType, r)),
       theme: "grid",
-      headStyles: { fillColor: PURPLE, textColor: 255 },
+      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
       alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 8 },
+      styles: { fontSize: 8, font: CJK_FONT_FAMILY },
     });
   }
 
@@ -618,6 +623,8 @@ export async function exportOrdersListPDF(opts: {
   const doc = new jsPDF();
   const l = labels(opts.lang, opts.bizType);
 
+  await applyCjkFont(doc);
+
   drawHeader(doc, l, opts.businessName, opts.statusLabel, opts.logoDataUrl);
 
   autoTable(doc, {
@@ -625,9 +632,9 @@ export async function exportOrdersListPDF(opts: {
     head: [tableHeadersForBiz(opts.bizType, l)],
     body: opts.rows.map((r) => tableRowForBiz(opts.bizType, r)),
     theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255 },
+    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
     alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 9 },
+    styles: { fontSize: 9, font: CJK_FONT_FAMILY },
   });
 
   drawFooters(doc, l);
