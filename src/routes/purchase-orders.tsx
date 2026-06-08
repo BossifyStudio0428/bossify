@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { SheetShell, SheetField, ConfirmSheet } from "@/components/InventorySheets";
+import { SheetShell, SheetField } from "@/components/InventorySheets";
 import { StockTabs } from "@/components/StockTabs";
 
 export const Route = createFileRoute("/purchase-orders")({ component: PurchaseOrdersPage });
@@ -488,6 +488,3 @@ export async function applyReceivedStock(
 // Re-export for detail page convenience
 export type { POStatus, PurchaseOrder, Supplier, Ingredient };
 export { statusColor };
-
-// Silence unused import warning when ConfirmSheet stays unused here.
-void ConfirmSheet;
