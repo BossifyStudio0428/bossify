@@ -9,6 +9,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
 import { CasesKanban, type EduStageInfo } from "@/components/CasesKanban";
 import { PhoneInput } from "@/components/PhoneInput";
+import { stripEmoji } from "@/lib/wa";
 
 export const Route = createFileRoute("/customers")({ component: CustomersPage });
 
@@ -35,10 +36,6 @@ function relTime(iso: string | null, t: (k: any) => string) {
   return d.toLocaleDateString("en-MY", { day: "numeric", month: "short" });
 }
 
-function buildWA(phone: string, message: string) {
-  const cleaned = phone.replace(/[^0-9]/g, "");
-  return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
-}
 
 function CustomersPage() {
   const { t } = useI18n();
