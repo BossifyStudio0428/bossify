@@ -8,7 +8,12 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
-import { revokeAdminSubscriptionPlan, setAdminSubscriptionPlan } from "@/lib/admin.functions";
+import {
+  getAiUsageStats,
+  revokeAdminSubscriptionPlan,
+  setAdminSubscriptionPlan,
+  type AiUsageStats,
+} from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
@@ -43,7 +48,11 @@ function AdminPage() {
   const { t } = useI18n();
   const setAdminSubscriptionPlanFn = useServerFn(setAdminSubscriptionPlan);
   const revokeAdminSubscriptionPlanFn = useServerFn(revokeAdminSubscriptionPlan);
-  const [tab, setTab] = useState<"stats" | "users" | "orders">("stats");
+  const getAiUsageStatsFn = useServerFn(getAiUsageStats);
+  const [tab, setTab] = useState<"stats" | "users" | "orders" | "ai">("stats");
+  const [aiStats, setAiStats] = useState<AiUsageStats | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -233,6 +242,25 @@ function AdminPage() {
   const grantSelfPro = () => user && grantPro(user.id, 1);
   const revokeSelf = () => user && revokePro(user.id);
 
+  const loadAiStats = useCallback(async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const r = await getAiUsageStatsFn();
+      setAiStats(r);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "Failed to load");
+    } finally {
+      setAiLoading(false);
+    }
+  }, [getAiUsageStatsFn]);
+
+  useEffect(() => {
+    if (tab === "ai" && isAdmin && !aiStats && !aiLoading) {
+      loadAiStats();
+    }
+  }, [tab, isAdmin, aiStats, aiLoading, loadAiStats]);
+
   return (
     <div className="pb-8">
       <header className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground px-5 pt-10 pb-6 rounded-b-3xl">
@@ -251,13 +279,13 @@ function AdminPage() {
 
       <div className="px-5 pt-5 space-y-5">
         <div className="flex gap-2">
-          {(["stats", "users", "orders"] as const).map((k) => (
+          {(["stats", "users", "orders", "ai"] as const).map((k) => (
             <button
               key={k}
               onClick={() => setTab(k)}
-              className={`flex-1 py-2 rounded-full text-xs font-semibold capitalize ${tab === k ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+              className={`flex-1 py-2 rounded-full text-xs font-semibold uppercase ${tab === k ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
             >
-              {k}
+              {k === "ai" ? "AI" : k}
             </button>
           ))}
         </div>
