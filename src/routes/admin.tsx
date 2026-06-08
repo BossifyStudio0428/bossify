@@ -107,7 +107,7 @@ function AdminPage() {
           .from("admin_users_view" as never)
           .select("*")
           .order("created_at", { ascending: false }),
-        supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(50),
+        supabase.from("orders").select("*").order("created_at", { ascending: false }),
       ]);
 
     if (ordersError) throw new Error(ordersError.message);
@@ -126,7 +126,7 @@ function AdminPage() {
         supabase.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
       ]);
     if (profilesError || subsError) {
-      throw new Error(profilesError?.message ?? subsError?.message ?? viewError.message);
+      throw new Error(profilesError?.message ?? subsError?.message ?? viewError?.message ?? "Unable to load admin data");
     }
 
     const subMap = new Map((subscriptions ?? []).map((s) => [s.user_id, s]));
