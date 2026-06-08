@@ -211,156 +211,156 @@ const ORDER_TPL: TplMap = {
 const REMINDER_TPL: TplMap = {
   retail: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `This is a payment reminder for your order.\n\n` +
-      `🛍️ Order: [code]\n` +
-      `📦 Product: [product]\n` +
-      `💰 Amount Due: RM [amount]\n\n` +
+      `- Order: [code]\n` +
+      `- Product: [product]\n` +
+      `- Amount Due: RM [amount]\n\n` +
       `[payment_details]` +
-      `Please make payment at your earliest convenience. Thank you! 🙏`,
+      `Please make payment at your earliest convenience. Thank you!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Ini adalah peringatan pembayaran untuk pesanan anda.\n\n` +
-      `🛍️ Pesanan: [code]\n` +
-      `📦 Produk: [product]\n` +
-      `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
+      `- Pesanan: [code]\n` +
+      `- Produk: [product]\n` +
+      `- Jumlah Perlu Dibayar: RM [amount]\n\n` +
       `[payment_details]` +
-      `Sila buat pembayaran secepat mungkin. Terima kasih! 🙏`,
+      `Sila buat pembayaran secepat mungkin. Terima kasih!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
+      `你好 [customer_name]，\n\n` +
       `这是您订单的付款提醒。\n\n` +
-      `🛍️ 订单：[code]\n` +
-      `📦 商品：[product]\n` +
-      `💰 待付金额：RM [amount]\n\n` +
+      `- 订单：[code]\n` +
+      `- 商品：[product]\n` +
+      `- 待付金额：RM [amount]\n\n` +
       `[payment_details]` +
-      `请尽快完成付款，谢谢！🙏`,
+      `请尽快完成付款，谢谢！`,
   },
   fnb: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `This is a payment reminder for your order.\n\n` +
-      `🛍️ Order: [code]\n` +
-      `🍱 Item: [product]\n` +
-      `💰 Amount Due: RM [amount]\n\n` +
+      `- Order: [code]\n` +
+      `- Item: [product]\n` +
+      `- Amount Due: RM [amount]\n\n` +
       `[payment_details]` +
-      `Please make payment at your earliest convenience. Thank you! 🙏`,
+      `Please make payment at your earliest convenience. Thank you!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Ini adalah peringatan pembayaran untuk pesanan anda.\n\n` +
-      `🛍️ Pesanan: [code]\n` +
-      `🍱 Menu: [product]\n` +
-      `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
+      `- Pesanan: [code]\n` +
+      `- Menu: [product]\n` +
+      `- Jumlah Perlu Dibayar: RM [amount]\n\n` +
       `[payment_details]` +
-      `Sila buat pembayaran secepat mungkin. Terima kasih! 🙏`,
+      `Sila buat pembayaran secepat mungkin. Terima kasih!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
+      `你好 [customer_name]，\n\n` +
       `这是您订单的付款提醒。\n\n` +
-      `🛍️ 订单：[code]\n` +
-      `🍱 餐点：[product]\n` +
-      `💰 待付金额：RM [amount]\n\n` +
+      `- 订单：[code]\n` +
+      `- 餐点：[product]\n` +
+      `- 待付金额：RM [amount]\n\n` +
       `[payment_details]` +
-      `请尽快完成付款，谢谢！🙏`,
+      `请尽快完成付款，谢谢！`,
   },
   education: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Reminder for your outstanding consultation fee.\n\n` +
-      `📋 Case: [code]\n` +
-      `🎓 Service: [product]\n` +
-      `💰 Outstanding Fee: RM [amount]\n\n` +
+      `- Case: [code]\n` +
+      `- Service: [product]\n` +
+      `- Outstanding Fee: RM [amount]\n\n` +
       `[payment_details]` +
-      `Please make payment. Thank you! 🙏`,
+      `Please make payment. Thank you!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Peringatan pembayaran yuran perundingan anda.\n\n` +
-      `📋 Kes: [code]\n` +
-      `🎓 Perkhidmatan: [product]\n` +
-      `💰 Yuran Belum Dibayar: RM [amount]\n\n` +
+      `- Kes: [code]\n` +
+      `- Perkhidmatan: [product]\n` +
+      `- Yuran Belum Dibayar: RM [amount]\n\n` +
       `[payment_details]` +
-      `Sila buat pembayaran. Terima kasih! 🙏`,
+      `Sila buat pembayaran. Terima kasih!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
+      `你好 [customer_name]，\n\n` +
       `您的咨询费用付款提醒。\n\n` +
-      `📋 案例：[code]\n` +
-      `🎓 服务：[product]\n` +
-      `💰 未付费用：RM [amount]\n\n` +
+      `- 案例：[code]\n` +
+      `- 服务：[product]\n` +
+      `- 未付费用：RM [amount]\n\n` +
       `[payment_details]` +
-      `请尽快付款，谢谢！🙏`,
+      `请尽快付款，谢谢！`,
   },
   beauty: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Reminder for your outstanding payment.\n\n` +
-      `💄 Appointment: [code]\n` +
-      `✨ Service: [product]\n` +
-      `💰 Amount Due: RM [amount]\n\n` +
+      `- Appointment: [code]\n` +
+      `- Service: [product]\n` +
+      `- Amount Due: RM [amount]\n\n` +
       `[payment_details]` +
-      `Please make payment. Thank you! 🙏`,
+      `Please make payment. Thank you!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Peringatan pembayaran tertunggak anda.\n\n` +
-      `💄 Temujanji: [code]\n` +
-      `✨ Perkhidmatan: [product]\n` +
-      `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
+      `- Temujanji: [code]\n` +
+      `- Perkhidmatan: [product]\n` +
+      `- Jumlah Perlu Dibayar: RM [amount]\n\n` +
       `[payment_details]` +
-      `Sila buat pembayaran. Terima kasih! 🙏`,
+      `Sila buat pembayaran. Terima kasih!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
+      `你好 [customer_name]，\n\n` +
       `您的未付款项提醒。\n\n` +
-      `💄 预约：[code]\n` +
-      `✨ 服务：[product]\n` +
-      `💰 待付金额：RM [amount]\n\n` +
+      `- 预约：[code]\n` +
+      `- 服务：[product]\n` +
+      `- 待付金额：RM [amount]\n\n` +
       `[payment_details]` +
-      `请尽快付款，谢谢！🙏`,
+      `请尽快付款，谢谢！`,
   },
   property: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Reminder for your outstanding payment.\n\n` +
-      `🏠 Reference: [code]\n` +
-      `🏠 Listing: [product]\n` +
-      `💰 Amount Due: RM [amount]\n\n` +
-      `Please make payment. Thank you! 🙏`,
+      `- Reference: [code]\n` +
+      `- Listing: [product]\n` +
+      `- Amount Due: RM [amount]\n\n` +
+      `Please make payment. Thank you!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Peringatan pembayaran tertunggak anda.\n\n` +
-      `🏠 Rujukan: [code]\n` +
-      `🏠 Hartanah: [product]\n` +
-      `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
-      `Sila buat pembayaran. Terima kasih! 🙏`,
+      `- Rujukan: [code]\n` +
+      `- Hartanah: [product]\n` +
+      `- Jumlah Perlu Dibayar: RM [amount]\n\n` +
+      `Sila buat pembayaran. Terima kasih!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
+      `你好 [customer_name]，\n\n` +
       `您的未付款项提醒。\n\n` +
-      `🏠 参考编号：[code]\n` +
-      `🏠 房源：[product]\n` +
-      `💰 待付金额：RM [amount]\n\n` +
-      `请尽快付款，谢谢！🙏`,
+      `- 参考编号：[code]\n` +
+      `- 房源：[product]\n` +
+      `- 待付金额：RM [amount]\n\n` +
+      `请尽快付款，谢谢！`,
   },
   freelance: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Reminder for your outstanding project payment.\n\n` +
-      `💼 Project: [code]\n` +
-      `🔧 Service: [product]\n` +
-      `💰 Amount Due: RM [amount]\n\n` +
+      `- Project: [code]\n` +
+      `- Service: [product]\n` +
+      `- Amount Due: RM [amount]\n\n` +
       `[payment_details]` +
-      `Please make payment. Thank you! 🙏`,
+      `Please make payment. Thank you!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Peringatan pembayaran projek tertunggak anda.\n\n` +
-      `💼 Projek: [code]\n` +
-      `🔧 Perkhidmatan: [product]\n` +
-      `💰 Jumlah Perlu Dibayar: RM [amount]\n\n` +
+      `- Projek: [code]\n` +
+      `- Perkhidmatan: [product]\n` +
+      `- Jumlah Perlu Dibayar: RM [amount]\n\n` +
       `[payment_details]` +
-      `Sila buat pembayaran. Terima kasih! 🙏`,
+      `Sila buat pembayaran. Terima kasih!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
+      `你好 [customer_name]，\n\n` +
       `您的项目未付款项提醒。\n\n` +
-      `💼 项目：[code]\n` +
-      `🔧 服务：[product]\n` +
-      `💰 待付金额：RM [amount]\n\n` +
+      `- 项目：[code]\n` +
+      `- 服务：[product]\n` +
+      `- 待付金额：RM [amount]\n\n` +
       `[payment_details]` +
-      `请尽快付款，谢谢！🙏`,
+      `请尽快付款，谢谢！`,
   },
 };
 
