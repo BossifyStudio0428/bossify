@@ -2,14 +2,17 @@ const PRODUCTION_ORIGIN = "https://bossify-malaysia.lovable.app";
 
 export function isNativeWebView(): boolean {
   if (typeof window === "undefined") return false;
+  const cap = (window as unknown as {
+    Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string };
+  }).Capacitor;
+  if (cap?.isNativePlatform?.()) return true;
   const { protocol, hostname } = window.location;
   return (
     protocol === "capacitor:" ||
     protocol === "ionic:" ||
     protocol === "file:" ||
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname.endsWith(".local")
+    (cap?.getPlatform?.() === "android" &&
+      (hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local")))
   );
 }
 
