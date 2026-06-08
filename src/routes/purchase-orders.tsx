@@ -317,6 +317,7 @@ function PurchaseOrdersPage() {
               ? inventoryItems.map((i) => ({ id: i.id, name: i.name, cost_per_unit: i.price }))
               : ingredients
           }
+          customCategories={customCategories}
           parsed={aiResult}
           onClose={() => setAiResult(null)}
           onSaved={() => {
