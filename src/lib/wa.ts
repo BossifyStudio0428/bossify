@@ -368,6 +368,47 @@ const REMINDER_TPL: TplMap = {
 export const DEFAULT_ORDER_TPL = ORDER_TPL.retail.en;
 export const DEFAULT_REMINDER_TPL = REMINDER_TPL.retail.en;
 
+// ---------------------------------------------------------------------------
+// Receipt template (Paid orders). One template per language — works for all
+// business types since the wording is generic enough.
+// ---------------------------------------------------------------------------
+const RECEIPT_TPL: Record<Lang, string> = {
+  en:
+    `Hi [customer_name]! 👋\n\n` +
+    `Thank you, your payment has been received! ✅\n\n` +
+    `🧾 Order: [code]\n` +
+    `📦 Item: [product] x[quantity]\n` +
+    `💰 Paid: RM [amount]\n` +
+    `[receipt_line]` +
+    `Thank you for your business with [business_name]! 🙏`,
+  ms:
+    `Hi [customer_name]! 👋\n\n` +
+    `Terima kasih, pembayaran anda telah diterima! ✅\n\n` +
+    `🧾 Pesanan: [code]\n` +
+    `📦 Item: [product] x[quantity]\n` +
+    `💰 Dibayar: RM [amount]\n` +
+    `[receipt_line]` +
+    `Terima kasih kerana berurusan dengan [business_name]! 🙏`,
+  zh:
+    `你好 [customer_name]！👋\n\n` +
+    `已收到您的付款，谢谢！✅\n\n` +
+    `🧾 订单：[code]\n` +
+    `📦 商品：[product] x[quantity]\n` +
+    `💰 已付：RM [amount]\n` +
+    `[receipt_line]` +
+    `感谢您光顾 [business_name]！🙏`,
+};
+
+const RECEIPT_LABEL: Record<Lang, string> = { en: "Receipt", ms: "Resit", zh: "收据" };
+
+export function getReceiptTemplate(lang: Lang): string {
+  return RECEIPT_TPL[lang] ?? RECEIPT_TPL.en;
+}
+
+export function receiptLineLabel(lang: Lang): string {
+  return RECEIPT_LABEL[lang];
+}
+
 /** True if `tpl` matches any built-in order template across biz × lang. */
 export function isBuiltInOrderTpl(tpl: string | null | undefined): boolean {
   if (!tpl) return true;
