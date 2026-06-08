@@ -414,6 +414,87 @@ function AdminPage() {
             ))}
           </div>
         )}
+
+        {tab === "ai" && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold">🤖 AI Usage</h3>
+              <button
+                onClick={loadAiStats}
+                className="text-[11px] px-3 py-1 rounded-full bg-muted text-muted-foreground font-semibold"
+              >
+                Refresh
+              </button>
+            </div>
+            {aiLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
+            {aiError && <p className="text-xs text-destructive">{aiError}</p>}
+            {aiStats && (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  <Stat label="Today calls" value={aiStats.today.calls} />
+                  <Stat label="Month calls" value={aiStats.this_month.calls} />
+                  <Stat label="Total calls" value={aiStats.total.calls} />
+                  <Stat label="Today $" value={`$${aiStats.today.cost_usd.toFixed(4)}`} />
+                  <Stat
+                    label="Month $"
+                    value={`$${aiStats.this_month.cost_usd.toFixed(4)}`}
+                    accent
+                  />
+                  <Stat
+                    label="Free left"
+                    value={`$${Math.max(0, 1 - aiStats.this_month.cost_usd).toFixed(4)}`}
+                  />
+                </div>
+
+                <div className="rounded-2xl bg-card border border-border/60 p-3 space-y-2">
+                  <p className="text-xs font-bold">By feature</p>
+                  {aiStats.by_feature.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground">No AI calls yet.</p>
+                  ) : (
+                    aiStats.by_feature.map((f) => (
+                      <div
+                        key={f.feature}
+                        className="flex items-center justify-between text-[11px] border-t border-border/40 first:border-t-0 pt-1.5 first:pt-0"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate">{f.feature}</p>
+                          <p className="text-muted-foreground">
+                            {f.calls} calls · {f.input_tokens.toLocaleString()} in /{" "}
+                            {f.output_tokens.toLocaleString()} out tokens
+                          </p>
+                        </div>
+                        <span className="font-bold">${f.cost_usd.toFixed(4)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="rounded-2xl bg-card border border-border/60 p-3 space-y-2">
+                  <p className="text-xs font-bold">Recent failures</p>
+                  {aiStats.recent_failures.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground">No failures 🎉</p>
+                  ) : (
+                    aiStats.recent_failures.map((r) => (
+                      <div
+                        key={r.id}
+                        className="text-[11px] border-t border-border/40 first:border-t-0 pt-1.5 first:pt-0"
+                      >
+                        <div className="flex justify-between">
+                          <span className="font-semibold">{r.feature}</span>
+                          <span className="text-destructive">{r.status}</span>
+                        </div>
+                        <p className="text-muted-foreground truncate">
+                          {new Date(r.created_at).toLocaleString()} · {r.model}
+                          {r.error_msg ? ` · ${r.error_msg}` : ""}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {grantOpen && (
