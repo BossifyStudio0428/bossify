@@ -43,10 +43,12 @@ function PurchaseOrdersPage() {
   const { user } = useAuth();
   const { type: bizType } = useBusinessType();
   const allowed = bizType === "fnb" || bizType === "retail";
+  const mode: "ingredients" | "inventory" = bizType === "retail" ? "inventory" : "ingredients";
 
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<{ id: string; name: string; price: number }[]>([]);
   const [counts, setCounts] = useState<Counts>({});
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
@@ -65,7 +67,7 @@ function PurchaseOrdersPage() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: po }, { data: sup }, { data: ing }] = await Promise.all([
+    const [{ data: po }, { data: sup }, { data: ing }, { data: inv }] = await Promise.all([
       supabase
         .from("purchase_orders" as any)
         .select("*")
@@ -76,11 +78,13 @@ function PurchaseOrdersPage() {
         .from("ingredients" as any)
         .select("id, name, unit, cost_per_unit")
         .order("name"),
+      supabase.from("inventory").select("id, name, price").order("name"),
     ]);
     const list = (po ?? []) as unknown as PurchaseOrder[];
     setOrders(list);
     setSuppliers((sup ?? []) as unknown as Supplier[]);
     setIngredients((ing ?? []) as unknown as Ingredient[]);
+    setInventoryItems((inv ?? []) as any);
     if (list.length) {
       const ids = list.map((o) => o.id);
       const { data: items } = await supabase
@@ -113,12 +117,17 @@ function PurchaseOrdersPage() {
   ) => {
     setAiScanning(true);
     try {
+      const aiItems =
+        mode === "inventory"
+          ? inventoryItems.map((i) => ({ id: i.id, name: i.name }))
+          : ingredients.map((i) => ({ id: i.id, name: i.name, unit: i.unit }));
       const result = await parseFn({
         data: {
           kind,
           payload,
           mimeType,
-          ingredients: ingredients.map((i) => ({ id: i.id, name: i.name, unit: i.unit })),
+          mode,
+          items: aiItems,
           suppliers: suppliers.map((s) => ({ id: s.id, name: s.name })),
         },
       });
@@ -291,8 +300,13 @@ function PurchaseOrdersPage() {
       {aiResult && (
         <PurchaseOrderAiReview
           userId={user?.id ?? ""}
+          mode={mode}
           suppliers={suppliers}
-          ingredients={ingredients}
+          stockItems={
+            mode === "inventory"
+              ? inventoryItems.map((i) => ({ id: i.id, name: i.name, cost_per_unit: i.price }))
+              : ingredients
+          }
           parsed={aiResult}
           onClose={() => setAiResult(null)}
           onSaved={() => {
@@ -693,6 +707,26 @@ export async function applyReceivedStock(
   for (const [id, add] of delta.entries()) {
     const next = (stockMap.get(id) ?? 0) + add;
     await supabase.from("ingredients" as any).update({ current_stock: next }).eq("id", id);
+  }
+}
+
+export async function applyReceivedStockInventory(
+  items: { inventory_id: string; quantity: string | number }[],
+) {
+  const ids = Array.from(new Set(items.map((i) => i.inventory_id).filter(Boolean)));
+  if (!ids.length) return;
+  const { data } = await supabase.from("inventory").select("id, stock").in("id", ids);
+  const stockMap = new Map<string, number>();
+  ((data ?? []) as any[]).forEach((r) => stockMap.set(r.id, Number(r.stock ?? 0)));
+  const delta = new Map<string, number>();
+  items.forEach((it) => {
+    const q = Number(it.quantity) || 0;
+    if (!it.inventory_id || q <= 0) return;
+    delta.set(it.inventory_id, (delta.get(it.inventory_id) ?? 0) + q);
+  });
+  for (const [id, add] of delta.entries()) {
+    const next = Math.round((stockMap.get(id) ?? 0) + add);
+    await supabase.from("inventory").update({ stock: next }).eq("id", id);
   }
 }
 

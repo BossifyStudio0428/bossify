@@ -5,15 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
 import { SheetShell, SheetField } from "@/components/InventorySheets";
 import type { ParsedPoResult } from "@/lib/ai-parse-po.functions";
-import { applyReceivedStock } from "@/routes/purchase-orders";
+import { applyReceivedStock, applyReceivedStockInventory } from "@/routes/purchase-orders";
 
 type Supplier = { id: string; name: string };
-type Ingredient = { id: string; name: string; unit: string; cost_per_unit: number };
+type StockRef = { id: string; name: string; unit?: string; cost_per_unit?: number };
+type Mode = "ingredients" | "inventory";
 
 type ReviewItem = {
   key: string;
   include: boolean;
-  matched_ingredient_id: string | null;
+  matched_id: string | null;
   name: string;
   quantity: string;
   unit: string;
@@ -25,15 +26,17 @@ type POStatus = "pending" | "received" | "cancelled";
 
 export function PurchaseOrderAiReview({
   userId,
+  mode,
   suppliers,
-  ingredients,
+  stockItems,
   parsed,
   onClose,
   onSaved,
 }: {
   userId: string;
+  mode: Mode;
   suppliers: Supplier[];
-  ingredients: Ingredient[];
+  stockItems: StockRef[];
   parsed: ParsedPoResult;
   onClose: () => void;
   onSaved: () => void;
@@ -61,7 +64,7 @@ export function PurchaseOrderAiReview({
     parsed.items.map((it) => ({
       key: crypto.randomUUID(),
       include: (it.confidence ?? 0) >= 0.6,
-      matched_ingredient_id: it.matched_ingredient_id,
+      matched_id: it.matched_id,
       name: it.name,
       quantity: String(it.quantity ?? 1),
       unit: it.unit ?? "",
@@ -71,10 +74,10 @@ export function PurchaseOrderAiReview({
   );
 
   const ingMap = useMemo(() => {
-    const m = new Map<string, Ingredient>();
-    ingredients.forEach((i) => m.set(i.id, i));
+    const m = new Map<string, StockRef>();
+    stockItems.forEach((i) => m.set(i.id, i));
     return m;
-  }, [ingredients]);
+  }, [stockItems]);
 
   useEffect(() => {
     if (items.length === 0) toast(t("po_ai_no_items_found"));
@@ -128,27 +131,36 @@ export function PurchaseOrderAiReview({
 
     setSaving(true);
 
-    // Insert new ingredients (those without matched id).
-    const newOnes = chosen.filter((l) => !l.matched_ingredient_id);
+    // Insert new stock items (those without matched id).
+    const newOnes = chosen.filter((l) => !l.matched_id);
     const created: Record<string, string> = {};
     for (const l of newOnes) {
-      const { data: ing, error: e } = await supabase
-        .from("ingredients" as any)
-        .insert({
-          user_id: userId,
-          name: l.name.trim(),
-          unit: l.unit || "pcs",
-          cost_per_unit: Number(l.unit_price) || 0,
-          current_stock: 0,
-        })
+      const insertPayload =
+        mode === "inventory"
+          ? {
+              user_id: userId,
+              name: l.name.trim(),
+              price: Number(l.unit_price) || 0,
+              stock: 0,
+            }
+          : {
+              user_id: userId,
+              name: l.name.trim(),
+              unit: l.unit || "pcs",
+              cost_per_unit: Number(l.unit_price) || 0,
+              current_stock: 0,
+            };
+      const { data: row, error: e } = await supabase
+        .from((mode === "inventory" ? "inventory" : "ingredients") as any)
+        .insert(insertPayload)
         .select("id")
         .single();
-      if (e || !ing) {
+      if (e || !row) {
         setSaving(false);
-        toast.error(e?.message ?? "Failed to create ingredient");
+        toast.error(e?.message ?? "Failed to create item");
         return;
       }
-      created[l.key] = (ing as any).id;
+      created[l.key] = (row as any).id;
     }
 
     // Build PO insert.
@@ -174,10 +186,12 @@ export function PurchaseOrderAiReview({
     const itemsPayload = chosen.map((l) => {
       const qty = Number(l.quantity) || 0;
       const price = Number(l.unit_price) || 0;
-      const ingId = l.matched_ingredient_id ?? created[l.key];
+      const refId = l.matched_id ?? created[l.key];
       return {
         purchase_order_id: poId,
-        ingredient_id: ingId,
+        ingredient_id: mode === "ingredients" ? refId : null,
+        inventory_id: mode === "inventory" ? refId : null,
+        name: l.name.trim(),
         quantity: qty,
         unit: l.unit || null,
         unit_price: price,
@@ -192,12 +206,19 @@ export function PurchaseOrderAiReview({
     }
 
     if (status === "received") {
-      await applyReceivedStock(
-        chosen.map((l) => ({
-          ingredient_id: l.matched_ingredient_id ?? created[l.key],
-          quantity: l.quantity,
-        })),
-      );
+      const payload = chosen.map((l) => ({
+        ref_id: l.matched_id ?? created[l.key],
+        quantity: l.quantity,
+      }));
+      if (mode === "inventory") {
+        await applyReceivedStockInventory(
+          payload.map((p) => ({ inventory_id: p.ref_id, quantity: p.quantity })),
+        );
+      } else {
+        await applyReceivedStock(
+          payload.map((p) => ({ ingredient_id: p.ref_id, quantity: p.quantity })),
+        );
+      }
       toast.success(t("po_stock_updated"));
     } else {
       toast.success(t("po_saved"));
@@ -291,8 +312,8 @@ export function PurchaseOrderAiReview({
           <p className="text-center text-xs text-muted-foreground py-4">{t("po_ai_no_items_found")}</p>
         )}
         {items.map((l) => {
-          const matched = l.matched_ingredient_id ? ingMap.get(l.matched_ingredient_id) : null;
-          const isNew = !l.matched_ingredient_id;
+          const matched = l.matched_id ? ingMap.get(l.matched_id) : null;
+          const isNew = !l.matched_id;
           const low = l.confidence < 0.6;
           return (
             <div
@@ -382,7 +403,7 @@ export function PurchaseOrderAiReview({
               {
                 key: crypto.randomUUID(),
                 include: true,
-                matched_ingredient_id: null,
+                matched_id: null,
                 name: "",
                 quantity: "1",
                 unit: "",
