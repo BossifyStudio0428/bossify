@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, X, Trash2, ChevronRight, ClipboardList, Sparkles, Camera, Image as ImageIcon, FileText, Type } from "lucide-react";
+import { Plus, X, Trash2, ChevronRight, ClipboardList, Sparkles, Camera, Image as ImageIcon, FileText, Type, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,6 +59,9 @@ function PurchaseOrdersPage() {
   const [aiText, setAiText] = useState("");
   const [aiScanning, setAiScanning] = useState(false);
   const [aiResult, setAiResult] = useState<ParsedPoResult | null>(null);
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const parseFn = useServerFn(parsePurchaseOrderWithAi);
 
   const supplierMap = useMemo(() => {
