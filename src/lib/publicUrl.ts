@@ -11,8 +11,9 @@ export function isNativeWebView(): boolean {
     protocol === "capacitor:" ||
     protocol === "ionic:" ||
     protocol === "file:" ||
-    (cap?.getPlatform?.() === "android" &&
-      (hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local")))
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname.endsWith(".local")
   );
 }
 
