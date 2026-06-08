@@ -126,13 +126,19 @@ function AdminPage() {
         supabase.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
       ]);
     if (profilesError || subsError) {
-      throw new Error(profilesError?.message ?? subsError?.message ?? viewError?.message ?? "Unable to load admin data");
+      throw new Error(
+        profilesError?.message ?? subsError?.message ?? viewError?.message ?? "Unable to load admin data",
+      );
     }
 
     const subMap = new Map((subscriptions ?? []).map((s) => [s.user_id, s]));
     const orderRows = (orders ?? []) as unknown as AdminOrder[];
     setUsers(
-      ((profiles ?? []) as Array<Pick<AdminUser, "id" | "business_name" | "is_admin" | "created_at">>).map(
+      (
+        (profiles ?? []) as Array<
+          Pick<AdminUser, "id" | "business_name" | "is_admin" | "created_at">
+        >
+      ).map(
         (profile) => {
           const sub = subMap.get(profile.id);
           const userOrders = orderRows.filter((o) => o.user_id === profile.id);
