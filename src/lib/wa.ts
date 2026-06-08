@@ -13,198 +13,198 @@ type TplMap = Record<BizType, Record<Lang, string>>;
 const ORDER_TPL: TplMap = {
   retail: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Thank you for your order with [business_name]!\n\n` +
-      `🛍️ Order: [code]\n` +
-      `📦 Product: [product] x[quantity]\n` +
-      `💰 Total: RM [amount]\n` +
-      `💳 Status: [status]\n` +
+      `- Order: [code]\n` +
+      `- Product: [product] x[quantity]\n` +
+      `- Total: RM [amount]\n` +
+      `- Status: [status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `Thank you for supporting our business! 🙏`,
+      `Thank you for supporting our business!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Terima kasih atas pesanan anda dengan [business_name]!\n\n` +
-      `🛍️ Pesanan: [code]\n` +
-      `📦 Produk: [product] x[quantity]\n` +
-      `💰 Jumlah: RM [amount]\n` +
-      `💳 Status: [status]\n` +
+      `- Pesanan: [code]\n` +
+      `- Produk: [product] x[quantity]\n` +
+      `- Jumlah: RM [amount]\n` +
+      `- Status: [status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `Terima kasih kerana menyokong perniagaan kami! 🙏`,
+      `Terima kasih kerana menyokong perniagaan kami!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
+      `你好 [customer_name]，\n\n` +
       `感谢您在 [business_name] 下单！\n\n` +
-      `🛍️ 订单：[code]\n` +
-      `📦 商品：[product] x[quantity]\n` +
-      `💰 总额：RM [amount]\n` +
-      `💳 状态：[status]\n` +
+      `- 订单：[code]\n` +
+      `- 商品：[product] x[quantity]\n` +
+      `- 总额：RM [amount]\n` +
+      `- 状态：[status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `感谢您的支持！🙏`,
+      `感谢您的支持！`,
   },
   fnb: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Thank you for your order with [business_name]!\n\n` +
-      `🛍️ Order: [code]\n` +
-      `🍱 Item: [product] x[quantity]\n` +
-      `💰 Total: RM [amount]\n` +
-      `💳 Status: [status]\n` +
+      `- Order: [code]\n` +
+      `- Item: [product] x[quantity]\n` +
+      `- Total: RM [amount]\n` +
+      `- Status: [status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `Thank you for supporting our business! 🙏`,
+      `Thank you for supporting our business!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Terima kasih atas pesanan anda dengan [business_name]!\n\n` +
-      `🛍️ Pesanan: [code]\n` +
-      `🍱 Menu: [product] x[quantity]\n` +
-      `💰 Jumlah: RM [amount]\n` +
-      `💳 Status: [status]\n` +
+      `- Pesanan: [code]\n` +
+      `- Menu: [product] x[quantity]\n` +
+      `- Jumlah: RM [amount]\n` +
+      `- Status: [status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `Terima kasih kerana menyokong perniagaan kami! 🙏`,
+      `Terima kasih kerana menyokong perniagaan kami!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
+      `你好 [customer_name]，\n\n` +
       `感谢您在 [business_name] 下单！\n\n` +
-      `🛍️ 订单：[code]\n` +
-      `🍱 餐点：[product] x[quantity]\n` +
-      `💰 总额：RM [amount]\n` +
-      `💳 状态：[status]\n` +
+      `- 订单：[code]\n` +
+      `- 餐点：[product] x[quantity]\n` +
+      `- 总额：RM [amount]\n` +
+      `- 状态：[status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `感谢您的支持！🙏`,
+      `感谢您的支持！`,
   },
   education: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Thank you for trusting [business_name]!\n\n` +
-      `📋 Case: [code]\n` +
-      `🎓 Service: [product]\n` +
-      `💰 Fee: RM [amount]\n` +
-      `💳 Status: [status]\n` +
+      `- Case: [code]\n` +
+      `- Service: [product]\n` +
+      `- Fee: RM [amount]\n` +
+      `- Status: [status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `We will assist you to the best of our ability! 🙏`,
+      `We will assist you to the best of our ability!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Terima kasih atas kepercayaan anda kepada [business_name]!\n\n` +
-      `📋 Kes: [code]\n` +
-      `🎓 Perkhidmatan: [product]\n` +
-      `💰 Yuran: RM [amount]\n` +
-      `💳 Status: [status]\n` +
+      `- Kes: [code]\n` +
+      `- Perkhidmatan: [product]\n` +
+      `- Yuran: RM [amount]\n` +
+      `- Status: [status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `Kami akan membantu anda sebaik mungkin! 🙏`,
+      `Kami akan membantu anda sebaik mungkin!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
+      `你好 [customer_name]，\n\n` +
       `感谢您信任 [business_name]！\n\n` +
-      `📋 案例：[code]\n` +
-      `🎓 服务：[product]\n` +
-      `💰 费用：RM [amount]\n` +
-      `💳 状态：[status]\n` +
+      `- 案例：[code]\n` +
+      `- 服务：[product]\n` +
+      `- 费用：RM [amount]\n` +
+      `- 状态：[status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `我们将竭诚为您服务！🙏`,
+      `我们将竭诚为您服务！`,
   },
   beauty: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
-      `Your appointment is confirmed! 💄\n\n` +
-      `💄 Appointment: [code]\n` +
-      `✨ Service: [product]\n` +
+      `Hi [customer_name],\n\n` +
+      `Your appointment is confirmed!\n\n` +
+      `- Appointment: [code]\n` +
+      `- Service: [product]\n` +
       `[date_time_line]` +
-      `💰 Price: RM [amount]\n` +
-      `💳 Status: [status]\n` +
+      `- Price: RM [amount]\n` +
+      `- Status: [status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `See you soon! 🙏`,
+      `See you soon!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
-      `Temujanji anda telah disahkan! 💄\n\n` +
-      `💄 Temujanji: [code]\n` +
-      `✨ Perkhidmatan: [product]\n` +
+      `Hi [customer_name],\n\n` +
+      `Temujanji anda telah disahkan!\n\n` +
+      `- Temujanji: [code]\n` +
+      `- Perkhidmatan: [product]\n` +
       `[date_time_line]` +
-      `💰 Harga: RM [amount]\n` +
-      `💳 Status: [status]\n` +
+      `- Harga: RM [amount]\n` +
+      `- Status: [status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `Jumpa anda nanti! 🙏`,
+      `Jumpa anda nanti!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
-      `您的预约已确认！💄\n\n` +
-      `💄 预约：[code]\n` +
-      `✨ 服务：[product]\n` +
+      `你好 [customer_name]，\n\n` +
+      `您的预约已确认！\n\n` +
+      `- 预约：[code]\n` +
+      `- 服务：[product]\n` +
       `[date_time_line]` +
-      `💰 价格：RM [amount]\n` +
-      `💳 状态：[status]\n` +
+      `- 价格：RM [amount]\n` +
+      `- 状态：[status]\n` +
       `[notes]` +
       `[payment_details]` +
-      `期待您的光临！🙏`,
+      `期待您的光临！`,
   },
   property: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Thank you for your interest in [business_name]!\n\n` +
-      `🏠 Reference: [code]\n` +
-      `🏠 Listing: [product]\n` +
-      `💰 Budget: RM [amount]\n` +
+      `- Reference: [code]\n` +
+      `- Listing: [product]\n` +
+      `- Budget: RM [amount]\n` +
       `[follow_up_line]` +
       `[notes]` +
-      `We will contact you soon! 🙏`,
+      `We will contact you soon!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
+      `Hi [customer_name],\n\n` +
       `Terima kasih atas minat anda dengan [business_name]!\n\n` +
-      `🏠 Rujukan: [code]\n` +
-      `🏠 Hartanah: [product]\n` +
-      `💰 Anggaran: RM [amount]\n` +
+      `- Rujukan: [code]\n` +
+      `- Hartanah: [product]\n` +
+      `- Anggaran: RM [amount]\n` +
       `[follow_up_line]` +
       `[notes]` +
-      `Kami akan menghubungi anda tidak lama lagi! 🙏`,
+      `Kami akan menghubungi anda tidak lama lagi!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
+      `你好 [customer_name]，\n\n` +
       `感谢您对 [business_name] 的关注！\n\n` +
-      `🏠 参考编号：[code]\n` +
-      `🏠 房源：[product]\n` +
-      `💰 预算：RM [amount]\n` +
+      `- 参考编号：[code]\n` +
+      `- 房源：[product]\n` +
+      `- 预算：RM [amount]\n` +
       `[follow_up_line]` +
       `[notes]` +
-      `我们将尽快与您联系！🙏`,
+      `我们将尽快与您联系！`,
   },
   freelance: {
     en:
-      `Hi [customer_name]! 👋\n\n` +
-      `Your project has been received! 💼\n\n` +
-      `💼 Project: [code]\n` +
-      `🔧 Service: [product]\n` +
-      `💰 Amount: RM [amount]\n` +
-      `💳 Status: [status]\n` +
+      `Hi [customer_name],\n\n` +
+      `Your project has been received!\n\n` +
+      `- Project: [code]\n` +
+      `- Service: [product]\n` +
+      `- Amount: RM [amount]\n` +
+      `- Status: [status]\n` +
       `[deadline_line]` +
       `[notes]` +
       `[payment_details]` +
-      `Thank you for trusting us! 🙏`,
+      `Thank you for trusting us!`,
     ms:
-      `Hi [customer_name]! 👋\n\n` +
-      `Projek anda telah diterima! 💼\n\n` +
-      `💼 Projek: [code]\n` +
-      `🔧 Perkhidmatan: [product]\n` +
-      `💰 Jumlah: RM [amount]\n` +
-      `💳 Status: [status]\n` +
+      `Hi [customer_name],\n\n` +
+      `Projek anda telah diterima!\n\n` +
+      `- Projek: [code]\n` +
+      `- Perkhidmatan: [product]\n` +
+      `- Jumlah: RM [amount]\n` +
+      `- Status: [status]\n` +
       `[deadline_line]` +
       `[notes]` +
       `[payment_details]` +
-      `Terima kasih atas kepercayaan anda! 🙏`,
+      `Terima kasih atas kepercayaan anda!`,
     zh:
-      `你好 [customer_name]！👋\n\n` +
-      `您的项目已收到！💼\n\n` +
-      `💼 项目：[code]\n` +
-      `🔧 服务：[product]\n` +
-      `💰 金额：RM [amount]\n` +
-      `💳 状态：[status]\n` +
+      `你好 [customer_name]，\n\n` +
+      `您的项目已收到！\n\n` +
+      `- 项目：[code]\n` +
+      `- 服务：[product]\n` +
+      `- 金额：RM [amount]\n` +
+      `- 状态：[status]\n` +
       `[deadline_line]` +
       `[notes]` +
       `[payment_details]` +
-      `感谢您的信任！🙏`,
+      `感谢您的信任！`,
   },
 };
 
