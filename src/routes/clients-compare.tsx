@@ -10,6 +10,7 @@ import {
 import { STAGE_DEFS } from "@/components/FollowupPipeline";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { applyCjkFont, CJK_FONT_FAMILY } from "@/lib/pdfCjk";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
@@ -111,13 +112,16 @@ function ComparePage() {
     setExporting(true);
     try {
       const doc = new jsPDF({ orientation: "landscape" });
+      await applyCjkFont(doc);
       const PURPLE: [number, number, number] = [108, 63, 214];
       doc.setFillColor(...PURPLE);
       doc.rect(0, 0, 297, 22, "F");
       doc.setTextColor(255, 255, 255);
+      doc.setFont(CJK_FONT_FAMILY, "bold");
       doc.setFontSize(14);
       doc.text(`Bossify — ${t("edu_comparison_report")}`, 14, 14);
       doc.setTextColor(0, 0, 0);
+      doc.setFont(CJK_FONT_FAMILY, "normal");
       doc.setFontSize(10);
       doc.text(new Date().toLocaleString("en-MY"), 14, 28);
 
@@ -125,12 +129,13 @@ function ComparePage() {
       const body = rows.map((r) => [t(r.key), ...picked.map((c) => r.render(c))]);
       autoTable(doc, {
         startY: 34, head, body, theme: "grid",
-        headStyles: { fillColor: PURPLE, textColor: 255 },
+        headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
         alternateRowStyles: { fillColor: [240, 238, 248] },
-        styles: { fontSize: 9, cellPadding: 3 },
+        styles: { fontSize: 9, cellPadding: 3, font: CJK_FONT_FAMILY },
       });
 
       let y = (doc as any).lastAutoTable.finalY + 8;
+      doc.setFont(CJK_FONT_FAMILY, "normal");
       doc.setFontSize(11);
       doc.text(t("edu_pipeline"), 14, y);
       y += 5;
