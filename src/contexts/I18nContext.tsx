@@ -61,6 +61,7 @@ const dict = {
     receipt_unconfirmed: "Mark receipt as not confirmed",
     view_receipt: "View receipt",
     receipt_remove: "Remove receipt",
+    thank_customer_msg: "Hi {name}, thank you for being a valued customer!",
     delete_order: "Delete Order",
     pull_refresh: "Pull to refresh",
     no_orders_create: "No orders yet. Tap + to create your first order!",
