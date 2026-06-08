@@ -1,0 +1,1 @@
+CREATE POLICY "auth_can_read_order_receipts_bucket" ON storage.buckets FOR SELECT TO authenticated USING (id = 'order-receipts');
