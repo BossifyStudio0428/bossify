@@ -8,10 +8,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
-import {
-  revokeAdminSubscriptionPlan,
-  setAdminSubscriptionPlan,
-} from "@/lib/admin.functions";
+import { revokeAdminSubscriptionPlan, setAdminSubscriptionPlan } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
@@ -127,7 +124,10 @@ function AdminPage() {
       ]);
     if (profilesError || subsError) {
       throw new Error(
-        profilesError?.message ?? subsError?.message ?? viewError?.message ?? "Unable to load admin data",
+        profilesError?.message ??
+          subsError?.message ??
+          viewError?.message ??
+          "Unable to load admin data",
       );
     }
 
@@ -138,24 +138,22 @@ function AdminPage() {
         (profiles ?? []) as Array<
           Pick<AdminUser, "id" | "business_name" | "is_admin" | "created_at">
         >
-      ).map(
-        (profile) => {
-          const sub = subMap.get(profile.id);
-          const userOrders = orderRows.filter((o) => o.user_id === profile.id);
-          return {
-            ...profile,
-            plan: sub?.plan ?? "free",
-            status: sub?.status ?? null,
-            expires_at: sub?.expires_at ?? null,
-            order_count: sub?.order_count ?? 0,
-            total_orders: userOrders.length,
-            total_revenue: userOrders.reduce(
-              (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
-              0,
-            ),
-          };
-        },
-      ),
+      ).map((profile) => {
+        const sub = subMap.get(profile.id);
+        const userOrders = orderRows.filter((o) => o.user_id === profile.id);
+        return {
+          ...profile,
+          plan: sub?.plan ?? "free",
+          status: sub?.status ?? null,
+          expires_at: sub?.expires_at ?? null,
+          order_count: sub?.order_count ?? 0,
+          total_orders: userOrders.length,
+          total_revenue: userOrders.reduce(
+            (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
+            0,
+          ),
+        };
+      }),
     );
     setAllOrders(orderRows);
   }, [user]);
