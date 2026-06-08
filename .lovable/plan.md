@@ -1,38 +1,46 @@
 ## Goal
+WhatsApp share message on the Order Form page (and the Orders page share button) should vary by business type — not always the generic "Hi! Place your order here".
 
-Make push notifications (the bell/system pop-ups) also follow the merchant's **business type** and **app language** — not always English "New order received! 🛍️".
+## Per-biz messages (en / ms / zh)
 
-## Current state
+| biz | en | ms | zh |
+|---|---|---|---|
+| retail | Hi! Place your order with us here: {link} | Hai! Buat pesanan dengan kami di sini: {link} | 您好！点此向我们下单：{link} |
+| fnb | Hi! Place your order with us here 🍱: {link} | Hai! Pesan makanan dengan kami di sini 🍱: {link} | 您好！点此订餐：{link} |
+| education | Hi! Enquire about our courses & programs here: {link} | Hai! Tanya tentang kursus & program kami di sini: {link} | 您好！点此咨询课程与升学：{link} |
+| beauty | Hi! Book your appointment with us here: {link} | Hai! Tempah temujanji dengan kami di sini: {link} | 您好！点此预约美容服务：{link} |
+| property | Hi! View our property listings and enquire here: {link} | Hai! Sila lihat senarai hartanah kami dan hubungi kami: {link} | 你好！欢迎浏览我们的房源，请点击链接询问：{link} |
+| freelance | Hi! Book my services here: {link} | Hai! Tempah perkhidmatan saya di sini: {link} | 您好！点此预约我的服务：{link} |
 
-- `src/lib/notifMessages.ts` (used by **in-app** toasts and the bell list): already biz-aware + localised for all kinds.
-- `supabase/functions/send-push` (the **actual push** sent to phones/web): biz+lang-aware for `morning_summary`, `closing_report`. Generic-only for `unpaid_reminder`, `follow_up_reminder`, `low_stock`, `milestone`. Has **no** computed wording for `new_order`.
-- DB trigger `notify_new_order_push` (fires on every new order INSERT): hardcodes English `title = 'New order received! 🛍️'` and a body string, then calls send-push with those as overrides — so the edge function's biz/lang logic is bypassed and every merchant gets English regardless of language or biz type.
+(Emoji stays in source; `stripEmoji` removes it for the WhatsApp URL — same as today.)
 
 ## Changes
 
-### 1. DB trigger `notify_new_order_push`
-Rewrite so it does NOT send `title`/`body`. Send only:
-```json
-{ "kind": "new_order", "targetUserId": ..., "link": "/orders",
-  "vars": { "customer": "...", "amount": "12.50" } }
+### 1. `src/lib/businessType.ts`
+Add helper:
+```ts
+export function pofWaShareKey(type: BizType | null | undefined): TKey {
+  switch (type) {
+    case "fnb": return "pof_wa_share_msg_fnb";
+    case "education": return "pof_wa_share_msg_education";
+    case "beauty": return "pof_wa_share_msg_beauty";
+    case "property": return "pof_wa_share_msg_property";
+    case "freelance": return "pof_wa_share_msg_freelance";
+    case "retail":
+    default: return "pof_wa_share_msg";   // retail keeps the existing key
+  }
+}
 ```
-The edge function will compute biz+lang title/body.
 
-### 2. `supabase/functions/send-push/index.ts`
-- Add a `T_NEW_ORDER` biz pack mirroring the `NEW_ORDER` table in `src/lib/notifMessages.ts` (retail/fnb = "New order", education = "New case", beauty = "New appointment", property = "New customer", freelance = "New project", in en/ms/zh).
-- Add a `T_UNPAID` biz pack mirroring the `UNPAID` table in `notifMessages.ts` (per-biz wording). Keep `T_UNPAID_GENERIC` only as the fallback when no `customer`/`amount` is supplied (the cron path).
-- Add a localised `T_LOW_STOCK`, `T_MILESTONE`, `T_FOLLOWUP` body that uses the user's `language` (already partly there — verify low_stock and milestone are localised since they're sent from `src/lib/notifications.ts` or other call sites).
-- Read `parsed.vars` (optional `{customer, amount, product, quantity, milestone, note}`) and use it to fill bodies. When the trigger passes vars, render a per-customer message; when the cron broadcast has no vars, fall back to the count-based generic.
-- In `resolveContent`, add a `kind === "new_order"` branch that picks the biz template and fills `{customer}`+`{amount}` from `parsed.vars`. Only fall back to override.title/body when caller explicitly passes them (no in-tree caller does for `new_order` after step 1).
+### 2. `src/contexts/I18nContext.tsx`
+Add the four new keys (`_fnb`, `_education`, `_beauty`, `_freelance`) to all three locale blocks (en/ms/zh) plus the `TKey` union. Keep existing `pof_wa_share_msg` (retail default) and `pof_wa_share_msg_property` unchanged.
 
-### 3. Find all other call sites that pass hardcoded English overrides
-Search for `send-push` callers (`sendPush.ts`, `notify.ts`, `notifications.ts`, any DB function) and switch them to pass `kind` + `vars` instead of pre-composed `title`/`body`, so the edge function's biz+lang logic always wins. Leave one escape hatch (`override.title && override.body`) for one-off custom notifications.
+### 3. `src/routes/order-form.tsx`
+Replace the inline ternary with `t(pofWaShareKey(businessType as BizType | null))`.
+
+### 4. `src/routes/orders.tsx`
+Read `business_type` from the profile (it's already loaded elsewhere on this page — verify) and use `pofWaShareKey(...)` for the share button at line 587. If `business_type` isn't loaded there yet, fetch it once in the same effect that loads `ofCode`.
 
 ### Out of scope
-- In-app bell list / toast wording — already biz+lang aware via `notifMessages.ts`.
-- Emoji handling — push notifications render emoji fine on the OS notification tray; we only strip them from WhatsApp URLs.
-
-## Files touched
-- New migration: replace `notify_new_order_push` function.
-- `supabase/functions/send-push/index.ts`
-- `src/lib/sendPush.ts` / `src/lib/notify.ts` / `src/lib/notifications.ts` (only if any of them pass pre-composed English titles).
+- `src/routes/listings.tsx` — hardcoded property message, already correct.
+- In-app notification / push wording (separate system).
