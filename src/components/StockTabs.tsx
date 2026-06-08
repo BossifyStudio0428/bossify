@@ -2,7 +2,13 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
-type TabKey = "products" | "ingredients" | "recipes" | "suppliers" | "stock-take";
+type TabKey =
+  | "products"
+  | "ingredients"
+  | "recipes"
+  | "suppliers"
+  | "stock-take"
+  | "purchase-orders";
 
 const LABELS: Record<TabKey, { en: string; ms: string; zh: string }> = {
   products:    { en: "Products",   ms: "Produk",     zh: "成品" },
@@ -10,14 +16,19 @@ const LABELS: Record<TabKey, { en: string; ms: string; zh: string }> = {
   recipes:     { en: "Recipes",     ms: "Resipi",     zh: "食谱" },
   suppliers:   { en: "Suppliers",   ms: "Pembekal",   zh: "供应商" },
   "stock-take":{ en: "Stock Take",  ms: "Ambil Stok", zh: "盘点" },
+  "purchase-orders": { en: "Purchase Orders", ms: "Pesanan Belian", zh: "采购单" },
 };
 
-const ROUTE_BY_KEY: Record<TabKey, "/inventory" | "/ingredients" | "/recipes" | "/suppliers" | "/stock-take"> = {
+const ROUTE_BY_KEY: Record<
+  TabKey,
+  "/inventory" | "/ingredients" | "/recipes" | "/suppliers" | "/stock-take" | "/purchase-orders"
+> = {
   products: "/inventory",
   ingredients: "/ingredients",
   recipes: "/recipes",
   suppliers: "/suppliers",
   "stock-take": "/stock-take",
+  "purchase-orders": "/purchase-orders",
 };
 
 export function StockTabs({ active }: { active: TabKey }) {
@@ -25,9 +36,9 @@ export function StockTabs({ active }: { active: TabKey }) {
   const { type } = useBusinessType();
   let tabs: TabKey[];
   if (type === "fnb") {
-    tabs = ["products", "ingredients", "recipes", "suppliers", "stock-take"];
+    tabs = ["products", "ingredients", "recipes", "suppliers", "stock-take", "purchase-orders"];
   } else if (type === "retail") {
-    tabs = ["products", "suppliers", "stock-take"];
+    tabs = ["products", "suppliers", "stock-take", "purchase-orders"];
   } else {
     tabs = ["products"];
   }
@@ -63,5 +74,6 @@ export function useActiveStockTab(): TabKey | null {
   if (path.startsWith("/recipes")) return "recipes";
   if (path.startsWith("/suppliers")) return "suppliers";
   if (path.startsWith("/stock-take")) return "stock-take";
+  if (path.startsWith("/purchase-orders")) return "purchase-orders";
   return null;
 }
