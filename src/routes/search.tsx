@@ -10,7 +10,10 @@ function SearchPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const [results, setResults] = useState<{ orders: any[]; customers: any[]; inventory: any[] }>({ orders: [], customers: [], inventory: [] });
+  const [results, setResults] = useState<{
+    orders: any[]; customers: any[]; inventory: any[];
+    ingredients: any[]; recipes: any[]; suppliers: any[]; stockTakes: any[];
+  }>({ orders: [], customers: [], inventory: [], ingredients: [], recipes: [], suppliers: [], stockTakes: [] });
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -18,18 +21,26 @@ function SearchPage() {
 
   useEffect(() => {
     if (q.trim().length < 2) {
-      setResults({ orders: [], customers: [], inventory: [] });
+      setResults({ orders: [], customers: [], inventory: [], ingredients: [], recipes: [], suppliers: [], stockTakes: [] });
       return;
     }
     const timer = setTimeout(async () => {
       setLoading(true);
       const term = `%${q.trim()}%`;
-      const [o, c, i] = await Promise.all([
+      const [o, c, i, ing, rec, sup, st] = await Promise.all([
         supabase.from("orders").select("id,code,customer_name,product,amount,status").or(`customer_name.ilike.${term},product.ilike.${term},code.ilike.${term}`).limit(10),
         supabase.from("customers").select("id,name,phone,total_orders").or(`name.ilike.${term},phone.ilike.${term}`).limit(10),
         supabase.from("inventory").select("id,name,stock,unit").ilike("name", term).limit(10),
+        supabase.from("ingredients" as any).select("id,name,unit,current_stock").ilike("name", term).limit(10),
+        supabase.from("recipes" as any).select("id,name,serving_size").ilike("name", term).limit(10),
+        supabase.from("suppliers" as any).select("id,name,contact").or(`name.ilike.${term},contact.ilike.${term}`).limit(10),
+        supabase.from("stock_takes" as any).select("id,started_at,completed_at,status,notes").or(`notes.ilike.${term},status.ilike.${term},started_at.ilike.${term},completed_at.ilike.${term}`).limit(10),
       ]);
-      setResults({ orders: o.data ?? [], customers: c.data ?? [], inventory: i.data ?? [] });
+      setResults({
+        orders: o.data ?? [], customers: c.data ?? [], inventory: i.data ?? [],
+        ingredients: (ing as any).data ?? [], recipes: (rec as any).data ?? [],
+        suppliers: (sup as any).data ?? [], stockTakes: (st as any).data ?? [],
+      });
       setLoading(false);
     }, 300);
     return () => clearTimeout(timer);
@@ -95,8 +106,65 @@ function SearchPage() {
           </section>
         )}
 
+        {results.ingredients.length > 0 && (
+          <section>
+            <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2">{t("ingredients")}</p>
+            <div className="space-y-2">
+              {results.ingredients.map((i) => (
+                <Link key={i.id} to="/ingredients" onClick={close} className="block p-3 rounded-xl bg-card border border-border/60">
+                  <p className="text-sm font-medium">{i.name}</p>
+                  <p className="text-xs text-muted-foreground">{Number(i.current_stock)} {i.unit}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {results.recipes.length > 0 && (
+          <section>
+            <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2">{t("recipes")}</p>
+            <div className="space-y-2">
+              {results.recipes.map((r) => (
+                <Link key={r.id} to="/recipes" onClick={close} className="block p-3 rounded-xl bg-card border border-border/60">
+                  <p className="text-sm font-medium">{r.name}</p>
+                  {r.serving_size != null && <p className="text-xs text-muted-foreground">× {r.serving_size}</p>}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {results.suppliers.length > 0 && (
+          <section>
+            <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2">{t("suppliers")}</p>
+            <div className="space-y-2">
+              {results.suppliers.map((s) => (
+                <Link key={s.id} to="/suppliers" onClick={close} className="block p-3 rounded-xl bg-card border border-border/60">
+                  <p className="text-sm font-medium">{s.name}</p>
+                  {s.contact && <p className="text-xs text-muted-foreground">{s.contact}</p>}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {results.stockTakes.length > 0 && (
+          <section>
+            <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2">{t("stock_take") || "Stock Take"}</p>
+            <div className="space-y-2">
+              {results.stockTakes.map((s) => (
+                <Link key={s.id} to="/stock-take/$id" params={{ id: s.id }} onClick={close} className="block p-3 rounded-xl bg-card border border-border/60">
+                  <p className="text-sm font-medium">{new Date(s.started_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-muted-foreground">{s.status}{s.notes ? ` · ${s.notes}` : ""}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {!loading && q.trim().length >= 2 &&
-         results.orders.length === 0 && results.customers.length === 0 && results.inventory.length === 0 && (
+         results.orders.length === 0 && results.customers.length === 0 && results.inventory.length === 0 &&
+         results.ingredients.length === 0 && results.recipes.length === 0 && results.suppliers.length === 0 && results.stockTakes.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-10">—</p>
         )}
       </div>
