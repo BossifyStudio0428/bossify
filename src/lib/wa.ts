@@ -372,37 +372,170 @@ export const DEFAULT_REMINDER_TPL = REMINDER_TPL.retail.en;
 // Receipt template (Paid orders). One template per language — works for all
 // business types since the wording is generic enough.
 // ---------------------------------------------------------------------------
-const RECEIPT_TPL: Record<Lang, string> = {
-  en:
-    `Hi [customer_name],\n\n` +
-    `Thank you! Your payment has been received.\n\n` +
-    `- Order: [code]\n` +
-    `- Item: [product] x[quantity]\n` +
-    `- Paid: RM [amount]\n` +
-    `[receipt_line]` +
-    `Thank you for your business with [business_name].`,
-  ms:
-    `Hi [customer_name],\n\n` +
-    `Terima kasih! Pembayaran anda telah diterima.\n\n` +
-    `- Pesanan: [code]\n` +
-    `- Item: [product] x[quantity]\n` +
-    `- Dibayar: RM [amount]\n` +
-    `[receipt_line]` +
-    `Terima kasih kerana berurusan dengan [business_name].`,
-  zh:
-    `你好 [customer_name]，\n\n` +
-    `已收到您的付款，谢谢！\n\n` +
-    `- 订单：[code]\n` +
-    `- 商品：[product] x[quantity]\n` +
-    `- 已付：RM [amount]\n` +
-    `[receipt_line]` +
-    `感谢您光顾 [business_name]！`,
+const RECEIPT_TPL: TplMap = {
+  retail: {
+    en:
+      `Hi [customer_name],\n\n` +
+      `Thank you! Your payment has been received.\n\n` +
+      `- Order: [code]\n` +
+      `- Product: [product] x[quantity]\n` +
+      `- Paid: RM [amount]\n` +
+      `[receipt_line]` +
+      `Thank you for your business with [business_name].`,
+    ms:
+      `Hi [customer_name],\n\n` +
+      `Terima kasih! Pembayaran anda telah diterima.\n\n` +
+      `- Pesanan: [code]\n` +
+      `- Produk: [product] x[quantity]\n` +
+      `- Dibayar: RM [amount]\n` +
+      `[receipt_line]` +
+      `Terima kasih kerana berurusan dengan [business_name].`,
+    zh:
+      `你好 [customer_name]，\n\n` +
+      `已收到您的付款，谢谢！\n\n` +
+      `- 订单：[code]\n` +
+      `- 商品：[product] x[quantity]\n` +
+      `- 已付：RM [amount]\n` +
+      `[receipt_line]` +
+      `感谢您光顾 [business_name]！`,
+  },
+  fnb: {
+    en:
+      `Hi [customer_name],\n\n` +
+      `Thank you! Your payment has been received.\n\n` +
+      `- Order: [code]\n` +
+      `- Item: [product] x[quantity]\n` +
+      `- Paid: RM [amount]\n` +
+      `[receipt_line]` +
+      `Thank you for dining with [business_name].`,
+    ms:
+      `Hi [customer_name],\n\n` +
+      `Terima kasih! Pembayaran anda telah diterima.\n\n` +
+      `- Pesanan: [code]\n` +
+      `- Menu: [product] x[quantity]\n` +
+      `- Dibayar: RM [amount]\n` +
+      `[receipt_line]` +
+      `Terima kasih kerana memilih [business_name].`,
+    zh:
+      `你好 [customer_name]，\n\n` +
+      `已收到您的付款，谢谢！\n\n` +
+      `- 订单：[code]\n` +
+      `- 餐点：[product] x[quantity]\n` +
+      `- 已付：RM [amount]\n` +
+      `[receipt_line]` +
+      `感谢您光顾 [business_name]！`,
+  },
+  education: {
+    en:
+      `Hi [customer_name],\n\n` +
+      `Thank you! Your payment has been received.\n\n` +
+      `- Case: [code]\n` +
+      `- Service: [product]\n` +
+      `- Paid: RM [amount]\n` +
+      `[receipt_line]` +
+      `Thank you for trusting [business_name].`,
+    ms:
+      `Hi [customer_name],\n\n` +
+      `Terima kasih! Pembayaran anda telah diterima.\n\n` +
+      `- Kes: [code]\n` +
+      `- Perkhidmatan: [product]\n` +
+      `- Dibayar: RM [amount]\n` +
+      `[receipt_line]` +
+      `Terima kasih atas kepercayaan anda terhadap [business_name].`,
+    zh:
+      `你好 [customer_name]，\n\n` +
+      `已收到您的付款，谢谢！\n\n` +
+      `- 案例：[code]\n` +
+      `- 服务：[product]\n` +
+      `- 已付：RM [amount]\n` +
+      `[receipt_line]` +
+      `感谢您对 [business_name] 的信任！`,
+  },
+  beauty: {
+    en:
+      `Hi [customer_name],\n\n` +
+      `Thank you! Your payment has been received.\n\n` +
+      `- Appointment: [code]\n` +
+      `- Service: [product]\n` +
+      `- Paid: RM [amount]\n` +
+      `[receipt_line]` +
+      `Thank you for choosing [business_name].`,
+    ms:
+      `Hi [customer_name],\n\n` +
+      `Terima kasih! Pembayaran anda telah diterima.\n\n` +
+      `- Temujanji: [code]\n` +
+      `- Perkhidmatan: [product]\n` +
+      `- Dibayar: RM [amount]\n` +
+      `[receipt_line]` +
+      `Terima kasih kerana memilih [business_name].`,
+    zh:
+      `你好 [customer_name]，\n\n` +
+      `已收到您的付款，谢谢！\n\n` +
+      `- 预约：[code]\n` +
+      `- 服务：[product]\n` +
+      `- 已付：RM [amount]\n` +
+      `[receipt_line]` +
+      `感谢您选择 [business_name]！`,
+  },
+  property: {
+    en:
+      `Hi [customer_name],\n\n` +
+      `Thank you! Your payment has been received.\n\n` +
+      `- Reference: [code]\n` +
+      `- Listing: [product]\n` +
+      `- Paid: RM [amount]\n` +
+      `[receipt_line]` +
+      `Thank you for working with [business_name].`,
+    ms:
+      `Hi [customer_name],\n\n` +
+      `Terima kasih! Pembayaran anda telah diterima.\n\n` +
+      `- Rujukan: [code]\n` +
+      `- Hartanah: [product]\n` +
+      `- Dibayar: RM [amount]\n` +
+      `[receipt_line]` +
+      `Terima kasih kerana berurusan dengan [business_name].`,
+    zh:
+      `你好 [customer_name]，\n\n` +
+      `已收到您的付款，谢谢！\n\n` +
+      `- 参考编号：[code]\n` +
+      `- 房源：[product]\n` +
+      `- 已付：RM [amount]\n` +
+      `[receipt_line]` +
+      `感谢您选择 [business_name]！`,
+  },
+  freelance: {
+    en:
+      `Hi [customer_name],\n\n` +
+      `Thank you! Your payment has been received.\n\n` +
+      `- Project: [code]\n` +
+      `- Service: [product]\n` +
+      `- Paid: RM [amount]\n` +
+      `[receipt_line]` +
+      `Thank you for working with [business_name].`,
+    ms:
+      `Hi [customer_name],\n\n` +
+      `Terima kasih! Pembayaran anda telah diterima.\n\n` +
+      `- Projek: [code]\n` +
+      `- Perkhidmatan: [product]\n` +
+      `- Dibayar: RM [amount]\n` +
+      `[receipt_line]` +
+      `Terima kasih kerana berkerjasama dengan [business_name].`,
+    zh:
+      `你好 [customer_name]，\n\n` +
+      `已收到您的付款，谢谢！\n\n` +
+      `- 项目：[code]\n` +
+      `- 服务：[product]\n` +
+      `- 已付：RM [amount]\n` +
+      `[receipt_line]` +
+      `感谢与 [business_name] 的合作！`,
+  },
 };
 
 const RECEIPT_LABEL: Record<Lang, string> = { en: "Receipt", ms: "Resit", zh: "收据" };
 
-export function getReceiptTemplate(lang: Lang): string {
-  return RECEIPT_TPL[lang] ?? RECEIPT_TPL.en;
+export function getReceiptTemplate(lang: Lang, biz?: BizType | null): string {
+  const b = resolveBiz(biz);
+  return RECEIPT_TPL[b]?.[lang] ?? RECEIPT_TPL.retail.en;
 }
 
 export function receiptLineLabel(lang: Lang): string {

@@ -316,6 +316,7 @@ function OrdersPage() {
         amount: Number(o.amount),
         createdAt: (o as any).created_at ?? new Date().toISOString(),
         lang,
+        bizType,
       });
       const autoPath = `${user.id}/auto/${o.id}-${Date.now()}.pdf`;
       const { error: upErr } = await supabase.storage
@@ -333,7 +334,7 @@ function OrdersPage() {
     } finally {
       setReceiptUploadingId(null);
     }
-    const msg = renderTemplate(getReceiptTemplate(lang), {
+    const msg = renderTemplate(getReceiptTemplate(lang, bizType), {
       customer_name: o.customer_name,
       business_name: waProfile.businessName,
       code: o.code,
