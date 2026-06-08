@@ -161,6 +161,26 @@ function PurchaseOrdersPage() {
     await runAiParse(kind, b64, file.type);
   };
 
+  const supplierMap = useMemo(() => {
+    const m = new Map<string, string>();
+    suppliers.forEach((s) => m.set(s.id, s.name));
+    return m;
+  }, [suppliers]);
+
+  const filteredOrders = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return orders.filter((o) => {
+      const supName = (o.supplier_id && supplierMap.get(o.supplier_id)) || "";
+      if (q && !supName.toLowerCase().includes(q) && !(o.notes ?? "").toLowerCase().includes(q)) {
+        return false;
+      }
+      const d = o.order_date.slice(0, 10);
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo && d > dateTo) return false;
+      return true;
+    });
+  }, [orders, search, dateFrom, dateTo, supplierMap]);
+
   return (
     <div className="px-5 pt-10 pb-24 space-y-5 relative">
       <header className="flex items-center gap-3">
