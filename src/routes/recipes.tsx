@@ -113,7 +113,7 @@ function RecipesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={`${t("search")}...`}
-          className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-muted/40 border border-border/60 text-sm outline-none focus:border-primary"
+          className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-card border border-border shadow-sm text-sm outline-none focus:border-primary"
         />
       </div>
 
@@ -312,7 +312,7 @@ function RecipeForm({
         <select
           value={productId}
           onChange={(e) => onProductChange(e.target.value)}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+          className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
         >
           <option value="">—</option>
           {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -327,7 +327,7 @@ function RecipeForm({
           type="number"
           value={serving}
           onChange={(e) => setServing(e.target.value)}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+          className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
         />
         <p className="text-[11px] text-muted-foreground px-1">{t("serving_size_hint")}</p>
       </div>

@@ -193,7 +193,7 @@ function PurchaseOrdersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={`${t("search")}...`}
-            className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-muted/40 border border-border/60 text-sm outline-none focus:border-primary"
+            className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-card border border-border shadow-sm text-sm outline-none focus:border-primary"
           />
         </div>
         <div className="flex gap-2">
@@ -201,14 +201,14 @@ function PurchaseOrdersPage() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs outline-none focus:border-primary"
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-card border border-border shadow-sm text-xs outline-none focus:border-primary"
           />
           <span className="text-xs text-muted-foreground self-center">–</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs outline-none focus:border-primary"
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-card border border-border shadow-sm text-xs outline-none focus:border-primary"
           />
           {(dateFrom || dateTo) && (
             <button
@@ -333,7 +333,7 @@ function PurchaseOrdersPage() {
             onChange={(e) => setAiText(e.target.value)}
             rows={8}
             placeholder={t("po_ai_text_placeholder")}
-            className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm outline-none focus:border-primary resize-none"
+            className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm outline-none focus:border-primary resize-none"
           />
           <button
             onClick={async () => {
@@ -406,7 +406,7 @@ function AiSourceSheet({
         </button>
       </div>
 
-      <label className="flex items-center gap-3 rounded-2xl bg-muted/40 border border-border/60 p-4 cursor-pointer hover:bg-muted/60 active:scale-[0.99] transition">
+      <label className="flex items-center gap-3 rounded-2xl bg-card border border-border shadow-sm p-4 cursor-pointer hover:bg-muted/60 active:scale-[0.99] transition">
         <Camera className="h-5 w-5 text-primary" />
         <span className="text-sm font-semibold flex-1">{t("po_ai_camera")}</span>
         <input
@@ -421,7 +421,7 @@ function AiSourceSheet({
         />
       </label>
 
-      <label className="flex items-center gap-3 rounded-2xl bg-muted/40 border border-border/60 p-4 cursor-pointer hover:bg-muted/60 active:scale-[0.99] transition">
+      <label className="flex items-center gap-3 rounded-2xl bg-card border border-border shadow-sm p-4 cursor-pointer hover:bg-muted/60 active:scale-[0.99] transition">
         <ImageIcon className="h-5 w-5 text-primary" />
         <span className="text-sm font-semibold flex-1">{t("po_ai_gallery")}</span>
         <input
@@ -435,7 +435,7 @@ function AiSourceSheet({
         />
       </label>
 
-      <label className="flex items-center gap-3 rounded-2xl bg-muted/40 border border-border/60 p-4 cursor-pointer hover:bg-muted/60 active:scale-[0.99] transition">
+      <label className="flex items-center gap-3 rounded-2xl bg-card border border-border shadow-sm p-4 cursor-pointer hover:bg-muted/60 active:scale-[0.99] transition">
         <FileText className="h-5 w-5 text-primary" />
         <span className="text-sm font-semibold flex-1">{t("po_ai_pdf")}</span>
         <input
@@ -451,7 +451,7 @@ function AiSourceSheet({
 
       <button
         onClick={onPickText}
-        className="w-full flex items-center gap-3 rounded-2xl bg-muted/40 border border-border/60 p-4 hover:bg-muted/60 active:scale-[0.99] transition text-left"
+        className="w-full flex items-center gap-3 rounded-2xl bg-card border border-border shadow-sm p-4 hover:bg-muted/60 active:scale-[0.99] transition text-left"
       >
         <Type className="h-5 w-5 text-primary" />
         <span className="text-sm font-semibold flex-1">{t("po_ai_text")}</span>
@@ -625,7 +625,7 @@ export function PurchaseOrderForm({
         <select
           value={supplierId}
           onChange={(e) => setSupplierId(e.target.value)}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+          className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
         >
           <option value="">{t("po_select_supplier")}</option>
           {suppliers.map((s) => (
@@ -645,7 +645,7 @@ export function PurchaseOrderForm({
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as POStatus)}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+          className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
         >
           <option value="pending">{t("po_status_pending")}</option>
           <option value="received">{t("po_status_received")}</option>
@@ -743,7 +743,7 @@ export function PurchaseOrderForm({
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary resize-none"
+          className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary resize-none"
         />
       </div>
 

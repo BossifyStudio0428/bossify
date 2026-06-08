@@ -217,7 +217,7 @@ function IngredientsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={`${t("search")}...`}
-          className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-muted/40 border border-border/60 text-sm outline-none focus:border-primary"
+          className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-card border border-border shadow-sm text-sm outline-none focus:border-primary"
         />
       </div>
 
@@ -473,7 +473,7 @@ function IngredientForm({
         <select
           value={unit}
           onChange={(e) => setUnit(e.target.value)}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+          className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
         >
           {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
         </select>
@@ -502,7 +502,7 @@ function IngredientForm({
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+          className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
         >
           <option value="">{t("select_category")}</option>
           {catOptions.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -512,7 +512,7 @@ function IngredientForm({
             value={customCatInput}
             onChange={(e) => setCustomCatInput(e.target.value)}
             placeholder={t("new_category")}
-            className="flex-1 rounded-2xl bg-muted/40 border border-border/60 px-4 py-2.5 text-sm outline-none focus:border-primary"
+            className="flex-1 rounded-2xl bg-card border border-border shadow-sm px-4 py-2.5 text-sm outline-none focus:border-primary"
           />
           <button
             type="button"
@@ -534,7 +534,7 @@ function IngredientForm({
         <select
           value={supplierId}
           onChange={(e) => setSupplierId(e.target.value)}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+          className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
         >
           <option value="">—</option>
           {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
