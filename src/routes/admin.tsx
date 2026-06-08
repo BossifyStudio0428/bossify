@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { ChevronLeft, Sparkles } from "lucide-react";
@@ -60,7 +60,7 @@ function AdminPage() {
     "All",
   );
 
-  const callAdminApi = async (body: Record<string, unknown>) => {
+  const callAdminApi = useCallback(async (body: Record<string, unknown>) => {
     const token = session?.access_token;
     if (!token) throw new Error("Unauthorized");
     const response = await fetch(`${getPublicOrigin()}/api/public/admin`, {
@@ -88,7 +88,15 @@ function AdminPage() {
       throw new Error(data.error ?? `Admin API failed (${response.status})`);
     }
     return data;
-  };
+  }, [session?.access_token]);
+
+  const loadAll = useCallback(async () => {
+    const data = isNativeWebView()
+      ? await callAdminApi({ action: "overview" })
+      : await loadAdminOverviewFn();
+    setUsers((data.users ?? []) as unknown as AdminUser[]);
+    setAllOrders((data.orders ?? []) as unknown as AdminOrder[]);
+  }, [callAdminApi, loadAdminOverviewFn]);
 
   useEffect(() => {
     if (!user) return;
@@ -104,15 +112,7 @@ function AdminPage() {
         setChecking(false);
       }
     })();
-  }, [user?.id]);
-
-  const loadAll = async () => {
-    const data = isNativeWebView()
-      ? await callAdminApi({ action: "overview" })
-      : await loadAdminOverviewFn();
-    setUsers((data.users ?? []) as unknown as AdminUser[]);
-    setAllOrders((data.orders ?? []) as unknown as AdminOrder[]);
-  };
+  }, [loadAll, navigate, t, user]);
 
   if (checking) return <p className="p-6 text-sm text-muted-foreground">{t("admin_checking")}</p>;
   if (!isAdmin) return null;
