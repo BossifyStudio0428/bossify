@@ -13,6 +13,7 @@ import autoTable from "jspdf-autotable";
 import { applyCjkFont, CJK_FONT_FAMILY } from "@/lib/pdfCjk";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
+import { stripEmoji } from "@/lib/wa";
 import { Share } from "@capacitor/share";
 import { FileOpener } from "@capacitor-community/file-opener";
 
@@ -176,13 +177,13 @@ function ComparePage() {
   };
 
   const shareWA = () => {
-    const header = `📊 ${t("edu_comparison_report")}\n${new Date().toLocaleDateString("en-MY")}\n\n`;
+    const header = `${t("edu_comparison_report")}\n${new Date().toLocaleDateString("en-MY")}\n\n`;
     const blocks = picked.map((c) => {
       const p = stageProgress(c.id);
       const lines = rows.map((r) => `• ${t(r.key)}: ${r.render(c)}`).join("\n");
-      return `👤 ${c.name}\n${t("edu_pipeline")}: ${p.done}/10\n${lines}`;
+      return `${c.name}\n${t("edu_pipeline")}: ${p.done}/10\n${lines}`;
     }).join("\n\n");
-    const url = `https://wa.me/?text=${encodeURIComponent(header + blocks)}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(stripEmoji(header + blocks))}`;
     window.open(url, "_blank");
   };
 
