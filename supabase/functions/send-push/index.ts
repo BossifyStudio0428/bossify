@@ -491,6 +491,7 @@ Deno.serve(async (req) => {
     userId?: string;
     token?: string;
     platform?: string;
+    vars?: Record<string, string | number>;
   };
   try {
     parsed = await req.json();
