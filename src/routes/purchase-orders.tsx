@@ -155,6 +155,14 @@ function PurchaseOrdersPage() {
 
       <StockTabs active="purchase-orders" />
 
+      <button
+        onClick={() => setAiSourceOpen(true)}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-primary/15 to-primary/5 border border-primary/30 text-primary font-semibold text-sm active:scale-[0.99] transition-transform"
+      >
+        <Sparkles className="h-4 w-4" />
+        {t("po_ai_scan")}
+      </button>
+
       {loading && (
         <div className="flex justify-center py-10">
           <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
