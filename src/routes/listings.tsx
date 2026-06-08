@@ -9,6 +9,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { exportListingsPDF } from "@/lib/propertyPdf";
 import { getPublicOrigin } from "@/lib/publicUrl";
+import { stripEmoji } from "@/lib/wa";
 
 export const Route = createFileRoute("/listings")({ component: ListingsPage });
 
@@ -177,7 +178,7 @@ function ListingsPage() {
               <Copy className="h-3 w-3" /> {t("pof_copy_link")}
             </button>
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(t("pof_wa_share_msg_property" as any).replace("{link}", enquiryLink))}`}
+              href={`https://wa.me/?text=${encodeURIComponent(stripEmoji(t("pof_wa_share_msg_property" as any).replace("{link}", enquiryLink)))}`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-center gap-1 py-2 rounded-lg bg-emerald-500 text-white text-[11px] font-semibold active:scale-95"

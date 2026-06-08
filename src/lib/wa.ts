@@ -654,7 +654,24 @@ export function renderTemplate(tpl: string, vars: TplVars, lang: Lang = getActiv
 
 export function buildWhatsAppLink(phone: string, message: string) {
   const cleaned = phone.replace(/[^0-9]/g, "");
-  return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${cleaned}?text=${encodeURIComponent(stripEmoji(message))}`;
+}
+
+// Remove emoji + pictographic symbols from any outgoing WhatsApp text so
+// recipients on devices missing the emoji fonts (some WhatsApp Desktop /
+// older Windows installs) don't see replacement boxes (����).
+export function stripEmoji(input: string): string {
+  if (!input) return input;
+  return input
+    // Unicode property escapes: emoji + symbols + pictographs
+    .replace(/\p{Extended_Pictographic}/gu, "")
+    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "") // regional indicators (flags)
+    .replace(/[\u200D\uFE0F\u20E3]/g, "")    // ZWJ, variation selector, keycap
+    // collapse leftover whitespace
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/ ?\n ?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 export function daysSince(iso: string): number {

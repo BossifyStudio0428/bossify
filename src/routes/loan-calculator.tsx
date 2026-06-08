@@ -37,17 +37,17 @@ function LoanCalculatorPage() {
 
   const shareWa = () => {
     const lines = [
-      `🏠 ${t("loan_calc_title")}`,
+      `${t("loan_calc_title")}`,
       "",
       `${t("lc_price")}: RM ${fmt(Number(price) || 0)}`,
       `${t("lc_down_pct")}: ${downPct}% (RM ${fmt(calc.downAmt)})`,
       `${t("lc_tenure")}: ${tenure}`,
       `${t("lc_rate")}: ${rate}%`,
       "",
-      `💰 ${t("lc_loan_amount")}: RM ${fmt(calc.loan)}`,
-      `📅 ${t("lc_monthly")}: RM ${fmt(calc.monthly)}`,
-      `💵 ${t("lc_total_payment")}: RM ${fmt(calc.totalPayment)}`,
-      `📊 ${t("lc_total_interest")}: RM ${fmt(calc.totalInterest)}`,
+      `${t("lc_loan_amount")}: RM ${fmt(calc.loan)}`,
+      `${t("lc_monthly")}: RM ${fmt(calc.monthly)}`,
+      `${t("lc_total_payment")}: RM ${fmt(calc.totalPayment)}`,
+      `${t("lc_total_interest")}: RM ${fmt(calc.totalInterest)}`,
     ];
     const text = encodeURIComponent(lines.join("\n"));
     window.open(`https://wa.me/?text=${text}`, "_blank");

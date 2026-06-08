@@ -10,6 +10,7 @@ import { EducationDetailsForm } from "@/components/EducationDetailsForm";
 import { FollowupPipeline } from "@/components/FollowupPipeline";
 import { AdditionalServices } from "@/components/AdditionalServices";
 import { reqStatusKey } from "@/routes/requirements";
+import { stripEmoji } from "@/lib/wa";
 
 export const Route = createFileRoute("/customer/$customerId")({ component: CustomerDetail });
 
@@ -32,7 +33,7 @@ const CUSTOMER_STATUS_DOT: Record<CustomerStatus, string> = {
 
 function buildWA(phone: string, message: string) {
   const cleaned = phone.replace(/[^0-9]/g, "");
-  return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${cleaned}?text=${encodeURIComponent(stripEmoji(message))}`;
 }
 
 function CustomerDetail() {

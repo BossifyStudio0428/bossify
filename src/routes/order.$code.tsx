@@ -5,6 +5,7 @@ import type {
   getPublicOrderForm,
   submitPublicOrder,
 } from "@/lib/public-order.functions";
+import { stripEmoji } from "@/lib/wa";
 import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Search } from "lucide-react";
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
@@ -483,7 +484,7 @@ function PublicOrderFormPage() {
                 ? `Hai ${done.business}, saya telah membuat pembayaran untuk pesanan ${done.code} sebanyak RM${amountStr}. Sila semak resit saya.`
                 : `Hi ${done.business}, I have made payment for order ${done.code} amounting to RM${amountStr}. Please find my receipt attached.`;
             const phone = done.whatsapp.replace(/[^0-9]/g, "");
-            const href = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+            const href = `https://wa.me/${phone}?text=${encodeURIComponent(stripEmoji(msg))}`;
             const label =
               lang === "zh"
                 ? "📎 发送付款收据"
@@ -840,7 +841,7 @@ function PublicOrderFormPage() {
 
           {profile.whatsapp_number && (
             <a
-              href={`https://wa.me/${profile.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent(waMessage)}`}
+              href={`https://wa.me/${profile.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent(stripEmoji(waMessage))}`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-[#25D366] text-white font-semibold text-sm shadow-md active:scale-[0.99] transition-transform"

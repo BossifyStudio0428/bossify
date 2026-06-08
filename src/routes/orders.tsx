@@ -7,7 +7,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey, pofSectionTitleKey, pofDescKey, type BizType } from "@/lib/businessType";
 import { getPublicOrigin } from "@/lib/publicUrl";
-import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, getReceiptTemplate, fetchWAProfile } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, getReceiptTemplate, fetchWAProfile, stripEmoji } from "@/lib/wa";
 import { buildReceiptPdf } from "@/lib/receiptPdf";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
@@ -237,7 +237,7 @@ function OrdersPage() {
       payment_details: waProfile.paymentDetails,
     }, lang);
     const cleaned = o.phone.replace(/[^0-9]/g, "");
-    const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`;
+    const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(stripEmoji(msg))}`;
     window.open(url, "_blank");
   };
 
@@ -343,7 +343,7 @@ function OrdersPage() {
       receipt_url: receiptUrl,
     }, lang);
     const cleaned = o.phone.replace(/[^0-9]/g, "");
-    window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(stripEmoji(msg))}`, "_blank");
   };
 
   const remindAllUnpaid = async () => {
@@ -583,7 +583,7 @@ function OrdersPage() {
                   📋
                 </button>
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(t("pof_wa_share_msg").replace("{link}", `${getPublicOrigin()}/order/${ofCode}`))}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(stripEmoji(t("pof_wa_share_msg").replace("{link}", `${getPublicOrigin()}/order/${ofCode}`)))}`}
                   target="_blank"
                   rel="noreferrer"
                   className="py-2 rounded-lg bg-emerald-500 text-white text-[10px] font-semibold text-center active:scale-95"
