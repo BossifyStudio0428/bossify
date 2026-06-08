@@ -6,12 +6,9 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
+import { supabase } from "@/integrations/supabase/client";
 import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
-import {
-  loadAdminOverview,
-  revokeAdminSubscriptionPlan,
-  setAdminSubscriptionPlan,
-} from "@/lib/admin.functions";
+import { revokeAdminSubscriptionPlan, setAdminSubscriptionPlan } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
@@ -44,7 +41,6 @@ function AdminPage() {
   const { refresh: refreshSub } = useSubscription();
   const navigate = useNavigate();
   const { t } = useI18n();
-  const loadAdminOverviewFn = useServerFn(loadAdminOverview);
   const setAdminSubscriptionPlanFn = useServerFn(setAdminSubscriptionPlan);
   const revokeAdminSubscriptionPlanFn = useServerFn(revokeAdminSubscriptionPlan);
   const [tab, setTab] = useState<"stats" | "users" | "orders">("stats");
@@ -94,12 +90,73 @@ function AdminPage() {
   );
 
   const loadAll = useCallback(async () => {
-    const data = isNativeWebView()
-      ? await callAdminApi({ action: "overview" })
-      : await loadAdminOverviewFn();
-    setUsers((data.users ?? []) as unknown as AdminUser[]);
-    setAllOrders((data.orders ?? []) as unknown as AdminOrder[]);
-  }, [callAdminApi, loadAdminOverviewFn]);
+    const { data: adminProfile, error: adminError } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user!.id)
+      .maybeSingle();
+    if (adminError) throw new Error(adminError.message);
+    if (!adminProfile?.is_admin) throw new Error("Forbidden");
+
+    const [{ data: viewUsers, error: viewError }, { data: orders, error: ordersError }] =
+      await Promise.all([
+        supabase
+          .from("admin_users_view" as never)
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase.from("orders").select("*").order("created_at", { ascending: false }),
+      ]);
+
+    if (ordersError) throw new Error(ordersError.message);
+    if (!viewError && viewUsers) {
+      setUsers(viewUsers as unknown as AdminUser[]);
+      setAllOrders((orders ?? []) as unknown as AdminOrder[]);
+      return;
+    }
+
+    const [{ data: profiles, error: profilesError }, { data: subscriptions, error: subsError }] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id,business_name,is_admin,created_at")
+          .order("created_at", { ascending: false }),
+        supabase.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
+      ]);
+    if (profilesError || subsError) {
+      throw new Error(
+        profilesError?.message ??
+          subsError?.message ??
+          viewError?.message ??
+          "Unable to load admin data",
+      );
+    }
+
+    const subMap = new Map((subscriptions ?? []).map((s) => [s.user_id, s]));
+    const orderRows = (orders ?? []) as unknown as AdminOrder[];
+    setUsers(
+      (
+        (profiles ?? []) as Array<
+          Pick<AdminUser, "id" | "business_name" | "is_admin" | "created_at">
+        >
+      ).map((profile) => {
+        const sub = subMap.get(profile.id);
+        const userOrders = orderRows.filter((o) => o.user_id === profile.id);
+        return {
+          ...profile,
+          plan: sub?.plan ?? "free",
+          status: sub?.status ?? null,
+          expires_at: sub?.expires_at ?? null,
+          order_count: sub?.order_count ?? 0,
+          total_orders: userOrders.length,
+          total_revenue: userOrders.reduce(
+            (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
+            0,
+          ),
+        };
+      }),
+    );
+    setAllOrders(orderRows);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
