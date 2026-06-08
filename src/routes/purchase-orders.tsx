@@ -429,12 +429,14 @@ function newLine(): LineItem {
 
 export function PurchaseOrderForm({
   userId,
+  mode = "ingredients",
   suppliers,
   ingredients,
   onClose,
   onSaved,
 }: {
   userId: string;
+  mode?: "ingredients" | "inventory";
   suppliers: Supplier[];
   ingredients: Ingredient[];
   onClose: () => void;
@@ -518,7 +520,8 @@ export function PurchaseOrderForm({
       const price = Number(l.unit_price) || 0;
       return {
         purchase_order_id: poId,
-        ingredient_id: l.ingredient_id,
+        ingredient_id: mode === "ingredients" ? l.ingredient_id : null,
+        inventory_id: mode === "inventory" ? l.ingredient_id : null,
         quantity: qty,
         unit: l.unit || null,
         unit_price: price,
@@ -533,7 +536,13 @@ export function PurchaseOrderForm({
     }
 
     if (status === "received") {
-      await applyReceivedStock(validLines);
+      if (mode === "inventory") {
+        await applyReceivedStockInventory(
+          validLines.map((l) => ({ inventory_id: l.ingredient_id, quantity: l.quantity })),
+        );
+      } else {
+        await applyReceivedStock(validLines);
+      }
       toast.success(t("po_stock_updated"));
     } else {
       toast.success(t("po_saved"));
