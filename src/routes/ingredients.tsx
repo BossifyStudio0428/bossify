@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Plus, Pencil, Trash2, Minus, AlertTriangle, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Minus, AlertTriangle, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,9 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { SheetShell, SheetField, ConfirmSheet } from "@/components/InventorySheets";
 import { StockTabs } from "@/components/StockTabs";
+import { useServerFn } from "@tanstack/react-start";
+import { classifyIngredientsWithAi } from "@/lib/ai-classify-ingredient.functions";
+import { mergeCategories } from "@/lib/ingredientCategories";
 
 export const Route = createFileRoute("/ingredients")({ component: IngredientsPage });
 
@@ -21,6 +24,7 @@ type Ingredient = {
   cost_per_unit: number;
   supplier_id: string | null;
   notes: string | null;
+  category: string | null;
   created_at: string;
 };
 
@@ -43,8 +47,12 @@ function IngredientsPage() {
 
   const [items, setItems] = useState<Ingredient[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string>("__all__");
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
+  const classifyFn = useServerFn(classifyIngredientsWithAi);
 
   useEffect(() => {
     // Guard disabled: allow all business types to access Ingredients
@@ -52,13 +60,15 @@ function IngredientsPage() {
   }, [btLoading, allowed, navigate]);
 
   const load = async () => {
-    const [{ data: ing, error: e1 }, { data: sup }] = await Promise.all([
+    const [{ data: ing, error: e1 }, { data: sup }, { data: cats }] = await Promise.all([
       supabase.from("ingredients" as any).select("*").order("name", { ascending: true }),
       supabase.from("suppliers" as any).select("id, name").order("name", { ascending: true }),
+      supabase.from("ingredient_categories" as any).select("name").order("name"),
     ]);
     if (e1) toast.error(e1.message);
     setItems(((ing ?? []) as unknown) as Ingredient[]);
     setSuppliers(((sup ?? []) as unknown) as Supplier[]);
+    setCustomCategories(((cats ?? []) as any[]).map((c) => c.name as string).filter(Boolean));
     setLoading(false);
   };
   useEffect(() => { if (allowed) load(); }, [allowed]);
@@ -70,6 +80,75 @@ function IngredientsPage() {
   }, [suppliers]);
 
   const lowCount = items.filter((i) => Number(i.current_stock) < Number(i.min_stock)).length;
+  const uncategorizedCount = items.filter((i) => !i.category || !i.category.trim()).length;
+
+  // Categories that actually appear in current items, merged with presets + custom
+  const allCategoryOptions = useMemo(() => {
+    const merged = mergeCategories(customCategories);
+    const lower = new Set(merged.map((c) => c.toLowerCase()));
+    items.forEach((it) => {
+      const c = (it.category ?? "").trim();
+      if (c && !lower.has(c.toLowerCase())) {
+        lower.add(c.toLowerCase());
+        merged.push(c);
+      }
+    });
+    return merged;
+  }, [customCategories, items]);
+
+  const filteredItems = useMemo(() => {
+    if (activeCategory === "__all__") return items;
+    if (activeCategory === "__none__") return items.filter((i) => !i.category || !i.category.trim());
+    return items.filter((i) => (i.category ?? "").toLowerCase() === activeCategory.toLowerCase());
+  }, [items, activeCategory]);
+
+  const handleBulkCategorize = async () => {
+    const targets = items.filter((i) => !i.category || !i.category.trim());
+    if (targets.length === 0) return;
+    setBulkBusy(true);
+    try {
+      const existing = mergeCategories(customCategories);
+      let done = 0;
+      const batchSize = 30;
+      const newCats = new Set<string>();
+      const knownLower = new Set(existing.map((c) => c.toLowerCase()));
+      for (let i = 0; i < targets.length; i += batchSize) {
+        const batch = targets.slice(i, i + batchSize);
+        const result = await classifyFn({
+          data: {
+            names: batch.map((b) => b.name),
+            existingCategories: existing,
+          },
+        });
+        // write back per item
+        for (let j = 0; j < batch.length; j++) {
+          const r = result[j];
+          const c = (r?.category ?? "").trim();
+          if (!c) continue;
+          if (!knownLower.has(c.toLowerCase())) {
+            newCats.add(c);
+            knownLower.add(c.toLowerCase());
+          }
+          await supabase.from("ingredients" as any).update({ category: c }).eq("id", batch[j].id);
+          done += 1;
+        }
+      }
+      if (newCats.size > 0) {
+        await supabase
+          .from("ingredient_categories" as any)
+          .upsert(
+            Array.from(newCats).map((name) => ({ user_id: user?.id, name })),
+            { onConflict: "user_id,name", ignoreDuplicates: true },
+          );
+      }
+      toast.success(t("categorized_count").replace("{n}", String(done)));
+      await load();
+    } catch (e: any) {
+      toast.error(String(e?.message ?? e ?? "AI failed"));
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const handleDelete = async (it: Ingredient) => {
     const prev = items;
@@ -118,17 +197,41 @@ function IngredientsPage() {
         </div>
       )}
 
+      {uncategorizedCount > 0 && (
+        <button
+          onClick={handleBulkCategorize}
+          disabled={bulkBusy}
+          className="w-full py-2.5 rounded-2xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-60"
+        >
+          <Sparkles className="h-4 w-4" />
+          {bulkBusy ? t("categorizing") : `${t("auto_categorize_all")} (${uncategorizedCount})`}
+        </button>
+      )}
+
+      {/* Category filter chips */}
+      {allCategoryOptions.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+          <CategoryChip label={t("all_categories")} active={activeCategory === "__all__"} onClick={() => setActiveCategory("__all__")} />
+          {uncategorizedCount > 0 && (
+            <CategoryChip label="—" active={activeCategory === "__none__"} onClick={() => setActiveCategory("__none__")} />
+          )}
+          {allCategoryOptions.map((c) => (
+            <CategoryChip key={c} label={c} active={activeCategory.toLowerCase() === c.toLowerCase()} onClick={() => setActiveCategory(c)} />
+          ))}
+        </div>
+      )}
+
       {loading && (
         <div className="flex justify-center py-10">
           <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
         </div>
       )}
-      {!loading && items.length === 0 && (
+      {!loading && filteredItems.length === 0 && (
         <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_ingredients")}</p>
       )}
 
       <div className="space-y-3">
-        {items.map((it) => {
+        {filteredItems.map((it) => {
           const isLow = Number(it.current_stock) < Number(it.min_stock);
           return (
             <article
@@ -139,6 +242,9 @@ function IngredientsPage() {
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-foreground truncate">{it.name}</p>
+                    {it.category && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{it.category}</span>
+                    )}
                     {isLow && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
                         {t("low_stock")}
