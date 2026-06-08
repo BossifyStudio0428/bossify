@@ -1191,8 +1191,6 @@ const dict = {
     ingredient_added: "Ingredient added",
     ingredient_updated: "Ingredient updated",
     ingredient_deleted: "Ingredient deleted",
-    category: "Category",
-    select_category: "Select category",
     new_category: "New category",
     ai_suggest_category: "AI suggest",
     auto_categorize_all: "AI categorize all",
