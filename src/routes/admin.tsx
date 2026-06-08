@@ -73,7 +73,15 @@ function AdminPage() {
       body: JSON.stringify(body),
     });
     const text = await response.text();
-    const data = (text ? JSON.parse(text) : {}) as { error?: string } & Record<string, unknown>;
+    const data = (text
+      ? (() => {
+          try {
+            return JSON.parse(text);
+          } catch {
+            return { error: text.slice(0, 180) };
+          }
+        })()
+      : {}) as { error?: string } & Record<string, unknown>;
     if (!response.ok) {
       throw new Error(data.error ?? `Admin API failed (${response.status})`);
     }
