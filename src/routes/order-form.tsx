@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { pofSectionTitleKey, pofSectionSubKey, pofDescKey, type BizType } from "@/lib/businessType";
+import { pofSectionTitleKey, pofSectionSubKey, pofDescKey, pofWaShareKey, type BizType } from "@/lib/businessType";
 import { getPublicOrigin } from "@/lib/publicUrl";
 import { stripEmoji } from "@/lib/wa";
 
@@ -161,7 +161,7 @@ function OrderFormPage() {
               📋 {t("pof_copy_link")}
             </button>
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(stripEmoji(t(businessType === "property" ? ("pof_wa_share_msg_property" as any) : "pof_wa_share_msg").replace("{link}", link)))}`}
+              href={`https://wa.me/?text=${encodeURIComponent(stripEmoji(t(pofWaShareKey(businessType as BizType | null)).replace("{link}", link)))}`}
               target="_blank"
               rel="noreferrer"
               className="py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-semibold text-center active:scale-95"
