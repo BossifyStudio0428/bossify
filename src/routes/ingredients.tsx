@@ -211,6 +211,16 @@ function IngredientsPage() {
 
       <StockTabs active="ingredients" />
 
+      <div className="relative">
+        <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={`${t("search")}...`}
+          className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-muted/40 border border-border/60 text-sm outline-none focus:border-primary"
+        />
+      </div>
+
       {lowCount > 0 && (
         <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 flex items-start gap-2">
           <AlertTriangle className="h-4 w-4 text-amber-700 mt-0.5" />
