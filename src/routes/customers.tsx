@@ -495,7 +495,7 @@ function CustomersPage() {
               <button
                 onClick={() => {
                   if (!c.phone) { toast.error(t("no_phone_for_wa")); return; }
-                  window.open(buildWA(c.phone, `Hi ${c.name}! 👋 Thank you for being a valued customer! 😊`), "_blank");
+                  window.open(buildWA(c.phone, t("thank_customer_msg" as TKey).replace("{name}", c.name)), "_blank");
                 }}
                 id={idx === 0 ? "tour-cust-wa" : undefined}
                 className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500 text-white active:scale-95 transition-transform"
