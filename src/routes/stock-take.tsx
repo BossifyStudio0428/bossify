@@ -152,6 +152,7 @@ function StockTakePage() {
         stock_take_id: takeId,
         inventory_id: isFnb ? null : r.inventory_id,
         product_name: r.product_name,
+        unit: r.unit ?? null,
         system_quantity: Math.round(r.system_quantity),
         actual_quantity: Math.round(actual),
         difference: Math.round(actual - r.system_quantity),
