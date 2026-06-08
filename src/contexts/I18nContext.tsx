@@ -1536,6 +1536,7 @@ const dict = {
     receipt_unconfirmed: "Tandakan resit belum disahkan",
     view_receipt: "Lihat resit",
     receipt_remove: "Buang resit",
+    thank_customer_msg: "Hi {name}, terima kasih kerana menjadi pelanggan kami!",
     delete_order: "Padam Pesanan",
     pull_refresh: "Tarik untuk muat semula",
     no_orders_create: "Tiada pesanan lagi. Ketik + untuk mula!",
