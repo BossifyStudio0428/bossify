@@ -23,6 +23,7 @@ import { Route as RequirementsRouteImport } from './routes/requirements'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RenewalsRouteImport } from './routes/renewals'
 import { Route as RecipesRouteImport } from './routes/recipes'
+import { Route as PurchaseOrdersRouteImport } from './routes/purchase-orders'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -148,6 +149,11 @@ const RenewalsRoute = RenewalsRouteImport.update({
 const RecipesRoute = RecipesRouteImport.update({
   id: '/recipes',
   path: '/recipes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PurchaseOrdersRoute = PurchaseOrdersRouteImport.update({
+  id: '/purchase-orders',
+  path: '/purchase-orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -467,6 +473,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
+  '/purchase-orders': typeof PurchaseOrdersRoute
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
@@ -539,6 +546,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
+  '/purchase-orders': typeof PurchaseOrdersRoute
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
@@ -612,6 +620,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
+  '/purchase-orders': typeof PurchaseOrdersRoute
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
@@ -686,6 +695,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/privacy-policy'
     | '/profile'
+    | '/purchase-orders'
     | '/recipes'
     | '/renewals'
     | '/reports'
@@ -758,6 +768,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/privacy-policy'
     | '/profile'
+    | '/purchase-orders'
     | '/recipes'
     | '/renewals'
     | '/reports'
@@ -830,6 +841,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/privacy-policy'
     | '/profile'
+    | '/purchase-orders'
     | '/recipes'
     | '/renewals'
     | '/reports'
@@ -903,6 +915,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ProfileRoute: typeof ProfileRoute
+  PurchaseOrdersRoute: typeof PurchaseOrdersRoute
   RecipesRoute: typeof RecipesRoute
   RenewalsRoute: typeof RenewalsRoute
   ReportsRoute: typeof ReportsRoute
@@ -1034,6 +1047,13 @@ declare module '@tanstack/react-router' {
       path: '/recipes'
       fullPath: '/recipes'
       preLoaderRoute: typeof RecipesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/purchase-orders': {
+      id: '/purchase-orders'
+      path: '/purchase-orders'
+      fullPath: '/purchase-orders'
+      preLoaderRoute: typeof PurchaseOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -1514,6 +1534,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   ProfileRoute: ProfileRoute,
+  PurchaseOrdersRoute: PurchaseOrdersRoute,
   RecipesRoute: RecipesRoute,
   RenewalsRoute: RenewalsRoute,
   ReportsRoute: ReportsRoute,
