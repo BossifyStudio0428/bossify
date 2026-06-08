@@ -12,6 +12,11 @@ const PURPLE: [number, number, number] = [108, 63, 214];
 const ALT_ROW: [number, number, number] = [240, 238, 248];
 type AutoTablePdf = jsPDF & { lastAutoTable?: { finalY: number } };
 
+function isAndroidNative(): boolean {
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") return false;
+  return true;
+}
+
 // ---------------------------------------------------------------------------
 // Localized labels
 // ---------------------------------------------------------------------------
@@ -262,40 +267,25 @@ function labels(lang: Lang, biz: BizType): ReportLabels {
 // ---------------------------------------------------------------------------
 
 export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
-  if (Capacitor.isNativePlatform()) {
+  if (isAndroidNative()) {
     const dataUri = doc.output("datauristring");
     const base64 = dataUri.split(",")[1];
     if (!base64) throw new Error("Unable to generate PDF data");
 
     const safeFilename = filename.replace(/[^a-zA-Z0-9._ -]/g, "_");
-    const cachePath = `bossify/${safeFilename}`;
-    const documentsPath = `Bossify/${safeFilename}`;
+    const cachePath = safeFilename;
 
     await Filesystem.writeFile({
       path: cachePath,
       data: base64,
       directory: Directory.Cache,
-      recursive: true,
     });
 
-    const cacheUri = await Filesystem.getUri({
+    const { uri } = await Filesystem.getUri({
       path: cachePath,
       directory: Directory.Cache,
     });
-    const fileUri = /^(file|content):\/\//.test(cacheUri.uri)
-      ? cacheUri.uri
-      : `file://${cacheUri.uri}`;
-
-    try {
-      await Filesystem.writeFile({
-        path: documentsPath,
-        data: base64,
-        directory: Directory.Documents,
-        recursive: true,
-      });
-    } catch (documentsErr) {
-      console.warn("[pdf] documents copy skipped; using app cache file", documentsErr);
-    }
+    const fileUri = /^(file|content):\/\//.test(uri) ? uri : `file://${uri}`;
 
     try {
       await FileOpener.open({
@@ -310,6 +300,55 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
         await Share.share({
           title: safeFilename,
           text: safeFilename,
+          url: fileUri,
+          dialogTitle: safeFilename,
+        });
+      } catch (urlShareErr) {
+        console.error("[pdf] share url failed, falling back to share files", urlShareErr);
+        try {
+          await Share.share({
+            title: safeFilename,
+            text: safeFilename,
+            files: [fileUri],
+            dialogTitle: safeFilename,
+          });
+        } catch (shareErr) {
+          console.error("[pdf] share files failed", shareErr);
+          throw new Error(
+            "PDF created, but Android could not open or share it. Please install a PDF viewer and try again.",
+          );
+        }
+      }
+      return;
+    }
+  }
+  try {
+    const blob = doc.output("blob");
+    const safeFilename = filename.replace(/[^a-zA-Z0-9._ -]/g, "_");
+
+    const shareFile = new File([blob], safeFilename, { type: "application/pdf" });
+    const webShare = navigator as Navigator & {
+      canShare?: (data: ShareData & { files?: File[] }) => boolean;
+      share?: (data: ShareData & { files?: File[] }) => Promise<void>;
+    };
+    if (webShare.share && webShare.canShare?.({ files: [shareFile] })) {
+      await webShare.share({ title: safeFilename, text: safeFilename, files: [shareFile] });
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = safeFilename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch {
+    doc.save(filename);
+  }
+}
           files: [fileUri],
           dialogTitle: safeFilename,
         });
