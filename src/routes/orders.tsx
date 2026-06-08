@@ -240,6 +240,86 @@ function OrdersPage() {
     window.open(url, "_blank");
   };
 
+  // ---- Receipt: upload, send, confirm ----
+  const [receiptUploadingId, setReceiptUploadingId] = useState<string | null>(null);
+
+  const uploadReceipt = async (o: OrderRow, file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+    setReceiptUploadingId(o.id);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const path = `${user.id}/${o.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("order-receipts")
+        .upload(path, file, { upsert: true, contentType: file.type || undefined });
+      if (upErr) throw upErr;
+      const { error: dbErr } = await supabase
+        .from("orders")
+        .update({ receipt_url: path } as any)
+        .eq("id", o.id);
+      if (dbErr) throw dbErr;
+      setOrders((p) => p.map((x) => (x.id === o.id ? ({ ...x, receipt_url: path } as any) : x)));
+      toast.success(t("receipt_uploaded"));
+    } catch (e: any) {
+      toast.error(e?.message || "Upload failed");
+    } finally {
+      setReceiptUploadingId(null);
+    }
+  };
+
+  const removeReceipt = async (o: OrderRow) => {
+    if (!user) return;
+    const url = (o as any).receipt_url as string | null;
+    if (url) {
+      await supabase.storage.from("order-receipts").remove([url]).catch(() => {});
+    }
+    await supabase.from("orders").update({ receipt_url: null, receipt_confirmed: false } as any).eq("id", o.id);
+    setOrders((p) => p.map((x) => (x.id === o.id ? ({ ...x, receipt_url: null, receipt_confirmed: false } as any) : x)));
+  };
+
+  const toggleReceiptConfirmed = async (o: OrderRow) => {
+    const next = !((o as any).receipt_confirmed as boolean);
+    setOrders((p) => p.map((x) => (x.id === o.id ? ({ ...x, receipt_confirmed: next } as any) : x)));
+    const { error } = await supabase.from("orders").update({ receipt_confirmed: next } as any).eq("id", o.id);
+    if (error) {
+      setOrders((p) => p.map((x) => (x.id === o.id ? ({ ...x, receipt_confirmed: !next } as any) : x)));
+      toast.error(t("update_failed"));
+    }
+  };
+
+  const viewReceipt = async (o: OrderRow) => {
+    const path = (o as any).receipt_url as string | null;
+    if (!path) return;
+    const { data, error } = await supabase.storage.from("order-receipts").createSignedUrl(path, 60 * 60);
+    if (error || !data?.signedUrl) { toast.error(error?.message || "Failed"); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const sendReceipt = async (o: OrderRow) => {
+    if (!o.phone) { alert(t("no_phone_for_wa")); return; }
+    if (!user) return;
+    let receiptUrl = "";
+    const path = (o as any).receipt_url as string | null;
+    if (path) {
+      const { data } = await supabase.storage
+        .from("order-receipts")
+        .createSignedUrl(path, 60 * 60 * 24 * 30); // 30 days
+      receiptUrl = data?.signedUrl ?? "";
+    }
+    const msg = renderTemplate(getReceiptTemplate(lang), {
+      customer_name: o.customer_name,
+      business_name: waProfile.businessName,
+      code: o.code,
+      product: o.product,
+      quantity: o.quantity,
+      amount: Number(o.amount).toFixed(2),
+      receipt_url: receiptUrl,
+    }, lang);
+    const cleaned = o.phone.replace(/[^0-9]/g, "");
+    window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
   const remindAllUnpaid = async () => {
     const unpaid = orders.filter((o) => o.status === "Unpaid" && o.phone);
     if (unpaid.length === 0) return;
