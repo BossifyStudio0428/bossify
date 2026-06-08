@@ -161,12 +161,6 @@ function PurchaseOrdersPage() {
     await runAiParse(kind, b64, file.type);
   };
 
-  const supplierMap = useMemo(() => {
-    const m = new Map<string, string>();
-    suppliers.forEach((s) => m.set(s.id, s.name));
-    return m;
-  }, [suppliers]);
-
   const filteredOrders = useMemo(() => {
     const q = search.trim().toLowerCase();
     return orders.filter((o) => {
