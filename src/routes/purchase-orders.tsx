@@ -609,7 +609,7 @@ export function PurchaseOrderForm({
                   onChange={(e) => updateLine(l.key, { ingredient_id: e.target.value })}
                   className="flex-1 rounded-xl bg-card border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
                 >
-                  <option value="">{t("po_select_ingredient")}</option>
+                  <option value="">{t(mode === "inventory" ? "po_select_product" : "po_select_ingredient")}</option>
                   {ingredients.map((i) => (
                     <option key={i.id} value={i.id}>
                       {i.name}
