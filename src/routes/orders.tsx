@@ -8,6 +8,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey, pofSectionTitleKey, pofDescKey, type BizType } from "@/lib/businessType";
 import { getPublicOrigin } from "@/lib/publicUrl";
 import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, getReceiptTemplate, fetchWAProfile } from "@/lib/wa";
+import { buildReceiptPdf } from "@/lib/receiptPdf";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
@@ -300,12 +301,43 @@ function OrdersPage() {
     if (!o.phone) { alert(t("no_phone_for_wa")); return; }
     if (!user) return;
     let receiptUrl = "";
-    const path = (o as any).receipt_url as string | null;
-    if (path) {
-      const { data } = await supabase.storage
-        .from("order-receipts")
-        .createSignedUrl(path, 60 * 60 * 24 * 30); // 30 days
-      receiptUrl = data?.signedUrl ?? "";
+    let path = (o as any).receipt_url as string | null;
+    try {
+      // If the merchant hasn't uploaded a payment-proof image, auto-generate a
+      // proper PDF receipt so the customer gets something that looks real.
+      if (!path) {
+        setReceiptUploadingId(o.id);
+        const blob = await buildReceiptPdf({
+          businessName: waProfile.businessName,
+          customerName: o.customer_name,
+          customerPhone: o.phone,
+          code: o.code,
+          product: o.product,
+          quantity: o.quantity,
+          amount: Number(o.amount),
+          createdAt: (o as any).created_at ?? new Date().toISOString(),
+          lang,
+        });
+        const autoPath = `${user.id}/auto/${o.id}-${Date.now()}.pdf`;
+        const { error: upErr } = await supabase.storage
+          .from("order-receipts")
+          .upload(autoPath, blob, { upsert: true, contentType: "application/pdf" });
+        if (upErr) throw upErr;
+        await supabase.from("orders").update({ receipt_url: autoPath } as any).eq("id", o.id);
+        setOrders((p) => p.map((x) => (x.id === o.id ? ({ ...x, receipt_url: autoPath } as any) : x)));
+        path = autoPath;
+      }
+      if (path) {
+        const { data } = await supabase.storage
+          .from("order-receipts")
+          .createSignedUrl(path, 60 * 60 * 24 * 30); // 30 days
+        receiptUrl = data?.signedUrl ?? "";
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to generate receipt");
+      return;
+    } finally {
+      setReceiptUploadingId(null);
     }
     const msg = renderTemplate(getReceiptTemplate(lang), {
       customer_name: o.customer_name,
