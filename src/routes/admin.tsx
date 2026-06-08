@@ -147,8 +147,8 @@ function AdminPage() {
       if (uid === user?.id) refreshSub();
       loadAll();
       setGrantOpen(null);
-    } catch {
-      toast.error(t("update_failed"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("update_failed"));
     }
   };
 
@@ -163,8 +163,8 @@ function AdminPage() {
       toast.success(t("admin_reverted_free"));
       if (uid === user?.id) refreshSub();
       loadAll();
-    } catch {
-      toast.error(t("update_failed"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("update_failed"));
     }
   };
 
