@@ -14,45 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      ai_usage_logs: {
-        Row: {
-          created_at: string
-          error_msg: string | null
-          est_cost_usd: number
-          feature: string
-          id: string
-          input_tokens: number
-          model: string
-          output_tokens: number
-          status: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          error_msg?: string | null
-          est_cost_usd?: number
-          feature: string
-          id?: string
-          input_tokens?: number
-          model: string
-          output_tokens?: number
-          status?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          error_msg?: string | null
-          est_cost_usd?: number
-          feature?: string
-          id?: string
-          input_tokens?: number
-          model?: string
-          output_tokens?: number
-          status?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       client_education_details: {
         Row: {
           academic_result: string | null
