@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, X, Trash2, ChevronRight, ClipboardList } from "lucide-react";
+import { Plus, X, Trash2, ChevronRight, ClipboardList, Sparkles, Camera, Image as ImageIcon, FileText, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,9 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { SheetShell, SheetField } from "@/components/InventorySheets";
 import { StockTabs } from "@/components/StockTabs";
+import { useServerFn } from "@tanstack/react-start";
+import { parsePurchaseOrderWithAi, type ParsedPoResult } from "@/lib/ai-parse-po.functions";
+import { PurchaseOrderAiReview } from "@/components/PurchaseOrderAiReview";
 
 export const Route = createFileRoute("/purchase-orders")({ component: PurchaseOrdersPage });
 
