@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { savePdf } from "@/lib/pdf";
+import { applyCjkFont, hasCjk, CJK_FONT_FAMILY } from "@/lib/pdfCjk";
 
 export const Route = createFileRoute("/stock-take_/$id")({ component: StockTakeReportPage });
 
@@ -75,16 +76,38 @@ function StockTakeReportPage() {
     }
     setExporting(true);
     try {
-      // jsPDF's built-in fonts only support Latin-1, so CJK characters render
-      // as garbage. Strip non-Latin-1 chars (and collapse the resulting
-      // whitespace / empty parentheses) so the PDF stays readable.
-      const toLatin = (s: string): string =>
-        (s ?? "")
-          .replace(/[^\x00-\xFF]/g, "")
-          .replace(/\(\s*\)/g, "")
-          .replace(/\s+/g, " ")
-          .trim();
       const doc = new jsPDF();
+      // Detect CJK in any user-visible text (translations, business name,
+      // product names, units, reasons) and embed Noto Sans SC so Chinese
+      // renders correctly instead of as garbled Latin-1 bytes.
+      const cjkProbe = [
+        t("stock_take_report"),
+        t("business_name"),
+        t("started_at"),
+        t("completed_at"),
+        t("status_completed"),
+        t("items_checked_label"),
+        t("items_with_discrepancies"),
+        t("total_shortage"),
+        t("total_surplus"),
+        t("unit"),
+        t("system_qty"),
+        t("actual_qty"),
+        t("difference"),
+        t("reason_for_difference"),
+        t("generated_by_bossify"),
+        businessName ?? "",
+        ...items.map((i) => `${i.product_name} ${i.unit ?? ""} ${i.reason ?? ""}`),
+      ].join(" ");
+      let bodyFont: string | undefined;
+      if (hasCjk(cjkProbe)) {
+        try {
+          await applyCjkFont(doc);
+          bodyFont = CJK_FONT_FAMILY;
+        } catch (e) {
+          console.warn("[stock-take pdf] CJK font load failed, falling back", e);
+        }
+      }
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
       doc.setFontSize(16);
@@ -136,15 +159,17 @@ function StockTakeReportPage() {
         head,
         body: items.map((i) => {
           const row = [
-            toLatin(i.product_name),
-            toLatin(i.unit ?? ""),
+            i.product_name,
+            i.unit ?? "",
             i.system_quantity,
             i.actual_quantity,
             (i.difference > 0 ? "+" : "") + i.difference,
           ];
-          if (hasReasons) row.push(toLatin(i.reason ?? ""));
+          if (hasReasons) row.push(i.reason ?? "");
           return row;
         }),
+        styles: bodyFont ? { font: bodyFont } : undefined,
+        headStyles: bodyFont ? { font: bodyFont } : undefined,
       });
       // Watermark on every page
       const pageCount = doc.getNumberOfPages();
