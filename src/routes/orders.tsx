@@ -7,12 +7,12 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey, pofSectionTitleKey, pofDescKey, type BizType } from "@/lib/businessType";
 import { getPublicOrigin } from "@/lib/publicUrl";
-import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, fetchWAProfile } from "@/lib/wa";
+import { renderTemplate, buildWhatsAppLink, daysSince, getReminderTemplate, getReceiptTemplate, fetchWAProfile } from "@/lib/wa";
 import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2, Check, Upload } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import {
