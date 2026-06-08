@@ -62,6 +62,7 @@ import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as StockTakeIdRouteImport } from './routes/stock-take_.$id'
 import { Route as RequirementIdRouteImport } from './routes/requirement.$id'
 import { Route as RenewalIdRouteImport } from './routes/renewal.$id'
+import { Route as PurchaseOrdersIdRouteImport } from './routes/purchase-orders_.$id'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 import { Route as OrderCodeRouteImport } from './routes/order.$code'
 import { Route as ListingIdRouteImport } from './routes/listing.$id'
@@ -346,6 +347,11 @@ const RenewalIdRoute = RenewalIdRouteImport.update({
   path: '/renewal/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PurchaseOrdersIdRoute = PurchaseOrdersIdRouteImport.update({
+  id: '/purchase-orders_/$id',
+  path: '/purchase-orders/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
   id: '/$orderId',
   path: '/$orderId',
@@ -498,6 +504,7 @@ export interface FileRoutesByFullPath {
   '/listing/$id': typeof ListingIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/purchase-orders/$id': typeof PurchaseOrdersIdRoute
   '/renewal/$id': typeof RenewalIdRoute
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
@@ -571,6 +578,7 @@ export interface FileRoutesByTo {
   '/listing/$id': typeof ListingIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/purchase-orders/$id': typeof PurchaseOrdersIdRoute
   '/renewal/$id': typeof RenewalIdRoute
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
@@ -645,6 +653,7 @@ export interface FileRoutesById {
   '/listing/$id': typeof ListingIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/purchase-orders_/$id': typeof PurchaseOrdersIdRoute
   '/renewal/$id': typeof RenewalIdRoute
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take_/$id': typeof StockTakeIdRoute
@@ -720,6 +729,7 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/purchase-orders/$id'
     | '/renewal/$id'
     | '/requirement/$id'
     | '/stock-take/$id'
@@ -793,6 +803,7 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/purchase-orders/$id'
     | '/renewal/$id'
     | '/requirement/$id'
     | '/stock-take/$id'
@@ -866,6 +877,7 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/purchase-orders_/$id'
     | '/renewal/$id'
     | '/requirement/$id'
     | '/stock-take_/$id'
@@ -936,6 +948,7 @@ export interface RootRouteChildren {
   DocumentIdRoute: typeof DocumentIdRoute
   ListingIdRoute: typeof ListingIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
+  PurchaseOrdersIdRoute: typeof PurchaseOrdersIdRoute
   RenewalIdRoute: typeof RenewalIdRoute
   RequirementIdRoute: typeof RequirementIdRoute
   StockTakeIdRoute: typeof StockTakeIdRoute
@@ -1322,6 +1335,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RenewalIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/purchase-orders_/$id': {
+      id: '/purchase-orders_/$id'
+      path: '/purchase-orders/$id'
+      fullPath: '/purchase-orders/$id'
+      preLoaderRoute: typeof PurchaseOrdersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders/$orderId': {
       id: '/orders/$orderId'
       path: '/$orderId'
@@ -1555,6 +1575,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocumentIdRoute: DocumentIdRoute,
   ListingIdRoute: ListingIdRoute,
   OrderCodeRoute: OrderCodeRoute,
+  PurchaseOrdersIdRoute: PurchaseOrdersIdRoute,
   RenewalIdRoute: RenewalIdRoute,
   RequirementIdRoute: RequirementIdRoute,
   StockTakeIdRoute: StockTakeIdRoute,
