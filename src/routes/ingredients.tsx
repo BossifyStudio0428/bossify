@@ -10,7 +10,7 @@ import { SheetShell, SheetField, ConfirmSheet } from "@/components/InventoryShee
 import { StockTabs } from "@/components/StockTabs";
 import { useServerFn } from "@tanstack/react-start";
 import { classifyIngredientsWithAi } from "@/lib/ai-classify-ingredient.functions";
-import { mergeCategories } from "@/lib/ingredientCategories";
+import { mergeCategories, translateCategory } from "@/lib/ingredientCategories";
 
 export const Route = createFileRoute("/ingredients")({ component: IngredientsPage });
 
@@ -39,7 +39,7 @@ type Sheet =
   | { kind: "delete"; item: Ingredient };
 
 function IngredientsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType, loading: btLoading } = useBusinessType();
   const navigate = useNavigate();
@@ -249,7 +249,7 @@ function IngredientsPage() {
             <CategoryChip label="—" active={activeCategory === "__none__"} onClick={() => setActiveCategory("__none__")} />
           )}
           {allCategoryOptions.map((c) => (
-            <CategoryChip key={c} label={c} active={activeCategory.toLowerCase() === c.toLowerCase()} onClick={() => setActiveCategory(c)} />
+            <CategoryChip key={c} label={translateCategory(c, lang)} active={activeCategory.toLowerCase() === c.toLowerCase()} onClick={() => setActiveCategory(c)} />
           ))}
         </div>
       )}
@@ -276,7 +276,7 @@ function IngredientsPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-foreground truncate">{it.name}</p>
                     {it.category && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{it.category}</span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{translateCategory(it.category, lang)}</span>
                     )}
                     {isLow && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
@@ -388,7 +388,7 @@ function IngredientForm({
   onSaved: () => void;
   userId: string;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const classifyFn = useServerFn(classifyIngredientsWithAi);
   const [name, setName] = useState(item?.name ?? "");
   const [unit, setUnit] = useState(item?.unit ?? "kg");
@@ -505,7 +505,7 @@ function IngredientForm({
           className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
         >
           <option value="">{t("select_category")}</option>
-          {catOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+          {catOptions.map((c) => <option key={c} value={c}>{translateCategory(c, lang)}</option>)}
         </select>
         <div className="flex gap-2">
           <input
