@@ -397,6 +397,32 @@ function StockTakePage() {
         <Plus className="h-4 w-4" /> {t("start_stock_take")}
       </button>
 
+      {takes.length > 0 && (
+        <div className="flex gap-2 items-center">
+          <input
+            type="date"
+            value={listDateFrom}
+            onChange={(e) => setListDateFrom(e.target.value)}
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs outline-none focus:border-primary"
+          />
+          <span className="text-xs text-muted-foreground">–</span>
+          <input
+            type="date"
+            value={listDateTo}
+            onChange={(e) => setListDateTo(e.target.value)}
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs outline-none focus:border-primary"
+          />
+          {(listDateFrom || listDateTo) && (
+            <button
+              onClick={() => { setListDateFrom(""); setListDateTo(""); }}
+              className="px-2 py-2 rounded-xl text-xs text-muted-foreground hover:bg-muted"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
       {loading && (
         <div className="flex justify-center py-10">
           <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
@@ -407,7 +433,14 @@ function StockTakePage() {
       )}
 
       <div className="space-y-2">
-        {takes.map((tk) => (
+        {takes
+          .filter((tk) => {
+            const d = tk.started_at.slice(0, 10);
+            if (listDateFrom && d < listDateFrom) return false;
+            if (listDateTo && d > listDateTo) return false;
+            return true;
+          })
+          .map((tk) => (
           <div
             key={tk.id}
             className="rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.99] transition-transform"
