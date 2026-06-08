@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import type { Lang } from "@/contexts/I18nContext";
+import type { BizType } from "@/lib/businessType";
 import { applyCjkFont, CJK_FONT_FAMILY, hasCjk } from "@/lib/pdfCjk";
 
 const PURPLE: [number, number, number] = [108, 63, 214];
@@ -9,12 +10,12 @@ const LINE: [number, number, number] = [220, 220, 220];
 
 type L = {
   title: string;
+  invoiceTitle: string;
   paid: string;
   receiptNo: string;
   date: string;
   billTo: string;
   phone: string;
-  description: string;
   qty: string;
   amount: string;
   total: string;
@@ -26,12 +27,12 @@ type L = {
 const LABELS: Record<Lang, L> = {
   en: {
     title: "OFFICIAL RECEIPT",
+    invoiceTitle: "INVOICE",
     paid: "PAID",
     receiptNo: "Receipt No.",
     date: "Date",
     billTo: "Bill To",
     phone: "Phone",
-    description: "Description",
     qty: "Qty",
     amount: "Amount",
     total: "Total Paid",
@@ -41,12 +42,12 @@ const LABELS: Record<Lang, L> = {
   },
   ms: {
     title: "RESIT RASMI",
+    invoiceTitle: "INVOIS",
     paid: "DIBAYAR",
     receiptNo: "No. Resit",
     date: "Tarikh",
     billTo: "Kepada",
     phone: "Telefon",
-    description: "Keterangan",
     qty: "Kuantiti",
     amount: "Jumlah",
     total: "Jumlah Dibayar",
@@ -56,12 +57,12 @@ const LABELS: Record<Lang, L> = {
   },
   zh: {
     title: "正式收据",
+    invoiceTitle: "发票",
     paid: "已付款",
     receiptNo: "收据编号",
     date: "日期",
     billTo: "客户",
     phone: "电话",
-    description: "项目",
     qty: "数量",
     amount: "金额",
     total: "实付金额",
@@ -70,6 +71,45 @@ const LABELS: Record<Lang, L> = {
     poweredBy: "由 Bossify 提供",
   },
 };
+
+// Per-biz wording for the "Receipt No." label (Order / Case / Appointment / etc.)
+// and the items column header (Product / Menu / Service / Listing).
+const BIZ_LABELS: Record<BizType, Record<Lang, { code: string; item: string }>> = {
+  retail: {
+    en: { code: "Order No.", item: "Product" },
+    ms: { code: "No. Pesanan", item: "Produk" },
+    zh: { code: "订单编号", item: "商品" },
+  },
+  fnb: {
+    en: { code: "Order No.", item: "Item" },
+    ms: { code: "No. Pesanan", item: "Menu" },
+    zh: { code: "订单编号", item: "餐点" },
+  },
+  education: {
+    en: { code: "Case No.", item: "Service" },
+    ms: { code: "No. Kes", item: "Perkhidmatan" },
+    zh: { code: "案例编号", item: "服务" },
+  },
+  beauty: {
+    en: { code: "Appointment No.", item: "Service" },
+    ms: { code: "No. Temujanji", item: "Perkhidmatan" },
+    zh: { code: "预约编号", item: "服务" },
+  },
+  property: {
+    en: { code: "Reference No.", item: "Listing" },
+    ms: { code: "No. Rujukan", item: "Hartanah" },
+    zh: { code: "参考编号", item: "房源" },
+  },
+  freelance: {
+    en: { code: "Project No.", item: "Service" },
+    ms: { code: "No. Projek", item: "Perkhidmatan" },
+    zh: { code: "项目编号", item: "服务" },
+  },
+};
+
+// retail & fnb keep the "Receipt" wording; service-based businesses are
+// typically invoices.
+const INVOICE_BIZ: ReadonlySet<BizType> = new Set(["education", "beauty", "property", "freelance"]);
 
 export type ReceiptInput = {
   businessName: string;
@@ -83,6 +123,7 @@ export type ReceiptInput = {
   createdAt: string;
   paymentLabel?: string | null;
   lang: Lang;
+  bizType?: BizType | null;
 };
 
 function formatDate(iso: string, lang: Lang): string {
@@ -98,6 +139,10 @@ function formatDate(iso: string, lang: Lang): string {
 export async function buildReceiptPdf(input: ReceiptInput): Promise<Blob> {
   const doc = new jsPDF({ unit: "mm", format: "a5", orientation: "portrait" });
   const labels = LABELS[input.lang];
+  const biz: BizType = (input.bizType ?? "retail") as BizType;
+  const bizLabels = (BIZ_LABELS[biz] ?? BIZ_LABELS.retail)[input.lang]
+    ?? BIZ_LABELS.retail.en;
+  const headerTitle = INVOICE_BIZ.has(biz) ? labels.invoiceTitle : labels.title;
 
   // Decide font: use CJK font for any content that needs it; otherwise helvetica.
   const needsCjk =
@@ -127,7 +172,7 @@ export async function buildReceiptPdf(input: ReceiptInput): Promise<Blob> {
 
   setFont();
   doc.setFontSize(10);
-  doc.text(labels.title, M, 20);
+  doc.text(headerTitle, M, 20);
 
   // PAID badge (right)
   setFont("bold");
@@ -143,7 +188,7 @@ export async function buildReceiptPdf(input: ReceiptInput): Promise<Blob> {
   doc.setTextColor(...MUTED);
   setFont();
   doc.setFontSize(9);
-  doc.text(`${labels.receiptNo}:`, M, y);
+  doc.text(`${bizLabels.code}:`, M, y);
   doc.text(`${labels.date}:`, W / 2, y);
 
   doc.setTextColor(...DARK);
@@ -181,7 +226,7 @@ export async function buildReceiptPdf(input: ReceiptInput): Promise<Blob> {
   doc.setTextColor(...MUTED);
   setFont("bold");
   doc.setFontSize(9);
-  doc.text(labels.description, M, y);
+  doc.text(bizLabels.item, M, y);
   doc.text(labels.qty, W - M - 35, y, { align: "right" });
   doc.text(labels.amount, W - M, y, { align: "right" });
 
