@@ -23,6 +23,7 @@ import { Route as RequirementsRouteImport } from './routes/requirements'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RenewalsRouteImport } from './routes/renewals'
 import { Route as RecipesRouteImport } from './routes/recipes'
+import { Route as PurchaseOrdersRouteImport } from './routes/purchase-orders'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -61,6 +62,7 @@ import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as StockTakeIdRouteImport } from './routes/stock-take_.$id'
 import { Route as RequirementIdRouteImport } from './routes/requirement.$id'
 import { Route as RenewalIdRouteImport } from './routes/renewal.$id'
+import { Route as PurchaseOrdersIdRouteImport } from './routes/purchase-orders_.$id'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 import { Route as OrderCodeRouteImport } from './routes/order.$code'
 import { Route as ListingIdRouteImport } from './routes/listing.$id'
@@ -148,6 +150,11 @@ const RenewalsRoute = RenewalsRouteImport.update({
 const RecipesRoute = RecipesRouteImport.update({
   id: '/recipes',
   path: '/recipes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PurchaseOrdersRoute = PurchaseOrdersRouteImport.update({
+  id: '/purchase-orders',
+  path: '/purchase-orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -340,6 +347,11 @@ const RenewalIdRoute = RenewalIdRouteImport.update({
   path: '/renewal/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PurchaseOrdersIdRoute = PurchaseOrdersIdRouteImport.update({
+  id: '/purchase-orders_/$id',
+  path: '/purchase-orders/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
   id: '/$orderId',
   path: '/$orderId',
@@ -467,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
+  '/purchase-orders': typeof PurchaseOrdersRoute
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
@@ -491,6 +504,7 @@ export interface FileRoutesByFullPath {
   '/listing/$id': typeof ListingIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/purchase-orders/$id': typeof PurchaseOrdersIdRoute
   '/renewal/$id': typeof RenewalIdRoute
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
@@ -539,6 +553,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
+  '/purchase-orders': typeof PurchaseOrdersRoute
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
@@ -563,6 +578,7 @@ export interface FileRoutesByTo {
   '/listing/$id': typeof ListingIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/purchase-orders/$id': typeof PurchaseOrdersIdRoute
   '/renewal/$id': typeof RenewalIdRoute
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
@@ -612,6 +628,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/profile': typeof ProfileRoute
+  '/purchase-orders': typeof PurchaseOrdersRoute
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
   '/reports': typeof ReportsRoute
@@ -636,6 +653,7 @@ export interface FileRoutesById {
   '/listing/$id': typeof ListingIdRoute
   '/order/$code': typeof OrderCodeRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/purchase-orders_/$id': typeof PurchaseOrdersIdRoute
   '/renewal/$id': typeof RenewalIdRoute
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take_/$id': typeof StockTakeIdRoute
@@ -686,6 +704,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/privacy-policy'
     | '/profile'
+    | '/purchase-orders'
     | '/recipes'
     | '/renewals'
     | '/reports'
@@ -710,6 +729,7 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/purchase-orders/$id'
     | '/renewal/$id'
     | '/requirement/$id'
     | '/stock-take/$id'
@@ -758,6 +778,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/privacy-policy'
     | '/profile'
+    | '/purchase-orders'
     | '/recipes'
     | '/renewals'
     | '/reports'
@@ -782,6 +803,7 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/purchase-orders/$id'
     | '/renewal/$id'
     | '/requirement/$id'
     | '/stock-take/$id'
@@ -830,6 +852,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/privacy-policy'
     | '/profile'
+    | '/purchase-orders'
     | '/recipes'
     | '/renewals'
     | '/reports'
@@ -854,6 +877,7 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/order/$code'
     | '/orders/$orderId'
+    | '/purchase-orders_/$id'
     | '/renewal/$id'
     | '/requirement/$id'
     | '/stock-take_/$id'
@@ -903,6 +927,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ProfileRoute: typeof ProfileRoute
+  PurchaseOrdersRoute: typeof PurchaseOrdersRoute
   RecipesRoute: typeof RecipesRoute
   RenewalsRoute: typeof RenewalsRoute
   ReportsRoute: typeof ReportsRoute
@@ -923,6 +948,7 @@ export interface RootRouteChildren {
   DocumentIdRoute: typeof DocumentIdRoute
   ListingIdRoute: typeof ListingIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
+  PurchaseOrdersIdRoute: typeof PurchaseOrdersIdRoute
   RenewalIdRoute: typeof RenewalIdRoute
   RequirementIdRoute: typeof RequirementIdRoute
   StockTakeIdRoute: typeof StockTakeIdRoute
@@ -1034,6 +1060,13 @@ declare module '@tanstack/react-router' {
       path: '/recipes'
       fullPath: '/recipes'
       preLoaderRoute: typeof RecipesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/purchase-orders': {
+      id: '/purchase-orders'
+      path: '/purchase-orders'
+      fullPath: '/purchase-orders'
+      preLoaderRoute: typeof PurchaseOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -1302,6 +1335,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RenewalIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/purchase-orders_/$id': {
+      id: '/purchase-orders_/$id'
+      path: '/purchase-orders/$id'
+      fullPath: '/purchase-orders/$id'
+      preLoaderRoute: typeof PurchaseOrdersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders/$orderId': {
       id: '/orders/$orderId'
       path: '/$orderId'
@@ -1514,6 +1554,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   ProfileRoute: ProfileRoute,
+  PurchaseOrdersRoute: PurchaseOrdersRoute,
   RecipesRoute: RecipesRoute,
   RenewalsRoute: RenewalsRoute,
   ReportsRoute: ReportsRoute,
@@ -1534,6 +1575,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocumentIdRoute: DocumentIdRoute,
   ListingIdRoute: ListingIdRoute,
   OrderCodeRoute: OrderCodeRoute,
+  PurchaseOrdersIdRoute: PurchaseOrdersIdRoute,
   RenewalIdRoute: RenewalIdRoute,
   RequirementIdRoute: RequirementIdRoute,
   StockTakeIdRoute: StockTakeIdRoute,
@@ -1549,3 +1591,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
