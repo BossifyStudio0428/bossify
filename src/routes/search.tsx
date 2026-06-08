@@ -153,7 +153,7 @@ function SearchPage() {
             <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2">{t("stock_take") || "Stock Take"}</p>
             <div className="space-y-2">
               {results.stockTakes.map((s) => (
-                <Link key={s.id} to="/stock-take_/$id" params={{ id: s.id }} onClick={close} className="block p-3 rounded-xl bg-card border border-border/60">
+                <Link key={s.id} to="/stock-take/$id" params={{ id: s.id }} onClick={close} className="block p-3 rounded-xl bg-card border border-border/60">
                   <p className="text-sm font-medium">{new Date(s.started_at).toLocaleDateString()}</p>
                   <p className="text-xs text-muted-foreground">{s.status}{s.notes ? ` · ${s.notes}` : ""}</p>
                 </Link>
