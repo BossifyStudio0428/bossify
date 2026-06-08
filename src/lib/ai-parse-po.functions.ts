@@ -1,0 +1,216 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireExternalSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
+
+const InputSchema = z.object({
+  kind: z.enum(["image", "pdf", "text"]),
+  // base64 (without data: prefix) for image/pdf, or raw text for text
+  payload: z.string().min(1).max(15_000_000),
+  mimeType: z.string().max(100).optional(),
+  ingredients: z
+    .array(z.object({ id: z.string(), name: z.string(), unit: z.string().optional().nullable() }))
+    .max(2000),
+  suppliers: z.array(z.object({ id: z.string(), name: z.string() })).max(500),
+});
+
+export type ParsedPoItem = {
+  matched_ingredient_id: string | null;
+  name: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  confidence: number;
+};
+
+export type ParsedPoResult = {
+  supplier: { matched_id: string | null; name: string; confidence: number };
+  items: ParsedPoItem[];
+  order_date: string | null;
+  notes: string | null;
+};
+
+function buildSystemPrompt() {
+  return `You are an assistant that extracts purchase order data from receipts, invoices, supplier order forms, or chat messages in Chinese, Bahasa Malaysia, and English (often mixed).
+
+Return STRICT JSON only matching this TypeScript type:
+{
+  "supplier": { "matched_id": string | null, "name": string, "confidence": number },
+  "items": Array<{
+    "matched_ingredient_id": string | null,
+    "name": string,
+    "quantity": number,
+    "unit": string,
+    "unit_price": number,
+    "confidence": number
+  }>,
+  "order_date": string | null,   // ISO date YYYY-MM-DD if visible
+  "notes": string | null
+}
+
+Rules:
+- For each item, try to match it to one entry from the provided ingredients list (case-insensitive, fuzzy, multilingual). If a confident match exists, set matched_ingredient_id to that id. Otherwise set null.
+- Same for supplier vs the suppliers list.
+- "confidence" is 0..1. Use < 0.5 only when very unsure.
+- "name" should be the cleaned-up product name as shown on the document (keep original language).
+- "quantity" must be a number (default 1 if unclear).
+- "unit" examples: kg, g, pcs, box, ctn, L, ml, pack. Use the most likely unit; empty string if unknown.
+- "unit_price" is RM per unit. 0 if unknown.
+- Ignore subtotals, tax lines, totals, delivery fees, discounts.
+- Output JSON only, no prose, no markdown fences.`;
+}
+
+function buildUserText(
+  ingredients: { id: string; name: string }[],
+  suppliers: { id: string; name: string }[],
+  textPayload?: string,
+) {
+  const ingList = ingredients.map((i) => `- ${i.id} :: ${i.name}`).join("\n");
+  const supList = suppliers.map((s) => `- ${s.id} :: ${s.name}`).join("\n");
+  return `EXISTING INGREDIENTS (id :: name):
+${ingList || "(none)"}
+
+EXISTING SUPPLIERS (id :: name):
+${supList || "(none)"}
+
+${textPayload ? `DOCUMENT TEXT:\n${textPayload}\n` : "Extract the purchase order from the attached file."}`;
+}
+
+export const parsePurchaseOrderWithAi = createServerFn({ method: "POST" })
+  .middleware([requireExternalSupabaseAuth])
+  .inputValidator((input: unknown) => InputSchema.parse(input))
+  .handler(async ({ data }): Promise<ParsedPoResult> => {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+
+    const systemPrompt = buildSystemPrompt();
+    const userText = buildUserText(
+      data.ingredients,
+      data.suppliers,
+      data.kind === "text" ? data.payload : undefined,
+    );
+
+    type ContentPart =
+      | { type: "text"; text: string }
+      | { type: "image_url"; image_url: { url: string } };
+
+    const userContent: ContentPart[] = [{ type: "text", text: userText }];
+
+    if (data.kind === "image") {
+      const mime = data.mimeType || "image/jpeg";
+      userContent.push({
+        type: "image_url",
+        image_url: { url: `data:${mime};base64,${data.payload}` },
+      });
+    } else if (data.kind === "pdf") {
+      // Best-effort: pass PDF as image_url data URL (gemini-2.5-pro tolerates this in many cases).
+      userContent.push({
+        type: "image_url",
+        image_url: { url: `data:application/pdf;base64,${data.payload}` },
+      });
+    }
+
+    const model = data.kind === "text" ? "google/gemini-2.5-flash" : "google/gemini-2.5-pro";
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Lovable-API-Key": apiKey,
+        "X-Lovable-AIG-SDK": "raw-fetch",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+      }),
+    });
+
+    if (res.status === 429) {
+      throw new Error("AI_RATE_LIMIT");
+    }
+    if (res.status === 402) {
+      throw new Error("AI_CREDIT_EXHAUSTED");
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error("[ai-parse-po] gateway error", res.status, body.slice(0, 500));
+      throw new Error(`AI_ERROR_${res.status}`);
+    }
+
+    const json = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const raw = json.choices?.[0]?.message?.content ?? "";
+
+    let parsed: unknown;
+    try {
+      // Some models still wrap output in fences; strip them defensively.
+      const cleaned = raw
+        .trim()
+        .replace(/^```(?:json)?/i, "")
+        .replace(/```\s*$/, "")
+        .trim();
+      parsed = JSON.parse(cleaned);
+    } catch (e) {
+      console.error("[ai-parse-po] JSON parse failed", raw.slice(0, 500));
+      throw new Error("AI_PARSE_FAILED");
+    }
+
+    const Result = z.object({
+      supplier: z
+        .object({
+          matched_id: z.string().nullable().optional(),
+          name: z.string().optional().default(""),
+          confidence: z.number().min(0).max(1).optional().default(0),
+        })
+        .default({ matched_id: null, name: "", confidence: 0 }),
+      items: z
+        .array(
+          z.object({
+            matched_ingredient_id: z.string().nullable().optional(),
+            name: z.string().default(""),
+            quantity: z.coerce.number().default(1),
+            unit: z.string().optional().default(""),
+            unit_price: z.coerce.number().optional().default(0),
+            confidence: z.coerce.number().min(0).max(1).optional().default(0.5),
+          }),
+        )
+        .default([]),
+      order_date: z.string().nullable().optional().default(null),
+      notes: z.string().nullable().optional().default(null),
+    });
+
+    const safe = Result.parse(parsed);
+
+    // Verify matched ids actually exist in the user-provided lists.
+    const ingIds = new Set(data.ingredients.map((i) => i.id));
+    const supIds = new Set(data.suppliers.map((s) => s.id));
+
+    return {
+      supplier: {
+        matched_id:
+          safe.supplier.matched_id && supIds.has(safe.supplier.matched_id)
+            ? safe.supplier.matched_id
+            : null,
+        name: safe.supplier.name ?? "",
+        confidence: safe.supplier.confidence ?? 0,
+      },
+      items: safe.items.map((it) => ({
+        matched_ingredient_id:
+          it.matched_ingredient_id && ingIds.has(it.matched_ingredient_id)
+            ? it.matched_ingredient_id
+            : null,
+        name: (it.name ?? "").trim(),
+        quantity: Number.isFinite(it.quantity) ? Number(it.quantity) : 1,
+        unit: it.unit ?? "",
+        unit_price: Number.isFinite(it.unit_price) ? Number(it.unit_price) : 0,
+        confidence: it.confidence ?? 0.5,
+      })),
+      order_date: safe.order_date ?? null,
+      notes: safe.notes ?? null,
+    };
+  });

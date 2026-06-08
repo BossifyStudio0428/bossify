@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, X, Trash2, ChevronRight, ClipboardList } from "lucide-react";
+import { Plus, X, Trash2, ChevronRight, ClipboardList, Sparkles, Camera, Image as ImageIcon, FileText, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,9 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { SheetShell, SheetField } from "@/components/InventorySheets";
 import { StockTabs } from "@/components/StockTabs";
+import { useServerFn } from "@tanstack/react-start";
+import { parsePurchaseOrderWithAi, type ParsedPoResult } from "@/lib/ai-parse-po.functions";
+import { PurchaseOrderAiReview } from "@/components/PurchaseOrderAiReview";
 
 export const Route = createFileRoute("/purchase-orders")({ component: PurchaseOrdersPage });
 
@@ -47,6 +50,12 @@ function PurchaseOrdersPage() {
   const [counts, setCounts] = useState<Counts>({});
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [aiSourceOpen, setAiSourceOpen] = useState(false);
+  const [aiTextOpen, setAiTextOpen] = useState(false);
+  const [aiText, setAiText] = useState("");
+  const [aiScanning, setAiScanning] = useState(false);
+  const [aiResult, setAiResult] = useState<ParsedPoResult | null>(null);
+  const parseFn = useServerFn(parsePurchaseOrderWithAi);
 
   const supplierMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -97,6 +106,44 @@ function PurchaseOrdersPage() {
 
   if (!allowed) return null;
 
+  const runAiParse = async (
+    kind: "image" | "pdf" | "text",
+    payload: string,
+    mimeType?: string,
+  ) => {
+    setAiScanning(true);
+    try {
+      const result = await parseFn({
+        data: {
+          kind,
+          payload,
+          mimeType,
+          ingredients: ingredients.map((i) => ({ id: i.id, name: i.name, unit: i.unit })),
+          suppliers: suppliers.map((s) => ({ id: s.id, name: s.name })),
+        },
+      });
+      setAiResult(result);
+    } catch (e: any) {
+      const msg = String(e?.message ?? e ?? "");
+      if (msg.includes("AI_RATE_LIMIT")) toast.error(t("po_ai_rate_limit"));
+      else if (msg.includes("AI_CREDIT_EXHAUSTED")) toast.error(t("po_ai_credit_exhausted"));
+      else toast.error(t("po_ai_failed"));
+    } finally {
+      setAiScanning(false);
+    }
+  };
+
+  const handleFile = async (file: File, kind: "image" | "pdf") => {
+    const MAX = 8 * 1024 * 1024;
+    if (file.size > MAX) {
+      toast.error(t("po_ai_image_too_large"));
+      return;
+    }
+    setAiSourceOpen(false);
+    const b64 = await fileToBase64(file);
+    await runAiParse(kind, b64, file.type);
+  };
+
   return (
     <div className="px-5 pt-10 pb-24 space-y-5 relative">
       <header className="flex items-center gap-3">
@@ -107,6 +154,14 @@ function PurchaseOrdersPage() {
       </header>
 
       <StockTabs active="purchase-orders" />
+
+      <button
+        onClick={() => setAiSourceOpen(true)}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-primary/15 to-primary/5 border border-primary/30 text-primary font-semibold text-sm active:scale-[0.99] transition-transform"
+      >
+        <Sparkles className="h-4 w-4" />
+        {t("po_ai_scan")}
+      </button>
 
       {loading && (
         <div className="flex justify-center py-10">
@@ -181,8 +236,164 @@ function PurchaseOrdersPage() {
           }}
         />
       )}
+
+      {aiSourceOpen && (
+        <AiSourceSheet
+          onClose={() => setAiSourceOpen(false)}
+          onPickImage={(file) => handleFile(file, "image")}
+          onPickPdf={(file) => handleFile(file, "pdf")}
+          onPickText={() => {
+            setAiSourceOpen(false);
+            setAiTextOpen(true);
+          }}
+        />
+      )}
+
+      {aiTextOpen && (
+        <SheetShell onClose={() => setAiTextOpen(false)}>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-foreground">{t("po_ai_text")}</h3>
+            <button onClick={() => setAiTextOpen(false)} className="p-1.5 rounded-full hover:bg-muted">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <textarea
+            value={aiText}
+            onChange={(e) => setAiText(e.target.value)}
+            rows={8}
+            placeholder={t("po_ai_text_placeholder")}
+            className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm outline-none focus:border-primary resize-none"
+          />
+          <button
+            onClick={async () => {
+              const txt = aiText.trim();
+              if (!txt) return;
+              setAiTextOpen(false);
+              await runAiParse("text", txt);
+              setAiText("");
+            }}
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold active:scale-[0.99]"
+          >
+            {t("po_ai_scan")}
+          </button>
+        </SheetShell>
+      )}
+
+      {aiScanning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-2xl bg-card px-6 py-5 flex items-center gap-3 shadow-2xl">
+            <div className="h-5 w-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+            <span className="text-sm font-medium text-foreground">{t("po_ai_scanning")}</span>
+          </div>
+        </div>
+      )}
+
+      {aiResult && (
+        <PurchaseOrderAiReview
+          userId={user?.id ?? ""}
+          suppliers={suppliers}
+          ingredients={ingredients}
+          parsed={aiResult}
+          onClose={() => setAiResult(null)}
+          onSaved={() => {
+            setAiResult(null);
+            load();
+          }}
+        />
+      )}
     </div>
   );
+}
+
+function AiSourceSheet({
+  onClose,
+  onPickImage,
+  onPickPdf,
+  onPickText,
+}: {
+  onClose: () => void;
+  onPickImage: (f: File) => void;
+  onPickPdf: (f: File) => void;
+  onPickText: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <SheetShell onClose={onClose}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h3 className="text-lg font-bold text-foreground">{t("po_ai_choose_source")}</h3>
+        </div>
+        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <label className="flex items-center gap-3 rounded-2xl bg-muted/40 border border-border/60 p-4 cursor-pointer hover:bg-muted/60 active:scale-[0.99] transition">
+        <Camera className="h-5 w-5 text-primary" />
+        <span className="text-sm font-semibold flex-1">{t("po_ai_camera")}</span>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onPickImage(f);
+          }}
+        />
+      </label>
+
+      <label className="flex items-center gap-3 rounded-2xl bg-muted/40 border border-border/60 p-4 cursor-pointer hover:bg-muted/60 active:scale-[0.99] transition">
+        <ImageIcon className="h-5 w-5 text-primary" />
+        <span className="text-sm font-semibold flex-1">{t("po_ai_gallery")}</span>
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onPickImage(f);
+          }}
+        />
+      </label>
+
+      <label className="flex items-center gap-3 rounded-2xl bg-muted/40 border border-border/60 p-4 cursor-pointer hover:bg-muted/60 active:scale-[0.99] transition">
+        <FileText className="h-5 w-5 text-primary" />
+        <span className="text-sm font-semibold flex-1">{t("po_ai_pdf")}</span>
+        <input
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onPickPdf(f);
+          }}
+        />
+      </label>
+
+      <button
+        onClick={onPickText}
+        className="w-full flex items-center gap-3 rounded-2xl bg-muted/40 border border-border/60 p-4 hover:bg-muted/60 active:scale-[0.99] transition text-left"
+      >
+        <Type className="h-5 w-5 text-primary" />
+        <span className="text-sm font-semibold flex-1">{t("po_ai_text")}</span>
+      </button>
+    </SheetShell>
+  );
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const idx = result.indexOf(",");
+      resolve(idx >= 0 ? result.slice(idx + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 type LineItem = {

@@ -1,43 +1,135 @@
-## 目标
-一次性把 Android APK 里的两个问题修掉，同时保持 Web 现有功能继续正常：
-- Admin Panel：Web 有数据，但 Android 统计全部 0。
-- Stock PDF：Web 能下载，但 Android 点了没有反应。
 
-## 我找到的关键问题
-- Android APK 是离线打包的 WebView，不等于 Web 站点；它不能可靠使用 Web 的下载方式，也不能依赖未打进 APK 的后端调用变化。
-- Admin 当前 Android 分支先尝试用浏览器端数据库读取全部 profiles / orders；这个在权限下很可能只读到当前用户或空结果，所以统计会变 0。
-- 项目连接的实际业务数据表在外部业务后端里；Lovable Cloud 当前项目里只看到 `profiles/orders/subscriptions`，没有 `stock_takes/stock_take_items/admin_users_view`，所以 Android 不能靠当前项目数据库去推断 admin 总览。
-- PDF 当前原生保存逻辑使用 `Filesystem.writeFile` 返回的 URI 直接交给 FileOpener/Share；在部分 Android/Capacitor 版本里这个 URI 不一定能被外部 App 正确打开或分享，需要改成更稳的“真实 file:// 路径 + 原生打开 + 原生分享 + 明确错误提示”。
+## 功能概述
 
-## 实施计划
-1. **重做 Android Admin 数据加载路径**
-   - 移除 Android 端“直接用浏览器数据库读取所有用户/订单”的 fallback。
-   - Android 和 Web 都统一走安全的 admin 后端逻辑：
-     - Web 继续用 server function。
-     - Android 用 HTTPS `/api/public/admin`，带当前登录 token。
-   - Admin API 返回 `users/orders` 后再计算统计，避免 Android 因 RLS/权限读不到全表而显示 0。
+在 **采购单 (Purchase Orders)** 页面新增 "AI 智能识别" 入口，用户可以：
+1. 拍照 / 上传收据图片
+2. 上传 PDF 采购单
+3. 贴上文字（WhatsApp 讯息等）
 
-2. **让 Admin API 更可靠、更容易定位问题**
-   - Admin API 使用同一套 server-side admin helper 读取真实业务数据。
-   - 给 Android 请求失败时显示明确 toast，例如：未登录、不是管理员、API 未发布、服务端缺少 secret、读取失败。
-   - 不再静默把失败当成空数组，这样不会再出现“看起来正常但全部 0”。
+AI 会自动识别出 **ingredient 名字 + 数量 + 单位 + 单价 + supplier**，然后弹出 review 页面让用户逐项确认 / 修改 / 跳过，再一次过创建采购单。如果某 ingredient / supplier 在 DB 里没有，会标记 "新建" 让用户决定要不要加进 ingredients 表。
 
-3. **重做 Android PDF 保存/打开流程**
-   - 在 `savePdf` 里为 Android 单独生成 base64 PDF。
-   - 写入 app cache / documents 后，优先解析并使用稳定的 `file://` 路径。
-   - 先尝试 `FileOpener.open(... openWithDefault: true)`，失败再尝试 Android Share sheet。
-   - 如果手机没有 PDF viewer 或系统拒绝文件 URI，会在 UI 里弹出具体错误，不再“按了没反应”。
+---
 
-4. **给 Stock PDF 按钮完整反馈**
-   - 保留导出中的 loading/disabled 状态。
-   - 成功时 toast 提示“PDF ready / opened”。
-   - 失败时 toast 显示具体错误，并让按钮恢复可按。
+## 用户流程
 
-5. **更新 Android build 说明，避免继续安装旧 APK**
-   - 明确必须重新打包 APK/AAB，因为 Android 是离线包。
-   - Android admin API 依赖已发布站点，所以修复后也要 Publish 一次，再重新 `android:prep → cap sync → android:patch → Android Studio build`。
+```text
+[采购单页] → 按 "AI 识别" 按钮
+   ↓
+[选择输入方式] 拍照 / 相册 / PDF / 文字
+   ↓
+[上传 → 显示 "AI 识别中..."]
+   ↓
+[Review 页面] 列出 AI 解析的每一行：
+   ┌──────────────────────────────────┐
+   │ ☑ 鸡肉  2 kg  RM 15.00           │
+   │   ↳ 匹配到: Chicken Breast       │
+   │ ☑ 洋葱  5 kg  RM 3.50  [新建]    │
+   │   ↳ 名字: [洋葱___] 单位: [kg]   │
+   │ ☐ ??? (低信心，默认不选)         │
+   └──────────────────────────────────┘
+   Supplier: [ABC 供应商 ▼] 或 [+ 新建]
+   ↓
+[确认] → 新建缺失的 ingredients → 建立采购单 → 跳转详情页
+```
 
-## 验证方式
-- 代码层面检查：确认 Android admin 不再走直接前端全表查询，PDF 不再只依赖 Web 下载。
-- 后端层面检查：查询/确认 admin helper 读取的数据源和 API 路径。
-- 用户侧最终验证：安装新 APK 后打开 Admin 应该显示与 Web 一样的数据；Stock Report 点 Export PDF 应该打开 PDF 或弹出系统分享面板。
+---
+
+## 技术实现
+
+### 1. 后端：AI 识别 Server Function
+
+新增 `src/lib/ai-parse-po.functions.ts`，用 `createServerFn`：
+
+- 入参：`{ kind: "image" | "pdf" | "text", payload: string }`（图片/PDF 用 base64，文字直接 string）
+- 用 Lovable AI Gateway + `google/gemini-2.5-pro`（支援 vision + PDF）
+- 传入现有 ingredients 和 suppliers 的 list（只传 id + 名字，省 token）让 AI 做 fuzzy match
+- 用 AI SDK `Output.object` 输出 structured JSON：
+  ```ts
+  {
+    supplier: { matched_id: string | null, name: string, confidence: number },
+    items: [{
+      matched_ingredient_id: string | null,
+      name: string,
+      quantity: number,
+      unit: string,
+      unit_price: number,
+      confidence: number
+    }],
+    order_date?: string,
+    notes?: string
+  }
+  ```
+- 需先 provision `LOVABLE_API_KEY`（用 `ai_gateway--create` 或确认已存在）
+
+### 2. 前端：触发入口
+
+`src/routes/purchase-orders.tsx` 加 "AI 识别" 按钮（在 + FAB 旁边或顶部）。点击打开 action sheet 选输入方式。
+
+- 拍照/相册：用 Capacitor `Camera` plugin（Web fallback 用 `<input type="file" accept="image/*">`）
+- PDF：`<input type="file" accept="application/pdf">`
+- 文字：`<textarea>`
+
+转 base64 后调用 server function。
+
+### 3. 前端：Review Modal
+
+新增 `src/components/PurchaseOrderAiReview.tsx`：
+- 复用现有 `PurchaseOrderForm` 的 SheetShell + lines UI
+- 每行加：
+  - Checkbox（低 confidence < 0.6 默认不勾）
+  - "已匹配 / 新建" badge
+  - 如果是 "新建"：显示名字 / 单位输入框，确认后会写入 `ingredients` 表
+- Supplier dropdown 预选 AI 匹配的；如果 AI 给的是新 supplier 名字，提供 "新建 supplier" 选项
+- 底部 "确认建立采购单" 按钮：
+  1. 先 insert 新 ingredients（拿到新 id）
+  2. 如果有新 supplier 也 insert
+  3. 再走原本的 `purchase_orders` + `purchase_order_items` insert 流程
+  4. 如果状态 = received，调用现有 `applyReceivedStock`
+
+### 4. i18n
+
+`I18nContext.tsx` 加新 keys（CN/BM/EN）：
+- `po_ai_scan` = AI 智能识别 / Imbas AI / AI Scan
+- `po_ai_choose_source` / `po_ai_camera` / `po_ai_gallery` / `po_ai_pdf` / `po_ai_text`
+- `po_ai_scanning` = AI 识别中...
+- `po_ai_review_title` / `po_ai_new_ingredient` / `po_ai_new_supplier`
+- `po_ai_low_confidence` / `po_ai_no_items_found`
+- `po_ai_failed` = AI 识别失败，请重试
+
+### 5. 错误处理
+
+- 429 (rate limit) → toast "AI 忙碌中，请稍后再试"
+- 402 (credit exhausted) → toast "AI 额度不足，请联系管理员"
+- AI 返回空 items → toast "未检测到 ingredients，请手动添加"
+- 图片太大 → 前端压缩到 max 2MB 再上传
+
+---
+
+## 文件改动清单
+
+新增：
+- `src/lib/ai-parse-po.functions.ts` — AI 识别 server function
+- `src/lib/ai-gateway.server.ts` — Lovable AI Gateway provider helper（如还没存在）
+- `src/components/PurchaseOrderAiReview.tsx` — Review modal
+
+修改：
+- `src/routes/purchase-orders.tsx` — 加 "AI 识别" 按钮和 modal 控制
+- `src/contexts/I18nContext.tsx` — 加 AI 相关 i18n keys
+
+不动 DB schema（用现有 `ingredients` / `suppliers` / `purchase_orders` / `purchase_order_items`）。
+
+---
+
+## 平台支援
+
+- Web：用 `<input type="file">`
+- Android (Capacitor)：用 `@capacitor/camera` 拍照 / 选相册（plugin 应该已经有，会确认）
+- 所有 AI 调用走 server function（已配置 `attachSupabaseAuth`），Android app 也能用
+
+---
+
+## 风险 & 备注
+
+- Gemini 对 PDF 支援需用 `google/gemini-2.5-pro`（flash preview 也支援 vision 但对中文/马来文菜单准确率较低）
+- 中文/马来文混杂的收据要在 system prompt 明确说明三语
+- AI 不保证 100% 准确，所以一定要 review 才提交（不会全自动 insert）
