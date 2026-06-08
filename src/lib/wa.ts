@@ -488,14 +488,14 @@ export function formatPaymentBlock(
   if (valid.length === 0) return "";
   const sep = lang === "zh" ? "：" : ": ";
   const labels = PAYMENT_LABELS[lang];
-  const lines: string[] = ["━━━━━━━━━━━━━━━", `💳 ${labels.header}${sep}`];
+  const lines: string[] = ["---------------", `${labels.header}${sep}`];
   for (const m of valid) {
     lines.push(m.number ? `${m.type}${sep}${m.number}` : String(m.type));
     if (m.bank) lines.push(`${labels.bank}${sep}${m.bank}`);
     if (m.name) lines.push(`${labels.name}${sep}${m.name}`);
-    if (m.qr_url) lines.push(`📷 ${labels.qr}${sep}${m.qr_url}`);
+    if (m.qr_url) lines.push(`${labels.qr}${sep}${m.qr_url}`);
   }
-  lines.push("━━━━━━━━━━━━━━━");
+  lines.push("---------------");
   return lines.join("\n") + "\n\n";
 }
 
@@ -618,14 +618,14 @@ export function renderTemplate(tpl: string, vars: TplVars, lang: Lang = getActiv
   let out = tpl;
 
   // notes line
-  const noteLine = vars.notes ? `📝 ${NOTES_LABEL[lang]}: ${vars.notes}\n` : "";
+  const noteLine = vars.notes ? `${NOTES_LABEL[lang]}: ${vars.notes}\n` : "";
   out = out.replace(/\[notes if not empty:[^\]]*\]/g, noteLine);
   out = out.replace(/\[notes\]/g, noteLine);
 
   // optional extras (composed lines so they cleanly disappear when empty)
-  const dateTimeLine = vars.date_time ? `📅 ${DATE_TIME_LABEL[lang]}: ${vars.date_time}\n` : "";
-  const followUpLine = vars.follow_up_date ? `📅 ${FOLLOW_UP_LABEL[lang]}: ${vars.follow_up_date}\n` : "";
-  const deadlineLine = vars.deadline ? `📅 ${DEADLINE_LABEL[lang]}: ${vars.deadline}\n` : "";
+  const dateTimeLine = vars.date_time ? `${DATE_TIME_LABEL[lang]}: ${vars.date_time}\n` : "";
+  const followUpLine = vars.follow_up_date ? `${FOLLOW_UP_LABEL[lang]}: ${vars.follow_up_date}\n` : "";
+  const deadlineLine = vars.deadline ? `${DEADLINE_LABEL[lang]}: ${vars.deadline}\n` : "";
   const receiptLine = vars.receipt_url ? `${RECEIPT_LABEL[lang]}: ${vars.receipt_url}\n\n` : "";
   out = out.replace(/\[date_time_line\]/g, dateTimeLine);
   out = out.replace(/\[follow_up_line\]/g, followUpLine);
