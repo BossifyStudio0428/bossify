@@ -313,7 +313,9 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
         });
       } catch (shareErr) {
         console.error("[pdf] share files failed", shareErr);
-        throw new Error("PDF created, but Android could not open or share it. Please install a PDF viewer and try again.");
+        throw new Error(
+          "PDF created, but Android could not open or share it. Please install a PDF viewer and try again.",
+        );
       }
       return;
     }
