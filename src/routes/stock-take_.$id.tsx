@@ -169,7 +169,7 @@ function StockTakeReportPage() {
           return row;
         }),
         styles: bodyFont ? { font: bodyFont } : undefined,
-        headStyles: bodyFont ? { font: bodyFont } : undefined,
+        headStyles: bodyFont ? { font: bodyFont, fontStyle: "bold" } : undefined,
       });
       // Watermark on every page
       const pageCount = doc.getNumberOfPages();
