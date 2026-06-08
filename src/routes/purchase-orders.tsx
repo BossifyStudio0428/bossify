@@ -236,8 +236,13 @@ function PurchaseOrdersPage() {
       {formOpen && (
         <PurchaseOrderForm
           userId={user?.id ?? ""}
+          mode={mode}
           suppliers={suppliers}
-          ingredients={ingredients}
+          ingredients={
+            mode === "inventory"
+              ? inventoryItems.map((i) => ({ id: i.id, name: i.name, unit: "pcs", cost_per_unit: i.price }))
+              : ingredients
+          }
           onClose={() => setFormOpen(false)}
           onSaved={() => {
             setFormOpen(false);
@@ -424,12 +429,14 @@ function newLine(): LineItem {
 
 export function PurchaseOrderForm({
   userId,
+  mode = "ingredients",
   suppliers,
   ingredients,
   onClose,
   onSaved,
 }: {
   userId: string;
+  mode?: "ingredients" | "inventory";
   suppliers: Supplier[];
   ingredients: Ingredient[];
   onClose: () => void;
@@ -513,7 +520,8 @@ export function PurchaseOrderForm({
       const price = Number(l.unit_price) || 0;
       return {
         purchase_order_id: poId,
-        ingredient_id: l.ingredient_id,
+        ingredient_id: mode === "ingredients" ? l.ingredient_id : null,
+        inventory_id: mode === "inventory" ? l.ingredient_id : null,
         quantity: qty,
         unit: l.unit || null,
         unit_price: price,
@@ -528,7 +536,13 @@ export function PurchaseOrderForm({
     }
 
     if (status === "received") {
-      await applyReceivedStock(validLines);
+      if (mode === "inventory") {
+        await applyReceivedStockInventory(
+          validLines.map((l) => ({ inventory_id: l.ingredient_id, quantity: l.quantity })),
+        );
+      } else {
+        await applyReceivedStock(validLines);
+      }
       toast.success(t("po_stock_updated"));
     } else {
       toast.success(t("po_saved"));
@@ -595,7 +609,7 @@ export function PurchaseOrderForm({
                   onChange={(e) => updateLine(l.key, { ingredient_id: e.target.value })}
                   className="flex-1 rounded-xl bg-card border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
                 >
-                  <option value="">{t("po_select_ingredient")}</option>
+                  <option value="">{t(mode === "inventory" ? "po_select_product" : "po_select_ingredient")}</option>
                   {ingredients.map((i) => (
                     <option key={i.id} value={i.id}>
                       {i.name}
