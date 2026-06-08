@@ -75,6 +75,15 @@ function StockTakeReportPage() {
     }
     setExporting(true);
     try {
+      // jsPDF's built-in fonts only support Latin-1, so CJK characters render
+      // as garbage. Strip non-Latin-1 chars (and collapse the resulting
+      // whitespace / empty parentheses) so the PDF stays readable.
+      const toLatin = (s: string): string =>
+        (s ?? "")
+          .replace(/[^\x00-\xFF]/g, "")
+          .replace(/\(\s*\)/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
       const doc = new jsPDF();
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
@@ -127,13 +136,13 @@ function StockTakeReportPage() {
         head,
         body: items.map((i) => {
           const row = [
-            i.product_name,
-            i.unit ?? "",
+            toLatin(i.product_name),
+            toLatin(i.unit ?? ""),
             i.system_quantity,
             i.actual_quantity,
             (i.difference > 0 ? "+" : "") + i.difference,
           ];
-          if (hasReasons) row.push(i.reason ?? "");
+          if (hasReasons) row.push(toLatin(i.reason ?? ""));
           return row;
         }),
       });
