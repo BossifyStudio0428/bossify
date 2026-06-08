@@ -14,15 +14,14 @@ export async function assertAdmin(userId: string) {
 export async function loadAdminOverviewForUser(userId: string) {
   await assertAdmin(userId);
 
-  const [profilesResult, subscriptionsResult, ordersResult] =
-    await Promise.all([
-      supabaseAdmin
-        .from("profiles")
-        .select("id,business_name,is_admin,created_at")
-        .order("created_at", { ascending: false }),
-      supabaseAdmin.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
-      supabaseAdmin.from("orders").select("*").order("created_at", { ascending: false }),
-    ]);
+  const [profilesResult, subscriptionsResult, ordersResult] = await Promise.all([
+    supabaseAdmin
+      .from("profiles")
+      .select("id,business_name,is_admin,created_at")
+      .order("created_at", { ascending: false }),
+    supabaseAdmin.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
+    supabaseAdmin.from("orders").select("*").order("created_at", { ascending: false }),
+  ]);
 
   if (profilesResult.error || subscriptionsResult.error || ordersResult.error) {
     console.error("loadAdminOverviewForUser failed", {
