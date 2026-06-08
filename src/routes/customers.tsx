@@ -11,6 +11,11 @@ import { CasesKanban, type EduStageInfo } from "@/components/CasesKanban";
 import { PhoneInput } from "@/components/PhoneInput";
 import { stripEmoji } from "@/lib/wa";
 
+function buildWA(phone: string, message: string) {
+  const cleaned = phone.replace(/[^0-9]/g, "");
+  return `https://wa.me/${cleaned}?text=${encodeURIComponent(stripEmoji(message))}`;
+}
+
 export const Route = createFileRoute("/customers")({ component: CustomersPage });
 
 const CUSTOMER_STATUS_ORDER: CustomerStatus[] = ["enquiry", "in_progress", "completed", "rejected"];
