@@ -303,6 +303,8 @@ function IngredientsPage() {
         <IngredientForm
           item={sheet.item}
           suppliers={suppliers}
+          customCategories={customCategories}
+          onCustomCategoryAdded={(c) => setCustomCategories((p) => [...p, c])}
           onClose={() => setSheet({ kind: "none" })}
           onSaved={() => { setSheet({ kind: "none" }); load(); }}
           userId={user?.id ?? ""}
@@ -331,16 +333,30 @@ function IngredientsPage() {
   );
 }
 
+function CategoryChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border ${active ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border/60"}`}
+    >
+      {label}
+    </button>
+  );
+}
+
 function IngredientForm({
-  item, suppliers, onClose, onSaved, userId,
+  item, suppliers, customCategories, onCustomCategoryAdded, onClose, onSaved, userId,
 }: {
   item?: Ingredient;
   suppliers: Supplier[];
+  customCategories: string[];
+  onCustomCategoryAdded: (c: string) => void;
   onClose: () => void;
   onSaved: () => void;
   userId: string;
 }) {
   const { t } = useI18n();
+  const classifyFn = useServerFn(classifyIngredientsWithAi);
   const [name, setName] = useState(item?.name ?? "");
   const [unit, setUnit] = useState(item?.unit ?? "kg");
   const [currentStock, setCurrentStock] = useState(String(item?.current_stock ?? "0"));
@@ -348,7 +364,32 @@ function IngredientForm({
   const [cost, setCost] = useState(String(item?.cost_per_unit ?? "0"));
   const [supplierId, setSupplierId] = useState(item?.supplier_id ?? "");
   const [notes, setNotes] = useState(item?.notes ?? "");
+  const [category, setCategory] = useState(item?.category ?? "");
+  const [customCatInput, setCustomCatInput] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const catOptions = useMemo(() => {
+    const merged = mergeCategories(customCategories);
+    if (category && !merged.some((c) => c.toLowerCase() === category.toLowerCase())) merged.push(category);
+    return merged;
+  }, [customCategories, category]);
+
+  const handleAiSuggest = async () => {
+    if (!name.trim()) { toast.error(t("required_field")); return; }
+    setAiBusy(true);
+    try {
+      const res = await classifyFn({
+        data: { names: [name.trim()], existingCategories: mergeCategories(customCategories) },
+      });
+      const c = (res[0]?.category ?? "").trim();
+      if (c) setCategory(c);
+    } catch (e: any) {
+      toast.error(String(e?.message ?? e ?? "AI failed"));
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   const save = async () => {
     if (!name.trim()) { toast.error(t("required_field")); return; }
@@ -361,6 +402,7 @@ function IngredientForm({
       cost_per_unit: Number(cost) || 0,
       supplier_id: supplierId || null,
       notes: notes.trim() || null,
+      category: category.trim() || null,
     };
     let error;
     if (item) {
@@ -368,6 +410,16 @@ function IngredientForm({
     } else {
       ({ error } = await supabase.from("ingredients" as any).insert({ ...payload, user_id: userId }));
     }
+
+    // Persist a new category to user library so it shows up in pickers later
+    const c = category.trim();
+    if (!error && c && !mergeCategories(customCategories).some((x) => x.toLowerCase() === c.toLowerCase())) {
+      await supabase
+        .from("ingredient_categories" as any)
+        .upsert({ user_id: userId, name: c }, { onConflict: "user_id,name", ignoreDuplicates: true });
+      onCustomCategoryAdded(c);
+    }
+
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success(item ? t("ingredient_updated") : t("ingredient_added"));
@@ -400,6 +452,49 @@ function IngredientForm({
       </div>
 
       <SheetField label={t("cost_per_unit")} value={cost} onChange={setCost} type="number" />
+
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between px-1">
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">{t("category")}</label>
+          <button
+            type="button"
+            onClick={handleAiSuggest}
+            disabled={aiBusy || !name.trim()}
+            className="text-[11px] font-semibold text-primary flex items-center gap-1 disabled:opacity-50"
+          >
+            <Sparkles className="h-3 w-3" />
+            {aiBusy ? t("categorizing") : t("ai_suggest_category")}
+          </button>
+        </div>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+        >
+          <option value="">{t("select_category")}</option>
+          {catOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <div className="flex gap-2">
+          <input
+            value={customCatInput}
+            onChange={(e) => setCustomCatInput(e.target.value)}
+            placeholder={t("new_category")}
+            className="flex-1 rounded-2xl bg-muted/40 border border-border/60 px-4 py-2.5 text-sm outline-none focus:border-primary"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const c = customCatInput.trim();
+              if (!c) return;
+              setCategory(c);
+              setCustomCatInput("");
+            }}
+            className="px-3 rounded-2xl bg-primary/10 text-primary text-xs font-semibold"
+          >
+            +
+          </button>
+        </div>
+      </div>
 
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("supplier")}</label>
