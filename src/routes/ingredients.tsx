@@ -505,7 +505,7 @@ function IngredientForm({
           className="w-full rounded-2xl bg-card border border-border shadow-sm px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
         >
           <option value="">{t("select_category")}</option>
-          {catOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+          {catOptions.map((c) => <option key={c} value={c}>{translateCategory(c, lang)}</option>)}
         </select>
         <div className="flex gap-2">
           <input
