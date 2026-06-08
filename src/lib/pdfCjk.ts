@@ -53,6 +53,10 @@ export async function applyCjkFont(doc: jsPDF): Promise<void> {
   // addFileToVFS / addFont are safe to call again — jsPDF replaces the entry.
   doc.addFileToVFS(FONT_VFS_NAME, base64);
   doc.addFont(FONT_VFS_NAME, FONT_FAMILY, "normal");
+  // Register the same TTF under "bold" too — jspdf-autotable defaults
+  // table headers to fontStyle: "bold", and if that variant is missing
+  // jsPDF silently falls back to Helvetica (garbling CJK).
+  doc.addFont(FONT_VFS_NAME, FONT_FAMILY, "bold");
   doc.setFont(FONT_FAMILY, "normal");
 }
 
