@@ -52,6 +52,8 @@ function StockTakePage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [listDateFrom, setListDateFrom] = useState("");
+  const [listDateTo, setListDateTo] = useState("");
 
   useEffect(() => {
     // Guard disabled: allow all business types to access Stock Take
