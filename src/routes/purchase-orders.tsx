@@ -106,6 +106,44 @@ function PurchaseOrdersPage() {
 
   if (!allowed) return null;
 
+  const runAiParse = async (
+    kind: "image" | "pdf" | "text",
+    payload: string,
+    mimeType?: string,
+  ) => {
+    setAiScanning(true);
+    try {
+      const result = await parseFn({
+        data: {
+          kind,
+          payload,
+          mimeType,
+          ingredients: ingredients.map((i) => ({ id: i.id, name: i.name, unit: i.unit })),
+          suppliers: suppliers.map((s) => ({ id: s.id, name: s.name })),
+        },
+      });
+      setAiResult(result);
+    } catch (e: any) {
+      const msg = String(e?.message ?? e ?? "");
+      if (msg.includes("AI_RATE_LIMIT")) toast.error(t("po_ai_rate_limit"));
+      else if (msg.includes("AI_CREDIT_EXHAUSTED")) toast.error(t("po_ai_credit_exhausted"));
+      else toast.error(t("po_ai_failed"));
+    } finally {
+      setAiScanning(false);
+    }
+  };
+
+  const handleFile = async (file: File, kind: "image" | "pdf") => {
+    const MAX = 8 * 1024 * 1024;
+    if (file.size > MAX) {
+      toast.error(t("po_ai_image_too_large"));
+      return;
+    }
+    setAiSourceOpen(false);
+    const b64 = await fileToBase64(file);
+    await runAiParse(kind, b64, file.type);
+  };
+
   return (
     <div className="px-5 pt-10 pb-24 space-y-5 relative">
       <header className="flex items-center gap-3">
