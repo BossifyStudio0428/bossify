@@ -249,7 +249,7 @@ function IngredientsPage() {
             <CategoryChip label="—" active={activeCategory === "__none__"} onClick={() => setActiveCategory("__none__")} />
           )}
           {allCategoryOptions.map((c) => (
-            <CategoryChip key={c} label={c} active={activeCategory.toLowerCase() === c.toLowerCase()} onClick={() => setActiveCategory(c)} />
+            <CategoryChip key={c} label={translateCategory(c, lang)} active={activeCategory.toLowerCase() === c.toLowerCase()} onClick={() => setActiveCategory(c)} />
           ))}
         </div>
       )}
@@ -276,7 +276,7 @@ function IngredientsPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-foreground truncate">{it.name}</p>
                     {it.category && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{it.category}</span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{translateCategory(it.category, lang)}</span>
                     )}
                     {isLow && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
