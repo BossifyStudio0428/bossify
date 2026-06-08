@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, X, Trash2, ChevronRight, ClipboardList, Sparkles, Camera, Image as ImageIcon, FileText, Type } from "lucide-react";
+import { Plus, X, Trash2, ChevronRight, ClipboardList, Sparkles, Camera, Image as ImageIcon, FileText, Type, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,6 +59,9 @@ function PurchaseOrdersPage() {
   const [aiText, setAiText] = useState("");
   const [aiScanning, setAiScanning] = useState(false);
   const [aiResult, setAiResult] = useState<ParsedPoResult | null>(null);
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const parseFn = useServerFn(parsePurchaseOrderWithAi);
 
   const supplierMap = useMemo(() => {
@@ -158,6 +161,20 @@ function PurchaseOrdersPage() {
     await runAiParse(kind, b64, file.type);
   };
 
+  const filteredOrders = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return orders.filter((o) => {
+      const supName = (o.supplier_id && supplierMap.get(o.supplier_id)) || "";
+      if (q && !supName.toLowerCase().includes(q) && !(o.notes ?? "").toLowerCase().includes(q)) {
+        return false;
+      }
+      const d = o.order_date.slice(0, 10);
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo && d > dateTo) return false;
+      return true;
+    });
+  }, [orders, search, dateFrom, dateTo, supplierMap]);
+
   return (
     <div className="px-5 pt-10 pb-24 space-y-5 relative">
       <header className="flex items-center gap-3">
@@ -168,6 +185,41 @@ function PurchaseOrdersPage() {
       </header>
 
       <StockTabs active="purchase-orders" />
+
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`${t("search")}...`}
+            className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-muted/40 border border-border/60 text-sm outline-none focus:border-primary"
+          />
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs outline-none focus:border-primary"
+          />
+          <span className="text-xs text-muted-foreground self-center">–</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs outline-none focus:border-primary"
+          />
+          {(dateFrom || dateTo) && (
+            <button
+              onClick={() => { setDateFrom(""); setDateTo(""); }}
+              className="px-2 rounded-xl text-xs text-muted-foreground hover:bg-muted"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
 
       <button
         onClick={() => setAiSourceOpen(true)}
@@ -183,12 +235,12 @@ function PurchaseOrdersPage() {
         </div>
       )}
 
-      {!loading && orders.length === 0 && (
+      {!loading && filteredOrders.length === 0 && (
         <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("po_no_orders")}</p>
       )}
 
       <div className="space-y-2">
-        {orders.map((o) => {
+        {filteredOrders.map((o) => {
           const cnt = counts[o.id]?.items ?? 0;
           const supplierName = (o.supplier_id && supplierMap.get(o.supplier_id)) || "—";
           const label =

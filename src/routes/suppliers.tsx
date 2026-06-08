@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Plus, Pencil, Trash2, Phone, Mail, X, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, Phone, Mail, X, Check, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +36,7 @@ function SuppliersPage() {
   const [items, setItems] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
+  const [search, setSearch] = useState("");
 
   const allowed = bizType === "retail" || bizType === "fnb";
 
@@ -68,6 +69,17 @@ function SuppliersPage() {
     setSheet({ kind: "none" });
   };
 
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((s) =>
+      s.name.toLowerCase().includes(q) ||
+      (s.phone ?? "").toLowerCase().includes(q) ||
+      (s.email ?? "").toLowerCase().includes(q) ||
+      (s.products_supplied ?? "").toLowerCase().includes(q),
+    );
+  }, [items, search]);
+
   if (!allowed) return null;
 
   return (
@@ -81,17 +93,27 @@ function SuppliersPage() {
 
       <StockTabs active="suppliers" />
 
+      <div className="relative">
+        <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={`${t("search")}...`}
+          className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-muted/40 border border-border/60 text-sm outline-none focus:border-primary"
+        />
+      </div>
+
       {loading && (
         <div className="flex justify-center py-10">
           <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
         </div>
       )}
-      {!loading && items.length === 0 && (
+      {!loading && filteredItems.length === 0 && (
         <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_suppliers")}</p>
       )}
 
       <div className="space-y-3">
-        {items.map((it) => (
+        {filteredItems.map((it) => (
           <article key={it.id} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-1">

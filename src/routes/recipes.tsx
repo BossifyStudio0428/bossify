@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Pencil, Trash2, X, ChefHat } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ChefHat, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,6 +43,7 @@ function RecipesPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
+  const [search, setSearch] = useState("");
 
   const load = async () => {
     const [{ data: rec, error: e1 }, { data: ing }, { data: prod }] = await Promise.all([
@@ -77,6 +78,18 @@ function RecipesPage() {
     return total / Math.max(1, Number(r.serving_size) || 1);
   };
 
+  const filteredRecipes = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return recipes;
+    return recipes.filter((r) => {
+      const prod = prodMap.get(r.product_id);
+      return (
+        r.name.toLowerCase().includes(q) ||
+        (prod?.name ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [recipes, search, prodMap]);
+
   const handleDelete = async (it: Recipe) => {
     const { error } = await supabase.from("recipes" as any).delete().eq("id", it.id);
     if (error) { toast.error(error.message); return; }
@@ -94,17 +107,27 @@ function RecipesPage() {
 
       <StockTabs active="recipes" />
 
+      <div className="relative">
+        <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={`${t("search")}...`}
+          className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-muted/40 border border-border/60 text-sm outline-none focus:border-primary"
+        />
+      </div>
+
       {loading && (
         <div className="flex justify-center py-10">
           <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
         </div>
       )}
-      {!loading && recipes.length === 0 && (
+      {!loading && filteredRecipes.length === 0 && (
         <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_recipes")}</p>
       )}
 
       <div className="space-y-3">
-        {recipes.map((r) => {
+        {filteredRecipes.map((r) => {
           const prod = prodMap.get(r.product_id);
           const cost = recipeCost(r);
           const price = prod ? Number(prod.price) : 0;
