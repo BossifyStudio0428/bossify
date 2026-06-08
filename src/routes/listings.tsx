@@ -9,6 +9,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { exportListingsPDF } from "@/lib/propertyPdf";
 import { getPublicOrigin } from "@/lib/publicUrl";
+import { stripEmoji } from "@/lib/wa";
 
 export const Route = createFileRoute("/listings")({ component: ListingsPage });
 
