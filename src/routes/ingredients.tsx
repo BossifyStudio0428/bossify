@@ -10,7 +10,7 @@ import { SheetShell, SheetField, ConfirmSheet } from "@/components/InventoryShee
 import { StockTabs } from "@/components/StockTabs";
 import { useServerFn } from "@tanstack/react-start";
 import { classifyIngredientsWithAi } from "@/lib/ai-classify-ingredient.functions";
-import { mergeCategories } from "@/lib/ingredientCategories";
+import { mergeCategories, translateCategory } from "@/lib/ingredientCategories";
 
 export const Route = createFileRoute("/ingredients")({ component: IngredientsPage });
 
@@ -39,7 +39,7 @@ type Sheet =
   | { kind: "delete"; item: Ingredient };
 
 function IngredientsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType, loading: btLoading } = useBusinessType();
   const navigate = useNavigate();
