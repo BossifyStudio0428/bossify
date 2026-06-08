@@ -19,6 +19,12 @@ const config: CapacitorConfig = {
     backgroundColor: '#F4F3F8',
   },
   plugins: {
+    // Route window.fetch through native HTTP on Android/iOS.
+    // Fixes "Failed to fetch" when the WebView blocks cross-origin calls
+    // (e.g. admin API on bossify-malaysia.lovable.app from the APK shell).
+    CapacitorHttp: {
+      enabled: true,
+    },
     StatusBar: {
       overlaysWebView: false,
       style: 'DARK',
