@@ -752,6 +752,67 @@ function OrdersPage() {
                     {t("mark_paid")}
                   </button>
                 )}
+                {o.status === "Paid" && (() => {
+                  const url = (o as any).receipt_url as string | null;
+                  const confirmed = ((o as any).receipt_confirmed as boolean) ?? false;
+                  const uploading = receiptUploadingId === o.id;
+                  return (
+                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => toggleReceiptConfirmed(o)}
+                        aria-label={confirmed ? t("receipt_unconfirmed") : t("receipt_confirmed")}
+                        title={confirmed ? t("receipt_confirmed") : t("upload_receipt")}
+                        className={`h-9 w-9 rounded-xl flex items-center justify-center active:scale-95 transition ${confirmed ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}`}
+                      >
+                        <FileCheck2 className="h-4 w-4" />
+                      </button>
+                      {url ? (
+                        <>
+                          <button
+                            onClick={() => viewReceipt(o)}
+                            aria-label={t("view_receipt")}
+                            title={t("view_receipt")}
+                            className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center active:scale-95"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => removeReceipt(o)}
+                            aria-label={t("receipt_remove")}
+                            title={t("receipt_remove")}
+                            className="h-9 w-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center active:scale-95"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <label
+                          className={`h-9 w-9 rounded-xl bg-muted text-muted-foreground flex items-center justify-center cursor-pointer active:scale-95 ${uploading ? "opacity-60 pointer-events-none" : ""}`}
+                          title={t("upload_receipt")}
+                          aria-label={t("upload_receipt")}
+                        >
+                          <Upload className="h-4 w-4" />
+                          <input
+                            type="file"
+                            accept="image/*,application/pdf"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) uploadReceipt(o, f);
+                              e.currentTarget.value = "";
+                            }}
+                          />
+                        </label>
+                      )}
+                      <button
+                        onClick={() => sendReceipt(o)}
+                        className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500 text-white shadow-sm active:scale-95 transition-transform"
+                      >
+                        {t("send_receipt")}
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </article>
           );
