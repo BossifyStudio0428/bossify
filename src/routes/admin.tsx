@@ -8,7 +8,12 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
-import { revokeAdminSubscriptionPlan, setAdminSubscriptionPlan } from "@/lib/admin.functions";
+import {
+  getAiUsageStats,
+  revokeAdminSubscriptionPlan,
+  setAdminSubscriptionPlan,
+  type AiUsageStats,
+} from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
@@ -43,7 +48,11 @@ function AdminPage() {
   const { t } = useI18n();
   const setAdminSubscriptionPlanFn = useServerFn(setAdminSubscriptionPlan);
   const revokeAdminSubscriptionPlanFn = useServerFn(revokeAdminSubscriptionPlan);
-  const [tab, setTab] = useState<"stats" | "users" | "orders">("stats");
+  const getAiUsageStatsFn = useServerFn(getAiUsageStats);
+  const [tab, setTab] = useState<"stats" | "users" | "orders" | "ai">("stats");
+  const [aiStats, setAiStats] = useState<AiUsageStats | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -233,6 +242,25 @@ function AdminPage() {
   const grantSelfPro = () => user && grantPro(user.id, 1);
   const revokeSelf = () => user && revokePro(user.id);
 
+  const loadAiStats = useCallback(async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const r = await getAiUsageStatsFn();
+      setAiStats(r);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "Failed to load");
+    } finally {
+      setAiLoading(false);
+    }
+  }, [getAiUsageStatsFn]);
+
+  useEffect(() => {
+    if (tab === "ai" && isAdmin && !aiStats && !aiLoading) {
+      loadAiStats();
+    }
+  }, [tab, isAdmin, aiStats, aiLoading, loadAiStats]);
+
   return (
     <div className="pb-8">
       <header className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground px-5 pt-10 pb-6 rounded-b-3xl">
@@ -251,13 +279,13 @@ function AdminPage() {
 
       <div className="px-5 pt-5 space-y-5">
         <div className="flex gap-2">
-          {(["stats", "users", "orders"] as const).map((k) => (
+          {(["stats", "users", "orders", "ai"] as const).map((k) => (
             <button
               key={k}
               onClick={() => setTab(k)}
-              className={`flex-1 py-2 rounded-full text-xs font-semibold capitalize ${tab === k ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+              className={`flex-1 py-2 rounded-full text-xs font-semibold uppercase ${tab === k ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
             >
-              {k}
+              {k === "ai" ? "AI" : k}
             </button>
           ))}
         </div>
@@ -384,6 +412,87 @@ function AdminPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {tab === "ai" && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold">🤖 AI Usage</h3>
+              <button
+                onClick={loadAiStats}
+                className="text-[11px] px-3 py-1 rounded-full bg-muted text-muted-foreground font-semibold"
+              >
+                Refresh
+              </button>
+            </div>
+            {aiLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
+            {aiError && <p className="text-xs text-destructive">{aiError}</p>}
+            {aiStats && (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  <Stat label="Today calls" value={aiStats.today.calls} />
+                  <Stat label="Month calls" value={aiStats.this_month.calls} />
+                  <Stat label="Total calls" value={aiStats.total.calls} />
+                  <Stat label="Today $" value={`$${aiStats.today.cost_usd.toFixed(4)}`} />
+                  <Stat
+                    label="Month $"
+                    value={`$${aiStats.this_month.cost_usd.toFixed(4)}`}
+                    accent
+                  />
+                  <Stat
+                    label="Free left"
+                    value={`$${Math.max(0, 1 - aiStats.this_month.cost_usd).toFixed(4)}`}
+                  />
+                </div>
+
+                <div className="rounded-2xl bg-card border border-border/60 p-3 space-y-2">
+                  <p className="text-xs font-bold">By feature</p>
+                  {aiStats.by_feature.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground">No AI calls yet.</p>
+                  ) : (
+                    aiStats.by_feature.map((f) => (
+                      <div
+                        key={f.feature}
+                        className="flex items-center justify-between text-[11px] border-t border-border/40 first:border-t-0 pt-1.5 first:pt-0"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate">{f.feature}</p>
+                          <p className="text-muted-foreground">
+                            {f.calls} calls · {f.input_tokens.toLocaleString()} in /{" "}
+                            {f.output_tokens.toLocaleString()} out tokens
+                          </p>
+                        </div>
+                        <span className="font-bold">${f.cost_usd.toFixed(4)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="rounded-2xl bg-card border border-border/60 p-3 space-y-2">
+                  <p className="text-xs font-bold">Recent failures</p>
+                  {aiStats.recent_failures.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground">No failures 🎉</p>
+                  ) : (
+                    aiStats.recent_failures.map((r) => (
+                      <div
+                        key={r.id}
+                        className="text-[11px] border-t border-border/40 first:border-t-0 pt-1.5 first:pt-0"
+                      >
+                        <div className="flex justify-between">
+                          <span className="font-semibold">{r.feature}</span>
+                          <span className="text-destructive">{r.status}</span>
+                        </div>
+                        <p className="text-muted-foreground truncate">
+                          {new Date(r.created_at).toLocaleString()} · {r.model}
+                          {r.error_msg ? ` · ${r.error_msg}` : ""}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

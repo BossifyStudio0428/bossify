@@ -16,9 +16,13 @@ export type ClassifiedIngredient = {
 export const classifyIngredientsWithAi = createServerFn({ method: "POST" })
   .middleware([requireExternalSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
-  .handler(async ({ data }): Promise<ClassifiedIngredient[]> => {
+  .handler(async ({ data, context }): Promise<ClassifiedIngredient[]> => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+    const { logAiUsage } = await import("@/lib/ai-usage.server");
+    const userId = context.userId ?? null;
+    const model = "google/gemini-2.5-flash";
+    const feature = "classify_ingredient";
 
     const catList = data.existingCategories.length
       ? data.existingCategories.join(", ")
@@ -48,7 +52,7 @@ ${data.names.map((n, i) => `${i + 1}. ${n}`).join("\n")}`;
         "X-Lovable-AIG-SDK": "raw-fetch",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userText },
@@ -58,15 +62,25 @@ ${data.names.map((n, i) => `${i + 1}. ${n}`).join("\n")}`;
       }),
     });
 
-    if (res.status === 429) throw new Error("AI_RATE_LIMIT");
-    if (res.status === 402) throw new Error("AI_CREDIT_EXHAUSTED");
+    if (res.status === 429) {
+      await logAiUsage({ userId, feature, model, status: "rate_limit", errorMsg: "429" });
+      throw new Error("AI_RATE_LIMIT");
+    }
+    if (res.status === 402) {
+      await logAiUsage({ userId, feature, model, status: "credit_exhausted", errorMsg: "402" });
+      throw new Error("AI_CREDIT_EXHAUSTED");
+    }
     if (!res.ok) {
       const body = await res.text().catch(() => "");
       console.error("[ai-classify-ingredient] gateway error", res.status, body.slice(0, 500));
+      await logAiUsage({ userId, feature, model, status: "error", errorMsg: `HTTP ${res.status}` });
       throw new Error(`AI_ERROR_${res.status}`);
     }
 
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const json = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
     const raw = json.choices?.[0]?.message?.content ?? "";
 
     let parsed: unknown;
@@ -74,8 +88,17 @@ ${data.names.map((n, i) => `${i + 1}. ${n}`).join("\n")}`;
       const cleaned = raw.trim().replace(/^```(?:json)?/i, "").replace(/```\s*$/, "").trim();
       parsed = JSON.parse(cleaned);
     } catch {
+      await logAiUsage({
+        userId, feature, model, status: "parse_failed",
+        inputTokens: json.usage?.prompt_tokens, outputTokens: json.usage?.completion_tokens,
+      });
       throw new Error("AI_PARSE_FAILED");
     }
+
+    await logAiUsage({
+      userId, feature, model, status: "ok",
+      inputTokens: json.usage?.prompt_tokens, outputTokens: json.usage?.completion_tokens,
+    });
 
     const Result = z.object({
       items: z
