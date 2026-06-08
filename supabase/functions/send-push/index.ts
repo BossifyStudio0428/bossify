@@ -288,6 +288,35 @@ const T_FOLLOWUP: Record<Lang, { title: string; body: string }> = {
   zh: { title: "📅 跟进提醒", body: "📅 您今天有 {count} 个跟进事项。" },
 };
 
+// NEW ORDER per-merchant push — mirrors src/lib/notifMessages.ts NEW_ORDER.
+const T_NEW_ORDER: Record<string, Record<Lang, { title: string; body: string }>> = {
+  default: {
+    en: { title: "New order received! 🛍️", body: "{customer} — RM {amount}" },
+    ms: { title: "Pesanan baru diterima! 🛍️", body: "{customer} — RM {amount}" },
+    zh: { title: "收到新订单！🛍️", body: "{customer} — RM {amount}" },
+  },
+  education: {
+    en: { title: "New case received! 🎓", body: "{customer} — RM {amount}" },
+    ms: { title: "Kes baru diterima! 🎓", body: "{customer} — RM {amount}" },
+    zh: { title: "收到新案例！🎓", body: "{customer} — RM {amount}" },
+  },
+  beauty: {
+    en: { title: "New appointment! 💄", body: "{customer} — RM {amount}" },
+    ms: { title: "Temujanji baru! 💄", body: "{customer} — RM {amount}" },
+    zh: { title: "新预约！💄", body: "{customer} — RM {amount}" },
+  },
+  property: {
+    en: { title: "New customer! 🏠", body: "{customer} — RM {amount}" },
+    ms: { title: "Pelanggan baru! 🏠", body: "{customer} — RM {amount}" },
+    zh: { title: "新客户！🏠", body: "{customer} — RM {amount}" },
+  },
+  freelance: {
+    en: { title: "New project received! 💼", body: "{customer} — RM {amount}" },
+    ms: { title: "Projek baru diterima! 💼", body: "{customer} — RM {amount}" },
+    zh: { title: "收到新项目！💼", body: "{customer} — RM {amount}" },
+  },
+};
+
 function pickBiz<T>(pack: Record<string, T>, biz: string | null): T {
   const b = (biz ?? "retail") as Biz;
   return pack[b] ?? (b === "fnb" ? pack["retail"] : undefined) ?? pack["default"];
@@ -296,7 +325,7 @@ function pickBiz<T>(pack: Record<string, T>, biz: string | null): T {
 async function resolveContent(
   userId: string,
   kind: Kind,
-  override: { title?: string; body?: string; link?: string },
+  override: { title?: string; body?: string; link?: string; vars?: Record<string, string | number> },
 ) {
   const { data: prefs } = await appAdmin
     .from("profiles")
@@ -332,7 +361,16 @@ async function resolveContent(
   let link = override.link ?? "/";
 
   if (!override.title || !override.body) {
-    if (kind === "morning_summary") {
+    if (kind === "new_order") {
+      const tpl = pickBiz(T_NEW_ORDER, biz)[lang];
+      const vars = override.vars ?? {};
+      title = tpl.title;
+      body = fill(tpl.body, {
+        customer: String(vars.customer ?? ""),
+        amount: String(vars.amount ?? ""),
+      });
+      link = override.link ?? "/orders";
+    } else if (kind === "morning_summary") {
       const since = new Date(Date.now() - 86400000).toISOString();
       const { data: rows } = await appAdmin
         .from("orders")
@@ -453,6 +491,7 @@ Deno.serve(async (req) => {
     userId?: string;
     token?: string;
     platform?: string;
+    vars?: Record<string, string | number>;
   };
   try {
     parsed = await req.json();
