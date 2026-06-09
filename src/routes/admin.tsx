@@ -183,6 +183,25 @@ function AdminPage() {
     })();
   }, [loadAll, navigate, t, user]);
 
+  const loadAiStats = useCallback(async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const r = await getAiUsageStatsFn();
+      setAiStats(r);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "Failed to load");
+    } finally {
+      setAiLoading(false);
+    }
+  }, [getAiUsageStatsFn]);
+
+  useEffect(() => {
+    if (tab === "ai" && isAdmin && !aiStats && !aiLoading) {
+      loadAiStats();
+    }
+  }, [tab, isAdmin, aiStats, aiLoading, loadAiStats]);
+
   if (checking) return <p className="p-6 text-sm text-muted-foreground">{t("admin_checking")}</p>;
   if (!isAdmin) return null;
 
@@ -241,25 +260,6 @@ function AdminPage() {
 
   const grantSelfPro = () => user && grantPro(user.id, 1);
   const revokeSelf = () => user && revokePro(user.id);
-
-  const loadAiStats = useCallback(async () => {
-    setAiLoading(true);
-    setAiError(null);
-    try {
-      const r = await getAiUsageStatsFn();
-      setAiStats(r);
-    } catch (e) {
-      setAiError(e instanceof Error ? e.message : "Failed to load");
-    } finally {
-      setAiLoading(false);
-    }
-  }, [getAiUsageStatsFn]);
-
-  useEffect(() => {
-    if (tab === "ai" && isAdmin && !aiStats && !aiLoading) {
-      loadAiStats();
-    }
-  }, [tab, isAdmin, aiStats, aiLoading, loadAiStats]);
 
   return (
     <div className="pb-8">
