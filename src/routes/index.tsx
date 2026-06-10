@@ -635,23 +635,6 @@ function Index() {
         ))}
       </section>
 
-      {showLowStockCard && (
-        <Link
-          to="/inventory"
-          aria-label={t("low_stock")}
-          className="flex items-center gap-3 rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 pr-4 active:scale-[0.99] transition-transform"
-        >
-          <span className="h-11 w-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-            <PackageX className="h-5 w-5 text-amber-500" />
-          </span>
-          <div className="flex-1 min-w-0 flex items-center gap-2">
-            <span className="text-xl font-bold text-amber-500 leading-none">{lowStock}</span>
-            <span className="text-xs text-muted-foreground leading-tight">{t("low_stock")}</span>
-          </div>
-          <ChevronRight className="h-5 w-5 text-amber-500 shrink-0" />
-        </Link>
-      )}
-
       {(followUpsThisWeek > 0 || followUpsOverdue > 0) && (
         <Link
           to="/customers"
