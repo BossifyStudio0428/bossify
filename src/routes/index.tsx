@@ -327,7 +327,7 @@ function Index() {
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [user?.id, refreshSubscription]);
+  }, [user?.id, refreshSubscription, bizType]);
 
   useEffect(() => {
     if (!user) return;
@@ -341,6 +341,11 @@ function Index() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "inventory", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ingredients", filter: `user_id=eq.${user.id}` },
         () => load(),
       )
       .on(
