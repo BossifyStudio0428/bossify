@@ -100,7 +100,9 @@ function Index() {
             .select("*")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false }),
-          supabase.from("inventory").select("stock").eq("user_id", user.id),
+          eff === "fnb"
+            ? supabase.from("ingredients" as any).select("current_stock,min_stock").eq("user_id", user.id)
+            : supabase.from("inventory").select("stock").eq("user_id", user.id),
           supabase
             .from("customers")
             .select("*")
@@ -124,7 +126,13 @@ function Index() {
         if (result.error) console.error(`dashboard ${label} failed`, result.error);
       }
       setOrders((ordersRes.data ?? []) as OrderRow[]);
-      setLowStock((inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length);
+      setLowStock(
+        eff === "fnb"
+          ? (inventoryRes.data ?? []).filter(
+              (i: any) => Number(i.current_stock) < Number(i.min_stock),
+            ).length
+          : (inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length,
+      );
       setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
       setUnreadNotif(notificationsRes.count ?? 0);
       // Property: load sold listings (past 7 days) for weekly income chart
@@ -319,7 +327,7 @@ function Index() {
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [user?.id, refreshSubscription]);
+  }, [user?.id, refreshSubscription, bizType]);
 
   useEffect(() => {
     if (!user) return;
@@ -333,6 +341,11 @@ function Index() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "inventory", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ingredients", filter: `user_id=eq.${user.id}` },
         () => load(),
       )
       .on(
@@ -614,25 +627,34 @@ function Index() {
       <SuspendedTeamBanner />
 
       <section id="tour-stats" className="grid grid-cols-2 gap-3">
-        {stats.map((s, i) => (
-          <div
-            key={s.label}
-            className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4"
-          >
-            <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${s.bg}`}>
-              <s.icon className={`h-5 w-5 ${s.color}`} />
-            </div>
-            <p className={`mt-3 text-xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
-            {i === 0 && showRevenueDelta && revDelta !== null && (
-              <p
-                className={`text-[10px] mt-0.5 font-semibold ${revDelta >= 0 ? "text-emerald-600" : "text-red-500"}`}
-              >
-                {revDelta >= 0 ? "↑" : "↓"} {Math.abs(revDelta)}% {t("vs_yesterday")}
-              </p>
-            )}
-          </div>
-        ))}
+        {stats.map((s, i) => {
+          const isLowStock = s === lowStockCard;
+          const to = isLowStock ? (eff === "fnb" ? "/ingredients" : "/inventory") : null;
+          const inner = (
+            <>
+              <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${s.bg}`}>
+                <s.icon className={`h-5 w-5 ${s.color}`} />
+              </div>
+              <p className={`mt-3 text-xl font-bold ${s.color}`}>{s.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+              {i === 0 && showRevenueDelta && revDelta !== null && (
+                <p
+                  className={`text-[10px] mt-0.5 font-semibold ${revDelta >= 0 ? "text-emerald-600" : "text-red-500"}`}
+                >
+                  {revDelta >= 0 ? "↑" : "↓"} {Math.abs(revDelta)}% {t("vs_yesterday")}
+                </p>
+              )}
+            </>
+          );
+          const cls = "rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 block";
+          return to ? (
+            <Link key={s.label} to={to} className={`${cls} active:scale-[0.99] transition-transform`}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={s.label} className={cls}>{inner}</div>
+          );
+        })}
       </section>
 
       {(followUpsThisWeek > 0 || followUpsOverdue > 0) && (
