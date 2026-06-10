@@ -100,7 +100,9 @@ function Index() {
             .select("*")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false }),
-          supabase.from("inventory").select("stock").eq("user_id", user.id),
+          eff === "fnb"
+            ? supabase.from("ingredients" as any).select("current_stock,min_stock").eq("user_id", user.id)
+            : supabase.from("inventory").select("stock").eq("user_id", user.id),
           supabase
             .from("customers")
             .select("*")
@@ -124,7 +126,13 @@ function Index() {
         if (result.error) console.error(`dashboard ${label} failed`, result.error);
       }
       setOrders((ordersRes.data ?? []) as OrderRow[]);
-      setLowStock((inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length);
+      setLowStock(
+        eff === "fnb"
+          ? (inventoryRes.data ?? []).filter(
+              (i: any) => Number(i.current_stock) < Number(i.min_stock),
+            ).length
+          : (inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length,
+      );
       setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
       setUnreadNotif(notificationsRes.count ?? 0);
       // Property: load sold listings (past 7 days) for weekly income chart
