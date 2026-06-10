@@ -424,7 +424,7 @@ function Index() {
 
   const STATS_BY_TYPE: Record<BizType, Stat[]> = {
     retail:    [revenueCard, profitCard, newOrdersCard, unpaidCard],
-    fnb:       [revenueCard, newOrdersCard, unpaidCard],
+    fnb:       [revenueCard, newOrdersCard, unpaidCard, lowStockCard],
     education: [newCasesCard, unpaidCard, totalClientsCard, followupsTodayCard],
     beauty:    [newAppointmentsCard, unpaidCard, totalClientsCard, followupsWeekCard],
     property:  [newLeadsCard, inProgressCard, completedMonthCard, followupsTodayCard],
