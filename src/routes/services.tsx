@@ -228,7 +228,7 @@ function ServiceFormSheet({
       <ImagesUploader images={images} onChange={setImages} userId={userId} max={6} />
       <Field label={nameLabel} value={name} onChange={setName} />
       <Field label={t("description_label")} value={description} onChange={setDescription} multiline />
-      <Field label={`${t("price")} (RM)`} value={price} onChange={setPrice} type="number" />
+      <Field label={t("price")} value={price} onChange={setPrice} type="number" />
       {showDuration && (
         <Field label={`${t("duration_label")} (${t("minutes_short")})`} value={duration} onChange={setDuration} type="number" />
       )}
