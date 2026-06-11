@@ -594,18 +594,23 @@ function PublicOrderFormPage() {
 
   // Detail sheet (product / service detail)
   const renderDetailSheet = () => {
-    if (!openProduct) return null;
+    if (!openProductId) return null;
+    const initialIndex = filteredProducts.findIndex((p) => p.id === openProductId);
+    if (initialIndex < 0) return null;
     return (
       <DetailSheet
-        product={openProduct}
+        products={filteredProducts}
+        initialIndex={initialIndex}
+        bizType={bizType}
         isRetailish={isRetailish}
         addLabel={addToCartLabelFor(bizType, lang)}
-        onClose={() => setOpenProduct(null)}
+        onClose={() => setOpenProductId(null)}
         onAdd={(line) => {
           addToCart(line);
-          setOpenProduct(null);
+          setOpenProductId(null);
         }}
         lang={lang}
+        whatsappNumber={profile.whatsapp_number}
       />
     );
   };
