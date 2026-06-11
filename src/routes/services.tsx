@@ -242,16 +242,27 @@ function ServiceFormSheet({
     const cleanVariants = variants
       .filter((v) => v.name.trim())
       .map((v) => ({ id: v.id, name: v.name.trim(), price: Math.max(0, Number(v.price) || 0) }));
+    const cleanAddons = addons
+      .filter((a) => a.name.trim())
+      .map((a) => ({ id: a.id, name: a.name.trim(), price: Math.max(0, Number(a.price) || 0) }));
     setSaving(true);
     const payload: any = {
       name: name.trim(),
       description: description.trim() || null,
       price: Math.max(0, Number(price) || 0),
-      duration_minutes: showDuration && duration ? Math.max(0, Number(duration) || 0) : null,
+      duration_minutes: showDur && duration ? Math.max(0, Number(duration) || 0) : null,
       image_url: images[0] ?? null,
       images,
-      stock: stock.trim() === "" ? null : Math.max(0, Number(stock) || 0),
-      variants: cleanVariants,
+      stock: showStock && stock.trim() !== "" ? Math.max(0, Number(stock) || 0) : null,
+      variants: showVariants ? cleanVariants : [],
+      category: showCategory && category.trim() ? category.trim() : null,
+      addons: showAddons ? cleanAddons : [],
+      rate_type: isFreelance ? rateType : "fixed",
+      level: isEducation && level.trim() ? level.trim() : null,
+      intake: isEducation && intake.trim() ? intake.trim() : null,
+      requirements: isEducation && requirements.trim() ? requirements.trim() : null,
+      turnaround_days: isFreelance && turnaround.trim() ? Math.max(0, Number(turnaround) || 0) : null,
+      portfolio_links: isFreelance ? portfolioLinks.filter((l) => l.trim()) : [],
     };
     const { error } = item
       ? await supabase.from("services").update(payload).eq("id", item.id)
