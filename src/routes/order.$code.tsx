@@ -740,7 +740,7 @@ function PublicOrderFormPage() {
                       <div key={p.id} className="rounded-2xl bg-card overflow-hidden pof-card">
                         <button
                           type="button"
-                          onClick={() => setOpenProduct(p)}
+                          onClick={() => setOpenProductId(p.id)}
                           className="block w-full text-left"
                         >
                           <div className="aspect-[16/10] w-full bg-muted/40 overflow-hidden">
@@ -781,7 +781,7 @@ function PublicOrderFormPage() {
                           )}
                           <button
                             type="button"
-                            onClick={() => setOpenProduct(p)}
+                            onClick={() => setOpenProductId(p.id)}
                             className="mt-2 w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.99] transition-transform"
                           >
                             {enquireLabel}
@@ -800,7 +800,7 @@ function PublicOrderFormPage() {
                   >
                     <button
                       type="button"
-                      onClick={() => setOpenProduct(p)}
+                      onClick={() => setOpenProductId(p.id)}
                       className="block w-full text-left active:scale-[0.98] transition-transform"
                     >
                       <div className="aspect-square w-full bg-muted/40 overflow-hidden">
@@ -827,7 +827,7 @@ function PublicOrderFormPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setOpenProduct(p)}
+                      onClick={() => setOpenProductId(p.id)}
                       aria-label={addLabel}
                       className="absolute bottom-2.5 right-2.5 h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md active:scale-95 transition-transform"
                     >
