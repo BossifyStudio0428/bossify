@@ -10,6 +10,7 @@ import type { BizType } from "@/lib/businessType";
 import type { Lang } from "@/contexts/I18nContext";
 import { ImagesUploader } from "@/components/ImagesUploader";
 import { parseVariants, type Variant } from "@/lib/inventoryTypes";
+import { WizardSheet } from "@/components/WizardSheet";
 
 export const Route = createFileRoute("/services")({ component: ServicesPage });
 
@@ -220,70 +221,83 @@ function ServiceFormSheet({
   const titleEdit = isPackages ? t("edit_package") : t("edit_service");
 
   return (
-    <SheetShell onClose={onClose}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold">{item ? titleEdit : titleNew}</h3>
-        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
-      </div>
-      <ImagesUploader images={images} onChange={setImages} userId={userId} max={6} />
-      <Field label={nameLabel} value={name} onChange={setName} />
-      <Field label={t("description_label")} value={description} onChange={setDescription} multiline />
-      <Field label={t("price")} value={price} onChange={setPrice} type="number" />
-      {showDuration && (
-        <Field label={`${t("duration_label")} (${t("minutes_short")})`} value={duration} onChange={setDuration} type="number" />
-      )}
-      <Field label={t("how_many_now")} value={stock} onChange={setStock} type="number" />
-
-      <div className="space-y-2">
-        <div>
-          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("variants")}</label>
-          <p className="text-[11px] text-muted-foreground px-1 mt-0.5">{t("variants_subtitle")}</p>
-        </div>
-        {variants.length === 0 && (
-          <p className="text-xs text-muted-foreground italic px-1">{t("no_variants")}</p>
-        )}
-        {variants.map((v) => (
-          <div key={v.id} className="flex gap-2 items-center">
-            <input
-              value={v.name}
-              onChange={(e) => updateVariant(v.id, { name: e.target.value })}
-              placeholder={t("variant_name")}
-              className="flex-1 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
-            />
-            <input
-              type="number"
-              value={v.price || ""}
-              onChange={(e) => updateVariant(v.id, { price: Number(e.target.value) || 0 })}
-              placeholder={t("variant_price")}
-              className="w-24 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
-            />
-            <button
-              type="button"
-              onClick={() => removeVariant(v.id)}
-              className="p-2 rounded-xl text-red-500 hover:bg-red-50"
-              aria-label="remove"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={addVariant}
-          className="w-full py-2 rounded-xl border border-dashed border-border/80 text-xs font-semibold text-primary hover:bg-primary/5 transition"
-        >
-          <Plus className="inline h-3.5 w-3.5 mr-1" />
-          {t("add_variant")}
-        </button>
-      </div>
-
-      <button
-        onClick={save} disabled={saving}
-        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
-      >
-        {saving ? t("saving") : t("save")}
-      </button>
-    </SheetShell>
+    <WizardSheet
+      title={item ? titleEdit : titleNew}
+      saving={saving}
+      onClose={onClose}
+      onSave={save}
+      steps={[
+        {
+          label: t("image"),
+          content: (
+            <ImagesUploader images={images} onChange={setImages} userId={userId} max={6} />
+          ),
+        },
+        {
+          label: nameLabel,
+          content: (
+            <>
+              <Field label={nameLabel} value={name} onChange={setName} />
+              <Field label={t("description_label")} value={description} onChange={setDescription} multiline />
+              <Field label={t("price")} value={price} onChange={setPrice} type="number" />
+              {showDuration && (
+                <Field label={`${t("duration_label")} (${t("minutes_short")})`} value={duration} onChange={setDuration} type="number" />
+              )}
+            </>
+          ),
+        },
+        {
+          label: t("variants"),
+          content: (
+            <>
+              <Field label={t("how_many_now")} value={stock} onChange={setStock} type="number" />
+              <div className="space-y-2">
+                <div>
+                  <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("variants")}</label>
+                  <p className="text-[11px] text-muted-foreground px-1 mt-0.5">{t("variants_subtitle")}</p>
+                </div>
+                {variants.length === 0 && (
+                  <p className="text-xs text-muted-foreground italic px-1">{t("no_variants")}</p>
+                )}
+                {variants.map((v) => (
+                  <div key={v.id} className="flex gap-2 items-center">
+                    <input
+                      value={v.name}
+                      onChange={(e) => updateVariant(v.id, { name: e.target.value })}
+                      placeholder={t("variant_name")}
+                      className="flex-1 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                    <input
+                      type="number"
+                      value={v.price || ""}
+                      onChange={(e) => updateVariant(v.id, { price: Number(e.target.value) || 0 })}
+                      placeholder={t("variant_price")}
+                      className="w-24 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeVariant(v.id)}
+                      className="p-2 rounded-xl text-red-500 hover:bg-red-50"
+                      aria-label="remove"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addVariant}
+                  className="w-full py-2 rounded-xl border border-dashed border-border/80 text-xs font-semibold text-primary hover:bg-primary/5 transition"
+                >
+                  <Plus className="inline h-3.5 w-3.5 mr-1" />
+                  {t("add_variant")}
+                </button>
+              </div>
+            </>
+          ),
+        },
+      ]}
+    />
   );
 }
 
