@@ -206,7 +206,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     } else {
       const { data: svc } = await sb
         .from("services")
-        .select("id,name,price,is_active,image_url,images,category,description,variants,duration_minutes,stock")
+        .select("id,name,price,is_active,image_url,images,category,description,variants,duration_minutes,stock,addons,rate_type,level,intake,requirements,turnaround_days,portfolio_links")
         .eq("user_id", profile.id)
         .eq("is_active", true)
         .order("name", { ascending: true });
@@ -221,6 +221,13 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         duration_minutes: x.duration_minutes ?? null,
         stock: typeof x.stock === "number" ? x.stock : null,
         images: Array.isArray(x.images) ? x.images.map((u: unknown) => String(u)) : [],
+        addons: Array.isArray(x.addons) ? x.addons : [],
+        rate_type: x.rate_type ?? null,
+        level: x.level ?? null,
+        intake: x.intake ?? null,
+        requirements: x.requirements ?? null,
+        turnaround_days: x.turnaround_days ?? null,
+        portfolio_links: Array.isArray(x.portfolio_links) ? x.portfolio_links.map((u: unknown) => String(u)) : [],
       })) as any;
     }
 

@@ -68,6 +68,13 @@ type Product = {
   duration_minutes?: number | null;
   stock?: number | null;
   images?: string[];
+  addons?: { id?: string; name: string; price: number }[];
+  rate_type?: string | null;
+  level?: string | null;
+  intake?: string | null;
+  requirements?: string | null;
+  turnaround_days?: number | null;
+  portfolio_links?: string[];
   property?: {
     property_type: string | null;
     listing_type: string | null;
@@ -1606,6 +1613,70 @@ function ProductSlide({
         ) : null}
         {product.description && (
           <p className="text-sm text-foreground/80 whitespace-pre-wrap">{product.description}</p>
+        )}
+
+        {/* Biz-specific extras */}
+        {(product.level || product.intake) && (
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            {product.level && (
+              <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                <p className="text-muted-foreground">🎓 {lang === "ms" ? "Tahap" : lang === "zh" ? "等级" : "Level"}</p>
+                <p className="font-semibold">{product.level}</p>
+              </div>
+            )}
+            {product.intake && (
+              <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                <p className="text-muted-foreground">📅 {lang === "ms" ? "Pengambilan" : lang === "zh" ? "入学" : "Intake"}</p>
+                <p className="font-semibold">{product.intake}</p>
+              </div>
+            )}
+          </div>
+        )}
+        {product.requirements && (
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">
+            <p className="font-semibold mb-1">📋 {lang === "ms" ? "Syarat" : lang === "zh" ? "入学要求" : "Requirements"}</p>
+            <p className="whitespace-pre-wrap">{product.requirements}</p>
+          </div>
+        )}
+        {product.rate_type === "hourly" && (
+          <p className="text-xs text-muted-foreground">⏱ {lang === "ms" ? "Caj per jam" : lang === "zh" ? "按小时收费" : "Hourly rate"}</p>
+        )}
+        {product.turnaround_days ? (
+          <p className="text-xs text-muted-foreground">
+            🚚 {lang === "ms" ? "Siap dalam" : lang === "zh" ? "交付时间" : "Turnaround"}: {product.turnaround_days} {lang === "ms" ? "hari" : lang === "zh" ? "天" : "days"}
+          </p>
+        ) : null}
+        {product.portfolio_links && product.portfolio_links.length > 0 && (
+          <div className="space-y-1 pt-1">
+            <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+              {lang === "ms" ? "Portfolio" : lang === "zh" ? "作品" : "Portfolio"}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {product.portfolio_links.map((l, i) => (
+                <a key={i} href={l} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary truncate max-w-[180px]">
+                  🔗 {l.replace(/^https?:\/\//, "").slice(0, 28)}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+        {product.addons && product.addons.length > 0 && (
+          <div className="space-y-1.5 pt-1">
+            <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+              {lang === "ms" ? "Tambahan" : lang === "zh" ? "加料" : "Add-ons"}
+            </p>
+            <div className="space-y-1">
+              {product.addons.map((a, i) => (
+                <div key={i} className="flex items-center justify-between text-xs bg-muted/40 rounded-lg px-3 py-2">
+                  <span>{a.name}</span>
+                  <span className="font-semibold text-primary">+RM {Number(a.price).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground italic">
+              {lang === "ms" ? "Beritahu kami pilihan anda semasa pembayaran" : lang === "zh" ? "结账时告诉我们您的选项" : "Tell us your choices at checkout"}
+            </p>
+          </div>
         )}
 
         {hasVariants && (

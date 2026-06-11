@@ -25,6 +25,14 @@ type Service = {
   images?: string[] | null;
   stock?: number | null;
   variants?: unknown;
+  category?: string | null;
+  rate_type?: string | null;
+  addons?: unknown;
+  level?: string | null;
+  intake?: string | null;
+  requirements?: string | null;
+  turnaround_days?: number | null;
+  portfolio_links?: unknown;
 };
 
 type Sheet =
@@ -52,7 +60,7 @@ function ServicesPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("services")
-      .select("id,name,description,price,duration_minutes,is_active,image_url,images,stock,variants")
+      .select("id,name,description,price,duration_minutes,is_active,image_url,images,stock,variants,category,rate_type,addons,level,intake,requirements,turnaround_days,portfolio_links")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -144,6 +152,7 @@ function ServicesPage() {
           item={sheet.item}
           isPackages={isPackages}
           showDuration={showDuration}
+          bizType={bizType ?? "freelance"}
           userId={user?.id ?? ""}
           onClose={() => setSheet({ kind: "none" })}
           onSaved={() => { setSheet({ kind: "none" }); load(); }}
@@ -162,11 +171,12 @@ function ServicesPage() {
 }
 
 function ServiceFormSheet({
-  item, isPackages, showDuration, userId, onClose, onSaved,
+  item, isPackages, showDuration, bizType, userId, onClose, onSaved,
 }: {
   item?: Service;
   isPackages: boolean;
   showDuration: boolean;
+  bizType: BizType;
   userId: string;
   onClose: () => void;
   onSaved: () => void;
@@ -184,12 +194,47 @@ function ServiceFormSheet({
   const [images, setImages] = useState<string[]>(initialImages);
   const [stock, setStock] = useState(item?.stock != null ? String(item.stock) : "");
   const [variants, setVariants] = useState<Variant[]>(parseVariants(item?.variants));
+  const [category, setCategory] = useState(item?.category ?? "");
+  const [rateType, setRateType] = useState<"fixed" | "hourly">((item?.rate_type as any) === "hourly" ? "hourly" : "fixed");
+  const [level, setLevel] = useState(item?.level ?? "");
+  const [intake, setIntake] = useState(item?.intake ?? "");
+  const [requirements, setRequirements] = useState(item?.requirements ?? "");
+  const [turnaround, setTurnaround] = useState(item?.turnaround_days != null ? String(item.turnaround_days) : "");
+  type Addon = { id: string; name: string; price: number };
+  const parseAddons = (raw: unknown): Addon[] => {
+    if (!Array.isArray(raw)) return [];
+    return raw.map((a: any) => ({
+      id: String(a?.id ?? crypto.randomUUID()),
+      name: String(a?.name ?? ""),
+      price: Number(a?.price ?? 0) || 0,
+    }));
+  };
+  const [addons, setAddons] = useState<Addon[]>(parseAddons(item?.addons));
+  const parseLinks = (raw: unknown): string[] => Array.isArray(raw) ? raw.map((x) => String(x)).filter(Boolean) : [];
+  const [portfolioLinks, setPortfolioLinks] = useState<string[]>(parseLinks(item?.portfolio_links));
+  const [newLink, setNewLink] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const isFnb = bizType === "fnb";
+  const isBeauty = bizType === "beauty";
+  const isEducation = bizType === "education";
+  const isFreelance = bizType === "freelance";
+  const isRetailLike = bizType === "retail" || isPackages;
+  const showCategory = isRetailLike || isFnb;
+  const showAddons = isFnb || isBeauty;
+  const showStock = isRetailLike || isFnb;
+  const showVariants = isRetailLike || isFnb;
+  const showDur = showDuration || isBeauty;
 
   const addVariant = () => setVariants((p) => [...p, { id: crypto.randomUUID(), name: "", price: 0 }]);
   const updateVariant = (id: string, patch: Partial<Variant>) =>
     setVariants((p) => p.map((v) => (v.id === id ? { ...v, ...patch } : v)));
   const removeVariant = (id: string) => setVariants((p) => p.filter((v) => v.id !== id));
+
+  const addAddon = () => setAddons((p) => [...p, { id: crypto.randomUUID(), name: "", price: 0 }]);
+  const updateAddon = (id: string, patch: Partial<Addon>) =>
+    setAddons((p) => p.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  const removeAddon = (id: string) => setAddons((p) => p.filter((a) => a.id !== id));
 
   const save = async () => {
     if (!name.trim()) { toast.error(t("required_field")); return; }
@@ -197,16 +242,27 @@ function ServiceFormSheet({
     const cleanVariants = variants
       .filter((v) => v.name.trim())
       .map((v) => ({ id: v.id, name: v.name.trim(), price: Math.max(0, Number(v.price) || 0) }));
+    const cleanAddons = addons
+      .filter((a) => a.name.trim())
+      .map((a) => ({ id: a.id, name: a.name.trim(), price: Math.max(0, Number(a.price) || 0) }));
     setSaving(true);
     const payload: any = {
       name: name.trim(),
       description: description.trim() || null,
       price: Math.max(0, Number(price) || 0),
-      duration_minutes: showDuration && duration ? Math.max(0, Number(duration) || 0) : null,
+      duration_minutes: showDur && duration ? Math.max(0, Number(duration) || 0) : null,
       image_url: images[0] ?? null,
       images,
-      stock: stock.trim() === "" ? null : Math.max(0, Number(stock) || 0),
-      variants: cleanVariants,
+      stock: showStock && stock.trim() !== "" ? Math.max(0, Number(stock) || 0) : null,
+      variants: showVariants ? cleanVariants : [],
+      category: showCategory && category.trim() ? category.trim() : null,
+      addons: showAddons ? cleanAddons : [],
+      rate_type: isFreelance ? rateType : "fixed",
+      level: isEducation && level.trim() ? level.trim() : null,
+      intake: isEducation && intake.trim() ? intake.trim() : null,
+      requirements: isEducation && requirements.trim() ? requirements.trim() : null,
+      turnaround_days: isFreelance && turnaround.trim() ? Math.max(0, Number(turnaround) || 0) : null,
+      portfolio_links: isFreelance ? portfolioLinks.filter((l) => l.trim()) : [],
     };
     const { error } = item
       ? await supabase.from("services").update(payload).eq("id", item.id)
@@ -239,18 +295,42 @@ function ServiceFormSheet({
             <>
               <Field label={nameLabel} value={name} onChange={setName} />
               <Field label={t("description_label")} value={description} onChange={setDescription} multiline />
-              <Field label={t("price")} value={price} onChange={setPrice} type="number" />
-              {showDuration && (
+              {isFreelance && (
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">Rate type</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setRateType("fixed")} className={`py-2.5 rounded-2xl text-sm font-semibold border ${rateType === "fixed" ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 border-border/60 text-muted-foreground"}`}>Fixed</button>
+                    <button type="button" onClick={() => setRateType("hourly")} className={`py-2.5 rounded-2xl text-sm font-semibold border ${rateType === "hourly" ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 border-border/60 text-muted-foreground"}`}>Hourly</button>
+                  </div>
+                </div>
+              )}
+              <Field label={`${t("price")}${isFreelance && rateType === "hourly" ? " / hr" : ""}`} value={price} onChange={setPrice} type="number" />
+              {showDur && (
                 <Field label={`${t("duration_label")} (${t("minutes_short")})`} value={duration} onChange={setDuration} type="number" />
+              )}
+              {showCategory && (
+                <Field label="Category" value={category} onChange={setCategory} />
+              )}
+              {isEducation && (
+                <>
+                  <Field label="Level" value={level} onChange={setLevel} />
+                  <Field label="Intake" value={intake} onChange={setIntake} />
+                </>
+              )}
+              {isFreelance && (
+                <Field label="Turnaround (days)" value={turnaround} onChange={setTurnaround} type="number" />
               )}
             </>
           ),
         },
         {
-          label: t("variants"),
+          label: showVariants ? t("variants") : showAddons ? "Add-ons" : isEducation ? "Requirements" : isFreelance ? "Portfolio" : "Details",
           content: (
             <>
-              <Field label={t("how_many_now")} value={stock} onChange={setStock} type="number" />
+              {showStock && (
+                <Field label={t("how_many_now")} value={stock} onChange={setStock} type="number" />
+              )}
+              {showVariants && (
               <div className="space-y-2">
                 <div>
                   <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("variants")}</label>
@@ -293,6 +373,52 @@ function ServiceFormSheet({
                   {t("add_variant")}
                 </button>
               </div>
+              )}
+              {showAddons && (
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">Add-ons</label>
+                    <p className="text-[11px] text-muted-foreground px-1 mt-0.5">{isFnb ? "Extras like sauce, spicy level, extra portion" : "Optional extras customers can add"}</p>
+                  </div>
+                  {addons.length === 0 && (
+                    <p className="text-xs text-muted-foreground italic px-1">No add-ons</p>
+                  )}
+                  {addons.map((a) => (
+                    <div key={a.id} className="flex gap-2 items-center">
+                      <input value={a.name} onChange={(e) => updateAddon(a.id, { name: e.target.value })} placeholder="Add-on name" className="flex-1 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary" />
+                      <input type="number" value={a.price || ""} onChange={(e) => updateAddon(a.id, { price: Number(e.target.value) || 0 })} placeholder="+RM" className="w-24 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary" />
+                      <button type="button" onClick={() => removeAddon(a.id)} className="p-2 rounded-xl text-red-500 hover:bg-red-50" aria-label="remove"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={addAddon} className="w-full py-2 rounded-xl border border-dashed border-border/80 text-xs font-semibold text-primary hover:bg-primary/5 transition">
+                    <Plus className="inline h-3.5 w-3.5 mr-1" />Add add-on
+                  </button>
+                </div>
+              )}
+              {isEducation && (
+                <Field label="Requirements / Eligibility" value={requirements} onChange={setRequirements} multiline />
+              )}
+              {isFreelance && (
+                <div className="space-y-2">
+                  <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">Portfolio links</label>
+                  {portfolioLinks.length === 0 && (
+                    <p className="text-xs text-muted-foreground italic px-1">No links yet</p>
+                  )}
+                  {portfolioLinks.map((l, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input value={l} onChange={(e) => setPortfolioLinks((p) => p.map((x, idx) => idx === i ? e.target.value : x))} className="flex-1 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary" />
+                      <button type="button" onClick={() => setPortfolioLinks((p) => p.filter((_, idx) => idx !== i))} className="p-2 rounded-xl text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <input value={newLink} onChange={(e) => setNewLink(e.target.value)} placeholder="https://..." className="flex-1 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary" />
+                    <button type="button" onClick={() => { if (newLink.trim()) { setPortfolioLinks((p) => [...p, newLink.trim()]); setNewLink(""); } }} className="px-3 rounded-xl border border-dashed border-border/80 text-xs font-semibold text-primary hover:bg-primary/5">Add</button>
+                  </div>
+                </div>
+              )}
+              {!showStock && !showVariants && !showAddons && !isEducation && !isFreelance && (
+                <p className="text-xs text-muted-foreground italic px-1">No extra details needed.</p>
+              )}
             </>
           ),
         },
