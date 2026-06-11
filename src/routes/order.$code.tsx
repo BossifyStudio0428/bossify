@@ -1216,7 +1216,6 @@ function addToCartLabelFor(bizType: string, lang: "en" | "ms" | "zh") {
 }
 
 function DetailSheet({
-function DetailSheet({
   products,
   initialIndex,
   bizType,
