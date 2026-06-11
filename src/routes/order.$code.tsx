@@ -1216,34 +1216,183 @@ function addToCartLabelFor(bizType: string, lang: "en" | "ms" | "zh") {
 }
 
 function DetailSheet({
-  product,
+function DetailSheet({
+  products,
+  initialIndex,
+  bizType,
   isRetailish,
   addLabel,
   onClose,
   onAdd,
   lang,
+  whatsappNumber,
 }: {
-  product: Product;
+  products: Product[];
+  initialIndex: number;
+  bizType: string;
   isRetailish: boolean;
   addLabel: string;
   onClose: () => void;
   onAdd: (line: CartLine) => void;
   lang: "en" | "ms" | "zh";
+  whatsappNumber: string | null;
+}) {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
+  const total = products.length;
+
+  // Scroll to initial slide on mount (no smooth)
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollTo({ left: initialIndex * el.clientWidth, behavior: "auto" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleScroll = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const idx = Math.round(el.scrollLeft / el.clientWidth);
+    if (idx !== currentIndex && idx >= 0 && idx < total) {
+      setCurrentIndex(idx);
+    }
+  };
+
+  const goTo = (idx: number) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const clamped = Math.max(0, Math.min(total - 1, idx));
+    el.scrollTo({ left: clamped * el.clientWidth, behavior: "smooth" });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
+      <div
+        className="pof-scope relative w-full max-w-[420px] h-[92vh] bg-background rounded-t-3xl overflow-hidden animate-slide-up flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top bar overlay: counter + close */}
+        <div className="absolute top-3 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
+          <div className="pointer-events-auto px-3 py-1 rounded-full bg-background/90 backdrop-blur text-[11px] font-semibold shadow">
+            {currentIndex + 1} / {total}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="pointer-events-auto h-9 w-9 rounded-full bg-background/95 backdrop-blur shadow flex items-center justify-center"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Side arrows */}
+        {total > 1 && currentIndex > 0 && (
+          <button
+            type="button"
+            onClick={() => goTo(currentIndex - 1)}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-background/85 backdrop-blur shadow flex items-center justify-center"
+            aria-label="Previous"
+          >
+            <ChevronLeft size={18} />
+          </button>
+        )}
+        {total > 1 && currentIndex < total - 1 && (
+          <button
+            type="button"
+            onClick={() => goTo(currentIndex + 1)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-background/85 backdrop-blur shadow flex items-center justify-center"
+            aria-label="Next"
+          >
+            <ChevronRight size={18} />
+          </button>
+        )}
+
+        {/* Horizontal slide scroller */}
+        <div
+          ref={scrollerRef}
+          onScroll={handleScroll}
+          className="flex-1 flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory no-scrollbar overscroll-x-contain"
+          style={{ scrollSnapType: "x mandatory" }}
+        >
+          {products.map((p, idx) => (
+            <div
+              key={p.id}
+              className="shrink-0 w-full h-full snap-center snap-always"
+              style={{ scrollSnapAlign: "center" }}
+            >
+              <ProductSlide
+                product={p}
+                isActive={idx === currentIndex}
+                bizType={bizType}
+                isRetailish={isRetailish}
+                addLabel={addLabel}
+                onAdd={onAdd}
+                lang={lang}
+                whatsappNumber={whatsappNumber}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductSlide({
+  product,
+  isActive,
+  bizType,
+  isRetailish,
+  addLabel,
+  onAdd,
+  lang,
+  whatsappNumber,
+}: {
+  product: Product;
+  isActive: boolean;
+  bizType: string;
+  isRetailish: boolean;
+  addLabel: string;
+  onAdd: (line: CartLine) => void;
+  lang: "en" | "ms" | "zh";
+  whatsappNumber: string | null;
 }) {
   const hasVariants = product.variants && product.variants.length > 0;
   const [selectedVariantIdx, setSelectedVariantIdx] = useState<number>(0);
   const [qty, setQty] = useState<number>(1);
+  const [galleryIdx, setGalleryIdx] = useState(0);
+
+  // Reset state when slide becomes inactive (so re-entering is fresh)
+  useEffect(() => {
+    if (!isActive) {
+      setSelectedVariantIdx(0);
+      setQty(1);
+      setGalleryIdx(0);
+    }
+  }, [isActive]);
 
   const variant = hasVariants ? product.variants[selectedVariantIdx] : null;
   const unitPrice = variant ? Number(variant.price) : Number(product.price ?? 0);
 
+  const stock = typeof product.stock === "number" ? product.stock : null;
+  const isOutOfStock = stock !== null && stock <= 0;
+  const maxQty = stock !== null ? Math.min(99, Math.max(1, stock)) : 99;
+
+  const prop = product.property;
+  const isProperty = !!prop;
+  const gallery = (product.images && product.images.length > 0)
+    ? product.images
+    : (product.image_url ? [product.image_url] : []);
+
   const handleAdd = () => {
+    if (isOutOfStock) return;
     onAdd({
       productId: product.id,
       product: product.name,
       variant: variant ? variant.name : "",
       unit_price: unitPrice,
-      quantity: isRetailish ? Math.max(1, qty) : 1,
+      quantity: isRetailish ? Math.max(1, Math.min(qty, maxQty)) : 1,
       image_url: product.image_url,
     });
   };
@@ -1252,13 +1401,13 @@ function DetailSheet({
   const qtyLabel = lang === "ms" ? "Kuantiti" : lang === "zh" ? "数量" : "Quantity";
   const durationLabel = lang === "ms" ? "Tempoh" : lang === "zh" ? "时长" : "Duration";
   const mins = lang === "ms" ? "minit" : lang === "zh" ? "分钟" : "min";
+  const inStockLabel = lang === "ms" ? "Ada stok" : lang === "zh" ? "有货" : "In stock";
+  const lowStockLabel = (n: number) =>
+    lang === "ms" ? `Tinggal ${n} sahaja` : lang === "zh" ? `仅剩 ${n} 件` : `Only ${n} left`;
+  const outOfStockLabel = lang === "ms" ? "Kehabisan stok" : lang === "zh" ? "缺货" : "Out of stock";
+  const leftLabel = (n: number) =>
+    lang === "ms" ? `${n} tinggal` : lang === "zh" ? `剩 ${n} 件` : `${n} left`;
 
-  const prop = product.property;
-  const isProperty = !!prop;
-  const gallery = (product.images && product.images.length > 0)
-    ? product.images
-    : (product.image_url ? [product.image_url] : []);
-  const [galleryIdx, setGalleryIdx] = useState(0);
   const isRent = prop?.listing_type === "rent";
   const propStatusLabel = isRent
     ? (lang === "ms" ? "Untuk Disewa" : lang === "zh" ? "出租" : "For Rent")
@@ -1268,171 +1417,229 @@ function DetailSheet({
   const sizeLabel = lang === "ms" ? "Keluasan" : lang === "zh" ? "面积" : "Size";
   const typeLabel = lang === "ms" ? "Jenis" : lang === "zh" ? "类型" : "Type";
 
+  // Property enquire: WhatsApp instead of cart
+  const handlePropertyEnquire = () => {
+    if (!whatsappNumber) return;
+    const msg = lang === "ms"
+      ? `Helo, saya berminat dengan hartanah: ${product.name}`
+      : lang === "zh"
+      ? `你好，我对这个房源感兴趣：${product.name}`
+      : `Hello, I'm interested in: ${product.name}`;
+    const url = `https://wa.me/${whatsappNumber.replace(/\D/g, "")}?text=${encodeURIComponent(stripEmoji(msg))}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
-      <div
-        className="pof-scope w-full max-w-[420px] max-h-[92vh] bg-background rounded-t-3xl overflow-y-auto pb-6 animate-slide-up"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative">
-          <div className={`${isProperty ? "aspect-[16/10]" : "aspect-square"} w-full bg-muted/40 overflow-hidden relative`}>
-            {gallery.length > 0 ? (
-              <img src={gallery[Math.min(galleryIdx, gallery.length - 1)]} alt={product.name} className="h-full w-full object-cover" />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
-                <ShoppingBag size={64} />
-              </div>
+    <div className="h-full w-full overflow-y-auto pb-6">
+      {/* Image gallery (horizontal scroll) */}
+      <div className={`${isProperty ? "aspect-[16/10]" : "aspect-square"} w-full bg-muted/40 overflow-hidden relative`}>
+        {gallery.length > 0 ? (
+          <>
+            <img
+              src={gallery[Math.min(galleryIdx, gallery.length - 1)]}
+              alt={product.name}
+              className="h-full w-full object-cover"
+              draggable={false}
+            />
+            {gallery.length > 1 && (
+              <>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 px-2 py-1 rounded-full">
+                  {gallery.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setGalleryIdx(i)}
+                      className={`h-1.5 w-1.5 rounded-full ${i === galleryIdx ? "bg-white" : "bg-white/50"}`}
+                      aria-label={`Image ${i + 1}`}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setGalleryIdx((i) => Math.max(0, i - 1))}
+                  disabled={galleryIdx === 0}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/40 text-white flex items-center justify-center disabled:opacity-30"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGalleryIdx((i) => Math.min(gallery.length - 1, i + 1))}
+                  disabled={galleryIdx === gallery.length - 1}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/40 text-white flex items-center justify-center disabled:opacity-30"
+                  aria-label="Next image"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </>
             )}
-            {isProperty && gallery.length > 1 && (
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 px-2 py-1 rounded-full">
-                {gallery.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setGalleryIdx(i)}
-                    className={`h-1.5 w-1.5 rounded-full ${i === galleryIdx ? "bg-white" : "bg-white/50"}`}
-                    aria-label={`Image ${i + 1}`}
-                  />
-                ))}
-              </div>
+          </>
+        ) : (
+          <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
+            <ShoppingBag size={64} />
+          </div>
+        )}
+      </div>
+
+      {gallery.length > 1 && (
+        <div className="px-5 mt-2 flex gap-2 overflow-x-auto no-scrollbar">
+          {gallery.map((src, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setGalleryIdx(i)}
+              className={`shrink-0 h-14 w-20 rounded-lg overflow-hidden border-2 ${i === galleryIdx ? "border-primary" : "border-transparent"}`}
+            >
+              <img src={src} alt="" className="h-full w-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="px-5 pt-4 space-y-3">
+        {isProperty ? (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+              {propStatusLabel}
+            </span>
+            {prop?.property_type && (
+              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                {prop.property_type}
+              </span>
             )}
           </div>
-          {isProperty && gallery.length > 1 && (
-            <div className="px-5 mt-2 flex gap-2 overflow-x-auto no-scrollbar">
-              {gallery.map((src, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setGalleryIdx(i)}
-                  className={`shrink-0 h-14 w-20 rounded-lg overflow-hidden border-2 ${i === galleryIdx ? "border-primary" : "border-transparent"}`}
-                >
-                  <img src={src} alt="" className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute top-3 right-3 h-9 w-9 rounded-full bg-background/95 backdrop-blur shadow flex items-center justify-center"
-            aria-label="Close"
-          >
-            <X size={16} />
-          </button>
-        </div>
+        ) : product.category && (
+          <p className="text-[10px] font-semibold tracking-wider uppercase text-primary/80">
+            {product.category}
+          </p>
+        )}
+        <h2 className="text-xl font-bold leading-tight">{product.name}</h2>
 
-        <div className="px-5 pt-4 space-y-3">
-          {isProperty ? (
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
-                {propStatusLabel}
+        {!isProperty && (
+          <p className="text-2xl font-bold text-primary">
+            {hasVariants && !variant ? "from " : ""}
+            RM {Number(unitPrice).toFixed(2)}
+          </p>
+        )}
+
+        {/* Stock badge (retailish only) */}
+        {isRetailish && stock !== null && (
+          <div>
+            {isOutOfStock ? (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-[11px] font-semibold">
+                {outOfStockLabel}
               </span>
-              {prop?.property_type && (
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                  {prop.property_type}
-                </span>
-              )}
-            </div>
-          ) : product.category && (
-            <p className="text-[10px] font-semibold tracking-wider uppercase text-primary/80">
-              {product.category}
-            </p>
-          )}
-          <h2 className="text-xl font-bold leading-tight">{product.name}</h2>
-          {isProperty && (
-            <>
-              <p className="text-2xl font-bold text-primary">
-                RM {Number(product.price || 0).toLocaleString("en-MY", { minimumFractionDigits: 0 })}
-                {isRent && <span className="text-sm font-normal text-muted-foreground"> / {lang === "ms" ? "bln" : lang === "zh" ? "月" : "mo"}</span>}
-              </p>
-              {prop?.address && (
-                <p className="text-sm text-muted-foreground">📍 {prop.address}</p>
-              )}
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                {prop?.bedrooms ? (
-                  <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
-                    <p className="text-muted-foreground">🛏 {bedLabel}</p>
-                    <p className="font-semibold">{prop.bedrooms}</p>
-                  </div>
-                ) : null}
-                {prop?.bathrooms ? (
-                  <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
-                    <p className="text-muted-foreground">🛁 {bathLabel}</p>
-                    <p className="font-semibold">{prop.bathrooms}</p>
-                  </div>
-                ) : null}
-                {prop?.size_sqft ? (
-                  <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
-                    <p className="text-muted-foreground">📐 {sizeLabel}</p>
-                    <p className="font-semibold">{prop.size_sqft} sqft</p>
-                  </div>
-                ) : null}
-                {prop?.property_type ? (
-                  <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
-                    <p className="text-muted-foreground">🏠 {typeLabel}</p>
-                    <p className="font-semibold">{prop.property_type}</p>
-                  </div>
-                ) : null}
-              </div>
-            </>
-          )}
-          {product.duration_minutes ? (
-            <p className="text-xs text-muted-foreground">
-              {durationLabel}: {product.duration_minutes} {mins}
-            </p>
-          ) : null}
-          {product.description && (
-            <p className="text-sm text-foreground/80 whitespace-pre-wrap">{product.description}</p>
-          )}
-
-          {hasVariants && (
-            <div className="space-y-2 pt-1">
-              <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
-                {variantsLabel}
-              </p>
-              <div className="space-y-1.5">
-                {product.variants.map((v, idx) => {
-                  const active = idx === selectedVariantIdx;
-                  return (
-                    <button
-                      type="button"
-                      key={(v.id ?? "") + idx}
-                      onClick={() => setSelectedVariantIdx(idx)}
-                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl border transition-colors ${
-                        active ? "bg-primary/10 border-primary" : "bg-card border-border"
-                      }`}
-                    >
-                      <span className="text-sm font-medium">{v.name}</span>
-                      <span className="text-sm font-bold text-primary">RM {Number(v.price).toFixed(2)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {isRetailish && (
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-xs font-semibold text-muted-foreground">{qtyLabel}</span>
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-9 w-9 rounded-full bg-muted flex items-center justify-center"><Minus size={16} /></button>
-                <span className="w-8 text-center text-sm font-semibold">{qty}</span>
-                <button type="button" onClick={() => setQty((q) => Math.min(99, q + 1))} className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center"><Plus size={16} strokeWidth={3} /></button>
-              </div>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={handleAdd}
-            className="w-full mt-3 py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg flex items-center justify-between px-5 active:scale-[0.99] transition-transform"
-          >
-            <span>{addLabel}</span>
-            {!isProperty && (
-              <span>RM {(unitPrice * (isRetailish ? qty : 1)).toFixed(2)}</span>
+            ) : stock < 5 ? (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[11px] font-semibold">
+                {lowStockLabel(stock)}
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-semibold">
+                {inStockLabel} · {leftLabel(stock)}
+              </span>
             )}
-          </button>
-        </div>
+          </div>
+        )}
+
+        {isProperty && (
+          <>
+            <p className="text-2xl font-bold text-primary">
+              RM {Number(product.price || 0).toLocaleString("en-MY", { minimumFractionDigits: 0 })}
+              {isRent && <span className="text-sm font-normal text-muted-foreground"> / {lang === "ms" ? "bln" : lang === "zh" ? "月" : "mo"}</span>}
+            </p>
+            {prop?.address && (
+              <p className="text-sm text-muted-foreground">📍 {prop.address}</p>
+            )}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              {prop?.bedrooms ? (
+                <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                  <p className="text-muted-foreground">🛏 {bedLabel}</p>
+                  <p className="font-semibold">{prop.bedrooms}</p>
+                </div>
+              ) : null}
+              {prop?.bathrooms ? (
+                <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                  <p className="text-muted-foreground">🛁 {bathLabel}</p>
+                  <p className="font-semibold">{prop.bathrooms}</p>
+                </div>
+              ) : null}
+              {prop?.size_sqft ? (
+                <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                  <p className="text-muted-foreground">📐 {sizeLabel}</p>
+                  <p className="font-semibold">{prop.size_sqft} sqft</p>
+                </div>
+              ) : null}
+              {prop?.property_type ? (
+                <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                  <p className="text-muted-foreground">🏠 {typeLabel}</p>
+                  <p className="font-semibold">{prop.property_type}</p>
+                </div>
+              ) : null}
+            </div>
+          </>
+        )}
+        {product.duration_minutes ? (
+          <p className="text-xs text-muted-foreground">
+            {durationLabel}: {product.duration_minutes} {mins}
+          </p>
+        ) : null}
+        {product.description && (
+          <p className="text-sm text-foreground/80 whitespace-pre-wrap">{product.description}</p>
+        )}
+
+        {hasVariants && (
+          <div className="space-y-2 pt-1">
+            <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+              {variantsLabel}
+            </p>
+            <div className="space-y-1.5">
+              {product.variants.map((v, idx) => {
+                const active = idx === selectedVariantIdx;
+                return (
+                  <button
+                    type="button"
+                    key={(v.id ?? "") + idx}
+                    onClick={() => setSelectedVariantIdx(idx)}
+                    className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl border transition-colors ${
+                      active ? "bg-primary/10 border-primary" : "bg-card border-border"
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{v.name}</span>
+                    <span className="text-sm font-bold text-primary">RM {Number(v.price).toFixed(2)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {isRetailish && !isOutOfStock && (
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-xs font-semibold text-muted-foreground">{qtyLabel}</span>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-9 w-9 rounded-full bg-muted flex items-center justify-center"><Minus size={16} /></button>
+              <span className="w-8 text-center text-sm font-semibold">{qty}</span>
+              <button type="button" onClick={() => setQty((q) => Math.min(maxQty, q + 1))} className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center"><Plus size={16} strokeWidth={3} /></button>
+            </div>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={isProperty ? handlePropertyEnquire : handleAdd}
+          disabled={isOutOfStock}
+          className={`w-full mt-3 py-3.5 rounded-2xl font-bold text-sm shadow-lg flex items-center justify-between px-5 transition-transform ${
+            isOutOfStock
+              ? "bg-muted text-muted-foreground cursor-not-allowed"
+              : "bg-primary text-primary-foreground active:scale-[0.99]"
+          }`}
+        >
+          <span>{isOutOfStock ? outOfStockLabel : addLabel}</span>
+          {!isProperty && !isOutOfStock && (
+            <span>RM {(unitPrice * (isRetailish ? qty : 1)).toFixed(2)}</span>
+          )}
+        </button>
       </div>
     </div>
   );
