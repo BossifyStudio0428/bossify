@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, Plus, X, Trash2, Pencil, Upload, Image as ImageIcon } from "lucide-react";
+import { ChevronLeft, Plus, X, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,8 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import type { BizType } from "@/lib/businessType";
 import type { Lang } from "@/contexts/I18nContext";
+import { ImagesUploader } from "@/components/ImagesUploader";
+import { parseVariants, type Variant } from "@/lib/inventoryTypes";
 
 export const Route = createFileRoute("/services")({ component: ServicesPage });
 
@@ -19,6 +21,9 @@ type Service = {
   duration_minutes: number | null;
   is_active: boolean;
   image_url: string | null;
+  images?: string[] | null;
+  stock?: number | null;
+  variants?: unknown;
 };
 
 type Sheet =
@@ -46,7 +51,7 @@ function ServicesPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("services")
-      .select("id,name,description,price,duration_minutes,is_active,image_url")
+      .select("id,name,description,price,duration_minutes,is_active,image_url,images,stock,variants")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -170,36 +175,37 @@ function ServiceFormSheet({
   const [description, setDescription] = useState(item?.description ?? "");
   const [price, setPrice] = useState(item?.price != null ? String(item.price) : "");
   const [duration, setDuration] = useState(item?.duration_minutes != null ? String(item.duration_minutes) : "");
-  const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const initialImages = (() => {
+    const arr = Array.isArray(item?.images) ? (item!.images as string[]).map(String) : [];
+    if (arr.length > 0) return arr;
+    return item?.image_url ? [item.image_url] : [];
+  })();
+  const [images, setImages] = useState<string[]>(initialImages);
+  const [stock, setStock] = useState(item?.stock != null ? String(item.stock) : "");
+  const [variants, setVariants] = useState<Variant[]>(parseVariants(item?.variants));
   const [saving, setSaving] = useState(false);
 
-  const onPickImage = async (file: File) => {
-    if (!userId) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error(t("image_too_large")); return; }
-    setUploading(true);
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("product-images")
-      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
-    if (error) { setUploading(false); toast.error(error.message); return; }
-    const { data: pub } = supabase.storage.from("product-images").getPublicUrl(path);
-    setImageUrl(pub.publicUrl);
-    setUploading(false);
-  };
+  const addVariant = () => setVariants((p) => [...p, { id: crypto.randomUUID(), name: "", price: 0 }]);
+  const updateVariant = (id: string, patch: Partial<Variant>) =>
+    setVariants((p) => p.map((v) => (v.id === id ? { ...v, ...patch } : v)));
+  const removeVariant = (id: string) => setVariants((p) => p.filter((v) => v.id !== id));
 
   const save = async () => {
     if (!name.trim()) { toast.error(t("required_field")); return; }
     if (!userId) return;
+    const cleanVariants = variants
+      .filter((v) => v.name.trim())
+      .map((v) => ({ id: v.id, name: v.name.trim(), price: Math.max(0, Number(v.price) || 0) }));
     setSaving(true);
     const payload: any = {
       name: name.trim(),
       description: description.trim() || null,
       price: Math.max(0, Number(price) || 0),
       duration_minutes: showDuration && duration ? Math.max(0, Number(duration) || 0) : null,
-      image_url: imageUrl,
+      image_url: images[0] ?? null,
+      images,
+      stock: stock.trim() === "" ? null : Math.max(0, Number(stock) || 0),
+      variants: cleanVariants,
     };
     const { error } = item
       ? await supabase.from("services").update(payload).eq("id", item.id)
@@ -219,56 +225,58 @@ function ServiceFormSheet({
         <h3 className="text-lg font-bold">{item ? titleEdit : titleNew}</h3>
         <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
       </div>
-      <div className="space-y-2">
-        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("image")}</label>
-        <div className="flex items-center gap-3">
-          <div className="h-20 w-20 rounded-2xl bg-muted/50 border border-border/60 overflow-hidden flex items-center justify-center">
-            {imageUrl ? (
-              <img src={imageUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <ImageIcon className="h-6 w-6 text-muted-foreground" />
-            )}
-          </div>
-          <div className="flex-1 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold disabled:opacity-60"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              {uploading ? t("uploading") : imageUrl ? t("change_image") : t("upload_image")}
-            </button>
-            {imageUrl && (
-              <button
-                type="button"
-                onClick={() => setImageUrl(null)}
-                className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                {t("remove_image")}
-              </button>
-            )}
-          </div>
-        </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) onPickImage(f);
-            e.target.value = "";
-          }}
-        />
-      </div>
+      <ImagesUploader images={images} onChange={setImages} userId={userId} max={6} />
       <Field label={nameLabel} value={name} onChange={setName} />
       <Field label={t("description_label")} value={description} onChange={setDescription} multiline />
       <Field label={`${t("price")} (RM)`} value={price} onChange={setPrice} type="number" />
       {showDuration && (
         <Field label={`${t("duration_label")} (${t("minutes_short")})`} value={duration} onChange={setDuration} type="number" />
       )}
+      <Field label={t("how_many_now")} value={stock} onChange={setStock} type="number" />
+
+      <div className="space-y-2">
+        <div>
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("variants")}</label>
+          <p className="text-[11px] text-muted-foreground px-1 mt-0.5">{t("variants_subtitle")}</p>
+        </div>
+        {variants.length === 0 && (
+          <p className="text-xs text-muted-foreground italic px-1">{t("no_variants")}</p>
+        )}
+        {variants.map((v) => (
+          <div key={v.id} className="flex gap-2 items-center">
+            <input
+              value={v.name}
+              onChange={(e) => updateVariant(v.id, { name: e.target.value })}
+              placeholder={t("variant_name")}
+              className="flex-1 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+            <input
+              type="number"
+              value={v.price || ""}
+              onChange={(e) => updateVariant(v.id, { price: Number(e.target.value) || 0 })}
+              placeholder={t("variant_price")}
+              className="w-24 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+            <button
+              type="button"
+              onClick={() => removeVariant(v.id)}
+              className="p-2 rounded-xl text-red-500 hover:bg-red-50"
+              aria-label="remove"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={addVariant}
+          className="w-full py-2 rounded-xl border border-dashed border-border/80 text-xs font-semibold text-primary hover:bg-primary/5 transition"
+        >
+          <Plus className="inline h-3.5 w-3.5 mr-1" />
+          {t("add_variant")}
+        </button>
+      </div>
+
       <button
         onClick={save} disabled={saving}
         className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
