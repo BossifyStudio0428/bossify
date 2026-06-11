@@ -8,6 +8,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { CATEGORY_PRESETS } from "@/lib/businessType";
 import { parseVariants, type InvRow, type Variant } from "@/lib/inventoryTypes";
 import { ImagesUploader } from "@/components/ImagesUploader";
+import { WizardSheet } from "@/components/WizardSheet";
 
 export function SheetShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
@@ -170,171 +171,173 @@ export function ProductFormSheet({
   };
 
   return (
-    <SheetShell onClose={onClose}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-foreground">{item ? t("edit") : t("new_product")}</h3>
-        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
-      </div>
-
-      <ImagesUploader images={images} onChange={setImages} userId={userId} max={6} />
-
-      <SheetField label={t("product_name")} value={name} onChange={setName} placeholder={t("product_name_ph")} />
-
-      {/* Category */}
-      <div className="space-y-2">
-        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("category")}</label>
-        <div className="flex flex-wrap gap-1.5">
-          {categoryPresets.map((c) => {
-            const selected = category === c;
-            return (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setCategory(selected ? "" : c)}
-                className={`px-2.5 py-1.5 rounded-full text-[11px] font-semibold border transition active:scale-95 ${
-                  selected
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
-                }`}
-              >
-                {c}
-              </button>
-            );
-          })}
-        </div>
-        <input
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          placeholder={t("custom_category")}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
-        />
-      </div>
-
-      <SheetField label={t("how_many_now")} value={stock} onChange={setStock} type="number" placeholder={t("stock_now_ph")} />
-
-      <div className="space-y-2">
-        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("measure_in")}</label>
-        <div className="flex flex-wrap gap-2">
-          {PRESET_UNITS.map((u) => {
-            const selected = unit === u.value;
-            return (
-              <button
-                key={u.value}
-                type="button"
-                onClick={() => setUnit(u.value)}
-                className={`px-3 py-2 rounded-full text-xs font-semibold border transition active:scale-95 ${
-                  selected
-                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
-                }`}
-              >
-                <span className="mr-1">{u.icon}</span>{u.label}
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            onClick={() => setUnit("other")}
-            className={`px-3 py-2 rounded-full text-xs font-semibold border transition active:scale-95 ${
-              unit === "other"
-                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
-            }`}
-          >
-            <span className="mr-1">✏️</span>{t("unit_others")}
-          </button>
-        </div>
-        {unit === "other" && (
-          <input
-            value={customUnit}
-            onChange={(e) => setCustomUnit(e.target.value)}
-            placeholder={t("custom_unit_ph")}
-            className="mt-2 w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
-          />
-        )}
-      </div>
-
-      <SheetField label={t("selling_price")} value={price} onChange={setPrice} type="number" placeholder={t("price_ph")} />
-      <SheetField label={t("cost_price")} value={costPrice} onChange={setCostPrice} type="number" placeholder={t("cost_price_placeholder")} />
-
-      {showSuppliers && (
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("supplier")}</label>
-          <select
-            value={supplierId}
-            onChange={(e) => setSupplierId(e.target.value)}
-            className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
-          >
-            <option value="">{t("no_supplier")}</option>
-            {suppliers.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Description */}
-      <div className="space-y-1.5">
-        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("description")}</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder={t("description_ph")}
-          rows={3}
-          className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
-        />
-      </div>
-
-      {/* Variants */}
-      <div className="space-y-2">
-        <div>
-          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("variants")}</label>
-          <p className="text-[11px] text-muted-foreground px-1 mt-0.5">{t("variants_subtitle")}</p>
-        </div>
-        {variants.length === 0 && (
-          <p className="text-xs text-muted-foreground italic px-1">{t("no_variants")}</p>
-        )}
-        {variants.map((v) => (
-          <div key={v.id} className="flex gap-2 items-center">
-            <input
-              value={v.name}
-              onChange={(e) => updateVariant(v.id, { name: e.target.value })}
-              placeholder={t("variant_name")}
-              className="flex-1 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
-            />
-            <input
-              type="number"
-              value={v.price || ""}
-              onChange={(e) => updateVariant(v.id, { price: Number(e.target.value) || 0 })}
-              placeholder={t("variant_price")}
-              className="w-24 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
-            />
-            <button
-              type="button"
-              onClick={() => removeVariant(v.id)}
-              className="p-2 rounded-xl text-red-500 hover:bg-red-50"
-              aria-label="remove"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={addVariant}
-          className="w-full py-2 rounded-xl border border-dashed border-border/80 text-xs font-semibold text-primary hover:bg-primary/5 transition"
-        >
-          <Plus className="inline h-3.5 w-3.5 mr-1" />
-          {t("add_variant")}
-        </button>
-      </div>
-
-      <button
-        onClick={save} disabled={saving}
-        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
-      >
-        {saving ? t("saving") : t("save")}
-      </button>
-    </SheetShell>
+    <WizardSheet
+      title={item ? t("edit") : t("new_product")}
+      saving={saving}
+      onClose={onClose}
+      onSave={save}
+      steps={[
+        {
+          label: t("image"),
+          content: (
+            <ImagesUploader images={images} onChange={setImages} userId={userId} max={6} />
+          ),
+        },
+        {
+          label: t("product_name"),
+          content: (
+            <>
+              <SheetField label={t("product_name")} value={name} onChange={setName} placeholder={t("product_name_ph")} />
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("category")}</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {categoryPresets.map((c) => {
+                    const selected = category === c;
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setCategory(selected ? "" : c)}
+                        className={`px-2.5 py-1.5 rounded-full text-[11px] font-semibold border transition active:scale-95 ${
+                          selected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    );
+                  })}
+                </div>
+                <input
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder={t("custom_category")}
+                  className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("description")}</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={t("description_ph")}
+                  rows={3}
+                  className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
+                />
+              </div>
+              <SheetField label={t("selling_price")} value={price} onChange={setPrice} type="number" placeholder={t("price_ph")} />
+              <SheetField label={t("cost_price")} value={costPrice} onChange={setCostPrice} type="number" placeholder={t("cost_price_placeholder")} />
+            </>
+          ),
+        },
+        {
+          label: t("variants"),
+          content: (
+            <>
+              <SheetField label={t("how_many_now")} value={stock} onChange={setStock} type="number" placeholder={t("stock_now_ph")} />
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("measure_in")}</label>
+                <div className="flex flex-wrap gap-2">
+                  {PRESET_UNITS.map((u) => {
+                    const selected = unit === u.value;
+                    return (
+                      <button
+                        key={u.value}
+                        type="button"
+                        onClick={() => setUnit(u.value)}
+                        className={`px-3 py-2 rounded-full text-xs font-semibold border transition active:scale-95 ${
+                          selected
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
+                        }`}
+                      >
+                        <span className="mr-1">{u.icon}</span>{u.label}
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => setUnit("other")}
+                    className={`px-3 py-2 rounded-full text-xs font-semibold border transition active:scale-95 ${
+                      unit === "other"
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
+                    }`}
+                  >
+                    <span className="mr-1">✏️</span>{t("unit_others")}
+                  </button>
+                </div>
+                {unit === "other" && (
+                  <input
+                    value={customUnit}
+                    onChange={(e) => setCustomUnit(e.target.value)}
+                    placeholder={t("custom_unit_ph")}
+                    className="mt-2 w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+                  />
+                )}
+              </div>
+              {showSuppliers && (
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("supplier")}</label>
+                  <select
+                    value={supplierId}
+                    onChange={(e) => setSupplierId(e.target.value)}
+                    className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+                  >
+                    <option value="">{t("no_supplier")}</option>
+                    {suppliers.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className="space-y-2">
+                <div>
+                  <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("variants")}</label>
+                  <p className="text-[11px] text-muted-foreground px-1 mt-0.5">{t("variants_subtitle")}</p>
+                </div>
+                {variants.length === 0 && (
+                  <p className="text-xs text-muted-foreground italic px-1">{t("no_variants")}</p>
+                )}
+                {variants.map((v) => (
+                  <div key={v.id} className="flex gap-2 items-center">
+                    <input
+                      value={v.name}
+                      onChange={(e) => updateVariant(v.id, { name: e.target.value })}
+                      placeholder={t("variant_name")}
+                      className="flex-1 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                    <input
+                      type="number"
+                      value={v.price || ""}
+                      onChange={(e) => updateVariant(v.id, { price: Number(e.target.value) || 0 })}
+                      placeholder={t("variant_price")}
+                      className="w-24 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeVariant(v.id)}
+                      className="p-2 rounded-xl text-red-500 hover:bg-red-50"
+                      aria-label="remove"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addVariant}
+                  className="w-full py-2 rounded-xl border border-dashed border-border/80 text-xs font-semibold text-primary hover:bg-primary/5 transition"
+                >
+                  <Plus className="inline h-3.5 w-3.5 mr-1" />
+                  {t("add_variant")}
+                </button>
+              </div>
+            </>
+          ),
+        },
+      ]}
+    />
   );
 }
