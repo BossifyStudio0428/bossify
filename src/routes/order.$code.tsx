@@ -1333,6 +1333,27 @@ function DetailSheet({
             </div>
           ))}
         </div>
+
+        {/* Bottom page dots */}
+        {total > 1 && (
+          <div className="absolute bottom-2 left-0 right-0 z-20 flex justify-center pointer-events-none">
+            <div className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur shadow max-w-[80%] overflow-x-auto no-scrollbar">
+              {products.map((p, idx) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => goTo(idx)}
+                  aria-label={`Go to ${idx + 1}`}
+                  className={
+                    idx === currentIndex
+                      ? "h-2 w-5 rounded-full bg-primary transition-all"
+                      : "h-2 w-2 rounded-full bg-muted-foreground/40 transition-all"
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
