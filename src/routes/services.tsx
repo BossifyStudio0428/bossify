@@ -152,6 +152,7 @@ function ServicesPage() {
           item={sheet.item}
           isPackages={isPackages}
           showDuration={showDuration}
+          bizType={bizType ?? "freelance"}
           userId={user?.id ?? ""}
           onClose={() => setSheet({ kind: "none" })}
           onSaved={() => { setSheet({ kind: "none" }); load(); }}
