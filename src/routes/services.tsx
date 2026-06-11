@@ -171,11 +171,12 @@ function ServicesPage() {
 }
 
 function ServiceFormSheet({
-  item, isPackages, showDuration, userId, onClose, onSaved,
+  item, isPackages, showDuration, bizType, userId, onClose, onSaved,
 }: {
   item?: Service;
   isPackages: boolean;
   showDuration: boolean;
+  bizType: BizType;
   userId: string;
   onClose: () => void;
   onSaved: () => void;
