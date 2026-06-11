@@ -71,14 +71,13 @@ export function WizardSheet({ title, steps, saving, saveLabel, onClose, onSave }
         {/* Pager */}
         <div className="flex-1 min-h-0 overflow-hidden">
           <div
-            className="h-full flex transition-transform duration-300 ease-out"
-            style={{ transform: `translateX(-${idx * 100}%)`, width: `${total * 100}%` }}
+            className="h-full w-full flex transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${idx * 100}%)` }}
           >
             {steps.map((s, i) => (
               <div
                 key={i}
-                className="h-full overflow-y-auto px-5 py-4 space-y-4"
-                style={{ width: `${100 / total}%` }}
+                className="h-full w-full shrink-0 overflow-y-auto px-5 py-4 space-y-4"
                 aria-hidden={i !== idx}
               >
                 {s.content}
