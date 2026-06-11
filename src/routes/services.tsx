@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, Plus, X, Trash2, Pencil } from "lucide-react";
+import { ChevronLeft, Plus, X, Trash2, Pencil, Upload, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ type Service = {
   price: number;
   duration_minutes: number | null;
   is_active: boolean;
+  image_url: string | null;
 };
 
 type Sheet =
@@ -45,7 +46,7 @@ function ServicesPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("services")
-      .select("id,name,description,price,duration_minutes,is_active")
+      .select("id,name,description,price,duration_minutes,is_active,image_url")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -91,6 +92,11 @@ function ServicesPage() {
         {!loading && items.map((it) => (
           <article key={it.id} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
             <div className="flex items-start justify-between gap-2">
+              {it.image_url && (
+                <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted/50 border border-border/60 shrink-0">
+                  <img src={it.image_url} alt={it.name} className="h-full w-full object-cover" />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{it.name}</p>
                 {it.description && (
