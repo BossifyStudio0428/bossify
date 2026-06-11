@@ -1,12 +1,13 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useEffect } from "react";
-import { X, Upload, Trash2, ImageIcon, Plus } from "lucide-react";
+import { X, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { CATEGORY_PRESETS } from "@/lib/businessType";
 import { parseVariants, type InvRow, type Variant } from "@/lib/inventoryTypes";
+import { ImagesUploader } from "@/components/ImagesUploader";
 
 export function SheetShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
@@ -87,7 +88,6 @@ export function ProductFormSheet({
 }: { item?: InvRow; onClose: () => void; onSaved: () => void; userId: string }) {
   const { t } = useI18n();
   const { type: bizType } = useBusinessType();
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState(item?.name ?? "");
   const [stock, setStock] = useState(item?.stock != null ? String(item.stock) : "");
@@ -107,8 +107,12 @@ export function ProductFormSheet({
   const [category, setCategory] = useState(item?.category ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [variants, setVariants] = useState<Variant[]>(parseVariants(item?.variants));
-  const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
-  const [uploading, setUploading] = useState(false);
+  const initialImages = (() => {
+    const arr = Array.isArray((item as any)?.images) ? ((item as any).images as unknown[]).map(String) : [];
+    if (arr.length > 0) return arr;
+    return item?.image_url ? [item.image_url] : [];
+  })();
+  const [images, setImages] = useState<string[]>(initialImages);
   const [saving, setSaving] = useState(false);
   const [supplierId, setSupplierId] = useState<string>((item as any)?.supplier_id ?? "");
   const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
@@ -128,28 +132,6 @@ export function ProductFormSheet({
   }, [showSuppliers]);
 
   const categoryPresets = CATEGORY_PRESETS[bizType ?? "retail"];
-
-  const onPickImage = async (file: File) => {
-    if (!userId) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error(t("image_too_large"));
-      return;
-    }
-    setUploading(true);
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("product-images")
-      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
-    if (error) {
-      setUploading(false);
-      toast.error(error.message);
-      return;
-    }
-    const { data: pub } = supabase.storage.from("product-images").getPublicUrl(path);
-    setImageUrl(pub.publicUrl);
-    setUploading(false);
-  };
 
   const addVariant = () => setVariants((p) => [...p, { id: crypto.randomUUID(), name: "", price: 0 }]);
   const updateVariant = (id: string, patch: Partial<Variant>) =>
@@ -174,7 +156,8 @@ export function ProductFormSheet({
       category: category.trim() || null,
       description: description.trim() || null,
       variants: cleanVariants,
-      image_url: imageUrl,
+      images,
+      image_url: images[0] ?? null,
       ...(showSuppliers ? { supplier_id: supplierId || null } : {}),
     };
     const { error } = item
@@ -193,52 +176,7 @@ export function ProductFormSheet({
         <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
       </div>
 
-      {/* Image */}
-      <div className="space-y-2">
-        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("image")}</label>
-        <div className="flex items-center gap-3">
-          <div className="h-20 w-20 rounded-2xl bg-muted/50 border border-border/60 overflow-hidden flex items-center justify-center">
-            {imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <ImageIcon className="h-6 w-6 text-muted-foreground" />
-            )}
-          </div>
-          <div className="flex-1 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold disabled:opacity-60"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              {uploading ? t("uploading") : imageUrl ? t("change_image") : t("upload_image")}
-            </button>
-            {imageUrl && (
-              <button
-                type="button"
-                onClick={() => setImageUrl(null)}
-                className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                {t("remove_image")}
-              </button>
-            )}
-          </div>
-        </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) onPickImage(f);
-            e.target.value = "";
-          }}
-        />
-      </div>
+      <ImagesUploader images={images} onChange={setImages} userId={userId} max={6} />
 
       <SheetField label={t("product_name")} value={name} onChange={setName} placeholder={t("product_name_ph")} />
 
@@ -392,7 +330,7 @@ export function ProductFormSheet({
       </div>
 
       <button
-        onClick={save} disabled={saving || uploading}
+        onClick={save} disabled={saving}
         className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
       >
         {saving ? t("saving") : t("save")}

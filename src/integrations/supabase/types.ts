@@ -267,6 +267,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          images: Json
           low_stock_threshold: number
           name: string
           price: number
@@ -281,6 +282,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          images?: Json
           low_stock_threshold?: number
           name: string
           price?: number
@@ -295,6 +297,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          images?: Json
           low_stock_threshold?: number
           name?: string
           price?: number
@@ -757,6 +760,7 @@ export type Database = {
           duration_minutes: number | null
           id: string
           image_url: string | null
+          images: Json
           is_active: boolean
           name: string
           price: number
@@ -771,6 +775,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           image_url?: string | null
+          images?: Json
           is_active?: boolean
           name: string
           price?: number
@@ -785,6 +790,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           image_url?: string | null
+          images?: Json
           is_active?: boolean
           name?: string
           price?: number

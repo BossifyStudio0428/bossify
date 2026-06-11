@@ -159,7 +159,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     if (isRetailish) {
       const { data: inv } = await sb
         .from("inventory")
-        .select("id,name,price,image_url,category,description,variants,stock")
+        .select("id,name,price,image_url,images,category,description,variants,stock")
         .eq("user_id", profile.id)
         .order("name", { ascending: true });
       products = ((inv ?? []) as any[]).map((x) => ({
@@ -171,6 +171,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         description: x.description ?? null,
         variants: Array.isArray(x.variants) ? x.variants : [],
         stock: typeof x.stock === "number" ? x.stock : null,
+        images: Array.isArray(x.images) ? x.images.map((u: unknown) => String(u)) : [],
       })) as any;
     } else if (bizType === "property") {
       const { data: rows } = await sb
@@ -205,7 +206,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     } else {
       const { data: svc } = await sb
         .from("services")
-        .select("id,name,price,is_active,image_url,category,description,variants,duration_minutes")
+        .select("id,name,price,is_active,image_url,images,category,description,variants,duration_minutes,stock")
         .eq("user_id", profile.id)
         .eq("is_active", true)
         .order("name", { ascending: true });
@@ -218,6 +219,8 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         description: x.description ?? null,
         variants: Array.isArray(x.variants) ? x.variants : [],
         duration_minutes: x.duration_minutes ?? null,
+        stock: typeof x.stock === "number" ? x.stock : null,
+        images: Array.isArray(x.images) ? x.images.map((u: unknown) => String(u)) : [],
       })) as any;
     }
 
