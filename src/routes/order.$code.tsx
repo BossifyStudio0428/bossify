@@ -68,6 +68,13 @@ type Product = {
   duration_minutes?: number | null;
   stock?: number | null;
   images?: string[];
+  addons?: { id?: string; name: string; price: number }[];
+  rate_type?: string | null;
+  level?: string | null;
+  intake?: string | null;
+  requirements?: string | null;
+  turnaround_days?: number | null;
+  portfolio_links?: string[];
   property?: {
     property_type: string | null;
     listing_type: string | null;
