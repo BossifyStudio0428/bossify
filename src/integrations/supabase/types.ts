@@ -754,6 +754,7 @@ export type Database = {
       }
       services: {
         Row: {
+          addons: Json | null
           category: string | null
           created_at: string
           description: string | null
@@ -761,14 +762,21 @@ export type Database = {
           id: string
           image_url: string | null
           images: Json
+          intake: string | null
           is_active: boolean
+          level: string | null
           name: string
+          portfolio_links: Json | null
           price: number
+          rate_type: string | null
+          requirements: string | null
+          turnaround_days: number | null
           updated_at: string
           user_id: string
           variants: Json
         }
         Insert: {
+          addons?: Json | null
           category?: string | null
           created_at?: string
           description?: string | null
@@ -776,14 +784,21 @@ export type Database = {
           id?: string
           image_url?: string | null
           images?: Json
+          intake?: string | null
           is_active?: boolean
+          level?: string | null
           name: string
+          portfolio_links?: Json | null
           price?: number
+          rate_type?: string | null
+          requirements?: string | null
+          turnaround_days?: number | null
           updated_at?: string
           user_id: string
           variants?: Json
         }
         Update: {
+          addons?: Json | null
           category?: string | null
           created_at?: string
           description?: string | null
@@ -791,9 +806,15 @@ export type Database = {
           id?: string
           image_url?: string | null
           images?: Json
+          intake?: string | null
           is_active?: boolean
+          level?: string | null
           name?: string
+          portfolio_links?: Json | null
           price?: number
+          rate_type?: string | null
+          requirements?: string | null
+          turnaround_days?: number | null
           updated_at?: string
           user_id?: string
           variants?: Json
