@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, Plus, X, Trash2, Pencil } from "lucide-react";
+import { ChevronLeft, Plus, X, Trash2, Pencil, Upload, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ type Service = {
   price: number;
   duration_minutes: number | null;
   is_active: boolean;
+  image_url: string | null;
 };
 
 type Sheet =
@@ -45,7 +46,7 @@ function ServicesPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("services")
-      .select("id,name,description,price,duration_minutes,is_active")
+      .select("id,name,description,price,duration_minutes,is_active,image_url")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -91,6 +92,11 @@ function ServicesPage() {
         {!loading && items.map((it) => (
           <article key={it.id} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
             <div className="flex items-start justify-between gap-2">
+              {it.image_url && (
+                <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted/50 border border-border/60 shrink-0">
+                  <img src={it.image_url} alt={it.name} className="h-full w-full object-cover" />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{it.name}</p>
                 {it.description && (
@@ -164,7 +170,25 @@ function ServiceFormSheet({
   const [description, setDescription] = useState(item?.description ?? "");
   const [price, setPrice] = useState(item?.price != null ? String(item.price) : "");
   const [duration, setDuration] = useState(item?.duration_minutes != null ? String(item.duration_minutes) : "");
+  const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const onPickImage = async (file: File) => {
+    if (!userId) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error(t("image_too_large")); return; }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("product-images")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (error) { setUploading(false); toast.error(error.message); return; }
+    const { data: pub } = supabase.storage.from("product-images").getPublicUrl(path);
+    setImageUrl(pub.publicUrl);
+    setUploading(false);
+  };
 
   const save = async () => {
     if (!name.trim()) { toast.error(t("required_field")); return; }
@@ -175,6 +199,7 @@ function ServiceFormSheet({
       description: description.trim() || null,
       price: Math.max(0, Number(price) || 0),
       duration_minutes: showDuration && duration ? Math.max(0, Number(duration) || 0) : null,
+      image_url: imageUrl,
     };
     const { error } = item
       ? await supabase.from("services").update(payload).eq("id", item.id)
@@ -193,6 +218,50 @@ function ServiceFormSheet({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold">{item ? titleEdit : titleNew}</h3>
         <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
+      </div>
+      <div className="space-y-2">
+        <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("image")}</label>
+        <div className="flex items-center gap-3">
+          <div className="h-20 w-20 rounded-2xl bg-muted/50 border border-border/60 overflow-hidden flex items-center justify-center">
+            {imageUrl ? (
+              <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <ImageIcon className="h-6 w-6 text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex-1 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold disabled:opacity-60"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {uploading ? t("uploading") : imageUrl ? t("change_image") : t("upload_image")}
+            </button>
+            {imageUrl && (
+              <button
+                type="button"
+                onClick={() => setImageUrl(null)}
+                className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {t("remove_image")}
+              </button>
+            )}
+          </div>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onPickImage(f);
+            e.target.value = "";
+          }}
+        />
       </div>
       <Field label={nameLabel} value={name} onChange={setName} />
       <Field label={t("description_label")} value={description} onChange={setDescription} multiline />
