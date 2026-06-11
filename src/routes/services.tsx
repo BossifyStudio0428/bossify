@@ -194,12 +194,47 @@ function ServiceFormSheet({
   const [images, setImages] = useState<string[]>(initialImages);
   const [stock, setStock] = useState(item?.stock != null ? String(item.stock) : "");
   const [variants, setVariants] = useState<Variant[]>(parseVariants(item?.variants));
+  const [category, setCategory] = useState(item?.category ?? "");
+  const [rateType, setRateType] = useState<"fixed" | "hourly">((item?.rate_type as any) === "hourly" ? "hourly" : "fixed");
+  const [level, setLevel] = useState(item?.level ?? "");
+  const [intake, setIntake] = useState(item?.intake ?? "");
+  const [requirements, setRequirements] = useState(item?.requirements ?? "");
+  const [turnaround, setTurnaround] = useState(item?.turnaround_days != null ? String(item.turnaround_days) : "");
+  type Addon = { id: string; name: string; price: number };
+  const parseAddons = (raw: unknown): Addon[] => {
+    if (!Array.isArray(raw)) return [];
+    return raw.map((a: any) => ({
+      id: String(a?.id ?? crypto.randomUUID()),
+      name: String(a?.name ?? ""),
+      price: Number(a?.price ?? 0) || 0,
+    }));
+  };
+  const [addons, setAddons] = useState<Addon[]>(parseAddons(item?.addons));
+  const parseLinks = (raw: unknown): string[] => Array.isArray(raw) ? raw.map((x) => String(x)).filter(Boolean) : [];
+  const [portfolioLinks, setPortfolioLinks] = useState<string[]>(parseLinks(item?.portfolio_links));
+  const [newLink, setNewLink] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const isFnb = bizType === "fnb";
+  const isBeauty = bizType === "beauty";
+  const isEducation = bizType === "education";
+  const isFreelance = bizType === "freelance";
+  const isRetailLike = bizType === "retail" || isPackages;
+  const showCategory = isRetailLike || isFnb;
+  const showAddons = isFnb || isBeauty;
+  const showStock = isRetailLike || isFnb;
+  const showVariants = isRetailLike || isFnb;
+  const showDur = showDuration || isBeauty;
 
   const addVariant = () => setVariants((p) => [...p, { id: crypto.randomUUID(), name: "", price: 0 }]);
   const updateVariant = (id: string, patch: Partial<Variant>) =>
     setVariants((p) => p.map((v) => (v.id === id ? { ...v, ...patch } : v)));
   const removeVariant = (id: string) => setVariants((p) => p.filter((v) => v.id !== id));
+
+  const addAddon = () => setAddons((p) => [...p, { id: crypto.randomUUID(), name: "", price: 0 }]);
+  const updateAddon = (id: string, patch: Partial<Addon>) =>
+    setAddons((p) => p.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  const removeAddon = (id: string) => setAddons((p) => p.filter((a) => a.id !== id));
 
   const save = async () => {
     if (!name.trim()) { toast.error(t("required_field")); return; }
