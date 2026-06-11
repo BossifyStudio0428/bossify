@@ -330,7 +330,7 @@ export function ProductFormSheet({
       </div>
 
       <button
-        onClick={save} disabled={saving || uploading}
+        onClick={save} disabled={saving}
         className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
       >
         {saving ? t("saving") : t("save")}
