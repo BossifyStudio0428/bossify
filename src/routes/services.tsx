@@ -25,6 +25,14 @@ type Service = {
   images?: string[] | null;
   stock?: number | null;
   variants?: unknown;
+  category?: string | null;
+  rate_type?: string | null;
+  addons?: unknown;
+  level?: string | null;
+  intake?: string | null;
+  requirements?: string | null;
+  turnaround_days?: number | null;
+  portfolio_links?: unknown;
 };
 
 type Sheet =
@@ -52,7 +60,7 @@ function ServicesPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("services")
-      .select("id,name,description,price,duration_minutes,is_active,image_url,images,stock,variants")
+      .select("id,name,description,price,duration_minutes,is_active,image_url,images,stock,variants,category,rate_type,addons,level,intake,requirements,turnaround_days,portfolio_links")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
