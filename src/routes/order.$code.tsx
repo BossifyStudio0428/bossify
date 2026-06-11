@@ -6,7 +6,7 @@ import type {
   submitPublicOrder,
 } from "@/lib/public-order.functions";
 import { stripEmoji } from "@/lib/wa";
-import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Search } from "lucide-react";
+import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
 
@@ -66,6 +66,7 @@ type Product = {
   description: string | null;
   variants: Variant[];
   duration_minutes?: number | null;
+  stock?: number | null;
   images?: string[];
   property?: {
     property_type: string | null;
