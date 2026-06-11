@@ -91,6 +91,8 @@ export type LoadPublicOrderFormResult =
         description: string | null;
         variants: Array<{ id?: string; name: string; price: number }>;
         duration_minutes?: number | null;
+        stock?: number | null;
+        images?: string[];
         property?: {
           property_type: string | null;
           listing_type: string | null;
@@ -143,6 +145,8 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
       description: string | null;
       variants: Array<{ id?: string; name: string; price: number }>;
       duration_minutes?: number | null;
+      stock?: number | null;
+      images?: string[];
       property?: {
         property_type: string | null;
         listing_type: string | null;
@@ -155,7 +159,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     if (isRetailish) {
       const { data: inv } = await sb
         .from("inventory")
-        .select("id,name,price,image_url,category,description,variants")
+        .select("id,name,price,image_url,category,description,variants,stock")
         .eq("user_id", profile.id)
         .order("name", { ascending: true });
       products = ((inv ?? []) as any[]).map((x) => ({
@@ -166,6 +170,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         category: x.category ?? null,
         description: x.description ?? null,
         variants: Array.isArray(x.variants) ? x.variants : [],
+        stock: typeof x.stock === "number" ? x.stock : null,
       })) as any;
     } else if (bizType === "property") {
       const { data: rows } = await sb
