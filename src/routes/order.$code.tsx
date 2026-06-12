@@ -68,6 +68,8 @@ type Product = {
   duration_minutes?: number | null;
   stock?: number | null;
   images?: string[];
+  video_url?: string | null;
+  cover_image_url?: string | null;
   addons?: { id?: string; name: string; price: number }[];
   rate_type?: string | null;
   level?: string | null;
@@ -1408,9 +1410,14 @@ function ProductSlide({
 
   const prop = product.property;
   const isProperty = !!prop;
-  const gallery = (product.images && product.images.length > 0)
-    ? product.images
-    : (product.image_url ? [product.image_url] : []);
+  type Slide = { kind: "image" | "video"; url: string };
+  const gallery: Slide[] = [];
+  if (product.video_url) gallery.push({ kind: "video", url: product.video_url });
+  if (product.images && product.images.length > 0) {
+    for (const u of product.images) gallery.push({ kind: "image", url: u });
+  } else if (product.image_url) {
+    gallery.push({ kind: "image", url: product.image_url });
+  }
 
   const handleAdd = () => {
     if (isOutOfStock) return;
