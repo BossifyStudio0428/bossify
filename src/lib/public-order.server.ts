@@ -176,13 +176,13 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     } else if (bizType === "property") {
       const { data: rows } = await sb
         .from("listings")
-        .select("id,title,price,images,property_type,listing_type,bedrooms,bathrooms,size_sqft,address,description,status")
+        .select("id,title,price,images,video_url,cover_image_url,property_type,listing_type,bedrooms,bathrooms,size_sqft,address,description,status")
         .eq("user_id", profile.id)
         .eq("status", "available")
         .order("created_at", { ascending: false });
       products = ((rows ?? []) as any[]).map((x) => {
         const imgs = Array.isArray(x.images) ? x.images : [];
-        const firstImg = imgs.length > 0 ? String(imgs[0]) : null;
+        const firstImg = x.cover_image_url ?? (imgs.length > 0 ? String(imgs[0]) : null);
         const listingType = String(x.listing_type ?? "sale");
         return {
           id: String(x.id),
@@ -193,6 +193,8 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
           description: x.description ?? null,
           variants: [],
           images: imgs.map((u: unknown) => String(u)),
+          video_url: x.video_url ?? null,
+          cover_image_url: x.cover_image_url ?? null,
           property: {
             property_type: x.property_type ?? null,
             listing_type: listingType,
@@ -206,7 +208,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     } else {
       const { data: svc } = await sb
         .from("services")
-        .select("id,name,price,is_active,image_url,images,category,description,variants,duration_minutes,stock,addons,rate_type,level,intake,requirements,turnaround_days,portfolio_links")
+        .select("id,name,price,is_active,image_url,images,video_url,cover_image_url,category,description,variants,duration_minutes,stock,addons,rate_type,level,intake,requirements,turnaround_days,portfolio_links")
         .eq("user_id", profile.id)
         .eq("is_active", true)
         .order("name", { ascending: true });
@@ -214,13 +216,15 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         id: String(x.id),
         name: String(x.name),
         price: Number(x.price ?? 0),
-        image_url: x.image_url ?? null,
+        image_url: x.cover_image_url ?? x.image_url ?? null,
         category: x.category ?? null,
         description: x.description ?? null,
         variants: Array.isArray(x.variants) ? x.variants : [],
         duration_minutes: x.duration_minutes ?? null,
         stock: typeof x.stock === "number" ? x.stock : null,
         images: Array.isArray(x.images) ? x.images.map((u: unknown) => String(u)) : [],
+        video_url: x.video_url ?? null,
+        cover_image_url: x.cover_image_url ?? null,
         addons: Array.isArray(x.addons) ? x.addons : [],
         rate_type: x.rate_type ?? null,
         level: x.level ?? null,
