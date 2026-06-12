@@ -7,8 +7,8 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { CATEGORY_PRESETS } from "@/lib/businessType";
 import { parseVariants, type InvRow, type Variant } from "@/lib/inventoryTypes";
-import { ImagesUploader } from "@/components/ImagesUploader";
-import { WizardSheet } from "@/components/WizardSheet";
+import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
+import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 
 export function SheetShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
@@ -114,6 +114,7 @@ export function ProductFormSheet({
     return item?.image_url ? [item.image_url] : [];
   })();
   const [images, setImages] = useState<string[]>(initialImages);
+  const [videoUrl, setVideoUrl] = useState<string | null>((item as any)?.video_url ?? null);
   const [saving, setSaving] = useState(false);
   const [supplierId, setSupplierId] = useState<string>((item as any)?.supplier_id ?? "");
   const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
@@ -159,6 +160,8 @@ export function ProductFormSheet({
       variants: cleanVariants,
       images,
       image_url: images[0] ?? null,
+      video_url: videoUrl,
+      cover_image_url: images[0] ?? null,
       ...(showSuppliers ? { supplier_id: supplierId || null } : {}),
     };
     const { error } = item
@@ -170,24 +173,25 @@ export function ProductFormSheet({
     onSaved();
   };
 
-  return (
-    <WizardSheet
-      title={item ? t("edit") : t("new_product")}
-      saving={saving}
-      onClose={onClose}
-      onSave={save}
-      steps={[
-        {
-          label: t("image"),
-          content: (
-            <ImagesUploader images={images} onChange={setImages} userId={userId} max={6} />
-          ),
-        },
-        {
-          label: t("product_name"),
-          content: (
-            <>
-              <SheetField label={t("product_name")} value={name} onChange={setName} placeholder={t("product_name_ph")} />
+  const sections: FormSection[] = [
+    {
+      title: t("image") + " & Video",
+      subtitle: "First photo is the cover. Up to 9 photos + 1 video.",
+      content: (
+        <ProductImagesGrid
+          images={images}
+          onChange={setImages}
+          videoUrl={videoUrl}
+          onVideoChange={setVideoUrl}
+          userId={userId}
+        />
+      ),
+    },
+    {
+      title: "Basic info",
+      content: (
+        <>
+          <SheetField label={t("product_name")} value={name} onChange={setName} placeholder={t("product_name_ph")} />
               <div className="space-y-2">
                 <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("category")}</label>
                 <div className="flex flex-wrap gap-1.5">
@@ -226,16 +230,23 @@ export function ProductFormSheet({
                   className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
                 />
               </div>
-              <SheetField label={t("selling_price")} value={price} onChange={setPrice} type="number" placeholder={t("price_ph")} />
+        </>
+      ),
+    },
+    {
+      title: "Price",
+      content: (
+        <>
+          <SheetField label={t("selling_price")} value={price} onChange={setPrice} type="number" placeholder={t("price_ph")} />
               <SheetField label={t("cost_price")} value={costPrice} onChange={setCostPrice} type="number" placeholder={t("cost_price_placeholder")} />
-            </>
-          ),
-        },
-        {
-          label: t("variants"),
-          content: (
-            <>
-              <SheetField label={t("how_many_now")} value={stock} onChange={setStock} type="number" placeholder={t("stock_now_ph")} />
+        </>
+      ),
+    },
+    {
+      title: "Stock & unit",
+      content: (
+        <>
+          <SheetField label={t("how_many_now")} value={stock} onChange={setStock} type="number" placeholder={t("stock_now_ph")} />
               <div className="space-y-2">
                 <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("measure_in")}</label>
                 <div className="flex flex-wrap gap-2">
@@ -292,12 +303,15 @@ export function ProductFormSheet({
                   </select>
                 </div>
               )}
-              <div className="space-y-2">
-                <div>
-                  <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("variants")}</label>
-                  <p className="text-[11px] text-muted-foreground px-1 mt-0.5">{t("variants_subtitle")}</p>
-                </div>
-                {variants.length === 0 && (
+        </>
+      ),
+    },
+    {
+      title: t("variants"),
+      subtitle: t("variants_subtitle"),
+      content: (
+        <div className="space-y-2">
+          {variants.length === 0 && (
                   <p className="text-xs text-muted-foreground italic px-1">{t("no_variants")}</p>
                 )}
                 {variants.map((v) => (
@@ -333,11 +347,18 @@ export function ProductFormSheet({
                   <Plus className="inline h-3.5 w-3.5 mr-1" />
                   {t("add_variant")}
                 </button>
-              </div>
-            </>
-          ),
-        },
-      ]}
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <ProductFormScreen
+      title={item ? t("edit") : t("new_product")}
+      saving={saving}
+      onClose={onClose}
+      onSave={save}
+      sections={sections}
     />
   );
 }

@@ -68,6 +68,8 @@ type Product = {
   duration_minutes?: number | null;
   stock?: number | null;
   images?: string[];
+  video_url?: string | null;
+  cover_image_url?: string | null;
   addons?: { id?: string; name: string; price: number }[];
   rate_type?: string | null;
   level?: string | null;
@@ -1408,9 +1410,14 @@ function ProductSlide({
 
   const prop = product.property;
   const isProperty = !!prop;
-  const gallery = (product.images && product.images.length > 0)
-    ? product.images
-    : (product.image_url ? [product.image_url] : []);
+  type Slide = { kind: "image" | "video"; url: string };
+  const gallery: Slide[] = [];
+  if (product.video_url) gallery.push({ kind: "video", url: product.video_url });
+  if (product.images && product.images.length > 0) {
+    for (const u of product.images) gallery.push({ kind: "image", url: u });
+  } else if (product.image_url) {
+    gallery.push({ kind: "image", url: product.image_url });
+  }
 
   const handleAdd = () => {
     if (isOutOfStock) return;
@@ -1462,12 +1469,25 @@ function ProductSlide({
       <div className={`${isProperty ? "aspect-[16/10]" : "aspect-square"} w-full bg-muted/40 overflow-hidden relative`}>
         {gallery.length > 0 ? (
           <>
-            <img
-              src={gallery[Math.min(galleryIdx, gallery.length - 1)]}
-              alt={product.name}
-              className="h-full w-full object-cover"
-              draggable={false}
-            />
+            {(() => {
+              const cur = gallery[Math.min(galleryIdx, gallery.length - 1)];
+              return cur.kind === "video" ? (
+                <video
+                  src={cur.url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="h-full w-full object-contain bg-black"
+                />
+              ) : (
+                <img
+                  src={cur.url}
+                  alt={product.name}
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                />
+              );
+            })()}
             {gallery.length > 1 && (
               <>
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 px-2 py-1 rounded-full">
@@ -1511,14 +1531,21 @@ function ProductSlide({
 
       {gallery.length > 1 && (
         <div className="px-5 mt-2 flex gap-2 overflow-x-auto no-scrollbar">
-          {gallery.map((src, i) => (
+          {gallery.map((s, i) => (
             <button
               key={i}
               type="button"
               onClick={() => setGalleryIdx(i)}
-              className={`shrink-0 h-14 w-20 rounded-lg overflow-hidden border-2 ${i === galleryIdx ? "border-primary" : "border-transparent"}`}
+              className={`shrink-0 h-14 w-20 rounded-lg overflow-hidden border-2 relative bg-black ${i === galleryIdx ? "border-primary" : "border-transparent"}`}
             >
-              <img src={src} alt="" className="h-full w-full object-cover" />
+              {s.kind === "video" ? (
+                <>
+                  <video src={s.url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+                  <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold bg-black/30">▶</span>
+                </>
+              ) : (
+                <img src={s.url} alt="" className="h-full w-full object-cover" />
+              )}
             </button>
           ))}
         </div>
