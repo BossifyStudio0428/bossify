@@ -313,6 +313,7 @@ export type Database = {
           address: string | null
           bathrooms: number | null
           bedrooms: number | null
+          cover_image_url: string | null
           created_at: string
           description: string | null
           id: string
@@ -326,11 +327,13 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          video_url: string | null
         }
         Insert: {
           address?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -344,11 +347,13 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          video_url?: string | null
         }
         Update: {
           address?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -362,6 +367,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -756,6 +762,7 @@ export type Database = {
         Row: {
           addons: Json | null
           category: string | null
+          cover_image_url: string | null
           created_at: string
           description: string | null
           duration_minutes: number | null
@@ -774,10 +781,12 @@ export type Database = {
           updated_at: string
           user_id: string
           variants: Json
+          video_url: string | null
         }
         Insert: {
           addons?: Json | null
           category?: string | null
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           duration_minutes?: number | null
@@ -796,10 +805,12 @@ export type Database = {
           updated_at?: string
           user_id: string
           variants?: Json
+          video_url?: string | null
         }
         Update: {
           addons?: Json | null
           category?: string | null
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           duration_minutes?: number | null
@@ -818,6 +829,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           variants?: Json
+          video_url?: string | null
         }
         Relationships: [
           {
