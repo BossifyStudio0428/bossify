@@ -2,7 +2,6 @@ import { useRef } from "react";
 import { Plus, X, Video, Star } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useI18n } from "@/contexts/I18nContext";
 
 type Props = {
   images: string[];
@@ -33,13 +32,12 @@ export function ProductImagesGrid({
   maxImageMB = 5,
   maxVideoMB = 30,
 }: Props) {
-  const { t } = useI18n();
   const imgRef = useRef<HTMLInputElement>(null);
   const vidRef = useRef<HTMLInputElement>(null);
 
   const uploadImage = async (file: File): Promise<string | null> => {
     if (file.size > maxImageMB * 1024 * 1024) {
-      toast.error(t("image_too_large"));
+      toast.error(`Image must be ≤ ${maxImageMB}MB`);
       return null;
     }
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -116,7 +114,7 @@ export function ProductImagesGrid({
                 <img src={c.url} alt="" className="h-full w-full object-cover" />
                 {c.idx === 0 && (
                   <span className="absolute top-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-primary text-primary-foreground">
-                    {t("cover") || "COVER"}
+                    COVER
                   </span>
                 )}
                 <button
@@ -134,7 +132,7 @@ export function ProductImagesGrid({
                     className="absolute bottom-1 left-1 h-5 px-1.5 rounded-md bg-black/60 text-white text-[9px] font-bold flex items-center gap-0.5"
                     aria-label="make cover"
                   >
-                    <Star className="h-2.5 w-2.5" /> {t("set_cover") || "Cover"}
+                    <Star className="h-2.5 w-2.5" /> Cover
                   </button>
                 )}
               </div>
@@ -198,7 +196,7 @@ export function ProductImagesGrid({
           >
             <Video className="h-4 w-4" />
             <span className="text-xs font-semibold">
-              {t("upload_video") || "Upload video"} <span className="text-muted-foreground/70 font-normal">(≤{maxVideoMB}MB)</span>
+              Upload video <span className="text-muted-foreground/70 font-normal">(≤{maxVideoMB}MB)</span>
             </span>
           </button>
         )}
