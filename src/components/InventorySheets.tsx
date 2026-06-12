@@ -311,7 +311,6 @@ export function ProductFormSheet({
       subtitle: t("variants_subtitle"),
       content: (
         <div className="space-y-2">
-                <div>
           {variants.length === 0 && (
                   <p className="text-xs text-muted-foreground italic px-1">{t("no_variants")}</p>
                 )}
