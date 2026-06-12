@@ -8,9 +8,9 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import type { BizType } from "@/lib/businessType";
 import type { Lang } from "@/contexts/I18nContext";
-import { ImagesUploader } from "@/components/ImagesUploader";
 import { parseVariants, type Variant } from "@/lib/inventoryTypes";
-import { WizardSheet } from "@/components/WizardSheet";
+import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
+import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 
 export const Route = createFileRoute("/services")({ component: ServicesPage });
 
@@ -23,6 +23,8 @@ type Service = {
   is_active: boolean;
   image_url: string | null;
   images?: string[] | null;
+  video_url?: string | null;
+  cover_image_url?: string | null;
   stock?: number | null;
   variants?: unknown;
   category?: string | null;
@@ -60,7 +62,7 @@ function ServicesPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("services")
-      .select("id,name,description,price,duration_minutes,is_active,image_url,images,stock,variants,category,rate_type,addons,level,intake,requirements,turnaround_days,portfolio_links")
+      .select("id,name,description,price,duration_minutes,is_active,image_url,images,video_url,cover_image_url,stock,variants,category,rate_type,addons,level,intake,requirements,turnaround_days,portfolio_links")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
