@@ -194,6 +194,7 @@ function ServiceFormSheet({
     return item?.image_url ? [item.image_url] : [];
   })();
   const [images, setImages] = useState<string[]>(initialImages);
+  const [videoUrl, setVideoUrl] = useState<string | null>(item?.video_url ?? null);
   const [stock, setStock] = useState(item?.stock != null ? String(item.stock) : "");
   const [variants, setVariants] = useState<Variant[]>(parseVariants(item?.variants));
   const [category, setCategory] = useState(item?.category ?? "");
@@ -255,6 +256,8 @@ function ServiceFormSheet({
       duration_minutes: showDur && duration ? Math.max(0, Number(duration) || 0) : null,
       image_url: images[0] ?? null,
       images,
+      video_url: videoUrl,
+      cover_image_url: images[0] ?? null,
       stock: showStock && stock.trim() !== "" ? Math.max(0, Number(stock) || 0) : null,
       variants: showVariants ? cleanVariants : [],
       category: showCategory && category.trim() ? category.trim() : null,
