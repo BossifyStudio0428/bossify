@@ -419,14 +419,17 @@ function buildSections(p: {
 
   // 1b. Detail photos (Shopee-style 详情图 — shown vertically in description area)
   sections.push({
-    title: "Detail photos",
-    subtitle: "Add one photo per detail (Detail 1, Detail 2...). Shown stacked below the description.",
+    title: "Description & Details",
+    subtitle: "Write the description, then add detail photos (Detail 1, Detail 2...).",
     content: (
-      <DetailPhotosList
-        images={p.detailImages}
-        onChange={p.setDetailImages}
-        userId={p.userId}
-      />
+      <>
+        <Field label={t("description_label")} value={p.description} onChange={p.setDescription} multiline />
+        <DetailPhotosList
+          images={p.detailImages}
+          onChange={p.setDetailImages}
+          userId={p.userId}
+        />
+      </>
     ),
   });
 
@@ -436,7 +439,6 @@ function buildSections(p: {
     content: (
       <>
         <Field label={p.nameLabel} value={p.name} onChange={p.setName} />
-        <Field label={t("description_label")} value={p.description} onChange={p.setDescription} multiline />
         {p.showCategory && (
           <Field label="Category" value={p.category} onChange={p.setCategory} />
         )}
