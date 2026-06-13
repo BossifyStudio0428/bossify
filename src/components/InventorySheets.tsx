@@ -217,7 +217,7 @@ export function ProductFormSheet({
   const sections: FormSection[] = [
     {
       title: t("image") + " & Video",
-      subtitle: "First photo is the cover. Up to 9 photos + 1 video.",
+      subtitle: "1 cover photo + 1 video. Add more in Detail photos below.",
       content: (
         <ProductImagesGrid
           images={images}
@@ -226,6 +226,7 @@ export function ProductFormSheet({
           onVideoChange={setVideoUrl}
           onVideoThumbReady={setVideoThumb}
           userId={userId}
+          maxImages={1}
         />
       ),
     },

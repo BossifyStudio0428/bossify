@@ -201,7 +201,7 @@ function ListingEditor() {
 
       <Section label={t("fld_images")}>
         <div className="grid grid-cols-3 gap-2">
-          {images.map((url, i) => (
+          {images.slice(0, 1).map((url, i) => (
             <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-muted">
               <img src={url} alt="" className="w-full h-full object-cover" />
               <button
@@ -213,7 +213,7 @@ function ListingEditor() {
               </button>
             </div>
           ))}
-          <button
+          {images.length < 1 && <button
             type="button"
             onClick={() => fileRef.current?.click()}
             className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground active:bg-muted"
@@ -226,12 +226,12 @@ function ListingEditor() {
                 <span className="text-[10px] mt-1">+</span>
               </>
             )}
-          </button>
+          </button>}
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
-            multiple
+
             hidden
             onChange={(e) => pickImages(e.target.files)}
           />
