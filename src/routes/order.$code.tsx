@@ -299,8 +299,21 @@ function PublicOrderFormPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (state.status !== "ready") return;
-    if (!form.customer_name.trim() || !form.phone.trim() || cart.length === 0) return;
     const bt = state.profile.business_type;
+    const needsAddress = bt === "retail" || bt === "fnb";
+    if (!form.customer_name.trim()) {
+      alert(L("Please enter your name", "Sila masukkan nama anda", "请填写您的姓名"));
+      return;
+    }
+    if (!form.phone.trim()) {
+      alert(L("Please enter your phone number", "Sila masukkan nombor telefon", "请填写电话号码"));
+      return;
+    }
+    if (needsAddress && !form.address.trim()) {
+      alert(L("Please enter your delivery address", "Sila masukkan alamat penghantaran", "请填写送货地址"));
+      return;
+    }
+    if (cart.length === 0) return;
     const needsPayment = bt === "retail" || bt === "fnb";
     if (needsPayment && !paymentMethod) {
       alert(t("select_payment_method"));
