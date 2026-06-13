@@ -1341,7 +1341,6 @@ function DetailSheet({
                 onAdd={onAdd}
                 lang={lang}
                 whatsappNumber={whatsappNumber}
-          hideProductCounter={total === 1}
               />
             </div>
           ))}
@@ -1381,7 +1380,6 @@ function ProductSlide({
   onAdd,
   lang,
   whatsappNumber,
-  hideProductCounter,
 }: {
   product: Product;
   isActive: boolean;
@@ -1391,7 +1389,6 @@ function ProductSlide({
   onAdd: (line: CartLine) => void;
   lang: "en" | "ms" | "zh";
   whatsappNumber: string | null;
-  hideProductCounter?: boolean;
 }) {
   const hasVariants = product.variants && product.variants.length > 0;
   const [selectedVariantIdx, setSelectedVariantIdx] = useState<number>(0);
