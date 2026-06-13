@@ -239,19 +239,6 @@ function ListingEditor() {
         </div>
       </Section>
 
-      {user && (
-        <Section label="Detail photos">
-          <p className="text-[11px] text-muted-foreground -mt-1 mb-2">
-            Add one photo per detail (Detail 1, Detail 2...). Shown stacked below the listing info.
-          </p>
-          <DetailPhotosList
-            images={detailImages}
-            onChange={setDetailImages}
-            userId={user.id}
-          />
-        </Section>
-      )}
-
       <TextField label={t("fld_title")} value={title} onChange={setTitle} />
 
       <div className="grid grid-cols-2 gap-2">
@@ -287,6 +274,19 @@ function ListingEditor() {
         onChange={setStatus}
         options={STATUSES.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
       />
+
+      {user && (
+        <Section label="Description & Details">
+          <p className="text-[11px] text-muted-foreground -mt-1 mb-2">
+            Add detail photos (Detail 1, Detail 2...), then the description.
+          </p>
+          <DetailPhotosList
+            images={detailImages}
+            onChange={setDetailImages}
+            userId={user.id}
+          />
+        </Section>
+      )}
 
       <TextField label={t("description_label")} value={description} onChange={setDescription} multiline />
 

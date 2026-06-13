@@ -1663,9 +1663,6 @@ function ProductSlide({
             {durationLabel}: {product.duration_minutes} {mins}
           </p>
         ) : null}
-        {product.description && (
-          <p className="text-sm text-foreground/80 whitespace-pre-wrap">{product.description}</p>
-        )}
 
         {/* Detail photos — Shopee-style 详情图, stacked full-width under product info */}
         {product.detail_images && product.detail_images.length > 0 && (
@@ -1677,6 +1674,10 @@ function ProductSlide({
               <img key={i} src={u} alt="" loading="lazy" className="w-full h-auto block" />
             ))}
           </div>
+        )}
+
+        {product.description && (
+          <p className="text-sm text-foreground/80 whitespace-pre-wrap pt-1">{product.description}</p>
         )}
 
         {/* Biz-specific extras */}
