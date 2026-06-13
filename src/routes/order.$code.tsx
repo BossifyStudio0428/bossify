@@ -1520,7 +1520,7 @@ function ProductSlide({
                 />
               );
             })()}
-            <div className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-[11px] font-bold shadow">
+            <div className="absolute left-3 top-3 rounded-full bg-black/70 backdrop-blur px-3 py-1 text-[11px] font-bold text-white shadow-lg ring-1 ring-white/40">
               {galleryIdx + 1}/{gallery.length}
             </div>
             {gallery.length > 1 && (
