@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Plus, X, ImagePlus, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/contexts/I18nContext";
 
 type Props = {
   images: string[];
@@ -16,6 +17,7 @@ type Props = {
  * Shown stacked under the product description on the customer-facing page.
  */
 export function DetailPhotosList({ images, onChange, userId, maxImageMB = 5 }: Props) {
+  const { t } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -56,7 +58,7 @@ export function DetailPhotosList({ images, onChange, userId, maxImageMB = 5 }: P
       {images.map((url, i) => (
         <div key={url + i} className="rounded-xl border border-border/60 bg-muted/10 overflow-hidden">
           <div className="flex items-center justify-between px-2.5 py-1.5 bg-muted/40">
-            <span className="text-[11px] font-bold text-foreground/80">Detail {i + 1}</span>
+            <span className="text-[11px] font-bold text-foreground/80">{t("detail_label")} {i + 1}</span>
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -86,7 +88,7 @@ export function DetailPhotosList({ images, onChange, userId, maxImageMB = 5 }: P
               </button>
             </div>
           </div>
-          <img src={url} alt={`Detail ${i + 1}`} className="w-full h-auto block bg-black/5" />
+          <img src={url} alt={`${t("detail_label")} ${i + 1}`} className="w-full h-auto block bg-black/5" />
         </div>
       ))}
 
@@ -102,9 +104,9 @@ export function DetailPhotosList({ images, onChange, userId, maxImageMB = 5 }: P
           <>
             <Plus className="h-5 w-5" strokeWidth={2.5} />
             <span className="text-[11px] font-semibold">
-              Add Detail {images.length + 1}
+              {t("add_detail")} {images.length + 1}
             </span>
-            <span className="text-[10px] text-muted-foreground/70">One photo per detail</span>
+            <span className="text-[10px] text-muted-foreground/70">{t("one_photo_per_detail")}</span>
           </>
         )}
       </button>
