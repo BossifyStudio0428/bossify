@@ -1411,13 +1411,18 @@ function ProductSlide({
 
   const prop = product.property;
   const isProperty = !!prop;
-  type Slide = { kind: "image" | "video"; url: string };
+  type Slide = { kind: "image" | "video"; url: string; label?: string; description?: string };
   const gallery: Slide[] = [];
-  if (product.video_url) gallery.push({ kind: "video", url: product.video_url });
+  if (product.video_url) gallery.push({ kind: "video", url: product.video_url, label: "Cover" });
   if (product.images && product.images.length > 0) {
-    for (const u of product.images) gallery.push({ kind: "image", url: u });
+    for (const [idx, u] of product.images.entries()) gallery.push({ kind: "image", url: u, label: idx === 0 ? "Cover" : `Cover ${idx + 1}` });
   } else if (product.image_url) {
-    gallery.push({ kind: "image", url: product.image_url });
+    gallery.push({ kind: "image", url: product.image_url, label: "Cover" });
+  }
+  if (product.detail_images && product.detail_images.length > 0) {
+    for (const [idx, d] of product.detail_images.entries()) {
+      gallery.push({ kind: "image", url: d.url, label: `Details ${idx + 1}`, description: d.description });
+    }
   }
 
   // Touch swipe handlers (so the user can swipe left/right through the gallery).
@@ -1513,6 +1518,14 @@ function ProductSlide({
                 />
               );
             })()}
+            <div className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-[11px] font-bold shadow">
+              {gallery[Math.min(galleryIdx, gallery.length - 1)]?.label ?? "Cover"} · {galleryIdx + 1}/{gallery.length}
+            </div>
+            {gallery[Math.min(galleryIdx, gallery.length - 1)]?.description && (
+              <div className="absolute inset-x-3 bottom-3 rounded-xl bg-background/90 px-3 py-2 text-sm font-medium text-foreground shadow backdrop-blur">
+                {gallery[Math.min(galleryIdx, gallery.length - 1)]?.description}
+              </div>
+            )}
             {gallery.length > 1 && (
               <>
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 px-2 py-1 rounded-full">
