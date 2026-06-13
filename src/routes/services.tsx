@@ -373,6 +373,7 @@ function buildSections(p: {
   price: string; setPrice: (v: string) => void;
   duration: string; setDuration: (v: string) => void;
   images: string[]; setImages: (v: string[]) => void;
+  detailImages: string[]; setDetailImages: (v: string[]) => void;
   videoUrl: string | null; setVideoUrl: (v: string | null) => void;
   setVideoThumb: (v: string | null) => void;
   userId: string;
@@ -410,6 +411,22 @@ function buildSections(p: {
         onVideoChange={p.setVideoUrl}
         onVideoThumbReady={p.setVideoThumb}
         userId={p.userId}
+      />
+    ),
+  });
+
+  // 1b. Detail photos (Shopee-style 详情图 — shown vertically in description area)
+  sections.push({
+    title: "Detail photos",
+    subtitle: "Long detail / description photos shown stacked under the product info.",
+    content: (
+      <ProductImagesGrid
+        images={p.detailImages}
+        onChange={p.setDetailImages}
+        videoUrl={null}
+        onVideoChange={() => {}}
+        userId={p.userId}
+        maxImages={20}
       />
     ),
   });
