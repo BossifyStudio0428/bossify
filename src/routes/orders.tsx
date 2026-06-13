@@ -13,7 +13,7 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import {
@@ -579,32 +579,36 @@ function OrdersPage() {
                     navigator.clipboard?.writeText(`${getPublicOrigin()}/order/${ofCode}`);
                     toast.success(t("pof_link_copied"));
                   }}
-                  className="py-2 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold active:scale-95"
+                  className="py-2 px-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold active:scale-95 flex flex-col items-center gap-1"
                 >
-                  📋
+                  <Copy size={14} />
+                  <span className="leading-none">{t("pof_copy_link")}</span>
                 </button>
                 <a
                   href={`https://wa.me/?text=${encodeURIComponent(stripEmoji(t(pofWaShareKey(ofBizType as BizType | null)).replace("{link}", `${getPublicOrigin()}/order/${ofCode}`)))}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="py-2 rounded-lg bg-emerald-500 text-white text-[10px] font-semibold text-center active:scale-95"
+                  className="py-2 px-1 rounded-lg bg-emerald-500 text-white text-[10px] font-semibold text-center active:scale-95 flex flex-col items-center gap-1"
                 >
-                  💬
+                  <MessageCircle size={14} />
+                  <span className="leading-none">WhatsApp</span>
                 </a>
                 <button
                   type="button"
                   onClick={() => setOfQrOpen(true)}
-                  className="py-2 rounded-lg bg-card border border-border/60 text-[10px] font-semibold active:scale-95"
+                  className="py-2 px-1 rounded-lg bg-card border border-border/60 text-[10px] font-semibold active:scale-95 flex flex-col items-center gap-1"
                 >
-                  📱
+                  <QrCode size={14} />
+                  <span className="leading-none">{t("pof_qr_code")}</span>
                 </button>
                 <a
                   href={`${getPublicOrigin()}/order/${ofCode}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="py-2 rounded-lg bg-card border border-border/60 text-[10px] font-semibold text-center active:scale-95"
+                  className="py-2 px-1 rounded-lg bg-card border border-border/60 text-[10px] font-semibold text-center active:scale-95 flex flex-col items-center gap-1"
                 >
-                  👁
+                  <Eye size={14} />
+                  <span className="leading-none">{t("pof_view_form")}</span>
                 </a>
               </div>
             </>
