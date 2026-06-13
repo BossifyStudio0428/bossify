@@ -68,6 +68,7 @@ type Product = {
   duration_minutes?: number | null;
   stock?: number | null;
   images?: string[];
+  detail_images?: string[];
   video_url?: string | null;
   cover_image_url?: string | null;
   addons?: { id?: string; name: string; price: number }[];
