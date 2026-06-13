@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Plus, X, Video, Star } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 import {
   DndContext,
   PointerSensor,
