@@ -691,7 +691,7 @@ function PublicOrderFormPage() {
   if (!showCheckout) {
     return (
       <div className="pof-scope min-h-screen flex justify-center pb-28">
-        <div className="w-full max-w-[420px]">
+        <div className="w-full max-w-[420px] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl">
           {/* Hero header */}
           <header className="pof-hero px-5 pt-10 pb-6 rounded-b-3xl text-white">
             <div className="flex items-center gap-3">
@@ -938,7 +938,7 @@ function PublicOrderFormPage() {
         </div>
 
         {cart.length > 0 && (
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] px-4 pb-4 pt-2 bg-gradient-to-t from-background via-background to-transparent">
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl px-4 pb-4 pt-2 bg-gradient-to-t from-background via-background to-transparent">
             <button
               type="button"
               onClick={() => setShowCheckout(true)}
@@ -969,7 +969,7 @@ function PublicOrderFormPage() {
   // ---- Checkout screen ----
   return (
     <div className="pof-scope min-h-screen flex justify-center">
-      <div className="w-full max-w-[420px] px-5 pt-8 pb-10 space-y-5">
+      <div className="w-full max-w-[420px] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl px-5 pt-8 pb-10 space-y-5">
         <header className="flex items-center gap-3 sticky top-0 -mx-5 px-5 py-3 bg-background/90 backdrop-blur z-10">
           <button
             type="button"
