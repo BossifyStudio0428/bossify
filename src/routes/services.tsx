@@ -437,8 +437,8 @@ function buildSections(p: {
 
   // 2b. Description & Details (Shopee-style 详情图 — shown stacked in description area)
   sections.push({
-    title: "Description & Details",
-    subtitle: "Add detail photos (Detail 1, Detail 2...), then the description.",
+    title: t("desc_details_title"),
+    subtitle: t("desc_details_subtitle"),
     content: (
       <>
         <DetailPhotosList

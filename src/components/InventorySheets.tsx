@@ -269,8 +269,8 @@ export function ProductFormSheet({
       ),
     },
     {
-      title: "Description & Details",
-      subtitle: "Add detail photos (Detail 1, Detail 2...), then the description.",
+      title: t("desc_details_title"),
+      subtitle: t("desc_details_subtitle"),
       content: (
         <>
           <DetailPhotosList

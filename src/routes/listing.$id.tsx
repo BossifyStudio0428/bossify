@@ -281,9 +281,9 @@ function ListingEditor() {
       />
 
       {user && (
-        <Section label="Description & Details">
+        <Section label={t("desc_details_title")}>
           <p className="text-[11px] text-muted-foreground -mt-1 mb-2">
-            Add detail photos (Detail 1, Detail 2...), then the description.
+            {t("desc_details_subtitle")}
           </p>
           <DetailPhotosList
             images={detailImages}
