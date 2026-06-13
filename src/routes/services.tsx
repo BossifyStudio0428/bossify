@@ -327,7 +327,7 @@ function ServiceFormSheet({
     if (error) { toast.error(error.message); return; }
     clearDraft(draftKey);
     await toastSavedWithOrderFormLink(
-      item ? t("customer_updated") : isPackages ? t("package_saved") ?? "Package saved" : t("service_saved") ?? "Service saved",
+      isPackages ? "Package saved" : "Service saved",
       userId,
     );
     onSaved();
