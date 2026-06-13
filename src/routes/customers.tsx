@@ -43,7 +43,7 @@ function relTime(iso: string | null, t: (k: any) => string) {
 
 
 function CustomersPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { type: bizType } = useBusinessType();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -268,8 +268,7 @@ function CustomersPage() {
     return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q);
   });
   const dateFilterActive = !!(dateFrom || dateTo);
-  const lang = (typeof navigator !== "undefined" && navigator.language) || "en";
-  const dateLabel = lang.startsWith("zh") ? "时间" : lang.startsWith("ms") ? "Tarikh" : "Date";
+  const dateLabel = lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date";
   const todayStr = () => new Date().toISOString().slice(0, 10);
   const daysAgoStr = (n: number) => {
     const d = new Date(); d.setDate(d.getDate() - n);
