@@ -3,6 +3,23 @@ import "@tanstack/react-start/server-only";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+/** Normalize detail_images JSON (legacy string[] or new {url, description}[]) for public output. */
+function normalizeDetailItems(raw: unknown): Array<{ url: string; description: string }> {
+  if (!Array.isArray(raw)) return [];
+  const out: Array<{ url: string; description: string }> = [];
+  for (const v of raw) {
+    if (typeof v === "string") {
+      if (v.trim()) out.push({ url: v, description: "" });
+    } else if (v && typeof v === "object") {
+      const o = v as Record<string, unknown>;
+      const url = typeof o.url === "string" ? o.url : "";
+      const description = typeof o.description === "string" ? o.description : "";
+      if (url.trim()) out.push({ url, description });
+    }
+  }
+  return out;
+}
+
 const APP_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
 // Push notifications for new orders are dispatched by a Postgres AFTER INSERT
 // trigger on public.orders (see external migration: notify_new_order_push).
