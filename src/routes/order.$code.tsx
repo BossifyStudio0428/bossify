@@ -469,8 +469,7 @@ function PublicOrderFormPage() {
             ))}
           </div>
 
-          <div className="flex-1" />
-          <p className="text-center text-[10px] text-muted-foreground mt-8">
+          <p className="text-center text-[11px] text-muted-foreground mt-8 mb-2">
             Powered by <span className="font-semibold text-foreground/70">Bossify</span> 💜
           </p>
         </div>
