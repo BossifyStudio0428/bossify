@@ -1596,7 +1596,7 @@ function ProductSlide({
         </div>
       )}
 
-      <div className="px-5 pt-4 space-y-3">
+      <div className="px-5 pt-5 space-y-3.5">
         {isProperty ? (
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
@@ -1609,14 +1609,15 @@ function ProductSlide({
             )}
           </div>
         ) : product.category && (
-          <p className="text-[10px] font-semibold tracking-wider uppercase text-primary/80">
+          <div className="inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.18em] uppercase text-primary">
+            <span className="h-px w-5 bg-primary/60" />
             {product.category}
-          </p>
+          </div>
         )}
-        <h2 className="text-xl font-bold leading-tight">{product.name}</h2>
+        <h2 className="text-[26px] font-extrabold leading-tight tracking-tight">{product.name}</h2>
 
         {!isProperty && (
-          <p className="text-2xl font-bold text-primary">
+          <p className="text-3xl font-black bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {hasVariants && !variant ? "from " : ""}
             RM {Number(unitPrice).toFixed(2)}
           </p>
