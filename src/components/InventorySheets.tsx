@@ -218,8 +218,8 @@ export function ProductFormSheet({
 
   const sections: FormSection[] = [
     {
-      title: t("image") + " & Video",
-      subtitle: "1 cover photo + 1 video. Add more in Detail photos below.",
+      title: t("image") + " & " + t("media_video"),
+      subtitle: t("media_subtitle"),
       content: (
         <ProductImagesGrid
           images={images}
@@ -233,7 +233,7 @@ export function ProductFormSheet({
       ),
     },
     {
-      title: "Basic info",
+      title: t("basic_info"),
       content: (
         <>
           <SheetField label={t("product_name")} value={name} onChange={setName} placeholder={t("product_name_ph")} />
