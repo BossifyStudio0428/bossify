@@ -63,6 +63,9 @@ function CustomersPage() {
   const [newCustomerErrors, setNewCustomerErrors] = useState<Record<string, string>>({});
   const [savingNewCustomer, setSavingNewCustomer] = useState(false);
   const [followUpByCustomerId, setFollowUpByCustomerId] = useState<Record<string, string>>({});
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [dateOpen, setDateOpen] = useState(false);
 
   const ordersWordKey: TKey =
     bizType === "education" ? "case_word"
@@ -257,8 +260,21 @@ function CustomersPage() {
         return false;
       }
     }
+    if (dateFrom || dateTo) {
+      const t = new Date(c.created_at).getTime();
+      if (dateFrom && t < new Date(dateFrom + "T00:00:00").getTime()) return false;
+      if (dateTo && t > new Date(dateTo + "T23:59:59").getTime()) return false;
+    }
     return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q);
   });
+  const dateFilterActive = !!(dateFrom || dateTo);
+  const lang = (typeof navigator !== "undefined" && navigator.language) || "en";
+  const dateLabel = lang.startsWith("zh") ? "时间" : lang.startsWith("ms") ? "Tarikh" : "Date";
+  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const daysAgoStr = (n: number) => {
+    const d = new Date(); d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  };
 
   const packageOptions = bizType === "property"
     ? Array.from(
@@ -367,7 +383,52 @@ function CustomersPage() {
             {CUSTOMER_STATUS_DOT[s]} {t(`cs_${s}` as any)}
           </button>
         ))}
+        <button
+          onClick={() => setDateOpen((v) => !v)}
+          className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${dateFilterActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+        >
+          📅 {dateLabel}
+        </button>
+        {dateFilterActive && (
+          <button
+            onClick={() => { setDateFrom(""); setDateTo(""); }}
+            className="shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95"
+          >
+            ✕
+          </button>
+        )}
       </div>
+
+      {dateOpen && (
+        <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 space-y-2">
+          <div className="flex gap-2">
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+              className="flex-1 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary" />
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+              className="flex-1 rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary" />
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            <button onClick={() => { setDateFrom(todayStr()); setDateTo(todayStr()); }}
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95">
+              {lang.startsWith("zh") ? "今天" : lang.startsWith("ms") ? "Hari ini" : "Today"}
+            </button>
+            <button onClick={() => { setDateFrom(daysAgoStr(6)); setDateTo(todayStr()); }}
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95">
+              {lang.startsWith("zh") ? "近7天" : lang.startsWith("ms") ? "7 hari" : "Last 7 days"}
+            </button>
+            <button onClick={() => { setDateFrom(daysAgoStr(29)); setDateTo(todayStr()); }}
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95">
+              {lang.startsWith("zh") ? "近30天" : lang.startsWith("ms") ? "30 hari" : "Last 30 days"}
+            </button>
+            {dateFilterActive && (
+              <button onClick={() => { setDateFrom(""); setDateTo(""); }}
+                className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95 ml-auto">
+                {lang.startsWith("zh") ? "清除" : lang.startsWith("ms") ? "Padam" : "Clear"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {bizType === "property" && packageOptions.length > 0 && (
         <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
