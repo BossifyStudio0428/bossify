@@ -1666,23 +1666,27 @@ function ProductSlide({
 
         {/* Detail photos — horizontal swipe carousel (snap) */}
         {product.detail_images && product.detail_images.length > 0 && (
-          <div className="-mx-5 mt-2 bg-muted/20 pb-3">
+          <div className="-mx-5 mt-2 bg-muted/20 pb-4 overflow-hidden">
             <p className="px-5 pt-3 pb-2 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
               {lang === "ms" ? "Butiran" : lang === "zh" ? "商品详情" : "Details"}
             </p>
             <div
-              className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-3 px-5 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="grid grid-flow-col auto-cols-[100%] overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth px-5 no-scrollbar overscroll-x-contain touch-pan-x"
             >
               {product.detail_images.map((d, i) => (
                 <div
                   key={i}
-                  className="snap-center shrink-0 w-[85%] max-w-sm rounded-xl overflow-hidden bg-background shadow-sm"
+                  className="snap-center shrink-0 w-full pr-0"
                 >
-                  <img src={d.url} alt="" loading="lazy" className="w-full h-auto block" />
-                  {d.description && (
-                    <p className="px-3 py-2 text-sm text-foreground/80 whitespace-pre-wrap">{d.description}</p>
-                  )}
-                  <p className="px-3 pb-2 text-[10px] text-muted-foreground">{i + 1} / {product.detail_images!.length}</p>
+                  <div className="rounded-xl overflow-hidden bg-background shadow-sm">
+                    <div className="aspect-square w-full bg-muted/30 overflow-hidden">
+                      <img src={d.url} alt="" loading="lazy" className="h-full w-full object-cover block" />
+                    </div>
+                    {d.description && (
+                      <p className="px-3 py-2 text-sm text-foreground/80 whitespace-pre-wrap">{d.description}</p>
+                    )}
+                    <p className="px-3 pb-2 text-[10px] text-muted-foreground">{i + 1} / {product.detail_images!.length}</p>
+                  </div>
                 </div>
               ))}
             </div>
