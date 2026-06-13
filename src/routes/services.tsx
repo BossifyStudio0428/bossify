@@ -446,7 +446,6 @@ function buildSections(p: {
           onChange={p.setDetailImages}
           userId={p.userId}
         />
-        <Field label={t("description_label")} value={p.description} onChange={p.setDescription} multiline />
       </>
     ),
   });
