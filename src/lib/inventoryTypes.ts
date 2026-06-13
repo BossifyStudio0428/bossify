@@ -30,3 +30,23 @@ export function parseVariants(raw: unknown): Variant[] {
     })
     .filter((v): v is Variant => v !== null);
 }
+
+/** A single Shopee-style "detail" entry: one image + its own description. */
+export type DetailItem = { url: string; description: string };
+
+/** Accepts legacy string[] or new {url, description}[] and normalizes. */
+export function parseDetailItems(raw: unknown): DetailItem[] {
+  if (!Array.isArray(raw)) return [];
+  const out: DetailItem[] = [];
+  for (const v of raw) {
+    if (typeof v === "string") {
+      if (v.trim()) out.push({ url: v, description: "" });
+    } else if (v && typeof v === "object") {
+      const o = v as Record<string, unknown>;
+      const url = typeof o.url === "string" ? o.url : "";
+      const description = typeof o.description === "string" ? o.description : "";
+      if (url.trim()) out.push({ url, description });
+    }
+  }
+  return out;
+}
