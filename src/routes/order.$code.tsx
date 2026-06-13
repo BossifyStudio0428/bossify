@@ -619,7 +619,7 @@ function PublicOrderFormPage() {
       case "property":
         return { name: t("f_client_name") };
       default:
-        return { name: t("customer_name") };
+        return { name: L("Your name", "Nama anda", "您的姓名") };
     }
   })();
 
@@ -1064,8 +1064,15 @@ function PublicOrderFormPage() {
           </Field>
 
           {(bizType === "retail" || bizType === "fnb") && (
-            <Field label={addressLabel}>
-              <textarea rows={2} value={form.address} onChange={upd("address")} className="pof-input" maxLength={500} />
+            <Field label={`${addressLabel} *`}>
+              <textarea
+                required
+                rows={2}
+                value={form.address}
+                onChange={upd("address")}
+                className="pof-input"
+                maxLength={500}
+              />
             </Field>
           )}
 
