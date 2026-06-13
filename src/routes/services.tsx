@@ -251,7 +251,7 @@ function ServiceFormSheet({
     if (Array.isArray(d.addons)) setAddons(d.addons);
     if (Array.isArray(d.portfolioLinks)) setPortfolioLinks(d.portfolioLinks);
     if (typeof d.videoThumb === "string" || d.videoThumb === null) setVideoThumb(d.videoThumb);
-    toast.info("已恢复未保存的草稿");
+    toast.info(t("draft_restored"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -430,7 +430,7 @@ function buildSections(p: {
       <>
         <Field label={p.nameLabel} value={p.name} onChange={p.setName} />
         {p.showCategory && (
-          <Field label="Category" value={p.category} onChange={p.setCategory} />
+          <Field label={t("category")} value={p.category} onChange={p.setCategory} />
         )}
       </>
     ),
