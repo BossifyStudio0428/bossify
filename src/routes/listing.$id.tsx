@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { propTypeKey, statusKey } from "./listings";
+import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 
 export const Route = createFileRoute("/listing/$id")({ component: ListingEditor });
 
