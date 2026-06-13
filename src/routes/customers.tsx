@@ -43,7 +43,7 @@ function relTime(iso: string | null, t: (k: any) => string) {
 
 
 function CustomersPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { type: bizType } = useBusinessType();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -268,8 +268,7 @@ function CustomersPage() {
     return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q);
   });
   const dateFilterActive = !!(dateFrom || dateTo);
-  const lang = (typeof navigator !== "undefined" && navigator.language) || "en";
-  const dateLabel = lang.startsWith("zh") ? "时间" : lang.startsWith("ms") ? "Tarikh" : "Date";
+  const dateLabel = lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date";
   const todayStr = () => new Date().toISOString().slice(0, 10);
   const daysAgoStr = (n: number) => {
     const d = new Date(); d.setDate(d.getDate() - n);
@@ -383,19 +382,34 @@ function CustomersPage() {
             {CUSTOMER_STATUS_DOT[s]} {t(`cs_${s}` as any)}
           </button>
         ))}
+      </div>
+
+      <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={() => setDateOpen((v) => !v)}
-          className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${dateFilterActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors border ${
+            dateFilterActive
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-card text-foreground border-border"
+          }`}
         >
           📅 {dateLabel}
+          {dateFilterActive && <span className="text-[10px] opacity-80">●</span>}
         </button>
         {dateFilterActive && (
           <button
+            type="button"
             onClick={() => { setDateFrom(""); setDateTo(""); }}
-            className="shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95"
+            className="text-[11px] text-muted-foreground underline"
           >
-            ✕
+            {lang === "zh" ? "清除" : lang === "ms" ? "Buang" : "Clear"}
           </button>
+        )}
+        {dateFilterActive && (
+          <span className="text-[11px] text-muted-foreground ml-auto">
+            {visible.length} {lang === "zh" ? "条结果" : lang === "ms" ? "hasil" : "results"}
+          </span>
         )}
       </div>
 
