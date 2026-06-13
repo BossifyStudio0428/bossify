@@ -55,6 +55,7 @@ export function ProductImagesGrid({
   maxVideoMB = 30,
   hideVideo = false,
 }: Props) {
+  const { t } = useI18n();
   const imgRef = useRef<HTMLInputElement>(null);
   const vidRef = useRef<HTMLInputElement>(null);
   const [busyThumb, setBusyThumb] = useState(false);
@@ -237,7 +238,7 @@ export function ProductImagesGrid({
           >
             <Video className="h-4 w-4" />
             <span className="text-xs font-semibold">
-              Upload video <span className="text-muted-foreground/70 font-normal">(≤{maxVideoMB}MB)</span>
+              {t("upload_video")} <span className="text-muted-foreground/70 font-normal">(≤{maxVideoMB}MB)</span>
             </span>
           </button>
         )}
