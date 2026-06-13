@@ -407,8 +407,8 @@ function buildSections(p: {
 
   // 1. Photos & video
   sections.push({
-    title: t("image") + " & Video",
-    subtitle: "1 cover photo + 1 video. Add more in Detail photos below.",
+    title: t("image") + " & " + t("media_video"),
+    subtitle: t("media_subtitle"),
     content: (
       <ProductImagesGrid
         images={p.images}
@@ -424,7 +424,7 @@ function buildSections(p: {
 
   // 2. Basic info
   sections.push({
-    title: "Basic info",
+    title: t("basic_info"),
     content: (
       <>
         <Field label={p.nameLabel} value={p.name} onChange={p.setName} />
