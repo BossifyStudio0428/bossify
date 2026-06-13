@@ -24,6 +24,7 @@ type Service = {
   is_active: boolean;
   image_url: string | null;
   images?: string[] | null;
+  detail_images?: string[] | null;
   video_url?: string | null;
   cover_image_url?: string | null;
   stock?: number | null;
@@ -63,7 +64,7 @@ function ServicesPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("services")
-      .select("id,name,description,price,duration_minutes,is_active,image_url,images,video_url,cover_image_url,stock,variants,category,rate_type,addons,level,intake,requirements,turnaround_days,portfolio_links")
+      .select("id,name,description,price,duration_minutes,is_active,image_url,images,detail_images,video_url,cover_image_url,stock,variants,category,rate_type,addons,level,intake,requirements,turnaround_days,portfolio_links")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -195,6 +196,9 @@ function ServiceFormSheet({
     return item?.image_url ? [item.image_url] : [];
   })();
   const [images, setImages] = useState<string[]>(initialImages);
+  const [detailImages, setDetailImages] = useState<string[]>(
+    Array.isArray(item?.detail_images) ? (item!.detail_images as string[]).map(String) : [],
+  );
   const [videoUrl, setVideoUrl] = useState<string | null>(item?.video_url ?? null);
   const [stock, setStock] = useState(item?.stock != null ? String(item.stock) : "");
   const [variants, setVariants] = useState<Variant[]>(parseVariants(item?.variants));
@@ -232,6 +236,7 @@ function ServiceFormSheet({
     if (typeof d.price === "string") setPrice(d.price);
     if (typeof d.duration === "string") setDuration(d.duration);
     if (Array.isArray(d.images)) setImages(d.images);
+    if (Array.isArray(d.detailImages)) setDetailImages(d.detailImages);
     if (typeof d.videoUrl === "string" || d.videoUrl === null) setVideoUrl(d.videoUrl);
     if (typeof d.stock === "string") setStock(d.stock);
     if (Array.isArray(d.variants)) setVariants(d.variants);
@@ -252,12 +257,12 @@ function ServiceFormSheet({
   useEffect(() => {
     if (item) return;
     saveDraft(draftKey, {
-      name, description, price, duration, images, videoUrl, stock, variants,
+      name, description, price, duration, images, detailImages, videoUrl, stock, variants,
       category, rateType, level, intake, requirements, turnaround, addons,
       portfolioLinks, videoThumb,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, description, price, duration, images, videoUrl, stock, variants,
+  }, [name, description, price, duration, images, detailImages, videoUrl, stock, variants,
       category, rateType, level, intake, requirements, turnaround, addons,
       portfolioLinks, videoThumb]);
 
@@ -299,6 +304,7 @@ function ServiceFormSheet({
       duration_minutes: showDur && duration ? Math.max(0, Number(duration) || 0) : null,
       image_url: images[0] ?? null,
       images,
+      detail_images: detailImages,
       video_url: videoUrl,
       cover_image_url: images[0] ?? videoThumb ?? null,
       stock: showStock && stock.trim() !== "" ? Math.max(0, Number(stock) || 0) : null,
@@ -339,6 +345,7 @@ function ServiceFormSheet({
         price, setPrice,
         duration, setDuration,
         images, setImages,
+        detailImages, setDetailImages,
         videoUrl, setVideoUrl,
         setVideoThumb,
         userId,
@@ -366,6 +373,7 @@ function buildSections(p: {
   price: string; setPrice: (v: string) => void;
   duration: string; setDuration: (v: string) => void;
   images: string[]; setImages: (v: string[]) => void;
+  detailImages: string[]; setDetailImages: (v: string[]) => void;
   videoUrl: string | null; setVideoUrl: (v: string | null) => void;
   setVideoThumb: (v: string | null) => void;
   userId: string;
@@ -403,6 +411,23 @@ function buildSections(p: {
         onVideoChange={p.setVideoUrl}
         onVideoThumbReady={p.setVideoThumb}
         userId={p.userId}
+      />
+    ),
+  });
+
+  // 1b. Detail photos (Shopee-style 详情图 — shown vertically in description area)
+  sections.push({
+    title: "Detail photos",
+    subtitle: "Long detail / description photos shown stacked under the product info.",
+    content: (
+      <ProductImagesGrid
+        images={p.detailImages}
+        onChange={p.setDetailImages}
+        videoUrl={null}
+        onVideoChange={() => {}}
+        userId={p.userId}
+        maxImages={20}
+        hideVideo
       />
     ),
   });

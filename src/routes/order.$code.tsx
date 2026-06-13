@@ -68,6 +68,7 @@ type Product = {
   duration_minutes?: number | null;
   stock?: number | null;
   images?: string[];
+  detail_images?: string[];
   video_url?: string | null;
   cover_image_url?: string | null;
   addons?: { id?: string; name: string; price: number }[];
@@ -1664,6 +1665,18 @@ function ProductSlide({
         ) : null}
         {product.description && (
           <p className="text-sm text-foreground/80 whitespace-pre-wrap">{product.description}</p>
+        )}
+
+        {/* Detail photos — Shopee-style 详情图, stacked full-width under product info */}
+        {product.detail_images && product.detail_images.length > 0 && (
+          <div className="-mx-5 mt-2 space-y-1.5 bg-muted/20">
+            <p className="px-5 pt-3 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+              {lang === "ms" ? "Butiran" : lang === "zh" ? "商品详情" : "Details"}
+            </p>
+            {product.detail_images.map((u, i) => (
+              <img key={i} src={u} alt="" loading="lazy" className="w-full h-auto block" />
+            ))}
+          </div>
         )}
 
         {/* Biz-specific extras */}

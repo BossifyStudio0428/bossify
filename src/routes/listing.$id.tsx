@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { propTypeKey, statusKey } from "./listings";
+import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 
 export const Route = createFileRoute("/listing/$id")({ component: ListingEditor });
 
@@ -53,6 +54,7 @@ function ListingEditor() {
   const [status, setStatus] = useState("available");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [detailImages, setDetailImages] = useState<string[]>([]);
   const [interestedCustomerId, setInterestedCustomerId] = useState<string | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
@@ -94,6 +96,7 @@ function ListingEditor() {
         setStatus(r.status ?? "available");
         setDescription(r.description ?? "");
         setImages(Array.isArray(r.images) ? r.images : []);
+        setDetailImages(Array.isArray(r.detail_images) ? r.detail_images : []);
         setInterestedCustomerId(r.interested_customer_id ?? null);
       }
       setLoading(false);
@@ -136,6 +139,7 @@ function ListingEditor() {
       status,
       description: description.trim() || null,
       images,
+      detail_images: detailImages,
       interested_customer_id: interestedCustomerId,
     };
     let listingId: string | undefined = isNew ? undefined : id;
@@ -233,6 +237,23 @@ function ListingEditor() {
           />
         </div>
       </Section>
+
+      {user && (
+        <Section label="Detail photos">
+          <p className="text-[11px] text-muted-foreground -mt-1 mb-2">
+            Long detail / description photos shown stacked under the listing info.
+          </p>
+          <ProductImagesGrid
+            images={detailImages}
+            onChange={setDetailImages}
+            videoUrl={null}
+            onVideoChange={() => {}}
+            userId={user.id}
+            maxImages={20}
+            hideVideo
+          />
+        </Section>
+      )}
 
       <TextField label={t("fld_title")} value={title} onChange={setTitle} />
 

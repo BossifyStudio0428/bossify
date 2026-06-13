@@ -115,6 +115,9 @@ export function ProductFormSheet({
     return item?.image_url ? [item.image_url] : [];
   })();
   const [images, setImages] = useState<string[]>(initialImages);
+  const [detailImages, setDetailImages] = useState<string[]>(
+    Array.isArray((item as any)?.detail_images) ? ((item as any).detail_images as unknown[]).map(String) : [],
+  );
   const [videoUrl, setVideoUrl] = useState<string | null>((item as any)?.video_url ?? null);
   const [videoThumb, setVideoThumb] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -138,6 +141,7 @@ export function ProductFormSheet({
     if (typeof d.description === "string") setDescription(d.description);
     if (Array.isArray(d.variants)) setVariants(d.variants);
     if (Array.isArray(d.images)) setImages(d.images);
+    if (Array.isArray(d.detailImages)) setDetailImages(d.detailImages);
     if (typeof d.videoUrl === "string" || d.videoUrl === null) setVideoUrl(d.videoUrl);
     if (typeof d.videoThumb === "string" || d.videoThumb === null) setVideoThumb(d.videoThumb);
     if (typeof d.supplierId === "string") setSupplierId(d.supplierId);
@@ -149,11 +153,11 @@ export function ProductFormSheet({
     if (item) return;
     saveDraft(draftKey, {
       name, stock, unit, customUnit, price, costPrice, category, description,
-      variants, images, videoUrl, videoThumb, supplierId,
+      variants, images, detailImages, videoUrl, videoThumb, supplierId,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, stock, unit, customUnit, price, costPrice, category, description,
-      variants, images, videoUrl, videoThumb, supplierId]);
+      variants, images, detailImages, videoUrl, videoThumb, supplierId]);
 
   useEffect(() => {
     if (!showSuppliers) return;
@@ -194,6 +198,7 @@ export function ProductFormSheet({
       description: description.trim() || null,
       variants: cleanVariants,
       images,
+      detail_images: detailImages,
       image_url: images[0] ?? null,
       video_url: videoUrl,
       cover_image_url: images[0] ?? videoThumb ?? null,
@@ -221,6 +226,21 @@ export function ProductFormSheet({
           onVideoChange={setVideoUrl}
           onVideoThumbReady={setVideoThumb}
           userId={userId}
+        />
+      ),
+    },
+    {
+      title: "Detail photos",
+      subtitle: "Long detail / description photos shown stacked under the product info.",
+      content: (
+        <ProductImagesGrid
+          images={detailImages}
+          onChange={setDetailImages}
+          videoUrl={null}
+          onVideoChange={() => {}}
+          userId={userId}
+          maxImages={20}
+          hideVideo
         />
       ),
     },

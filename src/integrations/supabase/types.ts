@@ -266,6 +266,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           description: string | null
+          detail_images: Json
           id: string
           image_url: string | null
           images: Json
@@ -283,6 +284,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          detail_images?: Json
           id?: string
           image_url?: string | null
           images?: Json
@@ -300,6 +302,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          detail_images?: Json
           id?: string
           image_url?: string | null
           images?: Json
@@ -322,6 +325,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           description: string | null
+          detail_images: Json
           id: string
           images: Json
           interested_customer_id: string | null
@@ -342,6 +346,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          detail_images?: Json
           id?: string
           images?: Json
           interested_customer_id?: string | null
@@ -362,6 +367,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          detail_images?: Json
           id?: string
           images?: Json
           interested_customer_id?: string | null
@@ -771,6 +777,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           description: string | null
+          detail_images: Json
           duration_minutes: number | null
           id: string
           image_url: string | null
@@ -795,6 +802,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          detail_images?: Json
           duration_minutes?: number | null
           id?: string
           image_url?: string | null
@@ -819,6 +827,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          detail_images?: Json
           duration_minutes?: number | null
           id?: string
           image_url?: string | null
