@@ -1290,10 +1290,10 @@ function DetailSheet({
           <button
             type="button"
             onClick={onClose}
-            className="pointer-events-auto h-9 w-9 rounded-full bg-background/95 backdrop-blur shadow flex items-center justify-center"
+            className="pointer-events-auto h-10 w-10 rounded-full bg-foreground text-background shadow-lg ring-2 ring-background flex items-center justify-center"
             aria-label="Close"
           >
-            <X size={16} />
+            <X size={20} strokeWidth={2.75} />
           </button>
         </div>
 
