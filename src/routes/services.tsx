@@ -427,6 +427,7 @@ function buildSections(p: {
         onVideoChange={() => {}}
         userId={p.userId}
         maxImages={20}
+        hideVideo
       />
     ),
   });
