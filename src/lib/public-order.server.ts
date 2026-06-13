@@ -172,7 +172,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         variants: Array.isArray(x.variants) ? x.variants : [],
         stock: typeof x.stock === "number" ? x.stock : null,
         images: Array.isArray(x.images) ? x.images.map((u: unknown) => String(u)) : [],
-        detail_images: Array.isArray(x.detail_images) ? x.detail_images.map((u: unknown) => String(u)) : [],
+        detail_images: normalizeDetailItems(x.detail_images),
         video_url: x.video_url ?? null,
         cover_image_url: x.cover_image_url ?? null,
       })) as any;
@@ -196,7 +196,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
           description: x.description ?? null,
           variants: [],
           images: imgs.map((u: unknown) => String(u)),
-          detail_images: Array.isArray(x.detail_images) ? x.detail_images.map((u: unknown) => String(u)) : [],
+          detail_images: normalizeDetailItems(x.detail_images),
           video_url: x.video_url ?? null,
           cover_image_url: x.cover_image_url ?? null,
           property: {
@@ -227,7 +227,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         duration_minutes: x.duration_minutes ?? null,
         stock: typeof x.stock === "number" ? x.stock : null,
         images: Array.isArray(x.images) ? x.images.map((u: unknown) => String(u)) : [],
-        detail_images: Array.isArray(x.detail_images) ? x.detail_images.map((u: unknown) => String(u)) : [],
+        detail_images: normalizeDetailItems(x.detail_images),
         video_url: x.video_url ?? null,
         cover_image_url: x.cover_image_url ?? null,
         addons: Array.isArray(x.addons) ? x.addons : [],
