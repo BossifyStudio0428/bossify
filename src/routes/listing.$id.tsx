@@ -167,7 +167,10 @@ function ListingEditor() {
     }
     setSaving(false);
     if (user) {
-      await toastSavedWithOrderFormLink(t("listing_saved"), user.id);
+      await toastSavedWithOrderFormLink(t("listing_saved"), user.id, {
+        description: t("toast_view_on_order_form"),
+        action: t("toast_view_form"),
+      });
     } else {
       toast.success(t("listing_saved"));
     }
