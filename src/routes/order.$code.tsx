@@ -419,12 +419,16 @@ function PublicOrderFormPage() {
             <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
             <div className="absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-fuchsia-400/20 blur-2xl" />
             <div className="relative flex items-center gap-3">
-              <div className="h-14 w-14 rounded-2xl bg-white/95 flex items-center justify-center shadow-sm">
+              <div className="h-14 w-14 rounded-2xl bg-white/95 flex items-center justify-center shadow-sm flex-shrink-0">
                 <img src={bossifyLogo} alt="Bossify" className="h-10 w-10 object-contain" />
               </div>
-              <div>
-                <p className="text-[10px] font-bold tracking-[0.22em] text-white/70 uppercase">Welcome</p>
-                <h1 className="text-2xl font-extrabold leading-tight">Bossify</h1>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold tracking-[0.22em] text-white/70 uppercase">
+                  Order form · Borang pesanan · 订单表格
+                </p>
+                <h1 className="text-2xl font-extrabold leading-tight break-words">
+                  {state.profile?.business_name || "Store"}
+                </h1>
               </div>
             </div>
             <div className="relative mt-5 space-y-0.5 text-[13px] text-white/85 leading-snug">
