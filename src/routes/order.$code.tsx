@@ -1620,7 +1620,7 @@ function ProductSlide({
         <h2 className="text-[26px] font-extrabold leading-tight tracking-tight">{product.name}</h2>
 
         {!isProperty && (
-          <p className="text-3xl font-black bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <p className="text-3xl font-black text-primary">
             {hasVariants && !variant ? "from " : ""}
             RM {Number(unitPrice).toFixed(2)}
           </p>
