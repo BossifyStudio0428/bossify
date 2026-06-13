@@ -60,10 +60,15 @@ function CustomerDetail() {
     if (!c) { setLoading(false); return; }
     setCustomer(c as CustomerRow);
     setRemarks(((c as CustomerRow).remarks ?? "") as string);
-    const { data: o } = await supabase
-      .from("orders").select("*")
-      .eq("customer_name", (c as CustomerRow).name)
-      .order("created_at", { ascending: false });
+    const cust = c as CustomerRow;
+    const phoneDigits = (cust.phone || "").replace(/\D/g, "");
+    let q = supabase.from("orders").select("*").eq("user_id", cust.user_id);
+    if (phoneDigits) {
+      q = q.or(`phone.eq.${phoneDigits},customer_name.eq.${cust.name}`);
+    } else {
+      q = q.eq("customer_name", cust.name);
+    }
+    const { data: o } = await q.order("created_at", { ascending: false });
     setOrders((o ?? []) as OrderRow[]);
     const { data: fu } = await supabase
       .from("follow_ups").select("*")
