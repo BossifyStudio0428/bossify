@@ -8,6 +8,7 @@ import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { propTypeKey, statusKey } from "./listings";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
+import { DetailPhotosList } from "@/components/DetailPhotosList";
 
 export const Route = createFileRoute("/listing/$id")({ component: ListingEditor });
 
@@ -241,16 +242,12 @@ function ListingEditor() {
       {user && (
         <Section label="Detail photos">
           <p className="text-[11px] text-muted-foreground -mt-1 mb-2">
-            Long detail / description photos shown stacked under the listing info.
+            Add one photo per detail (Detail 1, Detail 2...). Shown stacked below the listing info.
           </p>
-          <ProductImagesGrid
+          <DetailPhotosList
             images={detailImages}
             onChange={setDetailImages}
-            videoUrl={null}
-            onVideoChange={() => {}}
             userId={user.id}
-            maxImages={20}
-            hideVideo
           />
         </Section>
       )}

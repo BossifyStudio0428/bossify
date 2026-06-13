@@ -11,6 +11,7 @@ import type { Lang } from "@/contexts/I18nContext";
 import { parseVariants, type Variant } from "@/lib/inventoryTypes";
 import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
+import { DetailPhotosList } from "@/components/DetailPhotosList";
 import { loadDraft, saveDraft, clearDraft } from "@/lib/formDraft";
 
 export const Route = createFileRoute("/services")({ component: ServicesPage });
@@ -419,16 +420,12 @@ function buildSections(p: {
   // 1b. Detail photos (Shopee-style 详情图 — shown vertically in description area)
   sections.push({
     title: "Detail photos",
-    subtitle: "Long detail / description photos shown stacked under the product info.",
+    subtitle: "Add one photo per detail (Detail 1, Detail 2...). Shown stacked below the description.",
     content: (
-      <ProductImagesGrid
+      <DetailPhotosList
         images={p.detailImages}
         onChange={p.setDetailImages}
-        videoUrl={null}
-        onVideoChange={() => {}}
         userId={p.userId}
-        maxImages={20}
-        hideVideo
       />
     ),
   });
