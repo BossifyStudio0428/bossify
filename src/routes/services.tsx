@@ -11,6 +11,7 @@ import type { Lang } from "@/contexts/I18nContext";
 import { parseVariants, type Variant } from "@/lib/inventoryTypes";
 import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
+import { loadDraft, saveDraft, clearDraft } from "@/lib/formDraft";
 
 export const Route = createFileRoute("/services")({ component: ServicesPage });
 
@@ -217,6 +218,48 @@ function ServiceFormSheet({
   const [portfolioLinks, setPortfolioLinks] = useState<string[]>(parseLinks(item?.portfolio_links));
   const [newLink, setNewLink] = useState("");
   const [saving, setSaving] = useState(false);
+  const [videoThumb, setVideoThumb] = useState<string | null>(null);
+
+  const draftKey = `service:${userId}:${bizType}:${item?.id ?? "new"}`;
+
+  // Restore draft on mount (only when creating a new item — editing keeps server values).
+  useEffect(() => {
+    if (item) return;
+    const d = loadDraft<any>(draftKey);
+    if (!d) return;
+    if (typeof d.name === "string") setName(d.name);
+    if (typeof d.description === "string") setDescription(d.description);
+    if (typeof d.price === "string") setPrice(d.price);
+    if (typeof d.duration === "string") setDuration(d.duration);
+    if (Array.isArray(d.images)) setImages(d.images);
+    if (typeof d.videoUrl === "string" || d.videoUrl === null) setVideoUrl(d.videoUrl);
+    if (typeof d.stock === "string") setStock(d.stock);
+    if (Array.isArray(d.variants)) setVariants(d.variants);
+    if (typeof d.category === "string") setCategory(d.category);
+    if (d.rateType === "hourly" || d.rateType === "fixed") setRateType(d.rateType);
+    if (typeof d.level === "string") setLevel(d.level);
+    if (typeof d.intake === "string") setIntake(d.intake);
+    if (typeof d.requirements === "string") setRequirements(d.requirements);
+    if (typeof d.turnaround === "string") setTurnaround(d.turnaround);
+    if (Array.isArray(d.addons)) setAddons(d.addons);
+    if (Array.isArray(d.portfolioLinks)) setPortfolioLinks(d.portfolioLinks);
+    if (typeof d.videoThumb === "string" || d.videoThumb === null) setVideoThumb(d.videoThumb);
+    toast.info("已恢复未保存的草稿");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced autosave (skip when editing existing item).
+  useEffect(() => {
+    if (item) return;
+    saveDraft(draftKey, {
+      name, description, price, duration, images, videoUrl, stock, variants,
+      category, rateType, level, intake, requirements, turnaround, addons,
+      portfolioLinks, videoThumb,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, description, price, duration, images, videoUrl, stock, variants,
+      category, rateType, level, intake, requirements, turnaround, addons,
+      portfolioLinks, videoThumb]);
 
   const isFnb = bizType === "fnb";
   const isBeauty = bizType === "beauty";
@@ -257,7 +300,7 @@ function ServiceFormSheet({
       image_url: images[0] ?? null,
       images,
       video_url: videoUrl,
-      cover_image_url: images[0] ?? null,
+      cover_image_url: images[0] ?? videoThumb ?? null,
       stock: showStock && stock.trim() !== "" ? Math.max(0, Number(stock) || 0) : null,
       variants: showVariants ? cleanVariants : [],
       category: showCategory && category.trim() ? category.trim() : null,
@@ -274,6 +317,7 @@ function ServiceFormSheet({
       : await supabase.from("services").insert({ ...payload, user_id: userId });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
+    clearDraft(draftKey);
     onSaved();
   };
 
@@ -296,6 +340,7 @@ function ServiceFormSheet({
         duration, setDuration,
         images, setImages,
         videoUrl, setVideoUrl,
+        setVideoThumb,
         userId,
         stock, setStock,
         variants, addVariant, updateVariant, removeVariant,
@@ -322,6 +367,7 @@ function buildSections(p: {
   duration: string; setDuration: (v: string) => void;
   images: string[]; setImages: (v: string[]) => void;
   videoUrl: string | null; setVideoUrl: (v: string | null) => void;
+  setVideoThumb: (v: string | null) => void;
   userId: string;
   stock: string; setStock: (v: string) => void;
   variants: Variant[]; addVariant: () => void;
@@ -355,6 +401,7 @@ function buildSections(p: {
         onChange={p.setImages}
         videoUrl={p.videoUrl}
         onVideoChange={p.setVideoUrl}
+        onVideoThumbReady={p.setVideoThumb}
         userId={p.userId}
       />
     ),

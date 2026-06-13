@@ -9,6 +9,7 @@ import { CATEGORY_PRESETS } from "@/lib/businessType";
 import { parseVariants, type InvRow, type Variant } from "@/lib/inventoryTypes";
 import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
+import { loadDraft, saveDraft, clearDraft } from "@/lib/formDraft";
 
 export function SheetShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
@@ -115,10 +116,44 @@ export function ProductFormSheet({
   })();
   const [images, setImages] = useState<string[]>(initialImages);
   const [videoUrl, setVideoUrl] = useState<string | null>((item as any)?.video_url ?? null);
+  const [videoThumb, setVideoThumb] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [supplierId, setSupplierId] = useState<string>((item as any)?.supplier_id ?? "");
   const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
   const showSuppliers = bizType === "retail" || bizType === "fnb";
+
+  const draftKey = `inventory:${userId}:${item?.id ?? "new"}`;
+
+  useEffect(() => {
+    if (item) return;
+    const d = loadDraft<any>(draftKey);
+    if (!d) return;
+    if (typeof d.name === "string") setName(d.name);
+    if (typeof d.stock === "string") setStock(d.stock);
+    if (typeof d.unit === "string") setUnit(d.unit);
+    if (typeof d.customUnit === "string") setCustomUnit(d.customUnit);
+    if (typeof d.price === "string") setPrice(d.price);
+    if (typeof d.costPrice === "string") setCostPrice(d.costPrice);
+    if (typeof d.category === "string") setCategory(d.category);
+    if (typeof d.description === "string") setDescription(d.description);
+    if (Array.isArray(d.variants)) setVariants(d.variants);
+    if (Array.isArray(d.images)) setImages(d.images);
+    if (typeof d.videoUrl === "string" || d.videoUrl === null) setVideoUrl(d.videoUrl);
+    if (typeof d.videoThumb === "string" || d.videoThumb === null) setVideoThumb(d.videoThumb);
+    if (typeof d.supplierId === "string") setSupplierId(d.supplierId);
+    toast.info("已恢复未保存的草稿");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (item) return;
+    saveDraft(draftKey, {
+      name, stock, unit, customUnit, price, costPrice, category, description,
+      variants, images, videoUrl, videoThumb, supplierId,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, stock, unit, customUnit, price, costPrice, category, description,
+      variants, images, videoUrl, videoThumb, supplierId]);
 
   useEffect(() => {
     if (!showSuppliers) return;
@@ -161,7 +196,7 @@ export function ProductFormSheet({
       images,
       image_url: images[0] ?? null,
       video_url: videoUrl,
-      cover_image_url: images[0] ?? null,
+      cover_image_url: images[0] ?? videoThumb ?? null,
       ...(showSuppliers ? { supplier_id: supplierId || null } : {}),
     };
     const { error } = item
@@ -169,6 +204,7 @@ export function ProductFormSheet({
       : await supabase.from("inventory").insert({ ...payload, user_id: userId });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
+    clearDraft(draftKey);
     toast.success(item ? t("customer_updated") : t("product_added"));
     onSaved();
   };
@@ -183,6 +219,7 @@ export function ProductFormSheet({
           onChange={setImages}
           videoUrl={videoUrl}
           onVideoChange={setVideoUrl}
+          onVideoThumbReady={setVideoThumb}
           userId={userId}
         />
       ),
