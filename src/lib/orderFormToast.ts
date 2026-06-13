@@ -7,7 +7,11 @@ import { getPublicOrigin } from "@/lib/publicUrl";
  * Includes an action to open the public order form so the merchant can
  * preview how the new item looks to customers.
  */
-export async function toastSavedWithOrderFormLink(message: string, userId: string) {
+export async function toastSavedWithOrderFormLink(
+  message: string,
+  userId: string,
+  labels?: { description?: string; action?: string },
+) {
   try {
     const { data } = await supabase
       .from("profiles")
@@ -20,10 +24,10 @@ export async function toastSavedWithOrderFormLink(message: string, userId: strin
     if (code && enabled) {
       const url = `${getPublicOrigin()}/order/${code}`;
       toast.success(message, {
-        description: "View it on your order form",
+        description: labels?.description ?? "View it on your order form",
         duration: 6000,
         action: {
-          label: "View form",
+          label: labels?.action ?? "View form",
           onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
         },
       });
