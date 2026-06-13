@@ -1521,7 +1521,7 @@ function ProductSlide({
               );
             })()}
             <div className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-[11px] font-bold shadow">
-              {gallery[Math.min(galleryIdx, gallery.length - 1)]?.label ?? "Cover"} · {galleryIdx + 1}/{gallery.length}
+              {galleryIdx + 1}/{gallery.length}
             </div>
             {gallery.length > 1 && (
               <>
@@ -1589,9 +1589,6 @@ function ProductSlide({
       {gallery[Math.min(galleryIdx, gallery.length - 1)]?.description && (
         <div className="px-5 mt-3">
           <div className="rounded-xl border bg-muted/30 px-3 py-2.5">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              {gallery[Math.min(galleryIdx, gallery.length - 1)]?.label}
-            </div>
             <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">
               {gallery[Math.min(galleryIdx, gallery.length - 1)]?.description}
             </p>
