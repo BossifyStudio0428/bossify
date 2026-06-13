@@ -139,8 +139,24 @@ export const getTeamMemberEmails = createServerFn({ method: "POST" })
     }
     if (!allowed) return { emails: {} as Record<string, string> };
 
+    // Restrict the lookup to UUIDs that are actually members (active or
+    // pending) of this team, or the team's owner. Without this filter, any
+    // team member could enumerate emails of arbitrary users by supplying
+    // their UUIDs.
+    const { data: team2 } = await externalSupabaseAdmin
+      .from("teams").select("owner_id").eq("id", data.teamId).maybeSingle();
+    const { data: members } = await externalSupabaseAdmin
+      .from("team_members")
+      .select("user_id")
+      .eq("team_id", data.teamId)
+      .in("user_id", data.userIds);
+    const allowedIds = new Set<string>(
+      (members ?? []).map((m: any) => m.user_id).filter(Boolean),
+    );
+    if (team2?.owner_id) allowedIds.add(team2.owner_id as string);
+
     const emails: Record<string, string> = {};
-    for (const uid of data.userIds) {
+    for (const uid of data.userIds.filter((id) => allowedIds.has(id))) {
       try {
         const { data: u } = await externalSupabaseAdmin.auth.admin.getUserById(uid);
         if (u?.user?.email) emails[uid] = u.user.email;
