@@ -1419,6 +1419,26 @@ function ProductSlide({
     gallery.push({ kind: "image", url: product.image_url });
   }
 
+  // Touch swipe handlers (so the user can swipe left/right through the gallery).
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartX.current = t.clientX;
+    touchStartY.current = t.clientY;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null || touchStartY.current == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX.current;
+    const dy = t.clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return; // ignore vertical scrolls
+    if (dx < 0) setGalleryIdx((i) => Math.min(gallery.length - 1, i + 1));
+    else setGalleryIdx((i) => Math.max(0, i - 1));
+  };
+
   const handleAdd = () => {
     if (isOutOfStock) return;
     onAdd({
@@ -1466,7 +1486,11 @@ function ProductSlide({
   return (
     <div className="h-full w-full overflow-y-auto pb-6">
       {/* Image gallery (horizontal scroll) */}
-      <div className={`${isProperty ? "aspect-[16/10]" : "aspect-square"} w-full bg-muted/40 overflow-hidden relative`}>
+      <div
+        className={`${isProperty ? "aspect-[16/10]" : "aspect-square"} w-full bg-muted/40 overflow-hidden relative select-none`}
+        onTouchStart={gallery.length > 1 ? onTouchStart : undefined}
+        onTouchEnd={gallery.length > 1 ? onTouchEnd : undefined}
+      >
         {gallery.length > 0 ? (
           <>
             {(() => {
