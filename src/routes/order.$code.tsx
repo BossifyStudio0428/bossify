@@ -1282,9 +1282,11 @@ function DetailSheet({
       >
         {/* Top bar overlay: counter + close */}
         <div className="absolute top-3 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
-          <div className="pointer-events-auto px-3 py-1 rounded-full bg-background/90 backdrop-blur text-[11px] font-semibold shadow">
-            {currentIndex + 1} / {total}
-          </div>
+          {!products[currentIndex]?.detail_images?.length && !products[currentIndex]?.images?.length ? (
+            <div className="pointer-events-auto px-3 py-1 rounded-full bg-background/90 backdrop-blur text-[11px] font-semibold shadow">
+              {currentIndex + 1} / {total}
+            </div>
+          ) : <div />}
           <button
             type="button"
             onClick={onClose}
@@ -1411,13 +1413,18 @@ function ProductSlide({
 
   const prop = product.property;
   const isProperty = !!prop;
-  type Slide = { kind: "image" | "video"; url: string };
+  type Slide = { kind: "image" | "video"; url: string; label?: string; description?: string };
   const gallery: Slide[] = [];
-  if (product.video_url) gallery.push({ kind: "video", url: product.video_url });
+  if (product.video_url) gallery.push({ kind: "video", url: product.video_url, label: "Cover" });
   if (product.images && product.images.length > 0) {
-    for (const u of product.images) gallery.push({ kind: "image", url: u });
+    for (const [idx, u] of product.images.entries()) gallery.push({ kind: "image", url: u, label: idx === 0 ? "Cover" : `Cover ${idx + 1}` });
   } else if (product.image_url) {
-    gallery.push({ kind: "image", url: product.image_url });
+    gallery.push({ kind: "image", url: product.image_url, label: "Cover" });
+  }
+  if (product.detail_images && product.detail_images.length > 0) {
+    for (const [idx, d] of product.detail_images.entries()) {
+      gallery.push({ kind: "image", url: d.url, label: `Details ${idx + 1}`, description: d.description });
+    }
   }
 
   // Touch swipe handlers (so the user can swipe left/right through the gallery).
@@ -1513,6 +1520,14 @@ function ProductSlide({
                 />
               );
             })()}
+            <div className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-[11px] font-bold shadow">
+              {gallery[Math.min(galleryIdx, gallery.length - 1)]?.label ?? "Cover"} · {galleryIdx + 1}/{gallery.length}
+            </div>
+            {gallery[Math.min(galleryIdx, gallery.length - 1)]?.description && (
+              <div className="absolute inset-x-3 bottom-3 rounded-xl bg-background/90 px-3 py-2 text-sm font-medium text-foreground shadow backdrop-blur">
+                {gallery[Math.min(galleryIdx, gallery.length - 1)]?.description}
+              </div>
+            )}
             {gallery.length > 1 && (
               <>
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 px-2 py-1 rounded-full">
@@ -1663,35 +1678,6 @@ function ProductSlide({
             {durationLabel}: {product.duration_minutes} {mins}
           </p>
         ) : null}
-
-        {/* Detail photos — horizontal swipe carousel (snap) */}
-        {product.detail_images && product.detail_images.length > 0 && (
-          <div className="-mx-5 mt-2 bg-muted/20 pb-4 overflow-hidden">
-            <p className="px-5 pt-3 pb-2 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
-              {lang === "ms" ? "Butiran" : lang === "zh" ? "商品详情" : "Details"}
-            </p>
-            <div
-              className="grid grid-flow-col auto-cols-[100%] overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth px-5 no-scrollbar overscroll-x-contain touch-pan-x"
-            >
-              {product.detail_images.map((d, i) => (
-                <div
-                  key={i}
-                  className="snap-center shrink-0 w-full pr-0"
-                >
-                  <div className="rounded-xl overflow-hidden bg-background shadow-sm">
-                    <div className="aspect-square w-full bg-muted/30 overflow-hidden">
-                      <img src={d.url} alt="" loading="lazy" className="h-full w-full object-cover block" />
-                    </div>
-                    {d.description && (
-                      <p className="px-3 py-2 text-sm text-foreground/80 whitespace-pre-wrap">{d.description}</p>
-                    )}
-                    <p className="px-3 pb-2 text-[10px] text-muted-foreground">{i + 1} / {product.detail_images!.length}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {product.description && (
           <p className="text-sm text-foreground/80 whitespace-pre-wrap pt-1">{product.description}</p>
