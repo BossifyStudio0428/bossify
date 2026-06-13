@@ -68,7 +68,7 @@ type Product = {
   duration_minutes?: number | null;
   stock?: number | null;
   images?: string[];
-  detail_images?: string[];
+  detail_images?: Array<{ url: string; description: string }>;
   video_url?: string | null;
   cover_image_url?: string | null;
   addons?: { id?: string; name: string; price: number }[];
@@ -1670,8 +1670,13 @@ function ProductSlide({
             <p className="px-5 pt-3 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
               {lang === "ms" ? "Butiran" : lang === "zh" ? "商品详情" : "Details"}
             </p>
-            {product.detail_images.map((u, i) => (
-              <img key={i} src={u} alt="" loading="lazy" className="w-full h-auto block" />
+            {product.detail_images.map((d, i) => (
+              <div key={i} className="space-y-1.5 pb-2">
+                <img src={d.url} alt="" loading="lazy" className="w-full h-auto block" />
+                {d.description && (
+                  <p className="px-5 text-sm text-foreground/80 whitespace-pre-wrap">{d.description}</p>
+                )}
+              </div>
             ))}
           </div>
         )}

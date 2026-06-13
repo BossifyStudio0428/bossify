@@ -3,6 +3,23 @@ import "@tanstack/react-start/server-only";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+/** Normalize detail_images JSON (legacy string[] or new {url, description}[]) for public output. */
+function normalizeDetailItems(raw: unknown): Array<{ url: string; description: string }> {
+  if (!Array.isArray(raw)) return [];
+  const out: Array<{ url: string; description: string }> = [];
+  for (const v of raw) {
+    if (typeof v === "string") {
+      if (v.trim()) out.push({ url: v, description: "" });
+    } else if (v && typeof v === "object") {
+      const o = v as Record<string, unknown>;
+      const url = typeof o.url === "string" ? o.url : "";
+      const description = typeof o.description === "string" ? o.description : "";
+      if (url.trim()) out.push({ url, description });
+    }
+  }
+  return out;
+}
+
 const APP_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
 // Push notifications for new orders are dispatched by a Postgres AFTER INSERT
 // trigger on public.orders (see external migration: notify_new_order_push).
@@ -172,7 +189,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         variants: Array.isArray(x.variants) ? x.variants : [],
         stock: typeof x.stock === "number" ? x.stock : null,
         images: Array.isArray(x.images) ? x.images.map((u: unknown) => String(u)) : [],
-        detail_images: Array.isArray(x.detail_images) ? x.detail_images.map((u: unknown) => String(u)) : [],
+        detail_images: normalizeDetailItems(x.detail_images),
         video_url: x.video_url ?? null,
         cover_image_url: x.cover_image_url ?? null,
       })) as any;
@@ -196,7 +213,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
           description: x.description ?? null,
           variants: [],
           images: imgs.map((u: unknown) => String(u)),
-          detail_images: Array.isArray(x.detail_images) ? x.detail_images.map((u: unknown) => String(u)) : [],
+          detail_images: normalizeDetailItems(x.detail_images),
           video_url: x.video_url ?? null,
           cover_image_url: x.cover_image_url ?? null,
           property: {
@@ -227,7 +244,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         duration_minutes: x.duration_minutes ?? null,
         stock: typeof x.stock === "number" ? x.stock : null,
         images: Array.isArray(x.images) ? x.images.map((u: unknown) => String(u)) : [],
-        detail_images: Array.isArray(x.detail_images) ? x.detail_images.map((u: unknown) => String(u)) : [],
+        detail_images: normalizeDetailItems(x.detail_images),
         video_url: x.video_url ?? null,
         cover_image_url: x.cover_image_url ?? null,
         addons: Array.isArray(x.addons) ? x.addons : [],

@@ -8,7 +8,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import type { BizType } from "@/lib/businessType";
 import type { Lang } from "@/contexts/I18nContext";
-import { parseVariants, type Variant } from "@/lib/inventoryTypes";
+import { parseVariants, parseDetailItems, type DetailItem, type Variant } from "@/lib/inventoryTypes";
 import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 import { DetailPhotosList } from "@/components/DetailPhotosList";
@@ -198,8 +198,8 @@ function ServiceFormSheet({
     return item?.image_url ? [item.image_url] : [];
   })();
   const [images, setImages] = useState<string[]>(initialImages);
-  const [detailImages, setDetailImages] = useState<string[]>(
-    Array.isArray(item?.detail_images) ? (item!.detail_images as string[]).map(String) : [],
+  const [detailImages, setDetailImages] = useState<DetailItem[]>(
+    parseDetailItems(item?.detail_images),
   );
   const [videoUrl, setVideoUrl] = useState<string | null>(item?.video_url ?? null);
   const [stock, setStock] = useState(item?.stock != null ? String(item.stock) : "");
@@ -238,7 +238,7 @@ function ServiceFormSheet({
     if (typeof d.price === "string") setPrice(d.price);
     if (typeof d.duration === "string") setDuration(d.duration);
     if (Array.isArray(d.images)) setImages(d.images);
-    if (Array.isArray(d.detailImages)) setDetailImages(d.detailImages);
+    if (Array.isArray(d.detailImages)) setDetailImages(parseDetailItems(d.detailImages));
     if (typeof d.videoUrl === "string" || d.videoUrl === null) setVideoUrl(d.videoUrl);
     if (typeof d.stock === "string") setStock(d.stock);
     if (Array.isArray(d.variants)) setVariants(d.variants);
@@ -379,7 +379,7 @@ function buildSections(p: {
   price: string; setPrice: (v: string) => void;
   duration: string; setDuration: (v: string) => void;
   images: string[]; setImages: (v: string[]) => void;
-  detailImages: string[]; setDetailImages: (v: string[]) => void;
+  detailImages: DetailItem[]; setDetailImages: (v: DetailItem[]) => void;
   videoUrl: string | null; setVideoUrl: (v: string | null) => void;
   setVideoThumb: (v: string | null) => void;
   userId: string;
@@ -442,7 +442,7 @@ function buildSections(p: {
     content: (
       <>
         <DetailPhotosList
-          images={p.detailImages}
+          items={p.detailImages}
           onChange={p.setDetailImages}
           userId={p.userId}
         />
