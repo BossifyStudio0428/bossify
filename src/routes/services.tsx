@@ -244,7 +244,7 @@ function ServiceFormSheet({
     if (Array.isArray(d.addons)) setAddons(d.addons);
     if (Array.isArray(d.portfolioLinks)) setPortfolioLinks(d.portfolioLinks);
     if (typeof d.videoThumb === "string" || d.videoThumb === null) setVideoThumb(d.videoThumb);
-    toast.info(t("draft_restored") ?? "已恢复未保存的草稿");
+    toast.info("已恢复未保存的草稿");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
