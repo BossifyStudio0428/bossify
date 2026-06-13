@@ -10,6 +10,7 @@ import { propTypeKey, statusKey } from "./listings";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 import { DetailPhotosList } from "@/components/DetailPhotosList";
 import { toastSavedWithOrderFormLink } from "@/lib/orderFormToast";
+import { parseDetailItems, type DetailItem } from "@/lib/inventoryTypes";
 
 export const Route = createFileRoute("/listing/$id")({ component: ListingEditor });
 
@@ -56,7 +57,7 @@ function ListingEditor() {
   const [status, setStatus] = useState("available");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<string[]>([]);
-  const [detailImages, setDetailImages] = useState<string[]>([]);
+  const [detailImages, setDetailImages] = useState<DetailItem[]>([]);
   const [interestedCustomerId, setInterestedCustomerId] = useState<string | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
@@ -98,7 +99,7 @@ function ListingEditor() {
         setStatus(r.status ?? "available");
         setDescription(r.description ?? "");
         setImages(Array.isArray(r.images) ? r.images : []);
-        setDetailImages(Array.isArray(r.detail_images) ? r.detail_images : []);
+        setDetailImages(parseDetailItems(r.detail_images));
         setInterestedCustomerId(r.interested_customer_id ?? null);
       }
       setLoading(false);
@@ -286,7 +287,7 @@ function ListingEditor() {
             {t("desc_details_subtitle")}
           </p>
           <DetailPhotosList
-            images={detailImages}
+            items={detailImages}
             onChange={setDetailImages}
             userId={user.id}
           />
