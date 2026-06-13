@@ -394,9 +394,9 @@ const BottomNav = memo(function BottomNav() {
   return (
     <nav
       className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40"
-      style={{ bottom: "max(env(safe-area-inset-bottom), 12px)" }}
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)" }}
     >
-      <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
+      <div className="relative mx-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
         <ul
           className="grid items-center h-16 px-1"
           style={{ gridTemplateColumns: `repeat(${totalCols}, minmax(0, 1fr))` }}
