@@ -1586,6 +1586,19 @@ function ProductSlide({
         </div>
       )}
 
+      {gallery[Math.min(galleryIdx, gallery.length - 1)]?.description && (
+        <div className="px-5 mt-3">
+          <div className="rounded-xl border bg-muted/30 px-3 py-2.5">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              {gallery[Math.min(galleryIdx, gallery.length - 1)]?.label}
+            </div>
+            <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">
+              {gallery[Math.min(galleryIdx, gallery.length - 1)]?.description}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="px-5 pt-4 space-y-3">
         {isProperty ? (
           <div className="flex items-center gap-1.5 flex-wrap">
