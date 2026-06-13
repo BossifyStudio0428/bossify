@@ -1191,11 +1191,22 @@ function CategoryChip({ label, active, onClick }: { label: string; active: boole
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold border transition-all ${
+      className="flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold border transition-all"
+      style={
         active
-          ? "bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]"
-          : "bg-card text-muted-foreground border-border hover:text-foreground"
-      }`}
+          ? {
+              background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+              color: "#ffffff",
+              borderColor: "#6d28d9",
+              boxShadow: "0 6px 16px -6px rgba(124,58,237,0.55)",
+              transform: "scale(1.03)",
+            }
+          : {
+              background: "#ffffff",
+              color: "#6B7280",
+              borderColor: "#E5E7EB",
+            }
+      }
     >
       {label}
     </button>
