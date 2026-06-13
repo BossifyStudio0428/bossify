@@ -3022,7 +3022,7 @@ const dict = {
     product_deleted: "产品已删除",
     category: "类别", description: "描述", variants: "选项",
     image: "图片", upload_image: "上传图片", change_image: "更换图片", remove_image: "移除",
-    media_video: "视频", media_subtitle: "1 张封面图片 + 1 个视频。更多请在下方"详情图片"添加。", upload_video: "上传视频", basic_info: "基本信息",
+    media_video: "视频", media_subtitle: "1 张封面图片 + 1 个视频。更多请在下方「详情图片」添加。", upload_video: "上传视频", basic_info: "基本信息",
     select_category: "选择类别", custom_category: "自定义类别…",
     description_ph: "添加详情、成分、特点…",
     variants_subtitle: "如尺寸、颜色、房型等不同选项 — 每个可设独立价格。",
