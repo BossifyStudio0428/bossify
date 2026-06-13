@@ -423,12 +423,12 @@ function buildSections(p: {
     subtitle: "Write the description, then add detail photos (Detail 1, Detail 2...).",
     content: (
       <>
-        <Field label={t("description_label")} value={p.description} onChange={p.setDescription} multiline />
         <DetailPhotosList
           images={p.detailImages}
           onChange={p.setDetailImages}
           userId={p.userId}
         />
+        <Field label={t("description_label")} value={p.description} onChange={p.setDescription} multiline />
       </>
     ),
   });

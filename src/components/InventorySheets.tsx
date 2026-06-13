@@ -236,6 +236,11 @@ export function ProductFormSheet({
       subtitle: "Write the description, then add detail photos (Detail 1, Detail 2...).",
       content: (
         <>
+          <DetailPhotosList
+            images={detailImages}
+            onChange={setDetailImages}
+            userId={userId}
+          />
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("description")}</label>
             <textarea
@@ -246,11 +251,6 @@ export function ProductFormSheet({
               className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
             />
           </div>
-          <DetailPhotosList
-            images={detailImages}
-            onChange={setDetailImages}
-            userId={userId}
-          />
         </>
       ),
     },
