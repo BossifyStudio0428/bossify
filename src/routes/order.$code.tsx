@@ -393,40 +393,86 @@ function PublicOrderFormPage() {
 
   // ---- Language picker screen ----
   if (!langPicked) {
+    const langOpts = [
+      { code: "en" as Lang, label: "English", sub: "Continue in English", flag: "🇬🇧", tag: "EN" },
+      { code: "ms" as Lang, label: "Bahasa Malaysia", sub: "Teruskan dalam Bahasa Malaysia", flag: "🇲🇾", tag: "MS" },
+      { code: "zh" as Lang, label: "中文", sub: "继续使用中文", flag: "🇨🇳", tag: "ZH" },
+    ];
     return (
-      <div className="pof-scope min-h-screen flex items-center justify-center px-6">
+      <div
+        className="pof-scope min-h-screen flex flex-col px-5 pt-8 pb-10"
+        style={{
+          background:
+            "radial-gradient(120% 60% at 50% 0%, hsl(var(--primary) / 0.18) 0%, transparent 60%), linear-gradient(180deg, #faf9ff 0%, #f4f3f8 100%)",
+        }}
+      >
         <PofStyles />
-        <div className="w-full max-w-sm text-center">
-          <img
-            src={bossifyLogo}
-            alt="Bossify"
-            className="mx-auto mb-6 h-20 w-20 object-contain"
-          />
-          <h1 className="text-xl font-bold">Bossify</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Choose your language · Pilih bahasa · 选择语言
-          </p>
-          <div className="mt-8 space-y-2.5">
-            {([
-              { code: "en" as Lang, label: "English", sub: "Continue in English" },
-              { code: "ms" as Lang, label: "Bahasa Malaysia", sub: "Teruskan dalam Bahasa Malaysia" },
-              { code: "zh" as Lang, label: "中文", sub: "继续使用中文" },
-            ]).map((opt) => (
+        <div className="w-full max-w-sm mx-auto flex-1 flex flex-col">
+          {/* Hero card */}
+          <div
+            className="relative overflow-hidden rounded-[28px] p-6 text-white shadow-[0_20px_50px_-20px_rgba(124,58,237,0.55)]"
+            style={{
+              background:
+                "linear-gradient(135deg, #7c3aed 0%, #6d28d9 45%, #4f46e5 100%)",
+            }}
+          >
+            <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
+            <div className="absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-fuchsia-400/20 blur-2xl" />
+            <div className="relative flex items-center gap-3">
+              <div className="h-14 w-14 rounded-2xl bg-white/95 flex items-center justify-center shadow-sm">
+                <img src={bossifyLogo} alt="Bossify" className="h-10 w-10 object-contain" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold tracking-[0.22em] text-white/70 uppercase">Welcome</p>
+                <h1 className="text-2xl font-extrabold leading-tight">Bossify</h1>
+              </div>
+            </div>
+            <div className="relative mt-5 space-y-0.5 text-[13px] text-white/85 leading-snug">
+              <p>Choose your language</p>
+              <p>Pilih bahasa anda</p>
+              <p>选择您的语言</p>
+            </div>
+          </div>
+
+          {/* Options */}
+          <div className="mt-6 space-y-3">
+            {langOpts.map((opt, i) => (
               <button
                 key={opt.code}
                 type="button"
                 onClick={() => pickLang(opt.code)}
-                className="w-full px-5 py-4 rounded-2xl border border-border bg-card text-left active:scale-[0.99] transition-transform flex items-center justify-between"
+                className="group w-full px-4 py-3.5 rounded-2xl bg-white border border-[#ECE8F7] text-left flex items-center gap-3 transition-all active:scale-[0.99] hover:border-primary/40 hover:shadow-[0_8px_24px_-12px_rgba(124,58,237,0.35)]"
+                style={{ animation: `fade-in 0.4s ease ${i * 60}ms both` }}
               >
-                <span>
-                  <span className="block text-sm font-bold">{opt.label}</span>
-                  <span className="block text-[11px] text-muted-foreground mt-0.5">{opt.sub}</span>
+                <span
+                  className="h-11 w-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg, #F3F0FF 0%, #EDE6FF 100%)" }}
+                >
+                  {opt.flag}
                 </span>
-                <span className="text-primary text-lg">→</span>
+                <span className="flex-1 min-w-0">
+                  <span className="flex items-center gap-2">
+                    <span className="text-[15px] font-bold text-[#1E1333] truncate">{opt.label}</span>
+                    <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-[#F3F0FF] text-primary">
+                      {opt.tag}
+                    </span>
+                  </span>
+                  <span className="block text-[11.5px] text-muted-foreground mt-0.5 truncate">{opt.sub}</span>
+                </span>
+                <span
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-primary text-base transition-all group-hover:bg-primary group-hover:text-white"
+                  style={{ background: "#F5F2FF" }}
+                >
+                  →
+                </span>
               </button>
             ))}
           </div>
-          <p className="text-[10px] text-muted-foreground mt-10">Powered by Bossify 💜</p>
+
+          <div className="flex-1" />
+          <p className="text-center text-[10px] text-muted-foreground mt-8">
+            Powered by <span className="font-semibold text-foreground/70">Bossify</span> 💜
+          </p>
         </div>
       </div>
     );
