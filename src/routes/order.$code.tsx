@@ -1283,17 +1283,17 @@ function DetailSheet({
         {/* Top bar overlay: counter + close */}
         <div className="absolute top-3 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
           {!products[currentIndex]?.detail_images?.length && !products[currentIndex]?.images?.length ? (
-            <div className="pointer-events-auto px-3 py-1 rounded-full bg-background/90 backdrop-blur text-[11px] font-semibold shadow">
+            <div className="pointer-events-auto px-3 py-1 rounded-full bg-black/70 backdrop-blur text-[11px] font-semibold text-white shadow-lg ring-1 ring-white/40">
               {currentIndex + 1} / {total}
             </div>
           ) : <div />}
           <button
             type="button"
             onClick={onClose}
-            className="pointer-events-auto h-10 w-10 rounded-full bg-foreground text-background shadow-lg ring-2 ring-background flex items-center justify-center"
+            className="pointer-events-auto h-10 w-10 rounded-full bg-black/75 backdrop-blur text-white shadow-[0_4px_14px_rgba(0,0,0,0.35)] ring-2 ring-white/80 flex items-center justify-center transition active:scale-90"
             aria-label="Close"
           >
-            <X size={20} strokeWidth={2.75} />
+            <X size={20} strokeWidth={3} />
           </button>
         </div>
 
@@ -1520,7 +1520,7 @@ function ProductSlide({
                 />
               );
             })()}
-            <div className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-[11px] font-bold shadow">
+            <div className="absolute left-3 top-3 rounded-full bg-black/70 backdrop-blur px-3 py-1 text-[11px] font-bold text-white shadow-lg ring-1 ring-white/40">
               {galleryIdx + 1}/{gallery.length}
             </div>
             {gallery.length > 1 && (
@@ -1596,7 +1596,7 @@ function ProductSlide({
         </div>
       )}
 
-      <div className="px-5 pt-4 space-y-3">
+      <div className="px-5 pt-5 space-y-3.5">
         {isProperty ? (
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
@@ -1609,14 +1609,15 @@ function ProductSlide({
             )}
           </div>
         ) : product.category && (
-          <p className="text-[10px] font-semibold tracking-wider uppercase text-primary/80">
+          <div className="inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.18em] uppercase text-primary">
+            <span className="h-px w-5 bg-primary/60" />
             {product.category}
-          </p>
+          </div>
         )}
-        <h2 className="text-xl font-bold leading-tight">{product.name}</h2>
+        <h2 className="text-[26px] font-extrabold leading-tight tracking-tight">{product.name}</h2>
 
         {!isProperty && (
-          <p className="text-2xl font-bold text-primary">
+          <p className="text-3xl font-black bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {hasVariants && !variant ? "from " : ""}
             RM {Number(unitPrice).toFixed(2)}
           </p>
