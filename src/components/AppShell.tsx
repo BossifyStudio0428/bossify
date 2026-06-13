@@ -394,7 +394,7 @@ const BottomNav = memo(function BottomNav() {
   return (
     <nav
       className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40"
-      style={{ bottom: "max(env(safe-area-inset-bottom), 0px)" }}
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
     >
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
         <ul
