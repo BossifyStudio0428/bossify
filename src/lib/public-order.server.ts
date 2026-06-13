@@ -147,7 +147,10 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
       error = fallback.error;
     }
 
-    if (error || !profile) return { ok: false, reason: "not_found", error: error?.message };
+    if (error || !profile) {
+      if (error) console.error("[loadPublicOrderForm] profile lookup error", error);
+      return { ok: false, reason: "not_found" };
+    }
     if (profile.order_form_enabled === false) return { ok: false, reason: "disabled" };
 
     const bizType: string = profile.business_type ?? "retail";
@@ -287,7 +290,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     };
   } catch (e: any) {
     console.error("[loadPublicOrderForm] threw", e);
-    return { ok: false, reason: "not_found", error: String(e?.message ?? e) };
+    return { ok: false, reason: "not_found" };
   }
 }
 
@@ -492,7 +495,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       console.error("[createPublicOrder] orders insert failed", oErr);
       const msg = oErr?.message ?? "";
       if (msg.includes("order_quota_reached")) return { ok: false, reason: "shop_closed" };
-      return { ok: false, reason: "insert_failed", error: oErr?.message ?? "Failed to insert order" };
+      return { ok: false, reason: "insert_failed", error: "Order could not be submitted" };
     }
 
     if (phoneDigits) {
@@ -556,6 +559,6 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     return { ok: true, code: inserted.code, business_name: profile.business_name ?? "" };
   } catch (e: any) {
     console.error("[createPublicOrder] threw", e);
-    return { ok: false, reason: "insert_failed", error: String(e?.message ?? e) };
+    return { ok: false, reason: "insert_failed", error: "Order could not be submitted" };
   }
 }
