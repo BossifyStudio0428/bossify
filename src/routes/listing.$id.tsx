@@ -9,6 +9,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { propTypeKey, statusKey } from "./listings";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 import { DetailPhotosList } from "@/components/DetailPhotosList";
+import { toastSavedWithOrderFormLink } from "@/lib/orderFormToast";
 
 export const Route = createFileRoute("/listing/$id")({ component: ListingEditor });
 
@@ -164,7 +165,11 @@ function ListingEditor() {
         .eq("id", interestedCustomerId);
     }
     setSaving(false);
-    toast.success(t("listing_saved"));
+    if (user) {
+      await toastSavedWithOrderFormLink(t("listing_saved"), user.id);
+    } else {
+      toast.success(t("listing_saved"));
+    }
     navigate({ to: "/listings" });
   };
 
