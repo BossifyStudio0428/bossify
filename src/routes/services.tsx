@@ -329,6 +329,7 @@ function ServiceFormSheet({
     await toastSavedWithOrderFormLink(
       isPackages ? "Package saved" : "Service saved",
       userId,
+      { description: t("toast_view_on_order_form"), action: t("toast_view_form") },
     );
     onSaved();
   };
