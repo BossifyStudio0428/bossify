@@ -1,22 +1,23 @@
 import { useRef, useState } from "react";
-import { Plus, X, ImagePlus, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, X, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
+import type { DetailItem } from "@/lib/inventoryTypes";
 
 type Props = {
-  images: string[];
-  onChange: (next: string[]) => void;
+  items: DetailItem[];
+  onChange: (next: DetailItem[]) => void;
   userId: string;
   maxImageMB?: number;
 };
 
 /**
- * Shopee-style detail photos: a vertical list where each entry is ONE photo
- * labeled "Detail 1", "Detail 2", ... with reorder + delete + "Add detail".
- * Shown stacked under the product description on the customer-facing page.
+ * Shopee-style detail entries: a vertical list where each entry is ONE photo
+ * PLUS its own description ("Detail 1 description", "Detail 2 description", ...).
+ * Shown stacked on the customer-facing order form so each image has its own caption.
  */
-export function DetailPhotosList({ images, onChange, userId, maxImageMB = 5 }: Props) {
+export function DetailPhotosList({ items, onChange, userId, maxImageMB = 5 }: Props) {
   const { t } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -41,22 +42,24 @@ export function DetailPhotosList({ images, onChange, userId, maxImageMB = 5 }: P
     setUploading(true);
     const url = await uploadOne(file);
     setUploading(false);
-    if (url) onChange([...images, url]);
+    if (url) onChange([...items, { url, description: "" }]);
   };
 
-  const removeAt = (i: number) => onChange(images.filter((_, idx) => idx !== i));
+  const removeAt = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+  const updateDesc = (i: number, description: string) =>
+    onChange(items.map((it, idx) => (idx === i ? { ...it, description } : it)));
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
-    if (j < 0 || j >= images.length) return;
-    const next = images.slice();
+    if (j < 0 || j >= items.length) return;
+    const next = items.slice();
     [next[i], next[j]] = [next[j], next[i]];
     onChange(next);
   };
 
   return (
     <div className="space-y-2.5">
-      {images.map((url, i) => (
-        <div key={url + i} className="rounded-xl border border-border/60 bg-muted/10 overflow-hidden">
+      {items.map((it, i) => (
+        <div key={it.url + i} className="rounded-xl border border-border/60 bg-muted/10 overflow-hidden">
           <div className="flex items-center justify-between px-2.5 py-1.5 bg-muted/40">
             <span className="text-[11px] font-bold text-foreground/80">{t("detail_label")} {i + 1}</span>
             <div className="flex items-center gap-1">
@@ -72,7 +75,7 @@ export function DetailPhotosList({ images, onChange, userId, maxImageMB = 5 }: P
               <button
                 type="button"
                 onClick={() => move(i, 1)}
-                disabled={i === images.length - 1}
+                disabled={i === items.length - 1}
                 className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30"
                 aria-label="move down"
               >
@@ -88,7 +91,16 @@ export function DetailPhotosList({ images, onChange, userId, maxImageMB = 5 }: P
               </button>
             </div>
           </div>
-          <img src={url} alt={`${t("detail_label")} ${i + 1}`} className="w-full h-auto block bg-black/5" />
+          <img src={it.url} alt={`${t("detail_label")} ${i + 1}`} className="w-full h-auto block bg-black/5" />
+          <div className="p-2">
+            <textarea
+              value={it.description}
+              onChange={(e) => updateDesc(i, e.target.value)}
+              rows={2}
+              placeholder={`${t("detail_label")} ${i + 1} ${t("description_label")}`}
+              className="w-full rounded-lg bg-background border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+            />
+          </div>
         </div>
       ))}
 
@@ -104,7 +116,7 @@ export function DetailPhotosList({ images, onChange, userId, maxImageMB = 5 }: P
           <>
             <Plus className="h-5 w-5" strokeWidth={2.5} />
             <span className="text-[11px] font-semibold">
-              {t("add_detail")} {images.length + 1}
+              {t("add_detail")} {items.length + 1}
             </span>
             <span className="text-[10px] text-muted-foreground/70">{t("one_photo_per_detail")}</span>
           </>
