@@ -347,7 +347,7 @@ function ShellInner() {
 
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
-      <div className="relative w-full max-w-[390px] min-h-screen bg-background flex flex-col">
+      <div className="relative w-full max-w-[390px] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl min-h-screen bg-background flex flex-col">
         {/* Top header with Bossify icon */}
         <header
           className="sticky top-0 z-30 bg-background/90 backdrop-blur border-b border-border/40"
@@ -393,7 +393,7 @@ const BottomNav = memo(function BottomNav() {
   const totalCols = leftCount + 1 + rightTabs.length;
   return (
     <nav
-      className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40"
+      className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl z-40"
       style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
     >
       <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
