@@ -619,7 +619,7 @@ function PublicOrderFormPage() {
       case "property":
         return { name: t("f_client_name") };
       default:
-        return { name: L("Your name", "Nama anda", "您的姓名") };
+        return { name: lang === "ms" ? "Nama anda" : lang === "zh" ? "您的姓名" : "Your name" };
     }
   })();
 
