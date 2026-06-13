@@ -147,7 +147,7 @@ export function ProductFormSheet({
     if (typeof d.videoUrl === "string" || d.videoUrl === null) setVideoUrl(d.videoUrl);
     if (typeof d.videoThumb === "string" || d.videoThumb === null) setVideoThumb(d.videoThumb);
     if (typeof d.supplierId === "string") setSupplierId(d.supplierId);
-    toast.info("已恢复未保存的草稿");
+    toast.info(t("draft_restored"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
