@@ -417,22 +417,6 @@ function buildSections(p: {
     ),
   });
 
-  // 1b. Detail photos (Shopee-style 详情图 — shown vertically in description area)
-  sections.push({
-    title: "Description & Details",
-    subtitle: "Write the description, then add detail photos (Detail 1, Detail 2...).",
-    content: (
-      <>
-        <DetailPhotosList
-          images={p.detailImages}
-          onChange={p.setDetailImages}
-          userId={p.userId}
-        />
-        <Field label={t("description_label")} value={p.description} onChange={p.setDescription} multiline />
-      </>
-    ),
-  });
-
   // 2. Basic info
   sections.push({
     title: "Basic info",
@@ -442,6 +426,22 @@ function buildSections(p: {
         {p.showCategory && (
           <Field label="Category" value={p.category} onChange={p.setCategory} />
         )}
+      </>
+    ),
+  });
+
+  // 2b. Description & Details (Shopee-style 详情图 — shown stacked in description area)
+  sections.push({
+    title: "Description & Details",
+    subtitle: "Add detail photos (Detail 1, Detail 2...), then the description.",
+    content: (
+      <>
+        <DetailPhotosList
+          images={p.detailImages}
+          onChange={p.setDetailImages}
+          userId={p.userId}
+        />
+        <Field label={t("description_label")} value={p.description} onChange={p.setDescription} multiline />
       </>
     ),
   });
