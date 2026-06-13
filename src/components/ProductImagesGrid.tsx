@@ -30,6 +30,8 @@ type Props = {
   maxImages?: number;
   maxImageMB?: number;
   maxVideoMB?: number;
+  /** Hide the video upload slot (for "detail photos" sections that are images-only). */
+  hideVideo?: boolean;
 };
 
 /**
@@ -50,6 +52,7 @@ export function ProductImagesGrid({
   maxImages = 9,
   maxImageMB = 5,
   maxVideoMB = 30,
+  hideVideo = false,
 }: Props) {
   const imgRef = useRef<HTMLInputElement>(null);
   const vidRef = useRef<HTMLInputElement>(null);
@@ -207,7 +210,7 @@ export function ProductImagesGrid({
       />
 
       {/* Video slot */}
-      <div className="pt-1">
+      {!hideVideo && <div className="pt-1">
         {videoUrl ? (
           <div className="relative rounded-xl overflow-hidden bg-black border border-border/60">
             <video src={videoUrl} controls preload="metadata" className="w-full max-h-56 object-contain bg-black" />
@@ -248,7 +251,7 @@ export function ProductImagesGrid({
             e.target.value = "";
           }}
         />
-      </div>
+      </div>}
     </div>
   );
 }
