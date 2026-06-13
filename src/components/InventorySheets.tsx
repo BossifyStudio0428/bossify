@@ -117,8 +117,8 @@ export function ProductFormSheet({
     return item?.image_url ? [item.image_url] : [];
   })();
   const [images, setImages] = useState<string[]>(initialImages);
-  const [detailImages, setDetailImages] = useState<string[]>(
-    Array.isArray((item as any)?.detail_images) ? ((item as any).detail_images as unknown[]).map(String) : [],
+  const [detailImages, setDetailImages] = useState<DetailItem[]>(
+    parseDetailItems((item as any)?.detail_images),
   );
   const [videoUrl, setVideoUrl] = useState<string | null>((item as any)?.video_url ?? null);
   const [videoThumb, setVideoThumb] = useState<string | null>(null);
@@ -143,7 +143,7 @@ export function ProductFormSheet({
     if (typeof d.description === "string") setDescription(d.description);
     if (Array.isArray(d.variants)) setVariants(d.variants);
     if (Array.isArray(d.images)) setImages(d.images);
-    if (Array.isArray(d.detailImages)) setDetailImages(d.detailImages);
+    if (Array.isArray(d.detailImages)) setDetailImages(parseDetailItems(d.detailImages));
     if (typeof d.videoUrl === "string" || d.videoUrl === null) setVideoUrl(d.videoUrl);
     if (typeof d.videoThumb === "string" || d.videoThumb === null) setVideoThumb(d.videoThumb);
     if (typeof d.supplierId === "string") setSupplierId(d.supplierId);
@@ -274,7 +274,7 @@ export function ProductFormSheet({
       content: (
         <>
           <DetailPhotosList
-            images={detailImages}
+            items={detailImages}
             onChange={setDetailImages}
             userId={userId}
           />
