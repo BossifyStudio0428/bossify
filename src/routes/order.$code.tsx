@@ -1282,9 +1282,11 @@ function DetailSheet({
       >
         {/* Top bar overlay: counter + close */}
         <div className="absolute top-3 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
-          <div className="pointer-events-auto px-3 py-1 rounded-full bg-background/90 backdrop-blur text-[11px] font-semibold shadow">
-            {currentIndex + 1} / {total}
-          </div>
+          {!products[currentIndex]?.detail_images?.length && !products[currentIndex]?.images?.length ? (
+            <div className="pointer-events-auto px-3 py-1 rounded-full bg-background/90 backdrop-blur text-[11px] font-semibold shadow">
+              {currentIndex + 1} / {total}
+            </div>
+          ) : <div />}
           <button
             type="button"
             onClick={onClose}
