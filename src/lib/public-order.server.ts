@@ -159,19 +159,21 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     if (isRetailish) {
       const { data: inv } = await sb
         .from("inventory")
-        .select("id,name,price,image_url,images,category,description,variants,stock")
+        .select("id,name,price,image_url,images,video_url,cover_image_url,category,description,variants,stock")
         .eq("user_id", profile.id)
         .order("name", { ascending: true });
       products = ((inv ?? []) as any[]).map((x) => ({
         id: String(x.id),
         name: String(x.name),
         price: Number(x.price ?? 0),
-        image_url: x.image_url ?? null,
+        image_url: x.cover_image_url ?? x.image_url ?? null,
         category: x.category ?? null,
         description: x.description ?? null,
         variants: Array.isArray(x.variants) ? x.variants : [],
         stock: typeof x.stock === "number" ? x.stock : null,
         images: Array.isArray(x.images) ? x.images.map((u: unknown) => String(u)) : [],
+        video_url: x.video_url ?? null,
+        cover_image_url: x.cover_image_url ?? null,
       })) as any;
     } else if (bizType === "property") {
       const { data: rows } = await sb
