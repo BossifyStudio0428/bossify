@@ -75,6 +75,9 @@ function OrdersPage() {
   const [ofEnabled, setOfEnabled] = useState<boolean>(true);
   const [ofBizType, setOfBizType] = useState<string | null>(null);
   const [ofQrOpen, setOfQrOpen] = useState(false);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [dateOpen, setDateOpen] = useState(false);
 
   useEffect(() => { setHydrated(true); }, []);
 
@@ -499,7 +502,22 @@ function OrdersPage() {
     toast.success(t("order_updated"));
   };
 
-  const visible = active === "All" ? orders : orders.filter((o) => o.status === active);
+  const inDateRange = (iso: string) => {
+    if (!dateFrom && !dateTo) return true;
+    const t = new Date(iso).getTime();
+    if (dateFrom) {
+      const from = new Date(dateFrom + "T00:00:00").getTime();
+      if (t < from) return false;
+    }
+    if (dateTo) {
+      const to = new Date(dateTo + "T23:59:59").getTime();
+      if (t > to) return false;
+    }
+    return true;
+  };
+  const byStatus = active === "All" ? orders : orders.filter((o) => o.status === active);
+  const visible = byStatus.filter((o) => inDateRange(o.created_at));
+  const dateFilterActive = !!(dateFrom || dateTo);
   const todayCount = orders.filter((o) => new Date(o.created_at).toDateString() === new Date().toDateString()).length;
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
 
