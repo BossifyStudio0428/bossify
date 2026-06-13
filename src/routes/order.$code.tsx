@@ -1148,7 +1148,7 @@ function CategoryChip({ label, active, onClick }: { label: string; active: boole
       aria-pressed={active}
       className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold border transition-all ${
         active
-          ? "bg-primary text-primary-foreground border-primary shadow-[0_4px_14px_-4px_hsl(var(--primary)/0.55)] scale-[1.02]"
+          ? "bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]"
           : "bg-card text-muted-foreground border-border hover:text-foreground"
       }`}
     >
