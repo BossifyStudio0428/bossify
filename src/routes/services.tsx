@@ -402,7 +402,7 @@ function buildSections(p: {
   // 1. Photos & video
   sections.push({
     title: t("image") + " & Video",
-    subtitle: "First photo is the cover. Up to 9 photos + 1 video.",
+    subtitle: "1 cover photo + 1 video. Add more in Detail photos below.",
     content: (
       <ProductImagesGrid
         images={p.images}
@@ -411,6 +411,7 @@ function buildSections(p: {
         onVideoChange={p.setVideoUrl}
         onVideoThumbReady={p.setVideoThumb}
         userId={p.userId}
+        maxImages={1}
       />
     ),
   });
