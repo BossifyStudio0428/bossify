@@ -1486,7 +1486,11 @@ function ProductSlide({
   return (
     <div className="h-full w-full overflow-y-auto pb-6">
       {/* Image gallery (horizontal scroll) */}
-      <div className={`${isProperty ? "aspect-[16/10]" : "aspect-square"} w-full bg-muted/40 overflow-hidden relative`}>
+      <div
+        className={`${isProperty ? "aspect-[16/10]" : "aspect-square"} w-full bg-muted/40 overflow-hidden relative select-none`}
+        onTouchStart={gallery.length > 1 ? onTouchStart : undefined}
+        onTouchEnd={gallery.length > 1 ? onTouchEnd : undefined}
+      >
         {gallery.length > 0 ? (
           <>
             {(() => {
