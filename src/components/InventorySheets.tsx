@@ -212,7 +212,10 @@ export function ProductFormSheet({
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     clearDraft(draftKey);
-    await toastSavedWithOrderFormLink(item ? t("customer_updated") : t("product_added"), userId);
+    await toastSavedWithOrderFormLink(item ? t("customer_updated") : t("product_added"), userId, {
+      description: t("toast_view_on_order_form"),
+      action: t("toast_view_form"),
+    });
     onSaved();
   };
 
