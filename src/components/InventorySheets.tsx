@@ -278,16 +278,6 @@ export function ProductFormSheet({
             onChange={setDetailImages}
             userId={userId}
           />
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("description")}</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("description_ph")}
-              rows={3}
-              className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
-            />
-          </div>
         </>
       ),
     },
