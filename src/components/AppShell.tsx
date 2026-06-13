@@ -347,7 +347,7 @@ function ShellInner() {
 
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
-      <div className="relative w-full max-w-[390px] min-h-screen bg-background flex flex-col">
+      <div className="relative w-full max-w-[390px] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl min-h-screen bg-background flex flex-col">
         {/* Top header with Bossify icon */}
         <header
           className="sticky top-0 z-30 bg-background/90 backdrop-blur border-b border-border/40"
