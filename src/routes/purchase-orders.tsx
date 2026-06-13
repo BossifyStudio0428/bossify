@@ -40,7 +40,7 @@ function statusColor(s: POStatus) {
 }
 
 function PurchaseOrdersPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType } = useBusinessType();
   const allowed = bizType === "fnb" || bizType === "retail";
@@ -62,6 +62,7 @@ function PurchaseOrdersPage() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [dateOpen, setDateOpen] = useState(false);
   const parseFn = useServerFn(parsePurchaseOrderWithAi);
 
   const supplierMap = useMemo(() => {
@@ -196,29 +197,87 @@ function PurchaseOrdersPage() {
             className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-card border border-border shadow-sm text-sm outline-none focus:border-primary"
           />
         </div>
-        <div className="flex gap-2">
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-card border border-border shadow-sm text-xs outline-none focus:border-primary"
-          />
-          <span className="text-xs text-muted-foreground self-center">–</span>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-card border border-border shadow-sm text-xs outline-none focus:border-primary"
-          />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setDateOpen((v) => !v)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors border ${
+              (dateFrom || dateTo)
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-foreground border-border"
+            }`}
+          >
+            📅 {lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date"}
+            {(dateFrom || dateTo) && <span className="text-[10px] opacity-80">●</span>}
+          </button>
           {(dateFrom || dateTo) && (
             <button
+              type="button"
               onClick={() => { setDateFrom(""); setDateTo(""); }}
-              className="px-2 rounded-xl text-xs text-muted-foreground hover:bg-muted"
+              className="text-[11px] text-muted-foreground underline"
             >
-              <X className="h-3.5 w-3.5" />
+              {lang === "zh" ? "清除" : lang === "ms" ? "Buang" : "Clear"}
             </button>
           )}
+          {(dateFrom || dateTo) && (
+            <span className="text-[11px] text-muted-foreground ml-auto">
+              {filteredOrders.length} {lang === "zh" ? "条结果" : lang === "ms" ? "hasil" : "results"}
+            </span>
+          )}
         </div>
+        {dateOpen && (
+          <div className="rounded-2xl bg-card border border-border/60 p-3 space-y-2 shadow-sm">
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-[11px] font-semibold text-muted-foreground">
+                {lang === "zh" ? "从" : lang === "ms" ? "Dari" : "From"}
+                <input
+                  type="date"
+                  value={dateFrom}
+                  max={dateTo || undefined}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="mt-1 w-full text-sm rounded-lg border border-border bg-background px-2 py-1.5 text-foreground"
+                />
+              </label>
+              <label className="text-[11px] font-semibold text-muted-foreground">
+                {lang === "zh" ? "至" : lang === "ms" ? "Hingga" : "To"}
+                <input
+                  type="date"
+                  value={dateTo}
+                  min={dateFrom || undefined}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="mt-1 w-full text-sm rounded-lg border border-border bg-background px-2 py-1.5 text-foreground"
+                />
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { k: "today", n: 0 },
+                { k: "7d", n: 7 },
+                { k: "30d", n: 30 },
+              ].map((p) => (
+                <button
+                  key={p.k}
+                  type="button"
+                  onClick={() => {
+                    const now = new Date();
+                    const to = now.toISOString().slice(0, 10);
+                    const fromD = new Date(now);
+                    fromD.setDate(fromD.getDate() - p.n);
+                    setDateFrom(fromD.toISOString().slice(0, 10));
+                    setDateTo(to);
+                  }}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted text-foreground active:scale-95"
+                >
+                  {p.k === "today"
+                    ? (lang === "zh" ? "今天" : lang === "ms" ? "Hari ini" : "Today")
+                    : p.k === "7d"
+                      ? (lang === "zh" ? "近7天" : lang === "ms" ? "7 hari" : "Last 7 days")
+                      : (lang === "zh" ? "近30天" : lang === "ms" ? "30 hari" : "Last 30 days")}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <button
