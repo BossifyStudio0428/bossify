@@ -40,7 +40,7 @@ function statusColor(s: POStatus) {
 }
 
 function PurchaseOrdersPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType } = useBusinessType();
   const allowed = bizType === "fnb" || bizType === "retail";
@@ -62,6 +62,7 @@ function PurchaseOrdersPage() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [dateOpen, setDateOpen] = useState(false);
   const parseFn = useServerFn(parsePurchaseOrderWithAi);
 
   const supplierMap = useMemo(() => {
