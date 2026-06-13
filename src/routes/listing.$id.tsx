@@ -294,8 +294,6 @@ function ListingEditor() {
         </Section>
       )}
 
-      <TextField label={t("description_label")} value={description} onChange={setDescription} multiline />
-
       <Section label={t("interested_customer")}>
         <select
           value={interestedCustomerId ?? ""}
