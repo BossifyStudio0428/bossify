@@ -12,6 +12,7 @@ import { parseVariants, type Variant } from "@/lib/inventoryTypes";
 import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 import { DetailPhotosList } from "@/components/DetailPhotosList";
+import { toastSavedWithOrderFormLink } from "@/lib/orderFormToast";
 import { loadDraft, saveDraft, clearDraft } from "@/lib/formDraft";
 
 export const Route = createFileRoute("/services")({ component: ServicesPage });
@@ -325,6 +326,10 @@ function ServiceFormSheet({
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     clearDraft(draftKey);
+    await toastSavedWithOrderFormLink(
+      item ? t("saved") : t(isPackages ? "package_added" : "service_added"),
+      userId,
+    );
     onSaved();
   };
 

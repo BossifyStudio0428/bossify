@@ -10,6 +10,7 @@ import { parseVariants, type InvRow, type Variant } from "@/lib/inventoryTypes";
 import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 import { DetailPhotosList } from "@/components/DetailPhotosList";
+import { toastSavedWithOrderFormLink } from "@/lib/orderFormToast";
 import { loadDraft, saveDraft, clearDraft } from "@/lib/formDraft";
 
 export function SheetShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
@@ -211,7 +212,7 @@ export function ProductFormSheet({
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     clearDraft(draftKey);
-    toast.success(item ? t("customer_updated") : t("product_added"));
+    await toastSavedWithOrderFormLink(item ? t("customer_updated") : t("product_added"), userId);
     onSaved();
   };
 
