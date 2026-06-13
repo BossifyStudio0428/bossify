@@ -1523,11 +1523,6 @@ function ProductSlide({
             <div className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-[11px] font-bold shadow">
               {gallery[Math.min(galleryIdx, gallery.length - 1)]?.label ?? "Cover"} · {galleryIdx + 1}/{gallery.length}
             </div>
-            {gallery[Math.min(galleryIdx, gallery.length - 1)]?.description && (
-              <div className="absolute inset-x-3 bottom-3 rounded-xl bg-background/90 px-3 py-2 text-sm font-medium text-foreground shadow backdrop-blur">
-                {gallery[Math.min(galleryIdx, gallery.length - 1)]?.description}
-              </div>
-            )}
             {gallery.length > 1 && (
               <>
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 px-2 py-1 rounded-full">
