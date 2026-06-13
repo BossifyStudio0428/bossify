@@ -9,6 +9,7 @@ import { CATEGORY_PRESETS } from "@/lib/businessType";
 import { parseVariants, type InvRow, type Variant } from "@/lib/inventoryTypes";
 import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
+import { DetailPhotosList } from "@/components/DetailPhotosList";
 import { loadDraft, saveDraft, clearDraft } from "@/lib/formDraft";
 
 export function SheetShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
@@ -232,16 +233,12 @@ export function ProductFormSheet({
     },
     {
       title: "Detail photos",
-      subtitle: "Long detail / description photos shown stacked under the product info.",
+      subtitle: "Add one photo per detail (Detail 1, Detail 2...). Shown stacked below the description.",
       content: (
-        <ProductImagesGrid
+        <DetailPhotosList
           images={detailImages}
           onChange={setDetailImages}
-          videoUrl={null}
-          onVideoChange={() => {}}
           userId={userId}
-          maxImages={20}
-          hideVideo
         />
       ),
     },
