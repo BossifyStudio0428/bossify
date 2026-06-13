@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { CATEGORY_PRESETS } from "@/lib/businessType";
-import { parseVariants, type InvRow, type Variant } from "@/lib/inventoryTypes";
+import { parseVariants, parseDetailItems, type DetailItem, type InvRow, type Variant } from "@/lib/inventoryTypes";
 import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 import { DetailPhotosList } from "@/components/DetailPhotosList";
