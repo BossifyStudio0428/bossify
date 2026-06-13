@@ -53,6 +53,7 @@ function ListingEditor() {
   const [status, setStatus] = useState("available");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [detailImages, setDetailImages] = useState<string[]>([]);
   const [interestedCustomerId, setInterestedCustomerId] = useState<string | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
@@ -94,6 +95,7 @@ function ListingEditor() {
         setStatus(r.status ?? "available");
         setDescription(r.description ?? "");
         setImages(Array.isArray(r.images) ? r.images : []);
+        setDetailImages(Array.isArray(r.detail_images) ? r.detail_images : []);
         setInterestedCustomerId(r.interested_customer_id ?? null);
       }
       setLoading(false);
@@ -136,6 +138,7 @@ function ListingEditor() {
       status,
       description: description.trim() || null,
       images,
+      detail_images: detailImages,
       interested_customer_id: interestedCustomerId,
     };
     let listingId: string | undefined = isNew ? undefined : id;
