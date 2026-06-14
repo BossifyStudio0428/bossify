@@ -13,7 +13,7 @@ import { notifySituation } from "@/lib/autoNotify";
 import { getNotifMessage } from "@/lib/notifMessages";
 import { ProductFormSheet, QtySheet, ConfirmSheet } from "@/components/InventorySheets";
 import { StockTabs } from "@/components/StockTabs";
-import { formatUnit } from "@/lib/labels";
+import { formatUnit, formatCategory } from "@/lib/labels";
 
 export const Route = createFileRoute("/inventory")({ component: InventoryPage });
 
@@ -218,7 +218,7 @@ function InventoryPage() {
                   : "bg-card text-foreground border-border"
               }`}
             >
-              {c}
+              {formatCategory(c, lang)}
             </button>
           ))}
         </div>
@@ -261,7 +261,7 @@ function InventoryPage() {
                     <p className="text-sm font-semibold text-foreground truncate">{it.name}</p>
                     {it.category && (
                       <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                        {it.category}
+                        {formatCategory(it.category, lang)}
                       </span>
                     )}
                   </div>
