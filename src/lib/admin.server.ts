@@ -39,7 +39,7 @@ export async function loadAdminOverviewForUser(userId: string) {
     if ((s.status ?? "active").toLowerCase() !== "active") return false;
     return !s.expires_at || new Date(s.expires_at).getTime() >= Date.now();
   };
-  const subMap = new Map<string, (typeof subscriptionsResult.data)[number]>();
+  const subMap = new Map<string, NonNullable<typeof subscriptionsResult.data>[number]>();
   for (const sub of subscriptionsResult.data ?? []) {
     const current = subMap.get(sub.user_id);
     if (!current || (activeSub(sub) && !activeSub(current))) subMap.set(sub.user_id, sub);
