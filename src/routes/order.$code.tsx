@@ -9,6 +9,7 @@ import { stripEmoji } from "@/lib/wa";
 import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
+import { formatCategory, formatUnit } from "@/lib/labels";
 
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
@@ -67,6 +68,7 @@ type Product = {
   variants: Variant[];
   duration_minutes?: number | null;
   stock?: number | null;
+  unit?: string | null;
   images?: string[];
   detail_images?: Array<{ url: string; description: string }>;
   video_url?: string | null;
@@ -108,6 +110,7 @@ type LoadState =
         whatsapp_number: string | null;
         language?: string;
         allow_cod?: boolean;
+        order_form_show_stock?: boolean;
         payment_methods?: Array<{
           type: string | null;
           bank: string | null;
@@ -584,6 +587,7 @@ function PublicOrderFormPage() {
   }
 
   const { profile, products } = state;
+  const showStock = profile.order_form_show_stock !== false;
   const initials = (profile.business_name || "?").slice(0, 2).toUpperCase();
   const noProducts = products.length === 0;
 
@@ -773,7 +777,7 @@ function PublicOrderFormPage() {
                   {categories.map((c) => (
                     <CategoryChip
                       key={c}
-                      label={c}
+                      label={formatCategory(c, t)}
                       active={activeCategory === c}
                       onClick={() => setActiveCategory(c)}
                     />
@@ -887,7 +891,7 @@ function PublicOrderFormPage() {
                       <div className="p-3 pb-12 space-y-1">
                         {p.category && (
                           <p className="text-[9px] font-semibold tracking-wider uppercase text-primary/80 truncate">
-                            {p.category}
+                            {formatCategory(p.category, t)}
                           </p>
                         )}
                         <p className="text-[13px] font-semibold leading-tight line-clamp-2 min-h-[2.4em]">{p.name}</p>
