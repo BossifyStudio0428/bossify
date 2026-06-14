@@ -25,16 +25,22 @@ function SearchPage() {
       return;
     }
     const timer = setTimeout(async () => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        setResults({ orders: [], customers: [], inventory: [], ingredients: [], recipes: [], suppliers: [], stockTakes: [] });
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       const term = `%${q.trim()}%`;
       const [o, c, i, ing, rec, sup, st] = await Promise.all([
-        supabase.from("orders").select("id,code,customer_name,product,amount,status").or(`customer_name.ilike.${term},product.ilike.${term},code.ilike.${term}`).limit(10),
-        supabase.from("customers").select("id,name,phone,total_orders").or(`name.ilike.${term},phone.ilike.${term}`).limit(10),
-        supabase.from("inventory").select("id,name,stock,unit").ilike("name", term).limit(10),
-        supabase.from("ingredients" as any).select("id,name,unit,current_stock").ilike("name", term).limit(10),
-        supabase.from("recipes" as any).select("id,name,serving_size").ilike("name", term).limit(10),
-        supabase.from("suppliers" as any).select("id,name,contact").or(`name.ilike.${term},contact.ilike.${term}`).limit(10),
-        supabase.from("stock_takes" as any).select("id,started_at,completed_at,status,notes").or(`notes.ilike.${term},status.ilike.${term},started_at.ilike.${term},completed_at.ilike.${term}`).limit(10),
+        supabase.from("orders").select("id,code,customer_name,product,amount,status").eq("user_id", userId).or(`customer_name.ilike.${term},product.ilike.${term},code.ilike.${term}`).limit(10),
+        supabase.from("customers").select("id,name,phone,total_orders").eq("user_id", userId).or(`name.ilike.${term},phone.ilike.${term}`).limit(10),
+        supabase.from("inventory").select("id,name,stock,unit").eq("user_id", userId).ilike("name", term).limit(10),
+        supabase.from("ingredients" as any).select("id,name,unit,current_stock").eq("user_id", userId).ilike("name", term).limit(10),
+        supabase.from("recipes" as any).select("id,name,serving_size").eq("user_id", userId).ilike("name", term).limit(10),
+        supabase.from("suppliers" as any).select("id,name,contact").eq("user_id", userId).or(`name.ilike.${term},contact.ilike.${term}`).limit(10),
+        supabase.from("stock_takes" as any).select("id,started_at,completed_at,status,notes").eq("user_id", userId).or(`notes.ilike.${term},status.ilike.${term},started_at.ilike.${term},completed_at.ilike.${term}`).limit(10),
       ]);
       setResults({
         orders: o.data ?? [], customers: c.data ?? [], inventory: i.data ?? [],
