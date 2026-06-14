@@ -10,6 +10,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { savePdf } from "@/lib/pdf";
 import { applyCjkFont, hasCjk, CJK_FONT_FAMILY } from "@/lib/pdfCjk";
+import { formatUnit } from "@/lib/labels";
 
 export const Route = createFileRoute("/stock-take_/$id")({ component: StockTakeReportPage });
 
@@ -297,7 +298,7 @@ function StockTakeReportPage() {
                   </p>
                   {it.unit && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
-                      {it.unit}
+                      {formatUnit(it.unit, t)}
                     </span>
                   )}
                 </div>
