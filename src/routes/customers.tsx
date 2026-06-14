@@ -167,6 +167,18 @@ function CustomersPage() {
   useEffect(() => { load(); }, [user?.id]);
 
   useEffect(() => {
+    if (!user) return;
+    const onFocus = () => load();
+    const onVisible = () => { if (document.visibilityState === "visible") load(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     const open = () => setNewCustomerOpen(true);
     window.addEventListener("bossify:add-customer", open);
     return () => window.removeEventListener("bossify:add-customer", open);

@@ -50,7 +50,9 @@ function ReportsPage() {
     setLoading(true);
     load();
     const onFocus = () => load();
+    const onVisible = () => { if (document.visibilityState === "visible") load(); };
     window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
     const ch = supabase
       .channel("reports-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, () => load())
@@ -58,6 +60,7 @@ function ReportsPage() {
     return () => {
       cancelled = true;
       window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(ch);
     };
   }, [user?.id]);
