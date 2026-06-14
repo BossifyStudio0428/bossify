@@ -168,6 +168,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
       variants: Array<{ id?: string; name: string; price: number }>;
       duration_minutes?: number | null;
       stock?: number | null;
+      unit?: string | null;
       images?: string[];
       property?: {
         property_type: string | null;
