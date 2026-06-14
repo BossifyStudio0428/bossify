@@ -64,6 +64,8 @@ function AdminPage() {
   const [orderStatusFilter, setOrderStatusFilter] = useState<"All" | "Paid" | "Unpaid" | "Pending">(
     "All",
   );
+  const [userSearch, setUserSearch] = useState("");
+  const [orderSearch, setOrderSearch] = useState("");
 
   const callAdminApi = useCallback(
     async (body: Record<string, unknown>) => {
@@ -208,17 +210,41 @@ function AdminPage() {
   const totalUsers = users.length;
   const totalOrders = users.reduce((s, u) => s + (u.total_orders ?? 0), 0);
   const totalRevenue = users.reduce((s, u) => s + Number(u.total_revenue ?? 0), 0);
-  const proUsers = users.filter((u) => u.plan === "pro").length;
-  const freeUsers = users.filter((u) => u.plan !== "pro").length;
+  const isPaidPlan = (p: string | null) => {
+    const plan = (p ?? "free").toLowerCase();
+    return plan !== "free" && plan !== "";
+  };
+  const proUsers = users.filter((u) => isPaidPlan(u.plan)).length;
+  const freeUsers = users.filter((u) => !isPaidPlan(u.plan)).length;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const newToday = users.filter((u) => new Date(u.created_at) >= today).length;
 
-  const filteredOrders =
+  const userMap = new Map(users.map((u) => [u.id, u.business_name || u.id.slice(0, 8)]));
+  const orderSearchLc = orderSearch.trim().toLowerCase();
+  const filteredOrders = (
     orderStatusFilter === "All"
       ? allOrders
-      : allOrders.filter((o) => o.status === orderStatusFilter);
-  const userMap = new Map(users.map((u) => [u.id, u.business_name || u.id.slice(0, 8)]));
+      : allOrders.filter((o) => o.status === orderStatusFilter)
+  ).filter((o) => {
+    if (!orderSearchLc) return true;
+    const owner = (userMap.get(o.user_id) ?? "").toLowerCase();
+    return (
+      o.code?.toLowerCase().includes(orderSearchLc) ||
+      o.customer_name?.toLowerCase().includes(orderSearchLc) ||
+      o.product?.toLowerCase().includes(orderSearchLc) ||
+      owner.includes(orderSearchLc)
+    );
+  });
+  const userSearchLc = userSearch.trim().toLowerCase();
+  const filteredUsers = userSearchLc
+    ? users.filter(
+        (u) =>
+          (u.business_name ?? "").toLowerCase().includes(userSearchLc) ||
+          u.id.toLowerCase().includes(userSearchLc) ||
+          (u.plan ?? "").toLowerCase().includes(userSearchLc),
+      )
+    : users;
 
   const grantPro = async (
     uid: string,
@@ -324,7 +350,14 @@ function AdminPage() {
 
         {tab === "users" && (
           <div className="space-y-2">
-            {users.map((u) => (
+            <input
+              type="search"
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              placeholder={t("search") + "…"}
+              className="w-full h-10 rounded-full bg-muted px-4 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            {filteredUsers.map((u) => (
               <div key={u.id} className="rounded-2xl bg-card border border-border/60 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
@@ -381,6 +414,13 @@ function AdminPage() {
 
         {tab === "orders" && (
           <div className="space-y-2">
+            <input
+              type="search"
+              value={orderSearch}
+              onChange={(e) => setOrderSearch(e.target.value)}
+              placeholder={t("search") + "…"}
+              className="w-full h-10 rounded-full bg-muted px-4 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+            />
             <div className="flex gap-2 overflow-x-auto scrollbar-none">
               {(["All", "Paid", "Unpaid", "Pending"] as const).map((s) => (
                 <button
