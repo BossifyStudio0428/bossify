@@ -179,7 +179,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     if (isRetailish) {
       const { data: inv } = await sb
         .from("inventory")
-        .select("id,name,price,cost_price,image_url,images,detail_images,video_url,cover_image_url,category,description,variants,stock")
+        .select("id,name,price,image_url,images,detail_images,video_url,cover_image_url,category,description,variants,stock")
         .eq("user_id", profile.id)
         .order("name", { ascending: true });
       products = ((inv ?? []) as any[]).map((x) => ({
@@ -361,10 +361,21 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       }
     } else {
       const sourceTable = isRetailish ? "inventory" : "services";
-      const { data: priceRows } = await sb
+      let { data: priceRows, error: priceError } = await sb
         .from(sourceTable)
         .select(isRetailish ? "name, price, cost_price, variants" : "name, price, variants")
         .eq("user_id", userId);
+      if (priceError && isRetailish) {
+        const fallback = await sb
+          .from(sourceTable)
+          .select("name, price, variants")
+          .eq("user_id", userId);
+        priceRows = fallback.data;
+        priceError = fallback.error;
+      }
+      if (priceError) {
+        console.error("[createPublicOrder] product price lookup failed", priceError);
+      }
       for (const row of (priceRows ?? []) as any[]) {
         const baseName = String(row.name ?? "").trim().toLowerCase();
         const basePrice = Number(row.price ?? 0);
