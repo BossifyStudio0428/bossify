@@ -257,7 +257,7 @@ export function ProductFormSheet({
                             : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
                         }`}
                       >
-                        {c}
+                        {formatCategory(c, t)}
                       </button>
                     );
                   })}
