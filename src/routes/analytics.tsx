@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import {
@@ -25,15 +25,42 @@ function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [eduRows, setEduRows] = useState<Array<{ university_preference: string | null; course_interest: string | null; application_status: string | null }>>([]);
 
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      setLoading(true);
-      const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-      setOrders((data ?? []) as OrderRow[]);
+  const loadOrders = useCallback(async () => {
+    if (!user?.id) {
+      setOrders([]);
       setLoading(false);
-    })();
+      return;
+    }
+    setLoading(true);
+    const { data } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    setOrders((data ?? []) as OrderRow[]);
+    setLoading(false);
   }, [user?.id]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const onFocus = () => loadOrders();
+    const onVisible = () => { if (document.visibilityState === "visible") loadOrders(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    const ch = supabase
+      .channel("analytics-orders-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, () => loadOrders())
+      .subscribe();
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+      supabase.removeChannel(ch);
+    };
+  }, [user?.id, loadOrders]);
 
   useEffect(() => {
     if (!user || eff !== "education") return;
