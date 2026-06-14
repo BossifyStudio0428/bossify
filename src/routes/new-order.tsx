@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
+import { formatUnit } from "@/lib/labels";
 import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchWAProfile } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
 import { notify as deviceNotify } from "@/lib/notifications";
