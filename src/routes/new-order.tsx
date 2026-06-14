@@ -585,7 +585,7 @@ function NewOrderPage() {
                   {isRetailish
                     ? inventory.map((m) => (
                         <option key={m.id} value={m.name}>
-                          {m.name}{m.price ? ` — RM ${Number(m.price).toFixed(2)}` : ""} · {m.stock} {m.unit}
+                          {m.name}{m.price ? ` — RM ${Number(m.price).toFixed(2)}` : ""} · {m.stock} {formatUnit(m.unit, t)}
                         </option>
                       ))
                     : services.map((s) => (
