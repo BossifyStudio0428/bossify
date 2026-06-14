@@ -423,6 +423,7 @@ export type Database = {
           cost: number
           created_at: string
           customer_name: string
+          delivery_address: string | null
           gross_profit: number
           id: string
           notes: string | null
@@ -445,6 +446,7 @@ export type Database = {
           cost?: number
           created_at?: string
           customer_name: string
+          delivery_address?: string | null
           gross_profit?: number
           id?: string
           notes?: string | null
@@ -467,6 +469,7 @@ export type Database = {
           cost?: number
           created_at?: string
           customer_name?: string
+          delivery_address?: string | null
           gross_profit?: number
           id?: string
           notes?: string | null
