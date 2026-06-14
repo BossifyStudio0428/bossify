@@ -126,7 +126,7 @@ function InventoryDetail() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{item.name}</h1>
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-bold text-primary">RM {Number(item.price).toFixed(2)}</span>
-            <span className="text-xs text-muted-foreground">/ {item.unit}</span>
+            <span className="text-xs text-muted-foreground">/ {formatUnit(item.unit, t)}</span>
           </div>
         </div>
 
@@ -135,7 +135,7 @@ function InventoryDetail() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">{t("current_stock")}</span>
             <span className={`text-2xl font-bold ${item.stock <= 5 ? "text-red-500" : "text-foreground"}`}>
-              {item.stock} <span className="text-xs font-normal text-muted-foreground">{item.unit}</span>
+              {item.stock} <span className="text-xs font-normal text-muted-foreground">{formatUnit(item.unit, t)}</span>
             </span>
           </div>
           <div className="grid grid-cols-2 gap-2">
