@@ -263,6 +263,7 @@ export type Database = {
       inventory: {
         Row: {
           category: string | null
+          cost_price: number
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -281,6 +282,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          cost_price?: number
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -299,6 +301,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          cost_price?: number
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
