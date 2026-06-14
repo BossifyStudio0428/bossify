@@ -218,7 +218,7 @@ function InventoryPage() {
                   : "bg-card text-foreground border-border"
               }`}
             >
-              {formatCategory(c, lang)}
+              {formatCategory(c, t)}
             </button>
           ))}
         </div>
@@ -261,7 +261,7 @@ function InventoryPage() {
                     <p className="text-sm font-semibold text-foreground truncate">{it.name}</p>
                     {it.category && (
                       <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                        {formatCategory(it.category, lang)}
+                        {formatCategory(it.category, t)}
                       </span>
                     )}
                   </div>
