@@ -1,11 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import {
-  loadAdminOverviewForUser,
-  revokeAdminSubscriptionPlanForUser,
-  setAdminSubscriptionPlanForUser,
-} from "@/lib/admin.server";
 
 const EXTERNAL_SUPABASE_URL = "https://knouahqwazerjiyiqgmh.supabase.co";
 const EXTERNAL_SUPABASE_ANON_KEY =
@@ -72,6 +67,12 @@ export const Route = createFileRoute("/api/public/admin")({
         if (!parsed.success) return json(400, { error: "Invalid request" });
 
         try {
+          const {
+            loadAdminOverviewForUser,
+            revokeAdminSubscriptionPlanForUser,
+            setAdminSubscriptionPlanForUser,
+          } = await import("@/lib/admin.server");
+
           if (parsed.data.action === "overview") {
             return json(200, await loadAdminOverviewForUser(userId));
           }
