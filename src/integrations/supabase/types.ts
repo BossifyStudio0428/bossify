@@ -263,6 +263,7 @@ export type Database = {
       inventory: {
         Row: {
           category: string | null
+          cost_price: number
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -281,6 +282,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          cost_price?: number
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -299,6 +301,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          cost_price?: number
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -420,8 +423,11 @@ export type Database = {
         Row: {
           amount: number
           code: string
+          cost: number
           created_at: string
           customer_name: string
+          delivery_address: string | null
+          gross_profit: number
           id: string
           notes: string | null
           order_source: string
@@ -440,8 +446,11 @@ export type Database = {
         Insert: {
           amount?: number
           code: string
+          cost?: number
           created_at?: string
           customer_name: string
+          delivery_address?: string | null
+          gross_profit?: number
           id?: string
           notes?: string | null
           order_source?: string
@@ -460,8 +469,11 @@ export type Database = {
         Update: {
           amount?: number
           code?: string
+          cost?: number
           created_at?: string
           customer_name?: string
+          delivery_address?: string | null
+          gross_profit?: number
           id?: string
           notes?: string | null
           order_source?: string

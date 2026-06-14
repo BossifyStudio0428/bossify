@@ -93,27 +93,31 @@ function CustomersPage() {
     setRemovingId(c.id);
     setConfirmDelete(null);
     setTimeout(async () => {
+      const ordersQ = supabase.from("orders").delete().eq("user_id", user.id);
+      const { error: ordersError } = c.phone
+        ? await ordersQ.eq("phone", c.phone)
+        : await ordersQ.is("phone", null).eq("customer_name", c.name);
+      if (ordersError) {
+        toast.error(ordersError.message);
+        setRemovingId(null);
+        return;
+      }
+      const { error: followUpError } = await supabase.from("follow_ups").delete().eq("user_id", user.id).eq("customer_id", c.id);
+      if (followUpError) {
+        toast.error(followUpError.message);
+        setRemovingId(null);
+        return;
+      }
       const { error } = await supabase.from("customers").delete().eq("id", c.id).eq("user_id", user.id);
       if (error) {
         toast.error(error.message);
         setRemovingId(null);
         return;
       }
-      // Cascade: remove related orders & follow-ups so they don't reappear on home.
-      try {
-        const ordersQ = supabase.from("orders").delete().eq("user_id", user.id);
-        if (c.phone) {
-          await ordersQ.eq("phone", c.phone);
-        } else {
-          await ordersQ.is("phone", null).eq("customer_name", c.name);
-        }
-      } catch { /* non-fatal */ }
-      try {
-        await supabase.from("follow_ups").delete().eq("user_id", user.id).eq("customer_id", c.id);
-      } catch { /* non-fatal */ }
       setCustomers((prev) => prev.filter((x) => x.id !== c.id));
       setRemovingId(null);
       toast.success(t("customer_deleted"));
+      load();
     }, 220);
   };
 
@@ -123,6 +127,7 @@ function CustomersPage() {
     const { data, error } = await supabase
       .from("customers")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     const rows = (data ?? []) as CustomerRow[];

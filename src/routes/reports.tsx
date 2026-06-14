@@ -9,6 +9,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { exportSalesReportPDF } from "@/lib/pdf";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { orderCost, orderGrossProfit, orderProfitMargin } from "@/lib/orderMath";
 
 export const Route = createFileRoute("/reports")({ component: ReportsPage });
 
@@ -94,9 +95,9 @@ function ReportsPage() {
   });
 
   const totalRevenue = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0);
-  const totalCost = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.cost ?? 0), 0);
-  const totalGrossProfit = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.gross_profit ?? 0), 0);
-  const profitMargin = totalRevenue > 0 ? (totalGrossProfit / totalRevenue) * 100 : 0;
+  const totalCost = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + orderCost(o), 0);
+  const totalGrossProfit = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + orderGrossProfit(o), 0);
+  const profitMargin = orderProfitMargin(totalRevenue, totalGrossProfit);
   const totalOrders = inRange.length;
   const paidOrders = inRange.filter((o) => o.status === "Paid").length;
   const unpaidAmount = inRange.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount), 0);

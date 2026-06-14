@@ -348,7 +348,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       paymentMethod = data2.payment_method;
     }
 
-    const priceMap = new Map<string, number>();
+    const priceMap = new Map<string, { price: number; cost: number }>();
     if (bizType === "property") {
       const { data: priceRows } = await sb
         .from("listings")
@@ -357,28 +357,40 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       for (const row of (priceRows ?? []) as any[]) {
         const baseName = String(row.title ?? "").trim().toLowerCase();
         const basePrice = Number(row.price ?? 0);
-        if (baseName) priceMap.set(baseName, basePrice);
+        if (baseName) priceMap.set(baseName, { price: basePrice, cost: 0 });
       }
     } else {
       const sourceTable = isRetailish ? "inventory" : "services";
-      const { data: priceRows } = await sb
+      let { data: priceRows, error: priceError } = await sb
         .from(sourceTable)
-        .select("name, price, variants")
+        .select(isRetailish ? "name, price, cost_price, variants" : "name, price, variants")
         .eq("user_id", userId);
+      if (priceError && isRetailish) {
+        const fallback = await sb
+          .from(sourceTable)
+          .select("name, price, variants")
+          .eq("user_id", userId);
+        priceRows = fallback.data;
+        priceError = fallback.error;
+      }
+      if (priceError) {
+        console.error("[createPublicOrder] product price lookup failed", priceError);
+      }
       for (const row of (priceRows ?? []) as any[]) {
         const baseName = String(row.name ?? "").trim().toLowerCase();
         const basePrice = Number(row.price ?? 0);
-        if (baseName) priceMap.set(baseName, basePrice);
+        const baseCost = isRetailish ? Number(row.cost_price ?? 0) : 0;
+        if (baseName) priceMap.set(baseName, { price: basePrice, cost: baseCost });
         const variants = Array.isArray(row.variants) ? row.variants : [];
         for (const v of variants) {
           const vName = String(v?.name ?? "").trim();
           if (!vName) continue;
           const vPrice = Number(v?.price ?? basePrice);
-          priceMap.set(`${baseName} (${vName.toLowerCase()})`, vPrice);
+          priceMap.set(`${baseName} (${vName.toLowerCase()})`, { price: vPrice, cost: baseCost });
         }
       }
     }
-    const lookupPrice = (product: string, variant?: string): number | null => {
+    const lookupPrice = (product: string, variant?: string): { price: number; cost: number } | null => {
       const p = product.trim().toLowerCase();
       if (variant && variant.trim()) {
         const key = `${p} (${variant.trim().toLowerCase()})`;
@@ -439,12 +451,12 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         : 1;
       totalAmount = resolved.reduce(
         (s, { it, serverPrice }: any) =>
-          s + Number(serverPrice ?? 0) * (isRetailish ? (it.quantity || 1) : 1),
+          s + Number(serverPrice?.price ?? 0) * (isRetailish ? (it.quantity || 1) : 1),
         0,
       );
       const lines = resolved.map(({ it, serverPrice }: any) => {
         const label = it.variant ? `${it.product} (${it.variant})` : it.product;
-        const sub = Number(serverPrice ?? 0) * (isRetailish ? (it.quantity || 1) : 1);
+        const sub = Number(serverPrice?.price ?? 0) * (isRetailish ? (it.quantity || 1) : 1);
         return isRetailish
           ? `• ${label} × ${it.quantity} — RM ${sub.toFixed(2)}`
           : `• ${label} — RM ${sub.toFixed(2)}`;
@@ -457,7 +469,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       if (productText && serverPrice === null) {
         return { ok: false, reason: "insert_failed", error: `Unknown product: ${productText}` };
       }
-      totalAmount = Number(serverPrice ?? 0) * totalQty;
+      totalAmount = Number(serverPrice?.price ?? 0) * totalQty;
     }
 
     if (!productText) {
@@ -471,6 +483,12 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     const phoneDigits = (data2.phone || "").replace(/\D/g, "");
     const qty = totalQty;
     const amount = totalAmount;
+    const totalCost = data2.items && data2.items.length > 0
+      ? data2.items.reduce((s: number, it: any) => {
+          const found = lookupPrice(it.product, it.variant);
+          return s + Number(found?.cost ?? 0) * (isRetailish ? (it.quantity || 1) : 1);
+        }, 0)
+      : Number(lookupPrice(productText)?.cost ?? 0) * qty;
 
     const { data: inserted, error: oErr } = await sb
       .from("orders")
@@ -482,6 +500,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         product: productText,
         quantity: qty,
         amount,
+        cost: totalCost,
         status: "Unpaid",
         notes: combinedNotes,
         delivery_address: (data2.address || "").trim() || null,
