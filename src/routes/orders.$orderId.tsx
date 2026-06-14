@@ -8,6 +8,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchWAProfile } from "@/lib/wa";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { PhoneInput } from "@/components/PhoneInput";
+import { orderCost } from "@/lib/orderMath";
 
 export const Route = createFileRoute("/orders/$orderId")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -74,6 +75,7 @@ function OrderDetailPage() {
       product: form.product?.trim(),
       quantity: Number(form.quantity ?? 1),
       amount: Number(form.amount ?? 0),
+      cost: orderCost(order),
       status: form.status,
       delivery_address: (form.delivery_address as string)?.toString().trim() || null,
       notes: form.notes?.toString().trim() || null,
@@ -89,7 +91,7 @@ function OrderDetailPage() {
 
   const remove = async () => {
     if (!order || !confirm(t("delete_confirm"))) return;
-    const { error } = await supabase.from("orders").delete().eq("id", order.id);
+    const { error } = await supabase.from("orders").delete().eq("id", order.id).eq("user_id", user?.id ?? "");
     if (error) toast.error(error.message);
     else { toast.success(t("order_deleted")); navigate({ to: "/orders" }); }
   };

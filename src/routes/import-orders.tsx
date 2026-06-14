@@ -111,7 +111,10 @@ function ImportOrdersPage() {
         notes: row.notes,
       };
       if (row.created_at) payload.created_at = row.created_at;
-      if (row.cost != null) payload.cost = row.cost;
+      if (row.cost != null) {
+        payload.cost = row.cost;
+        payload.gross_profit = row.amount - row.cost;
+      }
 
       const existingId = row.code ? existingByCode.get(row.code) : undefined;
       if (existingId) {

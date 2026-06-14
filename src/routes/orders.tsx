@@ -16,6 +16,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
+import { orderCost } from "@/lib/orderMath";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
@@ -440,6 +441,21 @@ function OrdersPage() {
         }
       }
     }
+    if (user && !target.phone) {
+      const { data: existing } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("user_id", user.id)
+        .is("phone", null)
+        .eq("name", target.customer_name)
+        .maybeSingle();
+      if (existing) {
+        const newOrders = Math.max(0, (existing.total_orders ?? 0) - 1);
+        const newSpent = Math.max(0, Number(existing.total_spent ?? 0) - Number(target.amount));
+        if (newOrders === 0) await supabase.from("customers").delete().eq("id", existing.id);
+        else await supabase.from("customers").update({ total_orders: newOrders, total_spent: newSpent }).eq("id", existing.id);
+      }
+    }
     if (user) {
       await createNotification({
         user_id: user.id,
@@ -474,6 +490,7 @@ function OrdersPage() {
       product: editForm.product?.toString().trim() || editingOrder.product,
       quantity: Number(editForm.quantity ?? editingOrder.quantity),
       amount: Number(editForm.amount ?? editingOrder.amount),
+      cost: orderCost(editingOrder),
       status: (editForm.status ?? editingOrder.status) as OrderStatus,
       delivery_address: (editForm.delivery_address as string)?.toString().trim() || null,
       notes: editForm.notes?.toString().trim() || null,
