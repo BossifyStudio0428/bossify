@@ -33,7 +33,17 @@ export async function loadAdminOverviewForUser(userId: string) {
   }
 
   const orders = ordersResult.data ?? [];
-  const subMap = new Map((subscriptionsResult.data ?? []).map((s) => [s.user_id, s]));
+  const activeSub = (s: { plan?: string | null; status?: string | null; expires_at?: string | null }) => {
+    const plan = (s.plan ?? "free").toLowerCase();
+    if (!plan || plan === "free") return false;
+    if ((s.status ?? "active").toLowerCase() !== "active") return false;
+    return !s.expires_at || new Date(s.expires_at).getTime() >= Date.now();
+  };
+  const subMap = new Map(
+    (subscriptionsResult.data ?? [])
+      .sort((a, b) => Number(activeSub(b)) - Number(activeSub(a)))
+      .map((s) => [s.user_id, s]),
+  );
   const users = (profilesResult.data ?? []).map((profile) => {
     const sub = subMap.get(profile.id);
     const userOrders = orders.filter((order) => order.user_id === profile.id);
