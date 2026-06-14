@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
 import {
   getAiUsageStats,
+  loadAdminOverview,
   revokeAdminSubscriptionPlan,
   setAdminSubscriptionPlan,
   type AiUsageStats,
@@ -46,6 +47,7 @@ function AdminPage() {
   const { refresh: refreshSub } = useSubscription();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const loadAdminOverviewFn = useServerFn(loadAdminOverview);
   const setAdminSubscriptionPlanFn = useServerFn(setAdminSubscriptionPlan);
   const revokeAdminSubscriptionPlanFn = useServerFn(revokeAdminSubscriptionPlan);
   const getAiUsageStatsFn = useServerFn(getAiUsageStats);
@@ -101,73 +103,13 @@ function AdminPage() {
   );
 
   const loadAll = useCallback(async () => {
-    const { data: adminProfile, error: adminError } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user!.id)
-      .maybeSingle();
-    if (adminError) throw new Error(adminError.message);
-    if (!adminProfile?.is_admin) throw new Error("Forbidden");
+    const overview = isNativeWebView()
+      ? await callAdminApi({ action: "overview" })
+      : await loadAdminOverviewFn();
 
-    const [{ data: viewUsers, error: viewError }, { data: orders, error: ordersError }] =
-      await Promise.all([
-        supabase
-          .from("admin_users_view" as never)
-          .select("*")
-          .order("created_at", { ascending: false }),
-        supabase.from("orders").select("*").order("created_at", { ascending: false }),
-      ]);
-
-    if (ordersError) throw new Error(ordersError.message);
-    if (!viewError && viewUsers) {
-      setUsers(viewUsers as unknown as AdminUser[]);
-      setAllOrders((orders ?? []) as unknown as AdminOrder[]);
-      return;
-    }
-
-    const [{ data: profiles, error: profilesError }, { data: subscriptions, error: subsError }] =
-      await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id,business_name,is_admin,created_at")
-          .order("created_at", { ascending: false }),
-        supabase.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
-      ]);
-    if (profilesError || subsError) {
-      throw new Error(
-        profilesError?.message ??
-          subsError?.message ??
-          viewError?.message ??
-          "Unable to load admin data",
-      );
-    }
-
-    const subMap = new Map((subscriptions ?? []).map((s) => [s.user_id, s]));
-    const orderRows = (orders ?? []) as unknown as AdminOrder[];
-    setUsers(
-      (
-        (profiles ?? []) as Array<
-          Pick<AdminUser, "id" | "business_name" | "is_admin" | "created_at">
-        >
-      ).map((profile) => {
-        const sub = subMap.get(profile.id);
-        const userOrders = orderRows.filter((o) => o.user_id === profile.id);
-        return {
-          ...profile,
-          plan: sub?.plan ?? "free",
-          status: sub?.status ?? null,
-          expires_at: sub?.expires_at ?? null,
-          order_count: sub?.order_count ?? 0,
-          total_orders: userOrders.length,
-          total_revenue: userOrders.reduce(
-            (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
-            0,
-          ),
-        };
-      }),
-    );
-    setAllOrders(orderRows);
-  }, [user]);
+    setUsers((overview.users ?? []) as AdminUser[]);
+    setAllOrders((overview.orders ?? []) as AdminOrder[]);
+  }, [callAdminApi, loadAdminOverviewFn]);
 
   useEffect(() => {
     if (!user) return;
@@ -210,12 +152,15 @@ function AdminPage() {
   const totalUsers = users.length;
   const totalOrders = users.reduce((s, u) => s + (u.total_orders ?? 0), 0);
   const totalRevenue = users.reduce((s, u) => s + Number(u.total_revenue ?? 0), 0);
-  const isPaidPlan = (p: string | null) => {
+  const isPaidPlan = (p: string | null, status?: string | null, expiresAt?: string | null) => {
     const plan = (p ?? "free").toLowerCase();
-    return plan !== "free" && plan !== "";
+    if (plan === "free" || plan === "") return false;
+    if (status && status.toLowerCase() !== "active") return false;
+    if (expiresAt && new Date(expiresAt).getTime() < Date.now()) return false;
+    return true;
   };
-  const proUsers = users.filter((u) => isPaidPlan(u.plan)).length;
-  const freeUsers = users.filter((u) => !isPaidPlan(u.plan)).length;
+  const proUsers = users.filter((u) => isPaidPlan(u.plan, u.status, u.expires_at)).length;
+  const freeUsers = users.filter((u) => !isPaidPlan(u.plan, u.status, u.expires_at)).length;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const newToday = users.filter((u) => new Date(u.created_at) >= today).length;
@@ -369,7 +314,7 @@ function AdminPage() {
                     </p>
                   </div>
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.plan === "pro" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isPaidPlan(u.plan, u.status, u.expires_at) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
                   >
                     {(u.plan ?? "free").toUpperCase()}
                   </span>
