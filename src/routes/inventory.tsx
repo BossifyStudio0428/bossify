@@ -36,6 +36,7 @@ function InventoryPage() {
   const [items, setItems] = useState<InvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
+  const [showStock, setShowStock] = useState<boolean>(true);
   const firstLowRef = useRef<HTMLElement | null>(null);
 
   const load = async () => {
@@ -45,6 +46,18 @@ function InventoryPage() {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("order_form_show_stock" as any)
+        .eq("id", user.id)
+        .maybeSingle();
+      setShowStock(((data as any)?.order_form_show_stock as boolean) ?? true);
+    })();
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
