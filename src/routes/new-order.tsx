@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
+import { formatUnit } from "@/lib/labels";
 import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchWAProfile } from "@/lib/wa";
 import { createNotification } from "@/lib/notify";
 import { notify as deviceNotify } from "@/lib/notifications";
@@ -585,7 +586,7 @@ function NewOrderPage() {
                   {isRetailish
                     ? inventory.map((m) => (
                         <option key={m.id} value={m.name}>
-                          {m.name}{m.price ? ` — RM ${Number(m.price).toFixed(2)}` : ""} · {m.stock} {m.unit}
+                          {m.name}{m.price ? ` — RM ${Number(m.price).toFixed(2)}` : ""} · {m.stock} {formatUnit(m.unit, t)}
                         </option>
                       ))
                     : services.map((s) => (

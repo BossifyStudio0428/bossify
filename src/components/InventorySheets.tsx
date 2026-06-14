@@ -12,6 +12,7 @@ import { ProductImagesGrid } from "@/components/ProductImagesGrid";
 import { DetailPhotosList } from "@/components/DetailPhotosList";
 import { toastSavedWithOrderFormLink } from "@/lib/orderFormToast";
 import { loadDraft, saveDraft, clearDraft } from "@/lib/formDraft";
+import { formatCategory } from "@/lib/labels";
 
 export function SheetShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
@@ -256,7 +257,7 @@ export function ProductFormSheet({
                             : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
                         }`}
                       >
-                        {c}
+                        {formatCategory(c, t)}
                       </button>
                     );
                   })}
@@ -285,7 +286,7 @@ export function ProductFormSheet({
       ),
     },
     {
-      title: "Price",
+      title: t("section_price"),
       content: (
         <>
           <SheetField label={t("selling_price")} value={price} onChange={setPrice} type="number" placeholder={t("price_ph")} />
@@ -294,7 +295,7 @@ export function ProductFormSheet({
       ),
     },
     {
-      title: "Stock & unit",
+      title: t("section_stock_unit"),
       content: (
         <>
           <SheetField label={t("how_many_now")} value={stock} onChange={setStock} type="number" placeholder={t("stock_now_ph")} />

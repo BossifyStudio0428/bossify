@@ -8,6 +8,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { SheetShell, ConfirmSheet } from "@/components/InventorySheets";
 import { StockTabs } from "@/components/StockTabs";
+import { formatUnit } from "@/lib/labels";
 
 export const Route = createFileRoute("/stock-take")({ component: StockTakePage });
 
@@ -310,7 +311,7 @@ function StockTakePage() {
                       <span className="inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{r.category}</span>
                     )}
                     {isFnb && r.unit && (
-                      <span className="inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{r.unit}</span>
+                      <span className="inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{formatUnit(r.unit, t)}</span>
                     )}
                   </div>
                 </div>

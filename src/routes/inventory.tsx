@@ -13,6 +13,7 @@ import { notifySituation } from "@/lib/autoNotify";
 import { getNotifMessage } from "@/lib/notifMessages";
 import { ProductFormSheet, QtySheet, ConfirmSheet } from "@/components/InventorySheets";
 import { StockTabs } from "@/components/StockTabs";
+import { formatUnit } from "@/lib/labels";
 
 export const Route = createFileRoute("/inventory")({ component: InventoryPage });
 
@@ -244,10 +245,10 @@ function InventoryPage() {
               </div>
               <div className="flex items-baseline gap-1.5">
                 <span className={`text-2xl font-bold ${low ? "text-red-500" : "text-foreground"}`}>{it.stock}</span>
-                <span className="text-xs text-muted-foreground">{it.unit} {t("left")}</span>
+                <span className="text-xs text-muted-foreground">{formatUnit(it.unit, t)} {t("left")}</span>
                 {it.price ? (
                   <span className="ml-auto text-xs font-semibold text-primary">
-                    RM {Number(it.price).toFixed(2)}<span className="text-muted-foreground font-normal"> / {it.unit}</span>
+                    RM {Number(it.price).toFixed(2)}<span className="text-muted-foreground font-normal"> / {formatUnit(it.unit, t)}</span>
                   </span>
                 ) : null}
               </div>
