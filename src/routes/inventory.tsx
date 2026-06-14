@@ -140,6 +140,38 @@ function InventoryPage() {
 
       {(bizType === "retail" || bizType === "fnb") && <StockTabs active="products" />}
 
+      {(bizType === "retail" || bizType === "fnb") && (
+        <div className="flex items-center justify-between rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-3 py-2">
+          <div className="min-w-0 pr-3">
+            <p className="text-xs font-semibold">📦 {t("pof_show_stock_label")}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{t("pof_show_stock_sub")}</p>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              if (!user) return;
+              const next = !showStock;
+              setShowStock(next);
+              const { error } = await supabase
+                .from("profiles")
+                .update({ order_form_show_stock: next } as any)
+                .eq("id", user.id);
+              if (error) {
+                setShowStock(!next);
+                toast.error(error.message);
+              }
+            }}
+            role="switch"
+            aria-checked={showStock}
+            className={`relative h-6 w-11 rounded-full transition-colors shrink-0 ${showStock ? "bg-primary" : "bg-muted-foreground/30"}`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${showStock ? "translate-x-5" : ""}`}
+            />
+          </button>
+        </div>
+      )}
+
       {lowItems.length > 0 && (
         <button
           onClick={() => firstLowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
