@@ -263,7 +263,10 @@ export function ProductFormSheet({
                   })}
                 </div>
                 <input
-                  value={category}
+                  value={categoryPresets.includes(category) ? formatCategory(category, t) : category}
+                  onFocus={() => {
+                    if (categoryPresets.includes(category)) setCategory("");
+                  }}
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder={t("custom_category")}
                   className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
