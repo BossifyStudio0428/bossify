@@ -1471,6 +1471,7 @@ function ProductSlide({
   onAdd,
   lang,
   whatsappNumber,
+  showStock,
 }: {
   product: Product;
   isActive: boolean;
@@ -1480,6 +1481,7 @@ function ProductSlide({
   onAdd: (line: CartLine) => void;
   lang: "en" | "ms" | "zh";
   whatsappNumber: string | null;
+  showStock: boolean;
 }) {
   const hasVariants = product.variants && product.variants.length > 0;
   const [selectedVariantIdx, setSelectedVariantIdx] = useState<number>(0);
