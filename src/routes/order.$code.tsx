@@ -687,6 +687,7 @@ function PublicOrderFormPage() {
         }}
         lang={lang}
         whatsappNumber={profile.whatsapp_number}
+        showStock={showStock}
       />
     );
   };
@@ -1322,6 +1323,7 @@ function DetailSheet({
   onAdd,
   lang,
   whatsappNumber,
+  showStock,
 }: {
   products: Product[];
   initialIndex: number;
@@ -1332,6 +1334,7 @@ function DetailSheet({
   onAdd: (line: CartLine) => void;
   lang: "en" | "ms" | "zh";
   whatsappNumber: string | null;
+  showStock: boolean;
 }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
@@ -1428,6 +1431,7 @@ function DetailSheet({
                 onAdd={onAdd}
                 lang={lang}
                 whatsappNumber={whatsappNumber}
+                showStock={showStock}
               />
             </div>
           ))}
