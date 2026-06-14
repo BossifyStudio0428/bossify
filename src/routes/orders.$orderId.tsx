@@ -95,9 +95,10 @@ function OrderDetailPage() {
     if (error) toast.error(error.message);
     else {
       if (user) {
+        const phoneDigits = (order.phone || "").replace(/\D/g, "");
         const customerQuery = supabase.from("customers").select("*").eq("user_id", user.id);
-        const { data: existing } = order.phone
-          ? await customerQuery.eq("phone", order.phone).maybeSingle()
+        const { data: existing } = phoneDigits
+          ? await customerQuery.eq("phone", phoneDigits).maybeSingle()
           : await customerQuery.is("phone", null).eq("name", order.customer_name).maybeSingle();
         if (existing) {
           const newOrders = Math.max(0, (existing.total_orders ?? 0) - 1);
