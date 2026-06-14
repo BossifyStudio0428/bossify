@@ -54,6 +54,7 @@ export async function loadAdminOverviewForUser(userId: string) {
       plan: sub?.plan ?? "free",
       status: sub?.status ?? null,
       expires_at: sub?.expires_at ?? null,
+      current_period_end: sub?.current_period_end ?? null,
       order_count: sub?.order_count ?? 0,
       total_orders: Math.max(userOrders.length, Number(sub?.order_count ?? 0)),
       total_revenue: userOrders.reduce(
