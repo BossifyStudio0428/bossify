@@ -39,11 +39,11 @@ export async function loadAdminOverviewForUser(userId: string) {
     if ((s.status ?? "active").toLowerCase() !== "active") return false;
     return !s.expires_at || new Date(s.expires_at).getTime() >= Date.now();
   };
-  const subMap = new Map(
-    (subscriptionsResult.data ?? [])
-      .sort((a, b) => Number(activeSub(b)) - Number(activeSub(a)))
-      .map((s) => [s.user_id, s]),
-  );
+  const subMap = new Map<string, (typeof subscriptionsResult.data)[number]>();
+  for (const sub of subscriptionsResult.data ?? []) {
+    const current = subMap.get(sub.user_id);
+    if (!current || (activeSub(sub) && !activeSub(current))) subMap.set(sub.user_id, sub);
+  }
   const users = (profilesResult.data ?? []).map((profile) => {
     const sub = subMap.get(profile.id);
     const userOrders = orders.filter((order) => order.user_id === profile.id);

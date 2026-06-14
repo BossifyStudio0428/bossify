@@ -93,7 +93,22 @@ function OrderDetailPage() {
     if (!order || !confirm(t("delete_confirm"))) return;
     const { error } = await supabase.from("orders").delete().eq("id", order.id).eq("user_id", user?.id ?? "");
     if (error) toast.error(error.message);
-    else { toast.success(t("order_deleted")); navigate({ to: "/orders" }); }
+    else {
+      if (user) {
+        const customerQuery = supabase.from("customers").select("*").eq("user_id", user.id);
+        const { data: existing } = order.phone
+          ? await customerQuery.eq("phone", order.phone).maybeSingle()
+          : await customerQuery.is("phone", null).eq("name", order.customer_name).maybeSingle();
+        if (existing) {
+          const newOrders = Math.max(0, (existing.total_orders ?? 0) - 1);
+          const newSpent = Math.max(0, Number(existing.total_spent ?? 0) - Number(order.amount));
+          if (newOrders === 0) await supabase.from("customers").delete().eq("id", existing.id);
+          else await supabase.from("customers").update({ total_orders: newOrders, total_spent: newSpent }).eq("id", existing.id);
+        }
+      }
+      toast.success(t("order_deleted"));
+      navigate({ to: "/orders" });
+    }
   };
 
   if (loading) return <p className="p-6 text-sm text-muted-foreground">{t("loading")}</p>;
