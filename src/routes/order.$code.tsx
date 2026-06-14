@@ -9,6 +9,7 @@ import { stripEmoji } from "@/lib/wa";
 import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
+import { formatCategory, formatUnit } from "@/lib/labels";
 
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
@@ -67,6 +68,7 @@ type Product = {
   variants: Variant[];
   duration_minutes?: number | null;
   stock?: number | null;
+  unit?: string | null;
   images?: string[];
   detail_images?: Array<{ url: string; description: string }>;
   video_url?: string | null;
@@ -108,6 +110,7 @@ type LoadState =
         whatsapp_number: string | null;
         language?: string;
         allow_cod?: boolean;
+        order_form_show_stock?: boolean;
         payment_methods?: Array<{
           type: string | null;
           bank: string | null;
@@ -584,6 +587,7 @@ function PublicOrderFormPage() {
   }
 
   const { profile, products } = state;
+  const showStock = profile.order_form_show_stock !== false;
   const initials = (profile.business_name || "?").slice(0, 2).toUpperCase();
   const noProducts = products.length === 0;
 
@@ -683,6 +687,7 @@ function PublicOrderFormPage() {
         }}
         lang={lang}
         whatsappNumber={profile.whatsapp_number}
+        showStock={showStock}
       />
     );
   };
@@ -773,7 +778,7 @@ function PublicOrderFormPage() {
                   {categories.map((c) => (
                     <CategoryChip
                       key={c}
-                      label={c}
+                      label={formatCategory(c, t)}
                       active={activeCategory === c}
                       onClick={() => setActiveCategory(c)}
                     />
@@ -887,7 +892,7 @@ function PublicOrderFormPage() {
                       <div className="p-3 pb-12 space-y-1">
                         {p.category && (
                           <p className="text-[9px] font-semibold tracking-wider uppercase text-primary/80 truncate">
-                            {p.category}
+                            {formatCategory(p.category, t)}
                           </p>
                         )}
                         <p className="text-[13px] font-semibold leading-tight line-clamp-2 min-h-[2.4em]">{p.name}</p>
@@ -1318,6 +1323,7 @@ function DetailSheet({
   onAdd,
   lang,
   whatsappNumber,
+  showStock,
 }: {
   products: Product[];
   initialIndex: number;
@@ -1328,6 +1334,7 @@ function DetailSheet({
   onAdd: (line: CartLine) => void;
   lang: "en" | "ms" | "zh";
   whatsappNumber: string | null;
+  showStock: boolean;
 }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
@@ -1424,6 +1431,7 @@ function DetailSheet({
                 onAdd={onAdd}
                 lang={lang}
                 whatsappNumber={whatsappNumber}
+                showStock={showStock}
               />
             </div>
           ))}
@@ -1463,6 +1471,7 @@ function ProductSlide({
   onAdd,
   lang,
   whatsappNumber,
+  showStock,
 }: {
   product: Product;
   isActive: boolean;
@@ -1472,8 +1481,10 @@ function ProductSlide({
   onAdd: (line: CartLine) => void;
   lang: "en" | "ms" | "zh";
   whatsappNumber: string | null;
+  showStock: boolean;
 }) {
   const hasVariants = product.variants && product.variants.length > 0;
+  const { t } = useI18n();
   const [selectedVariantIdx, setSelectedVariantIdx] = useState<number>(0);
   const [qty, setQty] = useState<number>(1);
   const [galleryIdx, setGalleryIdx] = useState(0);
@@ -1547,11 +1558,13 @@ function ProductSlide({
   const durationLabel = lang === "ms" ? "Tempoh" : lang === "zh" ? "时长" : "Duration";
   const mins = lang === "ms" ? "minit" : lang === "zh" ? "分钟" : "min";
   const inStockLabel = lang === "ms" ? "Ada stok" : lang === "zh" ? "有货" : "In stock";
+  const unitLabel = formatUnit(product.unit, t);
+  const stockText = (n: number) => unitLabel ? `${n} ${unitLabel}` : String(n);
   const lowStockLabel = (n: number) =>
-    lang === "ms" ? `Tinggal ${n} sahaja` : lang === "zh" ? `仅剩 ${n} 件` : `Only ${n} left`;
+    lang === "ms" ? `Tinggal ${stockText(n)} sahaja` : lang === "zh" ? `仅剩 ${stockText(n)}` : `Only ${stockText(n)} left`;
   const outOfStockLabel = lang === "ms" ? "Kehabisan stok" : lang === "zh" ? "缺货" : "Out of stock";
   const leftLabel = (n: number) =>
-    lang === "ms" ? `${n} tinggal` : lang === "zh" ? `剩 ${n} 件` : `${n} left`;
+    lang === "ms" ? `${stockText(n)} tinggal` : lang === "zh" ? `剩 ${stockText(n)}` : `${stockText(n)} left`;
 
   const isRent = prop?.listing_type === "rent";
   const propStatusLabel = isRent
@@ -1694,7 +1707,7 @@ function ProductSlide({
         ) : product.category && (
           <div className="inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.18em] uppercase text-primary">
             <span className="h-px w-5 bg-primary/60" />
-            {product.category}
+            {formatCategory(product.category, t)}
           </div>
         )}
         <h2 className="text-[26px] font-extrabold leading-tight tracking-tight">{product.name}</h2>
@@ -1707,7 +1720,7 @@ function ProductSlide({
         )}
 
         {/* Stock badge (retailish only) */}
-        {isRetailish && stock !== null && (
+        {isRetailish && stock !== null && (showStock || isOutOfStock) && (
           <div>
             {isOutOfStock ? (
               <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-[11px] font-semibold">

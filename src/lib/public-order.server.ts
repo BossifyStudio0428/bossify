@@ -91,6 +91,7 @@ export type LoadPublicOrderFormResult =
         whatsapp_number: string | null;
         language: string;
         allow_cod: boolean;
+        order_form_show_stock: boolean;
         payment_methods: Array<{
           type: string | null;
           bank: string | null;
@@ -109,6 +110,7 @@ export type LoadPublicOrderFormResult =
         variants: Array<{ id?: string; name: string; price: number }>;
         duration_minutes?: number | null;
         stock?: number | null;
+        unit?: string | null;
         images?: string[];
         property?: {
           property_type: string | null;
@@ -166,6 +168,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
       variants: Array<{ id?: string; name: string; price: number }>;
       duration_minutes?: number | null;
       stock?: number | null;
+      unit?: string | null;
       images?: string[];
       property?: {
         property_type: string | null;
@@ -179,7 +182,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
     if (isRetailish) {
       const { data: inv } = await sb
         .from("inventory")
-        .select("id,name,price,image_url,images,detail_images,video_url,cover_image_url,category,description,variants,stock")
+        .select("id,name,price,image_url,images,detail_images,video_url,cover_image_url,category,description,variants,stock,unit")
         .eq("user_id", profile.id)
         .order("name", { ascending: true });
       products = ((inv ?? []) as any[]).map((x) => ({
@@ -191,6 +194,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         description: x.description ?? null,
         variants: Array.isArray(x.variants) ? x.variants : [],
         stock: typeof x.stock === "number" ? x.stock : null,
+        unit: x.unit ?? null,
         images: Array.isArray(x.images) ? x.images.map((u: unknown) => String(u)) : [],
         detail_images: normalizeDetailItems(x.detail_images),
         video_url: x.video_url ?? null,
@@ -269,6 +273,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         whatsapp_number: profile.whatsapp_number ?? null,
         language: (profile as any).language ?? "en",
         allow_cod: (profile as any).allow_cod !== false,
+        order_form_show_stock: (profile as any).order_form_show_stock !== false,
         payment_methods: [
           {
             type: (profile as any).payment_method_1_type ?? null,

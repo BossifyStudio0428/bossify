@@ -19,7 +19,7 @@ export async function loadAdminOverviewForUser(userId: string) {
       .from("profiles")
       .select("id,business_name,is_admin,created_at")
       .order("created_at", { ascending: false }),
-    supabaseAdmin.from("subscriptions").select("user_id,plan,status,expires_at,order_count"),
+    supabaseAdmin.from("subscriptions").select("user_id,plan,status,expires_at,current_period_end,order_count"),
     supabaseAdmin.from("orders").select("*").order("created_at", { ascending: false }),
   ]);
 
@@ -33,11 +33,13 @@ export async function loadAdminOverviewForUser(userId: string) {
   }
 
   const orders = ordersResult.data ?? [];
-  const activeSub = (s: { plan?: string | null; status?: string | null; expires_at?: string | null }) => {
+  const activeSub = (s: { plan?: string | null; status?: string | null; expires_at?: string | null; current_period_end?: string | null }) => {
     const plan = (s.plan ?? "free").toLowerCase();
     if (!plan || plan === "free") return false;
     if ((s.status ?? "active").toLowerCase() !== "active") return false;
-    return !s.expires_at || new Date(s.expires_at).getTime() >= Date.now();
+    if (plan === "lifetime") return true;
+    const periodEnd = s.current_period_end ?? s.expires_at;
+    return !periodEnd || new Date(periodEnd).getTime() >= Date.now();
   };
   const subMap = new Map<string, NonNullable<typeof subscriptionsResult.data>[number]>();
   for (const sub of subscriptionsResult.data ?? []) {
@@ -52,8 +54,9 @@ export async function loadAdminOverviewForUser(userId: string) {
       plan: sub?.plan ?? "free",
       status: sub?.status ?? null,
       expires_at: sub?.expires_at ?? null,
+      current_period_end: sub?.current_period_end ?? null,
       order_count: sub?.order_count ?? 0,
-      total_orders: userOrders.length,
+      total_orders: Math.max(userOrders.length, Number(sub?.order_count ?? 0)),
       total_revenue: userOrders.reduce(
         (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
         0,

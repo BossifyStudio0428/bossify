@@ -25,6 +25,7 @@ type AdminUser = {
   plan: string | null;
   status: string | null;
   expires_at: string | null;
+  current_period_end?: string | null;
   order_count: number | null;
   total_orders: number;
   total_revenue: number;
@@ -165,15 +166,17 @@ function AdminPage() {
   const totalUsers = users.length;
   const totalOrders = users.reduce((s, u) => s + (u.total_orders ?? 0), 0);
   const totalRevenue = users.reduce((s, u) => s + Number(u.total_revenue ?? 0), 0);
-  const isPaidPlan = (p: string | null, status?: string | null, expiresAt?: string | null) => {
+  const isPaidPlan = (p: string | null, status?: string | null, expiresAt?: string | null, currentPeriodEnd?: string | null) => {
     const plan = (p ?? "free").toLowerCase();
     if (plan === "free" || plan === "") return false;
     if (status && status.toLowerCase() !== "active") return false;
-    if (expiresAt && new Date(expiresAt).getTime() < Date.now()) return false;
+    if (plan === "lifetime") return true;
+    const periodEnd = currentPeriodEnd ?? expiresAt;
+    if (periodEnd && new Date(periodEnd).getTime() < Date.now()) return false;
     return true;
   };
-  const proUsers = users.filter((u) => isPaidPlan(u.plan, u.status, u.expires_at)).length;
-  const freeUsers = users.filter((u) => !isPaidPlan(u.plan, u.status, u.expires_at)).length;
+  const proUsers = users.filter((u) => isPaidPlan(u.plan, u.status, u.expires_at, u.current_period_end)).length;
+  const freeUsers = users.filter((u) => !isPaidPlan(u.plan, u.status, u.expires_at, u.current_period_end)).length;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const newToday = users.filter((u) => new Date(u.created_at) >= today).length;
@@ -327,7 +330,7 @@ function AdminPage() {
                     </p>
                   </div>
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isPaidPlan(u.plan, u.status, u.expires_at) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isPaidPlan(u.plan, u.status, u.expires_at, u.current_period_end) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
                   >
                     {(u.plan ?? "free").toUpperCase()}
                   </span>

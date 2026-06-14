@@ -595,6 +595,7 @@ export type Database = {
           notif_unpaid: boolean
           order_form_code: string | null
           order_form_enabled: boolean
+          order_form_show_stock: boolean
           payment_method_1_bank: string | null
           payment_method_1_name: string | null
           payment_method_1_number: string | null
@@ -628,6 +629,7 @@ export type Database = {
           notif_unpaid?: boolean
           order_form_code?: string | null
           order_form_enabled?: boolean
+          order_form_show_stock?: boolean
           payment_method_1_bank?: string | null
           payment_method_1_name?: string | null
           payment_method_1_number?: string | null
@@ -661,6 +663,7 @@ export type Database = {
           notif_unpaid?: boolean
           order_form_code?: string | null
           order_form_enabled?: boolean
+          order_form_show_stock?: boolean
           payment_method_1_bank?: string | null
           payment_method_1_name?: string | null
           payment_method_1_number?: string | null
