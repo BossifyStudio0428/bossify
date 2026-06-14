@@ -31,6 +31,7 @@ import { SetupChecklist } from "@/components/SetupChecklist";
 import { TeamBanner } from "@/components/TeamBanner";
 import { SuspendedTeamBanner } from "@/components/SuspendedTeamBanner";
 import { PendingInviteBanner } from "@/components/PendingInviteBanner";
+import { orderGrossProfit } from "@/lib/orderMath";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -390,7 +391,7 @@ function Index() {
     .reduce((s, o) => s + Number(o.amount), 0);
   const todayGrossProfit = todayOrders
     .filter((o) => o.status === "Paid")
-    .reduce((s, o) => s + Number(o.gross_profit ?? 0), 0);
+    .reduce((s, o) => s + orderGrossProfit(o), 0);
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
   const activeProjects = orders.filter((o) => o.status !== "Paid").length;
   const nowD = new Date();
