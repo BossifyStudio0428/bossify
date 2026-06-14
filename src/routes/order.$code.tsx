@@ -1484,6 +1484,7 @@ function ProductSlide({
   showStock: boolean;
 }) {
   const hasVariants = product.variants && product.variants.length > 0;
+  const { t } = useI18n();
   const [selectedVariantIdx, setSelectedVariantIdx] = useState<number>(0);
   const [qty, setQty] = useState<number>(1);
   const [galleryIdx, setGalleryIdx] = useState(0);
@@ -1557,11 +1558,13 @@ function ProductSlide({
   const durationLabel = lang === "ms" ? "Tempoh" : lang === "zh" ? "时长" : "Duration";
   const mins = lang === "ms" ? "minit" : lang === "zh" ? "分钟" : "min";
   const inStockLabel = lang === "ms" ? "Ada stok" : lang === "zh" ? "有货" : "In stock";
+  const unitLabel = formatUnit(product.unit, t);
+  const stockText = (n: number) => unitLabel ? `${n} ${unitLabel}` : String(n);
   const lowStockLabel = (n: number) =>
-    lang === "ms" ? `Tinggal ${n} sahaja` : lang === "zh" ? `仅剩 ${n} 件` : `Only ${n} left`;
+    lang === "ms" ? `Tinggal ${stockText(n)} sahaja` : lang === "zh" ? `仅剩 ${stockText(n)}` : `Only ${stockText(n)} left`;
   const outOfStockLabel = lang === "ms" ? "Kehabisan stok" : lang === "zh" ? "缺货" : "Out of stock";
   const leftLabel = (n: number) =>
-    lang === "ms" ? `${n} tinggal` : lang === "zh" ? `剩 ${n} 件` : `${n} left`;
+    lang === "ms" ? `${stockText(n)} tinggal` : lang === "zh" ? `剩 ${stockText(n)}` : `${stockText(n)} left`;
 
   const isRent = prop?.listing_type === "rent";
   const propStatusLabel = isRent
@@ -1704,7 +1707,7 @@ function ProductSlide({
         ) : product.category && (
           <div className="inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.18em] uppercase text-primary">
             <span className="h-px w-5 bg-primary/60" />
-            {product.category}
+            {formatCategory(product.category, t)}
           </div>
         )}
         <h2 className="text-[26px] font-extrabold leading-tight tracking-tight">{product.name}</h2>
@@ -1717,7 +1720,7 @@ function ProductSlide({
         )}
 
         {/* Stock badge (retailish only) */}
-        {isRetailish && stock !== null && (
+        {isRetailish && stock !== null && (showStock || isOutOfStock) && (
           <div>
             {isOutOfStock ? (
               <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-[11px] font-semibold">
