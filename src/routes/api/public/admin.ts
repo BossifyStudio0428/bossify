@@ -14,6 +14,7 @@ const CORS = {
 
 const Schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("overview") }),
+  z.object({ action: z.literal("ai_usage") }),
   z.object({
     action: z.literal("set_plan"),
     userId: z.string().uuid(),
@@ -68,6 +69,7 @@ export const Route = createFileRoute("/api/public/admin")({
 
         try {
           const {
+            getAiUsageStatsForAdmin,
             loadAdminOverviewForUser,
             revokeAdminSubscriptionPlanForUser,
             setAdminSubscriptionPlanForUser,
@@ -75,6 +77,9 @@ export const Route = createFileRoute("/api/public/admin")({
 
           if (parsed.data.action === "overview") {
             return json(200, await loadAdminOverviewForUser(userId));
+          }
+          if (parsed.data.action === "ai_usage") {
+            return json(200, await getAiUsageStatsForAdmin(userId));
           }
           if (parsed.data.action === "set_plan") {
             return json(

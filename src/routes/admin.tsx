@@ -145,20 +145,30 @@ function AdminPage() {
     setAiLoading(true);
     setAiError(null);
     try {
-      const r = await getAiUsageStatsFn();
+      const r = (isNativeWebView()
+        ? await callAdminApi({ action: "ai_usage" })
+        : await getAiUsageStatsFn()) as AiUsageStats;
       setAiStats(r);
     } catch (e) {
       setAiError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setAiLoading(false);
     }
-  }, [getAiUsageStatsFn]);
+  }, [callAdminApi, getAiUsageStatsFn]);
 
   useEffect(() => {
     if (tab === "ai" && isAdmin && !aiStats && !aiLoading) {
       loadAiStats();
     }
   }, [tab, isAdmin, aiStats, aiLoading, loadAiStats]);
+
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+    const id = window.setInterval(() => {
+      loadAll().catch(() => undefined);
+    }, 10_000);
+    return () => window.clearInterval(id);
+  }, [isAdmin, loadAll, user]);
 
   if (checking) return <p className="p-6 text-sm text-muted-foreground">{t("admin_checking")}</p>;
   if (!isAdmin) return null;
@@ -375,6 +385,14 @@ function AdminPage() {
 
         {tab === "orders" && (
           <div className="space-y-2">
+            <div className="flex justify-end">
+              <button
+                onClick={() => loadAll().catch((error) => toast.error(error instanceof Error ? error.message : t("update_failed")))}
+                className="text-[11px] px-3 py-1 rounded-full bg-muted text-muted-foreground font-semibold"
+              >
+                Refresh
+              </button>
+            </div>
             <input
               type="search"
               value={orderSearch}
