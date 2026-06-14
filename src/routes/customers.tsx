@@ -93,12 +93,27 @@ function CustomersPage() {
     setRemovingId(c.id);
     setConfirmDelete(null);
     setTimeout(async () => {
-      const ordersQ = supabase.from("orders").delete().eq("user_id", user.id);
-      const { error: ordersError } = c.phone
-        ? await ordersQ.eq("phone", c.phone)
-        : await ordersQ.is("phone", null).eq("customer_name", c.name);
-      if (ordersError) {
-        toast.error(ordersError.message);
+      const phoneDigits = (c.phone || "").replace(/\D/g, "");
+      if (phoneDigits) {
+        const { error: phoneOrdersError } = await supabase
+          .from("orders")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("phone", phoneDigits);
+        if (phoneOrdersError) {
+          toast.error(phoneOrdersError.message);
+          setRemovingId(null);
+          return;
+        }
+      }
+      const { error: nameOrdersError } = await supabase
+        .from("orders")
+        .delete()
+        .eq("user_id", user.id)
+        .is("phone", null)
+        .eq("customer_name", c.name);
+      if (nameOrdersError) {
+        toast.error(nameOrdersError.message);
         setRemovingId(null);
         return;
       }
@@ -150,6 +165,18 @@ function CustomersPage() {
     setLoading(false);
   };
   useEffect(() => { load(); }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) return;
+    const onFocus = () => load();
+    const onVisible = () => { if (document.visibilityState === "visible") load(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     const open = () => setNewCustomerOpen(true);

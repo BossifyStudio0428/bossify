@@ -126,6 +126,20 @@ function AdminPage() {
     })();
   }, [loadAll, navigate, t, user]);
 
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+    const reload = () => loadAll().catch(() => undefined);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") reload();
+    };
+    window.addEventListener("focus", reload);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", reload);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [isAdmin, loadAll, user]);
+
   const loadAiStats = useCallback(async () => {
     setAiLoading(true);
     setAiError(null);

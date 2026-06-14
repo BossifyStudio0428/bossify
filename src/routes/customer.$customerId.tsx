@@ -91,11 +91,22 @@ function CustomerDetail() {
 
   const handleDelete = async () => {
     if (!customer) return;
-    const ordersQ = supabase.from("orders").delete().eq("user_id", customer.user_id);
-    const { error: ordersError } = customer.phone
-      ? await ordersQ.eq("phone", customer.phone)
-      : await ordersQ.is("phone", null).eq("customer_name", customer.name);
-    if (ordersError) { toast.error(ordersError.message); return; }
+    const phoneDigits = (customer.phone || "").replace(/\D/g, "");
+    if (phoneDigits) {
+      const { error: phoneOrdersError } = await supabase
+        .from("orders")
+        .delete()
+        .eq("user_id", customer.user_id)
+        .eq("phone", phoneDigits);
+      if (phoneOrdersError) { toast.error(phoneOrdersError.message); return; }
+    }
+    const { error: nameOrdersError } = await supabase
+      .from("orders")
+      .delete()
+      .eq("user_id", customer.user_id)
+      .is("phone", null)
+      .eq("customer_name", customer.name);
+    if (nameOrdersError) { toast.error(nameOrdersError.message); return; }
     const { error: followUpError } = await supabase
       .from("follow_ups")
       .delete()
