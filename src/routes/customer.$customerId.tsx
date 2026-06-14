@@ -91,8 +91,14 @@ function CustomerDetail() {
 
   const handleDelete = async () => {
     if (!customer) return;
-    const { error } = await supabase.from("customers").delete().eq("id", customer.id);
+    const { error } = await supabase.from("customers").delete().eq("id", customer.id).eq("user_id", customer.user_id);
     if (error) { toast.error(error.message); return; }
+    try {
+      const ordersQ = supabase.from("orders").delete().eq("user_id", customer.user_id);
+      if (customer.phone) await ordersQ.eq("phone", customer.phone);
+      else await ordersQ.is("phone", null).eq("customer_name", customer.name);
+      await supabase.from("follow_ups").delete().eq("user_id", customer.user_id).eq("customer_id", customer.id);
+    } catch { /* non-fatal */ }
     toast.success(t("customer_deleted"));
     navigate({ to: "/customers" });
   };

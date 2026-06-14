@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
-import { supabase } from "@/integrations/supabase/client";
 import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
 import {
   getAiUsageStats,
@@ -103,9 +102,9 @@ function AdminPage() {
   );
 
   const loadAll = useCallback(async () => {
-    const overview = isNativeWebView()
+    const overview = (isNativeWebView()
       ? await callAdminApi({ action: "overview" })
-      : await loadAdminOverviewFn();
+      : await loadAdminOverviewFn()) as { users?: AdminUser[]; orders?: AdminOrder[] };
 
     setUsers((overview.users ?? []) as AdminUser[]);
     setAllOrders((overview.orders ?? []) as AdminOrder[]);

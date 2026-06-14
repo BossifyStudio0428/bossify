@@ -114,6 +114,7 @@ function CustomersPage() {
       setCustomers((prev) => prev.filter((x) => x.id !== c.id));
       setRemovingId(null);
       toast.success(t("customer_deleted"));
+      load();
     }, 220);
   };
 
@@ -123,6 +124,7 @@ function CustomersPage() {
     const { data, error } = await supabase
       .from("customers")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     const rows = (data ?? []) as CustomerRow[];
