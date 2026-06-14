@@ -9,6 +9,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
 import { parseVariants, type InvRow } from "@/lib/inventoryTypes";
 import { ProductFormSheet, QtySheet, ConfirmSheet } from "@/components/InventorySheets";
+import { formatUnit } from "@/lib/labels";
 
 export const Route = createFileRoute("/inventory/$itemId")({ component: InventoryDetail });
 
