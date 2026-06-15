@@ -883,6 +883,12 @@ function OrdersPage() {
               <p className="mt-3 text-sm text-muted-foreground">
                 {o.product} {o.quantity > 1 ? `(x${o.quantity})` : ""}
               </p>
+              {o.delivery_address ? (
+                <p className="mt-1 text-xs text-muted-foreground flex items-start gap-1">
+                  <span>📍</span>
+                  <span className="flex-1 break-words">{o.delivery_address}</span>
+                </p>
+              ) : null}
 
               <div className="mt-3 flex items-center justify-between">
                 <p className="text-lg font-bold text-foreground">RM {Number(o.amount).toFixed(2)}</p>
