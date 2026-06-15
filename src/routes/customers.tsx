@@ -427,6 +427,30 @@ function CustomersPage() {
         ))}
       </div>
 
+      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 scrollbar-hide">
+        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground pr-1">
+          {t("sort_by")}
+        </span>
+        {([
+          { id: "recent", label: t("sort_recent"), emoji: "🕒" },
+          { id: "most_orders", label: t("sort_most_orders"), emoji: "📦" },
+          { id: "top_spender", label: t("sort_top_spender"), emoji: "💎" },
+        ] as const).map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => setSortBy(opt.id)}
+            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${
+              sortBy === opt.id
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {opt.emoji} {opt.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex items-center gap-2">
         <button
           type="button"
