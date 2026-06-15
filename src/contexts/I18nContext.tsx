@@ -3078,6 +3078,7 @@ const dict = {
     order_details: "订单详情",
     edit_status: "修改状态",
     send_receipt: "📧 发送收据",
+    receipt_sent: "✅ 收据已发送",
     upload_receipt: "上传收据",
     receipt_uploaded: "收据已上传",
     receipt_confirmed: "收据已确认",
