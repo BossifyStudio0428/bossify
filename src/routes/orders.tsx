@@ -57,6 +57,7 @@ function OrdersPage() {
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [productImages, setProductImages] = useState<Record<string, string>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [detail, setDetail] = useState<OrderRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
