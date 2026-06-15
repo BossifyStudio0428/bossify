@@ -4,11 +4,22 @@ import { verifyOAuthState } from "@/lib/platforms/oauth-state.server";
 import { exchangeTikTokCode } from "@/lib/platforms/tiktok.server";
 import { encryptToken } from "@/lib/platforms/crypto.server";
 
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function htmlResponse(title: string, body: string, status = 200): Response {
+  const safeTitle = escHtml(title);
+  const safeBody = escHtml(body);
   return new Response(
-    `<!doctype html><meta charset=utf-8><title>${title}</title>` +
+    `<!doctype html><meta charset=utf-8><title>${safeTitle}</title>` +
       `<style>body{font-family:system-ui;padding:32px;max-width:480px;margin:auto;text-align:center}</style>` +
-      `<h1>${title}</h1><p>${body}</p>` +
+      `<h1>${safeTitle}</h1><p>${safeBody}</p>` +
       `<p><a href="/profile">Back to Bossify</a></p>`,
     { status, headers: { "Content-Type": "text/html; charset=utf-8" } }
   );
