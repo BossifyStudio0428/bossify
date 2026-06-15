@@ -76,7 +76,7 @@ function NewOrderPage() {
 
   const [status, setStatus] = useState<OrderStatus>("Unpaid");
   const [form, setForm] = useState({
-    customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "",
+    customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "", delivery_address: "",
   });
   // Per-business-type extras
   const [extras, setExtras] = useState({
