@@ -1579,6 +1579,7 @@ const dict = {
     order_details: "Butiran Pesanan",
     edit_status: "Edit Status",
     send_receipt: "📧 Hantar Resit",
+    receipt_sent: "✅ Resit Dihantar",
     upload_receipt: "Muat Naik Resit",
     receipt_uploaded: "Resit dimuat naik",
     receipt_confirmed: "Resit disahkan",
