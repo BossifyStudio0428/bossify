@@ -57,7 +57,8 @@ function Index() {
   } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [lowStock, setLowStock] = useState(0);
+  const [lowStockProduct, setLowStockProduct] = useState(0);
+  const [lowStockIngredient, setLowStockIngredient] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
   const [latestClients, setLatestClients] = useState<CustomerRow[]>([]);
   const [latestClientFollowUps, setLatestClientFollowUps] = useState<Record<string, string>>({});
@@ -94,16 +95,17 @@ function Index() {
   const load = async () => {
     if (!user?.id) return;
     try {
-      const [ordersRes, inventoryRes, customersRes, notificationsRes, profileRes] =
+      const [ordersRes, inventoryRes, ingredientsRes, customersRes, notificationsRes, profileRes] =
         await Promise.all([
           supabase
             .from("orders")
             .select("*")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false }),
+          supabase.from("inventory").select("stock").eq("user_id", user.id),
           eff === "fnb"
             ? supabase.from("ingredients" as any).select("current_stock,min_stock").eq("user_id", user.id)
-            : supabase.from("inventory").select("stock").eq("user_id", user.id),
+            : Promise.resolve({ data: [], error: null } as any),
           supabase
             .from("customers")
             .select("*")
@@ -120,6 +122,7 @@ function Index() {
       for (const [label, result] of Object.entries({
         ordersRes,
         inventoryRes,
+        ingredientsRes,
         customersRes,
         notificationsRes,
         profileRes,
@@ -127,12 +130,15 @@ function Index() {
         if (result.error) console.error(`dashboard ${label} failed`, result.error);
       }
       setOrders((ordersRes.data ?? []) as OrderRow[]);
-      setLowStock(
+      setLowStockProduct(
+        (inventoryRes.data ?? []).filter((i: any) => Number(i.stock) <= 5).length,
+      );
+      setLowStockIngredient(
         eff === "fnb"
-          ? (inventoryRes.data ?? []).filter(
+          ? (ingredientsRes.data ?? []).filter(
               (i: any) => Number(i.current_stock) < Number(i.min_stock),
             ).length
-          : (inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length,
+          : 0,
       );
       setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
       setUnreadNotif(notificationsRes.count ?? 0);
