@@ -419,6 +419,7 @@ function Index() {
       ? Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
       : null;
 
+  const lowStock = lowStockProduct + lowStockIngredient;
   // Motivational
   let motivMsg = t("motiv_default");
   if (lowStock > 0) motivMsg = t("motiv_low_stock");
