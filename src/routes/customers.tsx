@@ -283,7 +283,7 @@ function CustomersPage() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id]);
 
-  const visible = customers.filter((c) => {
+  const filtered = customers.filter((c) => {
     const q = query.toLowerCase();
     if (statusFilter !== "all" && (c.customer_status ?? "enquiry") !== statusFilter) return false;
     if (bizType === "property" && packageFilter !== "all") {
@@ -299,6 +299,16 @@ function CustomersPage() {
       if (dateTo && t > new Date(dateTo + "T23:59:59").getTime()) return false;
     }
     return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q);
+  });
+  const visible = [...filtered].sort((a, b) => {
+    if (sortBy === "most_orders") {
+      return (b.total_orders ?? 0) - (a.total_orders ?? 0);
+    }
+    if (sortBy === "top_spender") {
+      return Number(b.total_spent ?? 0) - Number(a.total_spent ?? 0);
+    }
+    // recent: keep existing order (already by created_at desc from query)
+    return 0;
   });
   const dateFilterActive = !!(dateFrom || dateTo);
   const dateLabel = lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date";
