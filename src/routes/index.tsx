@@ -311,7 +311,8 @@ function Index() {
     } catch (error) {
       console.error("dashboard load failed", error);
       setOrders([]);
-      setLowStock(0);
+      setLowStockProduct(0);
+      setLowStockIngredient(0);
       setTopCustomers([]);
       setLatestClients([]);
       setLatestClientFollowUps({});
