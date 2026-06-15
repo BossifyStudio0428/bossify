@@ -943,14 +943,23 @@ function OrdersPage() {
               {/* Content */}
               <div className="px-4 py-3 bg-slate-50/60 space-y-2">
                 <div className="flex items-center gap-2.5">
-                  {productImages[o.product?.trim().toLowerCase()] ? (
-                    <img
-                      src={productImages[o.product.trim().toLowerCase()]}
-                      alt={o.product}
-                      loading="lazy"
-                      className="h-9 w-9 rounded-lg object-cover border border-slate-200 shrink-0"
-                    />
-                  ) : null}
+                  {(() => {
+                    const raw = (o.product ?? "").trim().toLowerCase();
+                    // strip trailing " × N" / " x N" / " (variant)" suffix from online-form orders
+                    const base = raw
+                      .replace(/\s*[×x]\s*\d+\s*$/i, "")
+                      .replace(/\s*\([^)]*\)\s*$/i, "")
+                      .trim();
+                    const img = productImages[raw] || productImages[base];
+                    return img ? (
+                      <img
+                        src={img}
+                        alt={o.product}
+                        loading="lazy"
+                        className="h-9 w-9 rounded-lg object-cover border border-slate-200 shrink-0"
+                      />
+                    ) : null;
+                  })()}
                   <span className="flex-1 min-w-0 text-slate-800 font-semibold text-sm break-words">{o.product}</span>
                   <span className="shrink-0 text-slate-400 text-xs font-medium">× {o.quantity}</span>
                 </div>

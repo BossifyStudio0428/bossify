@@ -66,6 +66,7 @@ function CustomersPage() {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [dateOpen, setDateOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<"recent" | "most_orders" | "top_spender">("recent");
 
   const ordersWordKey: TKey =
     bizType === "education" ? "case_word"
@@ -282,7 +283,7 @@ function CustomersPage() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id]);
 
-  const visible = customers.filter((c) => {
+  const filtered = customers.filter((c) => {
     const q = query.toLowerCase();
     if (statusFilter !== "all" && (c.customer_status ?? "enquiry") !== statusFilter) return false;
     if (bizType === "property" && packageFilter !== "all") {
@@ -298,6 +299,16 @@ function CustomersPage() {
       if (dateTo && t > new Date(dateTo + "T23:59:59").getTime()) return false;
     }
     return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q);
+  });
+  const visible = [...filtered].sort((a, b) => {
+    if (sortBy === "most_orders") {
+      return (b.total_orders ?? 0) - (a.total_orders ?? 0);
+    }
+    if (sortBy === "top_spender") {
+      return Number(b.total_spent ?? 0) - Number(a.total_spent ?? 0);
+    }
+    // recent: keep existing order (already by created_at desc from query)
+    return 0;
   });
   const dateFilterActive = !!(dateFrom || dateTo);
   const dateLabel = lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date";
@@ -412,6 +423,30 @@ function CustomersPage() {
             className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === s ? CUSTOMER_STATUS_STYLES[s] + " ring-2 ring-offset-1 ring-current" : "bg-muted text-muted-foreground"}`}
           >
             {CUSTOMER_STATUS_DOT[s]} {t(`cs_${s}` as any)}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 scrollbar-hide">
+        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground pr-1">
+          {t("sort_by")}
+        </span>
+        {([
+          { id: "recent", label: t("sort_recent"), emoji: "🕒" },
+          { id: "most_orders", label: t("sort_most_orders"), emoji: "📦" },
+          { id: "top_spender", label: t("sort_top_spender"), emoji: "💎" },
+        ] as const).map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => setSortBy(opt.id)}
+            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${
+              sortBy === opt.id
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {opt.emoji} {opt.label}
           </button>
         ))}
       </div>
