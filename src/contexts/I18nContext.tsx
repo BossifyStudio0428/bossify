@@ -55,6 +55,7 @@ const dict = {
     order_details: "Order Details",
     edit_status: "Edit Status",
     send_receipt: "📧 Send Receipt",
+    receipt_sent: "✅ Receipt Sent",
     upload_receipt: "Upload Receipt",
     receipt_uploaded: "Receipt uploaded",
     receipt_confirmed: "Receipt confirmed",
