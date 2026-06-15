@@ -816,116 +816,126 @@ function OrdersPage() {
                 if ((e.target as HTMLElement).closest("button,a,[role='menuitem']")) return;
                 navigate({ to: "/orders/$orderId", params: { orderId: o.id }, search: {} as never });
               }}
-              className={`rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 cursor-pointer transition-all ${removing ? "opacity-0 scale-95" : "opacity-100"}`}
+              className={`rounded-2xl bg-white border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] overflow-hidden cursor-pointer transition-all ${removing ? "opacity-0 scale-95" : "opacity-100"}`}
             >
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold shrink-0">
-                  {o.customer_name.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-1.5 min-w-0">
-                    <p className="text-sm font-semibold text-foreground leading-tight">{o.customer_name}</p>
-                    {(o as any).order_source === "online_form" && (
-                      <span className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
-                        🌐 {t("pof_source_online")}
-                      </span>
-                    )}
+              {/* Header */}
+              <div className="p-4 pb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex gap-3 min-w-0 flex-1">
+                    <div className="h-12 w-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg shrink-0">
+                      {o.customer_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                        <span className="font-bold text-slate-900 text-base leading-tight truncate">{o.customer_name}</span>
+                        {(o as any).order_source === "online_form" && (
+                          <span className="shrink-0 px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-medium rounded-full border border-indigo-100/50">
+                            🌐 {t("pof_source_online")}
+                          </span>
+                        )}
+                      </div>
+                      {o.phone ? (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPhoneSheet({ phone: o.phone!, name: o.customer_name }); }}
+                          className="flex items-center gap-1.5 text-slate-500 text-sm font-medium"
+                        >
+                          <Phone className="h-3.5 w-3.5" />
+                          <span>{o.phone}</span>
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
-                  {o.phone ? (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setPhoneSheet({ phone: o.phone!, name: o.customer_name }); }}
-                      className="text-[11px] text-primary font-medium flex items-center gap-1"
-                    >
-                      📱 {o.phone}
-                    </button>
-                  ) : null}
-                  <p className="text-[11px] text-muted-foreground">
-                    {o.code} · <span suppressHydrationWarning>{hydrated ? formatTime(o.created_at) : ""}</span>
-                  </p>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={statusLabel}
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 active:scale-95 transition ${statusStyles[o.status]}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${o.status === "Paid" ? "bg-emerald-500 animate-pulse" : o.status === "Unpaid" ? "bg-red-500" : "bg-amber-500"}`} />
+                          {statusLabel} ▾
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                        {(["Paid", "Unpaid", "Pending"] as OrderStatus[]).map((s) => (
+                          <DropdownMenuItem
+                            key={s}
+                            disabled={s === o.status}
+                            onSelect={(e) => { e.preventDefault(); if (s !== o.status) updateStatus(o.id, s); }}
+                          >
+                            <span className={`inline-block h-2 w-2 rounded-full mr-2 ${s === "Paid" ? "bg-emerald-500" : s === "Unpaid" ? "bg-red-500" : "bg-amber-500"}`} />
+                            {s === "Paid" ? t("paid") : s === "Unpaid" ? t("unpaid") : t("pending")}
+                            {s === o.status && <Check className="h-3.5 w-3.5 ml-auto" />}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={t("order_options")}
+                          className="h-6 w-6 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-500 hover:bg-slate-50 active:scale-95"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEdit(o); }}>
+                          <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600"
+                          onSelect={(e) => { e.preventDefault(); setPendingDelete(o); }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> {t("delete_order") || "Delete"}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={t("paid")}
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full active:scale-95 transition ${statusStyles[o.status]}`}
-                    >
-                      {statusLabel} ▾
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    {(["Paid", "Unpaid", "Pending"] as OrderStatus[]).map((s) => (
-                      <DropdownMenuItem
-                        key={s}
-                        disabled={s === o.status}
-                        onSelect={(e) => { e.preventDefault(); if (s !== o.status) updateStatus(o.id, s); }}
-                      >
-                        <span className={`inline-block h-2 w-2 rounded-full mr-2 ${s === "Paid" ? "bg-emerald-500" : s === "Unpaid" ? "bg-red-500" : "bg-amber-500"}`} />
-                        {s === "Paid" ? t("paid") : s === "Unpaid" ? t("unpaid") : t("pending")}
-                        {s === o.status && <Check className="h-3.5 w-3.5 ml-auto" />}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={t("order_options")}
-                      className="h-7 w-7 -mr-1 -mt-1 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-95"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        openEdit(o);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        setPendingDelete(o);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" /> {t("delete_order") || "Delete"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+
+                {/* Meta row */}
+                <div className="mt-3 flex items-center justify-between border-t border-slate-50 pt-2.5 text-[11px] text-slate-400 tracking-wide">
+                  <span className="truncate">{o.code}</span>
+                  <span suppressHydrationWarning className="shrink-0 ml-2">{hydrated ? formatTime(o.created_at) : ""}</span>
+                </div>
               </div>
 
-              <div className="mt-3 flex items-center gap-2">
-                {productImages[o.product?.trim().toLowerCase()] ? (
-                  <img
-                    src={productImages[o.product.trim().toLowerCase()]}
-                    alt={o.product}
-                    loading="lazy"
-                    className="h-10 w-10 rounded-lg object-cover border border-border/60 shrink-0"
-                  />
+              {/* Content */}
+              <div className="px-4 py-3 bg-slate-50/60 space-y-2">
+                <div className="flex items-center gap-2.5">
+                  {productImages[o.product?.trim().toLowerCase()] ? (
+                    <img
+                      src={productImages[o.product.trim().toLowerCase()]}
+                      alt={o.product}
+                      loading="lazy"
+                      className="h-9 w-9 rounded-lg object-cover border border-slate-200 shrink-0"
+                    />
+                  ) : null}
+                  <span className="flex-1 min-w-0 text-slate-800 font-semibold text-sm break-words">{o.product}</span>
+                  <span className="shrink-0 text-slate-400 text-xs font-medium">× {o.quantity}</span>
+                </div>
+                {o.delivery_address ? (
+                  <div className="flex gap-2 items-start">
+                    <MapPin className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+                    <p className="text-slate-500 text-xs leading-relaxed flex-1 break-words">{o.delivery_address}</p>
+                  </div>
                 ) : null}
-                <p className="text-sm text-muted-foreground flex-1 min-w-0 break-words">
-                  {o.product} {o.quantity > 1 ? `(x${o.quantity})` : ""}
-                </p>
               </div>
-              {o.delivery_address ? (
-                <p className="mt-1 text-xs text-muted-foreground flex items-start gap-1">
-                  <span>📍</span>
-                  <span className="flex-1 break-words">{o.delivery_address}</span>
-                </p>
-              ) : null}
 
-              <div className="mt-3 flex items-center justify-between">
-                <p className="text-lg font-bold text-foreground">RM {Number(o.amount).toFixed(2)}</p>
+              {/* Footer */}
+              <div className="p-4 flex items-center justify-between gap-3">
+                <div className="flex flex-col shrink-0">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{t("paid")}</span>
+                  <span className="text-xl font-bold text-slate-900 leading-tight">RM {Number(o.amount).toFixed(2)}</span>
+                </div>
                 {o.status === "Unpaid" && (
                   <button
                     onClick={(e) => { e.stopPropagation(); remind(o); }}
                     id={o.id === firstUnpaidId ? "tour-orders-remind" : undefined}
-                    className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500 text-white shadow-sm active:scale-95 transition-transform"
+                    className="text-xs font-bold px-4 py-2.5 rounded-xl bg-emerald-500 text-white shadow-md shadow-emerald-100 active:scale-95 transition-transform"
                   >
                     {t("remind")}
                   </button>
@@ -933,7 +943,7 @@ function OrdersPage() {
                 {o.status === "Pending" && (
                   <button
                     onClick={(e) => { e.stopPropagation(); updateStatus(o.id, "Paid"); }}
-                    className="text-xs font-semibold px-3 py-2 rounded-xl bg-amber-400 text-amber-950 shadow-sm active:scale-95 transition-transform"
+                    className="text-xs font-bold px-4 py-2.5 rounded-xl bg-amber-400 text-amber-950 shadow-md shadow-amber-100 active:scale-95 transition-transform"
                   >
                     {t("mark_paid")}
                   </button>
@@ -944,56 +954,59 @@ function OrdersPage() {
                   const uploading = receiptUploadingId === o.id;
                   return (
                     <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => toggleReceiptConfirmed(o)}
-                        aria-label={confirmed ? t("receipt_unconfirmed") : t("receipt_confirmed")}
-                        title={confirmed ? t("receipt_confirmed") : t("upload_receipt")}
-                        className={`h-9 w-9 rounded-xl flex items-center justify-center active:scale-95 transition ${confirmed ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}`}
-                      >
-                        <FileCheck2 className="h-4 w-4" />
-                      </button>
-                      {url ? (
-                        <>
-                          <button
-                            onClick={() => viewReceipt(o)}
-                            aria-label={t("view_receipt")}
-                            title={t("view_receipt")}
-                            className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center active:scale-95"
-                          >
-                            <Paperclip className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => removeReceipt(o)}
-                            aria-label={t("receipt_remove")}
-                            title={t("receipt_remove")}
-                            className="h-9 w-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center active:scale-95"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </>
-                      ) : (
-                        <label
-                          className={`h-9 w-9 rounded-xl bg-muted text-muted-foreground flex items-center justify-center cursor-pointer active:scale-95 ${uploading ? "opacity-60 pointer-events-none" : ""}`}
-                          title={t("upload_receipt")}
-                          aria-label={t("upload_receipt")}
+                      <div className="flex items-center gap-1 pr-1.5 border-r border-slate-100">
+                        <button
+                          onClick={() => toggleReceiptConfirmed(o)}
+                          aria-label={confirmed ? t("receipt_unconfirmed") : t("receipt_confirmed")}
+                          title={confirmed ? t("receipt_confirmed") : t("upload_receipt")}
+                          className={`h-8 w-8 rounded-lg flex items-center justify-center active:scale-95 transition ${confirmed ? "bg-emerald-50 text-emerald-600" : "text-slate-400 hover:bg-slate-50"}`}
                         >
-                          <Upload className="h-4 w-4" />
-                          <input
-                            type="file"
-                            accept="image/*,application/pdf"
-                            className="hidden"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f) uploadReceipt(o, f);
-                              e.currentTarget.value = "";
-                            }}
-                          />
-                        </label>
-                      )}
+                          <FileCheck2 className="h-4 w-4" />
+                        </button>
+                        {url ? (
+                          <>
+                            <button
+                              onClick={() => viewReceipt(o)}
+                              aria-label={t("view_receipt")}
+                              title={t("view_receipt")}
+                              className="h-8 w-8 rounded-lg text-indigo-500 hover:bg-indigo-50 flex items-center justify-center active:scale-95"
+                            >
+                              <Paperclip className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => removeReceipt(o)}
+                              aria-label={t("receipt_remove")}
+                              title={t("receipt_remove")}
+                              className="h-8 w-8 rounded-lg text-rose-400 hover:bg-rose-50 flex items-center justify-center active:scale-95"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <label
+                            className={`h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-50 flex items-center justify-center cursor-pointer active:scale-95 ${uploading ? "opacity-60 pointer-events-none" : ""}`}
+                            title={t("upload_receipt")}
+                            aria-label={t("upload_receipt")}
+                          >
+                            <Upload className="h-4 w-4" />
+                            <input
+                              type="file"
+                              accept="image/*,application/pdf"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) uploadReceipt(o, f);
+                                e.currentTarget.value = "";
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
                       <button
                         onClick={() => sendReceipt(o)}
-                        className={`text-xs font-semibold px-3 py-2 rounded-xl shadow-sm active:scale-95 transition-transform ${url ? "bg-emerald-100 text-emerald-700" : "bg-emerald-500 text-white"}`}
+                        className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl shadow-md active:scale-95 transition-transform ${url ? "bg-emerald-100 text-emerald-700 shadow-emerald-50" : "bg-emerald-500 text-white shadow-emerald-100"}`}
                       >
+                        <Check className="h-3.5 w-3.5" />
                         {url ? t("receipt_sent") : t("send_receipt")}
                       </button>
                     </div>
