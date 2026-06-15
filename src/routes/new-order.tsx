@@ -76,7 +76,7 @@ function NewOrderPage() {
 
   const [status, setStatus] = useState<OrderStatus>("Unpaid");
   const [form, setForm] = useState({
-    customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "",
+    customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "", delivery_address: "",
   });
   // Per-business-type extras
   const [extras, setExtras] = useState({
@@ -268,6 +268,7 @@ function NewOrderPage() {
         gross_profit,
         status: effectiveStatus,
         notes: combinedNotes,
+        delivery_address: form.delivery_address.trim() || null,
       })
       .select("id, code")
       .single();
@@ -414,7 +415,7 @@ function NewOrderPage() {
       });
     }
     isPrefEnabled("notif_new_order") && deviceNotify("New Order Added! 🎉", `Order from ${form.customer_name} — RM ${Number(form.amount).toFixed(2)} has been saved.`, { route: "/orders" }).catch(() => {});
-    setForm({ customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "" });
+    setForm({ customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "", delivery_address: "" });
     setStatus("Unpaid");
     setTimeout(() => navigate({ to: eff === "property" ? "/customers" : "/orders" }), 1500);
   };
@@ -716,6 +717,17 @@ function NewOrderPage() {
           </div>
         </div>
         )}
+
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
+            📍 {t("delivery_address" as any)}
+          </label>
+          <textarea
+            rows={2} value={form.delivery_address} onChange={upd("delivery_address")}
+            placeholder={t("delivery_address" as any)}
+            className="w-full rounded-2xl bg-muted/60 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
+          />
+        </div>
 
         <div className="space-y-1.5">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
