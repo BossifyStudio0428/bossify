@@ -957,9 +957,9 @@ function OrdersPage() {
                       )}
                       <button
                         onClick={() => sendReceipt(o)}
-                        className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500 text-white shadow-sm active:scale-95 transition-transform"
+                        className={`text-xs font-semibold px-3 py-2 rounded-xl shadow-sm active:scale-95 transition-transform ${url ? "bg-emerald-100 text-emerald-700" : "bg-emerald-500 text-white"}`}
                       >
-                        {t("send_receipt")}
+                        {url ? t("receipt_sent") : t("send_receipt")}
                       </button>
                     </div>
                   );
