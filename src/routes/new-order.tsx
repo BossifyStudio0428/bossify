@@ -720,6 +720,17 @@ function NewOrderPage() {
 
         <div className="space-y-1.5">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
+            📍 {t("delivery_address" as any)}
+          </label>
+          <textarea
+            rows={2} value={form.delivery_address} onChange={upd("delivery_address")}
+            placeholder={t("delivery_address" as any)}
+            className="w-full rounded-2xl bg-muted/60 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
             {t("notes")}
           </label>
           <textarea
