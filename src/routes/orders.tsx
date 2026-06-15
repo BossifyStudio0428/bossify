@@ -80,6 +80,7 @@ function OrdersPage() {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [dateOpen, setDateOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => { setHydrated(true); }, []);
 
