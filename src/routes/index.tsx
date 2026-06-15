@@ -57,7 +57,8 @@ function Index() {
   } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [lowStock, setLowStock] = useState(0);
+  const [lowStockProduct, setLowStockProduct] = useState(0);
+  const [lowStockIngredient, setLowStockIngredient] = useState(0);
   const [topCustomers, setTopCustomers] = useState<CustomerRow[]>([]);
   const [latestClients, setLatestClients] = useState<CustomerRow[]>([]);
   const [latestClientFollowUps, setLatestClientFollowUps] = useState<Record<string, string>>({});
@@ -94,16 +95,17 @@ function Index() {
   const load = async () => {
     if (!user?.id) return;
     try {
-      const [ordersRes, inventoryRes, customersRes, notificationsRes, profileRes] =
+      const [ordersRes, inventoryRes, ingredientsRes, customersRes, notificationsRes, profileRes] =
         await Promise.all([
           supabase
             .from("orders")
             .select("*")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false }),
+          supabase.from("inventory").select("stock").eq("user_id", user.id),
           eff === "fnb"
             ? supabase.from("ingredients" as any).select("current_stock,min_stock").eq("user_id", user.id)
-            : supabase.from("inventory").select("stock").eq("user_id", user.id),
+            : Promise.resolve({ data: [], error: null } as any),
           supabase
             .from("customers")
             .select("*")
@@ -120,6 +122,7 @@ function Index() {
       for (const [label, result] of Object.entries({
         ordersRes,
         inventoryRes,
+        ingredientsRes,
         customersRes,
         notificationsRes,
         profileRes,
@@ -127,12 +130,15 @@ function Index() {
         if (result.error) console.error(`dashboard ${label} failed`, result.error);
       }
       setOrders((ordersRes.data ?? []) as OrderRow[]);
-      setLowStock(
+      setLowStockProduct(
+        (inventoryRes.data ?? []).filter((i: any) => Number(i.stock) <= 5).length,
+      );
+      setLowStockIngredient(
         eff === "fnb"
-          ? (inventoryRes.data ?? []).filter(
+          ? (ingredientsRes.data ?? []).filter(
               (i: any) => Number(i.current_stock) < Number(i.min_stock),
             ).length
-          : (inventoryRes.data ?? []).filter((i: any) => i.stock <= 5).length,
+          : 0,
       );
       setTopCustomers((customersRes.data ?? []) as CustomerRow[]);
       setUnreadNotif(notificationsRes.count ?? 0);
@@ -305,7 +311,8 @@ function Index() {
     } catch (error) {
       console.error("dashboard load failed", error);
       setOrders([]);
-      setLowStock(0);
+      setLowStockProduct(0);
+      setLowStockIngredient(0);
       setTopCustomers([]);
       setLatestClients([]);
       setLatestClientFollowUps({});
@@ -412,6 +419,7 @@ function Index() {
       ? Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
       : null;
 
+  const lowStock = lowStockProduct + lowStockIngredient;
   // Motivational
   let motivMsg = t("motiv_default");
   if (lowStock > 0) motivMsg = t("motiv_low_stock");
@@ -630,8 +638,33 @@ function Index() {
       <section id="tour-stats" className="grid grid-cols-2 gap-3">
         {stats.map((s, i) => {
           const isLowStock = s === lowStockCard;
-          const to = isLowStock ? (eff === "fnb" ? "/ingredients" : "/inventory") : null;
-          const inner = (
+          const fnbSplit = isLowStock && eff === "fnb";
+          const to = isLowStock
+            ? (eff === "fnb"
+                ? (lowStockProduct > 0 && lowStockIngredient === 0
+                    ? "/inventory"
+                    : "/ingredients")
+                : "/inventory")
+            : null;
+          const inner = fnbSplit ? (
+            <>
+              <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${s.bg}`}>
+                <s.icon className={`h-5 w-5 ${s.color}`} />
+              </div>
+              <div className={`mt-3 flex items-baseline gap-2 ${s.color}`}>
+                <div className="flex flex-col items-start">
+                  <p className="text-xl font-bold leading-none">{lowStockProduct}</p>
+                  <p className="text-[10px] font-medium text-muted-foreground mt-1">{t("low_stock_products")}</p>
+                </div>
+                <span className="text-base text-muted-foreground/40 font-light">|</span>
+                <div className="flex flex-col items-start">
+                  <p className="text-xl font-bold leading-none">{lowStockIngredient}</p>
+                  <p className="text-[10px] font-medium text-muted-foreground mt-1">{t("low_stock_ingredients")}</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">{s.label}</p>
+            </>
+          ) : (
             <>
               <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${s.bg}`}>
                 <s.icon className={`h-5 w-5 ${s.color}`} />
