@@ -142,6 +142,24 @@ function OrdersPage() {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
+    if (!user) { setProductImages({}); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("inventory")
+        .select("name,image_url")
+        .eq("user_id", user.id);
+      if (cancelled || !data) return;
+      const map: Record<string, string> = {};
+      for (const r of data as Array<{ name: string; image_url: string | null }>) {
+        if (r.image_url) map[r.name.trim().toLowerCase()] = r.image_url;
+      }
+      setProductImages(map);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  useEffect(() => {
     if (!user) {
       setWaProfile({ paymentDetails: "", businessName: "us" });
       return;
