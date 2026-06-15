@@ -553,7 +553,21 @@ function OrdersPage() {
     return true;
   };
   const byStatus = active === "All" ? orders : orders.filter((o) => o.status === active);
-  const visible = byStatus.filter((o) => inDateRange(o.created_at));
+  const byDate = byStatus.filter((o) => inDateRange(o.created_at));
+  const q = searchQuery.trim().toLowerCase();
+  const visible = q
+    ? byDate.filter((o) => {
+        const hay = [
+          o.customer_name,
+          o.phone ?? "",
+          o.code ?? "",
+          o.product ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      })
+    : byDate;
   const dateFilterActive = !!(dateFrom || dateTo);
   const todayCount = orders.filter((o) => new Date(o.created_at).toDateString() === new Date().toDateString()).length;
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
