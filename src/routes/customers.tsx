@@ -66,6 +66,7 @@ function CustomersPage() {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [dateOpen, setDateOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<"recent" | "most_orders" | "top_spender">("recent");
 
   const ordersWordKey: TKey =
     bizType === "education" ? "case_word"
