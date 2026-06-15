@@ -13,7 +13,7 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import { orderCost } from "@/lib/orderMath";
@@ -80,6 +80,7 @@ function OrdersPage() {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [dateOpen, setDateOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => { setHydrated(true); }, []);
 
@@ -552,7 +553,21 @@ function OrdersPage() {
     return true;
   };
   const byStatus = active === "All" ? orders : orders.filter((o) => o.status === active);
-  const visible = byStatus.filter((o) => inDateRange(o.created_at));
+  const byDate = byStatus.filter((o) => inDateRange(o.created_at));
+  const q = searchQuery.trim().toLowerCase();
+  const visible = q
+    ? byDate.filter((o) => {
+        const hay = [
+          o.customer_name,
+          o.phone ?? "",
+          o.code ?? "",
+          o.product ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      })
+    : byDate;
   const dateFilterActive = !!(dateFrom || dateTo);
   const todayCount = orders.filter((o) => new Date(o.created_at).toDateString() === new Date().toDateString()).length;
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
@@ -689,6 +704,28 @@ function OrdersPage() {
             : `${hasFullAccess ? "📲" : "🔒"} ${t("remind_all_unpaid")} (${orders.filter((o) => o.status === "Unpaid" && o.phone).length})`}
         </button>
       )}
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <input
+          type="search"
+          inputMode="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t("search_orders_placeholder")}
+          className="w-full h-10 pl-9 pr-9 rounded-2xl bg-card border border-border text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground active:bg-muted"
+            aria-label="clear"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
       <div className="-mx-5 px-5 overflow-x-auto scrollbar-none" id="tour-orders-filters">
         <div className="flex gap-2 w-max">
