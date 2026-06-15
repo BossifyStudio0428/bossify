@@ -268,6 +268,7 @@ function NewOrderPage() {
         gross_profit,
         status: effectiveStatus,
         notes: combinedNotes,
+        delivery_address: form.delivery_address.trim() || null,
       })
       .select("id, code")
       .single();
