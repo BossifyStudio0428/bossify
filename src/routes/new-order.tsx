@@ -414,7 +414,7 @@ function NewOrderPage() {
       });
     }
     isPrefEnabled("notif_new_order") && deviceNotify("New Order Added! 🎉", `Order from ${form.customer_name} — RM ${Number(form.amount).toFixed(2)} has been saved.`, { route: "/orders" }).catch(() => {});
-    setForm({ customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "" });
+    setForm({ customer_name: "", phone: "", product: "", quantity: "1", amount: "", notes: "", delivery_address: "" });
     setStatus("Unpaid");
     setTimeout(() => navigate({ to: eff === "property" ? "/customers" : "/orders" }), 1500);
   };
