@@ -899,9 +899,19 @@ function OrdersPage() {
                 </DropdownMenu>
               </div>
 
-              <p className="mt-3 text-sm text-muted-foreground">
-                {o.product} {o.quantity > 1 ? `(x${o.quantity})` : ""}
-              </p>
+              <div className="mt-3 flex items-center gap-2">
+                {productImages[o.product?.trim().toLowerCase()] ? (
+                  <img
+                    src={productImages[o.product.trim().toLowerCase()]}
+                    alt={o.product}
+                    loading="lazy"
+                    className="h-10 w-10 rounded-lg object-cover border border-border/60 shrink-0"
+                  />
+                ) : null}
+                <p className="text-sm text-muted-foreground flex-1 min-w-0 break-words">
+                  {o.product} {o.quantity > 1 ? `(x${o.quantity})` : ""}
+                </p>
+              </div>
               {o.delivery_address ? (
                 <p className="mt-1 text-xs text-muted-foreground flex items-start gap-1">
                   <span>📍</span>
