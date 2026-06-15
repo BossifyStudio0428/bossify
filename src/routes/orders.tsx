@@ -13,7 +13,7 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import { orderCost } from "@/lib/orderMath";
