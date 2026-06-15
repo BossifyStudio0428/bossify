@@ -57,6 +57,7 @@ function OrdersPage() {
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [productImages, setProductImages] = useState<Record<string, string>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [detail, setDetail] = useState<OrderRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -139,6 +140,24 @@ function OrdersPage() {
   }, [user?.id]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!user) { setProductImages({}); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("inventory")
+        .select("name,image_url")
+        .eq("user_id", user.id);
+      if (cancelled || !data) return;
+      const map: Record<string, string> = {};
+      for (const r of data as Array<{ name: string; image_url: string | null }>) {
+        if (r.image_url) map[r.name.trim().toLowerCase()] = r.image_url;
+      }
+      setProductImages(map);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) {
@@ -880,9 +899,19 @@ function OrdersPage() {
                 </DropdownMenu>
               </div>
 
-              <p className="mt-3 text-sm text-muted-foreground">
-                {o.product} {o.quantity > 1 ? `(x${o.quantity})` : ""}
-              </p>
+              <div className="mt-3 flex items-center gap-2">
+                {productImages[o.product?.trim().toLowerCase()] ? (
+                  <img
+                    src={productImages[o.product.trim().toLowerCase()]}
+                    alt={o.product}
+                    loading="lazy"
+                    className="h-10 w-10 rounded-lg object-cover border border-border/60 shrink-0"
+                  />
+                ) : null}
+                <p className="text-sm text-muted-foreground flex-1 min-w-0 break-words">
+                  {o.product} {o.quantity > 1 ? `(x${o.quantity})` : ""}
+                </p>
+              </div>
               {o.delivery_address ? (
                 <p className="mt-1 text-xs text-muted-foreground flex items-start gap-1">
                   <span>📍</span>
