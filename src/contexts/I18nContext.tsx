@@ -3124,6 +3124,7 @@ const dict = {
     today_label: "今天", this_week: "本周", this_month: "本月", custom: "自定义",
     top_products: "热销产品", best_customers: "最佳客户",
     search_placeholder: "搜索任何内容...", search_orders_placeholder: "搜索客户名、电话、订单号、产品", sort_by: "排序", sort_recent: "最近", sort_most_orders: "最多订单", sort_top_spender: "最高消费", mark_all_read: "全部标为已读",
+    dine_in: "堂食", tables: "桌台", add_table: "新增桌台", table_label: "桌台名称", add_n_tables: "新增 {n} 张桌台", bulk_add: "批量新增", how_many_tables: "多少张桌台？", table_qr: "二维码", print_qrs: "打印所有二维码", scan_to_order: "扫码点餐", your_table: "您的桌台", menu_label: "菜单", add_to_cart: "加入", cart: "购物车", view_cart: "查看购物车", submit_order: "提交订单", order_submitted: "订单已提交！厨房已收到通知。", note_optional: "备注（可选）", received: "已接收", preparing: "制作中", ready: "已完成", served: "已上菜", open_tickets: "未结账单", no_open_tickets: "没有未结账单", checkout: "结账", pay_cash: "现金", pay_qr: "QR / 电子钱包", pay_bank: "银行转账", subtotal: "小计", grand_total: "总计", empty_menu: "暂无菜单。", table_inactive: "此桌台不可用。", manage_tables: "管理桌台", link_ingredients: "关联食材", ingredient: "食材", qty_per_unit: "每份用量", no_recipe: "未关联食谱 — 将直接扣库存", saved: "已保存",
     no_notifications: "暂无通知", remind_all_unpaid: "提醒所有未付款",
     confirm_remind_all: "向 {n} 位客户发送付款提醒？",
     sending_progress: "正在发送 {i} / {n}...", paid_orders_label: "已付款订单",
