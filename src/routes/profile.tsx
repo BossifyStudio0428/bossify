@@ -144,6 +144,22 @@ function ProfilePage() {
       emoji: "📊",
       items: [
         ...(servicesItem ? [servicesItem] : []),
+        ...(bizType === "fnb"
+          ? [
+              {
+                icon: "🍽️",
+                key: "tables",
+                label: t("manage_tables"),
+                onClick: () => navigate({ to: "/tables" }),
+              } as MenuItem,
+              {
+                icon: "🧑‍🍳",
+                key: "dinein",
+                label: t("dine_in"),
+                onClick: () => navigate({ to: "/dine-in" }),
+              } as MenuItem,
+            ]
+          : []),
         {
           icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
           key: "biztype",
