@@ -13,6 +13,7 @@ import { Route as ViewingsRouteImport } from './routes/viewings'
 import { Route as UniversityInsightsRouteImport } from './routes/university-insights'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as TablesRouteImport } from './routes/tables'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as StockTakeRouteImport } from './routes/stock-take'
 import { Route as SplashRouteImport } from './routes/splash'
@@ -100,6 +101,11 @@ const TermsRoute = TermsRouteImport.update({
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TablesRoute = TablesRouteImport.update({
+  id: '/tables',
+  path: '/tables',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuppliersRoute = SuppliersRouteImport.update({
@@ -490,6 +496,7 @@ export interface FileRoutesByFullPath {
   '/splash': typeof SplashRoute
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
+  '/tables': typeof TablesRoute
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
@@ -564,6 +571,7 @@ export interface FileRoutesByTo {
   '/splash': typeof SplashRoute
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
+  '/tables': typeof TablesRoute
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
@@ -639,6 +647,7 @@ export interface FileRoutesById {
   '/splash': typeof SplashRoute
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
+  '/tables': typeof TablesRoute
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
@@ -715,6 +724,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/stock-take'
     | '/suppliers'
+    | '/tables'
     | '/team'
     | '/terms'
     | '/university-insights'
@@ -789,6 +799,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/stock-take'
     | '/suppliers'
+    | '/tables'
     | '/team'
     | '/terms'
     | '/university-insights'
@@ -863,6 +874,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/stock-take'
     | '/suppliers'
+    | '/tables'
     | '/team'
     | '/terms'
     | '/university-insights'
@@ -938,6 +950,7 @@ export interface RootRouteChildren {
   SplashRoute: typeof SplashRoute
   StockTakeRoute: typeof StockTakeRoute
   SuppliersRoute: typeof SuppliersRoute
+  TablesRoute: typeof TablesRoute
   TeamRoute: typeof TeamRouteWithChildren
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
@@ -990,6 +1003,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tables': {
+      id: '/tables'
+      path: '/tables'
+      fullPath: '/tables'
+      preLoaderRoute: typeof TablesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/suppliers': {
@@ -1565,6 +1585,7 @@ const rootRouteChildren: RootRouteChildren = {
   SplashRoute: SplashRoute,
   StockTakeRoute: StockTakeRoute,
   SuppliersRoute: SuppliersRoute,
+  TablesRoute: TablesRoute,
   TeamRoute: TeamRouteWithChildren,
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
