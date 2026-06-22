@@ -71,6 +71,7 @@ import { Route as InventoryItemIdRouteImport } from './routes/inventory.$itemId'
 import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as DocumentIdRouteImport } from './routes/document.$id'
+import { Route as DineTableIdRouteImport } from './routes/dine/$tableId'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
 import { Route as CommissionIdRouteImport } from './routes/commission.$id'
@@ -393,6 +394,11 @@ const DocumentIdRoute = DocumentIdRouteImport.update({
   path: '/document/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DineTableIdRoute = DineTableIdRouteImport.update({
+  id: '/dine/$tableId',
+  path: '/dine/$tableId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CustomerCustomerIdRoute = CustomerCustomerIdRouteImport.update({
   id: '/customer/$customerId',
   path: '/customer/$customerId',
@@ -504,6 +510,7 @@ export interface FileRoutesByFullPath {
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
+  '/dine/$tableId': typeof DineTableIdRoute
   '/document/$id': typeof DocumentIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -579,6 +586,7 @@ export interface FileRoutesByTo {
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
+  '/dine/$tableId': typeof DineTableIdRoute
   '/document/$id': typeof DocumentIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -655,6 +663,7 @@ export interface FileRoutesById {
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
+  '/dine/$tableId': typeof DineTableIdRoute
   '/document/$id': typeof DocumentIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -732,6 +741,7 @@ export interface FileRouteTypes {
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
+    | '/dine/$tableId'
     | '/document/$id'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -807,6 +817,7 @@ export interface FileRouteTypes {
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
+    | '/dine/$tableId'
     | '/document/$id'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -882,6 +893,7 @@ export interface FileRouteTypes {
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
+    | '/dine/$tableId'
     | '/document/$id'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -958,6 +970,7 @@ export interface RootRouteChildren {
   CommissionIdRoute: typeof CommissionIdRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
+  DineTableIdRoute: typeof DineTableIdRoute
   DocumentIdRoute: typeof DocumentIdRoute
   ListingIdRoute: typeof ListingIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
@@ -1411,6 +1424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocumentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dine/$tableId': {
+      id: '/dine/$tableId'
+      path: '/dine/$tableId'
+      fullPath: '/dine/$tableId'
+      preLoaderRoute: typeof DineTableIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/customer/$customerId': {
       id: '/customer/$customerId'
       path: '/customer/$customerId'
@@ -1593,6 +1613,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommissionIdRoute: CommissionIdRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
+  DineTableIdRoute: DineTableIdRoute,
   DocumentIdRoute: DocumentIdRoute,
   ListingIdRoute: ListingIdRoute,
   OrderCodeRoute: OrderCodeRoute,
