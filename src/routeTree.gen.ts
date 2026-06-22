@@ -13,6 +13,7 @@ import { Route as ViewingsRouteImport } from './routes/viewings'
 import { Route as UniversityInsightsRouteImport } from './routes/university-insights'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as TablesRouteImport } from './routes/tables'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as StockTakeRouteImport } from './routes/stock-take'
 import { Route as SplashRouteImport } from './routes/splash'
@@ -46,6 +47,7 @@ import { Route as IngredientsRouteImport } from './routes/ingredients'
 import { Route as ImportOrdersRouteImport } from './routes/import-orders'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as DineInRouteImport } from './routes/dine-in'
 import { Route as DevicesRouteImport } from './routes/devices'
 import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as CustomersRouteImport } from './routes/customers'
@@ -70,6 +72,7 @@ import { Route as InventoryItemIdRouteImport } from './routes/inventory.$itemId'
 import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as DocumentIdRouteImport } from './routes/document.$id'
+import { Route as DineTableIdRouteImport } from './routes/dine/$tableId'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
 import { Route as CommissionIdRouteImport } from './routes/commission.$id'
@@ -100,6 +103,11 @@ const TermsRoute = TermsRouteImport.update({
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TablesRoute = TablesRouteImport.update({
+  id: '/tables',
+  path: '/tables',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuppliersRoute = SuppliersRouteImport.update({
@@ -267,6 +275,11 @@ const DocumentsRoute = DocumentsRouteImport.update({
   path: '/documents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DineInRoute = DineInRouteImport.update({
+  id: '/dine-in',
+  path: '/dine-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevicesRoute = DevicesRouteImport.update({
   id: '/devices',
   path: '/devices',
@@ -387,6 +400,11 @@ const DocumentIdRoute = DocumentIdRouteImport.update({
   path: '/document/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DineTableIdRoute = DineTableIdRouteImport.update({
+  id: '/dine/$tableId',
+  path: '/dine/$tableId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CustomerCustomerIdRoute = CustomerCustomerIdRouteImport.update({
   id: '/customer/$customerId',
   path: '/customer/$customerId',
@@ -457,6 +475,7 @@ export interface FileRoutesByFullPath {
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/devices': typeof DevicesRoute
+  '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
@@ -490,6 +509,7 @@ export interface FileRoutesByFullPath {
   '/splash': typeof SplashRoute
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
+  '/tables': typeof TablesRoute
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
@@ -497,6 +517,7 @@ export interface FileRoutesByFullPath {
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
+  '/dine/$tableId': typeof DineTableIdRoute
   '/document/$id': typeof DocumentIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -531,6 +552,7 @@ export interface FileRoutesByTo {
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/devices': typeof DevicesRoute
+  '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
@@ -564,6 +586,7 @@ export interface FileRoutesByTo {
   '/splash': typeof SplashRoute
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
+  '/tables': typeof TablesRoute
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
@@ -571,6 +594,7 @@ export interface FileRoutesByTo {
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
+  '/dine/$tableId': typeof DineTableIdRoute
   '/document/$id': typeof DocumentIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -606,6 +630,7 @@ export interface FileRoutesById {
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/devices': typeof DevicesRoute
+  '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/import-orders': typeof ImportOrdersRoute
@@ -639,6 +664,7 @@ export interface FileRoutesById {
   '/splash': typeof SplashRoute
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
+  '/tables': typeof TablesRoute
   '/team': typeof TeamRouteWithChildren
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
@@ -646,6 +672,7 @@ export interface FileRoutesById {
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
+  '/dine/$tableId': typeof DineTableIdRoute
   '/document/$id': typeof DocumentIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
@@ -682,6 +709,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/data-deletion'
     | '/devices'
+    | '/dine-in'
     | '/documents'
     | '/forgot-password'
     | '/import-orders'
@@ -715,6 +743,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/stock-take'
     | '/suppliers'
+    | '/tables'
     | '/team'
     | '/terms'
     | '/university-insights'
@@ -722,6 +751,7 @@ export interface FileRouteTypes {
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
+    | '/dine/$tableId'
     | '/document/$id'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -756,6 +786,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/data-deletion'
     | '/devices'
+    | '/dine-in'
     | '/documents'
     | '/forgot-password'
     | '/import-orders'
@@ -789,6 +820,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/stock-take'
     | '/suppliers'
+    | '/tables'
     | '/team'
     | '/terms'
     | '/university-insights'
@@ -796,6 +828,7 @@ export interface FileRouteTypes {
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
+    | '/dine/$tableId'
     | '/document/$id'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -830,6 +863,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/data-deletion'
     | '/devices'
+    | '/dine-in'
     | '/documents'
     | '/forgot-password'
     | '/import-orders'
@@ -863,6 +897,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/stock-take'
     | '/suppliers'
+    | '/tables'
     | '/team'
     | '/terms'
     | '/university-insights'
@@ -870,6 +905,7 @@ export interface FileRouteTypes {
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
+    | '/dine/$tableId'
     | '/document/$id'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
@@ -905,6 +941,7 @@ export interface RootRouteChildren {
   CustomersRoute: typeof CustomersRoute
   DataDeletionRoute: typeof DataDeletionRoute
   DevicesRoute: typeof DevicesRoute
+  DineInRoute: typeof DineInRoute
   DocumentsRoute: typeof DocumentsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
   ImportOrdersRoute: typeof ImportOrdersRoute
@@ -938,6 +975,7 @@ export interface RootRouteChildren {
   SplashRoute: typeof SplashRoute
   StockTakeRoute: typeof StockTakeRoute
   SuppliersRoute: typeof SuppliersRoute
+  TablesRoute: typeof TablesRoute
   TeamRoute: typeof TeamRouteWithChildren
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
@@ -945,6 +983,7 @@ export interface RootRouteChildren {
   CommissionIdRoute: typeof CommissionIdRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
+  DineTableIdRoute: typeof DineTableIdRoute
   DocumentIdRoute: typeof DocumentIdRoute
   ListingIdRoute: typeof ListingIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
@@ -990,6 +1029,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tables': {
+      id: '/tables'
+      path: '/tables'
+      fullPath: '/tables'
+      preLoaderRoute: typeof TablesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/suppliers': {
@@ -1223,6 +1269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocumentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dine-in': {
+      id: '/dine-in'
+      path: '/dine-in'
+      fullPath: '/dine-in'
+      preLoaderRoute: typeof DineInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/devices': {
       id: '/devices'
       path: '/devices'
@@ -1391,6 +1444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocumentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dine/$tableId': {
+      id: '/dine/$tableId'
+      path: '/dine/$tableId'
+      fullPath: '/dine/$tableId'
+      preLoaderRoute: typeof DineTableIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/customer/$customerId': {
       id: '/customer/$customerId'
       path: '/customer/$customerId'
@@ -1532,6 +1592,7 @@ const rootRouteChildren: RootRouteChildren = {
   CustomersRoute: CustomersRoute,
   DataDeletionRoute: DataDeletionRoute,
   DevicesRoute: DevicesRoute,
+  DineInRoute: DineInRoute,
   DocumentsRoute: DocumentsRoute,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
   ImportOrdersRoute: ImportOrdersRoute,
@@ -1565,6 +1626,7 @@ const rootRouteChildren: RootRouteChildren = {
   SplashRoute: SplashRoute,
   StockTakeRoute: StockTakeRoute,
   SuppliersRoute: SuppliersRoute,
+  TablesRoute: TablesRoute,
   TeamRoute: TeamRouteWithChildren,
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
@@ -1572,6 +1634,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommissionIdRoute: CommissionIdRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
+  DineTableIdRoute: DineTableIdRoute,
   DocumentIdRoute: DocumentIdRoute,
   ListingIdRoute: ListingIdRoute,
   OrderCodeRoute: OrderCodeRoute,
@@ -1591,13 +1654,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

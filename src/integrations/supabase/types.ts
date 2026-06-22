@@ -209,6 +209,152 @@ export type Database = {
         }
         Relationships: []
       }
+      dine_in_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_id: string | null
+          line_total: number
+          order_id: string
+          product_name: string
+          quantity: number
+          unit_price: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_id?: string | null
+          line_total?: number
+          order_id: string
+          product_name: string
+          quantity?: number
+          unit_price?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_id?: string | null
+          line_total?: number
+          order_id?: string
+          product_name?: string
+          quantity?: number
+          unit_price?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dine_in_order_items_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dine_in_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dine_in_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dine_in_orders: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          status: string
+          table_id: string
+          ticket_id: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          status?: string
+          table_id: string
+          ticket_id: string
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          status?: string
+          table_id?: string
+          ticket_id?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dine_in_orders_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dine_in_orders_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "dine_in_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dine_in_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          status: string
+          table_id: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          table_id: string
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          table_id?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dine_in_tickets_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follow_ups: {
         Row: {
           created_at: string
@@ -358,6 +504,51 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      inventory_recipe_items: {
+        Row: {
+          created_at: string
+          id: string
+          ingredient_id: string
+          inventory_id: string
+          quantity_per_unit: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ingredient_id: string
+          inventory_id: string
+          quantity_per_unit?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ingredient_id?: string
+          inventory_id?: string
+          quantity_per_unit?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_recipe_items_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_recipe_items_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       listings: {
         Row: {
@@ -824,6 +1015,36 @@ export type Database = {
           },
         ]
       }
+      restaurant_tables: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          label: string
+          seats: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          label: string
+          seats?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          label?: string
+          seats?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           addons: Json | null
@@ -1169,6 +1390,19 @@ export type Database = {
       }
       device_limit_for_plan: { Args: { _plan: string }; Returns: number }
       device_limit_for_user: { Args: { _user_id: string }; Returns: number }
+      get_dine_in_menu: {
+        Args: { _table_id: string }
+        Returns: {
+          category: string
+          cover_image_url: string
+          description: string
+          image_url: string
+          inventory_id: string
+          name: string
+          price: number
+          stock: number
+        }[]
+      }
       get_my_team: {
         Args: never
         Returns: {
