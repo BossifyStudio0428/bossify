@@ -368,7 +368,7 @@ function Index() {
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [user?.id, refreshSubscription, bizType]);
+  }, [user?.id, refreshSubscription, bizType, isRestaurant]);
 
   useEffect(() => {
     if (!user) return;
