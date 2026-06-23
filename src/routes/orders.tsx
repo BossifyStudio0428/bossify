@@ -16,6 +16,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
+import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { orderCost } from "@/lib/orderMath";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -1237,12 +1238,11 @@ function OrdersPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("delivery_address" as any)}</label>
-              <textarea
-                rows={2}
+              <PlacesAutocomplete
                 value={(editForm.delivery_address as string) ?? ""}
-                onChange={(e) => setEditForm((p) => ({ ...p, delivery_address: e.target.value }))}
-                maxLength={500}
-                className="w-full resize-y rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+                onChange={({ address }) => setEditForm((p) => ({ ...p, delivery_address: address }))}
+                placeholder={t("delivery_address" as any)}
+                className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
               />
             </div>
             <EditInput label={t("notes")} value={(editForm.notes as string) ?? ""} onChange={(v) => setEditForm((p) => ({ ...p, notes: v }))} />
