@@ -61,6 +61,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ViewingIdRouteImport } from './routes/viewing.$id'
+import { Route as TrackOrderRefRouteImport } from './routes/track.$orderRef'
 import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as StockTakeIdRouteImport } from './routes/stock-take_.$id'
 import { Route as RequirementIdRouteImport } from './routes/requirement.$id'
@@ -348,6 +349,11 @@ const ViewingIdRoute = ViewingIdRouteImport.update({
   path: '/viewing/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrackOrderRefRoute = TrackOrderRefRouteImport.update({
+  id: '/track/$orderRef',
+  path: '/track/$orderRef',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamWelcomeRoute = TeamWelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
@@ -549,6 +555,7 @@ export interface FileRoutesByFullPath {
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
@@ -629,6 +636,7 @@ export interface FileRoutesByTo {
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
@@ -710,6 +718,7 @@ export interface FileRoutesById {
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take_/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
@@ -792,6 +801,7 @@ export interface FileRouteTypes {
     | '/requirement/$id'
     | '/stock-take/$id'
     | '/team/welcome'
+    | '/track/$orderRef'
     | '/viewing/$id'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
@@ -872,6 +882,7 @@ export interface FileRouteTypes {
     | '/requirement/$id'
     | '/stock-take/$id'
     | '/team/welcome'
+    | '/track/$orderRef'
     | '/viewing/$id'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
@@ -952,6 +963,7 @@ export interface FileRouteTypes {
     | '/requirement/$id'
     | '/stock-take_/$id'
     | '/team/welcome'
+    | '/track/$orderRef'
     | '/viewing/$id'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
@@ -1028,6 +1040,7 @@ export interface RootRouteChildren {
   RenewalIdRoute: typeof RenewalIdRoute
   RequirementIdRoute: typeof RequirementIdRoute
   StockTakeIdRoute: typeof StockTakeIdRoute
+  TrackOrderRefRoute: typeof TrackOrderRefRoute
   ViewingIdRoute: typeof ViewingIdRoute
   ApiPublicAdminRoute: typeof ApiPublicAdminRoute
   ApiPublicDeliveryQuoteRoute: typeof ApiPublicDeliveryQuoteRoute
@@ -1406,6 +1419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ViewingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/track/$orderRef': {
+      id: '/track/$orderRef'
+      path: '/track/$orderRef'
+      fullPath: '/track/$orderRef'
+      preLoaderRoute: typeof TrackOrderRefRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team/welcome': {
       id: '/team/welcome'
       path: '/welcome'
@@ -1703,6 +1723,7 @@ const rootRouteChildren: RootRouteChildren = {
   RenewalIdRoute: RenewalIdRoute,
   RequirementIdRoute: RequirementIdRoute,
   StockTakeIdRoute: StockTakeIdRoute,
+  TrackOrderRefRoute: TrackOrderRefRoute,
   ViewingIdRoute: ViewingIdRoute,
   ApiPublicAdminRoute: ApiPublicAdminRoute,
   ApiPublicDeliveryQuoteRoute: ApiPublicDeliveryQuoteRoute,

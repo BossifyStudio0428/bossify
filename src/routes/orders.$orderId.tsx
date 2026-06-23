@@ -50,10 +50,29 @@ function buildDeliveryStatusMessage(
   name: string,
   ref: string,
   statusLabel: string,
+  trackingUrl: string,
+  eta?: string | null,
 ): string {
-  if (lang === "zh") return `您好 ${name}！您的订单 ${ref} 状态已更新：${statusLabel}。谢谢！`;
-  if (lang === "ms") return `Hai ${name}! Status pesanan ${ref} anda telah dikemaskini: ${statusLabel}. Terima kasih!`;
-  return `Hi ${name}! Your order ${ref} status has been updated: ${statusLabel}. Thank you!`;
+  const etaLine = eta
+    ? lang === "zh"
+      ? `预计到达：${eta} 🚗\n`
+      : lang === "ms"
+        ? `Anggaran ketibaan: ${eta} 🚗\n`
+        : `Estimated arrival: ${eta} 🚗\n`
+    : "";
+  if (lang === "zh") {
+    return `您好 ${name}！您的订单 ${ref} 状态已更新：${statusLabel}。\n${etaLine}追踪订单：${trackingUrl}\n谢谢！`;
+  }
+  if (lang === "ms") {
+    return `Hai ${name}! Status pesanan ${ref} anda telah dikemaskini: ${statusLabel}.\n${etaLine}Jejaki pesanan: ${trackingUrl}\nTerima kasih!`;
+  }
+  return `Hi ${name}! Your order ${ref} status has been updated: ${statusLabel}.\n${etaLine}Track your order: ${trackingUrl}\nThank you!`;
+}
+
+function trackingUrlFor(code: string): string {
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app";
+  return `${origin}/track/${code}`;
 }
 
 function OrderDetailPage() {
@@ -69,6 +88,8 @@ function OrderDetailPage() {
   const [form, setForm] = useState<Partial<OrderRow>>({});
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [etaModal, setEtaModal] = useState(false);
+  const [etaInput, setEtaInput] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -107,16 +128,28 @@ function OrderDetailPage() {
 
   const updateDeliveryStatus = async (next: DeliveryStatus) => {
     if (!user || !order) return;
+    if (next === "on_the_way") {
+      setEtaInput((order as any).estimated_arrival ?? "");
+      setEtaModal(true);
+      return;
+    }
+    await applyDeliveryStatus(next, null);
+  };
+
+  const applyDeliveryStatus = async (next: DeliveryStatus, eta: string | null) => {
+    if (!user || !order) return;
+    const patch: Record<string, unknown> = { delivery_status: next };
+    if (next === "on_the_way") patch.estimated_arrival = eta;
     const { error } = await supabase
       .from("orders")
-      .update({ delivery_status: next } as any)
+      .update(patch as any)
       .eq("id", order.id)
       .eq("user_id", user.id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setOrder({ ...(order as any), delivery_status: next } as OrderRow);
+    setOrder({ ...(order as any), delivery_status: next, ...(next === "on_the_way" ? { estimated_arrival: eta } : {}) } as OrderRow);
     toast.success(deliveryStatusLabel(next, lang));
     if (order.phone) {
       const msg = buildDeliveryStatusMessage(
@@ -124,9 +157,21 @@ function OrderDetailPage() {
         order.customer_name,
         order.code,
         deliveryStatusLabel(next, lang),
+        trackingUrlFor(order.code),
+        next === "on_the_way" ? eta : null,
       );
       window.open(buildWhatsAppLink(order.phone, msg), "_blank");
     }
+  };
+
+  const submitEta = async () => {
+    const eta = etaInput.trim();
+    if (!eta) {
+      toast.error(lang === "zh" ? "请输入预计到达时间" : lang === "ms" ? "Sila masukkan anggaran ketibaan" : "Please enter estimated arrival");
+      return;
+    }
+    setEtaModal(false);
+    await applyDeliveryStatus("on_the_way", eta);
   };
 
   const save = async () => {
