@@ -496,7 +496,45 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     const code = genCode();
     const phoneDigits = (data2.phone || "").replace(/\D/g, "");
     const qty = totalQty;
-    const amount = totalAmount;
+    // Server-side delivery fee: only when the seller has delivery configured,
+    // the customer chose delivery, and coordinates were supplied.
+    let deliveryFee = 0;
+    let deliveryKm: number | null = null;
+    const wantsDelivery =
+      isRetailish &&
+      data2.delivery_method === "delivery" &&
+      typeof data2.dest_lat === "number" &&
+      typeof data2.dest_lng === "number";
+    if (wantsDelivery) {
+      try {
+        const { loadDeliveryConfig, computeDistanceKm, pickFee } = await import("./delivery.server");
+        const cfg = await loadDeliveryConfig(data2.code);
+        if (cfg.ok) {
+          const dist = await computeDistanceKm(cfg.storeLat, cfg.storeLng, data2.dest_lat!, data2.dest_lng!);
+          if (dist.ok) {
+            const fee = pickFee(dist.km, cfg.zones);
+            if (fee === null) {
+              return { ok: false, reason: "insert_failed", error: "Address is outside the delivery area" };
+            }
+            deliveryFee = fee;
+            deliveryKm = dist.km;
+          } else if (dist.reason === "out_of_range") {
+            return { ok: false, reason: "insert_failed", error: "Address is outside the delivery area" };
+          }
+        }
+      } catch (e) {
+        console.warn("[createPublicOrder] delivery fee compute failed", e);
+      }
+    }
+    const amount = totalAmount + deliveryFee;
+    if (deliveryFee > 0 || deliveryKm !== null) {
+      const line = deliveryKm !== null
+        ? `Delivery: ${deliveryKm.toFixed(2)} km — RM ${deliveryFee.toFixed(2)}`
+        : `Delivery fee: RM ${deliveryFee.toFixed(2)}`;
+      extra.push(line);
+    } else if (isRetailish && data2.delivery_method === "pickup") {
+      extra.push("Fulfilment: Self-pickup");
+    }
     const totalCost = data2.items && data2.items.length > 0
       ? data2.items.reduce((s: number, it: any) => {
           const found = lookupPrice(it.product, it.variant);
