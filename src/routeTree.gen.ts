@@ -39,6 +39,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NotificationSettingsRouteImport } from './routes/notification-settings'
 import { Route as NewOrderRouteImport } from './routes/new-order'
+import { Route as NewBookingRouteImport } from './routes/new-booking'
 import { Route as LoanCalculatorRouteImport } from './routes/loan-calculator'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as LanguageRouteImport } from './routes/language'
@@ -238,6 +239,11 @@ const NotificationSettingsRoute = NotificationSettingsRouteImport.update({
 const NewOrderRoute = NewOrderRouteImport.update({
   id: '/new-order',
   path: '/new-order',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewBookingRoute = NewBookingRouteImport.update({
+  id: '/new-booking',
+  path: '/new-booking',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoanCalculatorRoute = LoanCalculatorRouteImport.update({
@@ -516,6 +522,7 @@ export interface FileRoutesByFullPath {
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
+  '/new-booking': typeof NewBookingRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -598,6 +605,7 @@ export interface FileRoutesByTo {
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
+  '/new-booking': typeof NewBookingRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -681,6 +689,7 @@ export interface FileRoutesById {
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
+  '/new-booking': typeof NewBookingRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -765,6 +774,7 @@ export interface FileRouteTypes {
     | '/language'
     | '/listings'
     | '/loan-calculator'
+    | '/new-booking'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -847,6 +857,7 @@ export interface FileRouteTypes {
     | '/language'
     | '/listings'
     | '/loan-calculator'
+    | '/new-booking'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -929,6 +940,7 @@ export interface FileRouteTypes {
     | '/language'
     | '/listings'
     | '/loan-calculator'
+    | '/new-booking'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -1012,6 +1024,7 @@ export interface RootRouteChildren {
   LanguageRoute: typeof LanguageRoute
   ListingsRoute: typeof ListingsRoute
   LoanCalculatorRoute: typeof LoanCalculatorRoute
+  NewBookingRoute: typeof NewBookingRoute
   NewOrderRoute: typeof NewOrderRoute
   NotificationSettingsRoute: typeof NotificationSettingsRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -1276,6 +1289,13 @@ declare module '@tanstack/react-router' {
       path: '/new-order'
       fullPath: '/new-order'
       preLoaderRoute: typeof NewOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/new-booking': {
+      id: '/new-booking'
+      path: '/new-booking'
+      fullPath: '/new-booking'
+      preLoaderRoute: typeof NewBookingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/loan-calculator': {
@@ -1703,6 +1723,7 @@ const rootRouteChildren: RootRouteChildren = {
   LanguageRoute: LanguageRoute,
   ListingsRoute: ListingsRoute,
   LoanCalculatorRoute: LoanCalculatorRoute,
+  NewBookingRoute: NewBookingRoute,
   NewOrderRoute: NewOrderRoute,
   NotificationSettingsRoute: NotificationSettingsRoute,
   NotificationsRoute: NotificationsRoute,
