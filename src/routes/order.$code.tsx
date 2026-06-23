@@ -194,6 +194,15 @@ function PublicOrderFormPage() {
     deadline: "",
   });
   const [paymentMethod, setPaymentMethod] = useState<"bank_transfer" | "cash_on_delivery" | "">("");
+  const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
+  const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [deliveryQuote, setDeliveryQuote] = useState<
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "ok"; km: number; fee: number }
+    | { status: "unavailable" }
+    | { status: "error"; message: string }
+  >({ status: "idle" });
   const upd =
     (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
