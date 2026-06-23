@@ -23,6 +23,39 @@ const statusBanner: Record<OrderStatus, string> = {
   Pending: "bg-amber-400 text-amber-950",
 };
 
+type DeliveryStatus = "confirmed" | "preparing" | "on_the_way" | "delivered";
+
+const DELIVERY_STATUSES: DeliveryStatus[] = [
+  "confirmed",
+  "preparing",
+  "on_the_way",
+  "delivered",
+];
+
+function deliveryStatusLabel(s: DeliveryStatus, lang: string): string {
+  const map: Record<DeliveryStatus, { en: string; zh: string; ms: string }> = {
+    confirmed:   { en: "Confirmed",  zh: "已确认", ms: "Disahkan" },
+    preparing:   { en: "Preparing",  zh: "准备中", ms: "Sedang disediakan" },
+    on_the_way:  { en: "On the Way", zh: "已出发", ms: "Dalam perjalanan" },
+    delivered:   { en: "Delivered",  zh: "已送达", ms: "Telah dihantar" },
+  };
+  const e = map[s];
+  if (lang === "zh") return e.zh;
+  if (lang === "ms") return e.ms;
+  return e.en;
+}
+
+function buildDeliveryStatusMessage(
+  lang: string,
+  name: string,
+  ref: string,
+  statusLabel: string,
+): string {
+  if (lang === "zh") return `您好 ${name}！您的订单 ${ref} 状态已更新：${statusLabel}。谢谢！`;
+  if (lang === "ms") return `Hai ${name}! Status pesanan ${ref} anda telah dikemaskini: ${statusLabel}. Terima kasih!`;
+  return `Hi ${name}! Your order ${ref} status has been updated: ${statusLabel}. Thank you!`;
+}
+
 function OrderDetailPage() {
   const { orderId } = useParams({ from: "/orders/$orderId" });
   const { edit } = Route.useSearch();
