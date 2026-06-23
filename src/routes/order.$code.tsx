@@ -371,6 +371,18 @@ function PublicOrderFormPage() {
       alert(L("Please enter your delivery address", "Sila masukkan alamat penghantaran", "请填写送货地址"));
       return;
     }
+    if (useDelivery) {
+      if (!destCoords) {
+        alert(L("Please pick your address from the suggestions", "Sila pilih alamat dari cadangan", "请从建议中选择您的地址"));
+        return;
+      }
+      if (deliveryQuote.status === "loading") return;
+      if (deliveryQuote.status === "unavailable") {
+        alert(L("Sorry, your address is outside our delivery area", "Maaf, alamat anda di luar kawasan penghantaran", "抱歉，您的地址超出送货范围"));
+        return;
+      }
+      if (deliveryQuote.status !== "ok") return;
+    }
     if (cart.length === 0) return;
     const needsPayment = bt === "retail" || bt === "fnb";
     if (needsPayment && !paymentMethod) {
@@ -394,6 +406,9 @@ function PublicOrderFormPage() {
         notes: form.notes,
         address: form.address,
         fulfilment: bizType === "fnb" ? form.fulfilment : "",
+        delivery_method: deliveryEnabled ? deliveryMethod : undefined,
+        dest_lat: useDelivery && destCoords ? destCoords.lat : undefined,
+        dest_lng: useDelivery && destCoords ? destCoords.lng : undefined,
         course_interest: form.course_interest,
         university_preference: form.university_preference,
         date_time: form.date_time,
@@ -408,7 +423,7 @@ function PublicOrderFormPage() {
           name: form.customer_name.trim(),
           code: res.code,
           business: res.business_name || state.profile.business_name,
-          amount: cartTotal,
+          amount: grandTotal,
           paymentMethod: needsPayment ? paymentMethod : "",
           whatsapp: state.profile.whatsapp_number || null,
           paymentMethods: state.profile.payment_methods ?? [],
