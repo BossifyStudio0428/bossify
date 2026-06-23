@@ -655,12 +655,14 @@ function PublicOrderFormPage() {
           )}
           {done.paymentMethod === "bank_transfer" && done.whatsapp && (() => {
             const amountStr = done.amount.toFixed(2);
+            const origin = typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app";
+            const trackUrl = `${origin}/track/${done.code}`;
             const msg =
               lang === "zh"
-                ? `你好 ${done.business}，我已完成订单 ${done.code} 的付款 RM${amountStr}，请查收我的转账收据。`
+                ? `你好 ${done.business}，我已完成订单 ${done.code} 的付款 RM${amountStr}，请查收我的转账收据。\n追踪订单：${trackUrl}`
                 : lang === "ms"
-                ? `Hai ${done.business}, saya telah membuat pembayaran untuk pesanan ${done.code} sebanyak RM${amountStr}. Sila semak resit saya.`
-                : `Hi ${done.business}, I have made payment for order ${done.code} amounting to RM${amountStr}. Please find my receipt attached.`;
+                ? `Hai ${done.business}, saya telah membuat pembayaran untuk pesanan ${done.code} sebanyak RM${amountStr}. Sila semak resit saya.\nJejaki pesanan: ${trackUrl}`
+                : `Hi ${done.business}, I have made payment for order ${done.code} amounting to RM${amountStr}. Please find my receipt attached.\nTrack order: ${trackUrl}`;
             const phone = done.whatsapp.replace(/[^0-9]/g, "");
             const href = `https://wa.me/${phone}?text=${encodeURIComponent(stripEmoji(msg))}`;
             const label =
