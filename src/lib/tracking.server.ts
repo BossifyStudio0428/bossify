@@ -39,7 +39,7 @@ export async function loadTrackingInfo(rawRef: string): Promise<TrackingResult> 
     const { data: order, error } = await sb
       .from("orders")
       .select(
-        "code, customer_name, product, quantity, amount, status, delivery_address, delivery_status, estimated_arrival, notes, created_at, user_id",
+        "code, customer_name, product, quantity, amount, status, delivery_address, delivery_status, estimated_arrival, notes, created_at, user_id, delivery_method, store_address_snapshot",
       )
       .eq("code", ref)
       .maybeSingle();
@@ -65,12 +65,17 @@ export async function loadTrackingInfo(rawRef: string): Promise<TrackingResult> 
         estimated_arrival: order.estimated_arrival ?? null,
         notes: order.notes ?? null,
         created_at: order.created_at,
-        delivery_method: order.delivery_address ? "delivery" : null,
+        delivery_method:
+          (order.delivery_method as string | null) ??
+          (order.delivery_address ? "delivery" : null),
       },
       business: {
         name: profile?.business_name ?? "",
         whatsapp_number: profile?.whatsapp_number ?? null,
-        store_address: profile?.store_address ?? null,
+        store_address:
+          (order.store_address_snapshot as string | null) ??
+          profile?.store_address ??
+          null,
       },
     };
   } catch (e) {
