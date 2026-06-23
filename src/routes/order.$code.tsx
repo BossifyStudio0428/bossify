@@ -10,6 +10,7 @@ import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Sea
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
 import { formatCategory, formatUnit } from "@/lib/labels";
+import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
@@ -111,6 +112,8 @@ type LoadState =
         language?: string;
         allow_cod?: boolean;
         order_form_show_stock?: boolean;
+        delivery_enabled?: boolean;
+        delivery_zones?: Array<{ max_km: number; fee: number }>;
         payment_methods?: Array<{
           type: string | null;
           bank: string | null;
@@ -191,6 +194,15 @@ function PublicOrderFormPage() {
     deadline: "",
   });
   const [paymentMethod, setPaymentMethod] = useState<"bank_transfer" | "cash_on_delivery" | "">("");
+  const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
+  const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [deliveryQuote, setDeliveryQuote] = useState<
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "ok"; km: number; fee: number }
+    | { status: "unavailable" }
+    | { status: "error"; message: string }
+  >({ status: "idle" });
   const upd =
     (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -276,6 +288,49 @@ function PublicOrderFormPage() {
   const isRetailish = bizType === "retail" || bizType === "fnb";
   const cartTotal = cart.reduce((s, l) => s + l.unit_price * (isRetailish ? l.quantity : 1), 0);
   const cartCount = cart.reduce((s, l) => s + (isRetailish ? l.quantity : 1), 0);
+  const deliveryEnabled =
+    isRetailish && state.status === "ready" && state.profile.delivery_enabled === true;
+  const useDelivery = deliveryEnabled && deliveryMethod === "delivery";
+  const deliveryFee =
+    useDelivery && deliveryQuote.status === "ok" ? deliveryQuote.fee : 0;
+  const grandTotal = cartTotal + deliveryFee;
+
+  // Re-quote whenever the destination coords or method change
+  useEffect(() => {
+    if (!useDelivery || !destCoords) {
+      if (useDelivery && !destCoords) setDeliveryQuote({ status: "idle" });
+      else if (!useDelivery) setDeliveryQuote({ status: "idle" });
+      return;
+    }
+    let cancelled = false;
+    setDeliveryQuote({ status: "loading" });
+    fetch("/api/public/delivery-quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ code, destLat: destCoords.lat, destLng: destCoords.lng }),
+      cache: "no-store",
+      credentials: "omit",
+    })
+      .then((r) => r.json())
+      .then((res: any) => {
+        if (cancelled) return;
+        if (!res?.ok) {
+          setDeliveryQuote({ status: "error", message: res?.error || res?.reason || "error" });
+          return;
+        }
+        if (!res.available) {
+          setDeliveryQuote({ status: "unavailable" });
+          return;
+        }
+        setDeliveryQuote({ status: "ok", km: Number(res.km), fee: Number(res.fee) });
+      })
+      .catch((e) => {
+        if (!cancelled) setDeliveryQuote({ status: "error", message: e?.message ?? "Network error" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [useDelivery, destCoords, code]);
 
   const addToCart = (line: CartLine) => {
     setCart((prev) => {
@@ -316,6 +371,18 @@ function PublicOrderFormPage() {
       alert(L("Please enter your delivery address", "Sila masukkan alamat penghantaran", "请填写送货地址"));
       return;
     }
+    if (useDelivery) {
+      if (!destCoords) {
+        alert(L("Please pick your address from the suggestions", "Sila pilih alamat dari cadangan", "请从建议中选择您的地址"));
+        return;
+      }
+      if (deliveryQuote.status === "loading") return;
+      if (deliveryQuote.status === "unavailable") {
+        alert(L("Sorry, your address is outside our delivery area", "Maaf, alamat anda di luar kawasan penghantaran", "抱歉，您的地址超出送货范围"));
+        return;
+      }
+      if (deliveryQuote.status !== "ok") return;
+    }
     if (cart.length === 0) return;
     const needsPayment = bt === "retail" || bt === "fnb";
     if (needsPayment && !paymentMethod) {
@@ -339,6 +406,9 @@ function PublicOrderFormPage() {
         notes: form.notes,
         address: form.address,
         fulfilment: bizType === "fnb" ? form.fulfilment : "",
+        delivery_method: deliveryEnabled ? deliveryMethod : undefined,
+        dest_lat: useDelivery && destCoords ? destCoords.lat : undefined,
+        dest_lng: useDelivery && destCoords ? destCoords.lng : undefined,
         course_interest: form.course_interest,
         university_preference: form.university_preference,
         date_time: form.date_time,
@@ -353,7 +423,7 @@ function PublicOrderFormPage() {
           name: form.customer_name.trim(),
           code: res.code,
           business: res.business_name || state.profile.business_name,
-          amount: cartTotal,
+          amount: grandTotal,
           paymentMethod: needsPayment ? paymentMethod : "",
           whatsapp: state.profile.whatsapp_number || null,
           paymentMethods: state.profile.payment_methods ?? [],
@@ -1043,8 +1113,14 @@ function PublicOrderFormPage() {
               ))}
               <div className="flex items-center justify-between px-2 pt-1">
                 <span className="text-sm font-semibold">{totalLabel}</span>
-                <span className="text-lg font-bold text-primary">RM {cartTotal.toFixed(2)}</span>
+                <span className="text-lg font-bold text-primary">RM {grandTotal.toFixed(2)}</span>
               </div>
+              {useDelivery && deliveryQuote.status === "ok" && (
+                <div className="flex items-center justify-between px-2 text-[11px] text-muted-foreground">
+                  <span>{L("Subtotal", "Subjumlah", "小计")}: RM {cartTotal.toFixed(2)}</span>
+                  <span>+ RM {deliveryQuote.fee.toFixed(2)} {L("delivery", "penghantaran", "运费")}</span>
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -1069,16 +1145,76 @@ function PublicOrderFormPage() {
           </Field>
 
           {(bizType === "retail" || bizType === "fnb") && (
-            <Field label={`${addressLabel} *`}>
-              <textarea
-                required
-                rows={2}
-                value={form.address}
-                onChange={upd("address")}
-                className="pof-input"
-                maxLength={500}
-              />
-            </Field>
+            <>
+              {deliveryEnabled && (
+                <Field label={fulfilmentLabel}>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod("delivery")}
+                      className={`py-2.5 rounded-xl text-xs font-semibold border ${deliveryMethod === "delivery" ? "border-primary bg-primary/5 text-foreground" : "border-border bg-card text-muted-foreground"}`}
+                    >
+                      🛵 {delivery}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod("pickup")}
+                      className={`py-2.5 rounded-xl text-xs font-semibold border ${deliveryMethod === "pickup" ? "border-primary bg-primary/5 text-foreground" : "border-border bg-card text-muted-foreground"}`}
+                    >
+                      🏬 {L("Self-pickup", "Ambil sendiri", "自取")}
+                    </button>
+                  </div>
+                </Field>
+              )}
+              <Field label={`${addressLabel}${useDelivery || !deliveryEnabled ? " *" : ""}`}>
+                {deliveryEnabled && useDelivery ? (
+                  <PlacesAutocomplete
+                    value={form.address}
+                    onChange={({ address: a, lat, lng }) => {
+                      setForm((p) => ({ ...p, address: a }));
+                      if (lat != null && lng != null) {
+                        setDestCoords({ lat, lng });
+                      } else {
+                        setDestCoords(null);
+                      }
+                    }}
+                    placeholder={addressLabel}
+                    className="pof-input"
+                  />
+                ) : (
+                  <textarea
+                    required={deliveryEnabled ? false : true}
+                    rows={2}
+                    value={form.address}
+                    onChange={upd("address")}
+                    className="pof-input"
+                    maxLength={500}
+                  />
+                )}
+              </Field>
+              {useDelivery && (
+                <div className="rounded-2xl border border-border bg-muted/30 px-3 py-2.5 text-xs">
+                  {deliveryQuote.status === "idle" && (
+                    <span className="text-muted-foreground">{L("Pick an address to see delivery fee", "Pilih alamat untuk lihat caj penghantaran", "选择地址以查看运费")}</span>
+                  )}
+                  {deliveryQuote.status === "loading" && (
+                    <span className="text-muted-foreground">{L("Calculating delivery fee…", "Mengira caj penghantaran…", "正在计算运费…")}</span>
+                  )}
+                  {deliveryQuote.status === "ok" && (
+                    <div className="flex items-center justify-between">
+                      <span>📍 {deliveryQuote.km.toFixed(2)} km</span>
+                      <span className="font-semibold">{L("Delivery", "Penghantaran", "运费")}: RM {deliveryQuote.fee.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {deliveryQuote.status === "unavailable" && (
+                    <span className="text-rose-600">{L("Outside delivery area", "Di luar kawasan penghantaran", "超出送货范围")}</span>
+                  )}
+                  {deliveryQuote.status === "error" && (
+                    <span className="text-rose-600">{L("Could not calculate fee. Try again.", "Tidak dapat mengira caj. Cuba lagi.", "无法计算运费，请重试。")}</span>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
           {bizType === "education" && (
@@ -1186,7 +1322,11 @@ function PublicOrderFormPage() {
 
           <button
             type="submit"
-            disabled={submitting || cart.length === 0}
+            disabled={
+              submitting ||
+              cart.length === 0 ||
+              (useDelivery && deliveryQuote.status !== "ok")
+            }
             className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg disabled:opacity-60 active:scale-[0.99] transition-transform"
           >
             {submitting ? t("saving") : t(submitLabelKey)}

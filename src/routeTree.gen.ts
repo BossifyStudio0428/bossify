@@ -49,6 +49,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as DineInRouteImport } from './routes/dine-in'
 import { Route as DevicesRouteImport } from './routes/devices'
+import { Route as DeliverySettingsRouteImport } from './routes/delivery-settings'
 import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as CommissionsRouteImport } from './routes/commissions'
@@ -78,6 +79,7 @@ import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connect
 import { Route as CommissionIdRouteImport } from './routes/commission.$id'
 import { Route as TeamJoinTokenRouteImport } from './routes/team.join.$token'
 import { Route as ApiPublicOrderFormRouteImport } from './routes/api/public/order-form'
+import { Route as ApiPublicDeliveryQuoteRouteImport } from './routes/api/public/delivery-quote'
 import { Route as ApiPublicAdminRouteImport } from './routes/api/public/admin'
 import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe/webhook'
@@ -285,6 +287,11 @@ const DevicesRoute = DevicesRouteImport.update({
   path: '/devices',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeliverySettingsRoute = DeliverySettingsRouteImport.update({
+  id: '/delivery-settings',
+  path: '/delivery-settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DataDeletionRoute = DataDeletionRouteImport.update({
   id: '/data-deletion',
   path: '/data-deletion',
@@ -431,6 +438,11 @@ const ApiPublicOrderFormRoute = ApiPublicOrderFormRouteImport.update({
   path: '/api/public/order-form',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDeliveryQuoteRoute = ApiPublicDeliveryQuoteRouteImport.update({
+  id: '/api/public/delivery-quote',
+  path: '/api/public/delivery-quote',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAdminRoute = ApiPublicAdminRouteImport.update({
   id: '/api/public/admin',
   path: '/api/public/admin',
@@ -474,6 +486,7 @@ export interface FileRoutesByFullPath {
   '/commissions': typeof CommissionsRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
+  '/delivery-settings': typeof DeliverySettingsRoute
   '/devices': typeof DevicesRoute
   '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
@@ -532,6 +545,7 @@ export interface FileRoutesByFullPath {
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
+  '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -551,6 +565,7 @@ export interface FileRoutesByTo {
   '/commissions': typeof CommissionsRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
+  '/delivery-settings': typeof DeliverySettingsRoute
   '/devices': typeof DevicesRoute
   '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
@@ -609,6 +624,7 @@ export interface FileRoutesByTo {
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
+  '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -629,6 +645,7 @@ export interface FileRoutesById {
   '/commissions': typeof CommissionsRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
+  '/delivery-settings': typeof DeliverySettingsRoute
   '/devices': typeof DevicesRoute
   '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
@@ -687,6 +704,7 @@ export interface FileRoutesById {
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
+  '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -708,6 +726,7 @@ export interface FileRouteTypes {
     | '/commissions'
     | '/customers'
     | '/data-deletion'
+    | '/delivery-settings'
     | '/devices'
     | '/dine-in'
     | '/documents'
@@ -766,6 +785,7 @@ export interface FileRouteTypes {
     | '/team/welcome'
     | '/viewing/$id'
     | '/api/public/admin'
+    | '/api/public/delivery-quote'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -785,6 +805,7 @@ export interface FileRouteTypes {
     | '/commissions'
     | '/customers'
     | '/data-deletion'
+    | '/delivery-settings'
     | '/devices'
     | '/dine-in'
     | '/documents'
@@ -843,6 +864,7 @@ export interface FileRouteTypes {
     | '/team/welcome'
     | '/viewing/$id'
     | '/api/public/admin'
+    | '/api/public/delivery-quote'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -862,6 +884,7 @@ export interface FileRouteTypes {
     | '/commissions'
     | '/customers'
     | '/data-deletion'
+    | '/delivery-settings'
     | '/devices'
     | '/dine-in'
     | '/documents'
@@ -920,6 +943,7 @@ export interface FileRouteTypes {
     | '/team/welcome'
     | '/viewing/$id'
     | '/api/public/admin'
+    | '/api/public/delivery-quote'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -940,6 +964,7 @@ export interface RootRouteChildren {
   CommissionsRoute: typeof CommissionsRoute
   CustomersRoute: typeof CustomersRoute
   DataDeletionRoute: typeof DataDeletionRoute
+  DeliverySettingsRoute: typeof DeliverySettingsRoute
   DevicesRoute: typeof DevicesRoute
   DineInRoute: typeof DineInRoute
   DocumentsRoute: typeof DocumentsRoute
@@ -993,6 +1018,7 @@ export interface RootRouteChildren {
   StockTakeIdRoute: typeof StockTakeIdRoute
   ViewingIdRoute: typeof ViewingIdRoute
   ApiPublicAdminRoute: typeof ApiPublicAdminRoute
+  ApiPublicDeliveryQuoteRoute: typeof ApiPublicDeliveryQuoteRoute
   ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
   ApiPublicStripeActivateRoute: typeof ApiPublicStripeActivateRoute
   ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
@@ -1283,6 +1309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/delivery-settings': {
+      id: '/delivery-settings'
+      path: '/delivery-settings'
+      fullPath: '/delivery-settings'
+      preLoaderRoute: typeof DeliverySettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/data-deletion': {
       id: '/data-deletion'
       path: '/data-deletion'
@@ -1486,6 +1519,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOrderFormRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/delivery-quote': {
+      id: '/api/public/delivery-quote'
+      path: '/api/public/delivery-quote'
+      fullPath: '/api/public/delivery-quote'
+      preLoaderRoute: typeof ApiPublicDeliveryQuoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/admin': {
       id: '/api/public/admin'
       path: '/api/public/admin'
@@ -1591,6 +1631,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommissionsRoute: CommissionsRoute,
   CustomersRoute: CustomersRoute,
   DataDeletionRoute: DataDeletionRoute,
+  DeliverySettingsRoute: DeliverySettingsRoute,
   DevicesRoute: DevicesRoute,
   DineInRoute: DineInRoute,
   DocumentsRoute: DocumentsRoute,
@@ -1644,6 +1685,7 @@ const rootRouteChildren: RootRouteChildren = {
   StockTakeIdRoute: StockTakeIdRoute,
   ViewingIdRoute: ViewingIdRoute,
   ApiPublicAdminRoute: ApiPublicAdminRoute,
+  ApiPublicDeliveryQuoteRoute: ApiPublicDeliveryQuoteRoute,
   ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
   ApiPublicStripeActivateRoute: ApiPublicStripeActivateRoute,
   ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
@@ -1654,13 +1696,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

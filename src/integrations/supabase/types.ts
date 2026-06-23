@@ -814,6 +814,8 @@ export type Database = {
           business_type: string | null
           connected_platforms: Json
           created_at: string
+          delivery_enabled: boolean
+          delivery_zones: Json
           id: string
           is_admin: boolean
           language: string | null
@@ -837,6 +839,9 @@ export type Database = {
           payment_method_2_qr_url: string | null
           payment_method_2_type: string | null
           payment_platform: string | null
+          store_address: string | null
+          store_lat: number | null
+          store_lng: number | null
           updated_at: string
           whatsapp_number: string | null
         }
@@ -848,6 +853,8 @@ export type Database = {
           business_type?: string | null
           connected_platforms?: Json
           created_at?: string
+          delivery_enabled?: boolean
+          delivery_zones?: Json
           id: string
           is_admin?: boolean
           language?: string | null
@@ -871,6 +878,9 @@ export type Database = {
           payment_method_2_qr_url?: string | null
           payment_method_2_type?: string | null
           payment_platform?: string | null
+          store_address?: string | null
+          store_lat?: number | null
+          store_lng?: number | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -882,6 +892,8 @@ export type Database = {
           business_type?: string | null
           connected_platforms?: Json
           created_at?: string
+          delivery_enabled?: boolean
+          delivery_zones?: Json
           id?: string
           is_admin?: boolean
           language?: string | null
@@ -905,6 +917,9 @@ export type Database = {
           payment_method_2_qr_url?: string | null
           payment_method_2_type?: string | null
           payment_platform?: string | null
+          store_address?: string | null
+          store_lat?: number | null
+          store_lng?: number | null
           updated_at?: string
           whatsapp_number?: string | null
         }
