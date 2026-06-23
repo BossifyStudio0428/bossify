@@ -284,6 +284,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         delivery_zones: Array.isArray((profile as any).delivery_zones)
           ? (profile as any).delivery_zones
           : [],
+        store_address: (profile as any).store_address ?? null,
         payment_methods: [
           {
             type: (profile as any).payment_method_1_type ?? null,
