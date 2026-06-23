@@ -657,9 +657,11 @@ export type Database = {
           created_at: string
           customer_name: string
           delivery_address: string | null
+          delivery_fee: number | null
           delivery_method: string | null
           delivery_status: string | null
           estimated_arrival: string | null
+          fulfillment_type: string | null
           gross_profit: number
           id: string
           notes: string | null
@@ -685,9 +687,11 @@ export type Database = {
           created_at?: string
           customer_name: string
           delivery_address?: string | null
+          delivery_fee?: number | null
           delivery_method?: string | null
           delivery_status?: string | null
           estimated_arrival?: string | null
+          fulfillment_type?: string | null
           gross_profit?: number
           id?: string
           notes?: string | null
@@ -713,9 +717,11 @@ export type Database = {
           created_at?: string
           customer_name?: string
           delivery_address?: string | null
+          delivery_fee?: number | null
           delivery_method?: string | null
           delivery_status?: string | null
           estimated_arrival?: string | null
+          fulfillment_type?: string | null
           gross_profit?: number
           id?: string
           notes?: string | null
