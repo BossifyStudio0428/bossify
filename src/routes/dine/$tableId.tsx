@@ -77,7 +77,8 @@ function DinePage() {
   );
 
   function statusLabel(s: string) {
-    return t(s) || s;
+    const known = ["received", "preparing", "ready", "served"];
+    return known.includes(s) ? t(s as any) : s;
   }
 
   const items = useMemo(() =>
