@@ -693,6 +693,7 @@ const dict = {
     business_type_sub: "We'll customize Bossify just for you",
     business_type_menu: "Business Type",
     business_type_saved: "Business type updated",
+    delivery_settings_menu: "Delivery Settings",
     business_type_confirm_title: "Change business type?",
     business_type_confirm_body: "Changing business type will update the app labels. Your data will not be affected. Continue?",
     business_type_confirm_yes: "Yes, Change",
