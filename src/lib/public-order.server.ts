@@ -527,6 +527,23 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         }, 0)
       : Number(lookupPrice(productText)?.cost ?? 0) * qty;
 
+    // Normalize the customer-facing order type into delivery_method so the
+    // order card / detail / tracking can render a badge:
+    //   delivery → 🚗 外送
+    //   pickup   → 🏪 自取 (explicit pickup from delivery flow)
+    //   takeaway → 🏪 外带 (FnB form choice; seller has no delivery configured)
+    //   dine_in  → 🍽️ 堂食 (FnB form choice)
+    let effectiveDeliveryMethod: string | null = null;
+    if (isRetailish) {
+      if (data2.delivery_method === "delivery" || data2.delivery_method === "pickup") {
+        effectiveDeliveryMethod = data2.delivery_method;
+      } else if (bizType === "fnb") {
+        const f = (data2.fulfilment || "").toLowerCase();
+        if (f === "dine-in" || f === "dinein" || f === "dine_in") effectiveDeliveryMethod = "dine_in";
+        else if (f === "takeaway" || f === "take-away" || f === "take_away") effectiveDeliveryMethod = "takeaway";
+      }
+    }
+
     const { data: inserted, error: oErr } = await sb
       .from("orders")
       .insert({
@@ -543,14 +560,14 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         delivery_address: (data2.address || "").trim() || null,
         payment_method: paymentMethod,
         order_source: "online_form",
-        delivery_method: isRetailish ? (data2.delivery_method ?? null) : null,
-        delivery_status: isRetailish && data2.delivery_method === "delivery" ? "confirmed" : null,
+        delivery_method: effectiveDeliveryMethod,
+        delivery_status: effectiveDeliveryMethod === "delivery" ? "confirmed" : null,
         store_address_snapshot:
-          isRetailish && data2.delivery_method === "pickup"
+          effectiveDeliveryMethod === "pickup" ||
+          effectiveDeliveryMethod === "takeaway" ||
+          effectiveDeliveryMethod === "delivery"
             ? ((profile as any).store_address ?? null)
-            : isRetailish && data2.delivery_method === "delivery"
-              ? ((profile as any).store_address ?? null)
-              : null,
+            : null,
       } as any)
       .select("id, code")
       .single();
