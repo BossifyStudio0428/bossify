@@ -969,6 +969,22 @@ function OrdersPage() {
                     <p className="text-slate-500 text-xs leading-relaxed flex-1 break-words">{o.delivery_address}</p>
                   </div>
                 ) : null}
+                {(() => {
+                  const dm = (o as any).delivery_method as string | undefined;
+                  const storeAddr = (o as any).store_address_snapshot as string | null | undefined;
+                  if (!dm) return null;
+                  const isDel = dm === "delivery";
+                  return (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${isDel ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-700"}`}>
+                        {isDel ? "🚗" : "🏪"} {isDel ? t("order_delivery" as any) : t("order_pickup" as any)}
+                      </span>
+                      {!isDel && storeAddr ? (
+                        <span className="text-slate-500 text-xs leading-relaxed break-words flex-1 min-w-0">{storeAddr}</span>
+                      ) : null}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Footer */}
@@ -1098,6 +1114,29 @@ function OrdersPage() {
               {detail.delivery_address && (
                 <Row label={t("delivery_address" as any)} value={detail.delivery_address} />
               )}
+              {(() => {
+                const dm = (detail as any).delivery_method as string | undefined;
+                if (!dm) return null;
+                const isDel = dm === "delivery";
+                return (
+                  <Row
+                    label={t("delivery_type" as any)}
+                    value={`${isDel ? "🚗" : "🏪"} ${isDel ? t("order_delivery" as any) : t("order_pickup" as any)}`}
+                  />
+                );
+              })()}
+              {(() => {
+                const dm = (detail as any).delivery_method as string | undefined;
+                const storeAddr = (detail as any).store_address_snapshot as string | null | undefined;
+                if (!storeAddr) return null;
+                const isDel = dm === "delivery";
+                return (
+                  <Row
+                    label={isDel ? t("delivering_from" as any) : t("pickup_at" as any)}
+                    value={storeAddr}
+                  />
+                );
+              })()}
               <Row label={t("notes")} value={detail.notes || "—"} />
               <Row label={t("date_label")} value={new Date(detail.created_at).toLocaleString("en-MY")} />
             </div>
@@ -1111,7 +1150,7 @@ function OrdersPage() {
                     onClick={() => updateStatus(detail.id, s)}
                     className={`py-2 rounded-xl text-xs font-semibold ${statusStyles[s]} ${detail.status === s ? "ring-2 ring-primary" : ""}`}
                   >
-                    {s}
+                    {s === "Paid" ? t("paid") : s === "Unpaid" ? t("unpaid") : t("pending")}
                   </button>
                 ))}
               </div>
@@ -1180,7 +1219,7 @@ function OrdersPage() {
                 {(["Paid", "Unpaid", "Pending"] as OrderStatus[]).map((s) => (
                   <button key={s} type="button" onClick={() => setEditForm((p) => ({ ...p, status: s }))}
                     className={`py-3 rounded-xl text-xs font-semibold ${editForm.status === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                    {s}
+                    {s === "Paid" ? t("paid") : s === "Unpaid" ? t("unpaid") : t("pending")}
                   </button>
                 ))}
               </div>

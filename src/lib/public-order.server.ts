@@ -335,14 +335,14 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
 
     let { data: profile, error: pErr } = await sb
       .from("profiles")
-      .select("id, business_type, order_form_enabled, business_name, allow_cod")
+      .select("id, business_type, order_form_enabled, business_name, allow_cod, store_address")
       .eq("order_form_code", data2.code.toLowerCase())
       .maybeSingle();
     if (pErr) {
       // allow_cod column may not exist on external Supabase yet — retry without it
       const fb = await sb
         .from("profiles")
-        .select("id, business_type, order_form_enabled, business_name")
+        .select("id, business_type, order_form_enabled, business_name, store_address")
         .eq("order_form_code", data2.code.toLowerCase())
         .maybeSingle();
       profile = fb.data;
@@ -416,14 +416,6 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     };
 
     const extra: string[] = [];
-    if (bizType === "fnb" && data2.fulfilment) {
-      const labelMap: Record<string, string> = {
-        dine_in: "Dine-in",
-        takeaway: "Takeaway",
-        delivery: "Delivery",
-      };
-      extra.push(`Type: ${labelMap[data2.fulfilment] ?? data2.fulfilment}`);
-    }
     // delivery_address is now persisted as a dedicated column on orders,
     // so we no longer duplicate it into the notes field for retail.
     if (bizType === "education") {
@@ -470,14 +462,8 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
           s + Number(serverPrice?.price ?? 0) * (isRetailish ? (it.quantity || 1) : 1),
         0,
       );
-      const lines = resolved.map(({ it, serverPrice }: any) => {
-        const label = it.variant ? `${it.product} (${it.variant})` : it.product;
-        const sub = Number(serverPrice?.price ?? 0) * (isRetailish ? (it.quantity || 1) : 1);
-        return isRetailish
-          ? `• ${label} × ${it.quantity} — RM ${sub.toFixed(2)}`
-          : `• ${label} — RM ${sub.toFixed(2)}`;
-      });
-      extra.unshift(`Items:\n${lines.join("\n")}`);
+      // Items breakdown lives in `product` + dedicated fields; no longer
+      // duplicated into notes.
     } else {
       productText = (data2.product || "").trim();
       totalQty = isRetailish ? Math.max(1, Number(data2.quantity) || 1) : 1;
@@ -531,8 +517,6 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         ? `Delivery: ${deliveryKm.toFixed(2)} km — RM ${deliveryFee.toFixed(2)}`
         : `Delivery fee: RM ${deliveryFee.toFixed(2)}`;
       extra.push(line);
-    } else if (isRetailish && data2.delivery_method === "pickup") {
-      extra.push("Fulfilment: Self-pickup");
     }
     const combinedNotes =
       [extra.join("\n"), (data2.notes || "").trim()].filter(Boolean).join("\n\n") || null;
@@ -559,7 +543,15 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         delivery_address: (data2.address || "").trim() || null,
         payment_method: paymentMethod,
         order_source: "online_form",
-      })
+        delivery_method: isRetailish ? (data2.delivery_method ?? null) : null,
+        delivery_status: isRetailish && data2.delivery_method === "delivery" ? "confirmed" : null,
+        store_address_snapshot:
+          isRetailish && data2.delivery_method === "pickup"
+            ? ((profile as any).store_address ?? null)
+            : isRetailish && data2.delivery_method === "delivery"
+              ? ((profile as any).store_address ?? null)
+              : null,
+      } as any)
       .select("id, code")
       .single();
 
