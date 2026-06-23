@@ -173,6 +173,16 @@ function ProfilePage() {
           label: t(pofSectionTitleKey(bizType)),
           onClick: () => navigate({ to: "/order-form" }),
         },
+        ...((bizType === "retail" || bizType === "fnb")
+          ? [
+              {
+                icon: "🛵",
+                key: "delivery",
+                label: "Delivery Settings",
+                onClick: () => navigate({ to: "/delivery-settings" }),
+              } as MenuItem,
+            ]
+          : []),
         {
           icon: "📊",
           key: "analytics",
