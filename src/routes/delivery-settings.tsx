@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
+import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/delivery-settings")({ component: DeliverySettingsPage });
 
@@ -19,6 +20,7 @@ const DEFAULT_ZONES: Zone[] = [
 function DeliverySettingsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [enabled, setEnabled] = useState(false);
@@ -96,20 +98,20 @@ function DeliverySettingsPage() {
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-foreground">🛵 Delivery Settings</h1>
-          <p className="text-[11px] text-muted-foreground">Distance-based delivery fees for your order form</p>
+          <h1 className="text-lg font-bold text-foreground">🛵 {t("ds_title")}</h1>
+          <p className="text-[11px] text-muted-foreground">{t("ds_subtitle")}</p>
         </div>
       </header>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground text-center py-10">Loading…</p>
+        <p className="text-sm text-muted-foreground text-center py-10">{t("loading")}</p>
       ) : (
         <>
           <section className="rounded-2xl bg-card border border-border/60 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="min-w-0 pr-3">
-                <p className="text-sm font-semibold">Enable delivery</p>
-                <p className="text-[11px] text-muted-foreground">Customers can choose delivery and see a calculated fee</p>
+                <p className="text-sm font-semibold">{t("ds_enable")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("ds_enable_desc")}</p>
               </div>
               <button
                 type="button"
@@ -125,8 +127,8 @@ function DeliverySettingsPage() {
 
           <section className="rounded-2xl bg-card border border-border/60 p-4 space-y-3">
             <div>
-              <p className="text-sm font-semibold">Store / Restaurant Address</p>
-              <p className="text-[11px] text-muted-foreground">Start typing and pick from suggestions to set coordinates</p>
+              <p className="text-sm font-semibold">{t("ds_store_address")}</p>
+              <p className="text-[11px] text-muted-foreground">{t("ds_store_address_desc")}</p>
             </div>
             <PlacesAutocomplete
               value={address}
@@ -148,8 +150,8 @@ function DeliverySettingsPage() {
           <section className="rounded-2xl bg-card border border-border/60 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold">Delivery Zones</p>
-                <p className="text-[11px] text-muted-foreground">Beyond the last zone = unavailable</p>
+                <p className="text-sm font-semibold">{t("ds_zones")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("ds_zones_desc")}</p>
               </div>
               <button
                 type="button"
@@ -161,8 +163,8 @@ function DeliverySettingsPage() {
             </div>
             <div className="space-y-2">
               <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-[10px] font-semibold uppercase text-muted-foreground px-1">
-                <span>Up to (km)</span>
-                <span>Fee (RM)</span>
+                <span>{t("ds_up_to_km")}</span>
+                <span>{t("ds_fee_rm")}</span>
                 <span />
               </div>
               {zones.map((z, i) => (
@@ -204,7 +206,7 @@ function DeliverySettingsPage() {
             disabled={saving}
             className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg disabled:opacity-60 active:scale-[0.99]"
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? t("saving") : t("save")}
           </button>
         </>
       )}
