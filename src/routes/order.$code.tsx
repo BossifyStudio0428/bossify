@@ -10,6 +10,7 @@ import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Sea
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
 import { formatCategory, formatUnit } from "@/lib/labels";
+import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
@@ -111,6 +112,8 @@ type LoadState =
         language?: string;
         allow_cod?: boolean;
         order_form_show_stock?: boolean;
+        delivery_enabled?: boolean;
+        delivery_zones?: Array<{ max_km: number; fee: number }>;
         payment_methods?: Array<{
           type: string | null;
           bank: string | null;
