@@ -19,8 +19,8 @@ import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supaba
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { HOME_GREETING_KEY, hasInventory, type BizType } from "@/lib/businessType";
-import { Calendar, Users, Briefcase, CheckCircle2, Clock } from "lucide-react";
+import { HOME_GREETING_KEY, hasInventory, hasDineIn, type BizType } from "@/lib/businessType";
+import { Calendar, Users, Briefcase, CheckCircle2, Clock, UtensilsCrossed, ClipboardList } from "lucide-react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import {
   loadPaymentSummary,
