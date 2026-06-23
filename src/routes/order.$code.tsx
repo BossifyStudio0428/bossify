@@ -138,6 +138,8 @@ function PublicOrderFormPage() {
     business: string;
     amount: number;
     paymentMethod: string;
+    deliveryMethod?: "delivery" | "pickup";
+    pickupAddress?: string | null;
     whatsapp: string | null;
     paymentMethods?: Array<{
       type: string | null;
@@ -359,7 +361,7 @@ function PublicOrderFormPage() {
     e.preventDefault();
     if (state.status !== "ready") return;
     const bt = state.profile.business_type;
-    const needsAddress = bt === "retail" || bt === "fnb";
+    const needsAddress = (bt === "retail" || bt === "fnb") && (!deliveryEnabled || useDelivery);
     if (!form.customer_name.trim()) {
       alert(L("Please enter your name", "Sila masukkan nama anda", "请填写您的姓名"));
       return;
@@ -426,6 +428,8 @@ function PublicOrderFormPage() {
           business: res.business_name || state.profile.business_name,
           amount: grandTotal,
           paymentMethod: needsPayment ? paymentMethod : "",
+          deliveryMethod: deliveryEnabled ? deliveryMethod : undefined,
+          pickupAddress: state.profile.store_address ?? null,
           whatsapp: state.profile.whatsapp_number || null,
           paymentMethods: state.profile.payment_methods ?? [],
         });
