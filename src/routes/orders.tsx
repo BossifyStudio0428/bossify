@@ -1004,7 +1004,6 @@ function OrdersPage() {
               {/* Footer */}
               <div className="p-4 flex items-center justify-between gap-3">
                 <div className="flex flex-col shrink-0">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{t("paid")}</span>
                   <span className="text-xl font-bold text-slate-900 leading-tight">RM {Number(o.amount).toFixed(2)}</span>
                 </div>
                 {o.status === "Unpaid" && (
