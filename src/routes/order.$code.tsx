@@ -973,7 +973,7 @@ function PublicOrderFormPage() {
                   })}
                 </div>
               ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {filteredProducts.map((p) => (
                   <div
                     key={p.id}
@@ -985,8 +985,8 @@ function PublicOrderFormPage() {
                       className="block w-full text-left active:scale-[0.98] transition-transform"
                     >
                       <div
-                        className="w-full bg-muted/40 overflow-hidden relative"
-                        style={{ aspectRatio: "1 / 1" }}
+                        className="w-full bg-muted/40 overflow-hidden relative mx-auto"
+                        style={{ aspectRatio: "1 / 1", maxHeight: "200px" }}
                       >
                         {p.image_url ? (
                           <img
