@@ -49,6 +49,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as DineInRouteImport } from './routes/dine-in'
 import { Route as DevicesRouteImport } from './routes/devices'
+import { Route as DeliverySettingsRouteImport } from './routes/delivery-settings'
 import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as CommissionsRouteImport } from './routes/commissions'
@@ -286,6 +287,11 @@ const DevicesRoute = DevicesRouteImport.update({
   path: '/devices',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeliverySettingsRoute = DeliverySettingsRouteImport.update({
+  id: '/delivery-settings',
+  path: '/delivery-settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DataDeletionRoute = DataDeletionRouteImport.update({
   id: '/data-deletion',
   path: '/data-deletion',
@@ -480,6 +486,7 @@ export interface FileRoutesByFullPath {
   '/commissions': typeof CommissionsRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
+  '/delivery-settings': typeof DeliverySettingsRoute
   '/devices': typeof DevicesRoute
   '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
@@ -558,6 +565,7 @@ export interface FileRoutesByTo {
   '/commissions': typeof CommissionsRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
+  '/delivery-settings': typeof DeliverySettingsRoute
   '/devices': typeof DevicesRoute
   '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
@@ -637,6 +645,7 @@ export interface FileRoutesById {
   '/commissions': typeof CommissionsRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
+  '/delivery-settings': typeof DeliverySettingsRoute
   '/devices': typeof DevicesRoute
   '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
@@ -717,6 +726,7 @@ export interface FileRouteTypes {
     | '/commissions'
     | '/customers'
     | '/data-deletion'
+    | '/delivery-settings'
     | '/devices'
     | '/dine-in'
     | '/documents'
@@ -795,6 +805,7 @@ export interface FileRouteTypes {
     | '/commissions'
     | '/customers'
     | '/data-deletion'
+    | '/delivery-settings'
     | '/devices'
     | '/dine-in'
     | '/documents'
@@ -873,6 +884,7 @@ export interface FileRouteTypes {
     | '/commissions'
     | '/customers'
     | '/data-deletion'
+    | '/delivery-settings'
     | '/devices'
     | '/dine-in'
     | '/documents'
@@ -952,6 +964,7 @@ export interface RootRouteChildren {
   CommissionsRoute: typeof CommissionsRoute
   CustomersRoute: typeof CustomersRoute
   DataDeletionRoute: typeof DataDeletionRoute
+  DeliverySettingsRoute: typeof DeliverySettingsRoute
   DevicesRoute: typeof DevicesRoute
   DineInRoute: typeof DineInRoute
   DocumentsRoute: typeof DocumentsRoute
@@ -1296,6 +1309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/delivery-settings': {
+      id: '/delivery-settings'
+      path: '/delivery-settings'
+      fullPath: '/delivery-settings'
+      preLoaderRoute: typeof DeliverySettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/data-deletion': {
       id: '/data-deletion'
       path: '/data-deletion'
@@ -1611,6 +1631,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommissionsRoute: CommissionsRoute,
   CustomersRoute: CustomersRoute,
   DataDeletionRoute: DataDeletionRoute,
+  DeliverySettingsRoute: DeliverySettingsRoute,
   DevicesRoute: DevicesRoute,
   DineInRoute: DineInRoute,
   DocumentsRoute: DocumentsRoute,
