@@ -99,6 +99,36 @@ function OrderDetailPage() {
     window.open(buildWhatsAppLink(order.phone, msg), "_blank");
   };
 
+  const isDelivery =
+    !!(order as any)?.delivery_address ||
+    (order as any)?.delivery_method === "delivery";
+  const currentDeliveryStatus: DeliveryStatus =
+    (((order as any)?.delivery_status as DeliveryStatus) ?? "confirmed");
+
+  const updateDeliveryStatus = async (next: DeliveryStatus) => {
+    if (!user || !order) return;
+    const { error } = await supabase
+      .from("orders")
+      .update({ delivery_status: next } as any)
+      .eq("id", order.id)
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setOrder({ ...(order as any), delivery_status: next } as OrderRow);
+    toast.success(deliveryStatusLabel(next, lang));
+    if (order.phone) {
+      const msg = buildDeliveryStatusMessage(
+        lang,
+        order.customer_name,
+        order.code,
+        deliveryStatusLabel(next, lang),
+      );
+      window.open(buildWhatsAppLink(order.phone, msg), "_blank");
+    }
+  };
+
   const save = async () => {
     if (!user || !order) return;
     setSaving(true);
