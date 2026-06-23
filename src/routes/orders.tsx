@@ -1114,6 +1114,29 @@ function OrdersPage() {
               {detail.delivery_address && (
                 <Row label={t("delivery_address" as any)} value={detail.delivery_address} />
               )}
+              {(() => {
+                const dm = (detail as any).delivery_method as string | undefined;
+                if (!dm) return null;
+                const isDel = dm === "delivery";
+                return (
+                  <Row
+                    label={t("delivery_type" as any)}
+                    value={`${isDel ? "🚗" : "🏪"} ${isDel ? t("order_delivery" as any) : t("order_pickup" as any)}`}
+                  />
+                );
+              })()}
+              {(() => {
+                const dm = (detail as any).delivery_method as string | undefined;
+                const storeAddr = (detail as any).store_address_snapshot as string | null | undefined;
+                if (!storeAddr) return null;
+                const isDel = dm === "delivery";
+                return (
+                  <Row
+                    label={isDel ? t("delivering_from" as any) : t("pickup_at" as any)}
+                    value={storeAddr}
+                  />
+                );
+              })()}
               <Row label={t("notes")} value={detail.notes || "—"} />
               <Row label={t("date_label")} value={new Date(detail.created_at).toLocaleString("en-MY")} />
             </div>
@@ -1127,7 +1150,7 @@ function OrdersPage() {
                     onClick={() => updateStatus(detail.id, s)}
                     className={`py-2 rounded-xl text-xs font-semibold ${statusStyles[s]} ${detail.status === s ? "ring-2 ring-primary" : ""}`}
                   >
-                    {s}
+                    {s === "Paid" ? t("paid") : s === "Unpaid" ? t("unpaid") : t("pending")}
                   </button>
                 ))}
               </div>
