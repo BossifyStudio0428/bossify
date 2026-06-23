@@ -461,7 +461,8 @@ function Index() {
 
   const eff: BizType = (bizType ?? "retail") as BizType;
   type Stat = { label: string; value: string; icon: typeof DollarSign; color: string; bg: string };
-  const revenueCard: Stat = { label: t("todays_revenue"), value: `RM ${todayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
+  const totalTodayRevenue = todayRevenue + (isRestaurant ? dineInTodayRevenue : 0);
+  const revenueCard: Stat = { label: t("todays_revenue"), value: `RM ${totalTodayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
   const profitCard: Stat = { label: t("todays_profit"), value: `RM ${todayGrossProfit.toFixed(0)}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" };
   const newOrdersCard: Stat = { label: t("new_orders"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" };
   const unpaidCard: Stat = { label: t("unpaid"), value: String(unpaidCount), icon: AlertCircle, color: "text-red-500", bg: "bg-red-50" };
@@ -476,6 +477,8 @@ function Index() {
   const completedMonthCard: Stat = { label: t("stat_completed_month"), value: String(completedThisMonth), icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" };
   const activeProjectsCard: Stat = { label: t("stat_active_projects"), value: String(activeProjects), icon: Briefcase, color: "text-primary", bg: "bg-primary/10" };
   const monthRevenueCard: Stat = { label: t("stat_month_revenue"), value: `RM ${monthRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
+  const activeTablesCard: Stat = { label: `🪑 ${t("tables")}`, value: String(activeTables), icon: UtensilsCrossed, color: "text-primary", bg: "bg-primary/10" };
+  const openTicketsCard: Stat = { label: t("open_tickets"), value: String(openTickets), icon: ClipboardList, color: "text-amber-600", bg: "bg-amber-50" };
 
   const STATS_BY_TYPE: Record<BizType, Stat[]> = {
     retail:    [revenueCard, profitCard, newOrdersCard, unpaidCard],
@@ -485,7 +488,9 @@ function Index() {
     property:  [newLeadsCard, inProgressCard, completedMonthCard, followupsTodayCard],
     freelance: [activeProjectsCard, unpaidCard, monthRevenueCard, followupsTodayCard],
   };
-  const stats = STATS_BY_TYPE[eff];
+  const stats = isRestaurant
+    ? [activeTablesCard, openTicketsCard, revenueCard, lowStockCard]
+    : STATS_BY_TYPE[eff];
   const showLowStockCard = hasInventory(eff);
   const showRevenueDelta = stats[0] === revenueCard;
 
