@@ -972,15 +972,28 @@ function OrdersPage() {
                 {(() => {
                   const dm = (o as any).delivery_method as string | undefined;
                   const storeAddr = (o as any).store_address_snapshot as string | null | undefined;
+                  const tableLabel = (o as any).table_label as string | undefined;
                   if (!dm) return null;
-                  const isDel = dm === "delivery";
+                  let emoji = "🏪", label = t("order_pickup" as any), cls = "bg-amber-50 text-amber-700", sub: string | null = null;
+                  if (dm === "delivery") {
+                    emoji = "🚗"; label = t("order_delivery" as any); cls = "bg-blue-50 text-blue-600";
+                  } else if (dm === "dine_in") {
+                    emoji = "🍽️"; label = t("dine_in" as any); cls = "bg-violet-50 text-violet-700";
+                    sub = tableLabel ? `🪑 ${tableLabel}` : null;
+                  } else if (dm === "takeaway") {
+                    emoji = "🛍️"; cls = "bg-amber-50 text-amber-700";
+                    label = lang === "zh" ? "外带" : lang === "ms" ? "Bungkus" : "Takeaway";
+                    sub = storeAddr ?? null;
+                  } else { // pickup
+                    sub = storeAddr ?? null;
+                  }
                   return (
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${isDel ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-700"}`}>
-                        {isDel ? "🚗" : "🏪"} {isDel ? t("order_delivery" as any) : t("order_pickup" as any)}
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${cls}`}>
+                        {emoji} {label}
                       </span>
-                      {!isDel && storeAddr ? (
-                        <span className="text-slate-500 text-xs leading-relaxed break-words flex-1 min-w-0">{storeAddr}</span>
+                      {sub ? (
+                        <span className="text-slate-500 text-xs leading-relaxed break-words flex-1 min-w-0">{sub}</span>
                       ) : null}
                     </div>
                   );
@@ -1117,13 +1130,11 @@ function OrdersPage() {
               {(() => {
                 const dm = (detail as any).delivery_method as string | undefined;
                 if (!dm) return null;
-                const isDel = dm === "delivery";
-                return (
-                  <Row
-                    label={t("delivery_type" as any)}
-                    value={`${isDel ? "🚗" : "🏪"} ${isDel ? t("order_delivery" as any) : t("order_pickup" as any)}`}
-                  />
-                );
+                let emoji = "🏪", label = t("order_pickup" as any);
+                if (dm === "delivery") { emoji = "🚗"; label = t("order_delivery" as any); }
+                else if (dm === "dine_in") { emoji = "🍽️"; label = t("dine_in" as any); }
+                else if (dm === "takeaway") { emoji = "🛍️"; label = lang === "zh" ? "外带" : lang === "ms" ? "Bungkus" : "Takeaway"; }
+                return <Row label={t("delivery_type" as any)} value={`${emoji} ${label}`} />;
               })()}
               {(() => {
                 const dm = (detail as any).delivery_method as string | undefined;
