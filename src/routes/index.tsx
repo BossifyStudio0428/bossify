@@ -944,7 +944,7 @@ function Index() {
                 <span
                   className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}
                 >
-                  {o.status}
+                  {o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending")}
                 </span>
                 {o.phone && (
                   <a
