@@ -657,6 +657,9 @@ export type Database = {
           created_at: string
           customer_name: string
           delivery_address: string | null
+          delivery_method: string | null
+          delivery_status: string | null
+          estimated_arrival: string | null
           gross_profit: number
           id: string
           notes: string | null
@@ -670,6 +673,7 @@ export type Database = {
           receipt_confirmed: boolean
           receipt_url: string | null
           status: string
+          store_address_snapshot: string | null
           updated_at: string
           user_id: string
         }
@@ -680,6 +684,9 @@ export type Database = {
           created_at?: string
           customer_name: string
           delivery_address?: string | null
+          delivery_method?: string | null
+          delivery_status?: string | null
+          estimated_arrival?: string | null
           gross_profit?: number
           id?: string
           notes?: string | null
@@ -693,6 +700,7 @@ export type Database = {
           receipt_confirmed?: boolean
           receipt_url?: string | null
           status?: string
+          store_address_snapshot?: string | null
           updated_at?: string
           user_id: string
         }
@@ -703,6 +711,9 @@ export type Database = {
           created_at?: string
           customer_name?: string
           delivery_address?: string | null
+          delivery_method?: string | null
+          delivery_status?: string | null
+          estimated_arrival?: string | null
           gross_profit?: number
           id?: string
           notes?: string | null
@@ -716,6 +727,7 @@ export type Database = {
           receipt_confirmed?: boolean
           receipt_url?: string | null
           status?: string
+          store_address_snapshot?: string | null
           updated_at?: string
           user_id?: string
         }
