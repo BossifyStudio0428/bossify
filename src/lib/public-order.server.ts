@@ -95,6 +95,8 @@ export type LoadPublicOrderFormResult =
         language: string;
         allow_cod: boolean;
         order_form_show_stock: boolean;
+        delivery_enabled: boolean;
+        delivery_zones: Array<{ max_km: number; fee: number }>;
         payment_methods: Array<{
           type: string | null;
           bank: string | null;
