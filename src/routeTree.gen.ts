@@ -61,6 +61,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ViewingIdRouteImport } from './routes/viewing.$id'
+import { Route as TrackOrderRefRouteImport } from './routes/track.$orderRef'
 import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as StockTakeIdRouteImport } from './routes/stock-take_.$id'
 import { Route as RequirementIdRouteImport } from './routes/requirement.$id'
@@ -78,6 +79,7 @@ import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$custo
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
 import { Route as CommissionIdRouteImport } from './routes/commission.$id'
 import { Route as TeamJoinTokenRouteImport } from './routes/team.join.$token'
+import { Route as ApiPublicTrackingRouteImport } from './routes/api/public/tracking'
 import { Route as ApiPublicOrderFormRouteImport } from './routes/api/public/order-form'
 import { Route as ApiPublicDeliveryQuoteRouteImport } from './routes/api/public/delivery-quote'
 import { Route as ApiPublicAdminRouteImport } from './routes/api/public/admin'
@@ -347,6 +349,11 @@ const ViewingIdRoute = ViewingIdRouteImport.update({
   path: '/viewing/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrackOrderRefRoute = TrackOrderRefRouteImport.update({
+  id: '/track/$orderRef',
+  path: '/track/$orderRef',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamWelcomeRoute = TeamWelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
@@ -432,6 +439,11 @@ const TeamJoinTokenRoute = TeamJoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
   getParentRoute: () => TeamRoute,
+} as any)
+const ApiPublicTrackingRoute = ApiPublicTrackingRouteImport.update({
+  id: '/api/public/tracking',
+  path: '/api/public/tracking',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicOrderFormRoute = ApiPublicOrderFormRouteImport.update({
   id: '/api/public/order-form',
@@ -543,10 +555,12 @@ export interface FileRoutesByFullPath {
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
+  '/api/public/tracking': typeof ApiPublicTrackingRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
@@ -622,10 +636,12 @@ export interface FileRoutesByTo {
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
+  '/api/public/tracking': typeof ApiPublicTrackingRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
@@ -702,10 +718,12 @@ export interface FileRoutesById {
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take_/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
+  '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
+  '/api/public/tracking': typeof ApiPublicTrackingRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
@@ -783,10 +801,12 @@ export interface FileRouteTypes {
     | '/requirement/$id'
     | '/stock-take/$id'
     | '/team/welcome'
+    | '/track/$orderRef'
     | '/viewing/$id'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
+    | '/api/public/tracking'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
@@ -862,10 +882,12 @@ export interface FileRouteTypes {
     | '/requirement/$id'
     | '/stock-take/$id'
     | '/team/welcome'
+    | '/track/$orderRef'
     | '/viewing/$id'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
+    | '/api/public/tracking'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
@@ -941,10 +963,12 @@ export interface FileRouteTypes {
     | '/requirement/$id'
     | '/stock-take_/$id'
     | '/team/welcome'
+    | '/track/$orderRef'
     | '/viewing/$id'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
+    | '/api/public/tracking'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
@@ -1016,10 +1040,12 @@ export interface RootRouteChildren {
   RenewalIdRoute: typeof RenewalIdRoute
   RequirementIdRoute: typeof RequirementIdRoute
   StockTakeIdRoute: typeof StockTakeIdRoute
+  TrackOrderRefRoute: typeof TrackOrderRefRoute
   ViewingIdRoute: typeof ViewingIdRoute
   ApiPublicAdminRoute: typeof ApiPublicAdminRoute
   ApiPublicDeliveryQuoteRoute: typeof ApiPublicDeliveryQuoteRoute
   ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
+  ApiPublicTrackingRoute: typeof ApiPublicTrackingRoute
   ApiPublicStripeActivateRoute: typeof ApiPublicStripeActivateRoute
   ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
@@ -1393,6 +1419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ViewingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/track/$orderRef': {
+      id: '/track/$orderRef'
+      path: '/track/$orderRef'
+      fullPath: '/track/$orderRef'
+      preLoaderRoute: typeof TrackOrderRefRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team/welcome': {
       id: '/team/welcome'
       path: '/welcome'
@@ -1511,6 +1544,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/team/join/$token'
       preLoaderRoute: typeof TeamJoinTokenRouteImport
       parentRoute: typeof TeamRoute
+    }
+    '/api/public/tracking': {
+      id: '/api/public/tracking'
+      path: '/api/public/tracking'
+      fullPath: '/api/public/tracking'
+      preLoaderRoute: typeof ApiPublicTrackingRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/order-form': {
       id: '/api/public/order-form'
@@ -1683,10 +1723,12 @@ const rootRouteChildren: RootRouteChildren = {
   RenewalIdRoute: RenewalIdRoute,
   RequirementIdRoute: RequirementIdRoute,
   StockTakeIdRoute: StockTakeIdRoute,
+  TrackOrderRefRoute: TrackOrderRefRoute,
   ViewingIdRoute: ViewingIdRoute,
   ApiPublicAdminRoute: ApiPublicAdminRoute,
   ApiPublicDeliveryQuoteRoute: ApiPublicDeliveryQuoteRoute,
   ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
+  ApiPublicTrackingRoute: ApiPublicTrackingRoute,
   ApiPublicStripeActivateRoute: ApiPublicStripeActivateRoute,
   ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,

@@ -50,10 +50,29 @@ function buildDeliveryStatusMessage(
   name: string,
   ref: string,
   statusLabel: string,
+  trackingUrl: string,
+  eta?: string | null,
 ): string {
-  if (lang === "zh") return `您好 ${name}！您的订单 ${ref} 状态已更新：${statusLabel}。谢谢！`;
-  if (lang === "ms") return `Hai ${name}! Status pesanan ${ref} anda telah dikemaskini: ${statusLabel}. Terima kasih!`;
-  return `Hi ${name}! Your order ${ref} status has been updated: ${statusLabel}. Thank you!`;
+  const etaLine = eta
+    ? lang === "zh"
+      ? `预计到达：${eta} 🚗\n`
+      : lang === "ms"
+        ? `Anggaran ketibaan: ${eta} 🚗\n`
+        : `Estimated arrival: ${eta} 🚗\n`
+    : "";
+  if (lang === "zh") {
+    return `您好 ${name}！您的订单 ${ref} 状态已更新：${statusLabel}。\n${etaLine}追踪订单：${trackingUrl}\n谢谢！`;
+  }
+  if (lang === "ms") {
+    return `Hai ${name}! Status pesanan ${ref} anda telah dikemaskini: ${statusLabel}.\n${etaLine}Jejaki pesanan: ${trackingUrl}\nTerima kasih!`;
+  }
+  return `Hi ${name}! Your order ${ref} status has been updated: ${statusLabel}.\n${etaLine}Track your order: ${trackingUrl}\nThank you!`;
+}
+
+function trackingUrlFor(code: string): string {
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app";
+  return `${origin}/track/${code}`;
 }
 
 function OrderDetailPage() {
@@ -69,6 +88,8 @@ function OrderDetailPage() {
   const [form, setForm] = useState<Partial<OrderRow>>({});
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [etaModal, setEtaModal] = useState(false);
+  const [etaInput, setEtaInput] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -107,16 +128,28 @@ function OrderDetailPage() {
 
   const updateDeliveryStatus = async (next: DeliveryStatus) => {
     if (!user || !order) return;
+    if (next === "on_the_way") {
+      setEtaInput((order as any).estimated_arrival ?? "");
+      setEtaModal(true);
+      return;
+    }
+    await applyDeliveryStatus(next, null);
+  };
+
+  const applyDeliveryStatus = async (next: DeliveryStatus, eta: string | null) => {
+    if (!user || !order) return;
+    const patch: Record<string, unknown> = { delivery_status: next };
+    if (next === "on_the_way") patch.estimated_arrival = eta;
     const { error } = await supabase
       .from("orders")
-      .update({ delivery_status: next } as any)
+      .update(patch as any)
       .eq("id", order.id)
       .eq("user_id", user.id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setOrder({ ...(order as any), delivery_status: next } as OrderRow);
+    setOrder({ ...(order as any), delivery_status: next, ...(next === "on_the_way" ? { estimated_arrival: eta } : {}) } as OrderRow);
     toast.success(deliveryStatusLabel(next, lang));
     if (order.phone) {
       const msg = buildDeliveryStatusMessage(
@@ -124,9 +157,21 @@ function OrderDetailPage() {
         order.customer_name,
         order.code,
         deliveryStatusLabel(next, lang),
+        trackingUrlFor(order.code),
+        next === "on_the_way" ? eta : null,
       );
       window.open(buildWhatsAppLink(order.phone, msg), "_blank");
     }
+  };
+
+  const submitEta = async () => {
+    const eta = etaInput.trim();
+    if (!eta) {
+      toast.error(lang === "zh" ? "请输入预计到达时间" : lang === "ms" ? "Sila masukkan anggaran ketibaan" : "Please enter estimated arrival");
+      return;
+    }
+    setEtaModal(false);
+    await applyDeliveryStatus("on_the_way", eta);
   };
 
   const save = async () => {
@@ -184,6 +229,7 @@ function OrderDetailPage() {
   );
 
   return (
+    <>
     <div className="pb-8 space-y-5">
       <header className="flex items-center gap-3 px-5 pt-10">
         <button onClick={() => navigate({ to: "/orders" })} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
@@ -250,6 +296,12 @@ function OrderDetailPage() {
                   {deliveryStatusLabel(currentDeliveryStatus, lang)}
                 </span>
               </div>
+              {(order as any).estimated_arrival && currentDeliveryStatus === "on_the_way" && (
+                <p className="text-xs text-primary">
+                  ⏰ {lang === "zh" ? "预计到达" : lang === "ms" ? "Anggaran ketibaan" : "Estimated arrival"}:{" "}
+                  <span className="font-semibold">{(order as any).estimated_arrival}</span>
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 {DELIVERY_STATUSES.map((s) => {
                   const active = currentDeliveryStatus === s;
@@ -276,6 +328,24 @@ function OrderDetailPage() {
                     ? "Pelanggan akan dimaklumkan melalui WhatsApp secara automatik"
                     : "Customer will be notified via WhatsApp automatically"}
               </p>
+              <div className="rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-[11px]">
+                <p className="text-muted-foreground mb-1">
+                  🔗 {lang === "zh" ? "追踪链接" : lang === "ms" ? "Pautan penjejakan" : "Tracking link"}
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 truncate font-mono text-[10px]">{trackingUrlFor(order.code)}</code>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard?.writeText(trackingUrlFor(order.code));
+                      toast.success(lang === "zh" ? "已复制" : lang === "ms" ? "Disalin" : "Copied");
+                    }}
+                    className="px-2 py-1 rounded-md bg-primary text-primary-foreground text-[10px] font-semibold"
+                  >
+                    {lang === "zh" ? "复制" : lang === "ms" ? "Salin" : "Copy"}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -316,6 +386,40 @@ function OrderDetailPage() {
         </div>
       )}
     </div>
+    {etaModal && (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4" onClick={() => setEtaModal(false)}>
+        <div className="w-full max-w-sm rounded-2xl bg-card border border-border p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div>
+            <p className="text-base font-bold">
+              🚗 {lang === "zh" ? "预计到达时间" : lang === "ms" ? "Anggaran ketibaan" : "Estimated Arrival"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {lang === "zh"
+                ? "例如：15 分钟、30 分钟，或 3:30 PM"
+                : lang === "ms"
+                  ? "Contoh: 15 minit, 30 minit, atau 3:30 PM"
+                  : "e.g. 15 mins, 30 mins, or 3:30 PM"}
+            </p>
+          </div>
+          <input
+            autoFocus
+            value={etaInput}
+            onChange={(e) => setEtaInput(e.target.value)}
+            placeholder={lang === "zh" ? "15 分钟" : lang === "ms" ? "15 minit" : "15 mins"}
+            className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm outline-none focus:border-primary"
+          />
+          <div className="flex gap-2">
+            <button onClick={() => setEtaModal(false)} className="flex-1 py-3 rounded-2xl bg-muted text-sm font-semibold">
+              {t("cancel")}
+            </button>
+            <button onClick={submitEta} className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold">
+              {lang === "zh" ? "通知客户" : lang === "ms" ? "Beritahu pelanggan" : "Notify customer"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

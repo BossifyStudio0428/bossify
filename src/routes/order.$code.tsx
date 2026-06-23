@@ -599,6 +599,18 @@ function PublicOrderFormPage() {
             <p className="text-sm font-mono font-semibold mt-1">{done.code}</p>
             <p className="text-xs text-muted-foreground mt-2">— {done.business}</p>
           </div>
+          {(() => {
+            const origin = typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app";
+            const trackUrl = `${origin}/track/${done.code}`;
+            return (
+              <a
+                href={trackUrl}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-md active:scale-[0.99] transition"
+              >
+                📦 {lang === "zh" ? "追踪订单" : lang === "ms" ? "Jejaki pesanan" : "Track your order"}
+              </a>
+            );
+          })()}
           {done.deliveryMethod === "pickup" && (
             <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 px-5 py-4 text-left">
               <p className="text-[11px] uppercase tracking-wider text-primary font-bold text-center">
@@ -643,12 +655,14 @@ function PublicOrderFormPage() {
           )}
           {done.paymentMethod === "bank_transfer" && done.whatsapp && (() => {
             const amountStr = done.amount.toFixed(2);
+            const origin = typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app";
+            const trackUrl = `${origin}/track/${done.code}`;
             const msg =
               lang === "zh"
-                ? `你好 ${done.business}，我已完成订单 ${done.code} 的付款 RM${amountStr}，请查收我的转账收据。`
+                ? `你好 ${done.business}，我已完成订单 ${done.code} 的付款 RM${amountStr}，请查收我的转账收据。\n追踪订单：${trackUrl}`
                 : lang === "ms"
-                ? `Hai ${done.business}, saya telah membuat pembayaran untuk pesanan ${done.code} sebanyak RM${amountStr}. Sila semak resit saya.`
-                : `Hi ${done.business}, I have made payment for order ${done.code} amounting to RM${amountStr}. Please find my receipt attached.`;
+                ? `Hai ${done.business}, saya telah membuat pembayaran untuk pesanan ${done.code} sebanyak RM${amountStr}. Sila semak resit saya.\nJejaki pesanan: ${trackUrl}`
+                : `Hi ${done.business}, I have made payment for order ${done.code} amounting to RM${amountStr}. Please find my receipt attached.\nTrack order: ${trackUrl}`;
             const phone = done.whatsapp.replace(/[^0-9]/g, "");
             const href = `https://wa.me/${phone}?text=${encodeURIComponent(stripEmoji(msg))}`;
             const label =
