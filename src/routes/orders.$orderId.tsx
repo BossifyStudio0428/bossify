@@ -273,6 +273,29 @@ function OrderDetailPage() {
             {order.delivery_address && (
               <Row label={`📍 ${t("delivery_address" as any)}`} value={order.delivery_address} />
             )}
+            {(() => {
+              const dm = (order as any).delivery_method as string | undefined;
+              if (!dm) return null;
+              const isDel = dm === "delivery";
+              return (
+                <Row
+                  label={`${isDel ? "🚗" : "🏪"} ${t("delivery_type" as any)}`}
+                  value={isDel ? t("order_delivery" as any) : t("order_pickup" as any)}
+                />
+              );
+            })()}
+            {(() => {
+              const dm = (order as any).delivery_method as string | undefined;
+              const storeAddr = (order as any).store_address_snapshot as string | null | undefined;
+              if (!storeAddr) return null;
+              const isDel = dm === "delivery";
+              return (
+                <Row
+                  label={`🏬 ${isDel ? t("delivering_from" as any) : t("pickup_at" as any)}`}
+                  value={storeAddr}
+                />
+              );
+            })()}
             {(order as any).payment_method && (
               <Row
                 label={`💳 ${t("pof_payment_method" as any)}`}
@@ -368,7 +391,7 @@ function OrderDetailPage() {
               {(["Paid", "Unpaid", "Pending"] as OrderStatus[]).map((s) => (
                 <button key={s} type="button" onClick={() => setForm((p) => ({ ...p, status: s }))}
                   className={`py-3 rounded-xl text-xs font-semibold ${form.status === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                  {s}
+                  {s === "Paid" ? t("paid") : s === "Unpaid" ? t("unpaid") : t("pending")}
                 </button>
               ))}
             </div>
