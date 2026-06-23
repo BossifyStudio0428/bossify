@@ -44,7 +44,8 @@ const statusStyles: Record<string, string> = {
 function Index() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
-  const { type: bizType } = useBusinessType();
+  const { type: bizType, subType } = useBusinessType();
+  const isRestaurant = hasDineIn(bizType, subType);
   const {
     hasFullAccess,
     isLifetime,
@@ -83,6 +84,9 @@ function Index() {
   const [hasPayment, setHasPayment] = useState<boolean | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [soldListings, setSoldListings] = useState<{ price: number; updated_at: string }[]>([]);
+  const [activeTables, setActiveTables] = useState(0);
+  const [openTickets, setOpenTickets] = useState(0);
+  const [dineInTodayRevenue, setDineInTodayRevenue] = useState(0);
 
   useEffect(() => {
     setBannerDismissed(isPaymentBannerDismissed());
