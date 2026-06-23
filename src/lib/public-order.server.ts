@@ -462,16 +462,8 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
           s + Number(serverPrice?.price ?? 0) * (isRetailish ? (it.quantity || 1) : 1),
         0,
       );
-      const lines = resolved.map(({ it, serverPrice }: any) => {
-        const label = it.variant ? `${it.product} (${it.variant})` : it.product;
-        const sub = Number(serverPrice?.price ?? 0) * (isRetailish ? (it.quantity || 1) : 1);
-        return isRetailish
-          ? `• ${label} × ${it.quantity} — RM ${sub.toFixed(2)}`
-          : `• ${label} — RM ${sub.toFixed(2)}`;
-      });
       // Items breakdown lives in `product` + dedicated fields; no longer
       // duplicated into notes.
-      void lines;
     } else {
       productText = (data2.product || "").trim();
       totalQty = isRetailish ? Math.max(1, Number(data2.quantity) || 1) : 1;
