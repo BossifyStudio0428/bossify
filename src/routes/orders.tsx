@@ -1130,13 +1130,11 @@ function OrdersPage() {
               {(() => {
                 const dm = (detail as any).delivery_method as string | undefined;
                 if (!dm) return null;
-                const isDel = dm === "delivery";
-                return (
-                  <Row
-                    label={t("delivery_type" as any)}
-                    value={`${isDel ? "🚗" : "🏪"} ${isDel ? t("order_delivery" as any) : t("order_pickup" as any)}`}
-                  />
-                );
+                let emoji = "🏪", label = t("order_pickup" as any);
+                if (dm === "delivery") { emoji = "🚗"; label = t("order_delivery" as any); }
+                else if (dm === "dine_in") { emoji = "🍽️"; label = t("dine_in" as any); }
+                else if (dm === "takeaway") { emoji = "🛍️"; label = lang === "zh" ? "外带" : lang === "ms" ? "Bungkus" : "Takeaway"; }
+                return <Row label={t("delivery_type" as any)} value={`${emoji} ${label}`} />;
               })()}
               {(() => {
                 const dm = (detail as any).delivery_method as string | undefined;
