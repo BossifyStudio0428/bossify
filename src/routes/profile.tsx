@@ -178,7 +178,7 @@ function ProfilePage() {
               {
                 icon: "🛵",
                 key: "delivery",
-                label: "Delivery Settings",
+                label: t("delivery_settings_menu"),
                 onClick: () => navigate({ to: "/delivery-settings" }),
               } as MenuItem,
             ]
