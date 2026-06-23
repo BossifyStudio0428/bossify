@@ -1172,14 +1172,16 @@ function PublicOrderFormPage() {
                     <button
                       type="button"
                       onClick={() => setDeliveryMethod("delivery")}
-                      className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${deliveryMethod === "delivery" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
+                      aria-pressed={deliveryMethod === "delivery"}
+                      className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${deliveryMethod === "delivery" ? "border-[#6d28d9] bg-[#7c3aed] text-white shadow-[0_8px_18px_-8px_rgba(124,58,237,0.75)] scale-[1.02]" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
                     >
                       🛵 {delivery}
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeliveryMethod("pickup")}
-                      className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${deliveryMethod === "pickup" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
+                      aria-pressed={deliveryMethod === "pickup"}
+                      className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${deliveryMethod === "pickup" ? "border-[#6d28d9] bg-[#7c3aed] text-white shadow-[0_8px_18px_-8px_rgba(124,58,237,0.75)] scale-[1.02]" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
                     >
                       🏬 {L("Self-pickup", "Ambil sendiri", "自取")}
                     </button>
