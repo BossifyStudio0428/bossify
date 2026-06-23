@@ -184,6 +184,18 @@ function ProfilePage() {
             ]
           : []),
         {
+          icon: "📅",
+          key: "bookings",
+          label: t("bookings"),
+          onClick: () => navigate({ to: "/bookings" }),
+        },
+        {
+          icon: "⚙️",
+          key: "bookingsettings",
+          label: t("booking_settings"),
+          onClick: () => navigate({ to: "/booking-settings" }),
+        },
+        {
           icon: "📊",
           key: "analytics",
           label: t(analyticsLabelKey),

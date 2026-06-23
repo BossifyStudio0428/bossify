@@ -39,6 +39,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NotificationSettingsRouteImport } from './routes/notification-settings'
 import { Route as NewOrderRouteImport } from './routes/new-order'
+import { Route as NewBookingRouteImport } from './routes/new-booking'
 import { Route as LoanCalculatorRouteImport } from './routes/loan-calculator'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as LanguageRouteImport } from './routes/language'
@@ -56,6 +57,8 @@ import { Route as CommissionsRouteImport } from './routes/commissions'
 import { Route as ClientsCompareRouteImport } from './routes/clients-compare'
 import { Route as BusinessTypeRouteImport } from './routes/business-type'
 import { Route as BusinessProfileRouteImport } from './routes/business-profile'
+import { Route as BookingsRouteImport } from './routes/bookings'
+import { Route as BookingSettingsRouteImport } from './routes/booking-settings'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -239,6 +242,11 @@ const NewOrderRoute = NewOrderRouteImport.update({
   path: '/new-order',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NewBookingRoute = NewBookingRouteImport.update({
+  id: '/new-booking',
+  path: '/new-booking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoanCalculatorRoute = LoanCalculatorRouteImport.update({
   id: '/loan-calculator',
   path: '/loan-calculator',
@@ -322,6 +330,16 @@ const BusinessTypeRoute = BusinessTypeRouteImport.update({
 const BusinessProfileRoute = BusinessProfileRouteImport.update({
   id: '/business-profile',
   path: '/business-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingsRoute = BookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingSettingsRoute = BookingSettingsRouteImport.update({
+  id: '/booking-settings',
+  path: '/booking-settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -492,6 +510,8 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/booking-settings': typeof BookingSettingsRoute
+  '/bookings': typeof BookingsRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
@@ -509,6 +529,7 @@ export interface FileRoutesByFullPath {
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
+  '/new-booking': typeof NewBookingRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -573,6 +594,8 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/booking-settings': typeof BookingSettingsRoute
+  '/bookings': typeof BookingsRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
@@ -590,6 +613,7 @@ export interface FileRoutesByTo {
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
+  '/new-booking': typeof NewBookingRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -655,6 +679,8 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/booking-settings': typeof BookingSettingsRoute
+  '/bookings': typeof BookingsRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
@@ -672,6 +698,7 @@ export interface FileRoutesById {
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
+  '/new-booking': typeof NewBookingRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
   '/notifications': typeof NotificationsRoute
@@ -738,6 +765,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/analytics'
     | '/auth'
+    | '/booking-settings'
+    | '/bookings'
     | '/business-profile'
     | '/business-type'
     | '/clients-compare'
@@ -755,6 +784,7 @@ export interface FileRouteTypes {
     | '/language'
     | '/listings'
     | '/loan-calculator'
+    | '/new-booking'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -819,6 +849,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/analytics'
     | '/auth'
+    | '/booking-settings'
+    | '/bookings'
     | '/business-profile'
     | '/business-type'
     | '/clients-compare'
@@ -836,6 +868,7 @@ export interface FileRouteTypes {
     | '/language'
     | '/listings'
     | '/loan-calculator'
+    | '/new-booking'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -900,6 +933,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/analytics'
     | '/auth'
+    | '/booking-settings'
+    | '/bookings'
     | '/business-profile'
     | '/business-type'
     | '/clients-compare'
@@ -917,6 +952,7 @@ export interface FileRouteTypes {
     | '/language'
     | '/listings'
     | '/loan-calculator'
+    | '/new-booking'
     | '/new-order'
     | '/notification-settings'
     | '/notifications'
@@ -982,6 +1018,8 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
+  BookingSettingsRoute: typeof BookingSettingsRoute
+  BookingsRoute: typeof BookingsRoute
   BusinessProfileRoute: typeof BusinessProfileRoute
   BusinessTypeRoute: typeof BusinessTypeRoute
   ClientsCompareRoute: typeof ClientsCompareRoute
@@ -999,6 +1037,7 @@ export interface RootRouteChildren {
   LanguageRoute: typeof LanguageRoute
   ListingsRoute: typeof ListingsRoute
   LoanCalculatorRoute: typeof LoanCalculatorRoute
+  NewBookingRoute: typeof NewBookingRoute
   NewOrderRoute: typeof NewOrderRoute
   NotificationSettingsRoute: typeof NotificationSettingsRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -1265,6 +1304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/new-booking': {
+      id: '/new-booking'
+      path: '/new-booking'
+      fullPath: '/new-booking'
+      preLoaderRoute: typeof NewBookingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/loan-calculator': {
       id: '/loan-calculator'
       path: '/loan-calculator'
@@ -1382,6 +1428,20 @@ declare module '@tanstack/react-router' {
       path: '/business-profile'
       fullPath: '/business-profile'
       preLoaderRoute: typeof BusinessProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookings': {
+      id: '/bookings'
+      path: '/bookings'
+      fullPath: '/bookings'
+      preLoaderRoute: typeof BookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/booking-settings': {
+      id: '/booking-settings'
+      path: '/booking-settings'
+      fullPath: '/booking-settings'
+      preLoaderRoute: typeof BookingSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1665,6 +1725,8 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
+  BookingSettingsRoute: BookingSettingsRoute,
+  BookingsRoute: BookingsRoute,
   BusinessProfileRoute: BusinessProfileRoute,
   BusinessTypeRoute: BusinessTypeRoute,
   ClientsCompareRoute: ClientsCompareRoute,
@@ -1682,6 +1744,7 @@ const rootRouteChildren: RootRouteChildren = {
   LanguageRoute: LanguageRoute,
   ListingsRoute: ListingsRoute,
   LoanCalculatorRoute: LoanCalculatorRoute,
+  NewBookingRoute: NewBookingRoute,
   NewOrderRoute: NewOrderRoute,
   NotificationSettingsRoute: NotificationSettingsRoute,
   NotificationsRoute: NotificationsRoute,
