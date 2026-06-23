@@ -114,6 +114,7 @@ type LoadState =
         order_form_show_stock?: boolean;
         delivery_enabled?: boolean;
         delivery_zones?: Array<{ max_km: number; fee: number }>;
+        store_address?: string | null;
         payment_methods?: Array<{
           type: string | null;
           bank: string | null;
@@ -1152,18 +1153,36 @@ function PublicOrderFormPage() {
                     <button
                       type="button"
                       onClick={() => setDeliveryMethod("delivery")}
-                      className={`py-2.5 rounded-xl text-xs font-semibold border ${deliveryMethod === "delivery" ? "border-primary bg-primary/5 text-foreground" : "border-border bg-card text-muted-foreground"}`}
+                      className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${deliveryMethod === "delivery" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
                     >
                       🛵 {delivery}
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeliveryMethod("pickup")}
-                      className={`py-2.5 rounded-xl text-xs font-semibold border ${deliveryMethod === "pickup" ? "border-primary bg-primary/5 text-foreground" : "border-border bg-card text-muted-foreground"}`}
+                      className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${deliveryMethod === "pickup" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
                     >
                       🏬 {L("Self-pickup", "Ambil sendiri", "自取")}
                     </button>
                   </div>
+                  {deliveryMethod === "pickup" && state.status === "ready" && (
+                    <div className="mt-2 rounded-2xl border border-border bg-muted/30 px-3 py-2.5 text-xs">
+                      <p className="font-semibold text-foreground mb-1">
+                        📍 {L("Pickup location", "Lokasi ambil", "自取地点")}
+                      </p>
+                      {state.profile.store_address ? (
+                        <p className="text-muted-foreground whitespace-pre-wrap">{state.profile.store_address}</p>
+                      ) : (
+                        <p className="text-muted-foreground">
+                          {L(
+                            "Please contact seller for pickup location",
+                            "Sila hubungi penjual untuk lokasi ambil",
+                            "请联系卖家获取自取地点",
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </Field>
               )}
               <Field label={`${addressLabel}${useDelivery || !deliveryEnabled ? " *" : ""}`}>

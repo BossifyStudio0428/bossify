@@ -97,6 +97,7 @@ export type LoadPublicOrderFormResult =
         order_form_show_stock: boolean;
         delivery_enabled: boolean;
         delivery_zones: Array<{ max_km: number; fee: number }>;
+        store_address: string | null;
         payment_methods: Array<{
           type: string | null;
           bank: string | null;
@@ -283,6 +284,7 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         delivery_zones: Array.isArray((profile as any).delivery_zones)
           ? (profile as any).delivery_zones
           : [],
+        store_address: (profile as any).store_address ?? null,
         payment_methods: [
           {
             type: (profile as any).payment_method_1_type ?? null,
