@@ -674,6 +674,7 @@ export type Database = {
           receipt_url: string | null
           status: string
           store_address_snapshot: string | null
+          ticket_id: string | null
           updated_at: string
           user_id: string
         }
@@ -701,6 +702,7 @@ export type Database = {
           receipt_url?: string | null
           status?: string
           store_address_snapshot?: string | null
+          ticket_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -728,10 +730,19 @@ export type Database = {
           receipt_url?: string | null
           status?: string
           store_address_snapshot?: string | null
+          ticket_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "dine_in_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_connections: {
         Row: {

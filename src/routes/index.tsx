@@ -461,7 +461,9 @@ function Index() {
 
   const eff: BizType = (bizType ?? "retail") as BizType;
   type Stat = { label: string; value: string; icon: typeof DollarSign; color: string; bg: string };
-  const totalTodayRevenue = todayRevenue + (isRestaurant ? dineInTodayRevenue : 0);
+  // Dine-in paid tickets are now reflected as Paid `orders` rows (linked via
+  // ticket_id), so `todayRevenue` already includes them — don't double-count.
+  const totalTodayRevenue = todayRevenue;
   const revenueCard: Stat = { label: t("todays_revenue"), value: `RM ${totalTodayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
   const profitCard: Stat = { label: t("todays_profit"), value: `RM ${todayGrossProfit.toFixed(0)}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" };
   const newOrdersCard: Stat = { label: t("new_orders"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" };

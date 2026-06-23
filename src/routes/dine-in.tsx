@@ -113,19 +113,39 @@ function DineInPage() {
       .eq("id", tkt.id);
     if (error) { toast.error(error.message); return; }
 
-    // Create orders row for analytics
-    const code = `DT-${Date.now().toString().slice(-6)}`;
-    await supabase.from("orders").insert({
-      user_id: user.id,
-      code,
-      customer_name: tkt.table_label ?? "Dine-in",
-      product: productSummary || "Dine-in",
-      quantity: totalQty || 1,
-      amount: Number(tkt.total_amount || 0),
-      status: "Paid",
-      order_source: "dine_in" as any,
-      payment_method: payMethod,
-    } as any);
+    // Update the orders row that was created at customer submission. If for
+    // some reason it doesn't exist (legacy ticket), insert one as Paid.
+    const { data: existingOrder } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("ticket_id", tkt.id)
+      .maybeSingle();
+    if ((existingOrder as any)?.id) {
+      await supabase
+        .from("orders")
+        .update({
+          status: "Paid",
+          payment_method: payMethod,
+          amount: Number(tkt.total_amount || 0),
+          quantity: totalQty || 1,
+          product: productSummary || "Dine-in",
+        } as any)
+        .eq("id", (existingOrder as any).id);
+    } else {
+      const code = `DT-${Date.now().toString().slice(-6)}`;
+      await supabase.from("orders").insert({
+        user_id: user.id,
+        code,
+        customer_name: tkt.table_label ?? "Dine-in",
+        product: productSummary || "Dine-in",
+        quantity: totalQty || 1,
+        amount: Number(tkt.total_amount || 0),
+        status: "Paid",
+        order_source: "dine_in" as any,
+        payment_method: payMethod,
+        ticket_id: tkt.id,
+      } as any);
+    }
 
     toast.success(t("paid"));
     setCheckoutTicket(null);

@@ -111,6 +111,55 @@ function DinePage() {
       const { error: e3 } = await supabase.from("dine_in_order_items" as any).insert(rows);
       if (e3) throw e3;
 
+      // 4. Create / update a linked `orders` row (status=Unpaid) so the seller
+      //    sees this in their Orders list immediately. Payment is only marked
+      //    Paid when the seller checks out the ticket.
+      try {
+        const productSummary = cartItems
+          .map((i) => `${i.name} × ${i.qty}`)
+          .join(", ")
+          .slice(0, 200);
+        const totalQty = cartItems.reduce((s, i) => s + i.qty, 0);
+
+        const { data: existingOrder } = await supabase
+          .from("orders")
+          .select("id, product, quantity, amount")
+          .eq("ticket_id", ticketId!)
+          .maybeSingle();
+
+        if ((existingOrder as any)?.id) {
+          const merged = [(existingOrder as any).product, productSummary]
+            .filter(Boolean)
+            .join(", ")
+            .slice(0, 500);
+          await supabase
+            .from("orders")
+            .update({
+              product: merged,
+              quantity: Number((existingOrder as any).quantity ?? 0) + totalQty,
+              amount: Number((existingOrder as any).amount ?? 0) + orderTotal,
+            } as any)
+            .eq("id", (existingOrder as any).id);
+        } else {
+          const code = `DT-${Date.now().toString().slice(-6)}`;
+          await supabase.from("orders").insert({
+            user_id: table.user_id,
+            code,
+            customer_name: table.label ?? "Dine-in",
+            product: productSummary || "Dine-in",
+            quantity: totalQty || 1,
+            amount: orderTotal,
+            status: "Unpaid",
+            order_source: "dine_in" as any,
+            delivery_method: "dine_in",
+            ticket_id: ticketId,
+            notes: note || null,
+          } as any);
+        }
+      } catch (linkErr) {
+        console.warn("[dine] orders link failed", linkErr);
+      }
+
       toast.success(t("order_submitted"));
       setCart({});
       setNote("");
