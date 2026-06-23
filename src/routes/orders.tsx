@@ -1219,7 +1219,7 @@ function OrdersPage() {
                 {(["Paid", "Unpaid", "Pending"] as OrderStatus[]).map((s) => (
                   <button key={s} type="button" onClick={() => setEditForm((p) => ({ ...p, status: s }))}
                     className={`py-3 rounded-xl text-xs font-semibold ${editForm.status === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                    {s}
+                    {s === "Paid" ? t("paid") : s === "Unpaid" ? t("unpaid") : t("pending")}
                   </button>
                 ))}
               </div>
