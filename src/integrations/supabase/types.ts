@@ -1428,6 +1428,17 @@ export type Database = {
           plan: string
         }[]
       }
+      get_open_dine_in_ticket: {
+        Args: { _table_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          status: string
+          table_id: string
+          total_amount: number
+          user_id: string
+        }[]
+      }
       is_active_team_member: {
         Args: { _actor_id: string; _team_id: string }
         Returns: boolean

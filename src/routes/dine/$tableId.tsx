@@ -69,13 +69,10 @@ function DinePage() {
       // 1. find or create open ticket
       let ticketId: string | null = null;
       const { data: existing } = await supabase
-        .from("dine_in_tickets" as any)
-        .select("id")
-        .eq("table_id", table.id)
-        .eq("status", "open")
-        .maybeSingle();
-      if ((existing as any)?.id) {
-        ticketId = (existing as any).id;
+        .rpc("get_open_dine_in_ticket" as any, { _table_id: table.id });
+      const existingRow = Array.isArray(existing) ? existing[0] : existing;
+      if ((existingRow as any)?.id) {
+        ticketId = (existingRow as any).id;
       } else {
         const { data: newT, error: e1 } = await supabase
           .from("dine_in_tickets" as any)
