@@ -56,6 +56,7 @@ import { Route as CommissionsRouteImport } from './routes/commissions'
 import { Route as ClientsCompareRouteImport } from './routes/clients-compare'
 import { Route as BusinessTypeRouteImport } from './routes/business-type'
 import { Route as BusinessProfileRouteImport } from './routes/business-profile'
+import { Route as BookingSettingsRouteImport } from './routes/booking-settings'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -324,6 +325,11 @@ const BusinessProfileRoute = BusinessProfileRouteImport.update({
   path: '/business-profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BookingSettingsRoute = BookingSettingsRouteImport.update({
+  id: '/booking-settings',
+  path: '/booking-settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -492,6 +498,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/booking-settings': typeof BookingSettingsRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
@@ -573,6 +580,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/booking-settings': typeof BookingSettingsRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
@@ -655,6 +663,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/booking-settings': typeof BookingSettingsRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
   '/clients-compare': typeof ClientsCompareRoute
@@ -738,6 +747,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/analytics'
     | '/auth'
+    | '/booking-settings'
     | '/business-profile'
     | '/business-type'
     | '/clients-compare'
@@ -819,6 +829,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/analytics'
     | '/auth'
+    | '/booking-settings'
     | '/business-profile'
     | '/business-type'
     | '/clients-compare'
@@ -900,6 +911,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/analytics'
     | '/auth'
+    | '/booking-settings'
     | '/business-profile'
     | '/business-type'
     | '/clients-compare'
@@ -982,6 +994,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
+  BookingSettingsRoute: typeof BookingSettingsRoute
   BusinessProfileRoute: typeof BusinessProfileRoute
   BusinessTypeRoute: typeof BusinessTypeRoute
   ClientsCompareRoute: typeof ClientsCompareRoute
@@ -1384,6 +1397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/booking-settings': {
+      id: '/booking-settings'
+      path: '/booking-settings'
+      fullPath: '/booking-settings'
+      preLoaderRoute: typeof BookingSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -1665,6 +1685,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
+  BookingSettingsRoute: BookingSettingsRoute,
   BusinessProfileRoute: BusinessProfileRoute,
   BusinessTypeRoute: BusinessTypeRoute,
   ClientsCompareRoute: ClientsCompareRoute,
