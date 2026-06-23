@@ -295,6 +295,12 @@ function OrderDetailPage() {
                   {deliveryStatusLabel(currentDeliveryStatus, lang)}
                 </span>
               </div>
+              {(order as any).estimated_arrival && currentDeliveryStatus === "on_the_way" && (
+                <p className="text-xs text-primary">
+                  ⏰ {lang === "zh" ? "预计到达" : lang === "ms" ? "Anggaran ketibaan" : "Estimated arrival"}:{" "}
+                  <span className="font-semibold">{(order as any).estimated_arrival}</span>
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 {DELIVERY_STATUSES.map((s) => {
                   const active = currentDeliveryStatus === s;
@@ -321,6 +327,24 @@ function OrderDetailPage() {
                     ? "Pelanggan akan dimaklumkan melalui WhatsApp secara automatik"
                     : "Customer will be notified via WhatsApp automatically"}
               </p>
+              <div className="rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-[11px]">
+                <p className="text-muted-foreground mb-1">
+                  🔗 {lang === "zh" ? "追踪链接" : lang === "ms" ? "Pautan penjejakan" : "Tracking link"}
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 truncate font-mono text-[10px]">{trackingUrlFor(order.code)}</code>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard?.writeText(trackingUrlFor(order.code));
+                      toast.success(lang === "zh" ? "已复制" : lang === "ms" ? "Disalin" : "Copied");
+                    }}
+                    className="px-2 py-1 rounded-md bg-primary text-primary-foreground text-[10px] font-semibold"
+                  >
+                    {lang === "zh" ? "复制" : lang === "ms" ? "Salin" : "Copy"}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
