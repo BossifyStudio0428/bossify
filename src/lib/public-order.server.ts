@@ -525,8 +525,6 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         ? `Delivery: ${deliveryKm.toFixed(2)} km — RM ${deliveryFee.toFixed(2)}`
         : `Delivery fee: RM ${deliveryFee.toFixed(2)}`;
       extra.push(line);
-    } else if (isRetailish && data2.delivery_method === "pickup") {
-      extra.push("Fulfilment: Self-pickup");
     }
     const combinedNotes =
       [extra.join("\n"), (data2.notes || "").trim()].filter(Boolean).join("\n\n") || null;
