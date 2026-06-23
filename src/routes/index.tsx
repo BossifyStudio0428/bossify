@@ -164,6 +164,35 @@ function Index() {
       } catch {
         setSoldListings([]);
       }
+      // Restaurant: dine-in stats (active tables = distinct tables with open tickets,
+      // open tickets count, today's paid dine-in revenue).
+      if (isRestaurant) {
+        try {
+          const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+          const [{ data: openT }, { data: paidT }] = await Promise.all([
+            supabase
+              .from("dine_in_tickets" as any)
+              .select("id,table_id")
+              .eq("user_id", user.id)
+              .eq("status", "open"),
+            supabase
+              .from("dine_in_tickets" as any)
+              .select("total_amount,paid_at")
+              .eq("user_id", user.id)
+              .eq("status", "paid")
+              .gte("paid_at", dayStart.toISOString()),
+          ]);
+          const openRows = ((openT as any[]) ?? []) as { id: string; table_id: string | null }[];
+          setOpenTickets(openRows.length);
+          setActiveTables(new Set(openRows.map((r) => r.table_id).filter(Boolean)).size);
+          const paidRows = ((paidT as any[]) ?? []) as { total_amount: number | string }[];
+          setDineInTodayRevenue(paidRows.reduce((s, r) => s + Number(r.total_amount ?? 0), 0));
+        } catch {
+          setOpenTickets(0); setActiveTables(0); setDineInTodayRevenue(0);
+        }
+      } else {
+        setOpenTickets(0); setActiveTables(0); setDineInTodayRevenue(0);
+      }
       // Latest clients (recently added)
       const { data: latestC } = await supabase
         .from("customers")
