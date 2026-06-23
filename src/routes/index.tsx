@@ -729,6 +729,25 @@ function Index() {
         })}
       </section>
 
+      {isRestaurant && (
+        <Link
+          to="/dine-in"
+          aria-label={t("dine_in")}
+          className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground p-4 shadow-[var(--shadow-soft)] active:scale-[0.99] transition-transform"
+        >
+          <span className="h-12 w-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
+            <UtensilsCrossed className="h-6 w-6" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-bold leading-tight">🍽️ {t("dine_in")}</p>
+            <p className="text-[11px] opacity-90 mt-0.5">
+              {activeTables} {t("tables")} · {openTickets} {t("open_tickets")}
+            </p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0" />
+        </Link>
+      )}
+
       {(followUpsThisWeek > 0 || followUpsOverdue > 0) && (
         <Link
           to="/customers"
