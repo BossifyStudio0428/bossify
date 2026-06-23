@@ -34,11 +34,8 @@ function DinePage() {
 
   useEffect(() => {
     (async () => {
-      const { data: tbl } = await supabase
-        .from("restaurant_tables" as any)
-        .select("id,label,user_id,active")
-        .eq("id", tableId)
-        .maybeSingle();
+      const { data: tblRows } = await supabase.rpc("get_dine_in_table" as any, { _table_id: tableId });
+      const tbl = Array.isArray(tblRows) ? tblRows[0] : tblRows;
       if (!tbl || !(tbl as any).active) {
         setError(t("table_inactive"));
         setLoading(false);
