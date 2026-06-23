@@ -599,6 +599,21 @@ function PublicOrderFormPage() {
             <p className="text-sm font-mono font-semibold mt-1">{done.code}</p>
             <p className="text-xs text-muted-foreground mt-2">— {done.business}</p>
           </div>
+          {done.deliveryMethod === "pickup" && (
+            <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 px-5 py-4 text-left">
+              <p className="text-[11px] uppercase tracking-wider text-primary font-bold text-center">
+                📍 {lang === "zh" ? "自取地点" : lang === "ms" ? "Lokasi ambil" : "Pickup location"}
+              </p>
+              <p className="mt-2 text-sm font-semibold text-foreground whitespace-pre-wrap text-center">
+                {done.pickupAddress?.trim() ||
+                  (lang === "zh"
+                    ? "请联系卖家获取自取地点"
+                    : lang === "ms"
+                    ? "Sila hubungi penjual untuk lokasi ambil"
+                    : "Please contact seller for pickup location")}
+              </p>
+            </div>
+          )}
           {done.paymentMethod !== "cash_on_delivery" && (done.paymentMethods?.some((m) => m && m.type)) && (
             <div className="mt-4 rounded-2xl border border-border bg-card px-5 py-4 text-left">
               <p className="text-[11px] uppercase tracking-wider text-muted-foreground text-center">
