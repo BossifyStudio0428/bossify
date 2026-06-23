@@ -23,6 +23,39 @@ const statusBanner: Record<OrderStatus, string> = {
   Pending: "bg-amber-400 text-amber-950",
 };
 
+type DeliveryStatus = "confirmed" | "preparing" | "on_the_way" | "delivered";
+
+const DELIVERY_STATUSES: DeliveryStatus[] = [
+  "confirmed",
+  "preparing",
+  "on_the_way",
+  "delivered",
+];
+
+function deliveryStatusLabel(s: DeliveryStatus, lang: string): string {
+  const map: Record<DeliveryStatus, { en: string; zh: string; ms: string }> = {
+    confirmed:   { en: "Confirmed",  zh: "已确认", ms: "Disahkan" },
+    preparing:   { en: "Preparing",  zh: "准备中", ms: "Sedang disediakan" },
+    on_the_way:  { en: "On the Way", zh: "已出发", ms: "Dalam perjalanan" },
+    delivered:   { en: "Delivered",  zh: "已送达", ms: "Telah dihantar" },
+  };
+  const e = map[s];
+  if (lang === "zh") return e.zh;
+  if (lang === "ms") return e.ms;
+  return e.en;
+}
+
+function buildDeliveryStatusMessage(
+  lang: string,
+  name: string,
+  ref: string,
+  statusLabel: string,
+): string {
+  if (lang === "zh") return `您好 ${name}！您的订单 ${ref} 状态已更新：${statusLabel}。谢谢！`;
+  if (lang === "ms") return `Hai ${name}! Status pesanan ${ref} anda telah dikemaskini: ${statusLabel}. Terima kasih!`;
+  return `Hi ${name}! Your order ${ref} status has been updated: ${statusLabel}. Thank you!`;
+}
+
 function OrderDetailPage() {
   const { orderId } = useParams({ from: "/orders/$orderId" });
   const { edit } = Route.useSearch();
@@ -64,6 +97,36 @@ function OrderDetailPage() {
       payment_details: paymentDetails,
     }, lang);
     window.open(buildWhatsAppLink(order.phone, msg), "_blank");
+  };
+
+  const isDelivery =
+    !!(order as any)?.delivery_address ||
+    (order as any)?.delivery_method === "delivery";
+  const currentDeliveryStatus: DeliveryStatus =
+    (((order as any)?.delivery_status as DeliveryStatus) ?? "confirmed");
+
+  const updateDeliveryStatus = async (next: DeliveryStatus) => {
+    if (!user || !order) return;
+    const { error } = await supabase
+      .from("orders")
+      .update({ delivery_status: next } as any)
+      .eq("id", order.id)
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setOrder({ ...(order as any), delivery_status: next } as OrderRow);
+    toast.success(deliveryStatusLabel(next, lang));
+    if (order.phone) {
+      const msg = buildDeliveryStatusMessage(
+        lang,
+        order.customer_name,
+        order.code,
+        deliveryStatusLabel(next, lang),
+      );
+      window.open(buildWhatsAppLink(order.phone, msg), "_blank");
+    }
   };
 
   const save = async () => {
@@ -178,6 +241,43 @@ function OrderDetailPage() {
             )}
             <Row label={`📝 ${t("notes")}`} value={order.notes || t("no_notes")} />
           </div>
+
+          {isDelivery && (
+            <div className="rounded-2xl bg-card border border-border/60 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">🚚 {lang === "zh" ? "配送状态" : lang === "ms" ? "Status Penghantaran" : "Delivery Status"}</p>
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary">
+                  {deliveryStatusLabel(currentDeliveryStatus, lang)}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {DELIVERY_STATUSES.map((s) => {
+                  const active = currentDeliveryStatus === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => updateDeliveryStatus(s)}
+                      className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
+                        active
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "bg-card text-muted-foreground border-border hover:bg-muted/50"
+                      }`}
+                    >
+                      {deliveryStatusLabel(s, lang)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {lang === "zh"
+                  ? "更新状态后会自动通过 WhatsApp 通知客户"
+                  : lang === "ms"
+                    ? "Pelanggan akan dimaklumkan melalui WhatsApp secara automatik"
+                    : "Customer will be notified via WhatsApp automatically"}
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-2">
             <button onClick={sendWA} className="py-3 rounded-2xl bg-emerald-500 text-white font-semibold text-xs">📲 WhatsApp</button>
