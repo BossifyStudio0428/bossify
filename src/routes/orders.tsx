@@ -981,7 +981,8 @@ function OrdersPage() {
                     emoji = "🍽️"; label = t("dine_in" as any); cls = "bg-violet-50 text-violet-700";
                     sub = tableLabel ? `🪑 ${tableLabel}` : null;
                   } else if (dm === "takeaway") {
-                    emoji = "🛍️"; label = t("takeaway" as any); cls = "bg-amber-50 text-amber-700";
+                    emoji = "🛍️"; cls = "bg-amber-50 text-amber-700";
+                    label = lang === "zh" ? "外带" : lang === "ms" ? "Bungkus" : "Takeaway";
                     sub = storeAddr ?? null;
                   } else { // pickup
                     sub = storeAddr ?? null;
