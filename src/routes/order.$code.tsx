@@ -288,6 +288,49 @@ function PublicOrderFormPage() {
   const isRetailish = bizType === "retail" || bizType === "fnb";
   const cartTotal = cart.reduce((s, l) => s + l.unit_price * (isRetailish ? l.quantity : 1), 0);
   const cartCount = cart.reduce((s, l) => s + (isRetailish ? l.quantity : 1), 0);
+  const deliveryEnabled =
+    isRetailish && state.status === "ready" && state.profile.delivery_enabled === true;
+  const useDelivery = deliveryEnabled && deliveryMethod === "delivery";
+  const deliveryFee =
+    useDelivery && deliveryQuote.status === "ok" ? deliveryQuote.fee : 0;
+  const grandTotal = cartTotal + deliveryFee;
+
+  // Re-quote whenever the destination coords or method change
+  useEffect(() => {
+    if (!useDelivery || !destCoords) {
+      if (useDelivery && !destCoords) setDeliveryQuote({ status: "idle" });
+      else if (!useDelivery) setDeliveryQuote({ status: "idle" });
+      return;
+    }
+    let cancelled = false;
+    setDeliveryQuote({ status: "loading" });
+    fetch("/api/public/delivery-quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ code, destLat: destCoords.lat, destLng: destCoords.lng }),
+      cache: "no-store",
+      credentials: "omit",
+    })
+      .then((r) => r.json())
+      .then((res: any) => {
+        if (cancelled) return;
+        if (!res?.ok) {
+          setDeliveryQuote({ status: "error", message: res?.error || res?.reason || "error" });
+          return;
+        }
+        if (!res.available) {
+          setDeliveryQuote({ status: "unavailable" });
+          return;
+        }
+        setDeliveryQuote({ status: "ok", km: Number(res.km), fee: Number(res.fee) });
+      })
+      .catch((e) => {
+        if (!cancelled) setDeliveryQuote({ status: "error", message: e?.message ?? "Network error" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [useDelivery, destCoords, code]);
 
   const addToCart = (line: CartLine) => {
     setCart((prev) => {
