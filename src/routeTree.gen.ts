@@ -78,6 +78,7 @@ import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connect
 import { Route as CommissionIdRouteImport } from './routes/commission.$id'
 import { Route as TeamJoinTokenRouteImport } from './routes/team.join.$token'
 import { Route as ApiPublicOrderFormRouteImport } from './routes/api/public/order-form'
+import { Route as ApiPublicDeliveryQuoteRouteImport } from './routes/api/public/delivery-quote'
 import { Route as ApiPublicAdminRouteImport } from './routes/api/public/admin'
 import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe/webhook'
@@ -431,6 +432,11 @@ const ApiPublicOrderFormRoute = ApiPublicOrderFormRouteImport.update({
   path: '/api/public/order-form',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDeliveryQuoteRoute = ApiPublicDeliveryQuoteRouteImport.update({
+  id: '/api/public/delivery-quote',
+  path: '/api/public/delivery-quote',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAdminRoute = ApiPublicAdminRouteImport.update({
   id: '/api/public/admin',
   path: '/api/public/admin',
@@ -532,6 +538,7 @@ export interface FileRoutesByFullPath {
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
+  '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -609,6 +616,7 @@ export interface FileRoutesByTo {
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
+  '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -687,6 +695,7 @@ export interface FileRoutesById {
   '/team/welcome': typeof TeamWelcomeRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
+  '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
@@ -766,6 +775,7 @@ export interface FileRouteTypes {
     | '/team/welcome'
     | '/viewing/$id'
     | '/api/public/admin'
+    | '/api/public/delivery-quote'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -843,6 +853,7 @@ export interface FileRouteTypes {
     | '/team/welcome'
     | '/viewing/$id'
     | '/api/public/admin'
+    | '/api/public/delivery-quote'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -920,6 +931,7 @@ export interface FileRouteTypes {
     | '/team/welcome'
     | '/viewing/$id'
     | '/api/public/admin'
+    | '/api/public/delivery-quote'
     | '/api/public/order-form'
     | '/team/join/$token'
     | '/api/public/stripe/activate'
@@ -993,6 +1005,7 @@ export interface RootRouteChildren {
   StockTakeIdRoute: typeof StockTakeIdRoute
   ViewingIdRoute: typeof ViewingIdRoute
   ApiPublicAdminRoute: typeof ApiPublicAdminRoute
+  ApiPublicDeliveryQuoteRoute: typeof ApiPublicDeliveryQuoteRoute
   ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
   ApiPublicStripeActivateRoute: typeof ApiPublicStripeActivateRoute
   ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
@@ -1486,6 +1499,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOrderFormRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/delivery-quote': {
+      id: '/api/public/delivery-quote'
+      path: '/api/public/delivery-quote'
+      fullPath: '/api/public/delivery-quote'
+      preLoaderRoute: typeof ApiPublicDeliveryQuoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/admin': {
       id: '/api/public/admin'
       path: '/api/public/admin'
@@ -1644,6 +1664,7 @@ const rootRouteChildren: RootRouteChildren = {
   StockTakeIdRoute: StockTakeIdRoute,
   ViewingIdRoute: ViewingIdRoute,
   ApiPublicAdminRoute: ApiPublicAdminRoute,
+  ApiPublicDeliveryQuoteRoute: ApiPublicDeliveryQuoteRoute,
   ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
   ApiPublicStripeActivateRoute: ApiPublicStripeActivateRoute,
   ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
