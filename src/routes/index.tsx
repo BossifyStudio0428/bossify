@@ -19,8 +19,8 @@ import { supabase, type OrderRow, type CustomerRow } from "@/integrations/supaba
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { HOME_GREETING_KEY, hasInventory, type BizType } from "@/lib/businessType";
-import { Calendar, Users, Briefcase, CheckCircle2, Clock } from "lucide-react";
+import { HOME_GREETING_KEY, hasInventory, hasDineIn, type BizType } from "@/lib/businessType";
+import { Calendar, Users, Briefcase, CheckCircle2, Clock, UtensilsCrossed, ClipboardList } from "lucide-react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import {
   loadPaymentSummary,
@@ -44,7 +44,8 @@ const statusStyles: Record<string, string> = {
 function Index() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
-  const { type: bizType } = useBusinessType();
+  const { type: bizType, subType } = useBusinessType();
+  const isRestaurant = hasDineIn(bizType, subType);
   const {
     hasFullAccess,
     isLifetime,
@@ -83,6 +84,9 @@ function Index() {
   const [hasPayment, setHasPayment] = useState<boolean | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [soldListings, setSoldListings] = useState<{ price: number; updated_at: string }[]>([]);
+  const [activeTables, setActiveTables] = useState(0);
+  const [openTickets, setOpenTickets] = useState(0);
+  const [dineInTodayRevenue, setDineInTodayRevenue] = useState(0);
 
   useEffect(() => {
     setBannerDismissed(isPaymentBannerDismissed());
@@ -159,6 +163,35 @@ function Index() {
         })));
       } catch {
         setSoldListings([]);
+      }
+      // Restaurant: dine-in stats (active tables = distinct tables with open tickets,
+      // open tickets count, today's paid dine-in revenue).
+      if (isRestaurant) {
+        try {
+          const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+          const [{ data: openT }, { data: paidT }] = await Promise.all([
+            supabase
+              .from("dine_in_tickets" as any)
+              .select("id,table_id")
+              .eq("user_id", user.id)
+              .eq("status", "open"),
+            supabase
+              .from("dine_in_tickets" as any)
+              .select("total_amount,paid_at")
+              .eq("user_id", user.id)
+              .eq("status", "paid")
+              .gte("paid_at", dayStart.toISOString()),
+          ]);
+          const openRows = ((openT as any[]) ?? []) as { id: string; table_id: string | null }[];
+          setOpenTickets(openRows.length);
+          setActiveTables(new Set(openRows.map((r) => r.table_id).filter(Boolean)).size);
+          const paidRows = ((paidT as any[]) ?? []) as { total_amount: number | string }[];
+          setDineInTodayRevenue(paidRows.reduce((s, r) => s + Number(r.total_amount ?? 0), 0));
+        } catch {
+          setOpenTickets(0); setActiveTables(0); setDineInTodayRevenue(0);
+        }
+      } else {
+        setOpenTickets(0); setActiveTables(0); setDineInTodayRevenue(0);
       }
       // Latest clients (recently added)
       const { data: latestC } = await supabase
@@ -335,7 +368,7 @@ function Index() {
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [user?.id, refreshSubscription, bizType]);
+  }, [user?.id, refreshSubscription, bizType, isRestaurant]);
 
   useEffect(() => {
     if (!user) return;
@@ -428,7 +461,8 @@ function Index() {
 
   const eff: BizType = (bizType ?? "retail") as BizType;
   type Stat = { label: string; value: string; icon: typeof DollarSign; color: string; bg: string };
-  const revenueCard: Stat = { label: t("todays_revenue"), value: `RM ${todayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
+  const totalTodayRevenue = todayRevenue + (isRestaurant ? dineInTodayRevenue : 0);
+  const revenueCard: Stat = { label: t("todays_revenue"), value: `RM ${totalTodayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
   const profitCard: Stat = { label: t("todays_profit"), value: `RM ${todayGrossProfit.toFixed(0)}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" };
   const newOrdersCard: Stat = { label: t("new_orders"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" };
   const unpaidCard: Stat = { label: t("unpaid"), value: String(unpaidCount), icon: AlertCircle, color: "text-red-500", bg: "bg-red-50" };
@@ -443,6 +477,8 @@ function Index() {
   const completedMonthCard: Stat = { label: t("stat_completed_month"), value: String(completedThisMonth), icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" };
   const activeProjectsCard: Stat = { label: t("stat_active_projects"), value: String(activeProjects), icon: Briefcase, color: "text-primary", bg: "bg-primary/10" };
   const monthRevenueCard: Stat = { label: t("stat_month_revenue"), value: `RM ${monthRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" };
+  const activeTablesCard: Stat = { label: `🪑 ${t("tables")}`, value: String(activeTables), icon: UtensilsCrossed, color: "text-primary", bg: "bg-primary/10" };
+  const openTicketsCard: Stat = { label: t("open_tickets"), value: String(openTickets), icon: ClipboardList, color: "text-amber-600", bg: "bg-amber-50" };
 
   const STATS_BY_TYPE: Record<BizType, Stat[]> = {
     retail:    [revenueCard, profitCard, newOrdersCard, unpaidCard],
@@ -452,7 +488,9 @@ function Index() {
     property:  [newLeadsCard, inProgressCard, completedMonthCard, followupsTodayCard],
     freelance: [activeProjectsCard, unpaidCard, monthRevenueCard, followupsTodayCard],
   };
-  const stats = STATS_BY_TYPE[eff];
+  const stats = isRestaurant
+    ? [activeTablesCard, openTicketsCard, revenueCard, lowStockCard]
+    : STATS_BY_TYPE[eff];
   const showLowStockCard = hasInventory(eff);
   const showRevenueDelta = stats[0] === revenueCard;
 
@@ -690,6 +728,25 @@ function Index() {
           );
         })}
       </section>
+
+      {isRestaurant && (
+        <Link
+          to="/dine-in"
+          aria-label={t("dine_in")}
+          className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground p-4 shadow-[var(--shadow-soft)] active:scale-[0.99] transition-transform"
+        >
+          <span className="h-12 w-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
+            <UtensilsCrossed className="h-6 w-6" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-bold leading-tight">🍽️ {t("dine_in")}</p>
+            <p className="text-[11px] opacity-90 mt-0.5">
+              {activeTables} {t("tables")} · {openTickets} {t("open_tickets")}
+            </p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0" />
+        </Link>
+      )}
 
       {(followUpsThisWeek > 0 || followUpsOverdue > 0) && (
         <Link
