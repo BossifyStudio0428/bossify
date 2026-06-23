@@ -1,0 +1,2 @@
+REVOKE SELECT (provider_purchase_token, provider_transaction_id) ON public.subscriptions FROM authenticated;
+REVOKE SELECT (provider_purchase_token, provider_transaction_id) ON public.subscriptions FROM anon;
