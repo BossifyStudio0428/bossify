@@ -1322,7 +1322,11 @@ function PublicOrderFormPage() {
 
           <button
             type="submit"
-            disabled={submitting || cart.length === 0}
+            disabled={
+              submitting ||
+              cart.length === 0 ||
+              (useDelivery && deliveryQuote.status !== "ok")
+            }
             className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg disabled:opacity-60 active:scale-[0.99] transition-transform"
           >
             {submitting ? t("saving") : t(submitLabelKey)}
