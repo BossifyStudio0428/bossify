@@ -1113,8 +1113,14 @@ function PublicOrderFormPage() {
               ))}
               <div className="flex items-center justify-between px-2 pt-1">
                 <span className="text-sm font-semibold">{totalLabel}</span>
-                <span className="text-lg font-bold text-primary">RM {cartTotal.toFixed(2)}</span>
+                <span className="text-lg font-bold text-primary">RM {grandTotal.toFixed(2)}</span>
               </div>
+              {useDelivery && deliveryQuote.status === "ok" && (
+                <div className="flex items-center justify-between px-2 text-[11px] text-muted-foreground">
+                  <span>{L("Subtotal", "Subjumlah", "小计")}: RM {cartTotal.toFixed(2)}</span>
+                  <span>+ RM {deliveryQuote.fee.toFixed(2)} {L("delivery", "penghantaran", "运费")}</span>
+                </div>
+              )}
             </div>
           )}
         </section>
