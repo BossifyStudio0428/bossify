@@ -416,14 +416,6 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     };
 
     const extra: string[] = [];
-    if (bizType === "fnb" && data2.fulfilment) {
-      const labelMap: Record<string, string> = {
-        dine_in: "Dine-in",
-        takeaway: "Takeaway",
-        delivery: "Delivery",
-      };
-      extra.push(`Type: ${labelMap[data2.fulfilment] ?? data2.fulfilment}`);
-    }
     // delivery_address is now persisted as a dedicated column on orders,
     // so we no longer duplicate it into the notes field for retail.
     if (bizType === "education") {
@@ -477,7 +469,9 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
           ? `• ${label} × ${it.quantity} — RM ${sub.toFixed(2)}`
           : `• ${label} — RM ${sub.toFixed(2)}`;
       });
-      extra.unshift(`Items:\n${lines.join("\n")}`);
+      // Items breakdown lives in `product` + dedicated fields; no longer
+      // duplicated into notes.
+      void lines;
     } else {
       productText = (data2.product || "").trim();
       totalQty = isRetailish ? Math.max(1, Number(data2.quantity) || 1) : 1;
