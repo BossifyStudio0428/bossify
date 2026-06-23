@@ -277,6 +277,10 @@ export async function loadPublicOrderForm(rawCode: string): Promise<LoadPublicOr
         language: (profile as any).language ?? "en",
         allow_cod: (profile as any).allow_cod !== false,
         order_form_show_stock: (profile as any).order_form_show_stock !== false,
+        delivery_enabled: (profile as any).delivery_enabled === true,
+        delivery_zones: Array.isArray((profile as any).delivery_zones)
+          ? (profile as any).delivery_zones
+          : [],
         payment_methods: [
           {
             type: (profile as any).payment_method_1_type ?? null,
