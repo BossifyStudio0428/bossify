@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, useParams } from "@tanstack/react-router";
-import { Minus, Plus, ShoppingCart, X } from "lucide-react";
+import { Clock, Minus, Plus, ShoppingCart, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
@@ -20,6 +20,22 @@ type MenuItem = {
 
 type TableInfo = { id: string; label: string; user_id: string; active: boolean };
 
+type HistoryItem = {
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+};
+
+type HistoryOrder = {
+  order_id: string;
+  status: string;
+  note: string | null;
+  total_amount: number;
+  created_at: string;
+  items: HistoryItem[];
+};
+
 function DinePage() {
   const { tableId } = useParams({ from: "/dine/$tableId" });
   const { t } = useI18n();
@@ -31,6 +47,12 @@ function DinePage() {
   const [showCart, setShowCart] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryOrder[]>([]);
+
+  const loadHistory = useCallback(async () => {
+    const { data } = await supabase.rpc("get_dine_in_ticket_orders" as any, { _table_id: tableId });
+    setHistory(((data as any) ?? []) as HistoryOrder[]);
+  }, [tableId]);
 
   useEffect(() => {
     (async () => {
@@ -45,8 +67,18 @@ function DinePage() {
       const { data: items } = await supabase.rpc("get_dine_in_menu" as any, { _table_id: tableId });
       setMenu((items as any) ?? []);
       setLoading(false);
+      await loadHistory();
     })();
-  }, [tableId, t]);
+  }, [tableId, t, loadHistory]);
+
+  const historyTotal = useMemo(
+    () => history.reduce((s, o) => s + Number(o.total_amount || 0), 0),
+    [history],
+  );
+
+  function statusLabel(s: string) {
+    return t(s) || s;
+  }
 
   const items = useMemo(() =>
     menu.map(m => ({ ...m, qty: cart[m.inventory_id] ?? 0 }))
@@ -164,6 +196,7 @@ function DinePage() {
       setCart({});
       setNote("");
       setShowCart(false);
+      await loadHistory();
     } catch (e: any) {
       toast.error(e.message ?? "Error");
     } finally {
