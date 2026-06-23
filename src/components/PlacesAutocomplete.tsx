@@ -99,14 +99,22 @@ export function PlacesAutocomplete({ value, onChange, placeholder, className, co
         autoComplete="off"
       />
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-[100] left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-64 overflow-auto">
+        <ul
+          className="absolute left-0 right-0 mt-1 border border-gray-200 rounded-xl max-h-64 overflow-auto"
+          style={{
+            zIndex: 9999,
+            backgroundColor: "#ffffff",
+            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1)",
+          }}
+        >
           {suggestions.map((s) => (
-            <li key={s.placeId}>
+            <li key={s.placeId} style={{ backgroundColor: "#ffffff" }}>
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(s)}
-                className="w-full text-left px-3 py-2 text-xs hover:bg-muted/60"
+                className="w-full text-left px-3 py-2 text-xs text-gray-900 hover:bg-gray-100"
+                style={{ backgroundColor: "transparent" }}
               >
                 {s.text}
               </button>
