@@ -490,9 +490,6 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       return { ok: false, reason: "insert_failed", error: "No product selected" };
     }
 
-    const combinedNotes =
-      [extra.join("\n"), (data2.notes || "").trim()].filter(Boolean).join("\n\n") || null;
-
     const code = genCode();
     const phoneDigits = (data2.phone || "").replace(/\D/g, "");
     const qty = totalQty;
@@ -535,6 +532,8 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     } else if (isRetailish && data2.delivery_method === "pickup") {
       extra.push("Fulfilment: Self-pickup");
     }
+    const combinedNotes =
+      [extra.join("\n"), (data2.notes || "").trim()].filter(Boolean).join("\n\n") || null;
     const totalCost = data2.items && data2.items.length > 0
       ? data2.items.reduce((s: number, it: any) => {
           const found = lookupPrice(it.product, it.variant);
