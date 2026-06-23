@@ -138,6 +138,8 @@ function PublicOrderFormPage() {
     business: string;
     amount: number;
     paymentMethod: string;
+    deliveryMethod?: "delivery" | "pickup";
+    pickupAddress?: string | null;
     whatsapp: string | null;
     paymentMethods?: Array<{
       type: string | null;
@@ -359,7 +361,7 @@ function PublicOrderFormPage() {
     e.preventDefault();
     if (state.status !== "ready") return;
     const bt = state.profile.business_type;
-    const needsAddress = bt === "retail" || bt === "fnb";
+    const needsAddress = (bt === "retail" || bt === "fnb") && (!deliveryEnabled || useDelivery);
     if (!form.customer_name.trim()) {
       alert(L("Please enter your name", "Sila masukkan nama anda", "请填写您的姓名"));
       return;
@@ -426,6 +428,8 @@ function PublicOrderFormPage() {
           business: res.business_name || state.profile.business_name,
           amount: grandTotal,
           paymentMethod: needsPayment ? paymentMethod : "",
+          deliveryMethod: deliveryEnabled ? deliveryMethod : undefined,
+          pickupAddress: state.profile.store_address ?? null,
           whatsapp: state.profile.whatsapp_number || null,
           paymentMethods: state.profile.payment_methods ?? [],
         });
@@ -595,6 +599,21 @@ function PublicOrderFormPage() {
             <p className="text-sm font-mono font-semibold mt-1">{done.code}</p>
             <p className="text-xs text-muted-foreground mt-2">— {done.business}</p>
           </div>
+          {done.deliveryMethod === "pickup" && (
+            <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 px-5 py-4 text-left">
+              <p className="text-[11px] uppercase tracking-wider text-primary font-bold text-center">
+                📍 {lang === "zh" ? "自取地点" : lang === "ms" ? "Lokasi ambil" : "Pickup location"}
+              </p>
+              <p className="mt-2 text-sm font-semibold text-foreground whitespace-pre-wrap text-center">
+                {done.pickupAddress?.trim() ||
+                  (lang === "zh"
+                    ? "请联系卖家获取自取地点"
+                    : lang === "ms"
+                    ? "Sila hubungi penjual untuk lokasi ambil"
+                    : "Please contact seller for pickup location")}
+              </p>
+            </div>
+          )}
           {done.paymentMethod !== "cash_on_delivery" && (done.paymentMethods?.some((m) => m && m.type)) && (
             <div className="mt-4 rounded-2xl border border-border bg-card px-5 py-4 text-left">
               <p className="text-[11px] uppercase tracking-wider text-muted-foreground text-center">
@@ -1153,14 +1172,16 @@ function PublicOrderFormPage() {
                     <button
                       type="button"
                       onClick={() => setDeliveryMethod("delivery")}
-                      className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${deliveryMethod === "delivery" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
+                      aria-pressed={deliveryMethod === "delivery"}
+                      className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${deliveryMethod === "delivery" ? "border-[#6d28d9] bg-[#7c3aed] text-white shadow-[0_8px_18px_-8px_rgba(124,58,237,0.75)] scale-[1.02]" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
                     >
                       🛵 {delivery}
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeliveryMethod("pickup")}
-                      className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${deliveryMethod === "pickup" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
+                      aria-pressed={deliveryMethod === "pickup"}
+                      className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${deliveryMethod === "pickup" ? "border-[#6d28d9] bg-[#7c3aed] text-white shadow-[0_8px_18px_-8px_rgba(124,58,237,0.75)] scale-[1.02]" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
                     >
                       🏬 {L("Self-pickup", "Ambil sendiri", "自取")}
                     </button>
