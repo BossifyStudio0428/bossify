@@ -251,6 +251,55 @@ function DinePage() {
         </div>
       )}
 
+      <section className="px-4 pt-2 pb-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 text-sm font-bold">
+            <Clock className="h-4 w-4 text-primary" />
+            {t("order_history")}
+          </div>
+          {history.length > 0 && (
+            <div className="text-[11px] text-muted-foreground">
+              {t("running_total")}: <span className="font-semibold text-foreground">RM {historyTotal.toFixed(2)}</span>
+            </div>
+          )}
+        </div>
+        {history.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border/60 p-4 text-center text-xs text-muted-foreground">
+            {t("no_history_yet")}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {history.map((o) => (
+              <div key={o.order_id} className="rounded-xl border border-border/60 bg-card p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-[11px] text-muted-foreground">
+                    {new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    {statusLabel(o.status)}
+                  </span>
+                </div>
+                <ul className="space-y-0.5">
+                  {o.items.map((it, idx) => (
+                    <li key={idx} className="flex justify-between text-xs">
+                      <span className="truncate pr-2">{it.product_name} × {it.quantity}</span>
+                      <span className="text-muted-foreground shrink-0">RM {Number(it.line_total || 0).toFixed(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+                {o.note && (
+                  <div className="mt-1 text-[11px] text-muted-foreground italic truncate">"{o.note}"</div>
+                )}
+                <div className="mt-2 pt-2 border-t border-border/40 flex items-center justify-between text-xs font-semibold">
+                  <span>{t("subtotal")}</span>
+                  <span>RM {Number(o.total_amount || 0).toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {totalQty > 0 && !showCart && (
         <button onClick={() => setShowCart(true)} className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg flex items-center gap-2">
           <ShoppingCart className="h-4 w-4" /> {t("view_cart")} · {totalQty} · RM {total.toFixed(2)}
