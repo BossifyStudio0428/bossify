@@ -15,6 +15,7 @@ import { notifySituation } from "@/lib/autoNotify";
 import { getNotifMessage } from "@/lib/notifMessages";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { PhoneInput } from "@/components/PhoneInput";
+import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
@@ -722,10 +723,11 @@ function NewOrderPage() {
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
             📍 {t("delivery_address" as any)}
           </label>
-          <textarea
-            rows={2} value={form.delivery_address} onChange={upd("delivery_address")}
+          <PlacesAutocomplete
+            value={form.delivery_address}
+            onChange={({ address }) => setForm((p) => ({ ...p, delivery_address: address }))}
             placeholder={t("delivery_address" as any)}
-            className="w-full rounded-2xl bg-muted/60 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
+            className="w-full rounded-2xl bg-muted/60 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
           />
         </div>
 
