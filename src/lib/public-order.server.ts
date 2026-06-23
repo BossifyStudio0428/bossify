@@ -335,14 +335,14 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
 
     let { data: profile, error: pErr } = await sb
       .from("profiles")
-      .select("id, business_type, order_form_enabled, business_name, allow_cod")
+      .select("id, business_type, order_form_enabled, business_name, allow_cod, store_address")
       .eq("order_form_code", data2.code.toLowerCase())
       .maybeSingle();
     if (pErr) {
       // allow_cod column may not exist on external Supabase yet — retry without it
       const fb = await sb
         .from("profiles")
-        .select("id, business_type, order_form_enabled, business_name")
+        .select("id, business_type, order_form_enabled, business_name, store_address")
         .eq("order_form_code", data2.code.toLowerCase())
         .maybeSingle();
       profile = fb.data;
