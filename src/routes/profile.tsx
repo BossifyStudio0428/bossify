@@ -54,7 +54,7 @@ function ProfilePage() {
   const { isPro, isStarter, isLifetime, isTeam, teamTier, hasFullAccess, ordersUsed, ordersLimit, showUpgrade } =
     useSubscription();
   const { theme, toggle: toggleTheme } = useTheme();
-  const { type: bizType } = useBusinessType();
+  const { type: bizType, subType: bizSubType } = useBusinessType();
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
   const [profile, setProfile] = useState<Omit<ProfileSummary, "is_admin"> | null>(null);
@@ -144,7 +144,7 @@ function ProfilePage() {
       emoji: "📊",
       items: [
         ...(servicesItem ? [servicesItem] : []),
-        ...(bizType === "fnb"
+        ...(bizType === "fnb" && bizSubType === "restaurant"
           ? [
               {
                 icon: "🍽️",

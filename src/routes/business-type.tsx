@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { Check } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { BIZ_TYPES, type BizType } from "@/lib/businessType";
+import { BIZ_TYPES, FNB_SUB_TYPES, type BizType, type FnbSubType } from "@/lib/businessType";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -29,16 +29,18 @@ function BusinessTypePage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { from } = useSearch({ from: "/business-type" });
-  const { type, setType } = useBusinessType();
+  const { type, subType, setType } = useBusinessType();
   const [selected, setSelected] = useState<BizType | null>(type);
+  const [selectedSub, setSelectedSub] = useState<FnbSubType | null>(subType);
   const [saving, setSaving] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const doSave = async () => {
     if (!selected || saving) return;
+    if (selected === "fnb" && !selectedSub) return;
     setSaving(true);
     try {
-      await setType(selected);
+      await setType(selected, selected === "fnb" ? selectedSub : null);
       toast.success(t("business_type_saved"));
       if (from === "profile") navigate({ to: "/profile", replace: true });
       else navigate({ to: "/payment-setup", replace: true });
@@ -52,8 +54,9 @@ function BusinessTypePage() {
 
   const onContinue = () => {
     if (!selected || saving) return;
+    if (selected === "fnb" && !selectedSub) return;
     // Confirm only when changing an existing type (no data loss, just labels)
-    if (type && selected !== type) {
+    if (type && (selected !== type || (selected === "fnb" && selectedSub !== subType))) {
       setConfirmOpen(true);
       return;
     }
@@ -74,7 +77,11 @@ function BusinessTypePage() {
             return (
               <button
                 key={b.key}
-                onClick={() => setSelected(b.key)}
+                onClick={() => {
+                  setSelected(b.key);
+                  if (b.key !== "fnb") setSelectedSub(null);
+                  else if (!selectedSub) setSelectedSub("general");
+                }}
                 className={`relative aspect-square rounded-2xl border p-3 flex flex-col items-center justify-center gap-2 text-center transition-all active:scale-95 ${
                   active
                     ? "border-primary bg-primary/10 ring-2 ring-primary"
@@ -95,10 +102,44 @@ function BusinessTypePage() {
           })}
         </div>
 
+        {selected === "fnb" && (
+          <div className="mt-6 space-y-2">
+            <p className="text-sm font-semibold text-foreground">{t("bst_pick_sub_type")}</p>
+            <div className="space-y-2">
+              {FNB_SUB_TYPES.map((s) => {
+                const active = selectedSub === s.key;
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setSelectedSub(s.key)}
+                    className={`w-full flex items-center gap-3 rounded-2xl border p-3 text-left transition-all active:scale-[0.99] ${
+                      active
+                        ? "border-primary bg-primary/10 ring-2 ring-primary"
+                        : "border-border/60 bg-card"
+                    }`}
+                  >
+                    <span className="text-2xl leading-none">{s.emoji}</span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-semibold text-foreground">{t(s.nameKey)}</span>
+                      <span className="block text-[11px] text-muted-foreground leading-snug">{t(s.descKey)}</span>
+                    </span>
+                    {active && (
+                      <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                        <Check className="h-3 w-3" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] px-5 pb-6 pt-4 bg-gradient-to-t from-background via-background to-transparent">
           <button
             onClick={onContinue}
-            disabled={!selected || saving}
+            disabled={!selected || saving || (selected === "fnb" && !selectedSub)}
             className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 active:scale-[0.98]"
           >
             {saving ? t("saving") : t("continue")}

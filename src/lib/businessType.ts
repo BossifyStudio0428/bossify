@@ -17,6 +17,27 @@ export const BIZ_TYPES: { key: BizType; emoji: string; nameKey: TKey }[] = [
   { key: "freelance", emoji: "💪", nameKey: "bt_freelance" },
 ];
 
+/** FnB sub-types. `restaurant` unlocks dine-in / table management. */
+export type FnbSubType = "general" | "restaurant";
+
+export const FNB_SUB_TYPES: { key: FnbSubType; emoji: string; nameKey: TKey; descKey: TKey }[] = [
+  { key: "general",    emoji: "🍱", nameKey: "bst_fnb_general",    descKey: "bst_fnb_general_desc" },
+  { key: "restaurant", emoji: "🍽️", nameKey: "bst_fnb_restaurant", descKey: "bst_fnb_restaurant_desc" },
+];
+
+export function normalizeFnbSubType(value: unknown): FnbSubType | null {
+  if (typeof value !== "string") return null;
+  const k = value.trim().toLowerCase();
+  if (k === "restaurant") return "restaurant";
+  if (k === "general" || k === "takeaway" || k === "fnb") return "general";
+  return null;
+}
+
+/** True when dine-in / table-management features should be visible. */
+export function hasDineIn(bizType: BizType | null | undefined, sub: FnbSubType | null | undefined): boolean {
+  return bizType === "fnb" && sub === "restaurant";
+}
+
 const BIZ_TYPE_KEYS: ReadonlySet<string> = new Set(BIZ_TYPES.map((b) => b.key));
 
 const LEGACY_BIZ_TYPE_MAP: Record<string, BizType> = {
