@@ -229,6 +229,7 @@ function OrderDetailPage() {
   );
 
   return (
+    <>
     <div className="pb-8 space-y-5">
       <header className="flex items-center gap-3 px-5 pt-10">
         <button onClick={() => navigate({ to: "/orders" })} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
@@ -385,6 +386,40 @@ function OrderDetailPage() {
         </div>
       )}
     </div>
+    {etaModal && (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4" onClick={() => setEtaModal(false)}>
+        <div className="w-full max-w-sm rounded-2xl bg-card border border-border p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div>
+            <p className="text-base font-bold">
+              🚗 {lang === "zh" ? "预计到达时间" : lang === "ms" ? "Anggaran ketibaan" : "Estimated Arrival"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {lang === "zh"
+                ? "例如：15 分钟、30 分钟，或 3:30 PM"
+                : lang === "ms"
+                  ? "Contoh: 15 minit, 30 minit, atau 3:30 PM"
+                  : "e.g. 15 mins, 30 mins, or 3:30 PM"}
+            </p>
+          </div>
+          <input
+            autoFocus
+            value={etaInput}
+            onChange={(e) => setEtaInput(e.target.value)}
+            placeholder={lang === "zh" ? "15 分钟" : lang === "ms" ? "15 minit" : "15 mins"}
+            className="w-full rounded-2xl bg-muted/40 border border-border/60 px-4 py-3 text-sm outline-none focus:border-primary"
+          />
+          <div className="flex gap-2">
+            <button onClick={() => setEtaModal(false)} className="flex-1 py-3 rounded-2xl bg-muted text-sm font-semibold">
+              {t("cancel")}
+            </button>
+            <button onClick={submitEta} className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold">
+              {lang === "zh" ? "通知客户" : lang === "ms" ? "Beritahu pelanggan" : "Notify customer"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
