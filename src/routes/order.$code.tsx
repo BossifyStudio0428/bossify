@@ -984,11 +984,19 @@ function PublicOrderFormPage() {
                       onClick={() => setOpenProductId(p.id)}
                       className="block w-full text-left active:scale-[0.98] transition-transform"
                     >
-                      <div className="aspect-square w-full bg-muted/40 overflow-hidden">
+                      <div
+                        className="w-full bg-muted/40 overflow-hidden relative"
+                        style={{ aspectRatio: "1 / 1" }}
+                      >
                         {p.image_url ? (
-                          <img src={p.image_url} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
+                          <img
+                            src={p.image_url}
+                            alt={p.name}
+                            loading="lazy"
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
                         ) : (
-                          <div className="h-full w-full flex items-center justify-center text-muted-foreground/40">
+                          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/40">
                             <ShoppingBag size={32} />
                           </div>
                         )}
