@@ -4548,6 +4548,16 @@ const dict = {
     svc_portfolio_links: "作品集链接",
     svc_no_links_yet: "暂无链接",
     svc_add_link: "添加",
+    ds_title: "配送设置",
+    ds_subtitle: "根据距离计算配送费",
+    ds_enable: "启用配送",
+    ds_enable_desc: "客户可选择配送并查看费用",
+    ds_store_address: "店铺/餐厅地址",
+    ds_store_address_desc: "输入并选择建议地址以设置坐标",
+    ds_zones: "配送范围",
+    ds_zones_desc: "超出最远范围 = 不可配送",
+    ds_up_to_km: "距离上限(KM)",
+    ds_fee_rm: "费用(RM)",
   },
 } as const;
 
