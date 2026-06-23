@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
+import { getPublicOrigin } from "@/lib/publicUrl";
 import {
   DAY_SHORT_KEYS,
   DEFAULT_BOOKING_CONFIG,
@@ -22,6 +23,7 @@ function BookingSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [config, setConfig] = useState<BookingConfig>(DEFAULT_BOOKING_CONFIG);
+  const [code, setCode] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,13 +31,23 @@ function BookingSettingsPage() {
       if (!user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("booking_enabled,booking_config" as any)
+        .select("booking_enabled,booking_config,booking_code" as any)
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
       const p = (data as any) ?? {};
       setEnabled(!!p.booking_enabled);
       setConfig(normalizeBookingConfig(p.booking_config));
+      let existing = (p.booking_code as string | null) ?? null;
+      if (!existing) {
+        const fresh = Math.random().toString(16).slice(2, 10);
+        const { error: upErr } = await supabase
+          .from("profiles")
+          .update({ booking_code: fresh } as any)
+          .eq("id", user.id);
+        if (!upErr) existing = fresh;
+      }
+      setCode(existing);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -96,6 +108,37 @@ function BookingSettingsPage() {
               </button>
             </div>
           </section>
+
+          {enabled && code && (
+            <section className="rounded-2xl bg-card border border-border/60 p-4 space-y-2">
+              <p className="text-sm font-semibold">{t("booking_share_link")}</p>
+              <p className="text-[11px] text-muted-foreground">{t("booking_share_sub")}</p>
+              <div className="rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-xs break-all">
+                {`${getPublicOrigin()}/book/${code}`}
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `${getPublicOrigin()}/book/${code}`;
+                    navigator.clipboard?.writeText(url);
+                    toast.success(t("link_copied"));
+                  }}
+                  className="h-10 rounded-xl bg-muted text-foreground text-xs font-semibold flex items-center justify-center gap-1.5"
+                >
+                  <Copy className="h-3.5 w-3.5" /> {t("copy_link")}
+                </button>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`${getPublicOrigin()}/book/${code}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="h-10 rounded-xl bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center gap-1.5"
+                >
+                  <Share2 className="h-3.5 w-3.5" /> {t("share_whatsapp")}
+                </a>
+              </div>
+            </section>
+          )}
 
           <section className="rounded-2xl bg-card border border-border/60 p-4 space-y-3">
             <p className="text-sm font-semibold">{t("working_days")}</p>

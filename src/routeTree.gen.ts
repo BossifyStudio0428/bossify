@@ -81,6 +81,7 @@ import { Route as DineTableIdRouteImport } from './routes/dine/$tableId'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
 import { Route as CommissionIdRouteImport } from './routes/commission.$id'
+import { Route as BookCodeRouteImport } from './routes/book.$code'
 import { Route as TeamJoinTokenRouteImport } from './routes/team.join.$token'
 import { Route as ApiPublicTrackingRouteImport } from './routes/api/public/tracking'
 import { Route as ApiPublicOrderFormRouteImport } from './routes/api/public/order-form'
@@ -453,6 +454,11 @@ const CommissionIdRoute = CommissionIdRouteImport.update({
   path: '/commission/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BookCodeRoute = BookCodeRouteImport.update({
+  id: '/book/$code',
+  path: '/book/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamJoinTokenRoute = TeamJoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -560,6 +566,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/viewings': typeof ViewingsRoute
+  '/book/$code': typeof BookCodeRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -644,6 +651,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/viewings': typeof ViewingsRoute
+  '/book/$code': typeof BookCodeRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -729,6 +737,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/viewings': typeof ViewingsRoute
+  '/book/$code': typeof BookCodeRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -815,6 +824,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/university-insights'
     | '/viewings'
+    | '/book/$code'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -899,6 +909,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/university-insights'
     | '/viewings'
+    | '/book/$code'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -983,6 +994,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/university-insights'
     | '/viewings'
+    | '/book/$code'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -1068,6 +1080,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
   ViewingsRoute: typeof ViewingsRoute
+  BookCodeRoute: typeof BookCodeRoute
   CommissionIdRoute: typeof CommissionIdRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
@@ -1598,6 +1611,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommissionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/book/$code': {
+      id: '/book/$code'
+      path: '/book/$code'
+      fullPath: '/book/$code'
+      preLoaderRoute: typeof BookCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team/join/$token': {
       id: '/team/join/$token'
       path: '/join/$token'
@@ -1775,6 +1795,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
   ViewingsRoute: ViewingsRoute,
+  BookCodeRoute: BookCodeRoute,
   CommissionIdRoute: CommissionIdRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
