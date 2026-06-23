@@ -1139,16 +1139,76 @@ function PublicOrderFormPage() {
           </Field>
 
           {(bizType === "retail" || bizType === "fnb") && (
-            <Field label={`${addressLabel} *`}>
-              <textarea
-                required
-                rows={2}
-                value={form.address}
-                onChange={upd("address")}
-                className="pof-input"
-                maxLength={500}
-              />
-            </Field>
+            <>
+              {deliveryEnabled && (
+                <Field label={fulfilmentLabel}>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod("delivery")}
+                      className={`py-2.5 rounded-xl text-xs font-semibold border ${deliveryMethod === "delivery" ? "border-primary bg-primary/5 text-foreground" : "border-border bg-card text-muted-foreground"}`}
+                    >
+                      🛵 {delivery}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod("pickup")}
+                      className={`py-2.5 rounded-xl text-xs font-semibold border ${deliveryMethod === "pickup" ? "border-primary bg-primary/5 text-foreground" : "border-border bg-card text-muted-foreground"}`}
+                    >
+                      🏬 {L("Self-pickup", "Ambil sendiri", "自取")}
+                    </button>
+                  </div>
+                </Field>
+              )}
+              <Field label={`${addressLabel}${useDelivery || !deliveryEnabled ? " *" : ""}`}>
+                {deliveryEnabled && useDelivery ? (
+                  <PlacesAutocomplete
+                    value={form.address}
+                    onChange={({ address: a, lat, lng }) => {
+                      setForm((p) => ({ ...p, address: a }));
+                      if (lat != null && lng != null) {
+                        setDestCoords({ lat, lng });
+                      } else {
+                        setDestCoords(null);
+                      }
+                    }}
+                    placeholder={addressLabel}
+                    className="pof-input"
+                  />
+                ) : (
+                  <textarea
+                    required={deliveryEnabled ? false : true}
+                    rows={2}
+                    value={form.address}
+                    onChange={upd("address")}
+                    className="pof-input"
+                    maxLength={500}
+                  />
+                )}
+              </Field>
+              {useDelivery && (
+                <div className="rounded-2xl border border-border bg-muted/30 px-3 py-2.5 text-xs">
+                  {deliveryQuote.status === "idle" && (
+                    <span className="text-muted-foreground">{L("Pick an address to see delivery fee", "Pilih alamat untuk lihat caj penghantaran", "选择地址以查看运费")}</span>
+                  )}
+                  {deliveryQuote.status === "loading" && (
+                    <span className="text-muted-foreground">{L("Calculating delivery fee…", "Mengira caj penghantaran…", "正在计算运费…")}</span>
+                  )}
+                  {deliveryQuote.status === "ok" && (
+                    <div className="flex items-center justify-between">
+                      <span>📍 {deliveryQuote.km.toFixed(2)} km</span>
+                      <span className="font-semibold">{L("Delivery", "Penghantaran", "运费")}: RM {deliveryQuote.fee.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {deliveryQuote.status === "unavailable" && (
+                    <span className="text-rose-600">{L("Outside delivery area", "Di luar kawasan penghantaran", "超出送货范围")}</span>
+                  )}
+                  {deliveryQuote.status === "error" && (
+                    <span className="text-rose-600">{L("Could not calculate fee. Try again.", "Tidak dapat mengira caj. Cuba lagi.", "无法计算运费，请重试。")}</span>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
           {bizType === "education" && (
