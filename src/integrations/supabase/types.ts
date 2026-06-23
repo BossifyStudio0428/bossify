@@ -1430,6 +1430,15 @@ export type Database = {
           stock: number
         }[]
       }
+      get_dine_in_table: {
+        Args: { _table_id: string }
+        Returns: {
+          active: boolean
+          id: string
+          label: string
+          user_id: string
+        }[]
+      }
       get_my_team: {
         Args: never
         Returns: {
