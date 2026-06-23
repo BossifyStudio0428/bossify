@@ -1246,6 +1246,24 @@ function PublicOrderFormPage() {
                   />
                 )}
               </Field>
+              {useDelivery && state.status === "ready" && (
+                <div className="rounded-2xl border border-border bg-muted/30 px-3 py-2.5 text-xs">
+                  <p className="font-semibold text-foreground mb-1">
+                    🏬 {L("Delivering from", "Dihantar dari", "发货地点")}
+                  </p>
+                  {state.profile.store_address ? (
+                    <p className="text-muted-foreground whitespace-pre-wrap">{state.profile.store_address}</p>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      {L(
+                        "Seller has not set a store address",
+                        "Penjual belum menetapkan alamat kedai",
+                        "卖家尚未设置店铺地址",
+                      )}
+                    </p>
+                  )}
+                </div>
+              )}
               {useDelivery && (
                 <div className="rounded-2xl border border-border bg-muted/30 px-3 py-2.5 text-xs">
                   {deliveryQuote.status === "idle" && (

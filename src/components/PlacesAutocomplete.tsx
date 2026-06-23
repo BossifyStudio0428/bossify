@@ -99,7 +99,7 @@ export function PlacesAutocomplete({ value, onChange, placeholder, className, co
         autoComplete="off"
       />
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-50 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-64 overflow-auto">
+        <ul className="absolute z-[100] left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-64 overflow-auto">
           {suggestions.map((s) => (
             <li key={s.placeId}>
               <button
