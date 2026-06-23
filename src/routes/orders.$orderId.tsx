@@ -242,6 +242,43 @@ function OrderDetailPage() {
             <Row label={`📝 ${t("notes")}`} value={order.notes || t("no_notes")} />
           </div>
 
+          {isDelivery && (
+            <div className="rounded-2xl bg-card border border-border/60 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">🚚 {lang === "zh" ? "配送状态" : lang === "ms" ? "Status Penghantaran" : "Delivery Status"}</p>
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary">
+                  {deliveryStatusLabel(currentDeliveryStatus, lang)}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {DELIVERY_STATUSES.map((s) => {
+                  const active = currentDeliveryStatus === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => updateDeliveryStatus(s)}
+                      className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
+                        active
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "bg-card text-muted-foreground border-border hover:bg-muted/50"
+                      }`}
+                    >
+                      {deliveryStatusLabel(s, lang)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {lang === "zh"
+                  ? "更新状态后会自动通过 WhatsApp 通知客户"
+                  : lang === "ms"
+                    ? "Pelanggan akan dimaklumkan melalui WhatsApp secara automatik"
+                    : "Customer will be notified via WhatsApp automatically"}
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-2">
             <button onClick={sendWA} className="py-3 rounded-2xl bg-emerald-500 text-white font-semibold text-xs">📲 WhatsApp</button>
             <button onClick={() => setEditing(true)} className="py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-xs">✏️ {t("edit")}</button>
