@@ -969,6 +969,22 @@ function OrdersPage() {
                     <p className="text-slate-500 text-xs leading-relaxed flex-1 break-words">{o.delivery_address}</p>
                   </div>
                 ) : null}
+                {(() => {
+                  const dm = (o as any).delivery_method as string | undefined;
+                  const storeAddr = (o as any).store_address_snapshot as string | null | undefined;
+                  if (!dm) return null;
+                  const isDel = dm === "delivery";
+                  return (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${isDel ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-700"}`}>
+                        {isDel ? "🚗" : "🏪"} {isDel ? t("order_delivery" as any) : t("order_pickup" as any)}
+                      </span>
+                      {!isDel && storeAddr ? (
+                        <span className="text-slate-500 text-xs leading-relaxed break-words flex-1 min-w-0">{storeAddr}</span>
+                      ) : null}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Footer */}
