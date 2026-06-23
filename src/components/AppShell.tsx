@@ -152,9 +152,10 @@ function ShellInner() {
   // app on the language screen without choosing is redirected back to it.
   const isOrderFormRoute = locationPathname.startsWith("/order/");
   const isDineRoute = locationPathname.startsWith("/dine/");
+  const isTrackRoute = locationPathname.startsWith("/track/");
   const isPrivacyPolicyRoute = locationPathname === "/privacy-policy";
   const isTermsRoute = locationPathname === "/terms";
-  const isPublicFlow = isSplashRoute || isLanguageRoute || isOrderFormRoute || isDineRoute || isPrivacyPolicyRoute || isTermsRoute;
+  const isPublicFlow = isSplashRoute || isLanguageRoute || isOrderFormRoute || isDineRoute || isTrackRoute || isPrivacyPolicyRoute || isTermsRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const { type: bizType, loading: bizLoading } = useBusinessType();

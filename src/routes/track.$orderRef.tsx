@@ -25,6 +25,7 @@ type TrackingData = {
     estimated_arrival: string | null;
     notes: string | null;
     created_at: string;
+    delivery_method: string | null;
   };
   business: {
     name: string;
@@ -52,6 +53,9 @@ const T = {
     delivered: "Delivered",
     pickedLang: "Language",
     contactSeller: "Contact Seller",
+    pickupAt: "Pickup at",
+    selfPickup: "Self-pickup order",
+    selfPickupSub: "Please collect your order at the address below.",
   },
   ms: {
     title: "Penjejakan Pesanan",
@@ -71,6 +75,9 @@ const T = {
     delivered: "Telah Dihantar",
     pickedLang: "Bahasa",
     contactSeller: "Hubungi Penjual",
+    pickupAt: "Ambil di",
+    selfPickup: "Pesanan ambil sendiri",
+    selfPickupSub: "Sila ambil pesanan anda di alamat di bawah.",
   },
   zh: {
     title: "订单追踪",
@@ -90,6 +97,9 @@ const T = {
     delivered: "已送达",
     pickedLang: "语言",
     contactSeller: "联系商家",
+    pickupAt: "自取地址",
+    selfPickup: "自取订单",
+    selfPickupSub: "请到以下地址领取订单。",
   },
 } as const;
 
@@ -142,6 +152,7 @@ function TrackingPage() {
   }
 
   const { order, business } = data;
+  const isPickup = order.delivery_method === "pickup" || order.delivery_method === "takeaway";
   const currentStatus = (STATUSES.includes(order.delivery_status as DeliveryStatus)
     ? order.delivery_status
     : "confirmed") as DeliveryStatus;
@@ -190,7 +201,8 @@ function TrackingPage() {
           <p className="text-xs text-white/85 mt-2 font-mono">{order.code}</p>
         </div>
 
-        {/* Progress */}
+        {/* Progress (delivery only) */}
+        {!isPickup && (
         <div className="rounded-2xl bg-white border border-border/60 p-5 shadow-sm">
           <p className="text-sm font-semibold mb-4">🚚 {tr.statusTitle}</p>
           <div className="space-y-4">
@@ -226,6 +238,17 @@ function TrackingPage() {
             })}
           </div>
         </div>
+        )}
+
+        {isPickup && business.store_address && (
+          <div className="rounded-2xl bg-white border border-border/60 p-5 shadow-sm space-y-2">
+            <p className="text-sm font-semibold">🏪 {tr.selfPickup}</p>
+            <p className="text-xs text-muted-foreground">{tr.selfPickupSub}</p>
+            <div className="rounded-xl bg-muted/40 px-3 py-2.5 text-sm whitespace-pre-wrap">
+              {business.store_address}
+            </div>
+          </div>
+        )}
 
         {/* Order details */}
         <div className="rounded-2xl bg-white border border-border/60 p-5 shadow-sm space-y-2 text-sm">
