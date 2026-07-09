@@ -343,7 +343,7 @@ function PurchaseOrdersPage() {
       <button
         onClick={() => setFormOpen(true)}
         aria-label={t("po_add")}
-        className="fixed bottom-24 z-30 h-14 w-14 rounded-full text-primary-foreground shadow-[var(--shadow-soft)] flex items-center justify-center active:scale-95 transition-transform bg-gradient-to-br from-primary to-primary/80"
+        className="fixed fab-above-nav z-30 h-14 w-14 rounded-full text-primary-foreground shadow-[var(--shadow-soft)] flex items-center justify-center active:scale-95 transition-transform bg-gradient-to-br from-primary to-primary/80"
         style={{ right: "max(1.5rem, calc(50vw - 180px + 1rem))" }}
       >
         <Plus className="h-6 w-6" strokeWidth={2.5} />

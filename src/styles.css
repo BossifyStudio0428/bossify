@@ -265,3 +265,27 @@ textarea,
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+
+/* Safe-area helpers for notch / gesture bar on Android + iOS.
+   On web / non-notch devices env(safe-area-inset-*) resolves to 0, so these
+   are inert there and only add spacing inside Capacitor WebView. */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility mt-safe {
+  margin-top: env(safe-area-inset-top);
+}
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+/* Floating action button positioned above the BottomNav (h-16 + mb-3 + inset).
+   96px keeps it above the 64px nav pill and its 12px margin. */
+.fab-above-nav {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 96px) !important;
+}
+.fab-above-nav-sm {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 80px) !important;
+}

@@ -44,7 +44,10 @@ export function ProductFormScreen({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky header */}
-        <div className="shrink-0 bg-card border-b border-border/60 px-4 py-3 flex items-center gap-2">
+        <div
+          className="shrink-0 bg-card border-b border-border/60 px-4 py-3 flex items-center gap-2"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
+        >
           <button
             onClick={onClose}
             className="p-1.5 -ml-1 rounded-full hover:bg-muted text-muted-foreground"
@@ -82,7 +85,10 @@ export function ProductFormScreen({
         </div>
 
         {/* Sticky bottom save bar (mobile thumb reach) */}
-        <div className="shrink-0 bg-card border-t border-border/60 px-4 py-3 pb-5">
+        <div
+          className="shrink-0 bg-card border-t border-border/60 px-4 py-3"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)" }}
+        >
           <button
             type="button"
             onClick={onSave}
