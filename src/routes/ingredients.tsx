@@ -327,7 +327,7 @@ function IngredientsPage() {
 
       <button
         onClick={() => setSheet({ kind: "form" })}
-        className="fixed bottom-20 right-5 h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg flex items-center justify-center active:scale-95"
+        className="fixed fab-above-nav-sm right-5 h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg flex items-center justify-center active:scale-95"
       >
         <Plus className="h-6 w-6" />
       </button>
