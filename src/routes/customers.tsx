@@ -627,13 +627,22 @@ function CustomersPage() {
             </Link>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               <p className="text-sm font-bold text-primary">RM {Number(c.total_spent).toFixed(0)}</p>
-              <button
-                onClick={() => cycleStatus(c)}
-                aria-label="Status"
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[(c.customer_status ?? "enquiry") as CustomerStatus]}`}
-              >
-                {CUSTOMER_STATUS_DOT[(c.customer_status ?? "enquiry") as CustomerStatus]} {t(`cs_${(c.customer_status ?? "enquiry") as CustomerStatus}` as any)}
-              </button>
+              {bizType === "retail" ? (
+                (() => {
+                  const b = retailBadge(c);
+                  return b ? (
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${b.cls}`}>{b.label}</span>
+                  ) : null;
+                })()
+              ) : (
+                <button
+                  onClick={() => cycleStatus(c)}
+                  aria-label="Status"
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[(c.customer_status ?? "enquiry") as CustomerStatus]}`}
+                >
+                  {CUSTOMER_STATUS_DOT[(c.customer_status ?? "enquiry") as CustomerStatus]} {t(`cs_${(c.customer_status ?? "enquiry") as CustomerStatus}` as any)}
+                </button>
+              )}
               {bizType === "education" && (
                 <div className="flex gap-1">
                   <Link
