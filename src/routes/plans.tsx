@@ -30,6 +30,7 @@ import {
   type TeamTier,
   type BillingError,
 } from "@/lib/billing";
+import { fetchStripePrices } from "@/lib/stripePrices.functions";
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
 
@@ -263,6 +264,36 @@ function PlansPage() {
             const next = { ...prev };
             for (const p of result.prices) {
               if (p.formattedPrice && p.formattedPrice !== "—") next[p.plan] = p.formattedPrice;
+            }
+            return next;
+          });
+        })
+        .catch(() => {});
+    };
+    load();
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
+  // Web (Stripe) price fetch. On native (Capacitor Android) the Google Play
+  // path above owns pricing; on web we call the Stripe-backed server fn so
+  // the UI reflects whatever is currently configured in the Stripe Dashboard.
+  // Any failure silently keeps the MYR fallbacks so /plans never breaks.
+  useEffect(() => {
+    if (isNativeBillingAvailable()) return;
+    let cancelled = false;
+    const load = () => {
+      fetchStripePrices()
+        .then((res) => {
+          if (cancelled || !res?.prices) return;
+          setStorePrices((prev) => {
+            const next = { ...prev };
+            for (const [k, v] of Object.entries(res.prices)) {
+              if (v) (next as Record<string, string>)[k] = v;
             }
             return next;
           });
