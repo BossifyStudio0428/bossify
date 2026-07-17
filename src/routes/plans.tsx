@@ -30,6 +30,7 @@ import {
   type TeamTier,
   type BillingError,
 } from "@/lib/billing";
+import { fetchStripePrices } from "@/lib/stripePrices.functions";
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
 
