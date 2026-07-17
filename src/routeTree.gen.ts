@@ -46,6 +46,7 @@ import { Route as NewBookingRouteImport } from './routes/new-booking'
 import { Route as MoreRouteImport } from './routes/more'
 import { Route as LoanCalculatorRouteImport } from './routes/loan-calculator'
 import { Route as ListingsRouteImport } from './routes/listings'
+import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as IngredientsRouteImport } from './routes/ingredients'
@@ -283,6 +284,11 @@ const LoanCalculatorRoute = LoanCalculatorRouteImport.update({
 const ListingsRoute = ListingsRouteImport.update({
   id: '/listings',
   path: '/listings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalRoute = LegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LanguageRoute = LanguageRouteImport.update({
@@ -576,6 +582,7 @@ export interface FileRoutesByFullPath {
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
+  '/legal': typeof LegalRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
   '/more': typeof MoreRoute
@@ -668,6 +675,7 @@ export interface FileRoutesByTo {
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
+  '/legal': typeof LegalRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
   '/more': typeof MoreRoute
@@ -760,6 +768,7 @@ export interface FileRoutesById {
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
+  '/legal': typeof LegalRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
   '/more': typeof MoreRoute
@@ -854,6 +863,7 @@ export interface FileRouteTypes {
     | '/ingredients'
     | '/inventory'
     | '/language'
+    | '/legal'
     | '/listings'
     | '/loan-calculator'
     | '/more'
@@ -946,6 +956,7 @@ export interface FileRouteTypes {
     | '/ingredients'
     | '/inventory'
     | '/language'
+    | '/legal'
     | '/listings'
     | '/loan-calculator'
     | '/more'
@@ -1037,6 +1048,7 @@ export interface FileRouteTypes {
     | '/ingredients'
     | '/inventory'
     | '/language'
+    | '/legal'
     | '/listings'
     | '/loan-calculator'
     | '/more'
@@ -1130,6 +1142,7 @@ export interface RootRouteChildren {
   IngredientsRoute: typeof IngredientsRoute
   InventoryRoute: typeof InventoryRouteWithChildren
   LanguageRoute: typeof LanguageRoute
+  LegalRoute: typeof LegalRoute
   ListingsRoute: typeof ListingsRoute
   LoanCalculatorRoute: typeof LoanCalculatorRoute
   MoreRoute: typeof MoreRoute
@@ -1451,6 +1464,13 @@ declare module '@tanstack/react-router' {
       path: '/listings'
       fullPath: '/listings'
       preLoaderRoute: typeof ListingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal': {
+      id: '/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof LegalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/language': {
@@ -1912,6 +1932,7 @@ const rootRouteChildren: RootRouteChildren = {
   IngredientsRoute: IngredientsRoute,
   InventoryRoute: InventoryRouteWithChildren,
   LanguageRoute: LanguageRoute,
+  LegalRoute: LegalRoute,
   ListingsRoute: ListingsRoute,
   LoanCalculatorRoute: LoanCalculatorRoute,
   MoreRoute: MoreRoute,
