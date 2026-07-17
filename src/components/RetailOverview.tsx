@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Package, Layers, Bell, MoreHorizontal, Plus } from "lucide-react";
+import { Package, Layers, Bell, MoreHorizontal, Plus, TrendingUp, TrendingDown, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -16,10 +16,14 @@ type InvRow = {
 };
 
 type OrderRow = {
+  id?: string;
+  code?: string | null;
+  customer_name?: string | null;
   amount: number | null;
   cost: number | null;
   gross_profit: number | null;
   product: string | null;
+  status?: string | null;
   created_at: string;
 };
 
@@ -29,16 +33,38 @@ function money(n: number) {
   return `RM ${n.toFixed(2)}`;
 }
 
-function startOfTodayISO() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+type Range = "week" | "month" | "custom";
+
+function rangeWindows(range: Range, customFrom?: string, customTo?: string) {
+  const now = new Date();
+  const curEnd = new Date(now);
+  let curStart: Date;
+  if (range === "week") {
+    curStart = new Date(now);
+    curStart.setHours(0, 0, 0, 0);
+    curStart.setDate(curStart.getDate() - 6);
+  } else if (range === "month") {
+    curStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else {
+    curStart = customFrom ? new Date(customFrom + "T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
+    if (customTo) {
+      const end = new Date(customTo + "T23:59:59");
+      return buildWithPrev(curStart, end);
+    }
+  }
+  return buildWithPrev(curStart, curEnd);
 }
-function startOfDaysAgoISO(days: number) {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - days);
-  return d.toISOString();
+
+function buildWithPrev(curStart: Date, curEnd: Date) {
+  const lenMs = curEnd.getTime() - curStart.getTime();
+  const prevEnd = new Date(curStart.getTime() - 1);
+  const prevStart = new Date(prevEnd.getTime() - lenMs);
+  return { curStart, curEnd, prevStart, prevEnd };
+}
+
+function pctDelta(cur: number, prev: number): number | null {
+  if (!isFinite(prev) || prev <= 0) return null;
+  return ((cur - prev) / prev) * 100;
 }
 
 export function RetailOverview() {
@@ -46,7 +72,13 @@ export function RetailOverview() {
   const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [inv, setInv] = useState<InvRow[]>([]);
-  const [todayOrders, setTodayOrders] = useState<OrderRow[]>([]);
+  const [range, setRange] = useState<Range>("month");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
+  const [rangePickerOpen, setRangePickerOpen] = useState(false);
+  const [curOrders, setCurOrders] = useState<OrderRow[]>([]);
+  const [prevOrders, setPrevOrders] = useState<OrderRow[]>([]);
+  const [recentOrders, setRecentOrders] = useState<OrderRow[]>([]);
   const [weekOrders, setWeekOrders] = useState<OrderRow[]>([]);
   // Rotate through equal-priority suggestions on each page load.
   const [tick] = useState(() => Math.floor(Math.random() * 1000));
@@ -54,54 +86,86 @@ export function RetailOverview() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+    setLoading(true);
+    const { curStart, curEnd, prevStart, prevEnd } = rangeWindows(range, customFrom, customTo);
+    const weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - 7);
     (async () => {
-      const [invRes, todayRes, weekRes] = await Promise.all([
+      const [invRes, curRes, prevRes, recentRes, weekRes] = await Promise.all([
         supabase
           .from("inventory")
           .select("id,name,price,cost_price,stock")
           .eq("user_id", user.id),
         supabase
           .from("orders")
-          .select("amount,cost,gross_profit,product,created_at")
+          .select("amount,cost,gross_profit,product,created_at,status")
           .eq("user_id", user.id)
-          .gte("created_at", startOfTodayISO()),
+          .gte("created_at", curStart.toISOString())
+          .lte("created_at", curEnd.toISOString()),
+        supabase
+          .from("orders")
+          .select("amount,cost,gross_profit,product,created_at,status")
+          .eq("user_id", user.id)
+          .gte("created_at", prevStart.toISOString())
+          .lte("created_at", prevEnd.toISOString()),
+        supabase
+          .from("orders")
+          .select("id,code,customer_name,amount,cost,gross_profit,product,created_at,status")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(3),
         supabase
           .from("orders")
           .select("amount,cost,gross_profit,product,created_at")
           .eq("user_id", user.id)
-          .gte("created_at", startOfDaysAgoISO(7)),
+          .gte("created_at", weekStart.toISOString()),
       ]);
       if (cancelled) return;
       setInv((invRes.data ?? []) as InvRow[]);
-      setTodayOrders((todayRes.data ?? []) as OrderRow[]);
+      setCurOrders((curRes.data ?? []) as OrderRow[]);
+      setPrevOrders((prevRes.data ?? []) as OrderRow[]);
+      setRecentOrders((recentRes.data ?? []) as OrderRow[]);
       setWeekOrders((weekRes.data ?? []) as OrderRow[]);
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, range, customFrom, customTo]);
 
   const stats = useMemo(() => {
-    const salesToday = todayOrders.reduce((s, o) => s + Number(o.amount ?? 0), 0);
-    const profitToday = todayOrders.reduce(
-      (s, o) => s + orderGrossProfit({ amount: o.amount, cost: o.cost, gross_profit: o.gross_profit }),
-      0,
-    );
-    let low = 0;
-    let restock = 0;
+    const sum = (rows: OrderRow[]) => {
+      let sales = 0;
+      let profit = 0;
+      for (const o of rows) {
+        sales += Number(o.amount ?? 0);
+        profit += orderGrossProfit({ amount: o.amount, cost: o.cost, gross_profit: o.gross_profit });
+      }
+      return { sales, profit, count: rows.length };
+    };
+    const cur = sum(curOrders);
+    const prev = sum(prevOrders);
+    let lowStockItems = 0;
     let losing = 0;
     for (const it of inv) {
       const stock = Number(it.stock ?? 0);
-      const thr = LOW_STOCK_THRESHOLD;
       const price = Number(it.price ?? 0);
       const cost = Number(it.cost_price ?? 0);
-      if (stock <= 0) restock++;
-      else if (stock <= thr) low++;
+      if (stock <= LOW_STOCK_THRESHOLD) lowStockItems++;
       if (price > 0 && cost > price) losing++;
     }
-    return { salesToday, profitToday, low, restock, losing };
-  }, [inv, todayOrders]);
+    return {
+      sales: cur.sales,
+      profit: cur.profit,
+      count: cur.count,
+      salesDelta: pctDelta(cur.sales, prev.sales),
+      profitDelta: pctDelta(cur.profit, prev.profit),
+      countDelta: pctDelta(cur.count, prev.count),
+      lowStockItems,
+      losing,
+    };
+  }, [inv, curOrders, prevOrders]);
 
   const suggestion = useMemo(() => {
     if (loading) return null;
@@ -148,29 +212,97 @@ export function RetailOverview() {
     return pool[tick % pool.length];
   }, [inv, weekOrders, loading, t, tick]);
 
+  const rangeLabel =
+    range === "week" ? t("this_week") : range === "month" ? t("this_month") : t("custom");
+
   return (
     <div className="px-4 pt-4 pb-6">
-      <h1 className="text-xl font-bold text-foreground">{t("ro_title")}</h1>
-      <p className="text-xs text-muted-foreground mt-0.5">{t("ro_subtitle")}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-foreground">{t("ro_title")}</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">{t("ro_subtitle")}</p>
+        </div>
+        <div className="relative shrink-0">
+          <button
+            onClick={() => setRangePickerOpen((v) => !v)}
+            className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-card border border-border/60 text-foreground shadow-[var(--shadow-card)] active:scale-95"
+          >
+            {rangeLabel}
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          {rangePickerOpen && (
+            <div className="absolute right-0 mt-1.5 z-20 rounded-xl border border-border/60 bg-card shadow-lg overflow-hidden min-w-[10rem]">
+              {(["week", "month", "custom"] as Range[]).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => {
+                    setRange(r);
+                    setRangePickerOpen(false);
+                  }}
+                  className={`w-full text-left text-xs px-3 py-2 hover:bg-muted ${
+                    range === r ? "text-primary font-semibold" : "text-foreground"
+                  }`}
+                >
+                  {r === "week" ? t("this_week") : r === "month" ? t("this_month") : t("custom")}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {range === "custom" && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <label className="text-[10px] text-muted-foreground">
+            {t("from_date")}
+            <input
+              type="date"
+              value={customFrom}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="mt-1 w-full rounded-xl bg-card border border-border/60 px-3 py-2 text-xs"
+            />
+          </label>
+          <label className="text-[10px] text-muted-foreground">
+            {t("to_date")}
+            <input
+              type="date"
+              value={customTo}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="mt-1 w-full rounded-xl bg-card border border-border/60 px-3 py-2 text-xs"
+            />
+          </label>
+        </div>
+      )}
 
       {/* First-run guidance for brand-new users; auto-hides when all 5 steps done. */}
       <div className="mt-4">
         <SetupChecklist />
       </div>
 
-      {/* 5 numbers */}
+      {/* 2x2 KPI grid with real trend vs previous period */}
       <div className="mt-4 grid grid-cols-2 gap-2.5">
-        <BigStat label={t("ro_sales_today")} value={loading ? "…" : money(stats.salesToday)} tone="primary" />
-        <BigStat
-          label={t("ro_profit_today")}
-          value={loading ? "…" : money(stats.profitToday)}
-          tone={stats.profitToday >= 0 ? "success" : "danger"}
+        <KpiCard
+          label={t("ro_total_sales")}
+          value={loading ? "…" : money(stats.sales)}
+          delta={loading ? null : stats.salesDelta}
         />
-      </div>
-      <div className="mt-2.5 grid grid-cols-3 gap-2.5">
-        <SmallStat label={t("ro_low_stock")} value={loading ? "…" : String(stats.low)} tone="warn" />
-        <SmallStat label={t("ro_needs_restock")} value={loading ? "…" : String(stats.restock)} tone="danger" />
-        <SmallStat label={t("ro_losing_money")} value={loading ? "…" : String(stats.losing)} tone="danger" />
+        <KpiCard
+          label={t("ro_total_profit")}
+          value={loading ? "…" : money(stats.profit)}
+          delta={loading ? null : stats.profitDelta}
+          tone={stats.profit < 0 ? "danger" : "success"}
+        />
+        <KpiCard
+          label={t("ro_orders_count")}
+          value={loading ? "…" : String(stats.count)}
+          delta={loading ? null : stats.countDelta}
+        />
+        <KpiCard
+          label={t("ro_low_stock_items")}
+          value={loading ? "…" : String(stats.lowStockItems)}
+          delta={null}
+          tone={stats.lowStockItems > 0 ? "warn" : "success"}
+        />
       </div>
 
       {/* Suggestion */}
@@ -182,6 +314,48 @@ export function RetailOverview() {
           <p className="mt-1 text-sm font-medium text-foreground leading-snug">{suggestion.text}</p>
         </div>
       )}
+
+      {/* Recent Orders */}
+      <div className="mt-4 rounded-2xl border border-border/60 bg-card p-3.5 shadow-[var(--shadow-card)]">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-foreground">{t("ro_recent_orders")}</p>
+          <Link to="/orders" className="text-xs font-semibold text-primary">
+            {t("ro_view_all")}
+          </Link>
+        </div>
+        <div className="mt-2 divide-y divide-border/60">
+          {loading ? (
+            <p className="py-6 text-center text-xs text-muted-foreground">…</p>
+          ) : recentOrders.length === 0 ? (
+            <p className="py-6 text-center text-xs text-muted-foreground">{t("ro_no_orders")}</p>
+          ) : (
+            recentOrders.map((o) => (
+              <Link
+                key={o.id}
+                to="/orders/$orderId"
+                params={{ orderId: o.id! }}
+                className="flex items-center gap-3 py-2.5 active:bg-muted/50 rounded-lg -mx-1 px-1"
+              >
+                <span className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
+                  {(o.customer_name ?? "?").slice(0, 1).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {o.customer_name || "—"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate">{o.code || ""}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <StatusPill status={o.status ?? ""} />
+                  <p className="mt-0.5 text-sm font-bold text-foreground">
+                    {money(Number(o.amount ?? 0))}
+                  </p>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+      </div>
 
       {/* Quick actions */}
       <div className="mt-5 grid grid-cols-2 gap-3">
@@ -202,44 +376,63 @@ export function RetailOverview() {
   );
 }
 
-function BigStat({
+function KpiCard({
   label,
   value,
-  tone,
+  delta,
+  tone = "primary",
 }: {
   label: string;
   value: string;
-  tone: "primary" | "success" | "danger";
+  delta: number | null;
+  tone?: "primary" | "success" | "danger" | "warn";
 }) {
   const toneClass =
     tone === "success"
       ? "text-emerald-600"
       : tone === "danger"
         ? "text-red-600"
-        : "text-primary";
+        : tone === "warn"
+          ? "text-amber-600"
+          : "text-foreground";
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-3.5 shadow-[var(--shadow-card)]">
-      <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">{label}</p>
-      <p className={`mt-1.5 text-xl font-bold ${toneClass}`}>{value}</p>
+      <p className="text-[11px] text-muted-foreground font-medium truncate">{label}</p>
+      <p className={`mt-1 text-xl font-bold ${toneClass}`}>{value}</p>
+      <TrendPill delta={delta} />
     </div>
   );
 }
 
-function SmallStat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: "warn" | "danger";
-}) {
-  const toneClass = tone === "danger" ? "text-red-600" : "text-amber-600";
+function TrendPill({ delta }: { delta: number | null }) {
+  if (delta === null || !isFinite(delta)) {
+    return <p className="mt-1 text-[11px] text-muted-foreground">—</p>;
+  }
+  const up = delta >= 0;
+  const Icon = up ? TrendingUp : TrendingDown;
+  const color = up ? "text-emerald-600" : "text-red-600";
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-2.5 shadow-[var(--shadow-card)]">
-      <p className={`text-lg font-bold ${toneClass}`}>{value}</p>
-      <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{label}</p>
-    </div>
+    <p className={`mt-1 flex items-center gap-1 text-[11px] font-semibold ${color}`}>
+      <Icon className="h-3 w-3" />
+      {`${up ? "+" : ""}${delta.toFixed(1)}%`}
+    </p>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const s = (status || "").toLowerCase();
+  const cls =
+    s === "paid"
+      ? "bg-emerald-100 text-emerald-700"
+      : s === "unpaid"
+        ? "bg-red-100 text-red-600"
+        : s === "pending"
+          ? "bg-amber-100 text-amber-700"
+          : "bg-muted text-muted-foreground";
+  return (
+    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${cls}`}>
+      {status || "—"}
+    </span>
   );
 }
 
