@@ -4809,6 +4809,7 @@ const dict = {
     profit_net: "净利润",
     profit_note: "仅计算已付款订单，TikTok Shop 费用和广告花费还没算进去。",
     profit_empty: "此时段没有已付款订单。",
+    profit_margin_hint: "每 RM 你能留下多少",
   },
 } as const;
 
