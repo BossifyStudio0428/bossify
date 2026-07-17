@@ -472,7 +472,7 @@ function ProfilePage() {
         ))}
       </section>
 
-      {sections.map((sec) => (
+      {sections.filter((sec) => sec.items.length > 0).map((sec) => (
         <section key={sec.key} className="space-y-2">
           <div className="flex items-center gap-2 px-1">
             <span className="text-base">{sec.emoji}</span>
