@@ -17,6 +17,7 @@ const Schema = z.object({
   planType: z.enum([
     "starter",
     "pro",
+    "business",
     "lifetime",
     "team_starter",
     "team_pro",
