@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, BarChart3, TrendingUp, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, BarChart3, TrendingUp, Package, FileText, Users, Truck, ClipboardCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type OrderRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +12,12 @@ import {
   exportSalesReportPDF,
   exportProfitReportPDF,
   exportStockReportPDF,
+  exportFinancialReportPDF,
+  exportCustomerStatementPDF,
+  exportSupplierReportPDF,
+  exportOrderReconciliationPDF,
   type StockInvRow,
+  type SupplierBlock,
 } from "@/lib/pdf";
 import { REPORTS_HUB_MODE } from "@/lib/featureFlags";
 
@@ -36,8 +41,12 @@ function ReportsHub() {
   const [range, setRange] = useState<Range>("month");
   const [from, setFrom] = useState<string>(() => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   const [to, setTo] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [busy, setBusy] = useState<null | "sales" | "profit" | "stock">(null);
+  type OrderExt = OrderRow & { payment_method?: string | null; order_source?: string | null };
+  const [orders, setOrders] = useState<OrderExt[]>([]);
+  const [busy, setBusy] = useState<null | "sales" | "profit" | "stock" | "financial" | "customer" | "supplier" | "recon">(null);
+  const [pickCustomer, setPickCustomer] = useState(false);
+  const [customerList, setCustomerList] = useState<Array<{ id: string; name: string; phone: string | null; total_orders: number; total_spent: number; last_order_at: string | null }>>([]);
+  const [customerQuery, setCustomerQuery] = useState("");
 
   useEffect(() => {
     if (!user?.id) return;
@@ -45,10 +54,10 @@ function ReportsHub() {
     (async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,code,customer_name,product,quantity,amount,cost,gross_profit,status,created_at")
+        .select("id,code,customer_name,phone,product,quantity,amount,cost,gross_profit,status,created_at,payment_method,order_source")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      if (!cancelled) setOrders((data ?? []) as OrderRow[]);
+      if (!cancelled) setOrders((data ?? []) as OrderExt[]);
     })();
     return () => { cancelled = true; };
   }, [user?.id]);
