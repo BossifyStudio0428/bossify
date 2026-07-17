@@ -6,14 +6,6 @@ import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
 import { toast } from "sonner";
-import {
-  DEFAULT_ORDER_TPL,
-  DEFAULT_REMINDER_TPL,
-  getOrderTemplate,
-  getReminderTemplate,
-  isBuiltInOrderTpl,
-  isBuiltInReminderTpl,
-} from "@/lib/wa";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -29,7 +21,6 @@ import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType"
 import { RETAIL_ONLY_MODE, HIDE_BOOKING_MENU, HIDE_ORDER_FORM, HIDE_TEAM_PLAN, HIDE_ANALYTICS_MENU } from "@/lib/featureFlags";
 import { VISIBLE_PLATFORMS } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
-import { isNativeBillingAvailable } from "@/lib/billing";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
