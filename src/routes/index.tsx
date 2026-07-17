@@ -32,6 +32,8 @@ import { TeamBanner } from "@/components/TeamBanner";
 import { SuspendedTeamBanner } from "@/components/SuspendedTeamBanner";
 import { PendingInviteBanner } from "@/components/PendingInviteBanner";
 import { orderGrossProfit } from "@/lib/orderMath";
+import { RETAIL_ONLY_MODE } from "@/lib/featureFlags";
+import { RetailOverview } from "@/components/RetailOverview";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -42,6 +44,10 @@ const statusStyles: Record<string, string> = {
 };
 
 function Index() {
+  // Retail-only pivot: replace the legacy multi-vertical dashboard with
+  // the focused Overview screen. Old code paths kept intact so flipping
+  // RETAIL_ONLY_MODE off restores the previous home.
+  if (RETAIL_ONLY_MODE) return <RetailOverview />;
   const { user } = useAuth();
   const { t, lang } = useI18n();
   const { type: bizType, subType } = useBusinessType();

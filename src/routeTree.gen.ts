@@ -16,6 +16,7 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as TablesRouteImport } from './routes/tables'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as StockTakeRouteImport } from './routes/stock-take'
+import { Route as StockRouteImport } from './routes/stock'
 import { Route as SplashRouteImport } from './routes/splash'
 import { Route as ServicesSummaryRouteImport } from './routes/services-summary'
 import { Route as ServicesRouteImport } from './routes/services'
@@ -40,6 +41,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NotificationSettingsRouteImport } from './routes/notification-settings'
 import { Route as NewOrderRouteImport } from './routes/new-order'
 import { Route as NewBookingRouteImport } from './routes/new-booking'
+import { Route as MoreRouteImport } from './routes/more'
 import { Route as LoanCalculatorRouteImport } from './routes/loan-calculator'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as LanguageRouteImport } from './routes/language'
@@ -61,6 +63,7 @@ import { Route as BookingsRouteImport } from './routes/bookings'
 import { Route as BookingSettingsRouteImport } from './routes/booking-settings'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ViewingIdRouteImport } from './routes/viewing.$id'
@@ -126,6 +129,11 @@ const SuppliersRoute = SuppliersRouteImport.update({
 const StockTakeRoute = StockTakeRouteImport.update({
   id: '/stock-take',
   path: '/stock-take',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StockRoute = StockRouteImport.update({
+  id: '/stock',
+  path: '/stock',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SplashRoute = SplashRouteImport.update({
@@ -248,6 +256,11 @@ const NewBookingRoute = NewBookingRouteImport.update({
   path: '/new-booking',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MoreRoute = MoreRouteImport.update({
+  id: '/more',
+  path: '/more',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoanCalculatorRoute = LoanCalculatorRouteImport.update({
   id: '/loan-calculator',
   path: '/loan-calculator',
@@ -351,6 +364,11 @@ const AuthRoute = AuthRouteImport.update({
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlertsRoute = AlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -514,6 +532,7 @@ const ApiPublicOauthTiktokCallbackRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/alerts': typeof AlertsRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/booking-settings': typeof BookingSettingsRoute
@@ -535,6 +554,7 @@ export interface FileRoutesByFullPath {
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
+  '/more': typeof MoreRoute
   '/new-booking': typeof NewBookingRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
@@ -559,6 +579,7 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
+  '/stock': typeof StockRoute
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
   '/tables': typeof TablesRoute
@@ -599,6 +620,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/alerts': typeof AlertsRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/booking-settings': typeof BookingSettingsRoute
@@ -620,6 +642,7 @@ export interface FileRoutesByTo {
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
+  '/more': typeof MoreRoute
   '/new-booking': typeof NewBookingRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
@@ -644,6 +667,7 @@ export interface FileRoutesByTo {
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
+  '/stock': typeof StockRoute
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
   '/tables': typeof TablesRoute
@@ -685,6 +709,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/alerts': typeof AlertsRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/booking-settings': typeof BookingSettingsRoute
@@ -706,6 +731,7 @@ export interface FileRoutesById {
   '/language': typeof LanguageRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
+  '/more': typeof MoreRoute
   '/new-booking': typeof NewBookingRoute
   '/new-order': typeof NewOrderRoute
   '/notification-settings': typeof NotificationSettingsRoute
@@ -730,6 +756,7 @@ export interface FileRoutesById {
   '/services': typeof ServicesRoute
   '/services-summary': typeof ServicesSummaryRoute
   '/splash': typeof SplashRoute
+  '/stock': typeof StockRoute
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
   '/tables': typeof TablesRoute
@@ -772,6 +799,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/alerts'
     | '/analytics'
     | '/auth'
     | '/booking-settings'
@@ -793,6 +821,7 @@ export interface FileRouteTypes {
     | '/language'
     | '/listings'
     | '/loan-calculator'
+    | '/more'
     | '/new-booking'
     | '/new-order'
     | '/notification-settings'
@@ -817,6 +846,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/services-summary'
     | '/splash'
+    | '/stock'
     | '/stock-take'
     | '/suppliers'
     | '/tables'
@@ -857,6 +887,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/alerts'
     | '/analytics'
     | '/auth'
     | '/booking-settings'
@@ -878,6 +909,7 @@ export interface FileRouteTypes {
     | '/language'
     | '/listings'
     | '/loan-calculator'
+    | '/more'
     | '/new-booking'
     | '/new-order'
     | '/notification-settings'
@@ -902,6 +934,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/services-summary'
     | '/splash'
+    | '/stock'
     | '/stock-take'
     | '/suppliers'
     | '/tables'
@@ -942,6 +975,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/alerts'
     | '/analytics'
     | '/auth'
     | '/booking-settings'
@@ -963,6 +997,7 @@ export interface FileRouteTypes {
     | '/language'
     | '/listings'
     | '/loan-calculator'
+    | '/more'
     | '/new-booking'
     | '/new-order'
     | '/notification-settings'
@@ -987,6 +1022,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/services-summary'
     | '/splash'
+    | '/stock'
     | '/stock-take'
     | '/suppliers'
     | '/tables'
@@ -1028,6 +1064,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AlertsRoute: typeof AlertsRoute
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
   BookingSettingsRoute: typeof BookingSettingsRoute
@@ -1049,6 +1086,7 @@ export interface RootRouteChildren {
   LanguageRoute: typeof LanguageRoute
   ListingsRoute: typeof ListingsRoute
   LoanCalculatorRoute: typeof LoanCalculatorRoute
+  MoreRoute: typeof MoreRoute
   NewBookingRoute: typeof NewBookingRoute
   NewOrderRoute: typeof NewOrderRoute
   NotificationSettingsRoute: typeof NotificationSettingsRoute
@@ -1073,6 +1111,7 @@ export interface RootRouteChildren {
   ServicesRoute: typeof ServicesRoute
   ServicesSummaryRoute: typeof ServicesSummaryRoute
   SplashRoute: typeof SplashRoute
+  StockRoute: typeof StockRoute
   StockTakeRoute: typeof StockTakeRoute
   SuppliersRoute: typeof SuppliersRoute
   TablesRoute: typeof TablesRoute
@@ -1154,6 +1193,13 @@ declare module '@tanstack/react-router' {
       path: '/stock-take'
       fullPath: '/stock-take'
       preLoaderRoute: typeof StockTakeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stock': {
+      id: '/stock'
+      path: '/stock'
+      fullPath: '/stock'
+      preLoaderRoute: typeof StockRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/splash': {
@@ -1324,6 +1370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewBookingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/more': {
+      id: '/more'
+      path: '/more'
+      fullPath: '/more'
+      preLoaderRoute: typeof MoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/loan-calculator': {
       id: '/loan-calculator'
       path: '/loan-calculator'
@@ -1469,6 +1522,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alerts': {
+      id: '/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AlertsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -1743,6 +1803,7 @@ const TeamRouteWithChildren = TeamRoute._addFileChildren(TeamRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AlertsRoute: AlertsRoute,
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
   BookingSettingsRoute: BookingSettingsRoute,
@@ -1764,6 +1825,7 @@ const rootRouteChildren: RootRouteChildren = {
   LanguageRoute: LanguageRoute,
   ListingsRoute: ListingsRoute,
   LoanCalculatorRoute: LoanCalculatorRoute,
+  MoreRoute: MoreRoute,
   NewBookingRoute: NewBookingRoute,
   NewOrderRoute: NewOrderRoute,
   NotificationSettingsRoute: NotificationSettingsRoute,
@@ -1788,6 +1850,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServicesRoute: ServicesRoute,
   ServicesSummaryRoute: ServicesSummaryRoute,
   SplashRoute: SplashRoute,
+  StockRoute: StockRoute,
   StockTakeRoute: StockTakeRoute,
   SuppliersRoute: SuppliersRoute,
   TablesRoute: TablesRoute,
