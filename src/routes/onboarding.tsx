@@ -264,6 +264,9 @@ function Welcome({ onStart }: { onStart: () => void }) {
       <p className="mt-2 text-sm italic text-muted-foreground">
         {t("slogan")}
       </p>
+      <p className="mt-3 text-[13px] text-muted-foreground px-4 leading-relaxed">
+        {t("welcome_sub")}
+      </p>
       <div className="mt-6 flex gap-2">
         <span className="px-4 py-1.5 rounded-full bg-[#F3F0FF] text-primary text-xs font-medium">
           {t("takes_1min")}
