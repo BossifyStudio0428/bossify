@@ -8,7 +8,9 @@ import { sendPushToSelf } from "@/lib/sendPush";
 import { registerPushForUser } from "@/lib/pushRegister";
 import { registerWebPush, isWebPushSupported } from "@/lib/webPush";
 import { loadPrefs } from "@/lib/notifPrefs";
+import { savePrefs, DEFAULT_PREFS, type NotifPrefs } from "@/lib/notifPrefs";
 import { rescheduleAll } from "@/lib/notifSchedule";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -33,6 +35,20 @@ function NotifSettingsPage() {
   const [sending, setSending] = useState(false);
   const [webPermission, setWebPermission] = useState<NotificationPermission | "unsupported">("unsupported");
   const [isNativeApp, setIsNativeApp] = useState(false);
+  const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS);
+
+  const togglePref = async (key: keyof NotifPrefs, value: boolean) => {
+    if (!user) return;
+    setPrefs((p) => ({ ...p, [key]: value }));
+    try {
+      await savePrefs(user.id, { [key]: value } as Partial<NotifPrefs>);
+      await rescheduleAll(user.id).catch(() => undefined);
+    } catch {
+      // revert
+      setPrefs((p) => ({ ...p, [key]: !value }));
+      toast.error(t("notif_send_failed") + "save");
+    }
+  };
 
   // Re-check native notification permission status (e.g. after returning from
   // the system settings page). Updates local `granted` state + localStorage
@@ -151,6 +167,9 @@ function NotifSettingsPage() {
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => setIsAdmin(!!data?.is_admin));
+
+    // Load prefs for the toggles
+    loadPrefs(user.id).then(setPrefs).catch(() => setPrefs(DEFAULT_PREFS));
   }, [user]);
 
   const openSysSettings = async () => {
