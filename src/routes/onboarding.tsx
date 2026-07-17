@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
 import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
+import { RETAIL_ONLY_MODE } from "@/lib/featureFlags";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
 
@@ -88,6 +90,7 @@ function Onboarding() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { setType } = useBusinessType();
   // step: 0 = welcome, 1..6 = questions, 7 = complete
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -147,8 +150,19 @@ function Onboarding() {
     if (!user || saving) return;
     setSaving(true);
     safeLocalStorage.setItem(`${ONBOARDING_DONE_KEY}:${user.id}`, "1");
-    // Always direct users to the dedicated business-type picker after onboarding
-    navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
+    // Retail-only pivot: skip the business-type picker entirely and set
+    // retail automatically. Prior behaviour (multi-type picker) is
+    // restored when RETAIL_ONLY_MODE is flipped off.
+    if (RETAIL_ONLY_MODE) {
+      try {
+        await setType("retail", null);
+      } catch (e) {
+        console.error("onboarding auto-set retail failed", e);
+      }
+      navigate({ to: "/payment-setup", replace: true });
+    } else {
+      navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
+    }
     try {
       const payload: Record<string, string | null> = {
         user_id: user.id,

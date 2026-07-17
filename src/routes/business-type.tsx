@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, FNB_SUB_TYPES, type BizType, type FnbSubType } from "@/lib/businessType";
+import { RETAIL_ONLY_MODE } from "@/lib/featureFlags";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -30,10 +31,34 @@ function BusinessTypePage() {
   const navigate = useNavigate();
   const { from } = useSearch({ from: "/business-type" });
   const { type, subType, setType } = useBusinessType();
-  const [selected, setSelected] = useState<BizType | null>(type);
+  const [selected, setSelected] = useState<BizType | null>(RETAIL_ONLY_MODE ? "retail" : type);
   const [selectedSub, setSelectedSub] = useState<FnbSubType | null>(subType);
   const [saving, setSaving] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // Retail-only pivot: auto-persist retail and skip this screen.
+  // Existing non-Retail accounts are also silently coerced to retail
+  // here (their old DB data is preserved on other tables).
+  useEffect(() => {
+    if (!RETAIL_ONLY_MODE) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await setType("retail", null);
+      } catch (e) {
+        console.error("auto-set retail failed", e);
+      }
+      if (cancelled) return;
+      if (from === "profile") navigate({ to: "/profile", replace: true });
+      else navigate({ to: "/payment-setup", replace: true });
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const visibleTypes = RETAIL_ONLY_MODE
+    ? BIZ_TYPES.filter((b) => b.key === "retail")
+    : BIZ_TYPES;
 
   const doSave = async () => {
     if (!selected || saving) return;
@@ -72,7 +97,7 @@ function BusinessTypePage() {
         <p className="text-sm text-muted-foreground mt-2">{t("business_type_sub")}</p>
 
         <div className="grid grid-cols-2 gap-3 mt-8">
-          {BIZ_TYPES.map((b) => {
+          {visibleTypes.map((b) => {
             const active = selected === b.key;
             return (
               <button

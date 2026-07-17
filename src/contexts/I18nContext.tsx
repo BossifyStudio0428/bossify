@@ -1551,6 +1551,9 @@ const dict = {
     ds_zones_desc: "Beyond the last zone = unavailable",
     ds_up_to_km: "Up to (km)",
     ds_fee_rm: "Fee (RM)",
+    retail_pivot_title: "Bossify is now Retail-only",
+    retail_pivot_body: "We've refocused Bossify on retail and online sellers (TikTok Shop, etc.). Your previous data is safely stored and nothing has been deleted — if you need help restoring or exporting it, please contact support.",
+    retail_pivot_ok: "Got it",
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
@@ -3073,6 +3076,9 @@ const dict = {
     ds_zones_desc: "Melebihi zon terakhir = tidak tersedia",
     ds_up_to_km: "Sehingga (km)",
     ds_fee_rm: "Cajaran (RM)",
+    retail_pivot_title: "Bossify kini khas untuk Runcit sahaja",
+    retail_pivot_body: "Kami telah menumpukan Bossify kepada peniaga runcit dan dalam talian (TikTok Shop, dll.). Data lama anda masih disimpan dengan selamat dan tidak dipadam — sila hubungi sokongan jika anda perlukan bantuan.",
+    retail_pivot_ok: "Faham",
   },
   zh: {
     continue: "继续", back: "返回", save: "保存", cancel: "取消", delete: "删除",
@@ -4594,6 +4600,9 @@ const dict = {
     ds_zones_desc: "超出最远范围 = 不可配送",
     ds_up_to_km: "距离上限(KM)",
     ds_fee_rm: "费用(RM)",
+    retail_pivot_title: "Bossify 已改为零售专用",
+    retail_pivot_body: "我们已将 Bossify 专注于零售和线上卖家（TikTok Shop 等）。您之前的数据仍安全保存，未被删除 — 如需协助恢复或导出，请联系客服。",
+    retail_pivot_ok: "知道了",
   },
 } as const;
 

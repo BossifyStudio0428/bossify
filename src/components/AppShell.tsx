@@ -20,6 +20,8 @@ import { registerPushForUser } from "@/lib/pushRegister";
 import { registerWebPush, isWebPushSupported } from "@/lib/webPush";
 import { BusinessTypeProvider, useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey, hasInventory } from "@/lib/businessType";
+import { RETAIL_ONLY_MODE, isArchivedRoute } from "@/lib/featureFlags";
+import { RetailPivotNotice } from "@/components/RetailPivotNotice";
 
 // Session-level flag — true once we've shown the cold-start splash this app
 // launch. We use sessionStorage so the splash flow survives client-side
@@ -266,10 +268,17 @@ function ShellInner() {
       if (completedOnboarding) {
         if (needsOnboarding) setNeedsOnboarding(false);
         if (isOnboardingRoute) navigate({ to: "/", replace: true });
-        // Force business-type selection once onboarding is done if profile
-        // hasn't picked one yet. Don't redirect away from the page itself.
-        if (!bizLoading && !bizType && !isBusinessTypeRoute && !isSetupFlowRoute) {
+        // Retail-only pivot: never force the business-type picker.
+        // Legacy behaviour (multi-type accounts) is restored when
+        // RETAIL_ONLY_MODE is flipped off.
+        if (!RETAIL_ONLY_MODE && !bizLoading && !bizType && !isBusinessTypeRoute && !isSetupFlowRoute) {
           navigate({ to: "/business-type", search: { from: "onboarding" }, replace: true });
+        }
+        // Bounce away from archived (non-Retail) routes if a user
+        // navigates or bookmarks directly to one.
+        if (RETAIL_ONLY_MODE && isArchivedRoute(locationPathname)) {
+          navigate({ to: "/", replace: true });
+          return;
         }
         return;
       }
@@ -350,6 +359,7 @@ function ShellInner() {
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
       <div className="relative w-full max-w-[390px] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl min-h-screen bg-background flex flex-col">
+        <RetailPivotNotice />
         {/* Top header with Bossify icon */}
         <header
           className="sticky top-0 z-30 bg-background/90 backdrop-blur border-b border-border/40"

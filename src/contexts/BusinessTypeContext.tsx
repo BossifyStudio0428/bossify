@@ -2,10 +2,17 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { normalizeBizType, normalizeFnbSubType, type BizType, type FnbSubType } from "@/lib/businessType";
+import { RETAIL_ONLY_MODE } from "@/lib/featureFlags";
 
 type Ctx = {
   type: BizType | null;
   subType: FnbSubType | null;
+  /**
+   * Raw business_type from the profile row (unfiltered by
+   * RETAIL_ONLY_MODE). Used only to detect legacy non-Retail users so
+   * we can show the one-time pivot notice. UI should read `type`.
+   */
+  storedType: BizType | null;
   loading: boolean;
   setType: (t: BizType, sub?: FnbSubType | null) => Promise<void>;
   refresh: () => Promise<void>;
@@ -17,12 +24,14 @@ export function BusinessTypeProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [type, setTypeState] = useState<BizType | null>(null);
   const [subType, setSubTypeState] = useState<FnbSubType | null>(null);
+  const [storedType, setStoredType] = useState<BizType | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
     if (!user) {
       setTypeState(null);
       setSubTypeState(null);
+      setStoredType(null);
       setLoading(false);
       return;
     }
@@ -46,8 +55,16 @@ export function BusinessTypeProvider({ children }: { children: ReactNode }) {
     const bt = (data as any)?.business_type ?? null;
     const sub = (data as any)?.business_sub_type ?? null;
     const normBt = normalizeBizType(bt) ?? normalizeBizType(cat);
-    setTypeState(normBt);
-    setSubTypeState(normBt === "fnb" ? (normalizeFnbSubType(sub) ?? "general") : null);
+    setStoredType(normBt);
+    if (RETAIL_ONLY_MODE) {
+      // Force Retail for everyone while the pivot is active. Their real
+      // business_type stays in the DB untouched.
+      setTypeState("retail");
+      setSubTypeState(null);
+    } else {
+      setTypeState(normBt);
+      setSubTypeState(normBt === "fnb" ? (normalizeFnbSubType(sub) ?? "general") : null);
+    }
     setLoading(false);
   };
 
@@ -55,13 +72,16 @@ export function BusinessTypeProvider({ children }: { children: ReactNode }) {
 
   const setType = async (t: BizType, sub: FnbSubType | null = null) => {
     if (!user) return;
-    const effectiveSub = t === "fnb" ? (sub ?? "general") : null;
-    setTypeState(t);
+    // While RETAIL_ONLY_MODE is on, any attempt to switch business type
+    // is coerced to retail. This keeps legacy code paths safe.
+    const effT: BizType = RETAIL_ONLY_MODE ? "retail" : t;
+    const effectiveSub = RETAIL_ONLY_MODE ? null : (effT === "fnb" ? (sub ?? "general") : null);
+    setTypeState(effT);
     setSubTypeState(effectiveSub);
     let { error } = await supabase
       .from("profiles")
       .upsert(
-        { id: user.id, business_category: t, business_type: t, business_sub_type: effectiveSub } as any,
+        { id: user.id, business_category: effT, business_type: effT, business_sub_type: effectiveSub } as any,
         { onConflict: "id" },
       );
     if (error) {
@@ -71,7 +91,7 @@ export function BusinessTypeProvider({ children }: { children: ReactNode }) {
       const fb = await supabase
         .from("profiles")
         .upsert(
-          { id: user.id, business_category: t, business_type: t } as any,
+          { id: user.id, business_category: effT, business_type: effT } as any,
           { onConflict: "id" },
         );
       error = fb.error;
@@ -84,7 +104,7 @@ export function BusinessTypeProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <BusinessTypeContext.Provider value={{ type, subType, loading, setType, refresh }}>
+    <BusinessTypeContext.Provider value={{ type, subType, storedType, loading, setType, refresh }}>
       {children}
     </BusinessTypeContext.Provider>
   );
