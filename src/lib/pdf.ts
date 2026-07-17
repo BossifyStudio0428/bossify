@@ -655,8 +655,8 @@ const NET_PROFIT_FOOTNOTE: Record<Lang, string> = {
   zh: "备注：净利润不包括平台手续费、广告支出及营运开销（目前系统未记录）。",
 };
 
-function drawFootnote(doc: jsPDF, lang: Lang, y: number): number {
-  const text = NET_PROFIT_FOOTNOTE[lang];
+function drawFootnote(doc: jsPDF, lang: Lang, y: number, customText?: string): number {
+  const text = customText ?? NET_PROFIT_FOOTNOTE[lang];
   doc.setFont(CJK_FONT_FAMILY, "italic");
   doc.setFontSize(7.5);
   doc.setTextColor(...MUTED);
@@ -1110,18 +1110,7 @@ export async function exportOrderReconciliationPDF(d: ReconReportData): Promise<
       warnRowIndexes: warnRows,
       fontSize: 8,
     }) + 4;
-    y = drawFootnote(doc, d.lang, y);
-    // overwrite the last footnote text (net-profit) with age footnote — redraw
-    doc.setFont(CJK_FONT_FAMILY, "italic");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...MUTED);
-    const lines = doc.splitTextToSize(r.ageFootnote, CONTENT_W);
-    // erase area — draw white rect then re-draw text
-    doc.setFillColor(255, 255, 255);
-    doc.rect(MARGIN_L, y - 8, CONTENT_W, 10, "F");
-    doc.text(lines, MARGIN_L, y - 4);
-    doc.setFont(CJK_FONT_FAMILY, "normal");
-    doc.setTextColor(...INK_2);
+    drawFootnote(doc, d.lang, y, r.ageFootnote);
   } else {
     doc.setFont(CJK_FONT_FAMILY, "italic");
     doc.setFontSize(9);
