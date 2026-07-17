@@ -3141,7 +3141,6 @@ const dict = {
     ro_sug_losing: "📉 {name} sedang rugi — naikkan harga atau berhenti jual",
     ro_sug_out: "🚨 {name} kehabisan stok — isi semula sekarang",
     ro_sug_low: "⚠️ {name} stok hampir habis — isi semula hari ini",
-    ro_sug_low: "⚠️ {name} stok hampir habis — isi semula hari ini",
     ro_sug_top: "🔥 {name} laris minggu ini",
     ro_sug_ok: "✅ Semua nampak baik hari ini",
     stock_title: "Stok",
