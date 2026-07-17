@@ -311,6 +311,24 @@ function CustomersPage() {
     return 0;
   });
   const dateFilterActive = !!(dateFrom || dateTo);
+  // Top 20% spend threshold across the currently visible retail list (spent > 0 only).
+  const topSpenderThreshold = (() => {
+    if (bizType !== "retail") return Number.POSITIVE_INFINITY;
+    const spends = visible.map((c) => Number(c.total_spent ?? 0)).filter((v) => v > 0).sort((a, b) => b - a);
+    if (spends.length === 0) return Number.POSITIVE_INFINITY;
+    const idx = Math.max(0, Math.ceil(spends.length * 0.2) - 1);
+    return spends[idx];
+  })();
+  const retailBadge = (c: CustomerRow): { label: string; cls: string } | null => {
+    if (bizType !== "retail") return null;
+    const spent = Number(c.total_spent ?? 0);
+    if (spent > 0 && spent >= topSpenderThreshold) {
+      return { label: t("customer_top_spender"), cls: "bg-amber-100 text-amber-700" };
+    }
+    if ((c.total_orders ?? 0) >= 2) return { label: t("customer_repeat"), cls: "bg-primary/10 text-primary" };
+    if ((c.total_orders ?? 0) === 1) return { label: t("customer_new"), cls: "bg-emerald-100 text-emerald-700" };
+    return null;
+  };
   const dateLabel = lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date";
   const todayStr = () => new Date().toISOString().slice(0, 10);
   const daysAgoStr = (n: number) => {
