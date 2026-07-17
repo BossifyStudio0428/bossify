@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Package, Layers, Bell, MoreHorizontal, Plus, TrendingUp, TrendingDown, ChevronDown } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -357,14 +357,6 @@ export function RetailOverview() {
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <QuickCard to="/inventory" icon={Package} label={t("ro_open_products")} />
-        <QuickCard to="/stock" icon={Layers} label={t("ro_open_stock")} />
-        <QuickCard to="/alerts" icon={Bell} label={t("ro_open_alerts")} />
-        <QuickCard to="/more" icon={MoreHorizontal} label={t("ro_open_more")} />
-      </div>
-
       <Link
         to="/new-order"
         className="mt-5 flex items-center justify-center gap-2 h-12 rounded-2xl bg-primary text-primary-foreground font-semibold active:scale-[0.98]"
@@ -433,27 +425,5 @@ function StatusPill({ status }: { status: string }) {
     <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${cls}`}>
       {status || "—"}
     </span>
-  );
-}
-
-function QuickCard({
-  to,
-  icon: Icon,
-  label,
-}: {
-  to: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}) {
-  return (
-    <Link
-      to={to}
-      className="flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3.5 shadow-[var(--shadow-card)] active:scale-[0.98]"
-    >
-      <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-        <Icon className="h-5 w-5" />
-      </span>
-      <span className="text-sm font-semibold text-foreground">{label}</span>
-    </Link>
   );
 }
