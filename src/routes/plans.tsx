@@ -678,12 +678,23 @@ function PlansPage() {
 
       {/* Billing toggle */}
       <div className="flex p-1 bg-muted rounded-2xl">
-        {(["monthly", "annual"] as const).map((b) => (
-          <button key={b} onClick={() => setBilling(b)}
-            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition ${billing === b ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}>
-            {b === "monthly" ? t("monthly") : <>{t("annual")} <span className="text-[10px] text-emerald-600 font-bold ml-1">{t("save_30")}</span></>}
-          </button>
-        ))}
+        <button
+          onClick={() => setBilling("monthly")}
+          className={`flex-1 py-2 rounded-xl text-sm font-semibold transition ${billing === "monthly" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}
+        >
+          {t("monthly")}
+        </button>
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          className="flex-1 py-2 rounded-xl text-sm font-semibold text-muted-foreground/60 cursor-not-allowed flex items-center justify-center gap-1.5"
+        >
+          {t("annual")}
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-muted-foreground/10 text-muted-foreground">
+            {t("coming_soon")}
+          </span>
+        </button>
       </div>
 
       {scope === "individual" && (<>
