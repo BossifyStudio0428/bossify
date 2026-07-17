@@ -254,6 +254,31 @@ export function RetailOverview() {
   const rangeLabel =
     range === "week" ? t("this_week") : range === "month" ? t("this_month") : t("custom");
 
+  const remind = (o: OrderRow) => {
+    if (!o.phone) {
+      alert(t("no_phone_for_wa"));
+      return;
+    }
+    const msg = renderTemplate(
+      getReminderTemplate(lang, bizType, customReminderTpl),
+      {
+        customer_name: o.customer_name ?? "",
+        business_name: waProfile.businessName,
+        code: o.code ?? "",
+        product: o.product ?? "",
+        quantity: Number(o.quantity ?? 1),
+        amount: Number(o.amount ?? 0).toFixed(2),
+        status: o.status ?? "",
+        days_ago: daysSince(o.created_at),
+        payment_details: waProfile.paymentDetails,
+      },
+      lang,
+    );
+    const cleaned = (o.phone || "").replace(/[^0-9]/g, "");
+    const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(stripEmoji(msg))}`;
+    window.open(url, "_blank");
+  };
+
   return (
     <div className="px-4 pt-4 pb-6">
       <div className="flex items-start justify-between gap-3">
@@ -390,6 +415,19 @@ export function RetailOverview() {
                     {money(Number(o.amount ?? 0))}
                   </p>
                 </div>
+                {o.status === "Unpaid" && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      remind(o);
+                    }}
+                    aria-label={t("remind")}
+                    className="ml-1 h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-100 active:scale-95 shrink-0"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </button>
+                )}
               </Link>
             ))
           )}
