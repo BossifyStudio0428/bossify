@@ -18,6 +18,7 @@ import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { orderCost } from "@/lib/orderMath";
+import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
@@ -601,7 +602,7 @@ function OrdersPage() {
       </header>
 
       {/* Compact Public Order Form */}
-      {ofCode && (
+      {!HIDE_ORDER_FORM && ofCode && (
         <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3.5 space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
