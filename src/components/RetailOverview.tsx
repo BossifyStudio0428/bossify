@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Package, Layers, Bell, MoreHorizontal, Plus, TrendingUp, TrendingDown, ChevronDown } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
