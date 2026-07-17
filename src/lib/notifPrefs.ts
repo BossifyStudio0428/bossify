@@ -8,6 +8,7 @@ export type NotifPrefs = {
   notif_morning: boolean;
   notif_evening: boolean;
   notif_milestone: boolean;
+  notif_losing: boolean;
 };
 
 export const DEFAULT_PREFS: NotifPrefs = {
@@ -17,6 +18,7 @@ export const DEFAULT_PREFS: NotifPrefs = {
   notif_morning: true,
   notif_evening: true,
   notif_milestone: true,
+  notif_losing: true,
 };
 
 const CACHE_KEY = "bossify_notif_prefs";
@@ -32,7 +34,7 @@ export function getCachedPrefs(): NotifPrefs {
 export async function loadPrefs(userId: string): Promise<NotifPrefs> {
   const { data } = await supabase
     .from("profiles")
-    .select("notif_new_order,notif_unpaid,notif_inventory,notif_morning,notif_evening,notif_milestone")
+    .select("notif_new_order,notif_unpaid,notif_inventory,notif_morning,notif_evening,notif_milestone,notif_losing")
     .eq("id", userId)
     .maybeSingle();
   const prefs: NotifPrefs = { ...DEFAULT_PREFS, ...(data ?? {}) } as NotifPrefs;
