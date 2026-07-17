@@ -1620,7 +1620,6 @@ const dict = {
     profit_revenue: "Revenue",
     profit_cost: "Cost",
     profit_net: "Net profit",
-    profit_margin: "Profit margin",
     profit_note: "Based on paid orders only. Platform fees not included.",
     profit_empty: "No paid orders in this range yet.",
   },
