@@ -709,6 +709,16 @@ async function tryNativeRestore(): Promise<PurchaseReceipt[]> {
         });
       }
     }
+    const businessProd = store.get(BUSINESS_SUBSCRIPTION_ID);
+    if (businessProd?.owned || businessProd?.offers?.some?.((o: AnyStore) => o?.owned)) {
+      out.push({
+        productId: BUSINESS_SUBSCRIPTION_ID,
+        transactionId: businessProd.transaction?.id ?? "",
+        purchaseToken: businessProd.transaction?.purchaseToken,
+        basePlanId: inferOwnedPlan(businessProd),
+        currentPeriodEnd: isoFromDate(businessProd.transaction?.expirationDate),
+      });
+    }
     // Team subscriptions
     for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
       for (const billing of ["monthly", "annual"] as BillingPlan[]) {
