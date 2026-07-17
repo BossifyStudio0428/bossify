@@ -706,6 +706,29 @@ const EXTRA: Record<Lang, ExtraLabels> = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// Shared: Net-profit disclaimer footnote
+// ---------------------------------------------------------------------------
+
+const NET_PROFIT_FOOTNOTE: Record<Lang, string> = {
+  en: "Note: Net profit excludes platform fees, ad spend, and operating expenses (not currently tracked).",
+  ms: "Nota: Untung bersih tidak termasuk yuran platform, kos iklan, dan perbelanjaan operasi (belum direkodkan).",
+  zh: "备注：净利润不包括平台手续费、广告支出及营运开销（目前系统未记录）。",
+};
+
+function drawFootnote(doc: AutoTablePdf, lang: Lang, y: number) {
+  const w = doc.internal.pageSize.getWidth();
+  const text = NET_PROFIT_FOOTNOTE[lang];
+  doc.setFont(CJK_FONT_FAMILY, "italic");
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
+  const lines = doc.splitTextToSize(text, w - 28);
+  doc.text(lines, 14, y);
+  doc.setFont(CJK_FONT_FAMILY, "normal");
+  doc.setTextColor(0, 0, 0);
+  return y + lines.length * 4 + 2;
+}
+
 function makeLabels(lang: Lang, reportTitle: string, dateRange: string): ReportLabels {
   return { ...labels(lang, "retail"), reportTitle, dateRange } as ReportLabels;
 }
