@@ -10,12 +10,13 @@ type Row = {
   id: string;
   name: string;
   stock: number | null;
-  low_stock_threshold: number | null;
   price: number | null;
   cost_price: number | null;
   image_url: string | null;
   cover_image_url: string | null;
 };
+
+const LOW_STOCK_THRESHOLD = 5;
 
 export const Route = createFileRoute("/stock")({ component: StockPage });
 
@@ -30,7 +31,7 @@ function StockPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("inventory")
-      .select("id,name,stock,low_stock_threshold,price,cost_price,image_url,cover_image_url")
+      .select("id,name,stock,price,cost_price,image_url,cover_image_url")
       .eq("user_id", user.id)
       .order("stock", { ascending: true });
     if (error) toast.error(error.message);
@@ -62,7 +63,7 @@ function StockPage() {
 
   const tone = (r: Row): "danger" | "warn" | "ok" => {
     const s = Number(r.stock ?? 0);
-    const thr = Number(r.low_stock_threshold ?? 5);
+    const thr = LOW_STOCK_THRESHOLD;
     if (s <= 0) return "danger";
     if (s <= thr) return "warn";
     return "ok";
