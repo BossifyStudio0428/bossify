@@ -473,6 +473,47 @@ function ReportsHub() {
           );
         })}
       </section>
+
+      {pickCustomer && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={() => setPickCustomer(false)}>
+          <div className="w-full sm:max-w-md bg-card rounded-t-2xl sm:rounded-2xl p-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-3">
+              <p className="text-sm font-bold flex-1">{t("reports_customer_pick")}</p>
+              <button onClick={() => setPickCustomer(false)} className="p-1 rounded-full active:bg-muted"><X className="h-5 w-5" /></button>
+            </div>
+            <input
+              value={customerQuery}
+              onChange={(e) => setCustomerQuery(e.target.value)}
+              placeholder={t("search")}
+              className="w-full rounded-xl bg-muted px-3 py-2 text-sm mb-2"
+            />
+            <div className="flex-1 overflow-y-auto -mx-1 px-1">
+              {customerList
+                .filter((c) => {
+                  const q = customerQuery.trim().toLowerCase();
+                  if (!q) return true;
+                  return c.name.toLowerCase().includes(q) || (c.phone ?? "").includes(q);
+                })
+                .map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleCustomerStatement(c)}
+                    className="w-full text-left px-3 py-2.5 rounded-xl active:bg-muted flex items-center gap-2"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{c.name}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{c.phone ?? "—"} · {c.total_orders} · RM {Number(c.total_spent ?? 0).toFixed(2)}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                ))}
+              {customerList.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-8">{t("loading")}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
