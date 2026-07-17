@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { orderGrossProfit } from "@/lib/orderMath";
+import { SetupChecklist } from "@/components/SetupChecklist";
 
 type InvRow = {
   id: string;
@@ -151,6 +152,11 @@ export function RetailOverview() {
     <div className="px-4 pt-4 pb-6">
       <h1 className="text-xl font-bold text-foreground">{t("ro_title")}</h1>
       <p className="text-xs text-muted-foreground mt-0.5">{t("ro_subtitle")}</p>
+
+      {/* First-run guidance for brand-new users; auto-hides when all 5 steps done. */}
+      <div className="mt-4">
+        <SetupChecklist />
+      </div>
 
       {/* 5 numbers */}
       <div className="mt-4 grid grid-cols-2 gap-2.5">
