@@ -2232,6 +2232,8 @@ const dict = {
     notif_setting_evening_desc: "Laporan jualan hari ini pada 9:00 malam setiap hari",
     notif_setting_milestone: "Sambutan Pencapaian",
     notif_setting_milestone_desc: "Dapatkan pemberitahuan apabila mencapai pencapaian penting",
+    notif_setting_losing: "Amaran Barang Rugi",
+    notif_setting_losing_desc: "Semakan harian untuk SKU yang kosnya lebih tinggi daripada harga",
     notif_setting_new_case: "Amaran Kes Baru",
     notif_setting_new_case_desc: "Beritahu saya bila kes baru ditambah",
     notif_setting_new_appointment: "Amaran Temujanji Baru",
