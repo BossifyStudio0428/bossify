@@ -9,6 +9,7 @@ import {
   Plus,
   User,
   Bell as BellIcon,
+  TrendingUp,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 
@@ -18,6 +19,7 @@ function MorePage() {
   const { t } = useI18n();
   const items: { to: string; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
     { to: "/new-order", icon: Plus, label: t("more_new_order") },
+    { to: "/profit", icon: TrendingUp, label: t("more_profit") },
     { to: "/orders", icon: ClipboardList, label: t("more_orders") },
     { to: "/customers", icon: Users, label: t("more_customers") },
     { to: "/suppliers", icon: Truck, label: t("more_suppliers") },
