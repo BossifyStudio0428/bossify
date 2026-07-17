@@ -119,3 +119,12 @@ export const HIDE_PROFIT_SUMMARY = true;
  * registered; flip to `false` to restore.
  */
 export const HIDE_ANALYTICS_MENU = true;
+
+/**
+ * Show the new Reports hub (3 cards: Sales / Profit / Stock) at `/reports`.
+ * When true, `/reports` renders the hub and the old visual sales-report
+ * screen moves to `/reports/sales`. Flip to `false` to skip the hub and
+ * send `/reports` straight to `/reports/sales`. No data or routes are
+ * removed either way.
+ */
+export const REPORTS_HUB_MODE = true;
