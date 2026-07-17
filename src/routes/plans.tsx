@@ -363,6 +363,13 @@ function PlansPage() {
   const starterRows = [starterDeviceLabel, ...STARTER[eff].map((k) => t(k))];
   const proRows = PRO[eff].map((k) => t(k));
 
+  const businessDeviceLabel = lang === "zh" ? "5 台设备" : lang === "ms" ? "5 Peranti" : "5 Devices";
+  const businessPrice = billing === "monthly" ? storePrices.business_monthly : storePrices.business_annual;
+  const businessName = lang === "zh" ? "商业版" : lang === "ms" ? "Pelan Business" : "Business Plan";
+  const businessTagline = lang === "zh" ? "适合有 5 台设备的团队" : lang === "ms" ? "Untuk pasukan dengan 5 peranti" : "For teams with 5 devices";
+  const upgradeToBusinessLabel = lang === "zh" ? "升级到商业版" : lang === "ms" ? "Naik Taraf ke Business" : "Upgrade to Business";
+  const bestForDevicesLabel = lang === "zh" ? "5 台设备（专业版 3 台）" : lang === "ms" ? "5 peranti (Pro: 3 peranti)" : "5 devices (vs Pro's 3)";
+
   const handleGooglePlayPurchase = async () => {
     if (!user) return;
     if (!isNativeBillingAvailable()) {
