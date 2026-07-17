@@ -4894,6 +4894,15 @@ const dict = {
     reports_stock_desc: "有库存、低库存、缺货、亏本",
     reports_open_pdf: "打开 PDF",
     reports_view_details: "查看详情",
+    reports_financial_title: "财务报表（损益表）",
+    reports_financial_desc: "营收、成本、毛利、利润率、平均订单金额",
+    reports_customer_title: "客户对账单",
+    reports_customer_desc: "按客户列出订单、消费和未付余额",
+    reports_supplier_title: "供应商报表",
+    reports_supplier_desc: "各供应商支出、采购单和补货历史",
+    reports_recon_title: "订单状态与对账",
+    reports_recon_desc: "按状态、付款方式、来源分类订单。未付款催收清单。",
+    reports_customer_pick: "选择客户",
   },
 } as const;
 
