@@ -203,12 +203,26 @@ function CustomerDetail() {
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
         )}
-        <button
-          onClick={cycleStatus}
-          className={`mt-2 text-xs font-semibold px-3 py-1.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[currentStatus]}`}
-        >
-          {CUSTOMER_STATUS_DOT[currentStatus]} {t(`cs_${currentStatus}` as any)}
-        </button>
+        {bizType === "retail" ? (
+          (() => {
+            const spent = Number(customer.total_spent ?? 0);
+            const orders = customer.total_orders ?? 0;
+            let badge: { label: string; cls: string } | null = null;
+            if (spent >= 500) badge = { label: t("customer_top_spender"), cls: "bg-amber-100 text-amber-700" };
+            else if (orders >= 2) badge = { label: t("customer_repeat"), cls: "bg-primary/10 text-primary" };
+            else if (orders === 1) badge = { label: t("customer_new"), cls: "bg-emerald-100 text-emerald-700" };
+            return badge ? (
+              <span className={`mt-2 text-xs font-semibold px-3 py-1.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+            ) : null;
+          })()
+        ) : (
+          <button
+            onClick={cycleStatus}
+            className={`mt-2 text-xs font-semibold px-3 py-1.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[currentStatus]}`}
+          >
+            {CUSTOMER_STATUS_DOT[currentStatus]} {t(`cs_${currentStatus}` as any)}
+          </button>
+        )}
       </section>
 
       <section className="grid grid-cols-3 gap-2">
