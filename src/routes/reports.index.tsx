@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, BarChart3, TrendingUp, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, BarChart3, TrendingUp, Package, FileText, Users, Truck, ClipboardCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type OrderRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +12,12 @@ import {
   exportSalesReportPDF,
   exportProfitReportPDF,
   exportStockReportPDF,
+  exportFinancialReportPDF,
+  exportCustomerStatementPDF,
+  exportSupplierReportPDF,
+  exportOrderReconciliationPDF,
   type StockInvRow,
+  type SupplierBlock,
 } from "@/lib/pdf";
 import { REPORTS_HUB_MODE } from "@/lib/featureFlags";
 
@@ -36,8 +41,12 @@ function ReportsHub() {
   const [range, setRange] = useState<Range>("month");
   const [from, setFrom] = useState<string>(() => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   const [to, setTo] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [busy, setBusy] = useState<null | "sales" | "profit" | "stock">(null);
+  type OrderExt = OrderRow & { payment_method?: string | null; order_source?: string | null };
+  const [orders, setOrders] = useState<OrderExt[]>([]);
+  const [busy, setBusy] = useState<null | "sales" | "profit" | "stock" | "financial" | "customer" | "supplier" | "recon">(null);
+  const [pickCustomer, setPickCustomer] = useState(false);
+  const [customerList, setCustomerList] = useState<Array<{ id: string; name: string; phone: string | null; total_orders: number; total_spent: number; last_order_at: string | null }>>([]);
+  const [customerQuery, setCustomerQuery] = useState("");
 
   useEffect(() => {
     if (!user?.id) return;
@@ -45,10 +54,10 @@ function ReportsHub() {
     (async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,code,customer_name,product,quantity,amount,cost,gross_profit,status,created_at")
+        .select("id,code,customer_name,phone,product,quantity,amount,cost,gross_profit,status,created_at,payment_method,order_source")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      if (!cancelled) setOrders((data ?? []) as OrderRow[]);
+      if (!cancelled) setOrders((data ?? []) as OrderExt[]);
     })();
     return () => { cancelled = true; };
   }, [user?.id]);
@@ -213,8 +222,164 @@ function ReportsHub() {
     finally { setBusy(null); }
   };
 
+  const handleFinancial = async () => {
+    if (!gate() || busy) return;
+    setBusy("financial");
+    await new Promise((r) => setTimeout(r, 30));
+    try {
+      const { businessName, logoDataUrl } = await getProfile();
+      const paid = inRange.filter((o) => o.status === "Paid");
+      const revenue = paid.reduce((s, o) => s + Number(o.amount), 0);
+      const cogs = paid.reduce((s, o) => s + orderCost(o), 0);
+      const grossProfit = paid.reduce((s, o) => s + orderGrossProfit(o), 0);
+      const margin = orderProfitMargin(revenue, grossProfit);
+      const orderCount = paid.length;
+      const avgOrder = orderCount > 0 ? revenue / orderCount : 0;
+      const unpaidAmount = inRange.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount), 0);
+      await exportFinancialReportPDF({
+        lang, businessName, logoDataUrl, rangeLabel: label,
+        revenue, cogs, grossProfit, margin, orderCount, avgOrder, unpaidAmount,
+      });
+    } catch (e) { console.error("[reports] financial pdf failed", e); toast.error(t("pdf_failed")); }
+    finally { setBusy(null); }
+  };
+
+  const openCustomerPicker = async () => {
+    if (!gate() || busy) return;
+    setPickCustomer(true);
+    if (customerList.length === 0 && user?.id) {
+      const { data } = await supabase
+        .from("customers")
+        .select("id,name,phone,total_orders,total_spent,last_order_at")
+        .eq("user_id", user.id)
+        .order("name", { ascending: true });
+      setCustomerList((data ?? []) as typeof customerList);
+    }
+  };
+
+  const handleCustomerStatement = async (c: { id: string; name: string; phone: string | null; total_orders: number; total_spent: number; last_order_at: string | null }) => {
+    if (busy) return;
+    setBusy("customer");
+    setPickCustomer(false);
+    await new Promise((r) => setTimeout(r, 30));
+    try {
+      const { businessName, logoDataUrl } = await getProfile();
+      // Match orders by phone OR customer_name (mirrors Customer Detail logic).
+      const nphone = (c.phone ?? "").replace(/\D/g, "");
+      const rows = inRange.filter((o) => {
+        const op = (o.phone ?? "").replace(/\D/g, "");
+        if (nphone && op && op === nphone) return true;
+        return (o.customer_name ?? "").trim().toLowerCase() === c.name.trim().toLowerCase();
+      });
+      const unpaidBalance = rows.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount), 0);
+      const totalSpent = rows.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0);
+      await exportCustomerStatementPDF({
+        lang, businessName, logoDataUrl, rangeLabel: label,
+        customerName: c.name,
+        phone: c.phone,
+        totalOrders: rows.length,
+        totalSpent,
+        unpaidBalance,
+        lastOrderAt: c.last_order_at,
+        rows: rows.map((o) => ({
+          date: new Date(o.created_at).toLocaleDateString("en-MY"),
+          code: o.code, product: o.product,
+          qty: Number(o.quantity), amount: Number(o.amount), status: o.status,
+        })),
+      });
+    } catch (e) { console.error("[reports] customer statement failed", e); toast.error(t("pdf_failed")); }
+    finally { setBusy(null); }
+  };
+
+  const handleSupplier = async () => {
+    if (!gate() || busy || !user?.id) return;
+    setBusy("supplier");
+    await new Promise((r) => setTimeout(r, 30));
+    try {
+      const { businessName, logoDataUrl } = await getProfile();
+      const [{ data: sups }, { data: pos }] = await Promise.all([
+        supabase.from("suppliers").select("id,name,contact").eq("user_id", user.id).order("name"),
+        supabase.from("purchase_orders")
+          .select("id,supplier_id,order_date,status,total_amount")
+          .eq("user_id", user.id)
+          .gte("order_date", fromDate.toISOString().slice(0, 10))
+          .lte("order_date", toDate.toISOString().slice(0, 10))
+          .order("order_date", { ascending: false }),
+      ]);
+      const poIds = (pos ?? []).map((p: { id: string }) => p.id);
+      let items: Array<{ purchase_order_id: string; name: string; quantity: number; unit: string | null; unit_price: number; total_price: number }> = [];
+      if (poIds.length) {
+        const { data: its } = await supabase
+          .from("purchase_order_items")
+          .select("purchase_order_id,name,quantity,unit,unit_price,total_price")
+          .in("purchase_order_id", poIds);
+        items = (its ?? []) as typeof items;
+      }
+      const posBySupplier = new Map<string, typeof pos>();
+      (pos ?? []).forEach((p) => {
+        const arr = posBySupplier.get(p.supplier_id) ?? [];
+        arr.push(p);
+        posBySupplier.set(p.supplier_id, arr);
+      });
+      const poMeta = new Map<string, { supplier_id: string; order_date: string }>();
+      (pos ?? []).forEach((p) => poMeta.set(p.id, { supplier_id: p.supplier_id, order_date: p.order_date }));
+
+      const blocks: SupplierBlock[] = (sups ?? []).map((s: { id: string; name: string; contact: string | null }) => {
+        const sPos = posBySupplier.get(s.id) ?? [];
+        const sItems = items.filter((it) => poMeta.get(it.purchase_order_id)?.supplier_id === s.id);
+        return {
+          supplier: s.name,
+          contact: s.contact,
+          poCount: sPos.length,
+          totalSpend: sPos.reduce((a, p) => a + Number(p.total_amount ?? 0), 0),
+          pos: sPos.map((p) => ({
+            date: p.order_date,
+            code: p.id.slice(0, 8),
+            status: p.status ?? "—",
+            total: Number(p.total_amount ?? 0),
+          })),
+          items: sItems.map((it) => ({
+            date: poMeta.get(it.purchase_order_id)?.order_date ?? "",
+            name: it.name,
+            qty: Number(it.quantity ?? 0),
+            unit: it.unit ?? "",
+            unitPrice: Number(it.unit_price ?? 0),
+            total: Number(it.total_price ?? 0),
+          })),
+        };
+      }).filter((b) => b.poCount > 0 || b.items.length > 0);
+
+      await exportSupplierReportPDF({
+        lang, businessName, logoDataUrl, rangeLabel: label, blocks,
+      });
+    } catch (e) { console.error("[reports] supplier pdf failed", e); toast.error(t("pdf_failed")); }
+    finally { setBusy(null); }
+  };
+
+  const handleRecon = async () => {
+    if (!gate() || busy) return;
+    setBusy("recon");
+    await new Promise((r) => setTimeout(r, 30));
+    try {
+      const { businessName, logoDataUrl } = await getProfile();
+      await exportOrderReconciliationPDF({
+        lang, businessName, logoDataUrl, rangeLabel: label,
+        orders: inRange.map((o) => ({
+          created_at: o.created_at,
+          code: o.code,
+          customer_name: o.customer_name,
+          amount: Number(o.amount),
+          status: o.status,
+          payment_method: o.payment_method ?? null,
+          order_source: o.order_source ?? null,
+        })),
+      });
+    } catch (e) { console.error("[reports] recon pdf failed", e); toast.error(t("pdf_failed")); }
+    finally { setBusy(null); }
+  };
+
   const cards: Array<{
-    key: "sales" | "profit" | "stock";
+    key: "sales" | "profit" | "stock" | "financial" | "customer" | "supplier" | "recon";
     icon: typeof BarChart3;
     title: string;
     desc: string;
@@ -225,6 +390,10 @@ function ReportsHub() {
     { key: "sales", icon: BarChart3, title: t("reports_sales_title"), desc: t("reports_sales_desc"), onExport: handleSales, linkTo: "/reports/sales", tint: "bg-primary/10 text-primary" },
     { key: "profit", icon: TrendingUp, title: t("reports_profit_title"), desc: t("reports_profit_desc"), onExport: handleProfit, tint: "bg-emerald-50 text-emerald-600" },
     { key: "stock", icon: Package, title: t("reports_stock_title"), desc: t("reports_stock_desc"), onExport: handleStock, tint: "bg-amber-50 text-amber-600" },
+    { key: "financial", icon: FileText, title: t("reports_financial_title"), desc: t("reports_financial_desc"), onExport: handleFinancial, tint: "bg-sky-50 text-sky-600" },
+    { key: "customer", icon: Users, title: t("reports_customer_title"), desc: t("reports_customer_desc"), onExport: openCustomerPicker, tint: "bg-fuchsia-50 text-fuchsia-600" },
+    { key: "supplier", icon: Truck, title: t("reports_supplier_title"), desc: t("reports_supplier_desc"), onExport: handleSupplier, tint: "bg-orange-50 text-orange-600" },
+    { key: "recon", icon: ClipboardCheck, title: t("reports_recon_title"), desc: t("reports_recon_desc"), onExport: handleRecon, tint: "bg-teal-50 text-teal-600" },
   ];
 
   return (
@@ -304,6 +473,47 @@ function ReportsHub() {
           );
         })}
       </section>
+
+      {pickCustomer && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={() => setPickCustomer(false)}>
+          <div className="w-full sm:max-w-md bg-card rounded-t-2xl sm:rounded-2xl p-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-3">
+              <p className="text-sm font-bold flex-1">{t("reports_customer_pick")}</p>
+              <button onClick={() => setPickCustomer(false)} className="p-1 rounded-full active:bg-muted"><X className="h-5 w-5" /></button>
+            </div>
+            <input
+              value={customerQuery}
+              onChange={(e) => setCustomerQuery(e.target.value)}
+              placeholder={t("search")}
+              className="w-full rounded-xl bg-muted px-3 py-2 text-sm mb-2"
+            />
+            <div className="flex-1 overflow-y-auto -mx-1 px-1">
+              {customerList
+                .filter((c) => {
+                  const q = customerQuery.trim().toLowerCase();
+                  if (!q) return true;
+                  return c.name.toLowerCase().includes(q) || (c.phone ?? "").includes(q);
+                })
+                .map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleCustomerStatement(c)}
+                    className="w-full text-left px-3 py-2.5 rounded-xl active:bg-muted flex items-center gap-2"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{c.name}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{c.phone ?? "—"} · {c.total_orders} · RM {Number(c.total_spent ?? 0).toFixed(2)}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                ))}
+              {customerList.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-8">{t("loading")}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
