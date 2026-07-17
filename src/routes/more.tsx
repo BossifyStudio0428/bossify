@@ -3,8 +3,6 @@ import {
   ChevronLeft,
   ClipboardList,
   Users,
-  Truck,
-  ShoppingBag,
   FileText,
   Plus,
   User,
@@ -29,8 +27,6 @@ function MorePage() {
       : [{ to: "/profit", icon: TrendingUp, label: t("more_profit") }]),
     { to: "/orders", icon: ClipboardList, label: t("more_orders") },
     { to: "/customers", icon: Users, label: t("more_customers") },
-    { to: "/suppliers", icon: Truck, label: t("more_suppliers") },
-    { to: "/purchase-orders", icon: ShoppingBag, label: t("more_purchase_orders") },
     { to: "/reports", icon: BarChart3, label: t("more_reports") },
     ...(RETAIL_ONLY_MODE
       ? []
