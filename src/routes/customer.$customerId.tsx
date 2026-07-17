@@ -183,6 +183,12 @@ function CustomerDetail() {
   const currentStatus = (customer.customer_status ?? "enquiry") as CustomerStatus;
   const todayStr = new Date().toISOString().slice(0, 10);
   const openFollowUps = followUps.filter((f) => !f.is_done);
+  // Derive totals from the loaded orders array so the stat cards always
+  // match the visible order history — customers.total_orders / total_spent
+  // are denormalized and drift when orders are added/removed outside the
+  // customer-update paths, or when the customer row is recreated.
+  const derivedOrderCount = orders.length;
+  const derivedTotalSpent = orders.reduce((s, o) => s + Number(o.amount ?? 0), 0);
 
   return (
     <div className="px-5 pt-10 pb-6 space-y-5">
@@ -205,12 +211,12 @@ function CustomerDetail() {
         )}
         {bizType === "retail" ? (
           (() => {
-            const spent = Number(customer.total_spent ?? 0);
-            const orders = customer.total_orders ?? 0;
+            const spent = derivedTotalSpent;
+            const ordersCount = derivedOrderCount;
             let badge: { label: string; cls: string } | null = null;
             if (spent >= 500) badge = { label: t("customer_top_spender"), cls: "bg-amber-100 text-amber-700" };
-            else if (orders >= 2) badge = { label: t("customer_repeat"), cls: "bg-primary/10 text-primary" };
-            else if (orders === 1) badge = { label: t("customer_new"), cls: "bg-emerald-100 text-emerald-700" };
+            else if (ordersCount >= 2) badge = { label: t("customer_repeat"), cls: "bg-primary/10 text-primary" };
+            else if (ordersCount === 1) badge = { label: t("customer_new"), cls: "bg-emerald-100 text-emerald-700" };
             return badge ? (
               <span className={`mt-2 text-xs font-semibold px-3 py-1.5 rounded-full ${badge.cls}`}>{badge.label}</span>
             ) : null;
@@ -226,8 +232,8 @@ function CustomerDetail() {
       </section>
 
       <section className="grid grid-cols-3 gap-2">
-        <Stat label={t("total_orders")} value={String(customer.total_orders)} />
-        <Stat label={t("total_spent")} value={`RM ${Number(customer.total_spent).toFixed(0)}`} />
+        <Stat label={t("total_orders")} value={String(derivedOrderCount)} />
+        <Stat label={t("total_spent")} value={`RM ${derivedTotalSpent.toFixed(0)}`} />
         <Stat label={t("member_since")} value={memberSince} />
       </section>
 
