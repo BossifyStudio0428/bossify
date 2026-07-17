@@ -70,3 +70,36 @@ export const HIDE_NON_RETAIL_INTEGRATIONS = true;
  * The routes themselves stay registered; flip to `false` to restore.
  */
 export const HIDE_BOOKING_MENU = true;
+
+/**
+ * Hide the Public Order Form feature surface:
+ *  - Profile menu entry to `/order-form`
+ *  - Compact Public Order Form section on `/orders`
+ *  - "Show stock on order form" toggle on the Products page
+ *  - "Saved — share order form link" toast after adding/editing a product
+ *
+ * Underlying data and routes stay intact:
+ *  - `/order/$code` public page still resolves for existing shared links
+ *  - `/order-form` settings route stays registered (just unlinked)
+ *  - `profiles.order_form_*` columns are untouched
+ *  - Past orders placed via the order form remain in `orders` and show up
+ *    in Orders / Profit Summary as normal
+ * Flip to `false` to restore.
+ */
+export const HIDE_ORDER_FORM = true;
+
+/**
+ * Hide the Team Plan surface:
+ *  - Profile "Team" section + `/team` menu entry
+ *  - Home page Team badge Link, TeamBanner, SuspendedTeamBanner,
+ *    PendingInviteBanner
+ *
+ * Underlying data and routes stay intact:
+ *  - `/team`, `/team/welcome`, `/team/join/$token` stay registered so
+ *    existing invite links still work if someone opens one directly
+ *  - `team_members` / invites data is untouched
+ *  - Subscription `isTeam` / `teamTier` logic is untouched (falls back to
+ *    the standard Pro/Lifetime badge on home)
+ * Flip to `false` to restore.
+ */
+export const HIDE_TEAM_PLAN = true;

@@ -26,9 +26,8 @@ import {
 import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType";
-import { RETAIL_ONLY_MODE } from "@/lib/featureFlags";
+import { RETAIL_ONLY_MODE, HIDE_BOOKING_MENU, HIDE_ORDER_FORM, HIDE_TEAM_PLAN } from "@/lib/featureFlags";
 import { VISIBLE_PLATFORMS } from "@/lib/platforms";
-import { HIDE_BOOKING_MENU } from "@/lib/featureFlags";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { isNativeBillingAvailable } from "@/lib/billing";
 
@@ -173,12 +172,16 @@ function ProfilePage() {
                 onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
               } as MenuItem,
             ]),
-        {
-          icon: "🔗",
-          key: "orderform",
-          label: t(pofSectionTitleKey(bizType)),
-          onClick: () => navigate({ to: "/order-form" }),
-        },
+        ...(HIDE_ORDER_FORM
+          ? []
+          : [
+              {
+                icon: "🔗",
+                key: "orderform",
+                label: t(pofSectionTitleKey(bizType)),
+                onClick: () => navigate({ to: "/order-form" }),
+              } as MenuItem,
+            ]),
         ...((bizType === "retail" || bizType === "fnb")
           ? [
               {
@@ -295,7 +298,7 @@ function ProfilePage() {
           : []),
       ],
     },
-    ...(isTeam
+    ...(!HIDE_TEAM_PLAN && isTeam
       ? [
           {
             key: "team",

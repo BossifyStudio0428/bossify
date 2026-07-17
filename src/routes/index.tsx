@@ -32,7 +32,7 @@ import { TeamBanner } from "@/components/TeamBanner";
 import { SuspendedTeamBanner } from "@/components/SuspendedTeamBanner";
 import { PendingInviteBanner } from "@/components/PendingInviteBanner";
 import { orderGrossProfit } from "@/lib/orderMath";
-import { RETAIL_ONLY_MODE } from "@/lib/featureFlags";
+import { RETAIL_ONLY_MODE, HIDE_TEAM_PLAN } from "@/lib/featureFlags";
 import { RetailOverview } from "@/components/RetailOverview";
 
 export const Route = createFileRoute("/")({ component: Index });
@@ -625,7 +625,7 @@ function Index() {
           >
             <span className="text-[10px] font-bold leading-none">{t("plan_badge_lifetime")}</span>
           </Link>
-        ) : isTeam && teamTier ? (
+        ) : !HIDE_TEAM_PLAN && isTeam && teamTier ? (
           <Link
             to="/team"
             aria-label={t(`plan_badge_${teamTier}` as any)}
@@ -677,9 +677,9 @@ function Index() {
       )}
 
       <SetupChecklist />
-      <PendingInviteBanner />
-      <TeamBanner />
-      <SuspendedTeamBanner />
+      {!HIDE_TEAM_PLAN && <PendingInviteBanner />}
+      {!HIDE_TEAM_PLAN && <TeamBanner />}
+      {!HIDE_TEAM_PLAN && <SuspendedTeamBanner />}
 
       <section id="tour-stats" className="grid grid-cols-2 gap-3">
         {stats.map((s, i) => {
