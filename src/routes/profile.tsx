@@ -26,7 +26,7 @@ import {
 import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType";
-import { RETAIL_ONLY_MODE, HIDE_BOOKING_MENU, HIDE_ORDER_FORM, HIDE_TEAM_PLAN } from "@/lib/featureFlags";
+import { RETAIL_ONLY_MODE, HIDE_BOOKING_MENU, HIDE_ORDER_FORM, HIDE_TEAM_PLAN, HIDE_ANALYTICS_MENU } from "@/lib/featureFlags";
 import { VISIBLE_PLATFORMS } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { isNativeBillingAvailable } from "@/lib/billing";
@@ -208,12 +208,14 @@ function ProfilePage() {
                 onClick: () => navigate({ to: "/booking-settings" }),
               } as MenuItem,
             ]),
-        {
-          icon: "📊",
-          key: "analytics",
-          label: t(analyticsLabelKey),
-          onClick: () => navigate({ to: "/analytics" }),
-        },
+        ...(HIDE_ANALYTICS_MENU
+          ? []
+          : [{
+              icon: "📊",
+              key: "analytics",
+              label: t(analyticsLabelKey),
+              onClick: () => navigate({ to: "/analytics" }),
+            } as MenuItem]),
         {
           icon: "📊",
           key: "rep",
