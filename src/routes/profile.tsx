@@ -26,6 +26,7 @@ import {
 import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType";
+import { RETAIL_ONLY_MODE } from "@/lib/featureFlags";
 import { PLATFORMS } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { isNativeBillingAvailable } from "@/lib/billing";
@@ -160,13 +161,17 @@ function ProfilePage() {
               } as MenuItem,
             ]
           : []),
-        {
-          icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
-          key: "biztype",
-          label: t("business_type_menu"),
-          value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
-          onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
-        },
+        ...(RETAIL_ONLY_MODE
+          ? []
+          : [
+              {
+                icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
+                key: "biztype",
+                label: t("business_type_menu"),
+                value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
+                onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
+              } as MenuItem,
+            ]),
         {
           icon: "🔗",
           key: "orderform",
