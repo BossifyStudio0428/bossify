@@ -225,14 +225,14 @@ function CustomersPage() {
     if (newCustomer.followup_date) {
       const { error: fuError } = await (supabase as any).from("follow_ups").insert({
         user_id: user.id,
-        customer_id: data.id,
+        customer_id: data!.id,
         follow_up_date: newCustomer.followup_date,
         note: newCustomer.note.trim() || null,
         is_done: false,
       });
-      if (!fuError) setFollowUpByCustomerId((prev) => ({ ...prev, [data.id]: newCustomer.followup_date }));
+      if (!fuError) setFollowUpByCustomerId((prev) => ({ ...prev, [data!.id]: newCustomer.followup_date }));
     }
-    setCustomers((prev) => [data as CustomerRow, ...prev.filter((c) => c.id !== data.id)]);
+    setCustomers((prev) => [data as CustomerRow, ...prev.filter((c) => c.id !== data!.id)]);
     setNewCustomer({ name: "", phone: "", followup_date: "", note: "" });
     setNewCustomerErrors({});
     setNewCustomerOpen(false);
