@@ -52,35 +52,6 @@ function ProfilePage() {
   const [profile, setProfile] = useState<Omit<ProfileSummary, "is_admin"> | null>(null);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({});
   const [langOpen, setLangOpen] = useState(false);
-  const [tplOpen, setTplOpen] = useState(false);
-  const defaultOrderTpl = getOrderTemplate(lang, bizType);
-  const defaultReminderTpl = getReminderTemplate(lang, bizType);
-
-  const varsHelp = (() => {
-    const base = "[customer_name] [code] [product] [amount]";
-    const status = " [status]";
-    const qty = " [quantity]";
-    const tail = " [notes] [days_ago]";
-    const list =
-      bizType === "property"
-        ? `${base}${tail}`
-        : bizType === "retail" || bizType === "fnb" || !bizType
-          ? `${base}${qty}${status}${tail}`
-          : `${base}${status}${tail}`;
-    const prefix = lang === "ms" ? "Pemboleh ubah: " : lang === "zh" ? "变量：" : "Variables: ";
-    return `${prefix}${list}`;
-  })();
-  const [orderTpl, setOrderTpl] = useState<string>(DEFAULT_ORDER_TPL);
-  const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
-  const [orderCustom, setOrderCustom] = useState(false);
-  const [reminderCustom, setReminderCustom] = useState(false);
-
-  // Keep textarea in sync with biz-type / lang default when user hasn't customised.
-  useEffect(() => {
-    if (!orderCustom) setOrderTpl(defaultOrderTpl);
-    if (!reminderCustom) setReminderTpl(defaultReminderTpl);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bizType, lang]);
   const [paySummary, setPaySummary] = useState<PaymentSummary | null>(null);
 
   const reportsLabelKey =
