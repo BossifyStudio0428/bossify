@@ -872,6 +872,11 @@ function OrdersPage() {
                             🌐 {t("pof_source_online")}
                           </span>
                         )}
+                        {(o as any).order_source === "tiktok" && (
+                          <span className="shrink-0 px-2 py-0.5 bg-black text-white text-[10px] font-medium rounded-full">
+                            🎵 TikTok
+                          </span>
+                        )}
                       </div>
                       {o.phone ? (
                         <button

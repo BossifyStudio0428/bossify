@@ -317,6 +317,15 @@ const T_NEW_ORDER: Record<string, Record<Lang, { title: string; body: string }>>
   },
 };
 
+// TikTok-Shop-sourced orders get their own copy so the merchant can tell at a
+// glance which channel the order came from. Applied when the trigger passes
+// vars.source = "tiktok".
+const T_NEW_ORDER_TIKTOK: Record<Lang, { title: string; body: string }> = {
+  en: { title: "New TikTok Shop order 🎵", body: "{product} — RM {amount}" },
+  ms: { title: "Pesanan TikTok Shop baru 🎵", body: "{product} — RM {amount}" },
+  zh: { title: "新 TikTok Shop 订单 🎵", body: "{product} — RM {amount}" },
+};
+
 function pickBiz<T>(pack: Record<string, T>, biz: string | null): T {
   const b = (biz ?? "retail") as Biz;
   return pack[b] ?? (b === "fnb" ? pack["retail"] : undefined) ?? pack["default"];
@@ -362,11 +371,15 @@ async function resolveContent(
 
   if (!override.title || !override.body) {
     if (kind === "new_order") {
-      const tpl = pickBiz(T_NEW_ORDER, biz)[lang];
       const vars = override.vars ?? {};
+      const source = String(vars.source ?? "");
+      const tpl = source === "tiktok"
+        ? T_NEW_ORDER_TIKTOK[lang]
+        : pickBiz(T_NEW_ORDER, biz)[lang];
       title = tpl.title;
       body = fill(tpl.body, {
         customer: String(vars.customer ?? ""),
+        product: String(vars.product ?? ""),
         amount: String(vars.amount ?? ""),
       });
       link = override.link ?? "/orders";

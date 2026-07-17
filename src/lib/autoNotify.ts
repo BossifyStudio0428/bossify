@@ -9,7 +9,8 @@ type PrefKey =
   | "notif_inventory"
   | "notif_morning"
   | "notif_evening"
-  | "notif_milestone";
+  | "notif_milestone"
+  | "notif_losing";
 
 export async function notifySituation(params: {
   kind: PushKind;

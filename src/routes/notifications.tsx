@@ -102,6 +102,7 @@ function NotificationsPage() {
         <div className="space-y-2">
           {items.map((n) => {
             const isDeleted = /deleted|删除|dipadam/i.test(n.title) || n.type === "order_deleted";
+            const isTikTok = n.type === "new_order_tiktok";
             return (
               <div
                 key={n.id}
@@ -114,9 +115,16 @@ function NotificationsPage() {
                 }`}
               >
                 <button onClick={() => tap(n)} className="w-full text-left">
-                  <p className={`text-sm font-semibold ${isDeleted ? "text-red-600" : "text-foreground"}`}>
-                    {n.title}
-                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className={`text-sm font-semibold ${isDeleted ? "text-red-600" : "text-foreground"}`}>
+                      {n.title}
+                    </p>
+                    {isTikTok && (
+                      <span className="shrink-0 px-2 py-0.5 bg-black text-white text-[10px] font-medium rounded-full">
+                        🎵 TikTok
+                      </span>
+                    )}
+                  </div>
                   <p className={`text-xs mt-0.5 ${isDeleted ? "text-red-500/80" : "text-muted-foreground"}`}>
                     {n.message}
                   </p>
