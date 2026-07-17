@@ -280,7 +280,7 @@ function ProfilePage() {
     if (!user) return;
     let cancelled = false;
     const load = async () => {
-      const [{ data: o }, { count: cust }, { data: p }, { data: pref }] = await Promise.all([
+      const [{ data: o }, { count: cust }, { data: p }] = await Promise.all([
         supabase.from("orders").select("amount,status").eq("user_id", user.id),
         supabase
           .from("customers")
@@ -290,11 +290,6 @@ function ProfilePage() {
           .from("profiles")
           .select("business_name,created_at,is_admin,avatar_url")
           .eq("id", user.id)
-          .maybeSingle(),
-        supabase
-          .from("user_preferences")
-          .select("wa_order_template,wa_reminder_template")
-          .eq("user_id", user.id)
           .maybeSingle(),
       ]);
       if (cancelled) return;
@@ -307,25 +302,6 @@ function ProfilePage() {
       setProfile(loadedProfile);
       setIsAdmin(!!loadedProfile?.is_admin);
       setConnectedPlatforms({});
-      // Treat any saved value that still matches a built-in default (in any
-      // biz/lang) as non-custom, so changing business_type or language flips
-      // to the right default automatically.
-      const savedOrder = pref?.wa_order_template ?? null;
-      const savedReminder = pref?.wa_reminder_template ?? null;
-      if (savedOrder && !isBuiltInOrderTpl(savedOrder)) {
-        setOrderTpl(savedOrder);
-        setOrderCustom(true);
-      } else {
-        setOrderTpl(defaultOrderTpl);
-        setOrderCustom(false);
-      }
-      if (savedReminder && !isBuiltInReminderTpl(savedReminder)) {
-        setReminderTpl(savedReminder);
-        setReminderCustom(true);
-      } else {
-        setReminderTpl(defaultReminderTpl);
-        setReminderCustom(false);
-      }
       try {
         const s = await loadPaymentSummary(user.id);
         if (!cancelled) setPaySummary(s);
@@ -355,24 +331,6 @@ function ProfilePage() {
       supabase.removeChannel(ch);
     };
   }, [user]);
-
-  const saveTemplates = async () => {
-    if (!user) return;
-    const { error } = await supabase.from("user_preferences").upsert(
-      {
-        user_id: user.id,
-        wa_order_template: orderTpl,
-        wa_reminder_template: reminderTpl,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    );
-    if (error) toast.error(error.message);
-    else {
-      toast.success(t("template_saved"));
-      setTplOpen(false);
-    }
-  };
 
   const businessName = profile?.business_name ?? user?.email?.split("@")[0] ?? t("my_store");
   const initials = businessName.slice(0, 2).toUpperCase();
