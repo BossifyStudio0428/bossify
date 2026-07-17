@@ -11,7 +11,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { orderCost, orderGrossProfit, orderProfitMargin } from "@/lib/orderMath";
 
-export const Route = createFileRoute("/reports")({ component: ReportsPage });
+export const Route = createFileRoute("/reports/sales")({ component: ReportsPage });
 
 type Range = "today" | "week" | "month" | "custom";
 
