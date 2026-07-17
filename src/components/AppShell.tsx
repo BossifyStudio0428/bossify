@@ -14,7 +14,7 @@ import { getBossifySplashRemainingMs, markBossifySplashStart } from "@/lib/splas
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { isNotifGranted } from "@/lib/notifications";
 import { loadPrefs } from "@/lib/notifPrefs";
-import { rescheduleAll, runUnpaidNotifyNow } from "@/lib/notifSchedule";
+import { rescheduleAll, runUnpaidNotifyNow, runLosingMoneyScanNow } from "@/lib/notifSchedule";
 import { initBilling } from "@/lib/billing";
 import { registerPushForUser } from "@/lib/pushRegister";
 import { registerWebPush, isWebPushSupported } from "@/lib/webPush";
@@ -312,6 +312,7 @@ function ShellInner() {
       loadPrefs(uid)
         .then(() => rescheduleAll(uid))
         .then(() => runUnpaidNotifyNow(uid))
+        .then(() => runLosingMoneyScanNow(uid))
         .catch(() => {});
     }
     // Register Android FCM token (no-op on web / preview)
