@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Plus, TrendingUp, TrendingDown, ChevronDown } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, ChevronDown, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { orderGrossProfit } from "@/lib/orderMath";
 import { SetupChecklist } from "@/components/SetupChecklist";
+import {
+  renderTemplate,
+  getReminderTemplate,
+  fetchWAProfile,
+  stripEmoji,
+  daysSince,
+} from "@/lib/wa";
 
 type InvRow = {
   id: string;
@@ -19,6 +27,8 @@ type OrderRow = {
   id?: string;
   code?: string | null;
   customer_name?: string | null;
+  phone?: string | null;
+  quantity?: number | null;
   amount: number | null;
   cost: number | null;
   gross_profit: number | null;
@@ -69,7 +79,8 @@ function pctDelta(cur: number, prev: number): number | null {
 
 export function RetailOverview() {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const { type: bizType } = useBusinessType();
   const [loading, setLoading] = useState(true);
   const [inv, setInv] = useState<InvRow[]>([]);
   const [range, setRange] = useState<Range>("month");
@@ -80,8 +91,36 @@ export function RetailOverview() {
   const [prevOrders, setPrevOrders] = useState<OrderRow[]>([]);
   const [recentOrders, setRecentOrders] = useState<OrderRow[]>([]);
   const [weekOrders, setWeekOrders] = useState<OrderRow[]>([]);
+  const [waProfile, setWaProfile] = useState<{ paymentDetails: string; businessName: string }>({
+    paymentDetails: "",
+    businessName: "us",
+  });
+  const [customReminderTpl, setCustomReminderTpl] = useState<string | null>(null);
   // Rotate through equal-priority suggestions on each page load.
   const [tick] = useState(() => Math.floor(Math.random() * 1000));
+
+  // Load WA profile + custom reminder template (same source as Orders screen).
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const p = await fetchWAProfile(user.id, lang);
+        if (!cancelled) setWaProfile(p);
+      } catch {}
+      try {
+        const { data } = await supabase
+          .from("user_preferences")
+          .select("wa_reminder_template")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!cancelled && data?.wa_reminder_template) setCustomReminderTpl(data.wa_reminder_template);
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, lang]);
 
   useEffect(() => {
     if (!user) return;
@@ -111,7 +150,7 @@ export function RetailOverview() {
           .lte("created_at", prevEnd.toISOString()),
         supabase
           .from("orders")
-          .select("id,code,customer_name,amount,cost,gross_profit,product,created_at,status")
+          .select("id,code,customer_name,phone,quantity,amount,cost,gross_profit,product,created_at,status")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(3),
@@ -214,6 +253,31 @@ export function RetailOverview() {
 
   const rangeLabel =
     range === "week" ? t("this_week") : range === "month" ? t("this_month") : t("custom");
+
+  const remind = (o: OrderRow) => {
+    if (!o.phone) {
+      alert(t("no_phone_for_wa"));
+      return;
+    }
+    const msg = renderTemplate(
+      getReminderTemplate(lang, bizType, customReminderTpl),
+      {
+        customer_name: o.customer_name ?? "",
+        business_name: waProfile.businessName,
+        code: o.code ?? "",
+        product: o.product ?? "",
+        quantity: Number(o.quantity ?? 1),
+        amount: Number(o.amount ?? 0).toFixed(2),
+        status: o.status ?? "",
+        days_ago: daysSince(o.created_at),
+        payment_details: waProfile.paymentDetails,
+      },
+      lang,
+    );
+    const cleaned = (o.phone || "").replace(/[^0-9]/g, "");
+    const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(stripEmoji(msg))}`;
+    window.open(url, "_blank");
+  };
 
   return (
     <div className="px-4 pt-4 pb-6">
@@ -351,6 +415,19 @@ export function RetailOverview() {
                     {money(Number(o.amount ?? 0))}
                   </p>
                 </div>
+                {o.status === "Unpaid" && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      remind(o);
+                    }}
+                    aria-label={t("remind")}
+                    className="ml-1 h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-100 active:scale-95 shrink-0"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </button>
+                )}
               </Link>
             ))
           )}
