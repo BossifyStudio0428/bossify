@@ -34,6 +34,21 @@ export const FALLBACK_PRICES: Record<BillingPlan, string> = {
   annual: "RM 399",
 };
 
+/**
+ * Business Plan — one subscription with two base plans (same shape as Pro).
+ * Individual tier, 5 devices, unlimited orders.
+ *
+ * Play Console setup:
+ *   Subscription product ID:  bossify_business
+ *     Base plan #1 ID:        monthly
+ *     Base plan #2 ID:        annual
+ */
+export const BUSINESS_SUBSCRIPTION_ID = "bossify_business";
+export const BUSINESS_FALLBACK_PRICES: Record<BillingPlan, string> = {
+  monthly: "RM 99",
+  annual: "RM 799",
+};
+
 /** One-time, non-consumable Lifetime product. */
 export const LIFETIME_PRODUCT_ID = "bossify_lifetime";
 export const LIFETIME_FALLBACK_PRICE = "RM 2,999";
@@ -138,6 +153,7 @@ export type ProductPrice = {
     | BillingPlan
     | "lifetime"
     | "starter_monthly" | "starter_annual"
+    | "business_monthly" | "business_annual"
     | "team_starter_monthly" | "team_starter_annual"
     | "team_pro_monthly"     | "team_pro_annual"
     | "team_business_monthly" | "team_business_annual";
@@ -303,6 +319,11 @@ export function initBilling(): Promise<AnyStore | null> {
       store.register([
         {
           id: SUBSCRIPTION_ID,
+          type: cdv.ProductType.PAID_SUBSCRIPTION,
+          platform: cdv.Platform.GOOGLE_PLAY,
+        },
+        {
+          id: BUSINESS_SUBSCRIPTION_ID,
           type: cdv.ProductType.PAID_SUBSCRIPTION,
           platform: cdv.Platform.GOOGLE_PLAY,
         },
