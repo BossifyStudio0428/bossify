@@ -290,7 +290,7 @@ function ReportsPage() {
         </div>
       )}
       <header className="flex items-center gap-2">
-        <Link to="/profile" className="-ml-2 p-2 rounded-full active:bg-muted"><ChevronLeft className="h-5 w-5" /></Link>
+        <Link to="/reports" className="-ml-2 p-2 rounded-full active:bg-muted"><ChevronLeft className="h-5 w-5" /></Link>
         <h1 className="text-2xl font-bold tracking-tight">{t(titleKey)}</h1>
       </header>
 
