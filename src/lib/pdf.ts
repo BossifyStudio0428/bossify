@@ -813,6 +813,8 @@ export async function exportProfitReportPDF(d: ProfitReportData): Promise<void> 
     });
   }
 
+  const yFn = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
+  drawFootnote(doc as AutoTablePdf, d.lang, yFn);
   drawFooters(doc, l);
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   await savePdf(doc, `Bossify_Profit_${ymd}.pdf`);
