@@ -19,6 +19,53 @@ export const Route = createFileRoute("/inventory")({ component: InventoryPage })
 
 const LOW_THRESHOLD = 5;
 
+function ProfitRow({
+  price,
+  cost,
+  t,
+}: {
+  price: number | null | undefined;
+  cost: number | null | undefined;
+  t: (k: any) => string;
+}) {
+  const p = Number(price ?? 0);
+  const c = Number(cost ?? 0);
+  const hasCost = cost != null && !Number.isNaN(Number(cost)) && Number(cost) > 0;
+  const profit = p - c;
+  const positive = profit > 0;
+  const negative = profit < 0;
+  return (
+    <div className="grid grid-cols-3 gap-2 rounded-xl bg-muted/40 border border-border/50 px-2.5 py-2">
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium text-muted-foreground">{t("inv_price_label")}</p>
+        <p className="text-xs font-semibold text-foreground truncate">RM {p.toFixed(2)}</p>
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium text-muted-foreground">{t("inv_cost_label")}</p>
+        <p className="text-xs font-semibold text-foreground truncate">
+          {hasCost ? `RM ${c.toFixed(2)}` : "—"}
+        </p>
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium text-muted-foreground">{t("inv_profit_label")}</p>
+        <p
+          className={`text-xs font-bold truncate ${
+            !hasCost
+              ? "text-muted-foreground"
+              : negative
+                ? "text-red-600"
+                : positive
+                  ? "text-emerald-600"
+                  : "text-foreground"
+          }`}
+        >
+          {hasCost ? `RM ${profit.toFixed(2)}` : t("inv_no_cost")}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 type Sheet =
   | { kind: "none" }
   | { kind: "form"; item?: InvRow }
