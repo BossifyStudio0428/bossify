@@ -43,7 +43,7 @@ export async function loadPrefs(userId: string): Promise<NotifPrefs> {
 }
 
 export async function savePrefs(userId: string, prefs: Partial<NotifPrefs>): Promise<void> {
-  await supabase.from("profiles").update(prefs).eq("id", userId);
+  await supabase.from("profiles").update(prefs as never).eq("id", userId);
   const merged = { ...getCachedPrefs(), ...prefs };
   try { safeLocalStorage.setItem(CACHE_KEY, JSON.stringify(merged)); } catch {}
 }
