@@ -103,3 +103,19 @@ export const HIDE_ORDER_FORM = true;
  * Flip to `false` to restore.
  */
 export const HIDE_TEAM_PLAN = true;
+
+/**
+ * Hide the Profit Summary tile on the More screen.
+ * Reports (`/reports`) still shows the same revenue / cost / profit /
+ * margin numbers with more range options + PDF export. The `/profit`
+ * route stays registered; flip to `false` to restore.
+ */
+export const HIDE_PROFIT_SUMMARY = true;
+
+/**
+ * Hide the Analytics entry in Profile → Business section.
+ * Reports (`/reports`) is the single reporting view (PDF export + custom
+ * date range + business-type awareness). The `/analytics` route stays
+ * registered; flip to `false` to restore.
+ */
+export const HIDE_ANALYTICS_MENU = true;
