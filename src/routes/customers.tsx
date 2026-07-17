@@ -191,29 +191,48 @@ function CustomersPage() {
     if (!name) { setNewCustomerErrors({ name: t("required_field") }); return; }
     setSavingNewCustomer(true);
     const fullPhone = newCustomer.phone.replace(/\D/g, "");
-    const { data, error } = await (supabase as any).from("customers").insert({
-      user_id: user.id,
-      name,
-      phone: fullPhone || null,
-      total_orders: 0,
-      total_spent: 0,
-    }).select("*").single();
-    if (error || !data) {
-      setSavingNewCustomer(false);
-      toast.error(error?.message ?? "Failed");
-      return;
+
+    // Dedupe: reuse an existing customer with same (user_id + phone) rather
+    // than creating a duplicate zero-totals row.
+    let data: CustomerRow | null = null;
+    if (fullPhone) {
+      const { data: existing } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("phone", fullPhone)
+        .maybeSingle();
+      if (existing) data = existing as CustomerRow;
     }
+    if (!data) {
+      const { data: inserted, error } = await (supabase as any).from("customers").insert({
+        user_id: user.id,
+        name,
+        phone: fullPhone || null,
+        total_orders: 0,
+        total_spent: 0,
+      }).select("*").single();
+      if (error || !inserted) {
+        setSavingNewCustomer(false);
+        toast.error(error?.message ?? "Failed");
+        return;
+      }
+      data = inserted as CustomerRow;
+    }
+
+    // Only write the note when a follow-up date is set — the textarea is
+    // labeled "Check-in note" and its content belongs to the follow_up row.
     if (newCustomer.followup_date) {
       const { error: fuError } = await (supabase as any).from("follow_ups").insert({
         user_id: user.id,
-        customer_id: data.id,
+        customer_id: data!.id,
         follow_up_date: newCustomer.followup_date,
         note: newCustomer.note.trim() || null,
         is_done: false,
       });
-      if (!fuError) setFollowUpByCustomerId((prev) => ({ ...prev, [data.id]: newCustomer.followup_date }));
+      if (!fuError) setFollowUpByCustomerId((prev) => ({ ...prev, [data!.id]: newCustomer.followup_date }));
     }
-    setCustomers((prev) => [data as CustomerRow, ...prev.filter((c) => c.id !== data.id)]);
+    setCustomers((prev) => [data as CustomerRow, ...prev.filter((c) => c.id !== data!.id)]);
     setNewCustomer({ name: "", phone: "", followup_date: "", note: "" });
     setNewCustomerErrors({});
     setNewCustomerOpen(false);
@@ -714,24 +733,27 @@ function CustomersPage() {
               value={newCustomer.phone}
               onChange={(v) => setNewCustomer((p) => ({ ...p, phone: v }))}
             />
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_followup_date")}</label>
-              <input
-                type="date"
-                value={newCustomer.followup_date}
-                onChange={(e) => setNewCustomer((p) => ({ ...p, followup_date: e.target.value }))}
-                className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("remarks")}</label>
-              <textarea
-                rows={3}
-                value={newCustomer.note}
-                onChange={(e) => setNewCustomer((p) => ({ ...p, note: e.target.value }))}
-                placeholder={t("remarks_placeholder")}
-                className="w-full rounded-2xl bg-muted/60 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
-              />
+            <div className="space-y-2 rounded-2xl bg-muted/30 border border-border/60 p-3">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_followup_date")}</label>
+                <input
+                  type="date"
+                  value={newCustomer.followup_date}
+                  onChange={(e) => setNewCustomer((p) => ({ ...p, followup_date: e.target.value }))}
+                  className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("checkin_note")}</label>
+                <textarea
+                  rows={3}
+                  value={newCustomer.note}
+                  disabled={!newCustomer.followup_date}
+                  onChange={(e) => setNewCustomer((p) => ({ ...p, note: e.target.value }))}
+                  placeholder={t("checkin_note_ph")}
+                  className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
             </div>
             <button
               onClick={saveNewCustomer}
