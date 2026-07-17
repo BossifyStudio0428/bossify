@@ -1,141 +1,70 @@
-# Reports Hub — 3 PDF Cards
+# Customers Retail Redesign
 
-Convert the current `/reports` single-PDF-button screen into a hub where the user picks which report to generate. All 3 reports reuse existing data — no new tables, no schema changes.
+## Investigation findings
 
-## 1. Hub screen layout
+**Data model (via live DB inspection):**
 
-**Location:** `/reports` (same route). The existing Sales Report view moves to `/reports/sales`; `/reports` becomes the hub.
+- `public.customers` real columns: `id, user_id, name, phone, total_orders, total_spent, last_order_at, created_at, updated_at, package_id, package_name, interested_listing_id`.
+- `customer_status` and `remarks` **do not exist in the database** — the client TypeScript type marks them optional, and every `.update({ customer_status })` / `.update({ remarks })` call has been silently erroring for months. So `customer_status` is dead data and nothing depends on it in the DB.
+- `follow_ups` is a real table (`customer_id`, `follow_up_date`, `note`, `is_done`) and is actively used — deleting a customer already cascades follow-up cleanup. Data model is fine as a "remind me to check in" note; no schema change needed to repurpose it.
 
-```text
-┌─ Reports ───────────────────────┐
-│ [date range picker — shared]    │
-│                                 │
-│ ┌───────────────────────────┐   │
-│ │ 📊 Sales Report           │   │
-│ │ Revenue, orders, top      │   │
-│ │ products, best customers  │   │
-│ │              [Open PDF →] │   │
-│ └───────────────────────────┘   │
-│ ┌───────────────────────────┐   │
-│ │ 💰 Profit Report          │   │
-│ │ Gross profit, margin,     │   │
-│ │ most/least profitable     │   │
-│ │              [Open PDF →] │   │
-│ └───────────────────────────┘   │
-│ ┌───────────────────────────┐   │
-│ │ 📦 Stock Report           │   │
-│ │ In stock, low stock, out, │   │
-│ │ losing-money items        │   │
-│ │              [Open PDF →] │   │
-│ └───────────────────────────┘   │
-└─────────────────────────────────┘
+**Code touch-points:**
+
+- `src/routes/customers.tsx` — status filter tabs (line 412-428), status pill on each card (line 610-616), `cycleStatus` writer (line 80-89).
+- `src/routes/customer.$customerId.tsx` — status pill in header (line 206-211), `cycleStatus` writer (line 122-130), Follow-up Reminder section (line 51-55, 142-164, and its JSX).
+- Card tap → `/customer/$customerId` **is already a `<Link>`** (line 557-560); it opens the detail page in view mode. Item 1 of the request is already the current behavior. The "..." menu offers Edit/Delete on top of that. **No nav change needed** unless a specific broken path is identified — please confirm what you were seeing.
+- `CUSTOMER_STATUS_*` are referenced by `CasesKanban`, `pipeline-overview`, `services-summary`, `renewal.$id` — all Education/Property surfaces, all hidden under `RETAIL_ONLY_MODE`. Safe to keep the types & imports intact; only the Retail-visible UI needs to lose the status.
+
+**Follow-up Reminder direction:** `follow_ups` already stores `note`, `follow_up_date`, `is_done` — exactly the shape needed for "remind me to check in with this customer". No pipeline coupling in retail. Repurpose (relabel + reuse) rather than remove.
+
+## Changes
+
+**Retail-only (`bizType === 'retail'` / `RETAIL_ONLY_MODE`) — nothing else touched:**
+
+1. **`customers.tsx` list**
+   - Hide the status filter row (Enquiry / In Progress / Completed / Rejected + "All statuses"). Keep search, date filter, sort tabs untouched.
+   - Remove the status pill button + `cycleStatus` handler from each card. Right column keeps `RM {total_spent}` and adds an auto-computed badge:
+     - `total_orders >= 2` → **Repeat** (primary tint)
+     - `total_orders === 1` → **New** (emerald tint)
+     - `total_orders === 0` → no badge
+     - If the customer is in the top 20% by `total_spent` among the current visible list AND `total_spent > 0` → **Top Spender** overrides Repeat/New (amber tint). Computed client-side from the already-loaded rows; no query.
+   - Card body tap still opens `/customer/$customerId` (already works). Kebab menu keeps Edit / Delete / WhatsApp.
+
+2. **`customer.$customerId.tsx` detail (retail path)**
+   - Replace the manual status pill under the customer name with the same auto-computed badge (New / Repeat / Top Spender), using the customer's own `total_orders` and `total_spent`. For Top Spender at detail level, use `total_spent >= 500` as the retail threshold (no cohort available on a single-record view). Purely presentational.
+   - Delete `cycleStatus` handler on this page.
+   - Rename the "Follow-up Reminder" section to **"Check-in Reminder"** (EN) / **"Peringatan Semak"** (BM) / **"跟进提醒"** (ZH). Same UI, same `follow_ups` writes — only the label + helper copy change. Existing rows continue to render.
+   - Remarks, Total Orders / Spent / Member since cards, Order History, WhatsApp / Edit / Delete: unchanged.
+
+3. **Non-retail verticals**
+   - `bizType !== 'retail'` (Education, Property, etc.) still shows the old status pill, filter tabs, and "Follow-up Reminder" wording. Reversible: flip `RETAIL_ONLY_MODE` off and everything comes back.
+
+**No changes to:** `CustomerRow` type, `CustomerStatus` type, `follow_ups` schema, `CasesKanban`, `pipeline-overview`, `services-summary`, `renewal.$id`.
+
+## SQL (provided separately — for you to run manually)
+
+Two dead-column cleanups that are strictly optional. Recommended, since the client type still mentions them and someone editing later may re-add write calls. Skip if you'd rather leave the DB alone:
+
+```sql
+-- Only if you want to formalise that remarks and customer_status are gone.
+-- Both are currently absent from public.customers; these are no-op-safe.
+ALTER TABLE public.customers DROP COLUMN IF EXISTS customer_status;
+ALTER TABLE public.customers DROP COLUMN IF EXISTS remarks;
 ```
 
-- Shared date-range picker at the top (already exists on current Reports) applies to Sales + Profit. Stock ignores it (stock is a point-in-time snapshot as of "now").
-- Each card tap → generates & opens that PDF directly. Paywall gate stays on the export action (same `usePaywall` check the current button uses); reuse it verbatim per card.
-- Sales card = existing `exportSalesReportPDF` — no logic change.
+**⚠ Remarks caveat:** The Remarks textarea on Customer Detail is in the "keep unchanged" list, but writes to `customers.remarks` have been silently failing (column missing). If you want Remarks to actually persist, we need this migration instead — please confirm which you want:
 
-## 2. Profit Report PDF structure
-
-Data source: existing `orders` rows in the selected range (already fetched for Sales). No new query.
-
-```text
-─ Header ────────────────────────
-Profit Report
-{business name}    {date range}
-─ Summary ──────────────────────
-Revenue          RM x,xxx.xx
-Cost of goods    RM x,xxx.xx
-Gross profit     RM x,xxx.xx   ← bold
-Gross margin %   xx.x%
-Orders           n
-Avg profit/order RM xx.xx
-─ Most profitable products (top 10) ─
-Product | Qty sold | Revenue | Cost | Profit | Margin %
-─ Least profitable / loss-making (bottom 10) ─
-Product | Qty sold | Revenue | Cost | Profit | Margin %
-─ Footer ───────────────────────
-Generated {timestamp} · Bossify
+```sql
+-- Adds a real remarks column so the existing UI works.
+ALTER TABLE public.customers ADD COLUMN IF NOT EXISTS remarks text;
 ```
 
-Aggregation helper: group order line items by product, sum revenue/cost/profit, sort desc for top-10 and asc for bottom-10 (include negatives).
+If you approve adding `remarks`, I'll leave the Remarks UI as-is and it will start persisting. If not, I'll remove the Remarks section in the same patch so we're not shipping a broken input.
 
-## 3. Stock Report PDF structure
+## Open confirmations before I code
 
-Data source: existing `inventory` table (same query `/inventory` and `/alerts` already run). Snapshot as of generation time — no date range.
+1. **Nav item #1** — card tap already opens Customer Detail. Is there a specific place you saw it going to Edit first (e.g. via a specific button)? If yes, tell me where and I'll fix that path.
+2. **Remarks** — add real `remarks` column (recommended, keeps your listed requirement), or drop the section entirely?
+3. **Top Spender rule** — OK with "top 20% of currently visible list by spend, must have spent > 0" on the list, and `total_spent >= 500 RM` on the detail page? Or give me a different threshold.
 
-```text
-─ Header ────────────────────────
-Stock Report
-{business name}    As of {timestamp}
-─ Summary ──────────────────────
-Total SKUs             n
-Total stock value      RM x,xxx.xx   (sum qty × cost)
-In stock               n
-Low stock              n   (qty ≤ reorder level, > 0)
-Out of stock           n   (qty = 0)
-Losing money           n   (sell price < cost)
-─ Low stock (needs reorder) ────
-SKU | Product | Qty on hand | Reorder level | Cost | Value
-─ Out of stock ─────────────────
-SKU | Product | Cost | Last sold
-─ Losing money ─────────────────
-SKU | Product | Cost | Sell price | Margin (negative)
-─ Full inventory ──────────────
-SKU | Product | Qty | Cost | Sell price | Value
-─ Footer ───────────────────────
-Generated {timestamp} · Bossify
-```
-
-The 4 category buckets reuse the exact same classification logic already used on `/alerts` — no new business rules.
-
-## 4. i18n keys (EN / BM / ZH)
-
-Add to `src/contexts/I18nContext.tsx`:
-
-| Key | EN | BM | ZH |
-|---|---|---|---|
-| `reports_hub_title` | Reports | Laporan | 报表 |
-| `reports_sales_title` | Sales Report | Laporan Jualan | 销售报表 |
-| `reports_sales_desc` | Revenue, orders, top products, best customers | Hasil, pesanan, produk teratas, pelanggan terbaik | 营收、订单、热销产品、最佳客户 |
-| `reports_profit_title` | Profit Report | Laporan Untung | 利润报表 |
-| `reports_profit_desc` | Gross profit, margin, most & least profitable products | Untung kasar, margin, produk paling & kurang menguntungkan | 毛利、利润率、最赚钱与最不赚钱的产品 |
-| `reports_stock_title` | Stock Report | Laporan Stok | 库存报表 |
-| `reports_stock_desc` | In stock, low stock, out of stock, losing money | Ada stok, stok rendah, habis stok, rugi | 有库存、低库存、缺货、亏本 |
-| `reports_open_pdf` | Open PDF | Buka PDF | 打开 PDF |
-| `reports_as_of` | As of | Setakat | 截至 |
-| `profit_report_cogs` | Cost of goods | Kos barang | 商品成本 |
-| `profit_report_gross_profit` | Gross profit | Untung kasar | 毛利 |
-| `profit_report_margin` | Gross margin | Margin kasar | 毛利率 |
-| `profit_report_avg_per_order` | Avg profit/order | Purata untung/pesanan | 每单平均利润 |
-| `profit_report_most_profitable` | Most profitable products | Produk paling menguntungkan | 最赚钱的产品 |
-| `profit_report_least_profitable` | Least profitable products | Produk kurang menguntungkan | 最不赚钱的产品 |
-| `stock_report_total_skus` | Total SKUs | Jumlah SKU | SKU 总数 |
-| `stock_report_total_value` | Total stock value | Jumlah nilai stok | 库存总值 |
-| `stock_report_in_stock` | In stock | Ada stok | 有库存 |
-| `stock_report_low_stock` | Low stock | Stok rendah | 低库存 |
-| `stock_report_out_of_stock` | Out of stock | Habis stok | 缺货 |
-| `stock_report_losing_money` | Losing money | Rugi | 亏本 |
-| `stock_report_needs_reorder` | Needs reorder | Perlu pesan semula | 需要补货 |
-| `stock_report_full_inventory` | Full inventory | Inventori penuh | 全部库存 |
-| `stock_report_last_sold` | Last sold | Terakhir dijual | 上次售出 |
-
-Existing `reports_*` keys used by the Sales Report stay as-is.
-
-## Technical notes
-
-**Files:**
-- `src/routes/reports.tsx` → becomes hub (3 cards + shared date picker). Removes the inline sales-report UI.
-- `src/routes/reports.sales.tsx` → new; hosts the existing sales-report view (moved as-is).
-- `src/lib/pdf.ts` → add `exportProfitReportPDF(orders, range, t)` and `exportStockReportPDF(inventory, t)`. Reuse existing jsPDF+autotable helpers and header/footer style from `exportSalesReportPDF`.
-- `src/contexts/I18nContext.tsx` → add keys above in all 3 languages.
-
-**Data reuse (no new queries):**
-- Profit: same `orders` fetch already used for Sales Report; aggregate client-side.
-- Stock: same `inventory` fetch pattern as `/inventory` and `/alerts`; one `supabase.from('inventory').select(...)` call.
-
-**Paywall:** each card's PDF action goes through the existing `usePaywall` check — identical gating to today's single button.
-
-**Reversibility:** wrap the new hub behind a `REPORTS_HUB_MODE` flag in `src/lib/featureFlags.ts` (default `true`). If off, `/reports` renders the old single-PDF view; the new `/reports/sales`, profit, and stock code paths simply aren't linked.
-
-**No schema changes. No new tables. No server functions.**
+I won't touch code until you answer these three.

@@ -311,6 +311,24 @@ function CustomersPage() {
     return 0;
   });
   const dateFilterActive = !!(dateFrom || dateTo);
+  // Top 20% spend threshold across the currently visible retail list (spent > 0 only).
+  const topSpenderThreshold = (() => {
+    if (bizType !== "retail") return Number.POSITIVE_INFINITY;
+    const spends = visible.map((c) => Number(c.total_spent ?? 0)).filter((v) => v > 0).sort((a, b) => b - a);
+    if (spends.length === 0) return Number.POSITIVE_INFINITY;
+    const idx = Math.max(0, Math.ceil(spends.length * 0.2) - 1);
+    return spends[idx];
+  })();
+  const retailBadge = (c: CustomerRow): { label: string; cls: string } | null => {
+    if (bizType !== "retail") return null;
+    const spent = Number(c.total_spent ?? 0);
+    if (spent > 0 && spent >= topSpenderThreshold) {
+      return { label: t("customer_top_spender"), cls: "bg-amber-100 text-amber-700" };
+    }
+    if ((c.total_orders ?? 0) >= 2) return { label: t("customer_repeat"), cls: "bg-primary/10 text-primary" };
+    if ((c.total_orders ?? 0) === 1) return { label: t("customer_new"), cls: "bg-emerald-100 text-emerald-700" };
+    return null;
+  };
   const dateLabel = lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date";
   const todayStr = () => new Date().toISOString().slice(0, 10);
   const daysAgoStr = (n: number) => {
@@ -409,23 +427,25 @@ function CustomersPage() {
         />
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
-        <button
-          onClick={() => setStatusFilter("all")}
-          className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-        >
-          {t("all_statuses")}
-        </button>
-        {CUSTOMER_STATUS_ORDER.map((s) => (
+      {bizType !== "retail" && (
+        <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
           <button
-            key={s}
-            onClick={() => setStatusFilter(s)}
-            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === s ? CUSTOMER_STATUS_STYLES[s] + " ring-2 ring-offset-1 ring-current" : "bg-muted text-muted-foreground"}`}
+            onClick={() => setStatusFilter("all")}
+            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
           >
-            {CUSTOMER_STATUS_DOT[s]} {t(`cs_${s}` as any)}
+            {t("all_statuses")}
           </button>
-        ))}
-      </div>
+          {CUSTOMER_STATUS_ORDER.map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === s ? CUSTOMER_STATUS_STYLES[s] + " ring-2 ring-offset-1 ring-current" : "bg-muted text-muted-foreground"}`}
+            >
+              {CUSTOMER_STATUS_DOT[s]} {t(`cs_${s}` as any)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 scrollbar-hide">
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground pr-1">
@@ -607,13 +627,22 @@ function CustomersPage() {
             </Link>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               <p className="text-sm font-bold text-primary">RM {Number(c.total_spent).toFixed(0)}</p>
-              <button
-                onClick={() => cycleStatus(c)}
-                aria-label="Status"
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[(c.customer_status ?? "enquiry") as CustomerStatus]}`}
-              >
-                {CUSTOMER_STATUS_DOT[(c.customer_status ?? "enquiry") as CustomerStatus]} {t(`cs_${(c.customer_status ?? "enquiry") as CustomerStatus}` as any)}
-              </button>
+              {bizType === "retail" ? (
+                (() => {
+                  const b = retailBadge(c);
+                  return b ? (
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${b.cls}`}>{b.label}</span>
+                  ) : null;
+                })()
+              ) : (
+                <button
+                  onClick={() => cycleStatus(c)}
+                  aria-label="Status"
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[(c.customer_status ?? "enquiry") as CustomerStatus]}`}
+                >
+                  {CUSTOMER_STATUS_DOT[(c.customer_status ?? "enquiry") as CustomerStatus]} {t(`cs_${(c.customer_status ?? "enquiry") as CustomerStatus}` as any)}
+                </button>
+              )}
               {bizType === "education" && (
                 <div className="flex gap-1">
                   <Link
