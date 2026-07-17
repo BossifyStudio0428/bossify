@@ -733,24 +733,27 @@ function CustomersPage() {
               value={newCustomer.phone}
               onChange={(v) => setNewCustomer((p) => ({ ...p, phone: v }))}
             />
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_followup_date")}</label>
-              <input
-                type="date"
-                value={newCustomer.followup_date}
-                onChange={(e) => setNewCustomer((p) => ({ ...p, followup_date: e.target.value }))}
-                className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("remarks")}</label>
-              <textarea
-                rows={3}
-                value={newCustomer.note}
-                onChange={(e) => setNewCustomer((p) => ({ ...p, note: e.target.value }))}
-                placeholder={t("remarks_placeholder")}
-                className="w-full rounded-2xl bg-muted/60 border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none"
-              />
+            <div className="space-y-2 rounded-2xl bg-muted/30 border border-border/60 p-3">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("f_followup_date")}</label>
+                <input
+                  type="date"
+                  value={newCustomer.followup_date}
+                  onChange={(e) => setNewCustomer((p) => ({ ...p, followup_date: e.target.value }))}
+                  className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("checkin_note")}</label>
+                <textarea
+                  rows={3}
+                  value={newCustomer.note}
+                  disabled={!newCustomer.followup_date}
+                  onChange={(e) => setNewCustomer((p) => ({ ...p, note: e.target.value }))}
+                  placeholder={t("checkin_note_ph")}
+                  className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
             </div>
             <button
               onClick={saveNewCustomer}
