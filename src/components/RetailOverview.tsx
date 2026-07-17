@@ -357,14 +357,6 @@ export function RetailOverview() {
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <QuickCard to="/inventory" icon={Package} label={t("ro_open_products")} />
-        <QuickCard to="/stock" icon={Layers} label={t("ro_open_stock")} />
-        <QuickCard to="/alerts" icon={Bell} label={t("ro_open_alerts")} />
-        <QuickCard to="/more" icon={MoreHorizontal} label={t("ro_open_more")} />
-      </div>
-
       <Link
         to="/new-order"
         className="mt-5 flex items-center justify-center gap-2 h-12 rounded-2xl bg-primary text-primary-foreground font-semibold active:scale-[0.98]"
