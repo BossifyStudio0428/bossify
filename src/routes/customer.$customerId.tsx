@@ -282,7 +282,7 @@ function CustomerDetail() {
       <section className="space-y-2">
         <div className="flex items-center justify-between px-1">
           <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
-            {t("followup_reminder")}
+            {t(bizType === "retail" ? "checkin_reminder" : "followup_reminder")}
           </p>
           <button
             onClick={() => setShowFollowUp(true)}
