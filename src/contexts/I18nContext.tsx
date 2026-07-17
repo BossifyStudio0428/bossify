@@ -592,6 +592,8 @@ const dict = {
     notif_setting_evening_desc: "Daily 9:00 PM report of today's sales",
     notif_setting_milestone: "Milestone Celebrations",
     notif_setting_milestone_desc: "Get notified when you hit key milestones",
+    notif_setting_losing: "Losing-money Alert",
+    notif_setting_losing_desc: "Daily check for SKUs where cost is higher than price",
     notif_setting_new_case: "New Case Alert",
     notif_setting_new_case_desc: "Notify me when a new case is added",
     notif_setting_new_appointment: "New Appointment Alert",
