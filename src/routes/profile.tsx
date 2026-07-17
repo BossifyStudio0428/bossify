@@ -189,18 +189,22 @@ function ProfilePage() {
               } as MenuItem,
             ]
           : []),
-        {
-          icon: "📅",
-          key: "bookings",
-          label: t("bookings"),
-          onClick: () => navigate({ to: "/bookings" }),
-        },
-        {
-          icon: "⚙️",
-          key: "bookingsettings",
-          label: t("booking_settings"),
-          onClick: () => navigate({ to: "/booking-settings" }),
-        },
+        ...(HIDE_BOOKING_MENU
+          ? []
+          : [
+              {
+                icon: "📅",
+                key: "bookings",
+                label: t("bookings"),
+                onClick: () => navigate({ to: "/bookings" }),
+              } as MenuItem,
+              {
+                icon: "⚙️",
+                key: "bookingsettings",
+                label: t("booking_settings"),
+                onClick: () => navigate({ to: "/booking-settings" }),
+              } as MenuItem,
+            ]),
         {
           icon: "📊",
           key: "analytics",
