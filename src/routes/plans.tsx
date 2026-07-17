@@ -31,6 +31,7 @@ import {
   type BillingError,
 } from "@/lib/billing";
 import { fetchStripePrices } from "@/lib/stripePrices.functions";
+import { HIDE_TEAM_PLAN } from "@/lib/featureFlags";
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
 
@@ -586,23 +587,25 @@ function PlansPage() {
       </div>
 
       {/* Scope toggle: Individual vs Team */}
-      <div className="flex p-1 bg-muted rounded-2xl">
-        {(["individual", "team"] as const).map((s) => {
-          const label =
-            s === "individual"
-              ? lang === "zh" ? "个人 Individual" : lang === "ms" ? "Individu / Individual" : "Individual 个人"
-              : lang === "zh" ? "团队 Team" : lang === "ms" ? "Pasukan / Team" : "Team 团队";
-          return (
-            <button
-              key={s}
-              onClick={() => setScope(s)}
-              className={`flex-1 py-2 rounded-xl text-sm font-semibold transition ${scope === s ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      {!HIDE_TEAM_PLAN && (
+        <div className="flex p-1 bg-muted rounded-2xl">
+          {(["individual", "team"] as const).map((s) => {
+            const label =
+              s === "individual"
+                ? lang === "zh" ? "个人 Individual" : lang === "ms" ? "Individu / Individual" : "Individual 个人"
+                : lang === "zh" ? "团队 Team" : lang === "ms" ? "Pasukan / Team" : "Team 团队";
+            return (
+              <button
+                key={s}
+                onClick={() => setScope(s)}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition ${scope === s ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Billing toggle */}
       <div className="flex p-1 bg-muted rounded-2xl">
@@ -975,7 +978,7 @@ function PlansPage() {
       )}
       </>)}
 
-      {scope === "team" && (
+      {!HIDE_TEAM_PLAN && scope === "team" && (
         <TeamPlansSection
           lang={lang}
           billing={billing}
