@@ -27,7 +27,8 @@ import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType";
 import { RETAIL_ONLY_MODE } from "@/lib/featureFlags";
-import { PLATFORMS } from "@/lib/platforms";
+import { PLATFORMS, VISIBLE_PLATFORMS } from "@/lib/platforms";
+import { HIDE_BOOKING_MENU } from "@/lib/featureFlags";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { isNativeBillingAvailable } from "@/lib/billing";
 
