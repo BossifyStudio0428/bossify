@@ -516,6 +516,31 @@ export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult
       } catch {}
       out.push({ plan: key, formattedPrice: STARTER_FALLBACK_PRICES[billing], currency: "MYR" });
     }
+    // Business subscription base plans (single product like Pro).
+    try {
+      const business = store.get(BUSINESS_SUBSCRIPTION_ID);
+      for (const offer of business?.offers ?? []) {
+        const offerId: string | undefined = offer.id || offer.basePlanId;
+        let bp: BillingPlan | null = null;
+        if (offerId?.includes(BASE_PLAN_IDS.monthly)) bp = "monthly";
+        else if (offerId?.includes(BASE_PLAN_IDS.annual)) bp = "annual";
+        if (!bp) continue;
+        const { price, currency } = readPrice(business, offer);
+        if (!price) continue;
+        out.push({
+          plan: bp === "monthly" ? "business_monthly" : "business_annual",
+          formattedPrice: price,
+          currency: currency ?? "MYR",
+        });
+      }
+    } catch {}
+    for (const billing of ["monthly", "annual"] as BillingPlan[]) {
+      const key = (billing === "monthly" ? "business_monthly" : "business_annual") as
+        | "business_monthly" | "business_annual";
+      if (!out.find((x) => x.plan === key)) {
+        out.push({ plan: key, formattedPrice: BUSINESS_FALLBACK_PRICES[billing], currency: "MYR" });
+      }
+    }
     // Team subscription SKUs.
     for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
       for (const billing of ["monthly", "annual"] as BillingPlan[]) {
