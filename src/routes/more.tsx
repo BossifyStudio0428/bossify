@@ -10,6 +10,7 @@ import {
   User,
   Bell as BellIcon,
   TrendingUp,
+  BarChart3,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import { RETAIL_ONLY_MODE, HIDE_PROFIT_SUMMARY } from "@/lib/featureFlags";
@@ -27,6 +28,7 @@ function MorePage() {
     { to: "/customers", icon: Users, label: t("more_customers") },
     { to: "/suppliers", icon: Truck, label: t("more_suppliers") },
     { to: "/purchase-orders", icon: ShoppingBag, label: t("more_purchase_orders") },
+    { to: "/reports", icon: BarChart3, label: t("more_reports") },
     ...(RETAIL_ONLY_MODE
       ? []
       : [{ to: "/documents", icon: FileText, label: t("more_documents") }]),
