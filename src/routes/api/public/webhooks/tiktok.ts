@@ -97,6 +97,16 @@ export const Route = createFileRoute("/api/public/webhooks/tiktok")({
           return new Response("Order write failed", { status: 500 });
         }
 
+        // Best-effort in-app notification for the merchant's Activity feed.
+        // type="new_order_tiktok" so the client can render a TikTok badge.
+        await supabaseAdmin.from("notifications" as any).insert({
+          user_id: userId,
+          type: "new_order_tiktok",
+          title: "New TikTok Shop order",
+          message: `Order ${orderId} — details syncing…`,
+          link: "/orders",
+        }).then(() => undefined).catch(() => undefined);
+
         return new Response("ok", { status: 200 });
       },
     },
