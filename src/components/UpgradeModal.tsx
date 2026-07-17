@@ -3,7 +3,8 @@ import { Lock } from "lucide-react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useEffect, useState } from "react";
-import { queryProductDetailsSafe, FALLBACK_PRICES } from "@/lib/billing";
+import { isNativeBillingAvailable, queryProductDetailsSafe, FALLBACK_PRICES } from "@/lib/billing";
+import { fetchStripePrices } from "@/lib/stripePrices.functions";
 
 export function UpgradeModal() {
   const { upgradeOpen, hideUpgrade, upgradeReason } = useSubscription();
@@ -14,13 +15,23 @@ export function UpgradeModal() {
   useEffect(() => {
     if (!upgradeOpen) return;
     let cancelled = false;
-    queryProductDetailsSafe()
-      .then((result) => {
-        if (cancelled) return;
-        const monthly = result.prices.find((p) => p.plan === "monthly");
-        if (monthly?.formattedPrice && monthly.formattedPrice !== "—") setProMonthlyPrice(monthly.formattedPrice);
-      })
-      .catch(() => {});
+    if (isNativeBillingAvailable()) {
+      queryProductDetailsSafe()
+        .then((result) => {
+          if (cancelled) return;
+          const monthly = result.prices.find((p) => p.plan === "monthly");
+          if (monthly?.formattedPrice && monthly.formattedPrice !== "—") setProMonthlyPrice(monthly.formattedPrice);
+        })
+        .catch(() => {});
+    } else {
+      fetchStripePrices()
+        .then((res) => {
+          if (cancelled) return;
+          const monthly = res?.prices?.monthly;
+          if (monthly) setProMonthlyPrice(monthly);
+        })
+        .catch(() => {});
+    }
     return () => { cancelled = true; };
   }, [upgradeOpen]);
 
