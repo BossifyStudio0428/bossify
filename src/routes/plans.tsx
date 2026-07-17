@@ -187,6 +187,7 @@ async function startStripeCheckout(opts: {
   planType:
     | "starter"
     | "pro"
+    | "business"
     | "lifetime"
     | "team_starter"
     | "team_pro"
