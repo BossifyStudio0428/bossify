@@ -37,12 +37,22 @@ export const fetchStripePrices = createServerFn({ method: "GET" }).handler(
         "./stripe.server"
       );
       const stripe = getStripe();
-      const ids = Object.values(PRICE_IDS);
-      const priceObjs = await Promise.all(
+      // Skip placeholder IDs (e.g. yearly is "Coming soon" and uses
+      // `price_PLACEHOLDER_*`). Use allSettled so one bad ID never sinks
+      // the whole fetch — the UI keeps MYR fallbacks for missing keys.
+      const ids = Object.values(PRICE_IDS).filter(
+        (id) => id && !id.startsWith("price_PLACEHOLDER_"),
+      );
+      const results = await Promise.allSettled(
         ids.map((id) => stripe.prices.retrieve(id)),
       );
       const map: StripePriceMap = {};
-      for (const p of priceObjs) {
+      for (const r of results) {
+        if (r.status !== "fulfilled") {
+          console.warn("[fetchStripePrices] skip:", (r as PromiseRejectedResult).reason);
+          continue;
+        }
+        const p = r.value;
         const info = PRICE_TO_PLAN[p.id];
         if (!info) continue;
         const key = stripeKeyFor(info.plan, info.cycle);
