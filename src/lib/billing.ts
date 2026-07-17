@@ -841,6 +841,56 @@ export async function purchasePlan(
 }
 
 /**
+ * Purchase the Business subscription (individual, 5 devices).
+ * Uses the same one-product-two-base-plans shape as Pro.
+ */
+export async function purchaseBusiness(
+  plan: BillingPlan,
+  onSuccess: (receipt: PurchaseReceipt) => Promise<void> | void,
+  onError: (err: BillingError) => void,
+): Promise<void> {
+  if (!isNativeBillingAvailable()) {
+    onError({ code: "not_android", message: "Not running inside Android app" });
+    return;
+  }
+  const basePlanId = BASE_PLAN_IDS[plan];
+  try {
+    const receipt = await tryNativePurchase(BUSINESS_SUBSCRIPTION_ID, basePlanId);
+    await onSuccess({ ...receipt, productId: BUSINESS_SUBSCRIPTION_ID, basePlanId: plan });
+  } catch (e) {
+    const err = e as Partial<BillingError> | undefined;
+    onError({ code: err?.code ?? "unknown", message: err?.message ?? "Purchase failed" });
+  }
+}
+
+/**
+ * Check whether the user owns the Business subscription.
+ */
+export async function verifyActiveBusiness(): Promise<PurchaseReceipt | null> {
+  if (!isNativeBillingAvailable()) return null;
+  const store = await initBilling();
+  if (!store) return null;
+  try {
+    try { await store.restorePurchases(); } catch {}
+    try { await store.update(); } catch {}
+    const product = store.get(BUSINESS_SUBSCRIPTION_ID);
+    if (!product) return null;
+    const owned: boolean = !!(product.owned || product.offers?.some?.((o: AnyStore) => o?.owned));
+    if (!owned) return null;
+    const tx = product.transaction ?? {};
+    return {
+      productId: BUSINESS_SUBSCRIPTION_ID,
+      transactionId: tx.id ?? tx.transactionId ?? "",
+      purchaseToken: tx.purchaseToken,
+      basePlanId: inferOwnedPlan(product),
+      currentPeriodEnd: isoFromDate(tx.expirationDate),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Purchase a Starter Plan subscription. Each Starter billing cycle is a
  * SEPARATE Google Play product (unlike Pro, which uses base plans), so we
  * order the matching SKU directly.
