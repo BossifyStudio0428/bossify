@@ -349,7 +349,7 @@ function drawTable(doc: jsPDF, opts: TableOpts): number {
     margin: { left: MARGIN_L, right: MARGIN_R },
     styles: {
       font: CJK_FONT_FAMILY,
-      fontSize: opts.fontSize ?? 9,
+      fontSize: opts.fontSize ?? 11,
       textColor: INK_2,
       lineColor: MUTED,
       lineWidth: 0,
@@ -359,7 +359,7 @@ function drawTable(doc: jsPDF, opts: TableOpts): number {
     },
     headStyles: {
       fillColor: BAND, textColor: INK,
-      fontStyle: "bold", fontSize: (opts.fontSize ?? 9),
+      fontStyle: "bold", fontSize: (opts.fontSize ?? 11),
       lineColor: MUTED, lineWidth: { top: 0, right: 0, bottom: 0.2, left: 0 },
       halign: "left",
     },
@@ -367,7 +367,7 @@ function drawTable(doc: jsPDF, opts: TableOpts): number {
     alternateRowStyles: opts.zebra === false ? undefined : { fillColor: ZEBRA },
     footStyles: {
       fillColor: [255, 255, 255], textColor: INK,
-      fontStyle: "bold", fontSize: (opts.fontSize ?? 9) + 0.5,
+      fontStyle: "bold", fontSize: (opts.fontSize ?? 11) + 1,
       lineColor: RULE, lineWidth: { top: 0.6, right: 0, bottom: 0, left: 0 },
     },
     columnStyles: opts.columnStyles,
