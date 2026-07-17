@@ -8,10 +8,12 @@ import {
   verifyLifetimeOwnership,
   verifyActiveStarter,
   verifyActiveTeam,
+  verifyActiveBusiness,
   isNativeBillingAvailable,
   LIFETIME_PRODUCT_ID,
   STARTER_PRODUCT_IDS,
   TEAM_PRODUCT_IDS,
+  BUSINESS_SUBSCRIPTION_ID,
   type BillingPlan,
 } from "@/lib/billing";
 
@@ -19,6 +21,7 @@ export type Plan =
   | "free"
   | "starter"
   | "pro"
+  | "business"
   | "lifetime"
   | "team_starter"
   | "team_pro"
@@ -60,7 +63,7 @@ export const STARTER_LIMITS = {
 
 /** Per-plan caps used by gates across the app. Infinity = no limit. */
 export function getPlanLimits(plan: Plan) {
-  if (plan === "pro" || plan === "lifetime") {
+  if (plan === "pro" || plan === "lifetime" || plan === "business") {
     return { ordersPerMonth: Infinity, inventory: Infinity, customers: Infinity, listings: Infinity };
   }
   if (plan === "team_starter" || plan === "team_pro" || plan === "team_business") {
@@ -76,6 +79,7 @@ type Ctx = {
   plan: Plan;
   isPro: boolean;
   isStarter: boolean;
+  isBusiness: boolean;
   isLifetime: boolean;
   isTeam: boolean;
   teamTier: "team_starter" | "team_pro" | "team_business" | null;
@@ -159,7 +163,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         const now = new Date();
         const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         if (
-          (data.plan === "pro" || data.plan === "starter") &&
+          (data.plan === "pro" || data.plan === "starter" || data.plan === "business") &&
           data.current_period_end &&
           new Date(data.current_period_end).getTime() <= now.getTime()
         ) {
@@ -199,7 +203,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         const nextSub = data as SubscriptionRow;
         // Mirror payment platform onto profiles for the Terms refund policy.
         if (
-          (nextSub.plan === "pro" || nextSub.plan === "starter" || nextSub.plan === "lifetime") &&
+          (nextSub.plan === "pro" || nextSub.plan === "starter" || nextSub.plan === "lifetime" || nextSub.plan === "business") &&
           (nextSub.provider === "google_play" || nextSub.provider === "stripe")
         ) {
           supabase
@@ -313,6 +317,25 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
             provider_transaction_id: receipt.transactionId,
             provider_purchase_token: receipt.purchaseToken ?? null,
             current_period_end: receipt.currentPeriodEnd ?? null,
+          },
+          { onConflict: "user_id" },
+        );
+        await refresh();
+        return;
+      }
+      // Business subscription (individual, 5 devices).
+      const businessReceipt = await verifyActiveBusiness();
+      if (businessReceipt) {
+        await supabase.from("subscriptions").upsert(
+          {
+            user_id: user.id,
+            plan: "business",
+            status: "active",
+            provider: "google_play",
+            provider_product_id: `${businessReceipt.productId ?? BUSINESS_SUBSCRIPTION_ID}:${businessReceipt.basePlanId ?? "monthly"}`,
+            provider_transaction_id: businessReceipt.transactionId,
+            provider_purchase_token: businessReceipt.purchaseToken ?? null,
+            current_period_end: businessReceipt.currentPeriodEnd ?? null,
           },
           { onConflict: "user_id" },
         );
@@ -436,6 +459,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const isPeriodActive =
     !sub?.current_period_end || new Date(sub.current_period_end).getTime() > Date.now();
   const isPro = plan === "pro" && (sub?.status ?? "active") === "active" && isPeriodActive;
+  const isBusiness = plan === "business" && (sub?.status ?? "active") === "active" && isPeriodActive;
   // Lifetime never expires — no period check.
   const isLifetime = plan === "lifetime" && (sub?.status ?? "active") === "active";
   const isStarter = plan === "starter" && (sub?.status ?? "active") === "active" && isPeriodActive;
@@ -446,9 +470,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       ? plan
       : null;
   const isTeam = teamTier !== null;
-  const hasFullAccess = isPro || isLifetime || isTeam;
+  const hasFullAccess = isPro || isLifetime || isTeam || isBusiness;
   const limits = getPlanLimits(
-    teamTier ? teamTier : isStarter ? "starter" : isPro ? "pro" : isLifetime ? "lifetime" : "free",
+    teamTier ? teamTier : isStarter ? "starter" : isBusiness ? "business" : isPro ? "pro" : isLifetime ? "lifetime" : "free",
   );
   const ordersUsed = sub?.order_count ?? 0;
   const ordersLimit = limits.ordersPerMonth;
@@ -471,6 +495,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         plan,
         isPro,
         isStarter,
+        isBusiness,
         isLifetime,
         isTeam,
         teamTier,

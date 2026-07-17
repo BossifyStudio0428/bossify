@@ -34,6 +34,21 @@ export const FALLBACK_PRICES: Record<BillingPlan, string> = {
   annual: "RM 399",
 };
 
+/**
+ * Business Plan — one subscription with two base plans (same shape as Pro).
+ * Individual tier, 5 devices, unlimited orders.
+ *
+ * Play Console setup:
+ *   Subscription product ID:  bossify_business
+ *     Base plan #1 ID:        monthly
+ *     Base plan #2 ID:        annual
+ */
+export const BUSINESS_SUBSCRIPTION_ID = "bossify_business";
+export const BUSINESS_FALLBACK_PRICES: Record<BillingPlan, string> = {
+  monthly: "RM 99",
+  annual: "RM 799",
+};
+
 /** One-time, non-consumable Lifetime product. */
 export const LIFETIME_PRODUCT_ID = "bossify_lifetime";
 export const LIFETIME_FALLBACK_PRICE = "RM 2,999";
@@ -138,6 +153,7 @@ export type ProductPrice = {
     | BillingPlan
     | "lifetime"
     | "starter_monthly" | "starter_annual"
+    | "business_monthly" | "business_annual"
     | "team_starter_monthly" | "team_starter_annual"
     | "team_pro_monthly"     | "team_pro_annual"
     | "team_business_monthly" | "team_business_annual";
@@ -303,6 +319,11 @@ export function initBilling(): Promise<AnyStore | null> {
       store.register([
         {
           id: SUBSCRIPTION_ID,
+          type: cdv.ProductType.PAID_SUBSCRIPTION,
+          platform: cdv.Platform.GOOGLE_PLAY,
+        },
+        {
+          id: BUSINESS_SUBSCRIPTION_ID,
           type: cdv.ProductType.PAID_SUBSCRIPTION,
           platform: cdv.Platform.GOOGLE_PLAY,
         },
@@ -495,6 +516,31 @@ export async function queryProductDetailsSafe(): Promise<BillingPriceFetchResult
       } catch {}
       out.push({ plan: key, formattedPrice: STARTER_FALLBACK_PRICES[billing], currency: "MYR" });
     }
+    // Business subscription base plans (single product like Pro).
+    try {
+      const business = store.get(BUSINESS_SUBSCRIPTION_ID);
+      for (const offer of business?.offers ?? []) {
+        const offerId: string | undefined = offer.id || offer.basePlanId;
+        let bp: BillingPlan | null = null;
+        if (offerId?.includes(BASE_PLAN_IDS.monthly)) bp = "monthly";
+        else if (offerId?.includes(BASE_PLAN_IDS.annual)) bp = "annual";
+        if (!bp) continue;
+        const { price, currency } = readPrice(business, offer);
+        if (!price) continue;
+        out.push({
+          plan: bp === "monthly" ? "business_monthly" : "business_annual",
+          formattedPrice: price,
+          currency: currency ?? "MYR",
+        });
+      }
+    } catch {}
+    for (const billing of ["monthly", "annual"] as BillingPlan[]) {
+      const key = (billing === "monthly" ? "business_monthly" : "business_annual") as
+        | "business_monthly" | "business_annual";
+      if (!out.find((x) => x.plan === key)) {
+        out.push({ plan: key, formattedPrice: BUSINESS_FALLBACK_PRICES[billing], currency: "MYR" });
+      }
+    }
     // Team subscription SKUs.
     for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
       for (const billing of ["monthly", "annual"] as BillingPlan[]) {
@@ -539,6 +585,8 @@ function fallbackPrices(): ProductPrice[] {
   subs.push({ plan: "lifetime", formattedPrice: LIFETIME_FALLBACK_PRICE, currency: "MYR" });
   subs.push({ plan: "starter_monthly", formattedPrice: STARTER_FALLBACK_PRICES.monthly, currency: "MYR" });
   subs.push({ plan: "starter_annual", formattedPrice: STARTER_FALLBACK_PRICES.annual, currency: "MYR" });
+  subs.push({ plan: "business_monthly", formattedPrice: BUSINESS_FALLBACK_PRICES.monthly, currency: "MYR" });
+  subs.push({ plan: "business_annual", formattedPrice: BUSINESS_FALLBACK_PRICES.annual, currency: "MYR" });
   for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
     subs.push({
       plan: `${tier}_monthly` as
@@ -660,6 +708,16 @@ async function tryNativeRestore(): Promise<PurchaseReceipt[]> {
           currentPeriodEnd: isoFromDate(s.transaction?.expirationDate),
         });
       }
+    }
+    const businessProd = store.get(BUSINESS_SUBSCRIPTION_ID);
+    if (businessProd?.owned || businessProd?.offers?.some?.((o: AnyStore) => o?.owned)) {
+      out.push({
+        productId: BUSINESS_SUBSCRIPTION_ID,
+        transactionId: businessProd.transaction?.id ?? "",
+        purchaseToken: businessProd.transaction?.purchaseToken,
+        basePlanId: inferOwnedPlan(businessProd),
+        currentPeriodEnd: isoFromDate(businessProd.transaction?.expirationDate),
+      });
     }
     // Team subscriptions
     for (const tier of Object.keys(TEAM_PRODUCT_IDS) as TeamTier[]) {
@@ -789,6 +847,56 @@ export async function purchasePlan(
     const err = e as Partial<BillingError> | undefined;
     const code: BillingErrorCode = err?.code ?? "unknown";
     onError({ code, message: err?.message ?? "Purchase failed" });
+  }
+}
+
+/**
+ * Purchase the Business subscription (individual, 5 devices).
+ * Uses the same one-product-two-base-plans shape as Pro.
+ */
+export async function purchaseBusiness(
+  plan: BillingPlan,
+  onSuccess: (receipt: PurchaseReceipt) => Promise<void> | void,
+  onError: (err: BillingError) => void,
+): Promise<void> {
+  if (!isNativeBillingAvailable()) {
+    onError({ code: "not_android", message: "Not running inside Android app" });
+    return;
+  }
+  const basePlanId = BASE_PLAN_IDS[plan];
+  try {
+    const receipt = await tryNativePurchase(BUSINESS_SUBSCRIPTION_ID, basePlanId);
+    await onSuccess({ ...receipt, productId: BUSINESS_SUBSCRIPTION_ID, basePlanId: plan });
+  } catch (e) {
+    const err = e as Partial<BillingError> | undefined;
+    onError({ code: err?.code ?? "unknown", message: err?.message ?? "Purchase failed" });
+  }
+}
+
+/**
+ * Check whether the user owns the Business subscription.
+ */
+export async function verifyActiveBusiness(): Promise<PurchaseReceipt | null> {
+  if (!isNativeBillingAvailable()) return null;
+  const store = await initBilling();
+  if (!store) return null;
+  try {
+    try { await store.restorePurchases(); } catch {}
+    try { await store.update(); } catch {}
+    const product = store.get(BUSINESS_SUBSCRIPTION_ID);
+    if (!product) return null;
+    const owned: boolean = !!(product.owned || product.offers?.some?.((o: AnyStore) => o?.owned));
+    if (!owned) return null;
+    const tx = product.transaction ?? {};
+    return {
+      productId: BUSINESS_SUBSCRIPTION_ID,
+      transactionId: tx.id ?? tx.transactionId ?? "",
+      purchaseToken: tx.purchaseToken,
+      basePlanId: inferOwnedPlan(product),
+      currentPeriodEnd: isoFromDate(tx.expirationDate),
+    };
+  } catch {
+    return null;
   }
 }
 
