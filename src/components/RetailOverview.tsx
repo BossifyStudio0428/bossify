@@ -12,7 +12,6 @@ type InvRow = {
   price: number | null;
   cost_price: number | null;
   stock: number | null;
-  low_stock_threshold: number | null;
 };
 
 type OrderRow = {
@@ -22,6 +21,8 @@ type OrderRow = {
   product: string | null;
   created_at: string;
 };
+
+const LOW_STOCK_THRESHOLD = 5;
 
 function money(n: number) {
   return `RM ${n.toFixed(2)}`;
@@ -56,7 +57,7 @@ export function RetailOverview() {
       const [invRes, todayRes, weekRes] = await Promise.all([
         supabase
           .from("inventory")
-          .select("id,name,price,cost_price,stock,low_stock_threshold")
+          .select("id,name,price,cost_price,stock")
           .eq("user_id", user.id),
         supabase
           .from("orders")
@@ -91,7 +92,7 @@ export function RetailOverview() {
     let losing = 0;
     for (const it of inv) {
       const stock = Number(it.stock ?? 0);
-      const thr = Number(it.low_stock_threshold ?? 5);
+      const thr = LOW_STOCK_THRESHOLD;
       const price = Number(it.price ?? 0);
       const cost = Number(it.cost_price ?? 0);
       if (stock <= 0) restock++;
@@ -113,7 +114,7 @@ export function RetailOverview() {
     // Priority 3: low stock
     const low = inv.filter((i) => {
       const s = Number(i.stock ?? 0);
-      return s > 0 && s <= Number(i.low_stock_threshold ?? 5);
+      return s > 0 && s <= LOW_STOCK_THRESHOLD;
     });
 
     // Best seller (last 7 days) by revenue, matched to inventory by name.
