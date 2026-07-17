@@ -11,6 +11,8 @@ export type StripePriceKey =
   | "lifetime"
   | "starter_monthly"
   | "starter_annual"
+  | "business_monthly"
+  | "business_annual"
   | "team_starter_monthly"
   | "team_starter_annual"
   | "team_pro_monthly"
@@ -61,6 +63,7 @@ function stripeKeyFor(
   plan:
     | "starter"
     | "pro"
+    | "business"
     | "lifetime"
     | "team_starter"
     | "team_pro"
@@ -70,6 +73,7 @@ function stripeKeyFor(
   if (plan === "pro") return cycle === "monthly" ? "monthly" : cycle === "yearly" ? "annual" : null;
   if (plan === "lifetime") return "lifetime";
   if (plan === "starter") return cycle === "monthly" ? "starter_monthly" : cycle === "yearly" ? "starter_annual" : null;
+  if (plan === "business") return cycle === "monthly" ? "business_monthly" : cycle === "yearly" ? "business_annual" : null;
   const suffix = cycle === "monthly" ? "monthly" : cycle === "yearly" ? "annual" : null;
   if (!suffix) return null;
   return `${plan}_${suffix}` as StripePriceKey;
