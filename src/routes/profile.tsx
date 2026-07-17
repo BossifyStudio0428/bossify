@@ -224,36 +224,6 @@ function ProfilePage() {
           label: t("my_devices"),
           onClick: () => navigate({ to: "/devices" }),
         },
-        {
-          icon: "💳",
-          key: "sub",
-          label: t("subscription"),
-          value: isLifetime
-            ? t("plan_badge_lifetime")
-            : isTeam && teamTier
-              ? t(`plan_badge_${teamTier}` as any)
-              : isPro
-                ? t("pro_plan")
-                : isStarter
-                  ? t("starter_plan")
-                  : t("free_plan"),
-          onClick: () => navigate({ to: "/plans" }),
-        },
-        ...(!isNativeBillingAvailable() && (isStarter || isPro)
-          ? [
-              {
-                icon: "🔗",
-                key: "stripeportal",
-                label: t("manage_subscription"),
-                value: t("manage_subscription_subtitle"),
-                onClick: () =>
-                  window.open(
-                    "https://billing.stripe.com/p/login/8x2bJ12Ya2sX9JKaIAeIw00",
-                    "_blank",
-                  ),
-              } as MenuItem,
-            ]
-          : []),
       ],
     },
     ...(!HIDE_TEAM_PLAN && isTeam
@@ -277,15 +247,7 @@ function ProfilePage() {
       key: "integrations",
       title: t("section_integrations"),
       emoji: "🔗",
-      items: [
-        {
-          icon: "📲",
-          key: "wa",
-          label: t("wa_template"),
-          value: hasFullAccess ? undefined : "🔒",
-          onClick: () => (hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template"))),
-        },
-      ],
+      items: [],
     },
     {
       key: "advanced",
