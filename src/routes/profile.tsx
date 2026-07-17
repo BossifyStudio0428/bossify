@@ -182,7 +182,7 @@ function ProfilePage() {
                 onClick: () => navigate({ to: "/order-form" }),
               } as MenuItem,
             ]),
-        ...((bizType === "retail" || bizType === "fnb")
+        ...((!HIDE_ORDER_FORM && (bizType === "retail" || bizType === "fnb"))
           ? [
               {
                 icon: "🛵",
