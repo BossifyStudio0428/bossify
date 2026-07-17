@@ -10,10 +10,11 @@ type Row = {
   id: string;
   name: string;
   stock: number | null;
-  low_stock_threshold: number | null;
   price: number | null;
   cost_price: number | null;
 };
+
+const LOW_STOCK_THRESHOLD = 5;
 
 export const Route = createFileRoute("/alerts")({ component: AlertsPage });
 
@@ -28,7 +29,7 @@ function AlertsPage() {
     (async () => {
       const { data, error } = await supabase
         .from("inventory")
-        .select("id,name,stock,low_stock_threshold,price,cost_price")
+        .select("id,name,stock,price,cost_price")
         .eq("user_id", user.id);
       if (error) toast.error(error.message);
       setRows((data ?? []) as Row[]);
@@ -42,7 +43,7 @@ function AlertsPage() {
     const losing: Row[] = [];
     for (const r of rows) {
       const s = Number(r.stock ?? 0);
-      const thr = Number(r.low_stock_threshold ?? 5);
+      const thr = LOW_STOCK_THRESHOLD;
       const p = Number(r.price ?? 0);
       const c = Number(r.cost_price ?? 0);
       if (s <= 0) out.push(r);
@@ -91,7 +92,7 @@ function AlertsPage() {
             renderMeta={(r) =>
               t("alerts_low_meta")
                 .replace("{n}", String(Number(r.stock ?? 0)))
-                .replace("{thr}", String(Number(r.low_stock_threshold ?? 5)))
+                .replace("{thr}", String(LOW_STOCK_THRESHOLD))
             }
           />
           <Section
