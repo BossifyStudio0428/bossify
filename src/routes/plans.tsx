@@ -791,24 +791,24 @@ function PlansPage() {
         </div>
       </section>
 
-      {/* Lifetime card — HIDDEN temporarily. Remove `{false && (` wrapper to bring back. */}
-      {false && (
+      {/* Business card — 5 devices vs Pro's 3. */}
       <section className="relative rounded-3xl p-[2px] bg-gradient-to-br from-amber-400 via-amber-300 to-yellow-500">
         <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
           <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow">
             {t("best_value")}
           </span>
           <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-bold flex items-center gap-1">{t("lifetime_plan")} <Crown className="h-4 w-4 text-amber-500" /></h2>
+            <h2 className="text-lg font-bold flex items-center gap-1">{businessName} <Crown className="h-4 w-4 text-amber-500" /></h2>
             <p className="text-xl font-bold text-amber-600">
-              <span className="text-amber-600">{lifetimePrice}</span>
-              <span className="text-xs text-muted-foreground font-normal"> · {t("one_time_payment")}</span>
+              <span className="text-amber-600">{businessPrice}</span>
+              <span className="text-xs text-muted-foreground font-normal"> {period}</span>
             </p>
           </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">{businessTagline}</p>
           <ul className="mt-4 space-y-2">
             <li className="flex items-start gap-2 text-sm">
               <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-              <span className="text-foreground">{lifetimeDeviceLabel}</span>
+              <span className="text-foreground font-semibold">{bestForDevicesLabel}</span>
             </li>
             {proRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
@@ -816,30 +816,26 @@ function PlansPage() {
                 <span className="text-foreground">{r}</span>
               </li>
             ))}
-            <li className="flex items-start gap-2 text-sm">
-              <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-              <span className="text-foreground font-semibold">{t("never_pay_again")}</span>
-            </li>
           </ul>
           {isLifetime ? (
             <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-100 text-amber-700 font-semibold text-sm">
-              ✓ {t("already_active")}
+              {t("plan_badge_lifetime")} ✓
+            </button>
+          ) : isBusiness && activeBillingPlan === billing ? (
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-100 text-emerald-700 font-semibold text-sm">
+              {t("current_plan")} ✓
             </button>
           ) : (
             <button
-              onClick={() => setLifetimeConfirmOpen(true)}
+              onClick={handleBusinessPurchase}
               disabled={submittingPlan !== null}
               className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
-              {submittingPlan === "lifetime" ? "..." : `${t("get_lifetime_access")} — ${lifetimePrice}`}
+              {submittingPlan === "business" ? "..." : `${upgradeToBusinessLabel} — ${businessPrice}`}
             </button>
           )}
-          <Link to="/terms" className="mt-3 block text-center text-[11px] text-muted-foreground underline">
-            {t("terms_of_use")}
-          </Link>
         </div>
       </section>
-      )}
 
       <button
         onClick={async () => {
