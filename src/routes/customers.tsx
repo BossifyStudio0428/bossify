@@ -409,23 +409,25 @@ function CustomersPage() {
         />
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
-        <button
-          onClick={() => setStatusFilter("all")}
-          className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-        >
-          {t("all_statuses")}
-        </button>
-        {CUSTOMER_STATUS_ORDER.map((s) => (
+      {bizType !== "retail" && (
+        <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
           <button
-            key={s}
-            onClick={() => setStatusFilter(s)}
-            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === s ? CUSTOMER_STATUS_STYLES[s] + " ring-2 ring-offset-1 ring-current" : "bg-muted text-muted-foreground"}`}
+            onClick={() => setStatusFilter("all")}
+            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
           >
-            {CUSTOMER_STATUS_DOT[s]} {t(`cs_${s}` as any)}
+            {t("all_statuses")}
           </button>
-        ))}
-      </div>
+          {CUSTOMER_STATUS_ORDER.map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === s ? CUSTOMER_STATUS_STYLES[s] + " ring-2 ring-offset-1 ring-current" : "bg-muted text-muted-foreground"}`}
+            >
+              {CUSTOMER_STATUS_DOT[s]} {t(`cs_${s}` as any)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 scrollbar-hide">
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground pr-1">
