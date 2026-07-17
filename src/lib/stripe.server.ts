@@ -8,6 +8,9 @@ export const PRICE_IDS: Record<string, string> = {
   "pro:monthly": "price_1TYR0xHkpW03osRD8sRq0tO2",
   "pro:yearly": "price_1TYR1LHkpW03osRDJrShdU7c",
   "lifetime:one": "price_1TYR1lHkpW03osRD3sRkqZcL",
+  // TODO: replace with real IDs created in Stripe Dashboard.
+  "business:monthly": "price_PLACEHOLDER_business_monthly",
+  "business:yearly": "price_PLACEHOLDER_business_yearly",
   "team_starter:monthly": "price_1TamtmHkpW03osRDhcMkc9bH",
   "team_starter:yearly": "price_1TamuIHkpW03osRDENjsHuL0",
   "team_pro:monthly": "price_1TamucHkpW03osRDVEwu8wmD",
@@ -17,7 +20,7 @@ export const PRICE_IDS: Record<string, string> = {
 };
 
 export type PlanInfo = {
-  plan: "starter" | "pro" | "lifetime" | "team_starter" | "team_pro" | "team_business";
+  plan: "starter" | "pro" | "business" | "lifetime" | "team_starter" | "team_pro" | "team_business";
   cycle: "monthly" | "yearly" | "one";
 };
 
@@ -27,6 +30,8 @@ export const PRICE_TO_PLAN: Record<string, PlanInfo> = {
   price_1TYR0xHkpW03osRD8sRq0tO2: { plan: "pro", cycle: "monthly" },
   price_1TYR1LHkpW03osRDJrShdU7c: { plan: "pro", cycle: "yearly" },
   price_1TYR1lHkpW03osRD3sRkqZcL: { plan: "lifetime", cycle: "one" },
+  price_PLACEHOLDER_business_monthly: { plan: "business", cycle: "monthly" },
+  price_PLACEHOLDER_business_yearly:  { plan: "business", cycle: "yearly" },
   price_1TamtmHkpW03osRDhcMkc9bH: { plan: "team_starter", cycle: "monthly" },
   price_1TamuIHkpW03osRDENjsHuL0: { plan: "team_starter", cycle: "yearly" },
   price_1TamucHkpW03osRDVEwu8wmD: { plan: "team_pro", cycle: "monthly" },
