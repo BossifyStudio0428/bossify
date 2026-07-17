@@ -1,89 +1,141 @@
-# Retail-Only Pivot — Plan (for approval before implementing)
+# Reports Hub — 3 PDF Cards
 
-## 1. The feature flag
+Convert the current `/reports` single-PDF-button screen into a hub where the user picks which report to generate. All 3 reports reuse existing data — no new tables, no schema changes.
 
-Single source of truth in `src/lib/featureFlags.ts` (new file, frontend-only — no DB, no env var needed since it must apply to all existing users immediately on next app open):
+## 1. Hub screen layout
 
-```ts
-export const RETAIL_ONLY_MODE = true;
-export const ALLOWED_BIZ_TYPES = ["retail"] as const;
+**Location:** `/reports` (same route). The existing Sales Report view moves to `/reports/sales`; `/reports` becomes the hub.
+
+```text
+┌─ Reports ───────────────────────┐
+│ [date range picker — shared]    │
+│                                 │
+│ ┌───────────────────────────┐   │
+│ │ 📊 Sales Report           │   │
+│ │ Revenue, orders, top      │   │
+│ │ products, best customers  │   │
+│ │              [Open PDF →] │   │
+│ └───────────────────────────┘   │
+│ ┌───────────────────────────┐   │
+│ │ 💰 Profit Report          │   │
+│ │ Gross profit, margin,     │   │
+│ │ most/least profitable     │   │
+│ │              [Open PDF →] │   │
+│ └───────────────────────────┘   │
+│ ┌───────────────────────────┐   │
+│ │ 📦 Stock Report           │   │
+│ │ In stock, low stock, out, │   │
+│ │ losing-money items        │   │
+│ │              [Open PDF →] │   │
+│ └───────────────────────────┘   │
+└─────────────────────────────────┘
 ```
 
-Flipping `RETAIL_ONLY_MODE = false` later fully restores the old multi-business behaviour. No data migration required to reverse — everything is hidden by conditional rendering, nothing is deleted.
+- Shared date-range picker at the top (already exists on current Reports) applies to Sales + Profit. Stock ignores it (stock is a point-in-time snapshot as of "now").
+- Each card tap → generates & opens that PDF directly. Paywall gate stays on the export action (same `usePaywall` check the current button uses); reuse it verbatim per card.
+- Sales card = existing `exportSalesReportPDF` — no logic change.
 
-## 2. What will be hidden globally (all users)
+## 2. Profit Report PDF structure
 
-**Business types removed from selector** (`business-type.tsx`, onboarding):
-- FnB, Property, Education, Beauty, Freelance
-- Only "Retail" remains selectable
+Data source: existing `orders` rows in the selected range (already fetched for Sales). No new query.
 
-**Routes hidden from nav + guarded to redirect to `/` if visited directly** (files kept on disk, code kept intact):
-- FnB: `/dine-in`, `/tables`, `/recipes`, `/ingredients`, `/dine/$tableId`
-- Property: `/listings`, `/listing/$id`, `/commissions`, `/commission/$id`, `/viewings`, `/viewing/$id`, `/loan-calculator`, `/clients-compare`
-- Education: `/pipeline-overview`, `/university-insights`, `/renewals`, `/renewal/$id`, `/requirements`, `/requirement/$id`, `/client-education-details`
-- Beauty: `/bookings`, `/new-booking`, `/booking-settings`, `/book/$code`
-- Cross-vertical extras only used by non-Retail: dine-in QR ordering, kitchen tickets, follow-up pipeline
+```text
+─ Header ────────────────────────
+Profit Report
+{business name}    {date range}
+─ Summary ──────────────────────
+Revenue          RM x,xxx.xx
+Cost of goods    RM x,xxx.xx
+Gross profit     RM x,xxx.xx   ← bold
+Gross margin %   xx.x%
+Orders           n
+Avg profit/order RM xx.xx
+─ Most profitable products (top 10) ─
+Product | Qty sold | Revenue | Cost | Profit | Margin %
+─ Least profitable / loss-making (bottom 10) ─
+Product | Qty sold | Revenue | Cost | Profit | Margin %
+─ Footer ───────────────────────
+Generated {timestamp} · Bossify
+```
 
-**Bottom nav** (`AppShell.tsx` `BottomNav`): forced to the Retail/Inventory tab set for every user, regardless of stored `business_type`. Property-user branch never renders.
+Aggregation helper: group order line items by product, sum revenue/cost/profit, sort desc for top-10 and asc for bottom-10 (include negatives).
 
-**Homepage / dashboard**: forced to the Retail dashboard variant; FnB dine-in widgets, Property commission widgets, Education pipeline widgets, Beauty booking widgets all conditionally hidden.
+## 3. Stock Report PDF structure
 
-**Settings**: business-type row hidden (or shown read-only as "Retail"). Sub-type (FnB general/restaurant) selector hidden.
+Data source: existing `inventory` table (same query `/inventory` and `/alerts` already run). Snapshot as of generation time — no date range.
 
-## 3. What existing non-Retail users see on next app open
+```text
+─ Header ────────────────────────
+Stock Report
+{business name}    As of {timestamp}
+─ Summary ──────────────────────
+Total SKUs             n
+Total stock value      RM x,xxx.xx   (sum qty × cost)
+In stock               n
+Low stock              n   (qty ≤ reorder level, > 0)
+Out of stock           n   (qty = 0)
+Losing money           n   (sell price < cost)
+─ Low stock (needs reorder) ────
+SKU | Product | Qty on hand | Reorder level | Cost | Value
+─ Out of stock ─────────────────
+SKU | Product | Cost | Last sold
+─ Losing money ─────────────────
+SKU | Product | Cost | Sell price | Margin (negative)
+─ Full inventory ──────────────
+SKU | Product | Qty | Cost | Sell price | Value
+─ Footer ───────────────────────
+Generated {timestamp} · Bossify
+```
 
-They will NOT be auto-converted in the database. Instead, at the app-shell level:
+The 4 category buckets reuse the exact same classification logic already used on `/alerts` — no new business rules.
 
-- `useBusinessType()` continues to return their stored value from `profiles`, but a new wrapper `useEffectiveBusinessType()` returns `"retail"` whenever `RETAIL_ONLY_MODE` is on. All UI reads the effective value; only the settings screen can see the stored value (and it's hidden anyway).
-- On first launch after the update, show a **one-time in-app notice** (dismiss-and-remember in localStorage, key `bossify_retail_pivot_notice_v1`, per-user) — 3 languages via existing i18n keys:
+## 4. i18n keys (EN / BM / ZH)
 
-  > "Bossify is now focused on Retail / online sellers. Your previous [FnB/Property/…] data is safely stored and can be restored later. Contact support if you need help."
+Add to `src/contexts/I18nContext.tsx`:
 
-- Their existing rows in `listings`, `bookings`, `ingredients`, etc. remain untouched in the database. They just can't reach those screens through the UI.
-- New orders / inventory they create go into the Retail flow (which they can already use — Retail is a superset of the base tables).
+| Key | EN | BM | ZH |
+|---|---|---|---|
+| `reports_hub_title` | Reports | Laporan | 报表 |
+| `reports_sales_title` | Sales Report | Laporan Jualan | 销售报表 |
+| `reports_sales_desc` | Revenue, orders, top products, best customers | Hasil, pesanan, produk teratas, pelanggan terbaik | 营收、订单、热销产品、最佳客户 |
+| `reports_profit_title` | Profit Report | Laporan Untung | 利润报表 |
+| `reports_profit_desc` | Gross profit, margin, most & least profitable products | Untung kasar, margin, produk paling & kurang menguntungkan | 毛利、利润率、最赚钱与最不赚钱的产品 |
+| `reports_stock_title` | Stock Report | Laporan Stok | 库存报表 |
+| `reports_stock_desc` | In stock, low stock, out of stock, losing money | Ada stok, stok rendah, habis stok, rugi | 有库存、低库存、缺货、亏本 |
+| `reports_open_pdf` | Open PDF | Buka PDF | 打开 PDF |
+| `reports_as_of` | As of | Setakat | 截至 |
+| `profit_report_cogs` | Cost of goods | Kos barang | 商品成本 |
+| `profit_report_gross_profit` | Gross profit | Untung kasar | 毛利 |
+| `profit_report_margin` | Gross margin | Margin kasar | 毛利率 |
+| `profit_report_avg_per_order` | Avg profit/order | Purata untung/pesanan | 每单平均利润 |
+| `profit_report_most_profitable` | Most profitable products | Produk paling menguntungkan | 最赚钱的产品 |
+| `profit_report_least_profitable` | Least profitable products | Produk kurang menguntungkan | 最不赚钱的产品 |
+| `stock_report_total_skus` | Total SKUs | Jumlah SKU | SKU 总数 |
+| `stock_report_total_value` | Total stock value | Jumlah nilai stok | 库存总值 |
+| `stock_report_in_stock` | In stock | Ada stok | 有库存 |
+| `stock_report_low_stock` | Low stock | Stok rendah | 低库存 |
+| `stock_report_out_of_stock` | Out of stock | Habis stok | 缺货 |
+| `stock_report_losing_money` | Losing money | Rugi | 亏本 |
+| `stock_report_needs_reorder` | Needs reorder | Perlu pesan semula | 需要补货 |
+| `stock_report_full_inventory` | Full inventory | Inventori penuh | 全部库存 |
+| `stock_report_last_sold` | Last sold | Terakhir dijual | 上次售出 |
 
-## 4. Onboarding for new users
+Existing `reports_*` keys used by the Sales Report stay as-is.
 
-- Skip the business-type selection screen entirely — auto-set `business_type = 'retail'` on profile creation, jump straight from language → business profile → payment setup.
-- Skip the FnB sub-type screen.
+## Technical notes
 
-## 5. Reversibility
+**Files:**
+- `src/routes/reports.tsx` → becomes hub (3 cards + shared date picker). Removes the inline sales-report UI.
+- `src/routes/reports.sales.tsx` → new; hosts the existing sales-report view (moved as-is).
+- `src/lib/pdf.ts` → add `exportProfitReportPDF(orders, range, t)` and `exportStockReportPDF(inventory, t)`. Reuse existing jsPDF+autotable helpers and header/footer style from `exportSalesReportPDF`.
+- `src/contexts/I18nContext.tsx` → add keys above in all 3 languages.
 
-To roll back at any future date:
-1. Flip `RETAIL_ONLY_MODE = false` in `src/lib/featureFlags.ts`.
-2. Ship.
+**Data reuse (no new queries):**
+- Profit: same `orders` fetch already used for Sales Report; aggregate client-side.
+- Stock: same `inventory` fetch pattern as `/inventory` and `/alerts`; one `supabase.from('inventory').select(...)` call.
 
-That's it. Because:
-- No DB rows are modified or deleted (existing `business_type` values stay as they are).
-- No route files are removed (only conditionally hidden from nav + redirected if flag on).
-- No i18n keys removed.
-- The one-time notice localStorage key can be cleared separately if you want users to see a "we're back" notice.
+**Paywall:** each card's PDF action goes through the existing `usePaywall` check — identical gating to today's single button.
 
-## 6. Files that will change
+**Reversibility:** wrap the new hub behind a `REPORTS_HUB_MODE` flag in `src/lib/featureFlags.ts` (default `true`). If off, `/reports` renders the old single-PDF view; the new `/reports/sales`, profit, and stock code paths simply aren't linked.
 
-- `src/lib/featureFlags.ts` — new (single flag)
-- `src/lib/businessType.ts` — add `useEffectiveBusinessType()` helper + `isBizTypeAllowed()`
-- `src/components/AppShell.tsx` — force Retail nav; add pivot-notice one-time toast; guard non-Retail routes in navigation effect
-- `src/routes/business-type.tsx` — hide non-Retail options
-- `src/routes/onboarding.tsx` — auto-set retail, skip type selector
-- `src/routes/profile.tsx` (or settings) — hide business-type row
-- `src/routes/index.tsx` — force Retail dashboard variant
-- i18n additions in `src/contexts/I18nContext.tsx` for the pivot notice (EN/BM/ZH)
-- Route-level guards (small `useEffect` redirect) in each archived route file — or a single wrapper — to bounce users who hit an archived URL directly
-
-## 7. SQL
-
-**None required.** No schema change, no data change. All hiding is done in frontend code. The `business_type` column, all vertical-specific tables (`listings`, `bookings`, `ingredients`, `recipes`, `commissions`, etc.), and all their RLS policies stay exactly as they are.
-
-## 8. Not in scope (flagging for your decision)
-
-- **Auto-migrating existing non-Retail users' `business_type` to `retail`** — I'd recommend NOT doing this so it's trivially reversible. Confirm you agree.
-- **Removing archived routes from the router entirely** — I'd recommend NOT doing this, so files stay compilable and reversible. Confirm you agree.
-- **Backend cleanup of orphaned edge functions (booking, dine-in, etc.)** — leave running, they cost nothing if unused. Confirm.
-
----
-
-**Please confirm** (or tell me what to change) and I'll implement. In particular:
-1. Do you want the one-time notice, or silent hide?
-2. Keep stored `business_type` as-is (recommended), or force-update all rows to `'retail'`?
-3. Any module you actually want to keep visible for Retail users (e.g. Suppliers, Purchase Orders, Documents — these are Retail-relevant so I'd keep them)?
+**No schema changes. No new tables. No server functions.**
