@@ -14,6 +14,7 @@ import { getNotifMessage } from "@/lib/notifMessages";
 import { ProductFormSheet, QtySheet, ConfirmSheet } from "@/components/InventorySheets";
 import { StockTabs } from "@/components/StockTabs";
 import { formatUnit, formatCategory } from "@/lib/labels";
+import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
 
 export const Route = createFileRoute("/inventory")({ component: InventoryPage });
 
@@ -187,7 +188,7 @@ function InventoryPage() {
 
       {(bizType === "retail" || bizType === "fnb") && <StockTabs active="products" />}
 
-      {(bizType === "retail" || bizType === "fnb") && (
+      {!HIDE_ORDER_FORM && (bizType === "retail" || bizType === "fnb") && (
         <div className="flex items-center justify-between rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-3 py-2">
           <div className="min-w-0 pr-3">
             <p className="text-xs font-semibold">📦 {t("pof_show_stock_label")}</p>
