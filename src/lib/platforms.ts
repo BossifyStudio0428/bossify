@@ -1,4 +1,5 @@
 import type { Lang } from "@/contexts/I18nContext";
+import { HIDE_NON_RETAIL_INTEGRATIONS } from "@/lib/featureFlags";
 
 export type PlatformKey = "tiktok" | "shopee" | "lazada" | "instagram" | "facebook";
 
@@ -202,3 +203,12 @@ export const PLATFORMS: PlatformConfig[] = [
 
 export const getPlatform = (key: string): PlatformConfig | undefined =>
   PLATFORMS.find((p) => p.key === key);
+
+/**
+ * Platforms currently shown in Settings → Integrations. When
+ * `HIDE_NON_RETAIL_INTEGRATIONS` is on, only TikTok Shop is exposed;
+ * the full `PLATFORMS` list stays intact for lookups and deep links.
+ */
+export const VISIBLE_PLATFORMS: PlatformConfig[] = HIDE_NON_RETAIL_INTEGRATIONS
+  ? PLATFORMS.filter((p) => p.key === "tiktok")
+  : PLATFORMS;
