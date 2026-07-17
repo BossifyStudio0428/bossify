@@ -191,18 +191,37 @@ function CustomersPage() {
     if (!name) { setNewCustomerErrors({ name: t("required_field") }); return; }
     setSavingNewCustomer(true);
     const fullPhone = newCustomer.phone.replace(/\D/g, "");
-    const { data, error } = await (supabase as any).from("customers").insert({
-      user_id: user.id,
-      name,
-      phone: fullPhone || null,
-      total_orders: 0,
-      total_spent: 0,
-    }).select("*").single();
-    if (error || !data) {
-      setSavingNewCustomer(false);
-      toast.error(error?.message ?? "Failed");
-      return;
+
+    // Dedupe: reuse an existing customer with same (user_id + phone) rather
+    // than creating a duplicate zero-totals row.
+    let data: CustomerRow | null = null;
+    if (fullPhone) {
+      const { data: existing } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("phone", fullPhone)
+        .maybeSingle();
+      if (existing) data = existing as CustomerRow;
     }
+    if (!data) {
+      const { data: inserted, error } = await (supabase as any).from("customers").insert({
+        user_id: user.id,
+        name,
+        phone: fullPhone || null,
+        total_orders: 0,
+        total_spent: 0,
+      }).select("*").single();
+      if (error || !inserted) {
+        setSavingNewCustomer(false);
+        toast.error(error?.message ?? "Failed");
+        return;
+      }
+      data = inserted as CustomerRow;
+    }
+
+    // Only write the note when a follow-up date is set — the textarea is
+    // labeled "Check-in note" and its content belongs to the follow_up row.
     if (newCustomer.followup_date) {
       const { error: fuError } = await (supabase as any).from("follow_ups").insert({
         user_id: user.id,
