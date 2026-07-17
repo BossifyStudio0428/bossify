@@ -30,8 +30,8 @@ export const FALLBACK_PRICES: Record<BillingPlan, string> = {
   // Default MYR prices shown immediately while Google Play returns the
   // user's locally-formatted price. Once the store responds these are
   // replaced with the real formattedPrice (USD / INR / IDR / etc.).
-  monthly: "RM 49",
-  annual: "RM 399",
+  monthly: "RM 99",
+  annual: "RM 799",
 };
 
 /**
@@ -45,8 +45,8 @@ export const FALLBACK_PRICES: Record<BillingPlan, string> = {
  */
 export const BUSINESS_SUBSCRIPTION_ID = "bossify_business";
 export const BUSINESS_FALLBACK_PRICES: Record<BillingPlan, string> = {
-  monthly: "RM 99",
-  annual: "RM 799",
+  monthly: "RM 129",
+  annual: "RM 1,099",
 };
 
 /** One-time, non-consumable Lifetime product. */
@@ -62,8 +62,8 @@ export const STARTER_PRODUCT_IDS: Record<BillingPlan, string> = {
   annual: "bossify_starter_yearly",
 };
 export const STARTER_FALLBACK_PRICES: Record<BillingPlan, string> = {
-  monthly: "RM 19",
-  annual: "RM 159",
+  monthly: "RM 59",
+  annual: "RM 499",
 };
 
 /**
