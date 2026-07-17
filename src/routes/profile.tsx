@@ -172,12 +172,16 @@ function ProfilePage() {
                 onClick: () => navigate({ to: "/business-type", search: { from: "profile" } }),
               } as MenuItem,
             ]),
-        {
-          icon: "🔗",
-          key: "orderform",
-          label: t(pofSectionTitleKey(bizType)),
-          onClick: () => navigate({ to: "/order-form" }),
-        },
+        ...(HIDE_ORDER_FORM
+          ? []
+          : [
+              {
+                icon: "🔗",
+                key: "orderform",
+                label: t(pofSectionTitleKey(bizType)),
+                onClick: () => navigate({ to: "/order-form" }),
+              } as MenuItem,
+            ]),
         ...((bizType === "retail" || bizType === "fnb")
           ? [
               {
@@ -294,7 +298,7 @@ function ProfilePage() {
           : []),
       ],
     },
-    ...(isTeam
+    ...(!HIDE_TEAM_PLAN && isTeam
       ? [
           {
             key: "team",
