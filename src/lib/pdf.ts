@@ -569,7 +569,7 @@ export async function exportSalesReportPDF(d: ReportData): Promise<void> {
       head: [tableHeadersForBiz(d.bizType, l)],
       body: d.rows.map((r) => tableRowForBiz(d.bizType, r)),
       columnStyles: bizColumnStyles(d.bizType),
-      fontSize: 8,
+      fontSize: 9,
     });
   }
 
@@ -601,7 +601,7 @@ export async function exportOrdersListPDF(opts: {
     head: [tableHeadersForBiz(opts.bizType, l)],
     body: opts.rows.map((r) => tableRowForBiz(opts.bizType, r)),
     columnStyles: bizColumnStyles(opts.bizType),
-    fontSize: 9,
+    fontSize: 11,
   });
 
   drawFooters(doc, l);
@@ -673,13 +673,13 @@ const NET_PROFIT_FOOTNOTE: Record<Lang, string> = {
 function drawFootnote(doc: jsPDF, lang: Lang, y: number, customText?: string): number {
   const text = customText ?? NET_PROFIT_FOOTNOTE[lang];
   doc.setFont(CJK_FONT_FAMILY, "italic");
-  doc.setFontSize(7.5);
+  doc.setFontSize(9);
   doc.setTextColor(...MUTED);
   const lines = doc.splitTextToSize(text, CONTENT_W);
   doc.text(lines, MARGIN_L, y);
   doc.setFont(CJK_FONT_FAMILY, "normal");
   doc.setTextColor(...INK_2);
-  return y + lines.length * 3.5 + 2;
+  return y + lines.length * 4.2 + 2;
 }
 
 function makeLabels(lang: Lang, reportTitle: string, dateRange: string): ReportLabels {
@@ -867,11 +867,11 @@ export async function exportCustomerStatementPDF(d: CustomerStatementData): Prom
   // CUSTOMER block — name bold 14pt
   y = drawSectionHeader(doc, s.customer, y);
   doc.setFont(CJK_FONT_FAMILY, "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(16);
   doc.setTextColor(...INK);
   doc.text(d.customerName, MARGIN_L, y + 4);
   doc.setFont(CJK_FONT_FAMILY, "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(11);
   doc.setTextColor(...MUTED);
   doc.text(`${s.phone}: ${d.phone ?? "—"}`, MARGIN_L, y + 10);
   doc.setTextColor(...INK_2);
@@ -885,11 +885,11 @@ export async function exportCustomerStatementPDF(d: CustomerStatementData): Prom
       head: [[s.date, s.code, s.product, s.qty, s.amount, s.status]],
       body: d.rows.map((r) => [r.date, r.code, r.product, String(r.qty), fmtMYR(r.amount), r.status]),
       columnStyles: { 3: { halign: "right" }, 4: { halign: "right" } },
-      fontSize: 9,
+      fontSize: 11,
     }) + 6;
   } else {
     doc.setFont(CJK_FONT_FAMILY, "italic");
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setTextColor(...MUTED);
     doc.text(s.noOrders, MARGIN_L, y + 3);
     doc.setFont(CJK_FONT_FAMILY, "normal");
@@ -976,7 +976,7 @@ export async function exportSupplierReportPDF(d: SupplierReportData): Promise<vo
 
     // contact + totals meta line
     doc.setFont(CJK_FONT_FAMILY, "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setTextColor(...MUTED);
     doc.text(`${s.contact}: ${b.contact ?? "—"}   ·   ${s.poCount}: ${b.poCount}`, MARGIN_L, y + 2);
     doc.setTextColor(...INK_2);
@@ -989,7 +989,7 @@ export async function exportSupplierReportPDF(d: SupplierReportData): Promise<vo
         ? b.pos.map((p) => [p.date, p.code, p.status, fmtMYR(p.total)])
         : [[s.noPos, "", "", ""]],
       columnStyles: { 3: { halign: "right" } },
-      fontSize: 8,
+      fontSize: 9,
     }) + 4;
 
     y = drawTable(doc, {
@@ -1000,7 +1000,7 @@ export async function exportSupplierReportPDF(d: SupplierReportData): Promise<vo
         : [[s.noItems, "", "", "", "", ""]],
       columnStyles: { 2: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" } },
       foot: [["", "", "", "", s.totalSpend, fmtMYR(b.totalSpend)]],
-      fontSize: 8,
+      fontSize: 9,
     }) + 4;
 
     // separator between suppliers
@@ -1123,12 +1123,12 @@ export async function exportOrderReconciliationPDF(d: ReconReportData): Promise<
         7: { halign: "right" },
       },
       warnRowIndexes: warnRows,
-      fontSize: 8,
+      fontSize: 9,
     }) + 4;
     drawFootnote(doc, d.lang, y, r.ageFootnote);
   } else {
     doc.setFont(CJK_FONT_FAMILY, "italic");
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setTextColor(...MUTED);
     doc.text(r.noItems, MARGIN_L, y + 3);
     doc.setFont(CJK_FONT_FAMILY, "normal");
@@ -1235,7 +1235,7 @@ export async function exportStockReportPDF(d: StockReportData): Promise<void> {
         : rightAlignFrom(1, 2),
       warnRowIndexes: opts.warn ? rows.map((_, i) => i) : undefined,
       zebra: !opts.warn,
-      fontSize: 9,
+      fontSize: 11,
     }) + 6;
   };
 
