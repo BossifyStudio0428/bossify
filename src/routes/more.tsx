@@ -12,6 +12,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
+import { RETAIL_ONLY_MODE, HIDE_PROFIT_SUMMARY } from "@/lib/featureFlags";
 
 export const Route = createFileRoute("/more")({ component: MorePage });
 
@@ -19,12 +20,16 @@ function MorePage() {
   const { t } = useI18n();
   const items: { to: string; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
     { to: "/new-order", icon: Plus, label: t("more_new_order") },
-    { to: "/profit", icon: TrendingUp, label: t("more_profit") },
+    ...(HIDE_PROFIT_SUMMARY
+      ? []
+      : [{ to: "/profit", icon: TrendingUp, label: t("more_profit") }]),
     { to: "/orders", icon: ClipboardList, label: t("more_orders") },
     { to: "/customers", icon: Users, label: t("more_customers") },
     { to: "/suppliers", icon: Truck, label: t("more_suppliers") },
     { to: "/purchase-orders", icon: ShoppingBag, label: t("more_purchase_orders") },
-    { to: "/documents", icon: FileText, label: t("more_documents") },
+    ...(RETAIL_ONLY_MODE
+      ? []
+      : [{ to: "/documents", icon: FileText, label: t("more_documents") }]),
     { to: "/notifications", icon: BellIcon, label: t("more_notifications") },
     { to: "/profile", icon: User, label: t("more_profile") },
   ];
