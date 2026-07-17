@@ -216,12 +216,6 @@ function ProfilePage() {
               label: t(analyticsLabelKey),
               onClick: () => navigate({ to: "/analytics" }),
             } as MenuItem]),
-        {
-          icon: "📊",
-          key: "rep",
-          label: t(reportsLabelKey),
-          onClick: () => navigate({ to: "/reports" }),
-        },
       ],
     },
     {
