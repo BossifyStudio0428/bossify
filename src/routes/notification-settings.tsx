@@ -341,36 +341,37 @@ function NotifSettingsPage() {
 
   const isRetailFnb = bizType === "retail" || bizType === "fnb";
 
-  const items: { icon: string; label: string; desc: string }[] = [
-    { icon: newItem.icon, label: t(newItem.labelKey as any), desc: t(newItem.descKey as any) },
+  const items: { icon: string; label: string; desc: string; prefKey: keyof NotifPrefs }[] = [
+    { icon: newItem.icon, label: t(newItem.labelKey as any), desc: t(newItem.descKey as any), prefKey: "notif_new_order" },
   ];
 
   if (bizType === "property") {
     items.push(
-      { icon: "📅", label: t("notif_setting_followup" as any), desc: t("notif_setting_followup_desc" as any) },
-      { icon: "💰", label: t("notif_setting_unpaid"), desc: t(unpaidDescKey as any) },
+      { icon: "📅", label: t("notif_setting_followup" as any), desc: t("notif_setting_followup_desc" as any), prefKey: "notif_unpaid" },
+      { icon: "💰", label: t("notif_setting_unpaid"), desc: t(unpaidDescKey as any), prefKey: "notif_unpaid" },
     );
   } else {
     items.push(
-      { icon: "💰", label: t("notif_setting_unpaid"), desc: t(unpaidDescKey as any) },
+      { icon: "💰", label: t("notif_setting_unpaid"), desc: t(unpaidDescKey as any), prefKey: "notif_unpaid" },
     );
     if (!isRetailFnb) {
       items.push(
-        { icon: "📅", label: t("notif_setting_followup" as any), desc: t("notif_setting_followup_desc" as any) },
+        { icon: "📅", label: t("notif_setting_followup" as any), desc: t("notif_setting_followup_desc" as any), prefKey: "notif_unpaid" },
       );
     }
   }
 
   if (isRetailFnb) {
     items.push(
-      { icon: "📦", label: t("notif_setting_inventory"), desc: t("notif_setting_inventory_desc") },
+      { icon: "📦", label: t("notif_setting_inventory"), desc: t("notif_setting_inventory_desc"), prefKey: "notif_inventory" },
+      { icon: "📉", label: t("notif_setting_losing" as any), desc: t("notif_setting_losing_desc" as any), prefKey: "notif_losing" },
     );
   }
 
   items.push(
-    { icon: "🌅", label: t("notif_setting_morning"), desc: t(morningDescKey as any) },
-    { icon: "🌙", label: t("notif_setting_evening"), desc: t(eveningDescKey as any) },
-    { icon: "🎯", label: t("notif_setting_milestone"), desc: t("notif_setting_milestone_desc") },
+    { icon: "🌅", label: t("notif_setting_morning"), desc: t(morningDescKey as any), prefKey: "notif_morning" },
+    { icon: "🌙", label: t("notif_setting_evening"), desc: t(eveningDescKey as any), prefKey: "notif_evening" },
+    { icon: "🎯", label: t("notif_setting_milestone"), desc: t("notif_setting_milestone_desc"), prefKey: "notif_milestone" },
   );
 
   return (
@@ -421,6 +422,11 @@ function NotifSettingsPage() {
               <p className="text-sm font-semibold">{it.label}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{it.desc}</p>
             </div>
+            <Switch
+              checked={!!prefs[it.prefKey]}
+              onCheckedChange={(v) => togglePref(it.prefKey, v)}
+              aria-label={it.label}
+            />
           </div>
         ))}
       </div>
