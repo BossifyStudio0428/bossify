@@ -260,6 +260,47 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
 
 /* ---------- Device Limit Block ---------- */
 
+function ComingSoonSocialButton({ provider }: { provider: "tiktok" | "google" }) {
+  const { t } = useI18n();
+  const label = provider === "tiktok" ? t("auth_signup_tiktok") : t("auth_signup_google");
+  const icon =
+    provider === "tiktok" ? (
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path
+          fill="#1E1333"
+          d="M16.5 3.2c.1 1.3.6 2.5 1.5 3.4.9.9 2.1 1.4 3.3 1.5v3c-1.7-.1-3.3-.6-4.8-1.5v6.6c0 3.6-2.9 6.5-6.5 6.5S3.5 19.8 3.5 16.2s2.9-6.5 6.5-6.5c.3 0 .7 0 1 .1v3.1c-.3-.1-.6-.1-1-.1-1.9 0-3.5 1.6-3.5 3.5s1.6 3.5 3.5 3.5 3.5-1.6 3.5-3.5V3.2h3z"
+        />
+      </svg>
+    ) : (
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path fill="#4285F4" d="M22.5 12.3c0-.8-.1-1.5-.2-2.2H12v4.2h5.9c-.3 1.4-1 2.5-2.2 3.3v2.8h3.5c2.1-1.9 3.3-4.7 3.3-8.1z" />
+        <path fill="#34A853" d="M12 23c2.9 0 5.4-1 7.2-2.6l-3.5-2.8c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.1-4.6H2.3v2.9C4.2 20.6 7.9 23 12 23z" />
+        <path fill="#FBBC05" d="M5.9 14.1c-.2-.7-.4-1.4-.4-2.1s.1-1.4.4-2.1V7H2.3C1.5 8.5 1 10.2 1 12s.5 3.5 1.3 5l3.6-2.9z" />
+        <path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1C17.4 2.4 14.9 1.4 12 1.4 7.9 1.4 4.2 3.8 2.3 7l3.6 2.9C6.7 7.3 9.1 5.4 12 5.4z" />
+      </svg>
+    );
+  return (
+    <button
+      type="button"
+      onClick={() => toast.message(t("auth_coming_soon_toast"))}
+      className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#E0DCF0] bg-white text-[13px] font-semibold text-[#1E1333] opacity-60 cursor-not-allowed relative"
+      style={{ padding: "11px 12px" }}
+      aria-disabled="true"
+    >
+      {icon}
+      <span>{label}</span>
+      <span
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full"
+        style={{ background: "#F3F0FF", color: "#7C3AED", letterSpacing: "0.5px" }}
+      >
+        {t("auth_coming_soon")}
+      </span>
+    </button>
+  );
+}
+
+/* ---------- Device Limit Block ---------- */
+
 function DeviceLimitBlock({
   used, limit, planName, onManage,
 }: { used: number; limit: number; planName: string; onManage: () => void }) {
