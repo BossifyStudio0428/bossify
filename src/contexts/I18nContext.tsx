@@ -3860,6 +3860,8 @@ const dict = {
     notif_setting_evening_desc: "每天晚上 9:00 推送当日销售报告",
     notif_setting_milestone: "里程碑庆祝",
     notif_setting_milestone_desc: "达成重要里程碑时通知您",
+    notif_setting_losing: "亏本商品提醒",
+    notif_setting_losing_desc: "每天检查成本高于售价的 SKU",
     notif_setting_new_case: "新案例提醒",
     notif_setting_new_case_desc: "有新案例时通知我",
     notif_setting_new_appointment: "新预约提醒",
