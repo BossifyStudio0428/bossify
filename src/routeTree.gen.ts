@@ -67,11 +67,13 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ReportsIndexRouteImport } from './routes/reports.index'
 import { Route as ViewingIdRouteImport } from './routes/viewing.$id'
 import { Route as TrackOrderRefRouteImport } from './routes/track.$orderRef'
 import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
 import { Route as StockTakeIdRouteImport } from './routes/stock-take_.$id'
 import { Route as RequirementIdRouteImport } from './routes/requirement.$id'
+import { Route as ReportsSalesRouteImport } from './routes/reports.sales'
 import { Route as RenewalIdRouteImport } from './routes/renewal.$id'
 import { Route as PurchaseOrdersIdRouteImport } from './routes/purchase-orders_.$id'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
@@ -387,6 +389,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsIndexRoute = ReportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ReportsRoute,
+} as any)
 const ViewingIdRoute = ViewingIdRouteImport.update({
   id: '/viewing/$id',
   path: '/viewing/$id',
@@ -411,6 +418,11 @@ const RequirementIdRoute = RequirementIdRouteImport.update({
   id: '/requirement/$id',
   path: '/requirement/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsSalesRoute = ReportsSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => ReportsRoute,
 } as any)
 const RenewalIdRoute = RenewalIdRouteImport.update({
   id: '/renewal/$id',
@@ -580,7 +592,7 @@ export interface FileRoutesByFullPath {
   '/purchase-orders': typeof PurchaseOrdersRoute
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
-  '/reports': typeof ReportsRoute
+  '/reports': typeof ReportsRouteWithChildren
   '/requirements': typeof RequirementsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
@@ -608,11 +620,13 @@ export interface FileRoutesByFullPath {
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/purchase-orders/$id': typeof PurchaseOrdersIdRoute
   '/renewal/$id': typeof RenewalIdRoute
+  '/reports/sales': typeof ReportsSalesRoute
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
+  '/reports/': typeof ReportsIndexRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
@@ -669,7 +683,6 @@ export interface FileRoutesByTo {
   '/purchase-orders': typeof PurchaseOrdersRoute
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
-  '/reports': typeof ReportsRoute
   '/requirements': typeof RequirementsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
@@ -697,11 +710,13 @@ export interface FileRoutesByTo {
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/purchase-orders/$id': typeof PurchaseOrdersIdRoute
   '/renewal/$id': typeof RenewalIdRoute
+  '/reports/sales': typeof ReportsSalesRoute
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
+  '/reports': typeof ReportsIndexRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
@@ -759,7 +774,7 @@ export interface FileRoutesById {
   '/purchase-orders': typeof PurchaseOrdersRoute
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
-  '/reports': typeof ReportsRoute
+  '/reports': typeof ReportsRouteWithChildren
   '/requirements': typeof RequirementsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
@@ -787,11 +802,13 @@ export interface FileRoutesById {
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/purchase-orders_/$id': typeof PurchaseOrdersIdRoute
   '/renewal/$id': typeof RenewalIdRoute
+  '/reports/sales': typeof ReportsSalesRoute
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take_/$id': typeof StockTakeIdRoute
   '/team/welcome': typeof TeamWelcomeRoute
   '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
+  '/reports/': typeof ReportsIndexRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
@@ -878,11 +895,13 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/purchase-orders/$id'
     | '/renewal/$id'
+    | '/reports/sales'
     | '/requirement/$id'
     | '/stock-take/$id'
     | '/team/welcome'
     | '/track/$orderRef'
     | '/viewing/$id'
+    | '/reports/'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
@@ -939,7 +958,6 @@ export interface FileRouteTypes {
     | '/purchase-orders'
     | '/recipes'
     | '/renewals'
-    | '/reports'
     | '/requirements'
     | '/search'
     | '/services'
@@ -967,11 +985,13 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/purchase-orders/$id'
     | '/renewal/$id'
+    | '/reports/sales'
     | '/requirement/$id'
     | '/stock-take/$id'
     | '/team/welcome'
     | '/track/$orderRef'
     | '/viewing/$id'
+    | '/reports'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
@@ -1056,11 +1076,13 @@ export interface FileRouteTypes {
     | '/orders/$orderId'
     | '/purchase-orders_/$id'
     | '/renewal/$id'
+    | '/reports/sales'
     | '/requirement/$id'
     | '/stock-take_/$id'
     | '/team/welcome'
     | '/track/$orderRef'
     | '/viewing/$id'
+    | '/reports/'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
@@ -1118,7 +1140,7 @@ export interface RootRouteChildren {
   PurchaseOrdersRoute: typeof PurchaseOrdersRoute
   RecipesRoute: typeof RecipesRoute
   RenewalsRoute: typeof RenewalsRoute
-  ReportsRoute: typeof ReportsRoute
+  ReportsRoute: typeof ReportsRouteWithChildren
   RequirementsRoute: typeof RequirementsRoute
   SearchRoute: typeof SearchRoute
   ServicesRoute: typeof ServicesRoute
@@ -1565,6 +1587,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports/': {
+      id: '/reports/'
+      path: '/'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof ReportsIndexRouteImport
+      parentRoute: typeof ReportsRoute
+    }
     '/viewing/$id': {
       id: '/viewing/$id'
       path: '/viewing/$id'
@@ -1599,6 +1628,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/requirement/$id'
       preLoaderRoute: typeof RequirementIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/reports/sales': {
+      id: '/reports/sales'
+      path: '/sales'
+      fullPath: '/reports/sales'
+      preLoaderRoute: typeof ReportsSalesRouteImport
+      parentRoute: typeof ReportsRoute
     }
     '/renewal/$id': {
       id: '/renewal/$id'
@@ -1808,6 +1844,19 @@ const OrdersRouteChildren: OrdersRouteChildren = {
 const OrdersRouteWithChildren =
   OrdersRoute._addFileChildren(OrdersRouteChildren)
 
+interface ReportsRouteChildren {
+  ReportsSalesRoute: typeof ReportsSalesRoute
+  ReportsIndexRoute: typeof ReportsIndexRoute
+}
+
+const ReportsRouteChildren: ReportsRouteChildren = {
+  ReportsSalesRoute: ReportsSalesRoute,
+  ReportsIndexRoute: ReportsIndexRoute,
+}
+
+const ReportsRouteWithChildren =
+  ReportsRoute._addFileChildren(ReportsRouteChildren)
+
 interface TeamRouteChildren {
   TeamWelcomeRoute: typeof TeamWelcomeRoute
   TeamJoinTokenRoute: typeof TeamJoinTokenRoute
@@ -1865,7 +1914,7 @@ const rootRouteChildren: RootRouteChildren = {
   PurchaseOrdersRoute: PurchaseOrdersRoute,
   RecipesRoute: RecipesRoute,
   RenewalsRoute: RenewalsRoute,
-  ReportsRoute: ReportsRoute,
+  ReportsRoute: ReportsRouteWithChildren,
   RequirementsRoute: RequirementsRoute,
   SearchRoute: SearchRoute,
   ServicesRoute: ServicesRoute,

@@ -628,3 +628,289 @@ export async function exportOrdersListPDF(opts: {
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   await savePdf(doc, `Bossify_Orders_${opts.statusLabel}_${ymd}.pdf`);
 }
+
+// ---------------------------------------------------------------------------
+// Profit Report (retail focus — reuses order-level cost/profit numbers)
+// ---------------------------------------------------------------------------
+
+const PROFIT_TITLE: Record<Lang, string> = {
+  en: "PROFIT REPORT",
+  ms: "LAPORAN UNTUNG",
+  zh: "利润报告",
+};
+
+const STOCK_TITLE: Record<Lang, string> = {
+  en: "STOCK REPORT",
+  ms: "LAPORAN STOK",
+  zh: "库存报告",
+};
+
+type ExtraLabels = {
+  cogs: string;
+  grossProfit: string;
+  margin: string;
+  orders: string;
+  avgPerOrder: string;
+  revenue: string;
+  mostProfitable: string;
+  leastProfitable: string;
+  product: string;
+  qty: string;
+  cost: string;
+  profit: string;
+  marginPct: string;
+  // stock
+  asOf: string;
+  totalSkus: string;
+  totalValue: string;
+  inStock: string;
+  lowStock: string;
+  outOfStock: string;
+  losingMoney: string;
+  needsReorder: string;
+  fullInventory: string;
+  sellPrice: string;
+  stockValue: string;
+};
+
+const EXTRA: Record<Lang, ExtraLabels> = {
+  en: {
+    cogs: "Cost of goods", grossProfit: "Gross profit", margin: "Gross margin",
+    orders: "Orders", avgPerOrder: "Avg profit / order", revenue: "Revenue",
+    mostProfitable: "Most profitable products", leastProfitable: "Least profitable products",
+    product: "Product", qty: "Qty", cost: "Cost", profit: "Profit", marginPct: "Margin %",
+    asOf: "As of", totalSkus: "Total SKUs", totalValue: "Total stock value",
+    inStock: "In stock", lowStock: "Low stock", outOfStock: "Out of stock",
+    losingMoney: "Losing money", needsReorder: "Needs reorder", fullInventory: "Full inventory",
+    sellPrice: "Sell price", stockValue: "Value",
+  },
+  ms: {
+    cogs: "Kos barang", grossProfit: "Untung kasar", margin: "Margin kasar",
+    orders: "Pesanan", avgPerOrder: "Purata untung / pesanan", revenue: "Hasil",
+    mostProfitable: "Produk paling menguntungkan", leastProfitable: "Produk kurang menguntungkan",
+    product: "Produk", qty: "Kuantiti", cost: "Kos", profit: "Untung", marginPct: "Margin %",
+    asOf: "Setakat", totalSkus: "Jumlah SKU", totalValue: "Jumlah nilai stok",
+    inStock: "Ada stok", lowStock: "Stok rendah", outOfStock: "Habis stok",
+    losingMoney: "Rugi", needsReorder: "Perlu pesan semula", fullInventory: "Inventori penuh",
+    sellPrice: "Harga jual", stockValue: "Nilai",
+  },
+  zh: {
+    cogs: "商品成本", grossProfit: "毛利", margin: "毛利率",
+    orders: "订单", avgPerOrder: "每单平均利润", revenue: "营收",
+    mostProfitable: "最赚钱的产品", leastProfitable: "最不赚钱的产品",
+    product: "产品", qty: "数量", cost: "成本", profit: "利润", marginPct: "利润率 %",
+    asOf: "截至", totalSkus: "SKU 总数", totalValue: "库存总值",
+    inStock: "有库存", lowStock: "低库存", outOfStock: "缺货",
+    losingMoney: "亏本", needsReorder: "需要补货", fullInventory: "全部库存",
+    sellPrice: "售价", stockValue: "价值",
+  },
+};
+
+function makeLabels(lang: Lang, reportTitle: string, dateRange: string): ReportLabels {
+  return { ...labels(lang, "retail"), reportTitle, dateRange } as ReportLabels;
+}
+
+export type ProfitProductRow = {
+  name: string;
+  qty: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+  margin: number;
+};
+
+export type ProfitReportData = {
+  lang: Lang;
+  businessName: string;
+  logoDataUrl?: string | null;
+  rangeLabel: string;
+  revenue: number;
+  cost: number;
+  grossProfit: number;
+  margin: number;
+  orderCount: number;
+  avgPerOrder: number;
+  top: ProfitProductRow[];
+  bottom: ProfitProductRow[];
+};
+
+export async function exportProfitReportPDF(d: ProfitReportData): Promise<void> {
+  const doc = new jsPDF();
+  const l = makeLabels(d.lang, PROFIT_TITLE[d.lang], EXTRA[d.lang].revenue);
+  const x = EXTRA[d.lang];
+  await applyCjkFont(doc);
+  drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
+
+  const rm = (n: number) => `RM ${n.toFixed(2)}`;
+  autoTable(doc, {
+    startY: 46,
+    head: [[l.summary, l.value]],
+    body: [
+      [x.revenue, rm(d.revenue)],
+      [x.cogs, rm(d.cost)],
+      [x.grossProfit, rm(d.grossProfit)],
+      [x.margin, `${d.margin.toFixed(1)}%`],
+      [x.orders, String(d.orderCount)],
+      [x.avgPerOrder, rm(d.avgPerOrder)],
+    ],
+    theme: "grid",
+    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
+    alternateRowStyles: { fillColor: ALT_ROW },
+    styles: { fontSize: 10, font: CJK_FONT_FAMILY },
+  });
+  let y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
+
+  const prodRows = (rows: ProfitProductRow[]) =>
+    rows.map((r) => [
+      r.name, String(r.qty), rm(r.revenue), rm(r.cost), rm(r.profit), `${r.margin.toFixed(1)}%`,
+    ]);
+
+  if (d.top.length) {
+    autoTable(doc, {
+      startY: y,
+      head: [[x.mostProfitable, x.qty, x.revenue, x.cost, x.profit, x.marginPct]],
+      body: prodRows(d.top),
+      theme: "striped",
+      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
+      alternateRowStyles: { fillColor: ALT_ROW },
+      styles: { fontSize: 9, font: CJK_FONT_FAMILY },
+    });
+    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
+  }
+
+  if (d.bottom.length) {
+    autoTable(doc, {
+      startY: y,
+      head: [[x.leastProfitable, x.qty, x.revenue, x.cost, x.profit, x.marginPct]],
+      body: prodRows(d.bottom),
+      theme: "striped",
+      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
+      alternateRowStyles: { fillColor: ALT_ROW },
+      styles: { fontSize: 9, font: CJK_FONT_FAMILY },
+    });
+  }
+
+  drawFooters(doc, l);
+  const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  await savePdf(doc, `Bossify_Profit_${ymd}.pdf`);
+}
+
+// ---------------------------------------------------------------------------
+// Stock Report (point-in-time inventory snapshot)
+// ---------------------------------------------------------------------------
+
+export type StockInvRow = {
+  id: string;
+  name: string;
+  stock: number | null;
+  price: number | null;
+  cost_price: number | null;
+};
+
+export type StockReportData = {
+  lang: Lang;
+  businessName: string;
+  logoDataUrl?: string | null;
+  items: StockInvRow[];
+};
+
+const LOW_STOCK_THRESHOLD = 5;
+
+export async function exportStockReportPDF(d: StockReportData): Promise<void> {
+  const doc = new jsPDF();
+  const asOf = new Date().toLocaleString("en-MY");
+  const l = makeLabels(d.lang, STOCK_TITLE[d.lang], `${EXTRA[d.lang].asOf} ${asOf}`);
+  const x = EXTRA[d.lang];
+  await applyCjkFont(doc);
+  drawHeader(doc, l, d.businessName, `${x.asOf} ${asOf}`, d.logoDataUrl);
+
+  const rm = (n: number) => `RM ${n.toFixed(2)}`;
+  const items = d.items;
+  const buckets = { out: [] as StockInvRow[], low: [] as StockInvRow[], losing: [] as StockInvRow[] };
+  let totalValue = 0, inStockCount = 0;
+  for (const r of items) {
+    const s = Number(r.stock ?? 0);
+    const p = Number(r.price ?? 0);
+    const c = Number(r.cost_price ?? 0);
+    totalValue += s * c;
+    if (s <= 0) buckets.out.push(r);
+    else if (s <= LOW_STOCK_THRESHOLD) { buckets.low.push(r); inStockCount++; }
+    else inStockCount++;
+    if (p > 0 && c > p) buckets.losing.push(r);
+  }
+
+  autoTable(doc, {
+    startY: 46,
+    head: [[l.summary, l.value]],
+    body: [
+      [x.totalSkus, String(items.length)],
+      [x.totalValue, rm(totalValue)],
+      [x.inStock, String(inStockCount)],
+      [x.lowStock, String(buckets.low.length)],
+      [x.outOfStock, String(buckets.out.length)],
+      [x.losingMoney, String(buckets.losing.length)],
+    ],
+    theme: "grid",
+    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
+    alternateRowStyles: { fillColor: ALT_ROW },
+    styles: { fontSize: 10, font: CJK_FONT_FAMILY },
+  });
+  let y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
+
+  const drawSection = (title: string, head: string[], body: string[][]) => {
+    if (body.length === 0) return;
+    autoTable(doc, {
+      startY: y,
+      head: [[title, ...Array(head.length - 1).fill("")]],
+      body: [head, ...body],
+      theme: "grid",
+      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
+      alternateRowStyles: { fillColor: ALT_ROW },
+      styles: { fontSize: 9, font: CJK_FONT_FAMILY },
+    });
+    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
+  };
+
+  drawSection(
+    x.needsReorder,
+    [x.product, x.qty, x.cost, x.sellPrice, x.stockValue],
+    buckets.low.map((r) => [
+      r.name,
+      String(Number(r.stock ?? 0)),
+      rm(Number(r.cost_price ?? 0)),
+      rm(Number(r.price ?? 0)),
+      rm(Number(r.stock ?? 0) * Number(r.cost_price ?? 0)),
+    ]),
+  );
+  drawSection(
+    x.outOfStock,
+    [x.product, x.cost, x.sellPrice],
+    buckets.out.map((r) => [
+      r.name, rm(Number(r.cost_price ?? 0)), rm(Number(r.price ?? 0)),
+    ]),
+  );
+  drawSection(
+    x.losingMoney,
+    [x.product, x.cost, x.sellPrice, x.margin],
+    buckets.losing.map((r) => {
+      const p = Number(r.price ?? 0);
+      const c = Number(r.cost_price ?? 0);
+      return [r.name, rm(c), rm(p), rm(p - c)];
+    }),
+  );
+  drawSection(
+    x.fullInventory,
+    [x.product, x.qty, x.cost, x.sellPrice, x.stockValue],
+    items.map((r) => [
+      r.name,
+      String(Number(r.stock ?? 0)),
+      rm(Number(r.cost_price ?? 0)),
+      rm(Number(r.price ?? 0)),
+      rm(Number(r.stock ?? 0) * Number(r.cost_price ?? 0)),
+    ]),
+  );
+
+  drawFooters(doc, l);
+  const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  await savePdf(doc, `Bossify_Stock_${ymd}.pdf`);
+}
