@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { isPrefEnabled } from "@/lib/notifPrefs";
+import { notifySituation } from "@/lib/autoNotify";
 
 const ID_MORNING = 9101;
 const ID_EVENING = 9102;
@@ -135,4 +136,40 @@ export async function runUnpaidNotifyNow(userId: string) {
       }],
     });
   } catch {}
+}
+
+/**
+ * Run an immediate scan for SKUs where cost > price and push a single
+ * digest notification if any are found. Dedupes to once per calendar day
+ * per device.
+ */
+export async function runLosingMoneyScanNow(userId: string) {
+  if (!isPrefEnabled("notif_losing")) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const dedupeKey = `losing_${today}`;
+  const { data } = await supabase
+    .from("inventory")
+    .select("id,name,price,cost")
+    .eq("user_id", userId);
+  const losing = (data ?? []).filter((r: any) => {
+    const p = Number(r.price ?? 0);
+    const c = Number(r.cost ?? 0);
+    return p > 0 && c > p;
+  });
+  if (losing.length === 0) return;
+  const first = losing[0] as any;
+  const extra = losing.length - 1;
+  const title = "📉 Losing-money alert";
+  const body =
+    extra > 0
+      ? `${first.name} + ${extra} more SKU(s) cost more than price`
+      : `${first.name}: cost is higher than price — every sale loses money`;
+  await notifySituation({
+    kind: "custom",
+    title,
+    body,
+    link: "/alerts",
+    prefKey: "notif_losing",
+    dedupeKey,
+  }).catch(() => {});
 }
