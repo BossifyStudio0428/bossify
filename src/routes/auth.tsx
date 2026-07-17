@@ -191,6 +191,9 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
     <div className="w-full max-w-[400px] mx-auto space-y-5 flex-1 flex flex-col">
       <Logo />
       <p className="text-[12px] italic text-center" style={{ color: "#6B7280" }}>{t("slogan")}</p>
+      <p className="text-[12px] text-center leading-relaxed -mt-2 px-2" style={{ color: "#6B7280" }}>
+        {t("auth_subheadline")}
+      </p>
 
       <div className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-4">
         <div>
@@ -242,6 +245,9 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
           <span className="text-[11px]" style={{ color: "#6B7280" }}>{t("or_label")}</span>
           <div className="flex-1 h-px bg-[#E0DCF0]" />
         </div>
+
+        <ComingSoonSocialButton provider="tiktok" />
+        <ComingSoonSocialButton provider="google" />
 
         <p className="text-[13px] text-center" style={{ color: "#6B7280" }}>
           {t("no_account")}{" "}
