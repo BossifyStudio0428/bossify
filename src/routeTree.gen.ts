@@ -67,6 +67,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ReportsIndexRouteImport } from './routes/reports.index'
 import { Route as ViewingIdRouteImport } from './routes/viewing.$id'
 import { Route as TrackOrderRefRouteImport } from './routes/track.$orderRef'
 import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
@@ -388,6 +389,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsIndexRoute = ReportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ReportsRoute,
+} as any)
 const ViewingIdRoute = ViewingIdRouteImport.update({
   id: '/viewing/$id',
   path: '/viewing/$id',
@@ -620,6 +626,7 @@ export interface FileRoutesByFullPath {
   '/team/welcome': typeof TeamWelcomeRoute
   '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
+  '/reports/': typeof ReportsIndexRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
@@ -676,7 +683,6 @@ export interface FileRoutesByTo {
   '/purchase-orders': typeof PurchaseOrdersRoute
   '/recipes': typeof RecipesRoute
   '/renewals': typeof RenewalsRoute
-  '/reports': typeof ReportsRouteWithChildren
   '/requirements': typeof RequirementsRoute
   '/search': typeof SearchRoute
   '/services': typeof ServicesRoute
@@ -710,6 +716,7 @@ export interface FileRoutesByTo {
   '/team/welcome': typeof TeamWelcomeRoute
   '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
+  '/reports': typeof ReportsIndexRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
@@ -801,6 +808,7 @@ export interface FileRoutesById {
   '/team/welcome': typeof TeamWelcomeRoute
   '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
+  '/reports/': typeof ReportsIndexRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
@@ -893,6 +901,7 @@ export interface FileRouteTypes {
     | '/team/welcome'
     | '/track/$orderRef'
     | '/viewing/$id'
+    | '/reports/'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
@@ -949,7 +958,6 @@ export interface FileRouteTypes {
     | '/purchase-orders'
     | '/recipes'
     | '/renewals'
-    | '/reports'
     | '/requirements'
     | '/search'
     | '/services'
@@ -983,6 +991,7 @@ export interface FileRouteTypes {
     | '/team/welcome'
     | '/track/$orderRef'
     | '/viewing/$id'
+    | '/reports'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
@@ -1073,6 +1082,7 @@ export interface FileRouteTypes {
     | '/team/welcome'
     | '/track/$orderRef'
     | '/viewing/$id'
+    | '/reports/'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
@@ -1577,6 +1587,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports/': {
+      id: '/reports/'
+      path: '/'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof ReportsIndexRouteImport
+      parentRoute: typeof ReportsRoute
+    }
     '/viewing/$id': {
       id: '/viewing/$id'
       path: '/viewing/$id'
@@ -1829,10 +1846,12 @@ const OrdersRouteWithChildren =
 
 interface ReportsRouteChildren {
   ReportsSalesRoute: typeof ReportsSalesRoute
+  ReportsIndexRoute: typeof ReportsIndexRoute
 }
 
 const ReportsRouteChildren: ReportsRouteChildren = {
   ReportsSalesRoute: ReportsSalesRoute,
+  ReportsIndexRoute: ReportsIndexRoute,
 }
 
 const ReportsRouteWithChildren =
