@@ -978,7 +978,7 @@ function PlansPage() {
       )}
       </>)}
 
-      {scope === "team" && (
+      {!HIDE_TEAM_PLAN && scope === "team" && (
         <TeamPlansSection
           lang={lang}
           billing={billing}
