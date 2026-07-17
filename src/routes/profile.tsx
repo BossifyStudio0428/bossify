@@ -27,7 +27,7 @@ import { loadPaymentSummary, type PaymentSummary } from "@/lib/paymentSetup";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType";
 import { RETAIL_ONLY_MODE } from "@/lib/featureFlags";
-import { PLATFORMS, VISIBLE_PLATFORMS } from "@/lib/platforms";
+import { VISIBLE_PLATFORMS } from "@/lib/platforms";
 import { HIDE_BOOKING_MENU } from "@/lib/featureFlags";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { isNativeBillingAvailable } from "@/lib/billing";
@@ -612,7 +612,7 @@ function ProfilePage() {
             ))}
             {sec.key === "integrations" && (
               <div className="divide-y divide-border/60">
-                {PLATFORMS.map((p) => {
+                {VISIBLE_PLATFORMS.map((p) => {
                   const isConn = !!connectedPlatforms[p.key];
                   return (
                     <button
