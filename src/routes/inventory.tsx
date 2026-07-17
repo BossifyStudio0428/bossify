@@ -297,6 +297,7 @@ function InventoryPage() {
                   </span>
                 ) : null}
               </div>
+              <ProfitRow price={it.price} cost={(it as any).cost_price} t={t} />
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
                   className={`h-full rounded-full ${low ? "bg-red-500" : "bg-gradient-to-r from-primary to-primary/70"}`}
