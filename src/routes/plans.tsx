@@ -31,6 +31,7 @@ import {
   type BillingError,
 } from "@/lib/billing";
 import { fetchStripePrices } from "@/lib/stripePrices.functions";
+import { HIDE_TEAM_PLAN } from "@/lib/featureFlags";
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
 
