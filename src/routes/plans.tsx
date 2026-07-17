@@ -279,6 +279,36 @@ function PlansPage() {
     };
   }, []);
 
+  // Web (Stripe) price fetch. On native (Capacitor Android) the Google Play
+  // path above owns pricing; on web we call the Stripe-backed server fn so
+  // the UI reflects whatever is currently configured in the Stripe Dashboard.
+  // Any failure silently keeps the MYR fallbacks so /plans never breaks.
+  useEffect(() => {
+    if (isNativeBillingAvailable()) return;
+    let cancelled = false;
+    const load = () => {
+      fetchStripePrices()
+        .then((res) => {
+          if (cancelled || !res?.prices) return;
+          setStorePrices((prev) => {
+            const next = { ...prev };
+            for (const [k, v] of Object.entries(res.prices)) {
+              if (v) (next as Record<string, string>)[k] = v;
+            }
+            return next;
+          });
+        })
+        .catch(() => {});
+    };
+    load();
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
   const price = storePrices[billing];
   const lifetimePrice = storePrices.lifetime;
   const starterPrice = billing === "monthly" ? storePrices.starter_monthly : storePrices.starter_annual;
