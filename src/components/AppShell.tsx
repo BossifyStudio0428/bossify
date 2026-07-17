@@ -115,7 +115,13 @@ export function AppShell() {
             <BusinessTypeProvider>
               <ShellInner />
               <UpgradeModal />
-              <Toaster position="bottom-center" richColors closeButton />
+              <Toaster
+                position="bottom-center"
+                richColors
+                closeButton
+                offset="calc(env(safe-area-inset-bottom, 0px) + 96px)"
+                mobileOffset="calc(env(safe-area-inset-bottom, 0px) + 96px)"
+              />
             </BusinessTypeProvider>
           </SubscriptionProvider>
         </AuthProvider>
