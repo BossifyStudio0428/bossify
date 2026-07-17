@@ -13,6 +13,7 @@ import {
   purchasePlan,
   purchaseLifetime,
   purchaseStarter,
+  purchaseBusiness,
   purchaseTeam,
   restorePurchases,
   queryProductDetailsSafe,
@@ -23,6 +24,8 @@ import {
   BASE_PLAN_IDS,
   STARTER_PRODUCT_IDS,
   STARTER_FALLBACK_PRICES,
+  BUSINESS_SUBSCRIPTION_ID,
+  BUSINESS_FALLBACK_PRICES,
   TEAM_PRODUCT_IDS,
   TEAM_FALLBACK_PRICES,
   ALL_TEAM_PRODUCT_IDS,
@@ -226,15 +229,16 @@ function PlansPage() {
   const eff = (bizType ?? "retail") as
     | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
   const { user } = useAuth();
-  const { isPro, isStarter, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan, teamTier } = useSubscription();
+  const { isPro, isStarter, isBusiness, isLifetime, plan, ordersUsed, sub, refresh, syncFromStore, activeBillingPlan, teamTier } = useSubscription();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [scope, setScope] = useState<"individual" | "team">("individual");
-  const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | null>(null);
+  const [submittingPlan, setSubmittingPlan] = useState<"pro" | "lifetime" | "starter" | "business" | null>(null);
   const [submittingTeam, setSubmittingTeam] = useState<TeamTier | null>(null);
   const [lifetimeConfirmOpen, setLifetimeConfirmOpen] = useState(false);
   type PriceKey =
     | "monthly" | "annual" | "lifetime"
     | "starter_monthly" | "starter_annual"
+    | "business_monthly" | "business_annual"
     | "team_starter_monthly" | "team_starter_annual"
     | "team_pro_monthly" | "team_pro_annual"
     | "team_business_monthly" | "team_business_annual";
@@ -244,6 +248,8 @@ function PlansPage() {
     lifetime: LIFETIME_FALLBACK_PRICE,
     starter_monthly: STARTER_FALLBACK_PRICES.monthly,
     starter_annual: STARTER_FALLBACK_PRICES.annual,
+    business_monthly: BUSINESS_FALLBACK_PRICES.monthly,
+    business_annual: BUSINESS_FALLBACK_PRICES.annual,
     team_starter_monthly: TEAM_FALLBACK_PRICES.team_starter.monthly,
     team_starter_annual: TEAM_FALLBACK_PRICES.team_starter.annual,
     team_pro_monthly: TEAM_FALLBACK_PRICES.team_pro.monthly,
