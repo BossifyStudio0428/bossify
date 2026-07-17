@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet } from "lucide-react";
+import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet, Layers, Bell as BellIcon, MoreHorizontal } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -384,6 +384,33 @@ const BottomNav = memo(function BottomNav() {
   const { t } = useI18n();
   const { type } = useBusinessType();
   const location = useLocation();
+
+  // Retail-only pivot: 4 equal tabs, no center FAB. Old multi-vertical
+  // nav is preserved below and restored when RETAIL_ONLY_MODE is off.
+  if (RETAIL_ONLY_MODE) {
+    const retailTabs: TabDef[] = [
+      { to: "/",         labelKey: "ro_title",        icon: Home,            id: "tour-tab-home" },
+      { to: "/inventory",labelKey: "ro_open_products",icon: Package,         id: "tour-tab-products" },
+      { to: "/stock",    labelKey: "ro_open_stock",   icon: Layers,          id: "tour-tab-stock" },
+      { to: "/alerts",   labelKey: "ro_open_alerts",  icon: BellIcon,        id: "tour-tab-alerts" },
+      { to: "/more",     labelKey: "ro_open_more",    icon: MoreHorizontal,  id: "tour-tab-more" },
+    ];
+    return (
+      <nav
+        className="fixed left-1/2 -translate-x-1/2 w-full max-w-[390px] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl z-40"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
+      >
+        <div className="relative mx-3 mb-3 rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)]">
+          <ul className="grid grid-cols-5 items-center h-16 px-1">
+            {retailTabs.map((tab) => (
+              <NavItem key={tab.to} to={tab.to} icon={tab.icon} label={t(tab.labelKey)} id={tab.id} />
+            ))}
+          </ul>
+        </div>
+      </nav>
+    );
+  }
+
   const tabs: TabDef[] =
     type === "property"
       ? [
