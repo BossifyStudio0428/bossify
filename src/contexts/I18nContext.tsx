@@ -3216,6 +3216,7 @@ const dict = {
     profit_net: "Untung bersih",
     profit_note: "Berdasarkan pesanan berbayar sahaja. Yuran TikTok Shop dan kos iklan belum dikira.",
     profit_empty: "Belum ada pesanan berbayar dalam tempoh ini.",
+    profit_margin_hint: "Berapa banyak anda simpan daripada setiap RM",
   },
   zh: {
     continue: "继续", back: "返回", save: "保存", cancel: "取消", delete: "删除",
