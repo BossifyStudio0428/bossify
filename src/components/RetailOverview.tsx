@@ -427,25 +427,3 @@ function StatusPill({ status }: { status: string }) {
     </span>
   );
 }
-
-function QuickCard({
-  to,
-  icon: Icon,
-  label,
-}: {
-  to: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}) {
-  return (
-    <Link
-      to={to}
-      className="flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3.5 shadow-[var(--shadow-card)] active:scale-[0.98]"
-    >
-      <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-        <Icon className="h-5 w-5" />
-      </span>
-      <span className="text-sm font-semibold text-foreground">{label}</span>
-    </Link>
-  );
-}
