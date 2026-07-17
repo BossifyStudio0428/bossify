@@ -56,3 +56,17 @@ export function isArchivedRoute(pathname: string): boolean {
     (p) => pathname === p || pathname.startsWith(p.endsWith("/") ? p : p + "/"),
   );
 }
+
+/**
+ * Hide Shopee / Lazada / Instagram / Facebook from Settings → Integrations.
+ * Only TikTok Shop remains visible while true. Flip to `false` to restore
+ * the full platform list. Underlying `platform_connections` rows and the
+ * `/connected-platforms/$platform` route are untouched.
+ */
+export const HIDE_NON_RETAIL_INTEGRATIONS = true;
+
+/**
+ * Hide the Bookings and Booking Settings menu entries (Beauty vertical).
+ * The routes themselves stay registered; flip to `false` to restore.
+ */
+export const HIDE_BOOKING_MENU = true;
