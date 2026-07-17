@@ -1,17 +1,42 @@
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import autoTable, { type UserOptions } from "jspdf-autotable";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
-import { Share } from "@capacitor/share";
 import { FileOpener } from "@capacitor-community/file-opener";
 import type { Lang } from "@/contexts/I18nContext";
 import type { BizType } from "@/lib/businessType";
 import { applyCjkFont, CJK_FONT_FAMILY } from "@/lib/pdfCjk";
 
-// Brand purple (#6C3FD6) and alt-row tint (#F0EEF8)
-const PURPLE: [number, number, number] = [108, 63, 214];
-const ALT_ROW: [number, number, number] = [240, 238, 248];
+// ---------------------------------------------------------------------------
+// Grayscale palette — no brand color, no red. Professional B&W business docs.
+// ---------------------------------------------------------------------------
+const INK: [number, number, number] = [17, 17, 17];        // #111111 titles / totals
+const INK_2: [number, number, number] = [51, 51, 51];      // #333333 body text
+const MUTED: [number, number, number] = [102, 102, 102];   // #666666 meta / footnotes
+const RULE: [number, number, number] = [0, 0, 0];          // hairlines
+const BAND: [number, number, number] = [237, 237, 237];    // #EDEDED table header
+const ZEBRA: [number, number, number] = [246, 246, 246];   // #F6F6F6 alt row
+const WARN_BAND: [number, number, number] = [221, 221, 221]; // #DDDDDD warning row
+
+// Page geometry (A4 portrait, mm)
+const PAGE_W = 210;
+const MARGIN_L = 18;
+const MARGIN_R = 18;
+const MARGIN_TOP = 20;
+const MARGIN_BOTTOM = 22;
+const CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;
+
 type AutoTablePdf = jsPDF & { lastAutoTable?: { finalY: number } };
+
+// Non-breaking space keeps "RM" glued to the number when text wraps.
+const NBSP = "\u00A0";
+const fmtMYR = (n: number): string => {
+  const abs = Math.abs(n);
+  const s = abs.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `RM${NBSP}${s}`;
+};
+const fmtMYRNeg = (n: number): string => (n < 0 ? `(${fmtMYR(n)})` : fmtMYR(n));
+const fmtPct = (n: number): string => `${n.toFixed(1)}%`;
 
 function isAndroidNative(): boolean {
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") return false;
@@ -19,7 +44,7 @@ function isAndroidNative(): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Localized labels
+// Localized labels (unchanged public shape)
 // ---------------------------------------------------------------------------
 
 type ReportLabels = {
@@ -29,7 +54,6 @@ type ReportLabels = {
   page: string;
   summary: string;
   value: string;
-  // metric labels
   totalRevenue: string;
   totalCost: string;
   grossProfit: string;
@@ -51,32 +75,14 @@ type ReportLabels = {
   totalProjects: string;
   activeProjects: string;
   completedProjects: string;
-  // table headers
   th: {
-    date: string;
-    orderId: string;
-    caseId: string;
-    appointmentId: string;
-    leadId: string;
-    projectId: string;
-    customer: string;
-    client: string;
-    product: string;
-    service: string;
-    package: string;
-    qty: string;
-    price: string;
-    fee: string;
-    amount: string;
-    budget: string;
-    duration: string;
-    status: string;
-    paymentStatus: string;
-    applicationStatus: string;
-    followUpDate: string;
-    deadline: string;
+    date: string; orderId: string; caseId: string; appointmentId: string;
+    leadId: string; projectId: string; customer: string; client: string;
+    product: string; service: string; package: string; qty: string;
+    price: string; fee: string; amount: string; budget: string;
+    duration: string; status: string; paymentStatus: string;
+    applicationStatus: string; followUpDate: string; deadline: string;
   };
-  // generic
   topProducts: string;
   bestCustomers: string;
   orders: string;
@@ -93,169 +99,70 @@ const REPORT_TITLE: Record<BizType, Record<Lang, string>> = {
 
 const L: Record<Lang, Omit<ReportLabels, "reportTitle">> = {
   en: {
-    dateRange: "Date Range",
-    generated: "Generated",
-    page: "Page",
-    summary: "Summary",
-    value: "Value",
-    totalRevenue: "Total Revenue",
-    totalCost: "Total Cost",
-    grossProfit: "Gross Profit",
-    profitMargin: "Profit Margin",
-    totalOrders: "Total Orders",
-    paidOrders: "Paid Orders",
-    unpaidAmount: "Unpaid Amount",
-    totalCases: "Total Cases",
-    paidCases: "Paid Cases",
-    completedCases: "Completed Cases",
-    inProgress: "In Progress",
-    totalAppointments: "Total Appointments",
-    paidAppointments: "Paid Appointments",
-    paid: "Paid",
-    totalLeads: "Total Leads",
-    completed: "Completed",
-    rejected: "Rejected",
+    dateRange: "Date Range", generated: "Generated", page: "Page",
+    summary: "Summary", value: "Value",
+    totalRevenue: "Total Revenue", totalCost: "Total Cost",
+    grossProfit: "Gross Profit", profitMargin: "Profit Margin",
+    totalOrders: "Total Orders", paidOrders: "Paid Orders", unpaidAmount: "Unpaid Amount",
+    totalCases: "Total Cases", paidCases: "Paid Cases",
+    completedCases: "Completed Cases", inProgress: "In Progress",
+    totalAppointments: "Total Appointments", paidAppointments: "Paid Appointments", paid: "Paid",
+    totalLeads: "Total Leads", completed: "Completed", rejected: "Rejected",
     conversionRate: "Conversion Rate",
-    totalProjects: "Total Projects",
-    activeProjects: "Active Projects",
-    completedProjects: "Completed Projects",
+    totalProjects: "Total Projects", activeProjects: "Active Projects", completedProjects: "Completed Projects",
     th: {
-      date: "Date",
-      orderId: "Order ID",
-      caseId: "Case ID",
-      appointmentId: "Appointment ID",
-      leadId: "Lead ID",
-      projectId: "Project ID",
-      customer: "Customer",
-      client: "Client",
-      product: "Product",
-      service: "Service",
-      package: "Package",
-      qty: "Qty",
-      price: "Price",
-      fee: "Fee",
-      amount: "Amount",
-      budget: "Budget",
-      duration: "Duration",
-      status: "Status",
-      paymentStatus: "Payment Status",
-      applicationStatus: "Application Status",
-      followUpDate: "Follow-up Date",
-      deadline: "Deadline",
+      date: "Date", orderId: "Order ID", caseId: "Case ID", appointmentId: "Appointment ID",
+      leadId: "Lead ID", projectId: "Project ID", customer: "Customer", client: "Client",
+      product: "Product", service: "Service", package: "Package", qty: "Qty",
+      price: "Price", fee: "Fee", amount: "Amount", budget: "Budget",
+      duration: "Duration", status: "Status", paymentStatus: "Payment Status",
+      applicationStatus: "Application Status", followUpDate: "Follow-up Date", deadline: "Deadline",
     },
-    topProducts: "Top Products",
-    bestCustomers: "Best Customers",
-    orders: "Orders",
+    topProducts: "Top Products", bestCustomers: "Best Customers", orders: "Orders",
   },
   ms: {
-    dateRange: "Julat Tarikh",
-    generated: "Dijana",
-    page: "Halaman",
-    summary: "Ringkasan",
-    value: "Nilai",
-    totalRevenue: "Jumlah Pendapatan",
-    totalCost: "Jumlah Kos",
-    grossProfit: "Untung Kasar",
-    profitMargin: "Margin Untung",
-    totalOrders: "Jumlah Pesanan",
-    paidOrders: "Pesanan Berbayar",
-    unpaidAmount: "Jumlah Tertunggak",
-    totalCases: "Jumlah Kes",
-    paidCases: "Kes Berbayar",
-    completedCases: "Kes Selesai",
-    inProgress: "Dalam Proses",
-    totalAppointments: "Jumlah Temujanji",
-    paidAppointments: "Temujanji Berbayar",
-    paid: "Berbayar",
-    totalLeads: "Jumlah Prospek",
-    completed: "Selesai",
-    rejected: "Ditolak",
+    dateRange: "Julat Tarikh", generated: "Dijana", page: "Halaman",
+    summary: "Ringkasan", value: "Nilai",
+    totalRevenue: "Jumlah Pendapatan", totalCost: "Jumlah Kos",
+    grossProfit: "Untung Kasar", profitMargin: "Margin Untung",
+    totalOrders: "Jumlah Pesanan", paidOrders: "Pesanan Berbayar", unpaidAmount: "Jumlah Tertunggak",
+    totalCases: "Jumlah Kes", paidCases: "Kes Berbayar",
+    completedCases: "Kes Selesai", inProgress: "Dalam Proses",
+    totalAppointments: "Jumlah Temujanji", paidAppointments: "Temujanji Berbayar", paid: "Berbayar",
+    totalLeads: "Jumlah Prospek", completed: "Selesai", rejected: "Ditolak",
     conversionRate: "Kadar Penukaran",
-    totalProjects: "Jumlah Projek",
-    activeProjects: "Projek Aktif",
-    completedProjects: "Projek Selesai",
+    totalProjects: "Jumlah Projek", activeProjects: "Projek Aktif", completedProjects: "Projek Selesai",
     th: {
-      date: "Tarikh",
-      orderId: "ID Pesanan",
-      caseId: "ID Kes",
-      appointmentId: "ID Temujanji",
-      leadId: "ID Prospek",
-      projectId: "ID Projek",
-      customer: "Pelanggan",
-      client: "Klien",
-      product: "Produk",
-      service: "Perkhidmatan",
-      package: "Pakej",
-      qty: "Kuantiti",
-      price: "Harga",
-      fee: "Yuran",
-      amount: "Jumlah",
-      budget: "Anggaran",
-      duration: "Tempoh",
-      status: "Status",
-      paymentStatus: "Status Bayaran",
-      applicationStatus: "Status Permohonan",
-      followUpDate: "Tarikh Susulan",
-      deadline: "Tarikh Akhir",
+      date: "Tarikh", orderId: "ID Pesanan", caseId: "ID Kes", appointmentId: "ID Temujanji",
+      leadId: "ID Prospek", projectId: "ID Projek", customer: "Pelanggan", client: "Klien",
+      product: "Produk", service: "Perkhidmatan", package: "Pakej", qty: "Kuantiti",
+      price: "Harga", fee: "Yuran", amount: "Jumlah", budget: "Anggaran",
+      duration: "Tempoh", status: "Status", paymentStatus: "Status Bayaran",
+      applicationStatus: "Status Permohonan", followUpDate: "Tarikh Susulan", deadline: "Tarikh Akhir",
     },
-    topProducts: "Produk Terlaris",
-    bestCustomers: "Pelanggan Terbaik",
-    orders: "Pesanan",
+    topProducts: "Produk Terlaris", bestCustomers: "Pelanggan Terbaik", orders: "Pesanan",
   },
   zh: {
-    dateRange: "日期范围",
-    generated: "生成时间",
-    page: "页",
-    summary: "摘要",
-    value: "数值",
-    totalRevenue: "总收入",
-    totalCost: "总成本",
-    grossProfit: "毛利润",
-    profitMargin: "利润率",
-    totalOrders: "总订单",
-    paidOrders: "已付订单",
-    unpaidAmount: "未付金额",
-    totalCases: "总案例",
-    paidCases: "已付案例",
-    completedCases: "已完成案例",
-    inProgress: "处理中",
-    totalAppointments: "总预约",
-    paidAppointments: "已付预约",
-    paid: "已付",
-    totalLeads: "总潜在客户",
-    completed: "已完成",
-    rejected: "已拒绝",
+    dateRange: "日期范围", generated: "生成时间", page: "页",
+    summary: "摘要", value: "数值",
+    totalRevenue: "总收入", totalCost: "总成本",
+    grossProfit: "毛利润", profitMargin: "利润率",
+    totalOrders: "总订单", paidOrders: "已付订单", unpaidAmount: "未付金额",
+    totalCases: "总案例", paidCases: "已付案例",
+    completedCases: "已完成案例", inProgress: "处理中",
+    totalAppointments: "总预约", paidAppointments: "已付预约", paid: "已付",
+    totalLeads: "总潜在客户", completed: "已完成", rejected: "已拒绝",
     conversionRate: "转化率",
-    totalProjects: "总项目",
-    activeProjects: "活跃项目",
-    completedProjects: "已完成项目",
+    totalProjects: "总项目", activeProjects: "活跃项目", completedProjects: "已完成项目",
     th: {
-      date: "日期",
-      orderId: "订单编号",
-      caseId: "案例编号",
-      appointmentId: "预约编号",
-      leadId: "潜在客户编号",
-      projectId: "项目编号",
-      customer: "客户",
-      client: "客户",
-      product: "产品",
-      service: "服务",
-      package: "配套",
-      qty: "数量",
-      price: "价格",
-      fee: "费用",
-      amount: "金额",
-      budget: "预算",
-      duration: "时长",
-      status: "状态",
-      paymentStatus: "付款状态",
-      applicationStatus: "申请状态",
-      followUpDate: "跟进日期",
-      deadline: "截止日期",
+      date: "日期", orderId: "订单编号", caseId: "案例编号", appointmentId: "预约编号",
+      leadId: "潜在客户编号", projectId: "项目编号", customer: "客户", client: "客户",
+      product: "产品", service: "服务", package: "配套", qty: "数量",
+      price: "价格", fee: "费用", amount: "金额", budget: "预算",
+      duration: "时长", status: "状态", paymentStatus: "付款状态",
+      applicationStatus: "申请状态", followUpDate: "跟进日期", deadline: "截止日期",
     },
-    topProducts: "热门产品",
-    bestCustomers: "顶级客户",
-    orders: "订单",
+    topProducts: "热门产品", bestCustomers: "顶级客户", orders: "订单",
   },
 };
 
@@ -264,7 +171,7 @@ function labels(lang: Lang, biz: BizType): ReportLabels {
 }
 
 // ---------------------------------------------------------------------------
-// File save helper
+// File save helper (unchanged)
 // ---------------------------------------------------------------------------
 
 export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
@@ -272,46 +179,23 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
     const dataUri = doc.output("datauristring");
     const base64 = dataUri.split(",")[1];
     if (!base64) throw new Error("Unable to generate PDF data");
-
     const safeFilename = filename.replace(/[^a-zA-Z0-9._ -]/g, "_");
-
-    // Save directly to the device's Documents folder so the file is a real
-    // download the user can find later, instead of opening a share sheet.
     let savedUri: string | null = null;
     try {
       await Filesystem.writeFile({
-        path: safeFilename,
-        data: base64,
-        directory: Directory.Documents,
-        recursive: true,
+        path: safeFilename, data: base64,
+        directory: Directory.Documents, recursive: true,
       });
-      const { uri } = await Filesystem.getUri({
-        path: safeFilename,
-        directory: Directory.Documents,
-      });
+      const { uri } = await Filesystem.getUri({ path: safeFilename, directory: Directory.Documents });
       savedUri = /^(file|content):\/\//.test(uri) ? uri : `file://${uri}`;
     } catch (writeErr) {
       console.error("[pdf] write to Documents failed, falling back to Cache", writeErr);
-      await Filesystem.writeFile({
-        path: safeFilename,
-        data: base64,
-        directory: Directory.Cache,
-      });
-      const { uri } = await Filesystem.getUri({
-        path: safeFilename,
-        directory: Directory.Cache,
-      });
+      await Filesystem.writeFile({ path: safeFilename, data: base64, directory: Directory.Cache });
+      const { uri } = await Filesystem.getUri({ path: safeFilename, directory: Directory.Cache });
       savedUri = /^(file|content):\/\//.test(uri) ? uri : `file://${uri}`;
     }
-
-    // Try to open the saved PDF in the device's default viewer. If that
-    // fails, surface a friendly message — the file is already saved.
     try {
-      await FileOpener.open({
-        filePath: savedUri!,
-        contentType: "application/pdf",
-        openWithDefault: true,
-      });
+      await FileOpener.open({ filePath: savedUri!, contentType: "application/pdf", openWithDefault: true });
     } catch (openErr) {
       console.warn("[pdf] saved but could not auto-open", openErr);
     }
@@ -320,9 +204,6 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
   try {
     const blob = doc.output("blob");
     const safeFilename = filename.replace(/[^a-zA-Z0-9._ -]/g, "_");
-
-    // On the web, always trigger a real file download instead of opening the
-    // OS share sheet — users expect the PDF to land in their Downloads folder.
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -338,7 +219,7 @@ export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Header / footer chrome
+// Header / section / footer chrome
 // ---------------------------------------------------------------------------
 
 function drawHeader(
@@ -347,35 +228,65 @@ function drawHeader(
   businessName: string,
   rangeLabel: string,
   logoDataUrl?: string | null,
-) {
-  doc.setFillColor(...PURPLE);
-  doc.rect(0, 0, 210, 26, "F");
-  doc.setTextColor(255, 255, 255);
+): number {
+  const name = businessName || "Bossify";
+  const logoSize = 14;
+  const logoX = MARGIN_L;
+  const logoY = MARGIN_TOP - 4;
+  let textX = MARGIN_L;
 
-  let textX = 14;
   if (logoDataUrl) {
     try {
-      doc.addImage(logoDataUrl, "PNG", 12, 5, 16, 16);
-      textX = 32;
+      doc.addImage(logoDataUrl, "PNG", logoX, logoY, logoSize, logoSize);
+      textX = MARGIN_L + logoSize + 4;
     } catch {
       /* ignore bad image */
     }
   }
 
+  // Business name (top-left)
+  doc.setTextColor(...INK);
   doc.setFont(CJK_FONT_FAMILY, "bold");
-  doc.setFontSize(16);
-  doc.text(businessName || "Bossify", textX, 13);
   doc.setFontSize(11);
-  doc.text(l.reportTitle, textX, 20);
+  doc.text(name, textX, MARGIN_TOP);
 
-  doc.setTextColor(0, 0, 0);
+  // Report title (large, below)
+  doc.setTextColor(...INK);
+  doc.setFont(CJK_FONT_FAMILY, "bold");
+  doc.setFontSize(18);
+  doc.text(l.reportTitle, MARGIN_L, MARGIN_TOP + 12);
+
+  // Meta line (date range · generated)
+  const genTs = new Date().toLocaleString("en-MY");
   doc.setFont(CJK_FONT_FAMILY, "normal");
-  doc.setFontSize(10);
-  doc.text(`${l.dateRange}: ${rangeLabel}`, 14, 34);
   doc.setFontSize(9);
-  doc.setTextColor(110, 110, 110);
-  doc.text(`${l.generated}: ${new Date().toLocaleString("en-MY")}`, 14, 39);
-  doc.setTextColor(0, 0, 0);
+  doc.setTextColor(...MUTED);
+  doc.text(`${l.dateRange}: ${rangeLabel}`, MARGIN_L, MARGIN_TOP + 18);
+  doc.text(`${l.generated}: ${genTs}`, PAGE_W - MARGIN_R, MARGIN_TOP + 18, { align: "right" });
+
+  // Rule under header
+  const ruleY = MARGIN_TOP + 21;
+  doc.setDrawColor(...RULE);
+  doc.setLineWidth(0.4);
+  doc.line(MARGIN_L, ruleY, PAGE_W - MARGIN_R, ruleY);
+
+  // Reset defaults for body
+  doc.setTextColor(...INK_2);
+  doc.setFont(CJK_FONT_FAMILY, "normal");
+  return ruleY + 6; // startY for first content block
+}
+
+function drawSectionHeader(doc: jsPDF, title: string, y: number): number {
+  doc.setFont(CJK_FONT_FAMILY, "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...INK);
+  doc.text(title.toUpperCase(), MARGIN_L, y);
+  doc.setDrawColor(...MUTED);
+  doc.setLineWidth(0.2);
+  doc.line(MARGIN_L, y + 1.5, PAGE_W - MARGIN_R, y + 1.5);
+  doc.setTextColor(...INK_2);
+  doc.setFont(CJK_FONT_FAMILY, "normal");
+  return y + 5;
 }
 
 function drawFooters(doc: jsPDF, l: ReportLabels) {
@@ -383,17 +294,88 @@ function drawFooters(doc: jsPDF, l: ReportLabels) {
   const when = new Date().toLocaleString("en-MY");
   for (let i = 1; i <= total; i++) {
     doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(120, 120, 120);
     const w = doc.internal.pageSize.getWidth();
     const h = doc.internal.pageSize.getHeight();
-    doc.text(`Generated by Bossify — bossify-malaysia.lovable.app`, 14, h - 8);
-    doc.text(`${l.page} ${i}/${total}  ·  ${when}`, w - 14, h - 8, { align: "right" });
+    doc.setDrawColor(...MUTED);
+    doc.setLineWidth(0.2);
+    doc.line(MARGIN_L, h - 12, w - MARGIN_R, h - 12);
+    doc.setFont(CJK_FONT_FAMILY, "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text(`Generated by Bossify · bossify-malaysia.lovable.app`, MARGIN_L, h - 8);
+    doc.text(when, w / 2, h - 8, { align: "center" });
+    doc.text(`${l.page} ${i}/${total}`, w - MARGIN_R, h - 8, { align: "right" });
   }
 }
 
 // ---------------------------------------------------------------------------
-// Public types
+// Table helper — enforces palette/typography consistently
+// ---------------------------------------------------------------------------
+
+type TableOpts = {
+  head?: string[][];
+  body: (string | number)[][];
+  foot?: string[][];
+  startY: number;
+  columnStyles?: UserOptions["columnStyles"];
+  warnRowIndexes?: number[]; // rows to shade with WARN_BAND
+  fontSize?: number;
+  zebra?: boolean;
+};
+
+function drawTable(doc: jsPDF, opts: TableOpts): number {
+  const warn = new Set(opts.warnRowIndexes ?? []);
+  autoTable(doc, {
+    startY: opts.startY,
+    head: opts.head,
+    body: opts.body,
+    foot: opts.foot,
+    theme: "plain",
+    margin: { left: MARGIN_L, right: MARGIN_R },
+    styles: {
+      font: CJK_FONT_FAMILY,
+      fontSize: opts.fontSize ?? 9,
+      textColor: INK_2,
+      lineColor: MUTED,
+      lineWidth: 0,
+      cellPadding: { top: 2.2, right: 3, bottom: 2.2, left: 3 },
+      overflow: "linebreak",
+      valign: "middle",
+    },
+    headStyles: {
+      fillColor: BAND, textColor: INK,
+      fontStyle: "bold", fontSize: (opts.fontSize ?? 9),
+      lineColor: MUTED, lineWidth: { top: 0, right: 0, bottom: 0.2, left: 0 },
+      halign: "left",
+    },
+    bodyStyles: { textColor: INK_2 },
+    alternateRowStyles: opts.zebra === false ? undefined : { fillColor: ZEBRA },
+    footStyles: {
+      fillColor: [255, 255, 255], textColor: INK,
+      fontStyle: "bold", fontSize: (opts.fontSize ?? 9) + 0.5,
+      lineColor: RULE, lineWidth: { top: 0.6, right: 0, bottom: 0, left: 0 },
+    },
+    columnStyles: opts.columnStyles,
+    didParseCell: (data) => {
+      if (data.section === "body" && warn.has(data.row.index)) {
+        data.cell.styles.fillColor = WARN_BAND;
+      }
+    },
+  });
+  return (doc as AutoTablePdf).lastAutoTable?.finalY ?? opts.startY;
+}
+
+// Right-align numeric columns starting from index `firstNumeric`.
+function rightAlignFrom(firstNumeric: number, count: number): UserOptions["columnStyles"] {
+  const styles: UserOptions["columnStyles"] = {};
+  for (let i = firstNumeric; i < firstNumeric + count; i++) {
+    styles[i] = { halign: "right" };
+  }
+  return styles;
+}
+
+// ---------------------------------------------------------------------------
+// Public types (unchanged)
 // ---------------------------------------------------------------------------
 
 export type ReportRow = {
@@ -435,16 +417,15 @@ export type ReportData = {
 // Sales / case / appointment / lead / project report
 // ---------------------------------------------------------------------------
 
-function summaryForBiz(d: ReportData, l: ReportLabels): string[][] {
-  const rm = (n: number) => `RM ${n.toFixed(2)}`;
+function summaryForBiz(d: ReportData, l: ReportLabels): [string, string][] {
   const biz = d.bizType;
   if (biz === "education") {
     const completed = d.completedCount ?? d.paidOrders;
     return [
       [l.totalCases, String(d.totalOrders)],
-      [l.totalRevenue, rm(d.totalRevenue)],
+      [l.totalRevenue, fmtMYR(d.totalRevenue)],
       [l.paidCases, String(d.paidOrders)],
-      [l.unpaidAmount, rm(d.unpaidAmount)],
+      [l.unpaidAmount, fmtMYR(d.unpaidAmount)],
       [l.completedCases, String(completed)],
       [l.inProgress, String(d.pendingCount ?? 0)],
     ];
@@ -452,9 +433,9 @@ function summaryForBiz(d: ReportData, l: ReportLabels): string[][] {
   if (biz === "beauty") {
     return [
       [l.totalAppointments, String(d.totalOrders)],
-      [l.totalRevenue, rm(d.totalRevenue)],
+      [l.totalRevenue, fmtMYR(d.totalRevenue)],
       [l.paid, String(d.paidOrders)],
-      [l.unpaidAmount, rm(d.unpaidAmount)],
+      [l.unpaidAmount, fmtMYR(d.unpaidAmount)],
     ];
   }
   if (biz === "property") {
@@ -465,27 +446,27 @@ function summaryForBiz(d: ReportData, l: ReportLabels): string[][] {
       [l.inProgress, String(d.pendingCount ?? 0)],
       [l.rejected, String(d.unpaidCount ?? 0)],
       [l.conversionRate, `${conv}%`],
-      [l.totalRevenue, rm(d.totalRevenue)],
+      [l.totalRevenue, fmtMYR(d.totalRevenue)],
     ];
   }
   if (biz === "freelance") {
     return [
       [l.totalProjects, String(d.totalOrders)],
-      [l.totalRevenue, rm(d.totalRevenue)],
+      [l.totalRevenue, fmtMYR(d.totalRevenue)],
       [l.activeProjects, String(d.pendingCount ?? 0)],
       [l.completedProjects, String(d.paidOrders)],
-      [l.unpaidAmount, rm(d.unpaidAmount)],
+      [l.unpaidAmount, fmtMYR(d.unpaidAmount)],
     ];
   }
   // retail / fnb
   return [
-    [l.totalRevenue, rm(d.totalRevenue)],
-    [l.totalCost, rm(d.totalCost ?? 0)],
-    [l.grossProfit, rm(d.grossProfit ?? 0)],
-    [l.profitMargin, `${(d.profitMargin ?? 0).toFixed(1)}%`],
+    [l.totalRevenue, fmtMYR(d.totalRevenue)],
+    [l.totalCost, fmtMYR(d.totalCost ?? 0)],
+    [l.grossProfit, fmtMYR(d.grossProfit ?? 0)],
+    [l.profitMargin, fmtPct(d.profitMargin ?? 0)],
     [l.totalOrders, String(d.totalOrders)],
     [l.paidOrders, String(d.paidOrders)],
-    [l.unpaidAmount, rm(d.unpaidAmount)],
+    [l.unpaidAmount, fmtMYR(d.unpaidAmount)],
   ];
 }
 
@@ -493,15 +474,7 @@ function tableHeadersForBiz(biz: BizType, l: ReportLabels): string[] {
   const th = l.th;
   switch (biz) {
     case "education":
-      return [
-        th.date,
-        th.caseId,
-        th.client,
-        th.service,
-        th.fee,
-        th.paymentStatus,
-        th.applicationStatus,
-      ];
+      return [th.date, th.caseId, th.client, th.service, th.fee, th.paymentStatus, th.applicationStatus];
     case "beauty":
       return [th.date, th.appointmentId, th.client, th.service, th.duration, th.price, th.status];
     case "property":
@@ -514,7 +487,7 @@ function tableHeadersForBiz(biz: BizType, l: ReportLabels): string[] {
 }
 
 function tableRowForBiz(biz: BizType, r: ReportRow): string[] {
-  const amt = r.amount.toFixed(2);
+  const amt = fmtMYR(r.amount);
   switch (biz) {
     case "education":
       return [r.date, r.code, r.customer, r.product, amt, r.status, r.applicationStatus ?? "—"];
@@ -529,67 +502,63 @@ function tableRowForBiz(biz: BizType, r: ReportRow): string[] {
   }
 }
 
+// Column-style helper for the biz-specific main table: right-align numeric columns.
+function bizColumnStyles(biz: BizType): UserOptions["columnStyles"] {
+  switch (biz) {
+    case "education": return { 4: { halign: "right" } };
+    case "beauty": return { 5: { halign: "right" } };
+    case "property": return { 4: { halign: "right" } };
+    case "freelance": return { 4: { halign: "right" } };
+    default: return { 4: { halign: "right" }, 5: { halign: "right" } };
+  }
+}
+
 export async function exportSalesReportPDF(d: ReportData): Promise<void> {
   const doc = new jsPDF();
   const l = labels(d.lang, d.bizType);
-
   await applyCjkFont(doc);
+  let y = drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
 
-  drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
-
-  // Summary table
-  autoTable(doc, {
-    startY: 46,
+  y = drawSectionHeader(doc, l.summary, y);
+  y = drawTable(doc, {
+    startY: y,
     head: [[l.summary, l.value]],
     body: summaryForBiz(d, l),
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 10, font: CJK_FONT_FAMILY },
-  });
-
-  let y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
+    columnStyles: { 1: { halign: "right" } },
+  }) + 6;
 
   if (d.topProducts && d.topProducts.length) {
-    autoTable(doc, {
+    y = drawSectionHeader(doc, l.topProducts, y);
+    y = drawTable(doc, {
       startY: y,
       head: [[l.topProducts, l.th.qty, l.th.amount]],
-      body: d.topProducts.map((p) => [p.name, String(p.qty), p.revenue.toFixed(2)]),
-      theme: "striped",
-      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 10, font: CJK_FONT_FAMILY },
-    });
-    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
+      body: d.topProducts.map((p) => [p.name, String(p.qty), fmtMYR(p.revenue)]),
+      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } },
+    }) + 6;
   }
 
   if (d.topCustomers && d.topCustomers.length) {
-    autoTable(doc, {
+    y = drawSectionHeader(doc, l.bestCustomers, y);
+    y = drawTable(doc, {
       startY: y,
       head: [[l.bestCustomers, l.orders, l.th.amount]],
-      body: d.topCustomers.map((c) => [c.name, String(c.orders), c.spent.toFixed(2)]),
-      theme: "striped",
-      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 10, font: CJK_FONT_FAMILY },
-    });
-    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
+      body: d.topCustomers.map((c) => [c.name, String(c.orders), fmtMYR(c.spent)]),
+      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } },
+    }) + 6;
   }
 
   if (d.rows.length) {
-    autoTable(doc, {
+    y = drawSectionHeader(doc, l.orders, y);
+    drawTable(doc, {
       startY: y,
       head: [tableHeadersForBiz(d.bizType, l)],
       body: d.rows.map((r) => tableRowForBiz(d.bizType, r)),
-      theme: "grid",
-      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 8, font: CJK_FONT_FAMILY },
+      columnStyles: bizColumnStyles(d.bizType),
+      fontSize: 8,
     });
   }
 
   drawFooters(doc, l);
-
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   await savePdf(doc, `Bossify_Report_${ymd}.pdf`);
 }
@@ -608,69 +577,43 @@ export async function exportOrdersListPDF(opts: {
 }): Promise<void> {
   const doc = new jsPDF();
   const l = labels(opts.lang, opts.bizType);
-
   await applyCjkFont(doc);
+  let y = drawHeader(doc, l, opts.businessName, opts.statusLabel, opts.logoDataUrl);
 
-  drawHeader(doc, l, opts.businessName, opts.statusLabel, opts.logoDataUrl);
-
-  autoTable(doc, {
-    startY: 46,
+  y = drawSectionHeader(doc, l.orders, y);
+  drawTable(doc, {
+    startY: y,
     head: [tableHeadersForBiz(opts.bizType, l)],
     body: opts.rows.map((r) => tableRowForBiz(opts.bizType, r)),
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 9, font: CJK_FONT_FAMILY },
+    columnStyles: bizColumnStyles(opts.bizType),
+    fontSize: 9,
   });
 
   drawFooters(doc, l);
-
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   await savePdf(doc, `Bossify_Orders_${opts.statusLabel}_${ymd}.pdf`);
 }
 
 // ---------------------------------------------------------------------------
-// Profit Report (retail focus — reuses order-level cost/profit numbers)
+// Profit / Stock / Financial extra labels
 // ---------------------------------------------------------------------------
 
 const PROFIT_TITLE: Record<Lang, string> = {
-  en: "PROFIT REPORT",
-  ms: "LAPORAN UNTUNG",
-  zh: "利润报告",
+  en: "PROFIT REPORT", ms: "LAPORAN UNTUNG", zh: "利润报告",
 };
-
 const STOCK_TITLE: Record<Lang, string> = {
-  en: "STOCK REPORT",
-  ms: "LAPORAN STOK",
-  zh: "库存报告",
+  en: "STOCK REPORT", ms: "LAPORAN STOK", zh: "库存报告",
 };
 
 type ExtraLabels = {
-  cogs: string;
-  grossProfit: string;
-  margin: string;
-  orders: string;
-  avgPerOrder: string;
-  revenue: string;
-  mostProfitable: string;
-  leastProfitable: string;
-  product: string;
-  qty: string;
-  cost: string;
-  profit: string;
-  marginPct: string;
-  // stock
-  asOf: string;
-  totalSkus: string;
-  totalValue: string;
-  inStock: string;
-  lowStock: string;
-  outOfStock: string;
-  losingMoney: string;
-  needsReorder: string;
-  fullInventory: string;
-  sellPrice: string;
-  stockValue: string;
+  cogs: string; grossProfit: string; margin: string;
+  orders: string; avgPerOrder: string; revenue: string;
+  mostProfitable: string; leastProfitable: string;
+  product: string; qty: string; cost: string; profit: string; marginPct: string;
+  asOf: string; totalSkus: string; totalValue: string;
+  inStock: string; lowStock: string; outOfStock: string;
+  losingMoney: string; needsReorder: string; fullInventory: string;
+  sellPrice: string; stockValue: string;
 };
 
 const EXTRA: Record<Lang, ExtraLabels> = {
@@ -706,27 +649,22 @@ const EXTRA: Record<Lang, ExtraLabels> = {
   },
 };
 
-// ---------------------------------------------------------------------------
-// Shared: Net-profit disclaimer footnote
-// ---------------------------------------------------------------------------
-
 const NET_PROFIT_FOOTNOTE: Record<Lang, string> = {
   en: "Note: Net profit excludes platform fees, ad spend, and operating expenses (not currently tracked).",
   ms: "Nota: Untung bersih tidak termasuk yuran platform, kos iklan, dan perbelanjaan operasi (belum direkodkan).",
   zh: "备注：净利润不包括平台手续费、广告支出及营运开销（目前系统未记录）。",
 };
 
-function drawFootnote(doc: AutoTablePdf, lang: Lang, y: number) {
-  const w = doc.internal.pageSize.getWidth();
-  const text = NET_PROFIT_FOOTNOTE[lang];
+function drawFootnote(doc: jsPDF, lang: Lang, y: number, customText?: string): number {
+  const text = customText ?? NET_PROFIT_FOOTNOTE[lang];
   doc.setFont(CJK_FONT_FAMILY, "italic");
-  doc.setFontSize(8);
-  doc.setTextColor(120, 120, 120);
-  const lines = doc.splitTextToSize(text, w - 28);
-  doc.text(lines, 14, y);
+  doc.setFontSize(7.5);
+  doc.setTextColor(...MUTED);
+  const lines = doc.splitTextToSize(text, CONTENT_W);
+  doc.text(lines, MARGIN_L, y);
   doc.setFont(CJK_FONT_FAMILY, "normal");
-  doc.setTextColor(0, 0, 0);
-  return y + lines.length * 4 + 2;
+  doc.setTextColor(...INK_2);
+  return y + lines.length * 3.5 + 2;
 }
 
 function makeLabels(lang: Lang, reportTitle: string, dateRange: string): ReportLabels {
@@ -734,12 +672,8 @@ function makeLabels(lang: Lang, reportTitle: string, dateRange: string): ReportL
 }
 
 export type ProfitProductRow = {
-  name: string;
-  qty: number;
-  revenue: number;
-  cost: number;
-  profit: number;
-  margin: number;
+  name: string; qty: number; revenue: number;
+  cost: number; profit: number; margin: number;
 };
 
 export type ProfitReportData = {
@@ -762,59 +696,53 @@ export async function exportProfitReportPDF(d: ProfitReportData): Promise<void> 
   const l = makeLabels(d.lang, PROFIT_TITLE[d.lang], EXTRA[d.lang].revenue);
   const x = EXTRA[d.lang];
   await applyCjkFont(doc);
-  drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
+  let y = drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
 
-  const rm = (n: number) => `RM ${n.toFixed(2)}`;
-  autoTable(doc, {
-    startY: 46,
+  y = drawSectionHeader(doc, l.summary, y);
+  y = drawTable(doc, {
+    startY: y,
     head: [[l.summary, l.value]],
     body: [
-      [x.revenue, rm(d.revenue)],
-      [x.cogs, rm(d.cost)],
-      [x.grossProfit, rm(d.grossProfit)],
-      [x.margin, `${d.margin.toFixed(1)}%`],
+      [x.revenue, fmtMYR(d.revenue)],
+      [x.cogs, fmtMYR(d.cost)],
+      [x.grossProfit, fmtMYRNeg(d.grossProfit)],
+      [x.margin, fmtPct(d.margin)],
       [x.orders, String(d.orderCount)],
-      [x.avgPerOrder, rm(d.avgPerOrder)],
+      [x.avgPerOrder, fmtMYRNeg(d.avgPerOrder)],
     ],
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 10, font: CJK_FONT_FAMILY },
-  });
-  let y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
+    columnStyles: { 1: { halign: "right" } },
+  }) + 6;
 
   const prodRows = (rows: ProfitProductRow[]) =>
     rows.map((r) => [
-      r.name, String(r.qty), rm(r.revenue), rm(r.cost), rm(r.profit), `${r.margin.toFixed(1)}%`,
+      r.name, String(r.qty), fmtMYR(r.revenue),
+      fmtMYR(r.cost), fmtMYRNeg(r.profit), fmtPct(r.margin),
     ]);
 
   if (d.top.length) {
-    autoTable(doc, {
+    y = drawSectionHeader(doc, x.mostProfitable, y);
+    y = drawTable(doc, {
       startY: y,
-      head: [[x.mostProfitable, x.qty, x.revenue, x.cost, x.profit, x.marginPct]],
+      head: [[x.product, x.qty, x.revenue, x.cost, x.profit, x.marginPct]],
       body: prodRows(d.top),
-      theme: "striped",
-      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 9, font: CJK_FONT_FAMILY },
-    });
-    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
+      columnStyles: rightAlignFrom(1, 5),
+    }) + 6;
   }
 
   if (d.bottom.length) {
-    autoTable(doc, {
+    y = drawSectionHeader(doc, x.leastProfitable, y);
+    y = drawTable(doc, {
       startY: y,
-      head: [[x.leastProfitable, x.qty, x.revenue, x.cost, x.profit, x.marginPct]],
+      head: [[x.product, x.qty, x.revenue, x.cost, x.profit, x.marginPct]],
       body: prodRows(d.bottom),
-      theme: "striped",
-      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 9, font: CJK_FONT_FAMILY },
-    });
+      columnStyles: rightAlignFrom(1, 5),
+      // shade every row — these are losing-money products
+      warnRowIndexes: d.bottom.map((_, i) => i),
+      zebra: false,
+    }) + 6;
   }
 
-  const yFn = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
-  drawFootnote(doc as AutoTablePdf, d.lang, yFn);
+  drawFootnote(doc, d.lang, y);
   drawFooters(doc, l);
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   await savePdf(doc, `Bossify_Profit_${ymd}.pdf`);
@@ -856,29 +784,27 @@ export async function exportFinancialReportPDF(d: FinancialReportData): Promise<
   const x = EXTRA[d.lang];
   const fl = FIN_LABELS[d.lang];
   await applyCjkFont(doc);
-  drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
+  let y = drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
 
-  const rm = (n: number) => `RM ${n.toFixed(2)}`;
-  autoTable(doc, {
-    startY: 46,
+  // P&L formal indented layout
+  y = drawSectionHeader(doc, l.summary, y);
+  y = drawTable(doc, {
+    startY: y,
     head: [[l.summary, l.value]],
     body: [
-      [x.revenue, rm(d.revenue)],
-      [x.cogs, rm(d.cogs)],
-      [fl.net, rm(d.grossProfit)],
-      [x.margin, `${d.margin.toFixed(1)}%`],
+      [x.revenue, fmtMYR(d.revenue)],
+      [`  ${x.cogs}`, fmtMYR(d.cogs)],
+      [x.grossProfit, fmtMYRNeg(d.grossProfit)],
+      [x.margin, fmtPct(d.margin)],
       [x.orders, String(d.orderCount)],
-      [fl.avgOrder, rm(d.avgOrder)],
-      [fl.unpaidAmt, rm(d.unpaidAmount)],
+      [fl.avgOrder, fmtMYR(d.avgOrder)],
+      [fl.unpaidAmt, fmtMYR(d.unpaidAmount)],
     ],
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 10, font: CJK_FONT_FAMILY },
-  });
-  const y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
-  drawFootnote(doc as AutoTablePdf, d.lang, y);
+    foot: [[fl.net, fmtMYRNeg(d.grossProfit)]],
+    columnStyles: { 1: { halign: "right" } },
+  }) + 6;
 
+  drawFootnote(doc, d.lang, y);
   drawFooters(doc, l);
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   await savePdf(doc, `Bossify_Financial_${ymd}.pdf`);
@@ -889,15 +815,13 @@ export async function exportFinancialReportPDF(d: FinancialReportData): Promise<
 // ---------------------------------------------------------------------------
 
 const CUSTOMER_STMT_TITLE: Record<Lang, string> = {
-  en: "CUSTOMER STATEMENT",
-  ms: "PENYATA PELANGGAN",
-  zh: "客户对账单",
+  en: "CUSTOMER STATEMENT", ms: "PENYATA PELANGGAN", zh: "客户对账单",
 };
 
-const STMT_L: Record<Lang, { customer: string; phone: string; totalOrders: string; totalSpent: string; lastOrder: string; unpaid: string; date: string; code: string; product: string; qty: string; amount: string; status: string; orderHistory: string; noOrders: string; }> = {
-  en: { customer: "Customer", phone: "Phone", totalOrders: "Total orders", totalSpent: "Total spent", lastOrder: "Last order", unpaid: "Unpaid balance", date: "Date", code: "Order ID", product: "Product", qty: "Qty", amount: "Amount", status: "Status", orderHistory: "Order history", noOrders: "No orders in this range." },
-  ms: { customer: "Pelanggan", phone: "Telefon", totalOrders: "Jumlah pesanan", totalSpent: "Jumlah dibelanja", lastOrder: "Pesanan terakhir", unpaid: "Baki belum bayar", date: "Tarikh", code: "ID Pesanan", product: "Produk", qty: "Kuantiti", amount: "Jumlah", status: "Status", orderHistory: "Sejarah pesanan", noOrders: "Tiada pesanan dalam julat ini." },
-  zh: { customer: "客户", phone: "电话", totalOrders: "订单总数", totalSpent: "消费总额", lastOrder: "最后订单", unpaid: "未付余额", date: "日期", code: "订单编号", product: "产品", qty: "数量", amount: "金额", status: "状态", orderHistory: "订单历史", noOrders: "此范围内无订单。" },
+const STMT_L: Record<Lang, { customer: string; phone: string; totalOrders: string; totalSpent: string; lastOrder: string; unpaid: string; date: string; code: string; product: string; qty: string; amount: string; status: string; orderHistory: string; noOrders: string; statementSummary: string; }> = {
+  en: { customer: "Customer", phone: "Phone", totalOrders: "Total orders", totalSpent: "Total spent", lastOrder: "Last order", unpaid: "Unpaid balance", date: "Date", code: "Order ID", product: "Product", qty: "Qty", amount: "Amount", status: "Status", orderHistory: "Order history", noOrders: "No orders in this range.", statementSummary: "Statement summary" },
+  ms: { customer: "Pelanggan", phone: "Telefon", totalOrders: "Jumlah pesanan", totalSpent: "Jumlah dibelanja", lastOrder: "Pesanan terakhir", unpaid: "Baki belum bayar", date: "Tarikh", code: "ID Pesanan", product: "Produk", qty: "Kuantiti", amount: "Jumlah", status: "Status", orderHistory: "Sejarah pesanan", noOrders: "Tiada pesanan dalam julat ini.", statementSummary: "Ringkasan penyata" },
+  zh: { customer: "客户", phone: "电话", totalOrders: "订单总数", totalSpent: "消费总额", lastOrder: "最后订单", unpaid: "未付余额", date: "日期", code: "订单编号", product: "产品", qty: "数量", amount: "金额", status: "状态", orderHistory: "订单历史", noOrders: "此范围内无订单。", statementSummary: "对账单摘要" },
 };
 
 export type CustomerStatementRow = {
@@ -923,40 +847,53 @@ export async function exportCustomerStatementPDF(d: CustomerStatementData): Prom
   const l = makeLabels(d.lang, CUSTOMER_STMT_TITLE[d.lang], d.rangeLabel);
   const s = STMT_L[d.lang];
   await applyCjkFont(doc);
-  drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
+  let y = drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
 
-  const rm = (n: number) => `RM ${n.toFixed(2)}`;
-  autoTable(doc, {
-    startY: 46,
-    head: [[l.summary, l.value]],
+  // CUSTOMER block — name bold 14pt
+  y = drawSectionHeader(doc, s.customer, y);
+  doc.setFont(CJK_FONT_FAMILY, "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(...INK);
+  doc.text(d.customerName, MARGIN_L, y + 4);
+  doc.setFont(CJK_FONT_FAMILY, "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...MUTED);
+  doc.text(`${s.phone}: ${d.phone ?? "—"}`, MARGIN_L, y + 10);
+  doc.setTextColor(...INK_2);
+  y = y + 16;
+
+  // Order history
+  y = drawSectionHeader(doc, s.orderHistory, y);
+  if (d.rows.length) {
+    y = drawTable(doc, {
+      startY: y,
+      head: [[s.date, s.code, s.product, s.qty, s.amount, s.status]],
+      body: d.rows.map((r) => [r.date, r.code, r.product, String(r.qty), fmtMYR(r.amount), r.status]),
+      columnStyles: { 3: { halign: "right" }, 4: { halign: "right" } },
+      fontSize: 9,
+    }) + 6;
+  } else {
+    doc.setFont(CJK_FONT_FAMILY, "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    doc.text(s.noOrders, MARGIN_L, y + 3);
+    doc.setFont(CJK_FONT_FAMILY, "normal");
+    doc.setTextColor(...INK_2);
+    y += 10;
+  }
+
+  // Statement summary
+  y = drawSectionHeader(doc, s.statementSummary, y);
+  drawTable(doc, {
+    startY: y,
     body: [
-      [s.customer, d.customerName],
-      [s.phone, d.phone ?? "—"],
       [s.totalOrders, String(d.totalOrders)],
-      [s.totalSpent, rm(d.totalSpent)],
-      [s.unpaid, rm(d.unpaidBalance)],
+      [s.totalSpent, fmtMYR(d.totalSpent)],
+      [s.unpaid, fmtMYR(d.unpaidBalance)],
       [s.lastOrder, d.lastOrderAt ? new Date(d.lastOrderAt).toLocaleDateString("en-MY") : "—"],
     ],
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 10, font: CJK_FONT_FAMILY },
-  });
-  let y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
-
-  autoTable(doc, {
-    startY: y,
-    head: [[s.orderHistory, "", "", "", "", ""]],
-    body: [
-      [s.date, s.code, s.product, s.qty, s.amount, s.status],
-      ...(d.rows.length
-        ? d.rows.map((r) => [r.date, r.code, r.product, String(r.qty), rm(r.amount), r.status])
-        : [[s.noOrders, "", "", "", "", ""]]),
-    ],
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 9, font: CJK_FONT_FAMILY },
+    foot: [[s.totalSpent, fmtMYR(d.totalSpent)]],
+    columnStyles: { 1: { halign: "right" } },
   });
 
   drawFooters(doc, l);
@@ -966,27 +903,21 @@ export async function exportCustomerStatementPDF(d: CustomerStatementData): Prom
 }
 
 // ---------------------------------------------------------------------------
-// Supplier Report (per-supplier totals + POs + restock items)
+// Supplier Report
 // ---------------------------------------------------------------------------
 
 const SUPPLIER_TITLE: Record<Lang, string> = {
-  en: "SUPPLIER REPORT",
-  ms: "LAPORAN PEMBEKAL",
-  zh: "供应商报表",
+  en: "SUPPLIER REPORT", ms: "LAPORAN PEMBEKAL", zh: "供应商报表",
 };
 
-const SUP_L: Record<Lang, { supplier: string; contact: string; poCount: string; totalSpend: string; poList: string; poDate: string; poId: string; poStatus: string; poTotal: string; restockItems: string; itemName: string; qty: string; unit: string; unitPrice: string; total: string; noPos: string; noItems: string; }> = {
-  en: { supplier: "Supplier", contact: "Contact", poCount: "PO count", totalSpend: "Total spend", poList: "Purchase orders", poDate: "Date", poId: "PO ID", poStatus: "Status", poTotal: "Total", restockItems: "Restock history (items)", itemName: "Item", qty: "Qty", unit: "Unit", unitPrice: "Unit price", total: "Total", noPos: "No purchase orders in this range.", noItems: "No restock items in this range." },
-  ms: { supplier: "Pembekal", contact: "Kenalan", poCount: "Jumlah PO", totalSpend: "Jumlah belanja", poList: "Pesanan pembelian", poDate: "Tarikh", poId: "ID PO", poStatus: "Status", poTotal: "Jumlah", restockItems: "Sejarah stok masuk (barang)", itemName: "Barang", qty: "Kuantiti", unit: "Unit", unitPrice: "Harga seunit", total: "Jumlah", noPos: "Tiada pesanan pembelian.", noItems: "Tiada barang stok masuk." },
-  zh: { supplier: "供应商", contact: "联系方式", poCount: "采购单数量", totalSpend: "总支出", poList: "采购订单", poDate: "日期", poId: "采购单编号", poStatus: "状态", poTotal: "总额", restockItems: "补货历史（明细）", itemName: "商品", qty: "数量", unit: "单位", unitPrice: "单价", total: "总额", noPos: "此范围内无采购单。", noItems: "此范围内无补货记录。" },
+const SUP_L: Record<Lang, { suppliers: string; supplier: string; contact: string; poCount: string; totalSpend: string; poList: string; poDate: string; poId: string; poStatus: string; poTotal: string; restockItems: string; itemName: string; qty: string; unit: string; unitPrice: string; total: string; noPos: string; noItems: string; productsSourced: string; }> = {
+  en: { suppliers: "Suppliers", supplier: "Supplier", contact: "Contact", poCount: "PO count", totalSpend: "Total spend", poList: "Purchase orders", poDate: "Date", poId: "PO ID", poStatus: "Status", poTotal: "Total", restockItems: "Restock history", itemName: "Item", qty: "Qty", unit: "Unit", unitPrice: "Unit price", total: "Total", noPos: "No purchase orders in this range.", noItems: "No restock items in this range.", productsSourced: "Products sourced" },
+  ms: { suppliers: "Pembekal", supplier: "Pembekal", contact: "Kenalan", poCount: "Jumlah PO", totalSpend: "Jumlah belanja", poList: "Pesanan pembelian", poDate: "Tarikh", poId: "ID PO", poStatus: "Status", poTotal: "Jumlah", restockItems: "Sejarah stok masuk", itemName: "Barang", qty: "Kuantiti", unit: "Unit", unitPrice: "Harga seunit", total: "Jumlah", noPos: "Tiada pesanan pembelian.", noItems: "Tiada barang stok masuk.", productsSourced: "Produk dibekalkan" },
+  zh: { suppliers: "供应商", supplier: "供应商", contact: "联系方式", poCount: "采购单数量", totalSpend: "总支出", poList: "采购订单", poDate: "日期", poId: "采购单编号", poStatus: "状态", poTotal: "总额", restockItems: "补货历史", itemName: "商品", qty: "数量", unit: "单位", unitPrice: "单价", total: "总额", noPos: "此范围内无采购单。", noItems: "此范围内无补货记录。", productsSourced: "供应商品" },
 };
 
-export type SupplierPO = {
-  date: string; code: string; status: string; total: number;
-};
-export type SupplierItem = {
-  date: string; name: string; qty: number; unit: string; unitPrice: number; total: number;
-};
+export type SupplierPO = { date: string; code: string; status: string; total: number };
+export type SupplierItem = { date: string; name: string; qty: number; unit: string; unitPrice: number; total: number };
 export type SupplierBlock = {
   supplier: string;
   contact: string | null;
@@ -995,7 +926,6 @@ export type SupplierBlock = {
   pos: SupplierPO[];
   items: SupplierItem[];
 };
-
 export type SupplierReportData = {
   lang: Lang;
   businessName: string;
@@ -1009,71 +939,60 @@ export async function exportSupplierReportPDF(d: SupplierReportData): Promise<vo
   const l = makeLabels(d.lang, SUPPLIER_TITLE[d.lang], d.rangeLabel);
   const s = SUP_L[d.lang];
   await applyCjkFont(doc);
-  drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
+  let y = drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
 
-  const rm = (n: number) => `RM ${n.toFixed(2)}`;
   const totalSpend = d.blocks.reduce((a, b) => a + b.totalSpend, 0);
   const totalPos = d.blocks.reduce((a, b) => a + b.poCount, 0);
 
-  autoTable(doc, {
-    startY: 46,
+  y = drawSectionHeader(doc, l.summary, y);
+  y = drawTable(doc, {
+    startY: y,
     head: [[l.summary, l.value]],
     body: [
-      ["Suppliers", String(d.blocks.length)],
+      [s.suppliers, String(d.blocks.length)],
       [s.poCount, String(totalPos)],
-      [s.totalSpend, rm(totalSpend)],
+      [s.totalSpend, fmtMYR(totalSpend)],
     ],
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 10, font: CJK_FONT_FAMILY },
-  });
-  let y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
+    columnStyles: { 1: { halign: "right" } },
+  }) + 8;
 
   for (const b of d.blocks) {
-    autoTable(doc, {
-      startY: y,
-      head: [[`${s.supplier}: ${b.supplier}`, ""]],
-      body: [
-        [s.contact, b.contact ?? "—"],
-        [s.poCount, String(b.poCount)],
-        [s.totalSpend, rm(b.totalSpend)],
-      ],
-      theme: "grid",
-      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 9, font: CJK_FONT_FAMILY },
-    });
-    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 4;
+    y = drawSectionHeader(doc, `${s.supplier}: ${b.supplier}`, y);
 
-    autoTable(doc, {
+    // contact + totals meta line
+    doc.setFont(CJK_FONT_FAMILY, "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    doc.text(`${s.contact}: ${b.contact ?? "—"}   ·   ${s.poCount}: ${b.poCount}`, MARGIN_L, y + 2);
+    doc.setTextColor(...INK_2);
+    y += 6;
+
+    y = drawTable(doc, {
       startY: y,
       head: [[s.poDate, s.poId, s.poStatus, s.poTotal]],
       body: b.pos.length
-        ? b.pos.map((p) => [p.date, p.code, p.status, rm(p.total)])
+        ? b.pos.map((p) => [p.date, p.code, p.status, fmtMYR(p.total)])
         : [[s.noPos, "", "", ""]],
-      theme: "striped",
-      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 8, font: CJK_FONT_FAMILY },
-    });
-    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 4;
+      columnStyles: { 3: { halign: "right" } },
+      fontSize: 8,
+    }) + 4;
 
-    autoTable(doc, {
+    y = drawTable(doc, {
       startY: y,
-      head: [[s.restockItems, "", "", "", "", ""]],
-      body: [
-        [s.poDate, s.itemName, s.qty, s.unit, s.unitPrice, s.total],
-        ...(b.items.length
-          ? b.items.map((it) => [it.date, it.name, String(it.qty), it.unit, rm(it.unitPrice), rm(it.total)])
-          : [[s.noItems, "", "", "", "", ""]]),
-      ],
-      theme: "grid",
-      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 8, font: CJK_FONT_FAMILY },
-    });
-    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
+      head: [[s.poDate, s.itemName, s.qty, s.unit, s.unitPrice, s.total]],
+      body: b.items.length
+        ? b.items.map((it) => [it.date, it.name, String(it.qty), it.unit, fmtMYR(it.unitPrice), fmtMYR(it.total)])
+        : [[s.noItems, "", "", "", "", ""]],
+      columnStyles: { 2: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" } },
+      foot: [["", "", "", "", s.totalSpend, fmtMYR(b.totalSpend)]],
+      fontSize: 8,
+    }) + 4;
+
+    // separator between suppliers
+    doc.setDrawColor(...RULE);
+    doc.setLineWidth(0.4);
+    doc.line(MARGIN_L, y, PAGE_W - MARGIN_R, y);
+    y += 8;
   }
 
   drawFooters(doc, l);
@@ -1091,10 +1010,10 @@ const RECON_TITLE: Record<Lang, string> = {
   zh: "订单状态与对账",
 };
 
-const RECON_L: Record<Lang, { byStatus: string; byPayment: string; bySource: string; chaseList: string; status: string; count: string; amount: string; paymentMethod: string; source: string; date: string; code: string; customer: string; days: string; noItems: string; ageDays: string; unspecified: string; }> = {
-  en: { byStatus: "Orders by status", byPayment: "Orders by payment method", bySource: "Orders by source (platform)", chaseList: "Chase list (Unpaid / Pending)", status: "Status", count: "Count", amount: "Amount", paymentMethod: "Payment method", source: "Source", date: "Date", code: "Order ID", customer: "Customer", days: "Age (days)", noItems: "Nothing to reconcile — all clear.", ageDays: "Age (days)", unspecified: "(unspecified)" },
-  ms: { byStatus: "Pesanan mengikut status", byPayment: "Pesanan mengikut kaedah bayaran", bySource: "Pesanan mengikut sumber (platform)", chaseList: "Senarai kejar (Belum bayar / Tertangguh)", status: "Status", count: "Bilangan", amount: "Jumlah", paymentMethod: "Kaedah bayaran", source: "Sumber", date: "Tarikh", code: "ID Pesanan", customer: "Pelanggan", days: "Umur (hari)", noItems: "Tiada yang perlu dikejar — semua bersih.", ageDays: "Umur (hari)", unspecified: "(tidak dinyatakan)" },
-  zh: { byStatus: "按状态分类订单", byPayment: "按付款方式分类订单", bySource: "按来源（平台）分类订单", chaseList: "待催收清单（未付 / 待处理）", status: "状态", count: "数量", amount: "金额", paymentMethod: "付款方式", source: "来源", date: "日期", code: "订单编号", customer: "客户", days: "账龄（天）", noItems: "无需对账 — 一切正常。", ageDays: "账龄（天）", unspecified: "（未指定）" },
+const RECON_L: Record<Lang, { byStatus: string; byPayment: string; bySource: string; chaseList: string; status: string; count: string; amount: string; paymentMethod: string; source: string; date: string; code: string; customer: string; phone: string; days: string; noItems: string; ageDays: string; unspecified: string; ageFootnote: string; }> = {
+  en: { byStatus: "Orders by status", byPayment: "Orders by payment method", bySource: "Orders by source (platform)", chaseList: "Chase list (Unpaid / Pending)", status: "Status", count: "Count", amount: "Amount", paymentMethod: "Payment method", source: "Source", date: "Date", code: "Order ID", customer: "Customer", phone: "Phone", days: "Age (days)", noItems: "Nothing to reconcile — all clear.", ageDays: "Age (days)", unspecified: "(unspecified)", ageFootnote: "Age is days since the order was created. Rows shaded darker are older than 14 days." },
+  ms: { byStatus: "Pesanan mengikut status", byPayment: "Pesanan mengikut kaedah bayaran", bySource: "Pesanan mengikut sumber (platform)", chaseList: "Senarai kejar (Belum bayar / Tertangguh)", status: "Status", count: "Bilangan", amount: "Jumlah", paymentMethod: "Kaedah bayaran", source: "Sumber", date: "Tarikh", code: "ID Pesanan", customer: "Pelanggan", phone: "Telefon", days: "Umur (hari)", noItems: "Tiada yang perlu dikejar — semua bersih.", ageDays: "Umur (hari)", unspecified: "(tidak dinyatakan)", ageFootnote: "Umur dikira dari tarikh pesanan dibuat. Baris berwarna lebih gelap ialah lebih 14 hari." },
+  zh: { byStatus: "按状态分类订单", byPayment: "按付款方式分类订单", bySource: "按来源（平台）分类订单", chaseList: "待催收清单（未付 / 待处理）", status: "状态", count: "数量", amount: "金额", paymentMethod: "付款方式", source: "来源", date: "日期", code: "订单编号", customer: "客户", phone: "电话", days: "账龄（天）", noItems: "无需对账 — 一切正常。", ageDays: "账龄（天）", unspecified: "（未指定）", ageFootnote: "账龄按订单创建日期计算。深色底纹的行超过 14 天。" },
 };
 
 export type ReconOrder = {
@@ -1105,6 +1024,7 @@ export type ReconOrder = {
   status: string;
   payment_method: string | null;
   order_source: string | null;
+  customer_phone?: string | null;
 };
 
 export type ReconReportData = {
@@ -1120,9 +1040,7 @@ export async function exportOrderReconciliationPDF(d: ReconReportData): Promise<
   const l = makeLabels(d.lang, RECON_TITLE[d.lang], d.rangeLabel);
   const r = RECON_L[d.lang];
   await applyCjkFont(doc);
-  drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
-
-  const rm = (n: number) => `RM ${n.toFixed(2)}`;
+  let y = drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
 
   function groupBy(key: (o: ReconOrder) => string) {
     const m = new Map<string, { count: number; amount: number }>();
@@ -1140,20 +1058,17 @@ export async function exportOrderReconciliationPDF(d: ReconReportData): Promise<
   const byPayment = groupBy((o) => o.payment_method ?? "");
   const bySource = groupBy((o) => o.order_source ?? "");
 
-  const drawGroup = (title: string, header: string, rows: Array<[string, { count: number; amount: number }]>, y0: number) => {
-    autoTable(doc, {
-      startY: y0,
-      head: [[title, r.count, r.amount]],
-      body: rows.length ? rows.map(([k, v]) => [k, String(v.count), rm(v.amount)]) : [[header, "0", rm(0)]],
-      theme: "grid",
-      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 9, font: CJK_FONT_FAMILY },
-    });
-    return ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y0) + 6;
+  const drawGroup = (title: string, colLabel: string, rows: Array<[string, { count: number; amount: number }]>, y0: number): number => {
+    let yy = drawSectionHeader(doc, title, y0);
+    yy = drawTable(doc, {
+      startY: yy,
+      head: [[colLabel, r.count, r.amount]],
+      body: rows.length ? rows.map(([k, v]) => [k, String(v.count), fmtMYR(v.amount)]) : [["—", "0", fmtMYR(0)]],
+      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } },
+    }) + 6;
+    return yy;
   };
 
-  let y = 46;
   y = drawGroup(r.byStatus, r.status, byStatus, y);
   y = drawGroup(r.byPayment, r.paymentMethod, byPayment, y);
   y = drawGroup(r.bySource, r.source, bySource, y);
@@ -1167,23 +1082,43 @@ export async function exportOrderReconciliationPDF(d: ReconReportData): Promise<
     }))
     .sort((a, b) => b.ageDays - a.ageDays);
 
-  autoTable(doc, {
-    startY: y,
-    head: [[r.chaseList, "", "", "", "", ""]],
-    body: [
-      [r.date, r.code, r.customer, r.status, r.amount, r.ageDays],
-      ...(chase.length
-        ? chase.map((o) => [
-            new Date(o.created_at).toLocaleDateString("en-MY"),
-            o.code, o.customer_name, o.status, rm(Number(o.amount)), String(o.ageDays),
-          ])
-        : [[r.noItems, "", "", "", "", ""]]),
-    ],
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 8, font: CJK_FONT_FAMILY },
-  });
+  y = drawSectionHeader(doc, r.chaseList, y);
+  if (chase.length) {
+    const warnRows: number[] = [];
+    const body = chase.map((o, i) => {
+      if (o.ageDays > 14) warnRows.push(i);
+      return [
+        "☐",
+        new Date(o.created_at).toLocaleDateString("en-MY"),
+        o.code,
+        o.customer_name,
+        o.customer_phone ?? "—",
+        fmtMYR(Number(o.amount)),
+        o.status,
+        String(o.ageDays),
+      ];
+    });
+    y = drawTable(doc, {
+      startY: y,
+      head: [["", r.date, r.code, r.customer, r.phone, r.amount, r.status, r.days]],
+      body,
+      columnStyles: {
+        0: { halign: "center", cellWidth: 6 },
+        5: { halign: "right" },
+        7: { halign: "right" },
+      },
+      warnRowIndexes: warnRows,
+      fontSize: 8,
+    }) + 4;
+    drawFootnote(doc, d.lang, y, r.ageFootnote);
+  } else {
+    doc.setFont(CJK_FONT_FAMILY, "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    doc.text(r.noItems, MARGIN_L, y + 3);
+    doc.setFont(CJK_FONT_FAMILY, "normal");
+    doc.setTextColor(...INK_2);
+  }
 
   drawFooters(doc, l);
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -1217,93 +1152,82 @@ export async function exportStockReportPDF(d: StockReportData): Promise<void> {
   const l = makeLabels(d.lang, STOCK_TITLE[d.lang], `${EXTRA[d.lang].asOf} ${asOf}`);
   const x = EXTRA[d.lang];
   await applyCjkFont(doc);
-  drawHeader(doc, l, d.businessName, `${x.asOf} ${asOf}`, d.logoDataUrl);
+  let y = drawHeader(doc, l, d.businessName, `${x.asOf} ${asOf}`, d.logoDataUrl);
 
-  const rm = (n: number) => `RM ${n.toFixed(2)}`;
   const items = d.items;
-  const buckets = { out: [] as StockInvRow[], low: [] as StockInvRow[], losing: [] as StockInvRow[] };
-  let totalValue = 0, inStockCount = 0;
-  for (const r of items) {
-    const s = Number(r.stock ?? 0);
-    const p = Number(r.price ?? 0);
-    const c = Number(r.cost_price ?? 0);
+  const buckets = { out: [] as StockInvRow[], low: [] as StockInvRow[], inStock: [] as StockInvRow[], losing: [] as StockInvRow[] };
+  let totalValue = 0;
+  for (const row of items) {
+    const s = Number(row.stock ?? 0);
+    const p = Number(row.price ?? 0);
+    const c = Number(row.cost_price ?? 0);
     totalValue += s * c;
-    if (s <= 0) buckets.out.push(r);
-    else if (s <= LOW_STOCK_THRESHOLD) { buckets.low.push(r); inStockCount++; }
-    else inStockCount++;
-    if (p > 0 && c > p) buckets.losing.push(r);
+    if (s <= 0) buckets.out.push(row);
+    else if (s <= LOW_STOCK_THRESHOLD) { buckets.low.push(row); }
+    else { buckets.inStock.push(row); }
+    if (p > 0 && c > p) buckets.losing.push(row);
   }
+  const inStockCount = buckets.inStock.length + buckets.low.length;
 
-  autoTable(doc, {
-    startY: 46,
+  y = drawSectionHeader(doc, l.summary, y);
+  y = drawTable(doc, {
+    startY: y,
     head: [[l.summary, l.value]],
     body: [
       [x.totalSkus, String(items.length)],
-      [x.totalValue, rm(totalValue)],
+      [x.totalValue, fmtMYR(totalValue)],
       [x.inStock, String(inStockCount)],
       [x.lowStock, String(buckets.low.length)],
       [x.outOfStock, String(buckets.out.length)],
       [x.losingMoney, String(buckets.losing.length)],
     ],
-    theme: "grid",
-    headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: ALT_ROW },
-    styles: { fontSize: 10, font: CJK_FONT_FAMILY },
-  });
-  let y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? 46) + 8;
+    foot: [[x.totalValue, fmtMYR(totalValue)]],
+    columnStyles: { 1: { halign: "right" } },
+  }) + 8;
 
-  const drawSection = (title: string, head: string[], body: string[][]) => {
-    if (body.length === 0) return;
-    autoTable(doc, {
-      startY: y,
-      head: [[title, ...Array(head.length - 1).fill("")]],
-      body: [head, ...body],
-      theme: "grid",
-      headStyles: { fillColor: PURPLE, textColor: 255, font: CJK_FONT_FAMILY, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: ALT_ROW },
-      styles: { fontSize: 9, font: CJK_FONT_FAMILY },
+  const stockValueOf = (row: StockInvRow) => Number(row.stock ?? 0) * Number(row.cost_price ?? 0);
+
+  const drawStockSection = (
+    title: string,
+    rows: StockInvRow[],
+    opts: { warn?: boolean; withQty?: boolean } = {},
+  ) => {
+    if (rows.length === 0) return;
+    y = drawSectionHeader(doc, title, y);
+    const withQty = opts.withQty !== false;
+    const head = withQty
+      ? [x.product, x.qty, x.cost, x.sellPrice, x.stockValue]
+      : [x.product, x.cost, x.sellPrice];
+    const body = rows.map((row) => {
+      const s = Number(row.stock ?? 0);
+      const c = Number(row.cost_price ?? 0);
+      const p = Number(row.price ?? 0);
+      return withQty
+        ? [row.name, String(s), fmtMYR(c), fmtMYR(p), fmtMYR(s * c)]
+        : [row.name, fmtMYR(c), fmtMYR(p)];
     });
-    y = ((doc as AutoTablePdf).lastAutoTable?.finalY ?? y) + 8;
+    const subtotal = rows.reduce((a, r) => a + stockValueOf(r), 0);
+    const foot = withQty
+      ? [["", "", "", x.totalValue, fmtMYR(subtotal)]]
+      : undefined;
+    y = drawTable(doc, {
+      startY: y,
+      head: [head],
+      body,
+      foot,
+      columnStyles: withQty
+        ? rightAlignFrom(1, 4)
+        : rightAlignFrom(1, 2),
+      warnRowIndexes: opts.warn ? rows.map((_, i) => i) : undefined,
+      zebra: !opts.warn,
+      fontSize: 9,
+    }) + 6;
   };
 
-  drawSection(
-    x.needsReorder,
-    [x.product, x.qty, x.cost, x.sellPrice, x.stockValue],
-    buckets.low.map((r) => [
-      r.name,
-      String(Number(r.stock ?? 0)),
-      rm(Number(r.cost_price ?? 0)),
-      rm(Number(r.price ?? 0)),
-      rm(Number(r.stock ?? 0) * Number(r.cost_price ?? 0)),
-    ]),
-  );
-  drawSection(
-    x.outOfStock,
-    [x.product, x.cost, x.sellPrice],
-    buckets.out.map((r) => [
-      r.name, rm(Number(r.cost_price ?? 0)), rm(Number(r.price ?? 0)),
-    ]),
-  );
-  drawSection(
-    x.losingMoney,
-    [x.product, x.cost, x.sellPrice, x.margin],
-    buckets.losing.map((r) => {
-      const p = Number(r.price ?? 0);
-      const c = Number(r.cost_price ?? 0);
-      return [r.name, rm(c), rm(p), rm(p - c)];
-    }),
-  );
-  drawSection(
-    x.fullInventory,
-    [x.product, x.qty, x.cost, x.sellPrice, x.stockValue],
-    items.map((r) => [
-      r.name,
-      String(Number(r.stock ?? 0)),
-      rm(Number(r.cost_price ?? 0)),
-      rm(Number(r.price ?? 0)),
-      rm(Number(r.stock ?? 0) * Number(r.cost_price ?? 0)),
-    ]),
-  );
+  drawStockSection(x.inStock, buckets.inStock);
+  drawStockSection(x.needsReorder, buckets.low, { warn: true });
+  drawStockSection(x.outOfStock, buckets.out, { warn: true, withQty: false });
+  drawStockSection(x.losingMoney, buckets.losing, { warn: true });
 
   drawFooters(doc, l);
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
