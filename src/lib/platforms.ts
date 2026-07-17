@@ -25,19 +25,22 @@ export const PLATFORMS: PlatformConfig[] = [
     },
     benefits: {
       en: [
-        "TikTok orders recorded automatically",
-        "Receive notification for every new order",
-        "Manage all platforms in one app",
+        "See your REAL profit — not just GMV. Seller Center shows sales; Bossify shows what you actually keep after cost.",
+        "Know which SKU makes you money — and which one is quietly losing you money.",
+        "Get a restock alert before you run out. Seller Center won't warn you.",
+        "All your TikTok orders, costs, and stock — in one place, automatically.",
       ],
       ms: [
-        "Pesanan TikTok direkod secara automatik",
-        "Terima notifikasi untuk setiap pesanan baru",
-        "Urus semua platform dalam satu aplikasi",
+        "Lihat keuntungan SEBENAR anda — bukan sekadar GMV. Seller Center tunjuk jualan; Bossify tunjuk berapa yang anda betul-betul simpan selepas kos.",
+        "Tahu SKU mana yang untung — dan mana yang diam-diam rugi.",
+        "Dapat amaran restock sebelum stok habis. Seller Center tak akan beritahu anda.",
+        "Semua pesanan, kos, dan stok TikTok anda — di satu tempat, secara automatik.",
       ],
       zh: [
-        "TikTok 订单自动记录",
-        "每个新订单都收到通知",
-        "在一个 app 管理所有平台",
+        "看到你真正的利润 —— 不只是 GMV。Seller Center 只显示销售额；Bossify 显示扣除成本后你实际赚多少。",
+        "知道哪个 SKU 在赚钱 —— 哪个在悄悄亏钱。",
+        "库存快用完前收到补货提醒。Seller Center 不会提醒你。",
+        "所有 TikTok 订单、成本、库存 —— 一个地方，自动同步。",
       ],
     },
     connectLabel: {
