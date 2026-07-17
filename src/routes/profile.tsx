@@ -541,17 +541,6 @@ function ProfilePage() {
         {t("logout")}
       </button>
 
-      <Link to="/terms" className="block text-center text-xs text-muted-foreground underline">
-        {t("terms_conditions")}
-      </Link>
-
-      <Link
-        to="/privacy-policy"
-        className="block text-center text-xs text-muted-foreground underline"
-      >
-        {t("privacy_policy")}
-      </Link>
-
       <Link to="/" className="block text-center text-xs text-muted-foreground underline">
         {t("back_to_dashboard")}
       </Link>
