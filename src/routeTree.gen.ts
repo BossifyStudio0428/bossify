@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WhatsappTemplatesRouteImport } from './routes/whatsapp-templates'
 import { Route as ViewingsRouteImport } from './routes/viewings'
 import { Route as UniversityInsightsRouteImport } from './routes/university-insights'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -45,6 +46,7 @@ import { Route as NewBookingRouteImport } from './routes/new-booking'
 import { Route as MoreRouteImport } from './routes/more'
 import { Route as LoanCalculatorRouteImport } from './routes/loan-calculator'
 import { Route as ListingsRouteImport } from './routes/listings'
+import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LanguageRouteImport } from './routes/language'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as IngredientsRouteImport } from './routes/ingredients'
@@ -99,6 +101,11 @@ import { Route as ApiPublicStripeCheckoutRouteImport } from './routes/api/public
 import { Route as ApiPublicStripeActivateRouteImport } from './routes/api/public/stripe/activate'
 import { Route as ApiPublicOauthTiktokCallbackRouteImport } from './routes/api/public/oauth/tiktok/callback'
 
+const WhatsappTemplatesRoute = WhatsappTemplatesRouteImport.update({
+  id: '/whatsapp-templates',
+  path: '/whatsapp-templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ViewingsRoute = ViewingsRouteImport.update({
   id: '/viewings',
   path: '/viewings',
@@ -277,6 +284,11 @@ const LoanCalculatorRoute = LoanCalculatorRouteImport.update({
 const ListingsRoute = ListingsRouteImport.update({
   id: '/listings',
   path: '/listings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalRoute = LegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LanguageRoute = LanguageRouteImport.update({
@@ -570,6 +582,7 @@ export interface FileRoutesByFullPath {
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
+  '/legal': typeof LegalRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
   '/more': typeof MoreRoute
@@ -606,6 +619,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/viewings': typeof ViewingsRoute
+  '/whatsapp-templates': typeof WhatsappTemplatesRoute
   '/book/$code': typeof BookCodeRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
@@ -661,6 +675,7 @@ export interface FileRoutesByTo {
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
+  '/legal': typeof LegalRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
   '/more': typeof MoreRoute
@@ -696,6 +711,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/viewings': typeof ViewingsRoute
+  '/whatsapp-templates': typeof WhatsappTemplatesRoute
   '/book/$code': typeof BookCodeRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
@@ -752,6 +768,7 @@ export interface FileRoutesById {
   '/ingredients': typeof IngredientsRoute
   '/inventory': typeof InventoryRouteWithChildren
   '/language': typeof LanguageRoute
+  '/legal': typeof LegalRoute
   '/listings': typeof ListingsRoute
   '/loan-calculator': typeof LoanCalculatorRoute
   '/more': typeof MoreRoute
@@ -788,6 +805,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/viewings': typeof ViewingsRoute
+  '/whatsapp-templates': typeof WhatsappTemplatesRoute
   '/book/$code': typeof BookCodeRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
@@ -845,6 +863,7 @@ export interface FileRouteTypes {
     | '/ingredients'
     | '/inventory'
     | '/language'
+    | '/legal'
     | '/listings'
     | '/loan-calculator'
     | '/more'
@@ -881,6 +900,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/university-insights'
     | '/viewings'
+    | '/whatsapp-templates'
     | '/book/$code'
     | '/commission/$id'
     | '/connected-platforms/$platform'
@@ -936,6 +956,7 @@ export interface FileRouteTypes {
     | '/ingredients'
     | '/inventory'
     | '/language'
+    | '/legal'
     | '/listings'
     | '/loan-calculator'
     | '/more'
@@ -971,6 +992,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/university-insights'
     | '/viewings'
+    | '/whatsapp-templates'
     | '/book/$code'
     | '/commission/$id'
     | '/connected-platforms/$platform'
@@ -1026,6 +1048,7 @@ export interface FileRouteTypes {
     | '/ingredients'
     | '/inventory'
     | '/language'
+    | '/legal'
     | '/listings'
     | '/loan-calculator'
     | '/more'
@@ -1062,6 +1085,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/university-insights'
     | '/viewings'
+    | '/whatsapp-templates'
     | '/book/$code'
     | '/commission/$id'
     | '/connected-platforms/$platform'
@@ -1118,6 +1142,7 @@ export interface RootRouteChildren {
   IngredientsRoute: typeof IngredientsRoute
   InventoryRoute: typeof InventoryRouteWithChildren
   LanguageRoute: typeof LanguageRoute
+  LegalRoute: typeof LegalRoute
   ListingsRoute: typeof ListingsRoute
   LoanCalculatorRoute: typeof LoanCalculatorRoute
   MoreRoute: typeof MoreRoute
@@ -1154,6 +1179,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
   ViewingsRoute: typeof ViewingsRoute
+  WhatsappTemplatesRoute: typeof WhatsappTemplatesRoute
   BookCodeRoute: typeof BookCodeRoute
   CommissionIdRoute: typeof CommissionIdRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
@@ -1181,6 +1207,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/whatsapp-templates': {
+      id: '/whatsapp-templates'
+      path: '/whatsapp-templates'
+      fullPath: '/whatsapp-templates'
+      preLoaderRoute: typeof WhatsappTemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/viewings': {
       id: '/viewings'
       path: '/viewings'
@@ -1431,6 +1464,13 @@ declare module '@tanstack/react-router' {
       path: '/listings'
       fullPath: '/listings'
       preLoaderRoute: typeof ListingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal': {
+      id: '/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof LegalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/language': {
@@ -1892,6 +1932,7 @@ const rootRouteChildren: RootRouteChildren = {
   IngredientsRoute: IngredientsRoute,
   InventoryRoute: InventoryRouteWithChildren,
   LanguageRoute: LanguageRoute,
+  LegalRoute: LegalRoute,
   ListingsRoute: ListingsRoute,
   LoanCalculatorRoute: LoanCalculatorRoute,
   MoreRoute: MoreRoute,
@@ -1928,6 +1969,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
   ViewingsRoute: ViewingsRoute,
+  WhatsappTemplatesRoute: WhatsappTemplatesRoute,
   BookCodeRoute: BookCodeRoute,
   CommissionIdRoute: CommissionIdRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,

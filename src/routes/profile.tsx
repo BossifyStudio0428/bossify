@@ -6,14 +6,6 @@ import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type Lang } from "@/contexts/I18nContext";
 import { toast } from "sonner";
-import {
-  DEFAULT_ORDER_TPL,
-  DEFAULT_REMINDER_TPL,
-  getOrderTemplate,
-  getReminderTemplate,
-  isBuiltInOrderTpl,
-  isBuiltInReminderTpl,
-} from "@/lib/wa";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -29,7 +21,6 @@ import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType"
 import { RETAIL_ONLY_MODE, HIDE_BOOKING_MENU, HIDE_ORDER_FORM, HIDE_TEAM_PLAN, HIDE_ANALYTICS_MENU } from "@/lib/featureFlags";
 import { VISIBLE_PLATFORMS } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
-import { isNativeBillingAvailable } from "@/lib/billing";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -61,35 +52,6 @@ function ProfilePage() {
   const [profile, setProfile] = useState<Omit<ProfileSummary, "is_admin"> | null>(null);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({});
   const [langOpen, setLangOpen] = useState(false);
-  const [tplOpen, setTplOpen] = useState(false);
-  const defaultOrderTpl = getOrderTemplate(lang, bizType);
-  const defaultReminderTpl = getReminderTemplate(lang, bizType);
-
-  const varsHelp = (() => {
-    const base = "[customer_name] [code] [product] [amount]";
-    const status = " [status]";
-    const qty = " [quantity]";
-    const tail = " [notes] [days_ago]";
-    const list =
-      bizType === "property"
-        ? `${base}${tail}`
-        : bizType === "retail" || bizType === "fnb" || !bizType
-          ? `${base}${qty}${status}${tail}`
-          : `${base}${status}${tail}`;
-    const prefix = lang === "ms" ? "Pemboleh ubah: " : lang === "zh" ? "变量：" : "Variables: ";
-    return `${prefix}${list}`;
-  })();
-  const [orderTpl, setOrderTpl] = useState<string>(DEFAULT_ORDER_TPL);
-  const [reminderTpl, setReminderTpl] = useState<string>(DEFAULT_REMINDER_TPL);
-  const [orderCustom, setOrderCustom] = useState(false);
-  const [reminderCustom, setReminderCustom] = useState(false);
-
-  // Keep textarea in sync with biz-type / lang default when user hasn't customised.
-  useEffect(() => {
-    if (!orderCustom) setOrderTpl(defaultOrderTpl);
-    if (!reminderCustom) setReminderTpl(defaultReminderTpl);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bizType, lang]);
   const [paySummary, setPaySummary] = useState<PaymentSummary | null>(null);
 
   const reportsLabelKey =
@@ -262,36 +224,6 @@ function ProfilePage() {
           label: t("my_devices"),
           onClick: () => navigate({ to: "/devices" }),
         },
-        {
-          icon: "💳",
-          key: "sub",
-          label: t("subscription"),
-          value: isLifetime
-            ? t("plan_badge_lifetime")
-            : isTeam && teamTier
-              ? t(`plan_badge_${teamTier}` as any)
-              : isPro
-                ? t("pro_plan")
-                : isStarter
-                  ? t("starter_plan")
-                  : t("free_plan"),
-          onClick: () => navigate({ to: "/plans" }),
-        },
-        ...(!isNativeBillingAvailable() && (isStarter || isPro)
-          ? [
-              {
-                icon: "🔗",
-                key: "stripeportal",
-                label: t("manage_subscription"),
-                value: t("manage_subscription_subtitle"),
-                onClick: () =>
-                  window.open(
-                    "https://billing.stripe.com/p/login/8x2bJ12Ya2sX9JKaIAeIw00",
-                    "_blank",
-                  ),
-              } as MenuItem,
-            ]
-          : []),
       ],
     },
     ...(!HIDE_TEAM_PLAN && isTeam
@@ -315,15 +247,7 @@ function ProfilePage() {
       key: "integrations",
       title: t("section_integrations"),
       emoji: "🔗",
-      items: [
-        {
-          icon: "📲",
-          key: "wa",
-          label: t("wa_template"),
-          value: hasFullAccess ? undefined : "🔒",
-          onClick: () => (hasFullAccess ? setTplOpen(true) : showUpgrade(t("wa_template"))),
-        },
-      ],
+      items: [],
     },
     {
       key: "advanced",
@@ -356,7 +280,7 @@ function ProfilePage() {
     if (!user) return;
     let cancelled = false;
     const load = async () => {
-      const [{ data: o }, { count: cust }, { data: p }, { data: pref }] = await Promise.all([
+      const [{ data: o }, { count: cust }, { data: p }] = await Promise.all([
         supabase.from("orders").select("amount,status").eq("user_id", user.id),
         supabase
           .from("customers")
@@ -366,11 +290,6 @@ function ProfilePage() {
           .from("profiles")
           .select("business_name,created_at,is_admin,avatar_url")
           .eq("id", user.id)
-          .maybeSingle(),
-        supabase
-          .from("user_preferences")
-          .select("wa_order_template,wa_reminder_template")
-          .eq("user_id", user.id)
           .maybeSingle(),
       ]);
       if (cancelled) return;
@@ -383,25 +302,6 @@ function ProfilePage() {
       setProfile(loadedProfile);
       setIsAdmin(!!loadedProfile?.is_admin);
       setConnectedPlatforms({});
-      // Treat any saved value that still matches a built-in default (in any
-      // biz/lang) as non-custom, so changing business_type or language flips
-      // to the right default automatically.
-      const savedOrder = pref?.wa_order_template ?? null;
-      const savedReminder = pref?.wa_reminder_template ?? null;
-      if (savedOrder && !isBuiltInOrderTpl(savedOrder)) {
-        setOrderTpl(savedOrder);
-        setOrderCustom(true);
-      } else {
-        setOrderTpl(defaultOrderTpl);
-        setOrderCustom(false);
-      }
-      if (savedReminder && !isBuiltInReminderTpl(savedReminder)) {
-        setReminderTpl(savedReminder);
-        setReminderCustom(true);
-      } else {
-        setReminderTpl(defaultReminderTpl);
-        setReminderCustom(false);
-      }
       try {
         const s = await loadPaymentSummary(user.id);
         if (!cancelled) setPaySummary(s);
@@ -431,24 +331,6 @@ function ProfilePage() {
       supabase.removeChannel(ch);
     };
   }, [user]);
-
-  const saveTemplates = async () => {
-    if (!user) return;
-    const { error } = await supabase.from("user_preferences").upsert(
-      {
-        user_id: user.id,
-        wa_order_template: orderTpl,
-        wa_reminder_template: reminderTpl,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    );
-    if (error) toast.error(error.message);
-    else {
-      toast.success(t("template_saved"));
-      setTplOpen(false);
-    }
-  };
 
   const businessName = profile?.business_name ?? user?.email?.split("@")[0] ?? t("my_store");
   const initials = businessName.slice(0, 2).toUpperCase();
@@ -659,17 +541,6 @@ function ProfilePage() {
         {t("logout")}
       </button>
 
-      <Link to="/terms" className="block text-center text-xs text-muted-foreground underline">
-        {t("terms_conditions")}
-      </Link>
-
-      <Link
-        to="/privacy-policy"
-        className="block text-center text-xs text-muted-foreground underline"
-      >
-        {t("privacy_policy")}
-      </Link>
-
       <Link to="/" className="block text-center text-xs text-muted-foreground underline">
         {t("back_to_dashboard")}
       </Link>
@@ -709,73 +580,6 @@ function ProfilePage() {
         </div>
       )}
 
-      {tplOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 animate-fade-in"
-          onClick={() => setTplOpen(false)}
-        >
-          <div
-            className="w-full max-w-[390px] bg-card rounded-t-3xl p-5 space-y-3 max-h-[85vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mx-auto h-1 w-10 rounded-full bg-muted" />
-            <p className="text-sm font-semibold py-1">{t("wa_template")}</p>
-            <div>
-              <label className="text-[11px] uppercase font-semibold text-muted-foreground">
-                {t("order_template")}
-              </label>
-              <textarea
-                value={orderTpl}
-                onChange={(e) => {
-                  setOrderTpl(e.target.value);
-                  setOrderCustom(true);
-                }}
-                rows={6}
-                className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono"
-              />
-              <button
-                onClick={() => {
-                  setOrderTpl(defaultOrderTpl);
-                  setOrderCustom(false);
-                }}
-                className="text-[11px] text-primary mt-1"
-              >
-                {t("reset_default")}
-              </button>
-            </div>
-            <div>
-              <label className="text-[11px] uppercase font-semibold text-muted-foreground">
-                {t("reminder_template")}
-              </label>
-              <textarea
-                value={reminderTpl}
-                onChange={(e) => {
-                  setReminderTpl(e.target.value);
-                  setReminderCustom(true);
-                }}
-                rows={6}
-                className="mt-1 w-full rounded-xl bg-muted/50 border border-border/60 px-3 py-2 text-xs font-mono"
-              />
-              <button
-                onClick={() => {
-                  setReminderTpl(defaultReminderTpl);
-                  setReminderCustom(false);
-                }}
-                className="text-[11px] text-primary mt-1"
-              >
-                {t("reset_default")}
-              </button>
-            </div>
-            <p className="text-[10px] text-muted-foreground">{varsHelp}</p>
-            <button
-              onClick={saveTemplates}
-              className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold"
-            >
-              {t("save")}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

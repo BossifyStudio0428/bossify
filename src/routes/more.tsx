@@ -11,6 +11,9 @@ import {
   Bell as BellIcon,
   TrendingUp,
   BarChart3,
+  CreditCard,
+  MessageCircle,
+  ScrollText,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import { RETAIL_ONLY_MODE, HIDE_PROFIT_SUMMARY } from "@/lib/featureFlags";
@@ -34,6 +37,9 @@ function MorePage() {
       : [{ to: "/documents", icon: FileText, label: t("more_documents") }]),
     { to: "/notifications", icon: BellIcon, label: t("more_notifications") },
     { to: "/profile", icon: User, label: t("more_profile") },
+    { to: "/plans", icon: CreditCard, label: t("more_subscription") },
+    { to: "/whatsapp-templates", icon: MessageCircle, label: t("more_wa_templates") },
+    { to: "/legal", icon: ScrollText, label: t("more_legal") },
   ];
   return (
     <div className="px-4 pt-4 pb-24">
