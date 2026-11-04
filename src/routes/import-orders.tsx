@@ -9,6 +9,7 @@ import {
   parseSpreadsheet, autoMapHeaders, applyMapping, generateCode,
   FIELD_LABELS, type ImportField, type ParsedSheet, type MappedOrder,
 } from "@/lib/importOrders";
+import { calculateOrderFinancials } from "@/lib/orderMath";
 
 export const Route = createFileRoute("/import-orders")({ component: ImportOrdersPage });
 
@@ -89,6 +90,16 @@ function ImportOrdersPage() {
     let inserted = 0, updated = 0, skipped = 0;
     const errors: string[] = [];
 
+    // Financial Engine: the seller's default platform commission %, snapshotted
+    // onto every imported order (a raw CSV import has no way to know a
+    // per-platform real fee, so this default estimate applies uniformly).
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("platform_fee_percent")
+      .eq("id", user.id)
+      .maybeSingle();
+    const platformFeePercent = Number((prof as any)?.platform_fee_percent ?? 0);
+
     // Fetch existing codes once
     const codes = valid.map((v) => v.code).filter((c): c is string => !!c);
     const existingByCode = new Map<string, string>();
@@ -100,34 +111,82 @@ function ImportOrdersPage() {
     }
 
     for (const row of valid) {
+      // A CSV row's amount/cost are already line TOTALS (not per-unit),
+      // so we feed the engine a single "item" with quantity 1 to avoid
+      // multiplying by the row's quantity a second time.
+      const rowCost = row.cost != null ? row.cost : 0;
+      const financials = calculateOrderFinancials({
+        items: [
+          {
+            quantity: 1,
+            unitPriceAtSale: row.amount,
+            unitCostAtSale: rowCost,
+            packagingCostAtSale: 0,
+          },
+        ],
+        sellerDiscount: 0,
+        deliveryFeeCharged: 0,
+        shippingCost: 0,
+        platformFeePercent,
+        affiliateCommission: 0,
+      });
+
       const payload: Record<string, unknown> = {
         user_id: user.id,
         customer_name: row.customer_name,
         phone: row.phone,
         product: row.product,
+        product_summary: row.product,
         quantity: row.quantity,
-        amount: row.amount,
+        amount: financials.netRevenue,
         status: row.status,
         notes: row.notes,
+        seller_discount: 0,
+        delivery_fee_charged: 0,
+        shipping_cost: 0,
+        platform_fee_percent_at_sale: platformFeePercent,
+        platform_fee_amount: financials.platformFeeAmount,
+        affiliate_commission: 0,
+        financial_status: "complete",
       };
       if (row.created_at) payload.created_at = row.created_at;
       if (row.cost != null) {
-        payload.cost = row.cost;
-        payload.gross_profit = row.amount - row.cost;
+        payload.cost = financials.cogs;
+        payload.gross_profit = financials.grossProfit;
       }
 
       const existingId = row.code ? existingByCode.get(row.code) : undefined;
+      let orderId: string | null = null;
       if (existingId) {
         payload.code = row.code;
         const { error } = await supabase.from("orders").update(payload).eq("id", existingId).eq("user_id", user.id);
-        if (error) { errors.push(`Row ${row._rowIndex}: ${error.message}`); skipped++; }
-        else updated++;
+        if (error) { errors.push(`Row ${row._rowIndex}: ${error.message}`); skipped++; continue; }
+        orderId = existingId;
+        updated++;
       } else {
         payload.code = row.code || generateCode();
-        const { error } = await supabase.from("orders").insert(payload);
-        if (error) { errors.push(`Row ${row._rowIndex}: ${error.message}`); skipped++; }
-        else {
-          inserted++;
+        const { data: ins, error } = await supabase.from("orders").insert(payload).select("id").single();
+        if (error) { errors.push(`Row ${row._rowIndex}: ${error.message}`); skipped++; continue; }
+        orderId = ins?.id ?? null;
+        inserted++;
+      }
+
+      // Keep order_items as a single-line snapshot in sync with this row.
+      // Re-imports (update path) replace the line rather than duplicating it.
+      if (orderId) {
+        try {
+          await supabase.from("order_items" as any).delete().eq("order_id", orderId);
+          await supabase.from("order_items" as any).insert({
+            order_id: orderId,
+            product_id: null,
+            product_name: row.product,
+            quantity: row.quantity,
+            unit_price_at_sale: row.amount,
+            unit_cost_at_sale: rowCost,
+            packaging_cost_at_sale: 0,
+          });
+        } catch (e) {
+          console.error("[import-orders] order_items sync failed", e);
         }
       }
     }

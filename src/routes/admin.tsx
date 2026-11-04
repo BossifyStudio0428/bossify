@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
-import { getPublicOrigin, isNativeWebView } from "@/lib/publicUrl";
+import { isNativeWebView } from "@/lib/publicUrl";
 import {
   getAiUsageStats,
   loadAdminOverview,
@@ -14,6 +14,16 @@ import {
   setAdminSubscriptionPlan,
   type AiUsageStats,
 } from "@/lib/admin.functions";
+
+// IMPORTANT: this must be the real deployed backend, NOT getPublicOrigin().
+// getPublicOrigin() is for customer-facing SHARE links (order/booking/team
+// links) and deliberately falls back to the old bossify-malaysia.lovable.app
+// domain on native so those links are shareable outside the app. That domain
+// is not the live API anymore since the migration to Cloudflare Workers, so
+// using it for an actual fetch() here returns the app's own HTML shell
+// instead of JSON — that's what showed up as raw "<!DOCTYPE html>..." text
+// in the admin page's error toast on the native Android build.
+const API_ORIGIN = "https://tanstack-start-app.bossifystudio.workers.dev";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
@@ -73,7 +83,7 @@ function AdminPage() {
     async (body: Record<string, unknown>) => {
       const token = session?.access_token;
       if (!token) throw new Error("Unauthorized");
-      const response = await fetch(`${getPublicOrigin()}/api/public/admin`, {
+      const response = await fetch(`${API_ORIGIN}/api/public/admin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

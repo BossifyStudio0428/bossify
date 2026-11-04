@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { CATEGORY_PRESETS } from "@/lib/businessType";
+import { logInventoryChange } from "@/lib/inventoryAudit";
 import { parseVariants, parseDetailItems, type DetailItem, type InvRow, type Variant } from "@/lib/inventoryTypes";
 import { ProductFormScreen, type FormSection } from "@/components/ProductFormScreen";
 import { ProductImagesGrid } from "@/components/ProductImagesGrid";
@@ -213,6 +214,25 @@ export function ProductFormSheet({
       : await supabase.from("inventory").insert({ ...payload, user_id: userId });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
+
+    if (item) {
+      const fields: Array<["cost_price" | "price" | "stock", number, number]> = [
+        ["cost_price", Number(item.cost_price ?? 0), payload.cost_price],
+        ["price", Number(item.price ?? 0), payload.price],
+        ["stock", Number(item.stock ?? 0), payload.stock],
+      ];
+      for (const [fieldName, oldV, newV] of fields) {
+        logInventoryChange({
+          userId,
+          productId: item.id,
+          productName: payload.name,
+          fieldName,
+          oldValue: oldV,
+          newValue: newV,
+          source: "manual_edit",
+        });
+      }
+    }
     clearDraft(draftKey);
     if (HIDE_ORDER_FORM) {
       toast.success(item ? t("customer_updated") : t("product_added"));

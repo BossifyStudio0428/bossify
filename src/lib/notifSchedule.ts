@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { isPrefEnabled } from "@/lib/notifPrefs";
+import { isPrefEnabled, getCachedPrefs } from "@/lib/notifPrefs";
 import { notifySituation } from "@/lib/autoNotify";
 
 const ID_MORNING = 9101;
@@ -58,7 +58,7 @@ async function scheduleMorning(userId: string) {
       id: ID_MORNING,
       title: "Good morning, boss! 🌅",
       body,
-      schedule: { on: { hour: 9, minute: 0 }, allowWhileIdle: true, repeats: true },
+      schedule: { on: { hour: getCachedPrefs().morning_hour, minute: 0 }, allowWhileIdle: true, repeats: true },
       extra: { route: "/" },
     }],
   });
@@ -81,7 +81,7 @@ async function scheduleEvening(userId: string) {
       id: ID_EVENING,
       title: "Daily wrap-up 🌙",
       body,
-      schedule: { on: { hour: 21, minute: 0 }, allowWhileIdle: true, repeats: true },
+      schedule: { on: { hour: getCachedPrefs().evening_hour, minute: 0 }, allowWhileIdle: true, repeats: true },
       extra: { route: "/reports" },
     }],
   });
@@ -139,22 +139,40 @@ export async function runUnpaidNotifyNow(userId: string) {
 }
 
 /**
- * Run an immediate scan for SKUs where cost > price and push a single
- * digest notification if any are found. Dedupes to once per calendar day
- * per device.
+ * Run an immediate scan for SKUs whose per-unit Contribution Profit is
+ * zero or negative (price minus product cost, packaging cost, and the
+ * seller's platform fee %) and push a single digest notification if any
+ * are found. Dedupes to once per calendar day per device.
+ *
+ * Deliberately does NOT factor in period-level Operating Expenses (ads,
+ * subscriptions, etc) — those are company-wide costs, not per-SKU, and
+ * mixing them in would make a perfectly fine product look "loss-making"
+ * just because the business bought a software subscription that month.
  */
 export async function runLosingMoneyScanNow(userId: string) {
   if (!isPrefEnabled("notif_losing")) return;
   const today = new Date().toISOString().slice(0, 10);
   const dedupeKey = `losing_${today}`;
-  const { data } = await supabase
-    .from("inventory")
-    .select("id,name,price,cost")
-    .eq("user_id", userId);
-  const losing = (data ?? []).filter((r: any) => {
-    const p = Number(r.price ?? 0);
-    const c = Number(r.cost ?? 0);
-    return p > 0 && c > p;
+  const [{ data: invData }, { data: profileData }] = await Promise.all([
+    supabase
+      .from("inventory")
+      .select("id,name,price,cost_price,packaging_cost")
+      .eq("user_id", userId),
+    supabase
+      .from("profiles")
+      .select("platform_fee_percent")
+      .eq("id", userId)
+      .maybeSingle(),
+  ]);
+  const platformFeePercent = Number((profileData as any)?.platform_fee_percent ?? 0);
+  const losing = (invData ?? []).filter((r: any) => {
+    const price = Number(r.price ?? 0);
+    if (price <= 0) return false;
+    const cost = Number(r.cost_price ?? 0);
+    const packaging = Number((r as any).packaging_cost ?? 0);
+    const platformFee = price * (platformFeePercent / 100);
+    const contributionPerUnit = price - cost - packaging - platformFee;
+    return contributionPerUnit <= 0;
   });
   if (losing.length === 0) return;
   const first = losing[0] as any;
@@ -162,8 +180,8 @@ export async function runLosingMoneyScanNow(userId: string) {
   const title = "📉 Losing-money alert";
   const body =
     extra > 0
-      ? `${first.name} + ${extra} more SKU(s) cost more than price`
-      : `${first.name}: cost is higher than price — every sale loses money`;
+      ? `${first.name} + ${extra} more SKU(s) have zero or negative contribution profit`
+      : `${first.name}: after cost, packaging, and platform fees, every sale loses money`;
   await notifySituation({
     kind: "custom",
     title,

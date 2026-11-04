@@ -773,10 +773,10 @@ const FINANCIAL_TITLE: Record<Lang, string> = {
   zh: "财务报表（损益表）",
 };
 
-const FIN_LABELS: Record<Lang, { avgOrder: string; net: string; unpaidAmt: string }> = {
-  en: { avgOrder: "Avg order value", net: "Net profit (gross)", unpaidAmt: "Unpaid outstanding" },
-  ms: { avgOrder: "Purata nilai pesanan", net: "Untung bersih (kasar)", unpaidAmt: "Belum bayar tertunggak" },
-  zh: { avgOrder: "平均订单金额", net: "净利润（毛利）", unpaidAmt: "未收款项" },
+const FIN_LABELS: Record<Lang, { avgOrder: string; net: string; unpaidAmt: string; platformFees: string; contributionProfit: string; operatingExpenses: string; pendingCount: string }> = {
+  en: { avgOrder: "Avg order value", net: "Net profit", unpaidAmt: "Unpaid outstanding", platformFees: "Platform / selling fees", contributionProfit: "Contribution profit", operatingExpenses: "Operating expenses", pendingCount: "Orders excluded (pending sync)" },
+  ms: { avgOrder: "Purata nilai pesanan", net: "Untung bersih", unpaidAmt: "Belum bayar tertunggak", platformFees: "Yuran platform / jualan", contributionProfit: "Untung sumbangan", operatingExpenses: "Perbelanjaan operasi", pendingCount: "Pesanan tidak termasuk (belum sync)" },
+  zh: { avgOrder: "平均订单金额", net: "净利润", unpaidAmt: "未收款项", platformFees: "平台/销售抽成", contributionProfit: "边际利润", operatingExpenses: "营业费用", pendingCount: "未计入订单（同步中）" },
 };
 
 export type FinancialReportData = {
@@ -787,10 +787,15 @@ export type FinancialReportData = {
   revenue: number;
   cogs: number;
   grossProfit: number;
+  platformFees: number;
+  contributionProfit: number;
+  operatingExpenses: number;
+  netProfit: number;
   margin: number;
   orderCount: number;
   avgOrder: number;
   unpaidAmount: number;
+  pendingSyncCount: number;
 };
 
 export async function exportFinancialReportPDF(d: FinancialReportData): Promise<void> {
@@ -801,7 +806,9 @@ export async function exportFinancialReportPDF(d: FinancialReportData): Promise<
   await applyCjkFont(doc);
   let y = drawHeader(doc, l, d.businessName, d.rangeLabel, d.logoDataUrl);
 
-  // P&L formal indented layout
+  // Formal P&L: Revenue → COGS → Gross Profit → Platform Fees → Contribution
+  // Profit → Operating Expenses → Net Profit. Every figure here is read from
+  // stored order/expense records — nothing is recalculated in this file.
   y = drawSectionHeader(doc, l.summary, y);
   y = drawTable(doc, {
     startY: y,
@@ -810,16 +817,19 @@ export async function exportFinancialReportPDF(d: FinancialReportData): Promise<
       [x.revenue, fmtMYR(d.revenue)],
       [`  ${x.cogs}`, fmtMYR(d.cogs)],
       [x.grossProfit, fmtMYRNeg(d.grossProfit)],
+      [`  ${fl.platformFees}`, fmtMYR(d.platformFees)],
+      [fl.contributionProfit, fmtMYRNeg(d.contributionProfit)],
+      [`  ${fl.operatingExpenses}`, fmtMYR(d.operatingExpenses)],
       [x.margin, fmtPct(d.margin)],
       [x.orders, String(d.orderCount)],
       [fl.avgOrder, fmtMYR(d.avgOrder)],
       [fl.unpaidAmt, fmtMYR(d.unpaidAmount)],
+      ...(d.pendingSyncCount > 0 ? [[fl.pendingCount, String(d.pendingSyncCount)]] : []),
     ],
-    foot: [[fl.net, fmtMYRNeg(d.grossProfit)]],
+    foot: [[fl.net, fmtMYRNeg(d.netProfit)]],
     columnStyles: { 1: { halign: "right" } },
   }) + 6;
 
-  drawFootnote(doc, d.lang, y);
   drawFooters(doc, l);
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   await savePdf(doc, `Bossify_Financial_${ymd}.pdf`);
@@ -1157,11 +1167,11 @@ export type StockReportData = {
   businessName: string;
   logoDataUrl?: string | null;
   items: StockInvRow[];
+  lowStockThreshold?: number;
 };
 
-const LOW_STOCK_THRESHOLD = 5;
-
 export async function exportStockReportPDF(d: StockReportData): Promise<void> {
+  const LOW_STOCK_THRESHOLD = d.lowStockThreshold ?? 5;
   const doc = new jsPDF();
   const asOf = new Date().toLocaleString("en-MY");
   const l = makeLabels(d.lang, STOCK_TITLE[d.lang], `${EXTRA[d.lang].asOf} ${asOf}`);

@@ -49,6 +49,7 @@ function CustomersPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
+  const [tiktokBuyers, setTiktokBuyers] = useState<Array<{ buyerId: string; orders: number; totalSpent: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [menuFor, setMenuFor] = useState<CustomerRow | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<CustomerRow | null>(null);
@@ -148,6 +149,22 @@ function CustomersPage() {
     if (error) toast.error(error.message);
     const rows = (data ?? []) as CustomerRow[];
     setCustomers(rows);
+
+    const { data: tkOrders } = await supabase
+      .from("orders" as any)
+      .select("platform_buyer_id,amount")
+      .eq("user_id", user.id)
+      .eq("order_source", "tiktok")
+      .eq("status", "Paid")
+      .not("platform_buyer_id", "is", null);
+    const map = new Map<string, { buyerId: string; orders: number; totalSpent: number }>();
+    for (const o of ((tkOrders ?? []) as any[])) {
+      const existing = map.get(o.platform_buyer_id) ?? { buyerId: o.platform_buyer_id, orders: 0, totalSpent: 0 };
+      existing.orders += 1;
+      existing.totalSpent += Number(o.amount ?? 0);
+      map.set(o.platform_buyer_id, existing);
+    }
+    setTiktokBuyers(Array.from(map.values()).filter((b) => b.orders > 1).sort((a, b) => b.totalSpent - a.totalSpent));
     if (rows.length) {
       const { data: fuRows } = await supabase
         .from("follow_ups")
@@ -398,6 +415,36 @@ function CustomersPage() {
           </button>
         )}
       </header>
+
+      {tiktokBuyers.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-muted-foreground uppercase">
+              🎵 {lang === "zh" ? "TikTok 回购客户" : lang === "ms" ? "Pelanggan Berulang TikTok" : "TikTok Repeat Buyers"}
+            </p>
+            {tiktokBuyers.length > 5 && (
+              <Link to="/top-buyers" className="text-[11px] font-semibold text-primary shrink-0">
+                {t("ro_view_all")}
+              </Link>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground -mt-1">
+            {lang === "zh" ? "无法显示真实姓名（TikTok 平台限制）" : lang === "ms" ? "Nama sebenar tidak tersedia (had platform)" : "Real names unavailable (platform limitation)"}
+          </p>
+          <div className="rounded-2xl bg-card border border-border/60 divide-y divide-border/40">
+            {tiktokBuyers.slice(0, 5).map((b, idx) => (
+              <div key={b.buyerId} className="flex items-center gap-3 p-3">
+                <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">#{idx + 1}</div>
+                <p className="text-sm font-semibold flex-1">
+                  {lang === "zh" ? `买家 #${idx + 1}` : lang === "ms" ? `Pembeli #${idx + 1}` : `Buyer #${idx + 1}`}
+                </p>
+                <p className="text-xs text-muted-foreground">{b.orders} {lang === "zh" ? "笔" : "orders"}</p>
+                <p className="text-sm font-bold text-primary">RM {b.totalSpent.toFixed(2)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {bizType === "education" && (
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">

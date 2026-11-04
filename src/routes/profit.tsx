@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { orderGrossProfit } from "@/lib/orderMath";
+import { orderContributionProfit } from "@/lib/orderMath";
+import { fetchPeriodAdjustments, type PeriodAdjustments } from "@/lib/refundAdjustments";
 
 export const Route = createFileRoute("/profit")({ component: ProfitPage });
 
@@ -17,6 +18,10 @@ type OrderRow = {
   gross_profit: number | null;
   status: string | null;
   created_at: string;
+  platform_fee_amount: number | null;
+  shipping_cost: number | null;
+  affiliate_commission: number | null;
+  financial_status: string | null;
 };
 
 function rangeStartISO(r: Range): string {
@@ -39,6 +44,7 @@ function ProfitPage() {
   const { t } = useI18n();
   const [range, setRange] = useState<Range>("month");
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [adjustments, setAdjustments] = useState<PeriodAdjustments>({ revenueReversed: 0, cogsReversed: 0, count: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,15 +52,24 @@ function ProfitPage() {
     let cancelled = false;
     setLoading(true);
     (async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("amount,cost,gross_profit,status,created_at")
-        .eq("user_id", user.id)
-        .eq("status", "Paid")
-        .gte("created_at", rangeStartISO(range));
+      const from = rangeStartISO(range);
+      const to = new Date().toISOString();
+      const [{ data, error }, adj] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("amount,cost,gross_profit,status,created_at,platform_fee_amount,shipping_cost,affiliate_commission,financial_status")
+          .eq("user_id", user.id)
+          .eq("status", "Paid")
+          .gte("created_at", from),
+        fetchPeriodAdjustments(user.id, from, to),
+      ]);
       if (cancelled) return;
       if (error) toast.error(error.message);
-      setOrders((data ?? []) as OrderRow[]);
+      // TikTok placeholder orders (financial_status = "pending") have no
+      // real amount/cost yet — never count them.
+      const complete = ((data ?? []) as OrderRow[]).filter((o) => o.financial_status !== "pending");
+      setOrders(complete);
+      setAdjustments(adj);
       setLoading(false);
     })();
     return () => {
@@ -69,15 +84,17 @@ function ProfitPage() {
     for (const o of orders) {
       revenue += Number(o.amount ?? 0);
       cost += Number(o.cost ?? 0);
-      profit += orderGrossProfit({
-        amount: o.amount,
-        cost: o.cost,
-        gross_profit: o.gross_profit,
-      });
+      profit += orderContributionProfit(o);
     }
+    // Refunds/returns are dated on when they happened, not silently
+    // rewritten into the original order — so they net out here, in the
+    // period the refund itself falls in.
+    revenue -= adjustments.revenueReversed;
+    cost -= adjustments.cogsReversed;
+    profit -= adjustments.revenueReversed - adjustments.cogsReversed;
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
     return { revenue, cost, profit, margin, count: orders.length };
-  }, [orders]);
+  }, [orders, adjustments]);
 
   const ranges: { k: Range; label: string }[] = [
     { k: "month", label: t("profit_range_month") },

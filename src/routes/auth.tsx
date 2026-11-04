@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { authErrorText, isValidEmail, pwStrength } from "@/lib/authErrors";
 import { safeSessionStorage } from "@/lib/safeStorage";
+import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
 
 export const Route = createFileRoute("/auth")({ component: AuthPage });
 
@@ -17,6 +19,19 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [businessName, setBusinessName] = useState("");
   const { t } = useI18n();
+  const [tiktokPrefill, setTiktokPrefill] = useState<{ email: string; code: string } | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const tEmail = params.get("tiktok_email");
+    const tCode = params.get("tiktok_code");
+    if (tEmail && tCode) {
+      setTiktokPrefill({ email: tEmail, code: tCode });
+      // Clean the sensitive params out of the visible URL/history right away.
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -27,7 +42,7 @@ function AuthPage() {
 
   return (
     <div data-auth-surface className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}>
-      {mode === "login" && <LoginScreen onGoRegister={() => setMode("reg_email")} />}
+      {mode === "login" && <LoginScreen onGoRegister={() => setMode("reg_email")} tiktokPrefill={tiktokPrefill} />}
       {mode === "reg_email" && (
         <RegEmailScreen
           email={email}
@@ -143,7 +158,7 @@ function planLabel(plan?: string) {
 
 /* ---------- 1. Login ---------- */
 
-function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
+function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void; tiktokPrefill: { email: string; code: string } | null }) {
   const { signIn } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
@@ -154,6 +169,28 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [limitInfo, setLimitInfo] = useState<{ used: number; limit: number; plan: string } | null>(null);
+  const [showTikTokCode, setShowTikTokCode] = useState(!!tiktokPrefill);
+  const [tiktokStarting, setTiktokStarting] = useState(false);
+
+  const startTikTokLogin = async () => {
+    setTiktokStarting(true);
+    try {
+      const res = await fetch("https://tanstack-start-app.bossifystudio.workers.dev/api/public/oauth/tiktok/login-start", {
+        method: "POST",
+      });
+      const j = await res.json();
+      if (!res.ok || !j?.authUrl) throw new Error(j?.message || "Could not start TikTok login");
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({ url: j.authUrl });
+        setTiktokStarting(false);
+      } else {
+        window.location.href = j.authUrl;
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Could not start TikTok login");
+      setTiktokStarting(false);
+    }
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -185,6 +222,10 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
         onManage={() => navigate({ to: "/devices" })}
       />
     );
+  }
+
+  if (showTikTokCode) {
+    return <TikTokLoginCodeScreen onBack={() => setShowTikTokCode(false)} prefill={tiktokPrefill} />;
   }
 
   return (
@@ -246,9 +287,30 @@ function LoginScreen({ onGoRegister }: { onGoRegister: () => void }) {
           <div className="flex-1 h-px bg-[#E0DCF0]" />
         </div>
 
-        <ComingSoonSocialButton provider="tiktok" />
-        <ComingSoonSocialButton provider="google" />
-
+        <button
+          type="button"
+          disabled={tiktokStarting}
+          onClick={startTikTokLogin}
+          className="w-full flex items-center gap-3 rounded-xl border border-[#E0DCF0] bg-white text-[13px] font-semibold text-[#1E1333] px-3 py-2.5 active:scale-[0.99] disabled:opacity-60"
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" className="shrink-0">
+            <path
+              fill="#1E1333"
+              d="M16.5 3.2c.1 1.3.6 2.5 1.5 3.4.9.9 2.1 1.4 3.3 1.5v3c-1.7-.1-3.3-.6-4.8-1.5v6.6c0 3.6-2.9 6.5-6.5 6.5S3.5 19.8 3.5 16.2s2.9-6.5 6.5-6.5c.3 0 .7 0 1 .1v3.1c-.3-.1-.6-.1-1-.1-1.9 0-3.5 1.6-3.5 3.5s1.6 3.5 3.5 3.5 3.5-1.6 3.5-3.5V3.2h3z"
+            />
+          </svg>
+          <span className="min-w-0 flex-1 truncate text-left">
+            {tiktokStarting ? "..." : "Log in with TikTok Shop"}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowTikTokCode(true)}
+          className="text-[11px] text-center w-full"
+          style={{ color: "#7C3AED" }}
+        >
+          Already have a TikTok Shop login code?
+        </button>
         <p className="text-[13px] text-center" style={{ color: "#6B7280" }}>
           {t("no_account")}{" "}
           <button onClick={onGoRegister} className="font-bold" style={{ color: "#7C3AED" }}>{t("register")}</button>
@@ -295,6 +357,82 @@ function ComingSoonSocialButton({ provider }: { provider: "tiktok" | "google" })
         {t("auth_coming_soon")}
       </span>
     </button>
+  );
+}
+
+/* ---------- TikTok Shop login code entry ---------- */
+
+function TikTokLoginCodeScreen({ onBack, prefill }: { onBack: () => void; prefill: { email: string; code: string } | null }) {
+  const router = useRouter();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState(prefill?.email ?? "");
+  const [code, setCode] = useState(prefill?.code ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const verify = async (e?: FormEvent) => {
+    e?.preventDefault();
+    setError(null);
+    if (!email.trim() || code.trim().length < 6) {
+      setError("Enter the email and code shown after TikTok authorization.");
+      return;
+    }
+    setLoading(true);
+    const { data, error: err } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: code.trim(),
+      type: "email",
+    });
+    setLoading(false);
+    if (err || !data?.session) {
+      setError("That code didn't work — it may have expired. Try connecting again.");
+      return;
+    }
+    router.invalidate();
+    navigate({ to: "/" });
+  };
+
+  // Pre-filled from the TikTok callback redirect — log in automatically,
+  // no extra tap needed.
+  useEffect(() => {
+    if (prefill?.email && prefill?.code) verify();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="w-full max-w-[400px] mx-auto space-y-4 flex-1">
+      <BackArrow onClick={onBack} />
+      <div className="flex flex-col items-center gap-1">
+        <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 64, height: 64 }} />
+        <p className="text-[16px] font-bold" style={{ color: "#1E1333" }}>Bossify</p>
+      </div>
+      <div className="text-center">
+        <h1 className="text-[20px] font-bold" style={{ color: "#1E1333" }}>TikTok Shop login code</h1>
+        <p className="text-[13px]" style={{ color: "#6B7280" }}>
+          Enter the email and code shown on the TikTok authorization page.
+        </p>
+      </div>
+      <form onSubmit={verify} className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-3">
+        <div className="space-y-1.5">
+          <FieldLabel>Email shown on that page</FieldLabel>
+          <TextInput
+            type="email" autoCapitalize="none" inputMode="email"
+            placeholder="shop-xxxx@..." value={email}
+            onChange={(e) => { setEmail(e.target.value); setError(null); }}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <FieldLabel>6-digit code</FieldLabel>
+          <TextInput
+            type="text" inputMode="numeric" maxLength={6}
+            placeholder="123456" value={code}
+            onChange={(e) => { setCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(null); }}
+          />
+        </div>
+        <PrimaryButton type="submit" loading={loading}>Log in</PrimaryButton>
+        <ErrorText>{error}</ErrorText>
+      </form>
+    </div>
   );
 }
 

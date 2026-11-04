@@ -8,6 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
+import { getCachedPrefs, loadPrefs } from "@/lib/notifPrefs";
+import { logInventoryChange } from "@/lib/inventoryAudit";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { notifySituation } from "@/lib/autoNotify";
 import { getNotifMessage } from "@/lib/notifMessages";
@@ -18,7 +20,42 @@ import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
 
 export const Route = createFileRoute("/inventory")({ component: InventoryPage });
 
-const LOW_THRESHOLD = 5;
+function timeAgo(iso: string | null, lang: string): string {
+  if (!iso) return lang === "zh" ? "从未同步" : lang === "ms" ? "Belum pernah disegerak" : "Never synced";
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 1) return lang === "zh" ? "刚刚" : lang === "ms" ? "Baru sahaja" : "Just now";
+  if (mins < 60) return lang === "zh" ? `${mins} 分钟前` : lang === "ms" ? `${mins} minit lalu` : `${mins} min ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return lang === "zh" ? `${hrs} 小时前` : lang === "ms" ? `${hrs} jam lalu` : `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  return lang === "zh" ? `${days} 天前` : lang === "ms" ? `${days} hari lalu` : `${days}d ago`;
+}
+
+/** Strips the trailing " (SKU)" suffix tiktok-products-sync.server.ts appends
+ *  to variant rows, recovering the parent TikTok product's title for the
+ *  grouped-card header. */
+function stripVariantSuffix(name: string): string {
+  return name.replace(/\s*\([^)]*\)\s*$/, "").trim() || name;
+}
+
+/** Extracts just the "(SKU)" part of a variant row's name for display inside
+ *  a grouped card, where the parent title is already shown once above. */
+function variantLabel(name: string): string {
+  const m = name.match(/\(([^)]*)\)\s*$/);
+  return m ? m[1] : name;
+}
+
+/** Badge shown on an inventory row whose tiktok_delisted_at is set — the
+ *  product was removed/deactivated on TikTok's side. Row is never hidden
+ *  or deleted automatically (per John's call, 2026-10) so this is the only
+ *  signal the seller gets; they decide whether to delete it themselves. */
+function DelistedBadge({ lang }: { lang: string }) {
+  return (
+    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
+      {lang === "zh" ? "TikTok 已下架" : lang === "ms" ? "Dinyahsenarai di TikTok" : "Delisted on TikTok"}
+    </span>
+  );
+}
 
 function ProfitRow({
   price,
@@ -85,7 +122,74 @@ function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
   const [showStock, setShowStock] = useState<boolean>(true);
+  const [lowThreshold, setLowThreshold] = useState<number>(getCachedPrefs().low_stock_threshold);
+  const [tiktokConnected, setTiktokConnected] = useState(false);
+  const [tiktokLastSynced, setTiktokLastSynced] = useState<string | null>(null);
+  const [tiktokImporting, setTiktokImporting] = useState(false);
+  const [tiktokMsg, setTiktokMsg] = useState<string | null>(null);
   const firstLowRef = useRef<HTMLElement | null>(null);
+
+  const importFromTikTok = async (silent: boolean) => {
+    setTiktokImporting(true);
+    if (!silent) setTiktokMsg(null);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+      const res = await fetch("https://tanstack-start-app.bossifystudio.workers.dev/api/platforms/tiktok/sync-products", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.message || "Import failed");
+      if (user) {
+        const { data: refreshed } = await supabase
+          .from("platform_connections" as any)
+          .select("last_synced_at")
+          .eq("user_id", user.id)
+          .eq("platform", "tiktok")
+          .maybeSingle();
+        setTiktokLastSynced((refreshed as any)?.last_synced_at ?? null);
+      }
+      const importedCount = (j.imported ?? []).length;
+      const refreshedCount = Number(j.refreshed ?? 0);
+      const delistedCount = Number(j.delisted ?? 0);
+      // Delisted-on-TikTok is surfaced regardless of `silent`, same as a
+      // new import — this is something the seller needs to notice even on
+      // a background auto-sync, not just a manual tap.
+      if (!silent || importedCount > 0 || delistedCount > 0) {
+        const parts: string[] = [];
+        if (importedCount > 0) {
+          parts.push(lang === "zh" ? `${importedCount} 个新商品已导入，记得填成本价` : lang === "ms" ? `${importedCount} produk baru diimport` : `${importedCount} new product(s) imported`);
+        }
+        if (delistedCount > 0) {
+          parts.push(lang === "zh" ? `${delistedCount} 个商品在 TikTok 已下架` : lang === "ms" ? `${delistedCount} produk telah dinyahsenarai di TikTok` : `${delistedCount} product(s) delisted on TikTok`);
+        }
+        if (parts.length === 0) {
+          parts.push(
+            refreshedCount > 0
+              ? (lang === "zh" ? `已更新 ${refreshedCount} 个商品的价格/库存` : lang === "ms" ? `${refreshedCount} produk dikemas kini` : `${refreshedCount} product(s) refreshed`)
+              : (lang === "zh" ? "已是最新" : lang === "ms" ? "Sudah terkini" : "Already up to date"),
+          );
+        }
+        setTiktokMsg(parts.join(" · "));
+        setTimeout(() => setTiktokMsg(null), 5000);
+      }
+      // Always reload the on-screen list after a sync attempt, not just
+      // when something was newly imported/linked — otherwise a routine
+      // re-sync that only refreshes an already-linked product's price/
+      // stock (the common case) writes the new numbers to the database
+      // but the screen keeps showing what it had before the sync, making
+      // the sync look like it isn't doing anything.
+      load();
+    } catch (err: any) {
+      if (!silent) {
+        setTiktokMsg(err?.message || "Import failed");
+        setTimeout(() => setTiktokMsg(null), 4000);
+      }
+    } finally {
+      setTiktokImporting(false);
+    }
+  };
 
   const load = async () => {
     const { data, error } = await supabase.from("inventory").select("*").order("name", { ascending: true });
@@ -94,6 +198,36 @@ function InventoryPage() {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    loadPrefs(user.id).then((p) => setLowThreshold(p.low_stock_threshold)).catch(() => undefined);
+  }, [user?.id]);
+
+  // Check whether TikTok Shop is connected; if so, quietly refresh the
+  // product catalog on page load (throttled to once every 2 minutes so
+  // repeated visits don't hammer the TikTok API).
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("platform_connections" as any)
+        .select("status,last_synced_at")
+        .eq("user_id", user.id)
+        .eq("platform", "tiktok")
+        .maybeSingle();
+      const isConnected = (data as any)?.status === "active";
+      setTiktokConnected(isConnected);
+      setTiktokLastSynced((data as any)?.last_synced_at ?? null);
+      if (!isConnected) return;
+      const key = "bossify_tiktok_products_last_auto_sync";
+      const last = Number(sessionStorage.getItem(key) ?? 0);
+      if (Date.now() - last > 2 * 60 * 1000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        importFromTikTok(true);
+      }
+    })();
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -125,6 +259,7 @@ function InventoryPage() {
       toast.error(error.message);
     } else {
       toast.success(t("stock_updated"));
+      if (user) logInventoryChange({ userId: user.id, productId: it.id, productName: it.name, fieldName: "stock", oldValue: it.stock, newValue: next, source: "products_tab_adjust" });
       if (next <= 5 && next < it.stock) {
         const m = getNotifMessage("low_stock", bizType, lang, {
           product: it.name,
@@ -166,8 +301,43 @@ function InventoryPage() {
     const matchesCategory = activeCategory === "__all" || (i.category ?? "") === activeCategory;
     return matchesSearch && matchesCategory;
   });
-  const lowItems = items.filter((i) => i.stock <= LOW_THRESHOLD);
+  const lowItems = items.filter((i) => i.stock <= lowThreshold);
   const atLimit = !hasFullAccess && productsUsed >= productsLimit;
+
+  // Group TikTok-synced variant rows (same product, different size/color —
+  // each SKU is its own inventory row but they share tiktok_product_id)
+  // into one card instead of listing them as separate, disconnected
+  // products. Manually-added products (no tiktok_product_id) are untouched.
+  type GroupedEntry =
+    | { kind: "single"; item: InvRow }
+    | { kind: "group"; key: string; title: string; items: InvRow[] };
+
+  const grouped = useMemo<GroupedEntry[]>(() => {
+    const byTiktokId = new Map<string, InvRow[]>();
+    for (const it of visible) {
+      const tid = (it as any).tiktok_product_id as string | null | undefined;
+      if (!tid) continue;
+      if (!byTiktokId.has(tid)) byTiktokId.set(tid, []);
+      byTiktokId.get(tid)!.push(it);
+    }
+    const groupedIds = new Set<string>();
+    for (const [tid, arr] of byTiktokId) if (arr.length > 1) groupedIds.add(tid);
+
+    const out: GroupedEntry[] = [];
+    const seen = new Set<string>();
+    for (const it of visible) {
+      const tid = (it as any).tiktok_product_id as string | null | undefined;
+      if (tid && groupedIds.has(tid)) {
+        if (seen.has(tid)) continue;
+        seen.add(tid);
+        const groupItems = byTiktokId.get(tid)!;
+        out.push({ kind: "group", key: tid, title: stripVariantSuffix(groupItems[0].name), items: groupItems });
+      } else {
+        out.push({ kind: "single", item: it });
+      }
+    }
+    return out;
+  }, [visible]);
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-5 relative">
@@ -185,6 +355,26 @@ function InventoryPage() {
           </Link>
         )}
       </header>
+
+      {tiktokConnected && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={tiktokImporting}
+              onClick={() => importFromTikTok(false)}
+              className="flex-1 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95 disabled:opacity-60"
+            >
+              {tiktokImporting
+                ? (lang === "zh" ? "同步中…" : lang === "ms" ? "Menyegerak…" : "Syncing…")
+                : `🎵 ${lang === "zh" ? "同步 TikTok 商品" : lang === "ms" ? "Segerak produk TikTok" : "Sync TikTok products"}`}
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground text-center">
+            {tiktokMsg ?? `${lang === "zh" ? "上次同步：" : lang === "ms" ? "Segerak terakhir: " : "Last synced: "}${timeAgo(tiktokLastSynced, lang)}`}
+          </p>
+        </div>
+      )}
 
       {(bizType === "retail" || bizType === "fnb") && <StockTabs active="products" />}
 
@@ -281,8 +471,122 @@ function InventoryPage() {
         {!loading && items.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_products_create")}</p>
         )}
-        {!loading && items.length > 0 && visible.map((it, idx) => {
-          const low = it.stock <= LOW_THRESHOLD;
+        {!loading && items.length > 0 && grouped.map((entry, idx) => {
+          if (entry.kind === "group") {
+            const { key, title, items: groupItems } = entry;
+            const prices = groupItems.map((g) => Number(g.price ?? 0)).filter((p) => p > 0);
+            const minPrice = prices.length ? Math.min(...prices) : 0;
+            const anyLow = groupItems.some((g) => g.stock <= lowThreshold);
+            const isFirstLowGroup = anyLow && !!lowItems[0] && groupItems.some((g) => g.id === lowItems[0].id);
+            const coverImage = groupItems.find((g) => g.image_url)?.image_url;
+            return (
+              <article
+                key={key}
+                id={idx === 0 ? "tour-inv-card" : undefined}
+                ref={isFirstLowGroup ? (el) => { firstLowRef.current = el; } : undefined}
+                className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="h-12 w-12 shrink-0 rounded-xl bg-muted/50 border border-border/60 overflow-hidden flex items-center justify-center">
+                      {coverImage ? (
+                        <img src={coverImage} alt={title} className="h-full w-full object-cover" />
+                      ) : (
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-sm font-semibold text-foreground truncate">{title}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                          {groupItems.length} {lang === "zh" ? "个规格" : lang === "ms" ? "varian" : "variants"}
+                        </span>
+                        {minPrice > 0 && (
+                          <span className="text-[11px] text-muted-foreground">
+                            {lang === "zh" ? "起 " : lang === "ms" ? "dari " : "from "}RM {minPrice.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {anyLow && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600 shrink-0">
+                      {t("low_stock_badge")}
+                    </span>
+                  )}
+                </div>
+
+                <div className="rounded-xl bg-muted/30 border border-border/50 divide-y divide-border/50 overflow-hidden">
+                  {groupItems.map((v) => {
+                    const vLow = v.stock <= lowThreshold;
+                    const label = variantLabel(v.name);
+                    return (
+                      <div key={v.id} className="p-3 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <Link
+                            to="/inventory/$itemId"
+                            params={{ itemId: v.id }}
+                            className="flex-1 min-w-0 active:opacity-70 transition"
+                          >
+                            <p className="text-sm font-semibold text-foreground truncate">{label}</p>
+                          </Link>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {!!(v as any).tiktok_delisted_at && <DelistedBadge lang={lang} />}
+                            {vLow && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600">
+                                {t("low_stock_badge")}
+                              </span>
+                            )}
+                            <button
+                              onClick={() => setSheet({ kind: "form", item: v })}
+                              className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+                              aria-label={t("edit")}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setSheet({ kind: "delete", item: v })}
+                              className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
+                              aria-label={t("delete")}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className={`text-lg font-bold ${vLow ? "text-red-500" : "text-foreground"}`}>{v.stock}</span>
+                          <span className="text-xs text-muted-foreground">{formatUnit(v.unit, t)} {t("left")}</span>
+                          {v.price ? (
+                            <span className="ml-auto text-xs font-semibold text-primary">
+                              RM {Number(v.price).toFixed(2)}
+                            </span>
+                          ) : null}
+                        </div>
+                        <ProfitRow price={v.price} cost={(v as any).cost_price} t={t} />
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => setSheet({ kind: "remove", item: v })}
+                            className="py-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold active:scale-[0.98] transition-transform"
+                          >
+                            – {t("remove")}
+                          </button>
+                          <button
+                            onClick={() => setSheet({ kind: "restock", item: v })}
+                            className="py-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-xs font-semibold active:scale-[0.98] transition-transform"
+                          >
+                            + {t("restock")}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </article>
+            );
+          }
+
+          const it = entry.item;
+          const low = it.stock <= lowThreshold;
           const pct = Math.min(100, Math.round((it.stock / Math.max(1, it.max_stock)) * 100));
           const isFirstLow = low && lowItems[0]?.id === it.id;
           return (
@@ -315,6 +619,7 @@ function InventoryPage() {
                   </div>
                 </Link>
                 <div className="flex items-center gap-1.5">
+                  {!!(it as any).tiktok_delisted_at && <DelistedBadge lang={lang} />}
                   {low && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600">
                       {t("low_stock_badge")}
@@ -374,15 +679,21 @@ function InventoryPage() {
         )}
       </div>
 
+      {/*
+        Pill style (icon + label), centered above the bottom nav — matches
+        the look of the home page's "+ new sale" button per John's request,
+        instead of the old icon-only circle. Same onClick/lock logic as
+        before, just restyled.
+      */}
       <button
         onClick={() => atLimit ? showUpgrade(t("limit_inventory")) : setSheet({ kind: "form" })}
         id="tour-inv-add"
         aria-label={t("add_product")}
         title={atLimit ? t("limit_inventory") : t("add_product")}
-        className={`fixed fab-above-nav z-30 h-14 w-14 rounded-full text-primary-foreground shadow-[var(--shadow-soft)] flex items-center justify-center active:scale-95 transition-transform ${atLimit ? "bg-muted-foreground/60" : "bg-gradient-to-br from-primary to-primary/80"}`}
-        style={{ right: "max(1.5rem, calc(50vw - 180px + 1rem))" }}
+        className={`fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform ${atLimit ? "bg-muted-foreground/60" : "bg-gradient-to-br from-primary to-primary/80"}`}
       >
-        {atLimit ? <span className="text-base">🔒</span> : <Plus className="h-6 w-6" strokeWidth={2.5} />}
+        {atLimit ? <span className="text-base">🔒</span> : <Plus className="h-5 w-5" strokeWidth={2.5} />}
+        {t("add_product")}
       </button>
 
       {sheet.kind === "form" && (
@@ -426,4 +737,3 @@ function InventoryPage() {
     </div>
   );
 }
-

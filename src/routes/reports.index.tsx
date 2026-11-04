@@ -8,6 +8,9 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { orderCost, orderGrossProfit, orderProfitMargin } from "@/lib/orderMath";
+import { downloadCSV } from "@/lib/csvExport";
+import { loadPrefs } from "@/lib/notifPrefs";
+import { fetchPeriodAdjustments } from "@/lib/refundAdjustments";
 import {
   exportSalesReportPDF,
   exportProfitReportPDF,
@@ -28,6 +31,24 @@ type Range = "today" | "week" | "month" | "custom";
 function startOfDay(d: Date) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
 function endOfDay(d: Date) { const x = new Date(d); x.setHours(23,59,59,999); return x; }
 
+type OrderItemRow = {
+  order_id: string;
+  product_id: string | null;
+  product_name: string;
+  quantity: number;
+  unit_price_at_sale: number;
+  unit_cost_at_sale: number;
+  packaging_cost_at_sale: number;
+};
+
+/** Strips the trailing " (SKU)" suffix tiktok-products-sync.server.ts
+ *  appends to variant rows, so the Sales/Profit PDF product breakdowns
+ *  rank the parent product (e.g. "T恤") instead of splitting it into
+ *  weaker "T恤 (S)" / "T恤 (M)" entries. */
+function stripVariantSuffix(name: string): string {
+  return name.replace(/\s*\([^)]*\)\s*$/, "").trim() || name;
+}
+
 function ReportsHub() {
   if (!REPORTS_HUB_MODE) return <Navigate to="/reports/sales" replace />;
 
@@ -41,12 +62,28 @@ function ReportsHub() {
   const [range, setRange] = useState<Range>("month");
   const [from, setFrom] = useState<string>(() => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   const [to, setTo] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  type OrderExt = OrderRow & { payment_method?: string | null; order_source?: string | null };
+  // Paid Orders / All Orders — deliberately NOT called "Cash/Accrual Basis":
+  // we don't yet track separate paid_at / fulfilled_at dates, so this is a
+  // simpler distinction (only Paid-status orders vs every non-cancelled
+  // order in the date range), not true cash/accrual accounting.
+  const [reportBasis, setReportBasis] = useState<"paid_orders" | "all_orders">("paid_orders");
+  type OrderExt = OrderRow & {
+    payment_method?: string | null;
+    order_source?: string | null;
+    platform_fee_amount?: number | null;
+    shipping_cost?: number | null;
+    affiliate_commission?: number | null;
+    financial_status?: string | null;
+  };
   const [orders, setOrders] = useState<OrderExt[]>([]);
   const [busy, setBusy] = useState<null | "sales" | "profit" | "stock" | "financial" | "customer" | "supplier" | "recon">(null);
   const [pickCustomer, setPickCustomer] = useState(false);
   const [customerList, setCustomerList] = useState<Array<{ id: string; name: string; phone: string | null; total_orders: number; total_spent: number; last_order_at: string | null }>>([]);
   const [customerQuery, setCustomerQuery] = useState("");
+  const [orderCategories, setOrderCategories] = useState<Record<string, Set<string>>>({});
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("__all");
+  const [orderItems, setOrderItems] = useState<OrderItemRow[]>([]);
+  const [tiktokIdByProduct, setTiktokIdByProduct] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!user?.id) return;
@@ -54,10 +91,37 @@ function ReportsHub() {
     (async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,code,customer_name,phone,product,quantity,amount,cost,gross_profit,status,created_at,payment_method,order_source")
+        .select("id,code,customer_name,phone,product,quantity,amount,cost,gross_profit,status,created_at,payment_method,order_source,platform_fee_amount,shipping_cost,affiliate_commission,financial_status")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (!cancelled) setOrders((data ?? []) as OrderExt[]);
+
+      const orderIds = ((data ?? []) as any[]).map((o) => o.id);
+      if (orderIds.length > 0) {
+        const { data: items } = await supabase
+          .from("order_items" as any)
+          .select("order_id,product_id,product_name,quantity,unit_price_at_sale,unit_cost_at_sale,packaging_cost_at_sale")
+          .in("order_id", orderIds);
+        if (!cancelled) setOrderItems(((items ?? []) as any) as OrderItemRow[]);
+        const productIds = Array.from(new Set(((items ?? []) as any[]).map((i) => i.product_id).filter(Boolean)));
+        const catByProduct: Record<string, string> = {};
+        if (productIds.length > 0) {
+          const { data: invRows } = await supabase.from("inventory").select("id,category,tiktok_product_id").in("id", productIds);
+          const tidByProduct: Record<string, string> = {};
+          for (const r of ((invRows ?? []) as any[])) {
+            catByProduct[r.id] = r.category || "";
+            if (r.tiktok_product_id) tidByProduct[r.id] = r.tiktok_product_id;
+          }
+          if (!cancelled) setTiktokIdByProduct(tidByProduct);
+        }
+        const map: Record<string, Set<string>> = {};
+        for (const it of ((items ?? []) as any[])) {
+          const c = it.product_id ? catByProduct[it.product_id] : "";
+          if (!c) continue;
+          (map[it.order_id] ??= new Set()).add(c);
+        }
+        if (!cancelled) setOrderCategories(map);
+      }
     })();
     return () => { cancelled = true; };
   }, [user?.id]);
@@ -79,9 +143,12 @@ function ReportsHub() {
   const inRange = useMemo(
     () => orders.filter((o) => {
       const d = new Date(o.created_at);
-      return d >= fromDate && d <= toDate;
+      const inWindow = d >= fromDate && d <= toDate;
+      if (!inWindow) return false;
+      if (activeCategoryFilter === "__all") return true;
+      return orderCategories[o.id]?.has(activeCategoryFilter) ?? false;
     }),
-    [orders, fromDate, toDate],
+    [orders, fromDate, toDate, activeCategoryFilter, orderCategories],
   );
 
   async function getProfile() {
@@ -122,16 +189,52 @@ function ReportsHub() {
       const pendingCount = inRange.filter((o) => o.status === "Pending").length;
       const unpaidCount = inRange.filter((o) => o.status === "Unpaid").length;
 
-      const prodMap = new Map<string, { qty: number; revenue: number }>();
-      inRange.forEach((o) => {
-        const cur = prodMap.get(o.product) ?? { qty: 0, revenue: 0 };
-        cur.qty += Number(o.quantity);
-        if (o.status === "Paid") cur.revenue += Number(o.amount);
-        prodMap.set(o.product, cur);
+      // Aggregated from order LINE ITEMS, not the order-level "product" text
+      // field (which is every item in that order joined with commas, e.g.
+      // "T恤 (S) × 2, 裤子 × 1" — treating that whole string as one
+      // "product" silently broke ranking for any multi-item order). Same-
+      // product TikTok variants (S/M/L etc., sharing tiktok_product_id) are
+      // merged into one ranking entry.
+      const inRangeIds = new Set(inRange.map((o) => o.id));
+      const orderById = new Map(orders.map((o) => [o.id, o]));
+      const variantMap = new Map<string, { name: string; qty: number; revenue: number; productId: string | null }>();
+      orderItems.forEach((it) => {
+        if (!inRangeIds.has(it.order_id)) return;
+        const o = orderById.get(it.order_id);
+        const key = it.product_name || "—";
+        const cur = variantMap.get(key) ?? { name: key, qty: 0, revenue: 0, productId: it.product_id ?? null };
+        cur.qty += Number(it.quantity ?? 0);
+        if (o?.status === "Paid") cur.revenue += Number(it.unit_price_at_sale ?? 0) * Number(it.quantity ?? 0);
+        if (!cur.productId && it.product_id) cur.productId = it.product_id;
+        variantMap.set(key, cur);
       });
-      const topProducts = [...prodMap.entries()]
-        .map(([name, v]) => ({ name, ...v }))
-        .sort((a, b) => b.qty - a.qty).slice(0, 5);
+      const salesByTiktokId = new Map<string, Array<{ name: string; qty: number; revenue: number; productId: string | null }>>();
+      for (const v of variantMap.values()) {
+        const tid = v.productId ? tiktokIdByProduct[v.productId] : undefined;
+        if (!tid) continue;
+        if (!salesByTiktokId.has(tid)) salesByTiktokId.set(tid, []);
+        salesByTiktokId.get(tid)!.push(v);
+      }
+      const salesGroupedIds = new Set<string>();
+      for (const [tid, arr] of salesByTiktokId) if (arr.length > 1) salesGroupedIds.add(tid);
+      const mergedProducts: { name: string; qty: number; revenue: number }[] = [];
+      const salesSeen = new Set<string>();
+      for (const v of variantMap.values()) {
+        const tid = v.productId ? tiktokIdByProduct[v.productId] : undefined;
+        if (tid && salesGroupedIds.has(tid)) {
+          if (salesSeen.has(tid)) continue;
+          salesSeen.add(tid);
+          const vs = salesByTiktokId.get(tid)!;
+          mergedProducts.push({
+            name: stripVariantSuffix(vs[0].name),
+            qty: vs.reduce((s, x) => s + x.qty, 0),
+            revenue: vs.reduce((s, x) => s + x.revenue, 0),
+          });
+        } else {
+          mergedProducts.push({ name: v.name, qty: v.qty, revenue: v.revenue });
+        }
+      }
+      const topProducts = mergedProducts.sort((a, b) => b.qty - a.qty).slice(0, 5);
 
       const custMap = new Map<string, { orders: number; spent: number }>();
       inRange.forEach((o) => {
@@ -176,19 +279,53 @@ function ReportsHub() {
       const orderCount = paid.length;
       const avgPerOrder = orderCount > 0 ? grossProfit / orderCount : 0;
 
-      const m = new Map<string, { qty: number; revenue: number; cost: number; profit: number }>();
-      paid.forEach((o) => {
-        const cur = m.get(o.product) ?? { qty: 0, revenue: 0, cost: 0, profit: 0 };
-        cur.qty += Number(o.quantity);
-        cur.revenue += Number(o.amount);
-        cur.cost += orderCost(o);
-        cur.profit += orderGrossProfit(o);
-        m.set(o.product, cur);
+      // Same fix as the Sales PDF above: aggregate from order line items
+      // (unit_cost_at_sale + packaging_cost_at_sale per item — the same
+      // COGS basis that rolls up into order.cost) instead of attributing
+      // an entire multi-item order's cost/profit to its joined "product"
+      // text. Same-product TikTok variants are merged into one entry.
+      const paidIds = new Set(paid.map((o) => o.id));
+      const variantProfitMap = new Map<string, { name: string; qty: number; revenue: number; cost: number; profit: number; productId: string | null }>();
+      orderItems.forEach((it) => {
+        if (!paidIds.has(it.order_id)) return;
+        const key = it.product_name || "—";
+        const qty = Number(it.quantity ?? 0);
+        const revenue = Number(it.unit_price_at_sale ?? 0) * qty;
+        const cost = (Number(it.unit_cost_at_sale ?? 0) + Number(it.packaging_cost_at_sale ?? 0)) * qty;
+        const cur = variantProfitMap.get(key) ?? { name: key, qty: 0, revenue: 0, cost: 0, profit: 0, productId: it.product_id ?? null };
+        cur.qty += qty;
+        cur.revenue += revenue;
+        cur.cost += cost;
+        cur.profit += revenue - cost;
+        if (!cur.productId && it.product_id) cur.productId = it.product_id;
+        variantProfitMap.set(key, cur);
       });
-      const products = [...m.entries()].map(([name, v]) => {
-        const marginPct = v.revenue > 0 ? (v.profit / v.revenue) * 100 : 0;
-        return { name, ...v, margin: marginPct };
-      });
+      const profitByTiktokId = new Map<string, Array<{ name: string; qty: number; revenue: number; cost: number; profit: number; productId: string | null }>>();
+      for (const v of variantProfitMap.values()) {
+        const tid = v.productId ? tiktokIdByProduct[v.productId] : undefined;
+        if (!tid) continue;
+        if (!profitByTiktokId.has(tid)) profitByTiktokId.set(tid, []);
+        profitByTiktokId.get(tid)!.push(v);
+      }
+      const profitGroupedIds = new Set<string>();
+      for (const [tid, arr] of profitByTiktokId) if (arr.length > 1) profitGroupedIds.add(tid);
+      const products: { name: string; qty: number; revenue: number; cost: number; profit: number; margin: number }[] = [];
+      const profitSeen = new Set<string>();
+      for (const v of variantProfitMap.values()) {
+        const tid = v.productId ? tiktokIdByProduct[v.productId] : undefined;
+        if (tid && profitGroupedIds.has(tid)) {
+          if (profitSeen.has(tid)) continue;
+          profitSeen.add(tid);
+          const vs = profitByTiktokId.get(tid)!;
+          const qty = vs.reduce((s, x) => s + x.qty, 0);
+          const revenue = vs.reduce((s, x) => s + x.revenue, 0);
+          const cost = vs.reduce((s, x) => s + x.cost, 0);
+          const profit = revenue - cost;
+          products.push({ name: stripVariantSuffix(vs[0].name), qty, revenue, cost, profit, margin: revenue > 0 ? (profit / revenue) * 100 : 0 });
+        } else {
+          products.push({ name: v.name, qty: v.qty, revenue: v.revenue, cost: v.cost, profit: v.profit, margin: v.revenue > 0 ? (v.profit / v.revenue) * 100 : 0 });
+        }
+      }
       const top = [...products].sort((a, b) => b.profit - a.profit).slice(0, 10);
       const bottom = [...products].sort((a, b) => a.profit - b.profit).slice(0, 10);
 
@@ -209,14 +346,17 @@ function ReportsHub() {
       const { businessName, logoDataUrl } = await getProfile();
       const { data } = await supabase
         .from("inventory")
-        .select("id,name,stock,price,cost_price")
+        .select("id,name,stock,price,cost_price,category")
         .eq("user_id", user?.id ?? "")
         .order("name", { ascending: true });
-      const items = ((data ?? []) as StockInvRow[]);
+      const items = (((data ?? []) as StockInvRow[]).filter(
+        (i: any) => activeCategoryFilter === "__all" || (i.category ?? "") === activeCategoryFilter,
+      ));
+      const lowStockThreshold = user ? (await loadPrefs(user.id)).low_stock_threshold : 5;
 
       await exportStockReportPDF({
         lang, businessName, logoDataUrl,
-        items,
+        items, lowStockThreshold,
       });
     } catch (e) { console.error("[reports] stock pdf failed", e); toast.error(t("pdf_failed")); }
     finally { setBusy(null); }
@@ -228,17 +368,44 @@ function ReportsHub() {
     await new Promise((r) => setTimeout(r, 30));
     try {
       const { businessName, logoDataUrl } = await getProfile();
-      const paid = inRange.filter((o) => o.status === "Paid");
-      const revenue = paid.reduce((s, o) => s + Number(o.amount), 0);
-      const cogs = paid.reduce((s, o) => s + orderCost(o), 0);
-      const grossProfit = paid.reduce((s, o) => s + orderGrossProfit(o), 0);
+      const basisOrders = reportBasis === "paid_orders"
+        ? inRange.filter((o) => o.status === "Paid")
+        : inRange;
+      // TikTok placeholder orders (financial_status = "pending") are excluded
+      // from every figure below — they have no real amount/cost yet.
+      const pending = basisOrders.filter((o) => o.financial_status === "pending");
+      const paid = basisOrders.filter((o) => o.financial_status !== "pending");
+
+      // Refunds/returns are dated on when they happened, not silently
+      // rewritten into the original order — net them out of THIS period.
+      const adjustments = await fetchPeriodAdjustments(user?.id ?? "", fromDate.toISOString(), toDate.toISOString());
+
+      const revenue = paid.reduce((s, o) => s + Number(o.amount), 0) - adjustments.revenueReversed;
+      const cogs = paid.reduce((s, o) => s + orderCost(o), 0) - adjustments.cogsReversed;
+      const grossProfit = paid.reduce((s, o) => s + orderGrossProfit(o), 0) - (adjustments.revenueReversed - adjustments.cogsReversed);
+      const platformFees = paid.reduce((s, o) => s + Number(o.platform_fee_amount ?? 0), 0);
+      const shippingCosts = paid.reduce((s, o) => s + Number(o.shipping_cost ?? 0), 0);
+      const affiliateCosts = paid.reduce((s, o) => s + Number(o.affiliate_commission ?? 0), 0);
+      const contributionProfit = grossProfit - platformFees - shippingCosts - affiliateCosts;
+
+      const { data: expenseRows } = await supabase
+        .from("operating_expenses" as any)
+        .select("amount")
+        .eq("user_id", user?.id ?? "")
+        .gte("incurred_at", fromDate.toISOString().slice(0, 10))
+        .lte("incurred_at", toDate.toISOString().slice(0, 10));
+      const operatingExpenses = ((expenseRows ?? []) as any[]).reduce((s, e) => s + Number(e.amount ?? 0), 0);
+
+      const netProfit = contributionProfit - operatingExpenses;
       const margin = orderProfitMargin(revenue, grossProfit);
       const orderCount = paid.length;
       const avgOrder = orderCount > 0 ? revenue / orderCount : 0;
       const unpaidAmount = inRange.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount), 0);
       await exportFinancialReportPDF({
         lang, businessName, logoDataUrl, rangeLabel: label,
-        revenue, cogs, grossProfit, margin, orderCount, avgOrder, unpaidAmount,
+        revenue, cogs, grossProfit, platformFees, contributionProfit,
+        operatingExpenses, netProfit, margin, orderCount, avgOrder, unpaidAmount,
+        pendingSyncCount: pending.length,
       });
     } catch (e) { console.error("[reports] financial pdf failed", e); toast.error(t("pdf_failed")); }
     finally { setBusy(null); }
@@ -378,6 +545,26 @@ function ReportsHub() {
     finally { setBusy(null); }
   };
 
+  const handleCSVExport = () => {
+    if (!gate()) return;
+    const qtyLabel = lang === "zh" ? "数量" : lang === "ms" ? "Kuantiti" : "Qty";
+    const costLabel = lang === "zh" ? "成本" : lang === "ms" ? "Kos" : "Cost";
+    downloadCSV(
+      `orders-${label.replace(/\s+/g, "-")}`,
+      [t("date_label"), t("code_label"), t("customer_name"), t("product"), qtyLabel, t("price"), costLabel, t("payment_status")],
+      inRange.map((o) => [
+        new Date(o.created_at).toLocaleDateString("en-MY"),
+        o.code ?? "",
+        o.customer_name ?? "",
+        o.product ?? "",
+        Number(o.quantity ?? 0),
+        Number(o.amount ?? 0).toFixed(2),
+        orderCost(o).toFixed(2),
+        o.status,
+      ]),
+    );
+  };
+
   const cards: Array<{
     key: "sales" | "profit" | "stock" | "financial" | "customer" | "supplier" | "recon";
     icon: typeof BarChart3;
@@ -436,6 +623,63 @@ function ReportsHub() {
       <p className="text-[11px] text-muted-foreground -mt-2">
         {t("reports_hub_hint")}
       </p>
+
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+          {lang === "zh" ? "计算范围" : lang === "ms" ? "Skop kiraan" : "Basis"}
+        </span>
+        <div className="flex gap-1 bg-muted rounded-full p-1">
+          {(["paid_orders", "all_orders"] as const).map((b) => (
+            <button
+              key={b}
+              onClick={() => setReportBasis(b)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${reportBasis === b ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}
+            >
+              {b === "paid_orders"
+                ? (lang === "zh" ? "已付款订单" : lang === "ms" ? "Pesanan dibayar" : "Paid orders")
+                : (lang === "zh" ? "全部订单" : lang === "ms" ? "Semua pesanan" : "All orders")}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {(() => {
+        const cats = Array.from(new Set(Object.values(orderCategories).flatMap((s) => Array.from(s))));
+        if (cats.length === 0) return null;
+        return (
+          <div className="space-y-1">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              <button
+                onClick={() => setActiveCategoryFilter("__all")}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold ${activeCategoryFilter === "__all" ? "bg-primary text-primary-foreground" : "bg-card border border-border/60 text-muted-foreground"}`}
+              >
+                {lang === "zh" ? "全部分类" : lang === "ms" ? "Semua kategori" : "All categories"}
+              </button>
+              {cats.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setActiveCategoryFilter(c)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold ${activeCategoryFilter === c ? "bg-primary text-primary-foreground" : "bg-card border border-border/60 text-muted-foreground"}`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+            {activeCategoryFilter !== "__all" && (
+              <p className="text-[10px] text-muted-foreground">
+                {lang === "zh" ? "⚠️ 客户对账单/供应商报表不受此筛选影响" : lang === "ms" ? "⚠️ Penyata pelanggan/pembekal tidak terjejas" : "⚠️ Customer statement/Supplier report are not affected by this filter"}
+              </p>
+            )}
+          </div>
+        );
+      })()}
+
+      <button
+        onClick={handleCSVExport}
+        className="w-full py-3 rounded-2xl bg-card border border-border/60 text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98]"
+      >
+        📄 {lang === "zh" ? "导出原始订单 CSV（给会计师/报税用）" : lang === "ms" ? "Eksport CSV pesanan mentah" : "Export raw orders CSV (for your accountant/tax)"}
+      </button>
 
       <section className="space-y-3">
         {cards.map((c) => {

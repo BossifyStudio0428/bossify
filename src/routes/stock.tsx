@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { getCachedPrefs, loadPrefs } from "@/lib/notifPrefs";
+import { logInventoryChange } from "@/lib/inventoryAudit";
 
 type Row = {
   id: string;
@@ -16,7 +18,6 @@ type Row = {
   cover_image_url: string | null;
 };
 
-const LOW_STOCK_THRESHOLD = 5;
 const VELOCITY_WINDOW_DAYS = 14;
 const PAR_MULTIPLIER = 2; // 2× weekly average
 
@@ -38,6 +39,12 @@ function StockPage() {
   const [velocity, setVelocity] = useState<Map<string, number>>(new Map()); // qty per day, keyed by lower(name)
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [lowThreshold, setLowThreshold] = useState<number>(getCachedPrefs().low_stock_threshold);
+
+  useEffect(() => {
+    if (!user) return;
+    loadPrefs(user.id).then((p) => setLowThreshold(p.low_stock_threshold)).catch(() => undefined);
+  }, [user?.id]);
   const [sort, setSort] = useState<SortMode>("needs");
 
   const load = async () => {
@@ -50,7 +57,7 @@ function StockPage() {
         .order("stock", { ascending: true }),
       supabase
         .from("orders")
-        .select("product,quantity,status,created_at")
+        .select("id,status,created_at")
         .eq("user_id", user.id)
         .eq("status", "Paid")
         .gte("created_at", startOfDaysAgoISO(VELOCITY_WINDOW_DAYS)),
@@ -58,13 +65,26 @@ function StockPage() {
     if (invRes.error) toast.error(invRes.error.message);
     setRows((invRes.data ?? []) as Row[]);
 
+    // Sales velocity is computed from order LINE ITEMS, not the order-level
+    // "product" text field (every item in that order joined with commas,
+    // e.g. "T恤 (S) × 2, 裤子 × 1"). Matched by exact name to each
+    // inventory row, so a TikTok-synced size/color variant still gets its
+    // own restock suggestion, driven by its own sales — that part is
+    // deliberately NOT merged the way the Products list display is.
     const perDay = new Map<string, number>();
-    for (const o of (ordRes.data ?? []) as any[]) {
-      const key = String(o.product ?? "").trim().toLowerCase();
-      if (!key) continue;
-      const qty = Number(o.quantity ?? 0);
-      if (qty <= 0) continue;
-      perDay.set(key, (perDay.get(key) ?? 0) + qty / VELOCITY_WINDOW_DAYS);
+    const orderIds = ((ordRes.data ?? []) as any[]).map((o) => o.id).filter(Boolean);
+    if (orderIds.length > 0) {
+      const { data: items } = await supabase
+        .from("order_items" as any)
+        .select("product_name,quantity")
+        .in("order_id", orderIds);
+      for (const it of (items ?? []) as any[]) {
+        const key = String(it.product_name ?? "").trim().toLowerCase();
+        if (!key) continue;
+        const qty = Number(it.quantity ?? 0);
+        if (qty <= 0) continue;
+        perDay.set(key, (perDay.get(key) ?? 0) + qty / VELOCITY_WINDOW_DAYS);
+      }
     }
     setVelocity(perDay);
     setLoading(false);
@@ -106,12 +126,14 @@ function StockPage() {
     if (error) {
       setRows(prev);
       toast.error(error.message);
+    } else if (user) {
+      logInventoryChange({ userId: user.id, productId: r.id, productName: r.name, fieldName: "stock", oldValue: r.stock, newValue: next, source: "stock_tab_adjust" });
     }
   };
 
   const tone = (r: Row): "danger" | "warn" | "ok" => {
     const s = Number(r.stock ?? 0);
-    const thr = LOW_STOCK_THRESHOLD;
+    const thr = lowThreshold;
     if (s <= 0) return "danger";
     if (s <= thr) return "warn";
     return "ok";
@@ -201,11 +223,11 @@ function StockPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{r.name}</p>
-                    <div className="flex items-center gap-1.5 mt-1">
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${badgeClass}`}>
                         {badgeText}
                       </span>
-                      <span className="text-[10px] text-muted-foreground truncate">{info.daysLine}</span>
+                      <span className="text-[10px] text-muted-foreground">{info.daysLine}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">

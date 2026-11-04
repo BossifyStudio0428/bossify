@@ -10,6 +10,7 @@ import { exportSalesReportPDF } from "@/lib/pdf";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { orderCost, orderGrossProfit, orderProfitMargin } from "@/lib/orderMath";
+import { fetchPeriodAdjustments, type PeriodAdjustments } from "@/lib/refundAdjustments";
 
 export const Route = createFileRoute("/reports/sales")({ component: ReportsPage });
 
@@ -17,6 +18,22 @@ type Range = "today" | "week" | "month" | "custom";
 
 function startOfDay(d: Date) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
 function endOfDay(d: Date) { const x = new Date(d); x.setHours(23,59,59,999); return x; }
+
+type OrderItemRow = {
+  order_id: string;
+  product_id: string | null;
+  product_name: string;
+  quantity: number;
+  unit_price_at_sale: number;
+};
+
+/** Strips the trailing " (SKU)" suffix tiktok-products-sync.server.ts
+ *  appends to variant rows, so "Top Products" ranks the parent product
+ *  (e.g. "T恤") instead of splitting it into weaker "T恤 (S)" / "T恤 (M)"
+ *  entries that individually never make the top of the list. */
+function stripVariantSuffix(name: string): string {
+  return name.replace(/\s*\([^)]*\)\s*$/, "").trim() || name;
+}
 
 function ReportsPage() {
   const { user } = useAuth();
@@ -33,6 +50,11 @@ function ReportsPage() {
   const [to, setTo] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [exporting, setExporting] = useState(false);
   const [commissions, setCommissions] = useState<Array<{ commission_amount: number; status: string; transaction_date: string }>>([]);
+  const [adjustments, setAdjustments] = useState<PeriodAdjustments>({ revenueReversed: 0, cogsReversed: 0, count: 0 });
+  const [orderCategories, setOrderCategories] = useState<Record<string, Set<string>>>({});
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("__all");
+  const [orderItems, setOrderItems] = useState<OrderItemRow[]>([]);
+  const [tiktokIdByProduct, setTiktokIdByProduct] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!user?.id) return;
@@ -40,12 +62,39 @@ function ReportsPage() {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,code,customer_name,product,quantity,amount,cost,gross_profit,status,created_at")
+        .select("id,code,customer_name,product,quantity,amount,cost,gross_profit,status,created_at,financial_status")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (cancelled) return;
       setOrders((data ?? []) as OrderRow[]);
       setLoading(false);
+
+      const orderIds = ((data ?? []) as any[]).map((o) => o.id);
+      if (orderIds.length > 0) {
+        const { data: items } = await supabase
+          .from("order_items" as any)
+          .select("order_id,product_id,product_name,quantity,unit_price_at_sale")
+          .in("order_id", orderIds);
+        if (!cancelled) setOrderItems(((items ?? []) as any) as OrderItemRow[]);
+        const productIds = Array.from(new Set(((items ?? []) as any[]).map((i) => i.product_id).filter(Boolean)));
+        const catByProduct: Record<string, string> = {};
+        if (productIds.length > 0) {
+          const { data: invRows } = await supabase.from("inventory").select("id,category,tiktok_product_id").in("id", productIds);
+          const tidByProduct: Record<string, string> = {};
+          for (const r of ((invRows ?? []) as any[])) {
+            catByProduct[r.id] = r.category || "";
+            if (r.tiktok_product_id) tidByProduct[r.id] = r.tiktok_product_id;
+          }
+          if (!cancelled) setTiktokIdByProduct(tidByProduct);
+        }
+        const map: Record<string, Set<string>> = {};
+        for (const it of ((items ?? []) as any[])) {
+          const c = it.product_id ? catByProduct[it.product_id] : "";
+          if (!c) continue;
+          (map[it.order_id] ??= new Set()).add(c);
+        }
+        if (!cancelled) setOrderCategories(map);
+      }
     };
     setLoading(true);
     load();
@@ -92,14 +141,28 @@ function ReportsPage() {
     return { fromDate: startOfDay(new Date(from)), toDate: endOfDay(new Date(to)), label: `${from} → ${to}` };
   }, [range, from, to, t]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    fetchPeriodAdjustments(user.id, fromDate.toISOString(), toDate.toISOString()).then((adj) => {
+      if (!cancelled) setAdjustments(adj);
+    });
+    return () => { cancelled = true; };
+  }, [user?.id, fromDate, toDate]);
+
+  // TikTok placeholder orders (financial_status = "pending") have no real
+  // amount/cost yet — never count them in any report figure.
   const inRange = orders.filter((o) => {
     const d = new Date(o.created_at);
-    return d >= fromDate && d <= toDate;
+    const inWindow = d >= fromDate && d <= toDate && (o as any).financial_status !== "pending";
+    if (!inWindow) return false;
+    if (activeCategoryFilter === "__all") return true;
+    return orderCategories[o.id]?.has(activeCategoryFilter) ?? false;
   });
 
-  const totalRevenue = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0);
-  const totalCost = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + orderCost(o), 0);
-  const totalGrossProfit = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + orderGrossProfit(o), 0);
+  const totalRevenue = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0) - adjustments.revenueReversed;
+  const totalCost = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + orderCost(o), 0) - adjustments.cogsReversed;
+  const totalGrossProfit = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + orderGrossProfit(o), 0) - (adjustments.revenueReversed - adjustments.cogsReversed);
   const profitMargin = orderProfitMargin(totalRevenue, totalGrossProfit);
   const totalOrders = inRange.length;
   const paidOrders = inRange.filter((o) => o.status === "Paid").length;
@@ -126,20 +189,59 @@ function ReportsPage() {
     return Array.from(buckets.entries()).map(([day, value]) => ({ day, value }));
   }, [inRange, fromDate, toDate]);
 
-  // Top products
+  // Top products — aggregated from order LINE ITEMS, not the order-level
+  // "product" text field (which is every item in that order joined with
+  // commas, e.g. "T恤 (S) × 2, 裤子 × 1" — treating that whole string as
+  // one "product" silently broke ranking for any multi-item order).
+  // Same-product TikTok variants (S/M/L etc., sharing tiktok_product_id)
+  // are merged into one ranking entry so a genuinely popular product
+  // isn't split into several weak entries that never reach the top 5.
   const topProducts = useMemo(() => {
-    const m = new Map<string, { qty: number; revenue: number }>();
-    inRange.forEach((o) => {
-      const cur = m.get(o.product) ?? { qty: 0, revenue: 0 };
-      cur.qty += Number(o.quantity);
-      if (o.status === "Paid") cur.revenue += Number(o.amount);
-      m.set(o.product, cur);
+    const inRangeIds = new Set(inRange.map((o) => o.id));
+    const orderById = new Map(orders.map((o) => [o.id, o]));
+
+    const variantMap = new Map<string, { name: string; qty: number; revenue: number; productId: string | null }>();
+    orderItems.forEach((it) => {
+      if (!inRangeIds.has(it.order_id)) return;
+      const o = orderById.get(it.order_id);
+      const key = it.product_name || "—";
+      const cur = variantMap.get(key) ?? { name: key, qty: 0, revenue: 0, productId: it.product_id ?? null };
+      cur.qty += Number(it.quantity ?? 0);
+      if (o?.status === "Paid") cur.revenue += Number(it.unit_price_at_sale ?? 0) * Number(it.quantity ?? 0);
+      if (!cur.productId && it.product_id) cur.productId = it.product_id;
+      variantMap.set(key, cur);
     });
-    return Array.from(m.entries())
-      .map(([name, v]) => ({ name, ...v }))
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 5);
-  }, [inRange]);
+
+    const byTiktokId = new Map<string, Array<{ name: string; qty: number; revenue: number; productId: string | null }>>();
+    for (const v of variantMap.values()) {
+      const tid = v.productId ? tiktokIdByProduct[v.productId] : undefined;
+      if (!tid) continue;
+      if (!byTiktokId.has(tid)) byTiktokId.set(tid, []);
+      byTiktokId.get(tid)!.push(v);
+    }
+    const groupedIds = new Set<string>();
+    for (const [tid, arr] of byTiktokId) if (arr.length > 1) groupedIds.add(tid);
+
+    const merged: { name: string; qty: number; revenue: number }[] = [];
+    const seen = new Set<string>();
+    for (const v of variantMap.values()) {
+      const tid = v.productId ? tiktokIdByProduct[v.productId] : undefined;
+      if (tid && groupedIds.has(tid)) {
+        if (seen.has(tid)) continue;
+        seen.add(tid);
+        const vs = byTiktokId.get(tid)!;
+        merged.push({
+          name: stripVariantSuffix(vs[0].name),
+          qty: vs.reduce((s, x) => s + x.qty, 0),
+          revenue: vs.reduce((s, x) => s + x.revenue, 0),
+        });
+      } else {
+        merged.push({ name: v.name, qty: v.qty, revenue: v.revenue });
+      }
+    }
+
+    return merged.sort((a, b) => b.qty - a.qty).slice(0, 5);
+  }, [inRange, orders, orderItems, tiktokIdByProduct]);
   const maxQty = Math.max(1, ...topProducts.map((p) => p.qty));
 
   // Status breakdown
@@ -304,6 +406,32 @@ function ReportsPage() {
           ))}
         </div>
       </div>
+
+      {(() => {
+        const cats = Array.from(new Set(Object.values(orderCategories).flatMap((s) => Array.from(s))));
+        if (cats.length === 0) return null;
+        return (
+          <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
+            <div className="flex gap-2 w-max">
+              <button
+                onClick={() => setActiveCategoryFilter("__all")}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${activeCategoryFilter === "__all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+              >
+                {lang === "zh" ? "全部分类" : lang === "ms" ? "Semua kategori" : "All categories"}
+              </button>
+              {cats.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setActiveCategoryFilter(c)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${activeCategoryFilter === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {range === "custom" && (
         <div className="grid grid-cols-2 gap-2">

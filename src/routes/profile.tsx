@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, LogOut, Check } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +23,7 @@ import { BIZ_TYPES, hasInventory, pofSectionTitleKey } from "@/lib/businessType"
 import { RETAIL_ONLY_MODE, HIDE_BOOKING_MENU, HIDE_ORDER_FORM, HIDE_TEAM_PLAN, HIDE_ANALYTICS_MENU } from "@/lib/featureFlags";
 import { VISIBLE_PLATFORMS } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
+import { getPlatformConnection } from "@/lib/platformConnect.functions";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 
@@ -29,6 +32,15 @@ const LANG_INFO: Record<Lang, { flag: string; label: string }> = {
   ms: { flag: "🇲🇾", label: "Bahasa Melayu" },
   zh: { flag: "🇨🇳", label: "简体中文" },
 };
+
+const API_ORIGIN = "https://tanstack-start-app.bossifystudio.workers.dev";
+const isNative = Capacitor.isNativePlatform();
+
+async function getAuthHeader(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 type ProfileSummary = {
   business_name: string | null;
@@ -53,6 +65,8 @@ function ProfilePage() {
   const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({});
   const [langOpen, setLangOpen] = useState(false);
   const [paySummary, setPaySummary] = useState<PaymentSummary | null>(null);
+
+  const getConnection = useServerFn(getPlatformConnection);
 
   const reportsLabelKey =
     bizType === "education"
@@ -279,6 +293,33 @@ function ProfilePage() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+
+    const loadPlatformStatuses = async () => {
+      const entries = await Promise.all(
+        VISIBLE_PLATFORMS.map(async (p) => {
+          try {
+            if (isNative) {
+              const headers = await getAuthHeader();
+              const res = await fetch(
+                `${API_ORIGIN}/api/platforms/connect?platform=${encodeURIComponent(p.key)}`,
+                { headers },
+              );
+              const j = await res.json();
+              return [p.key, j?.connection?.status === "active"] as const;
+            } else {
+              const { connection } = await getConnection({
+                data: { platform: p.key as any },
+              });
+              return [p.key, (connection as any)?.status === "active"] as const;
+            }
+          } catch {
+            return [p.key, false] as const;
+          }
+        }),
+      );
+      if (!cancelled) setConnectedPlatforms(Object.fromEntries(entries));
+    };
+
     const load = async () => {
       const [{ data: o }, { count: cust }, { data: p }] = await Promise.all([
         supabase.from("orders").select("amount,status").eq("user_id", user.id),
@@ -301,7 +342,7 @@ function ProfilePage() {
       const loadedProfile = p as ProfileSummary | null;
       setProfile(loadedProfile);
       setIsAdmin(!!loadedProfile?.is_admin);
-      setConnectedPlatforms({});
+      loadPlatformStatuses();
       try {
         const s = await loadPaymentSummary(user.id);
         if (!cancelled) setPaySummary(s);

@@ -2,6 +2,7 @@ import "@tanstack/react-start/server-only";
 
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { calculateOrderFinancials, type OrderItemInput } from "./orderMath";
 
 /** Normalize detail_images JSON (legacy string[] or new {url, description}[]) for public output. */
 function normalizeDetailItems(raw: unknown): Array<{ url: string; description: string }> {
@@ -335,11 +336,12 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
 
     let { data: profile, error: pErr } = await sb
       .from("profiles")
-      .select("id, business_type, order_form_enabled, business_name, allow_cod, store_address")
+      .select("id, business_type, order_form_enabled, business_name, allow_cod, store_address, platform_fee_percent")
       .eq("order_form_code", data2.code.toLowerCase())
       .maybeSingle();
     if (pErr) {
-      // allow_cod column may not exist on external Supabase yet — retry without it
+      // allow_cod / platform_fee_percent columns may not exist on external
+      // Supabase yet — retry with a minimal, guaranteed-present column set.
       const fb = await sb
         .from("profiles")
         .select("id, business_type, order_form_enabled, business_name, store_address")
@@ -354,6 +356,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
     const bizType: string = profile.business_type ?? "retail";
     const isRetailish = bizType === "retail" || bizType === "fnb";
     const userId: string = profile.id;
+    const platformFeePercent: number = Number((profile as any).platform_fee_percent ?? 0);
 
     // Payment method only applies to retail/fnb. Validate seller actually allows the chosen option.
     let paymentMethod: string | null = null;
@@ -364,27 +367,33 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       paymentMethod = data2.payment_method;
     }
 
-    const priceMap = new Map<string, { price: number; cost: number }>();
+    // priceMap now also carries the inventory row id (for order_items.product_id)
+    // and packaging_cost (for COGS), on top of price/cost.
+    const priceMap = new Map<
+      string,
+      { id: string | null; price: number; cost: number; packagingCost: number }
+    >();
     if (bizType === "property") {
       const { data: priceRows } = await sb
         .from("listings")
-        .select("title, price")
+        .select("id, title, price")
         .eq("user_id", userId);
       for (const row of (priceRows ?? []) as any[]) {
         const baseName = String(row.title ?? "").trim().toLowerCase();
         const basePrice = Number(row.price ?? 0);
-        if (baseName) priceMap.set(baseName, { price: basePrice, cost: 0 });
+        if (baseName) priceMap.set(baseName, { id: String(row.id), price: basePrice, cost: 0, packagingCost: 0 });
       }
     } else {
       const sourceTable = isRetailish ? "inventory" : "services";
       let { data: priceRows, error: priceError } = await sb
         .from(sourceTable)
-        .select(isRetailish ? "name, price, cost_price, variants" : "name, price, variants")
+        .select(isRetailish ? "id, name, price, cost_price, packaging_cost, variants" : "id, name, price, variants")
         .eq("user_id", userId);
       if (priceError && isRetailish) {
+        // packaging_cost may not exist yet if migration hasn't run — retry without it.
         const fallback = await sb
           .from(sourceTable)
-          .select("name, price, variants")
+          .select("id, name, price, cost_price, variants")
           .eq("user_id", userId);
         priceRows = fallback.data;
         priceError = fallback.error;
@@ -396,17 +405,28 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         const baseName = String(row.name ?? "").trim().toLowerCase();
         const basePrice = Number(row.price ?? 0);
         const baseCost = isRetailish ? Number(row.cost_price ?? 0) : 0;
-        if (baseName) priceMap.set(baseName, { price: basePrice, cost: baseCost });
+        const basePackaging = isRetailish ? Number(row.packaging_cost ?? 0) : 0;
+        if (baseName) {
+          priceMap.set(baseName, { id: String(row.id), price: basePrice, cost: baseCost, packagingCost: basePackaging });
+        }
         const variants = Array.isArray(row.variants) ? row.variants : [];
         for (const v of variants) {
           const vName = String(v?.name ?? "").trim();
           if (!vName) continue;
           const vPrice = Number(v?.price ?? basePrice);
-          priceMap.set(`${baseName} (${vName.toLowerCase()})`, { price: vPrice, cost: baseCost });
+          priceMap.set(`${baseName} (${vName.toLowerCase()})`, {
+            id: String(row.id),
+            price: vPrice,
+            cost: baseCost,
+            packagingCost: basePackaging,
+          });
         }
       }
     }
-    const lookupPrice = (product: string, variant?: string): { price: number; cost: number } | null => {
+    const lookupPrice = (
+      product: string,
+      variant?: string,
+    ): { id: string | null; price: number; cost: number; packagingCost: number } | null => {
       const p = product.trim().toLowerCase();
       if (variant && variant.trim()) {
         const key = `${p} (${variant.trim().toLowerCase()})`;
@@ -432,46 +452,60 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       if (data2.date_time) extra.push(`Preferred: ${data2.date_time}`);
     }
 
+    // Build a normalized list of resolved line items — used for both the
+    // product_summary text AND the order_items rows written after insert.
+    type ResolvedLine = {
+      productName: string;
+      variant?: string;
+      productId: string | null;
+      quantity: number;
+      unitPrice: number;
+      unitCost: number;
+      packagingCost: number;
+    };
+    let resolvedLines: ResolvedLine[] = [];
     let productText = "";
-    let totalQty = 1;
-    let totalAmount = 0;
+
     if (data2.items && data2.items.length > 0) {
-      const resolved = data2.items.map((it: any) => ({
-        it,
-        serverPrice: lookupPrice(it.product, it.variant),
-      }));
-      const unknown = resolved.find((r) => r.serverPrice === null);
+      const resolved = data2.items.map((it: any) => ({ it, found: lookupPrice(it.product, it.variant) }));
+      const unknown = resolved.find((r) => r.found === null);
       if (unknown) {
-        return {
-          ok: false,
-          reason: "insert_failed",
-          error: `Unknown product: ${unknown.it.product}`,
-        };
+        return { ok: false, reason: "insert_failed", error: `Unknown product: ${unknown.it.product}` };
       }
+      resolvedLines = resolved.map(({ it, found }: any) => ({
+        productName: it.product,
+        variant: it.variant || undefined,
+        productId: found.id,
+        quantity: isRetailish ? Math.max(1, Number(it.quantity) || 1) : 1,
+        unitPrice: Number(found.price ?? 0),
+        unitCost: Number(found.cost ?? 0),
+        packagingCost: Number(found.packagingCost ?? 0),
+      }));
       productText = data2.items
         .map((it: any) => {
           const label = it.variant ? `${it.product} (${it.variant})` : it.product;
           return isRetailish ? `${label} × ${it.quantity}` : label;
         })
         .join(", ");
-      totalQty = isRetailish
-        ? data2.items.reduce((s: number, it: any) => s + (it.quantity || 1), 0)
-        : 1;
-      totalAmount = resolved.reduce(
-        (s, { it, serverPrice }: any) =>
-          s + Number(serverPrice?.price ?? 0) * (isRetailish ? (it.quantity || 1) : 1),
-        0,
-      );
-      // Items breakdown lives in `product` + dedicated fields; no longer
-      // duplicated into notes.
     } else {
       productText = (data2.product || "").trim();
-      totalQty = isRetailish ? Math.max(1, Number(data2.quantity) || 1) : 1;
-      const serverPrice = productText ? lookupPrice(productText) : null;
-      if (productText && serverPrice === null) {
+      if (!productText) {
+        return { ok: false, reason: "insert_failed", error: "No product selected" };
+      }
+      const found = lookupPrice(productText);
+      if (found === null) {
         return { ok: false, reason: "insert_failed", error: `Unknown product: ${productText}` };
       }
-      totalAmount = Number(serverPrice?.price ?? 0) * totalQty;
+      resolvedLines = [
+        {
+          productName: productText,
+          productId: found.id,
+          quantity: isRetailish ? Math.max(1, Number(data2.quantity) || 1) : 1,
+          unitPrice: Number(found.price ?? 0),
+          unitCost: Number(found.cost ?? 0),
+          packagingCost: Number(found.packagingCost ?? 0),
+        },
+      ];
     }
 
     if (!productText) {
@@ -480,10 +514,11 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
 
     const code = genCode();
     const phoneDigits = (data2.phone || "").replace(/\D/g, "");
-    const qty = totalQty;
+    const qty = resolvedLines.reduce((s, l) => s + l.quantity, 0) || 1;
+
     // Server-side delivery fee: only when the seller has delivery configured,
     // the customer chose delivery, and coordinates were supplied.
-    let deliveryFee = 0;
+    let deliveryFeeCharged = 0;
     let deliveryKm: number | null = null;
     const wantsDelivery =
       isRetailish &&
@@ -501,7 +536,7 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
             if (fee === null) {
               return { ok: false, reason: "insert_failed", error: "Address is outside the delivery area" };
             }
-            deliveryFee = fee;
+            deliveryFeeCharged = fee;
             deliveryKm = dist.km;
           } else if (dist.reason === "out_of_range") {
             return { ok: false, reason: "insert_failed", error: "Address is outside the delivery area" };
@@ -511,21 +546,30 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         console.warn("[createPublicOrder] delivery fee compute failed", e);
       }
     }
-    const amount = totalAmount + deliveryFee;
-    if (deliveryFee > 0 || deliveryKm !== null) {
+    if (deliveryFeeCharged > 0 || deliveryKm !== null) {
       const line = deliveryKm !== null
-        ? `Delivery: ${deliveryKm.toFixed(2)} km — RM ${deliveryFee.toFixed(2)}`
-        : `Delivery fee: RM ${deliveryFee.toFixed(2)}`;
+        ? `Delivery: ${deliveryKm.toFixed(2)} km — RM ${deliveryFeeCharged.toFixed(2)}`
+        : `Delivery fee: RM ${deliveryFeeCharged.toFixed(2)}`;
       extra.push(line);
     }
     const combinedNotes =
       [extra.join("\n"), (data2.notes || "").trim()].filter(Boolean).join("\n\n") || null;
-    const totalCost = data2.items && data2.items.length > 0
-      ? data2.items.reduce((s: number, it: any) => {
-          const found = lookupPrice(it.product, it.variant);
-          return s + Number(found?.cost ?? 0) * (isRetailish ? (it.quantity || 1) : 1);
-        }, 0)
-      : Number(lookupPrice(productText)?.cost ?? 0) * qty;
+
+    // ---- Financial Engine: single source of truth for the order economics ----
+    const engineItems: OrderItemInput[] = resolvedLines.map((l) => ({
+      quantity: l.quantity,
+      unitPriceAtSale: l.unitPrice,
+      unitCostAtSale: l.unitCost,
+      packagingCostAtSale: l.packagingCost,
+    }));
+    const financials = calculateOrderFinancials({
+      items: engineItems,
+      sellerDiscount: 0, // no discount UI on the public order form yet
+      deliveryFeeCharged,
+      shippingCost: 0, // seller's own courier cost isn't captured from this form
+      platformFeePercent, // only meaningful for retail/fnb; property/services orders have cost=0 anyway
+      affiliateCommission: 0, // not applicable — this order didn't come through TikTok
+    });
 
     // Normalize the customer-facing order type into delivery_method so the
     // order card / detail / tracking can render a badge:
@@ -552,9 +596,18 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
         customer_name: data2.customer_name.trim(),
         phone: phoneDigits || null,
         product: productText,
+        product_summary: productText,
         quantity: qty,
-        amount,
-        cost: totalCost,
+        amount: financials.netRevenue,
+        cost: financials.cogs,
+        gross_profit: financials.grossProfit,
+        seller_discount: 0,
+        delivery_fee_charged: deliveryFeeCharged,
+        shipping_cost: 0,
+        platform_fee_percent_at_sale: platformFeePercent,
+        platform_fee_amount: financials.platformFeeAmount,
+        affiliate_commission: 0,
+        financial_status: "complete",
         status: "Unpaid",
         notes: combinedNotes,
         delivery_address: (data2.address || "").trim() || null,
@@ -578,6 +631,26 @@ export async function createPublicOrder(rawInput: unknown): Promise<CreatePublic
       if (msg.includes("order_quota_reached")) return { ok: false, reason: "shop_closed" };
       return { ok: false, reason: "insert_failed", error: "Order could not be submitted" };
     }
+
+    // Write one order_items row per resolved line — this is the real
+    // source of the COGS breakdown, kept as a historical snapshot.
+    try {
+      const itemRows = resolvedLines.map((l) => ({
+        order_id: inserted.id,
+        product_id: l.productId,
+        product_name: l.variant ? `${l.productName} (${l.variant})` : l.productName,
+        quantity: l.quantity,
+        unit_price_at_sale: l.unitPrice,
+        unit_cost_at_sale: l.unitCost,
+        packaging_cost_at_sale: l.packagingCost,
+      }));
+      const { error: itemsErr } = await sb.from("order_items").insert(itemRows);
+      if (itemsErr) console.error("[createPublicOrder] order_items insert failed", itemsErr);
+    } catch (e) {
+      console.error("[createPublicOrder] order_items insert threw", e);
+    }
+
+    const amount = financials.netRevenue;
 
     if (phoneDigits) {
       try {

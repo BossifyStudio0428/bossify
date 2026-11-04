@@ -163,6 +163,7 @@ export function PurchaseOrderAiReview({
               name: l.name.trim(),
               price: Number(l.unit_price) || 0,
               stock: 0,
+              category: l.category.trim() || null,
             }
           : {
               user_id: userId,
@@ -191,18 +192,16 @@ export function PurchaseOrderAiReview({
       }
     }
 
-    // Also update category for matched ingredients if user changed it and matched ingredient lacks one
-    if (mode === "ingredients") {
-      for (const l of chosen) {
-        if (!l.matched_id) continue;
-        const c = l.category.trim();
-        if (!c) continue;
-        if (!knownCatsLower.has(c.toLowerCase())) newCatsToPersist.add(c);
-        await supabase
-          .from("ingredients" as any)
-          .update({ category: c })
-          .eq("id", l.matched_id);
-      }
+    // Also update category for matched items if the AI/user-edited value is non-empty.
+    for (const l of chosen) {
+      if (!l.matched_id) continue;
+      const c = l.category.trim();
+      if (!c) continue;
+      if (!knownCatsLower.has(c.toLowerCase())) newCatsToPersist.add(c);
+      await supabase
+        .from((mode === "inventory" ? "inventory" : "ingredients") as any)
+        .update({ category: c })
+        .eq("id", l.matched_id);
     }
 
     // Persist any newly invented categories so they appear in future pickers
@@ -259,10 +258,12 @@ export function PurchaseOrderAiReview({
       const payload = chosen.map((l) => ({
         ref_id: l.matched_id ?? created[l.key],
         quantity: l.quantity,
+        unit_price: l.unit_price,
       }));
       if (mode === "inventory") {
         await applyReceivedStockInventory(
-          payload.map((p) => ({ inventory_id: p.ref_id, quantity: p.quantity })),
+          payload.map((p) => ({ inventory_id: p.ref_id, quantity: p.quantity, unit_price: p.unit_price })),
+          userId,
         );
       } else {
         await applyReceivedStock(

@@ -29,13 +29,26 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 
 function NotifSettingsPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [granted, setGranted] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [sending, setSending] = useState(false);
   const [webPermission, setWebPermission] = useState<NotificationPermission | "unsupported">("unsupported");
   const [isNativeApp, setIsNativeApp] = useState(false);
   const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS);
+  const [thresholdInput, setThresholdInput] = useState<string>(String(DEFAULT_PREFS.low_stock_threshold));
+
+  const saveThreshold = async () => {
+    if (!user) return;
+    const n = Math.max(1, Math.min(9999, Number(thresholdInput) || DEFAULT_PREFS.low_stock_threshold));
+    setThresholdInput(String(n));
+    setPrefs((p) => ({ ...p, low_stock_threshold: n }));
+    try {
+      await savePrefs(user.id, { low_stock_threshold: n });
+    } catch {
+      toast.error(t("notif_send_failed") + "save");
+    }
+  };
 
   const togglePref = async (key: keyof NotifPrefs, value: boolean) => {
     if (!user) return;
@@ -169,7 +182,10 @@ function NotifSettingsPage() {
       .then(({ data }) => setIsAdmin(!!data?.is_admin));
 
     // Load prefs for the toggles
-    loadPrefs(user.id).then(setPrefs).catch(() => setPrefs(DEFAULT_PREFS));
+    loadPrefs(user.id).then((p) => {
+      setPrefs(p);
+      setThresholdInput(String(p.low_stock_threshold));
+    }).catch(() => setPrefs(DEFAULT_PREFS));
   }, [user]);
 
   const openSysSettings = async () => {
@@ -429,6 +445,126 @@ function NotifSettingsPage() {
             />
           </div>
         ))}
+      </div>
+
+      {isRetailFnb && (
+        <div className="rounded-2xl border border-border/60 bg-card p-4 flex items-center gap-3">
+          <span className="text-2xl">📦</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold">
+              {lang === "zh" ? "低库存提醒阈值" : lang === "ms" ? "Ambang stok rendah" : "Low-stock alert threshold"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {lang === "zh" ? "库存数量低于这个数字时提醒你" : lang === "ms" ? "Beritahu bila stok jatuh di bawah nombor ini" : "Alert when stock falls at or below this number"}
+            </p>
+          </div>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={9999}
+            value={thresholdInput}
+            onChange={(e) => setThresholdInput(e.target.value.replace(/[^0-9]/g, ""))}
+            onBlur={saveThreshold}
+            className="w-16 h-10 rounded-xl border border-border/60 bg-background text-center text-sm font-semibold"
+          />
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
+        <p className="text-sm font-semibold">
+          {lang === "zh" ? "早晚摘要推送时间" : lang === "ms" ? "Masa ringkasan pagi/malam" : "Summary notification times"}
+        </p>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-muted-foreground flex items-center gap-1.5">🌅 {t("notif_setting_morning")}</span>
+          <select
+            value={prefs.morning_hour}
+            onChange={async (e) => {
+              const h = Number(e.target.value);
+              setPrefs((p) => ({ ...p, morning_hour: h }));
+              if (user) await savePrefs(user.id, { morning_hour: h });
+            }}
+            className="h-9 rounded-xl border border-border/60 bg-background px-2 text-sm"
+          >
+            {Array.from({ length: 24 }, (_, h) => (
+              <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-muted-foreground flex items-center gap-1.5">🌙 {t("notif_setting_evening")}</span>
+          <select
+            value={prefs.evening_hour}
+            onChange={async (e) => {
+              const h = Number(e.target.value);
+              setPrefs((p) => ({ ...p, evening_hour: h }));
+              if (user) await savePrefs(user.id, { evening_hour: h });
+            }}
+            className="h-9 rounded-xl border border-border/60 bg-background px-2 text-sm"
+          >
+            {Array.from({ length: 24 }, (_, h) => (
+              <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold">
+              {lang === "zh" ? "静音时段" : lang === "ms" ? "Waktu senyap" : "Quiet hours"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {lang === "zh" ? "这段时间不会跳出新订单/低库存等即时提醒" : lang === "ms" ? "Tiada makluman segera semasa waktu ini" : "No instant alerts (new order, low stock, etc) during this window"}
+            </p>
+          </div>
+          <Switch
+            checked={prefs.quiet_hours_enabled}
+            onCheckedChange={async (v) => {
+              setPrefs((p) => ({ ...p, quiet_hours_enabled: v }));
+              if (user) await savePrefs(user.id, { quiet_hours_enabled: v });
+            }}
+          />
+        </div>
+        {prefs.quiet_hours_enabled && (
+          <div className="flex items-center gap-2">
+            <select
+              value={prefs.quiet_hours_start}
+              onChange={async (e) => {
+                const h = Number(e.target.value);
+                setPrefs((p) => ({ ...p, quiet_hours_start: h }));
+                if (user) await savePrefs(user.id, { quiet_hours_start: h });
+              }}
+              className="flex-1 h-9 rounded-xl border border-border/60 bg-background px-2 text-sm"
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+              ))}
+            </select>
+            <span className="text-xs text-muted-foreground">{lang === "zh" ? "到" : lang === "ms" ? "hingga" : "to"}</span>
+            <select
+              value={prefs.quiet_hours_end}
+              onChange={async (e) => {
+                const h = Number(e.target.value);
+                setPrefs((p) => ({ ...p, quiet_hours_end: h }));
+                if (user) await savePrefs(user.id, { quiet_hours_end: h });
+              }}
+              className="flex-1 h-9 rounded-xl border border-border/60 bg-background px-2 text-sm"
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+              ))}
+            </select>
+          </div>
+        )}
+        <p className="text-[10px] text-muted-foreground">
+          {lang === "zh"
+            ? "⚠️ 新订单的部分推播由系统自动触发，不受这个设置影响，仍可能收到"
+            : lang === "ms"
+              ? "⚠️ Sesetengah makluman pesanan baru dicetus oleh sistem dan tidak terjejas oleh tetapan ini"
+              : "⚠️ Some new-order push notifications are server-triggered and not affected by this setting"}
+        </p>
       </div>
 
       <button

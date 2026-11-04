@@ -431,7 +431,11 @@ function Index() {
       })
     : "";
   const isToday = (iso: string) => new Date(iso).toDateString() === new Date().toDateString();
-  const todayOrders = orders.filter((o) => isToday(o.created_at));
+  // TikTok placeholder orders (financial_status = "pending") have amount/cost
+  // = 0 until the Get Order Detail sync fills in real data — never count
+  // them toward revenue/profit figures.
+  const financiallyCompleteOrders = orders.filter((o: any) => o.financial_status !== "pending");
+  const todayOrders = financiallyCompleteOrders.filter((o) => isToday(o.created_at));
   const todayRevenue = todayOrders
     .filter((o) => o.status === "Paid")
     .reduce((s, o) => s + Number(o.amount), 0);
@@ -442,7 +446,7 @@ function Index() {
   const activeProjects = orders.filter((o) => o.status !== "Paid").length;
   const nowD = new Date();
   const monthStart = new Date(nowD.getFullYear(), nowD.getMonth(), 1);
-  const monthRevenue = orders
+  const monthRevenue = financiallyCompleteOrders
     .filter((o) => o.status === "Paid" && new Date(o.created_at) >= monthStart)
     .reduce((s, o) => s + Number(o.amount), 0);
 

@@ -1,5 +1,5 @@
 import { notify as localNotify } from "@/lib/notifications";
-import { isPrefEnabled } from "@/lib/notifPrefs";
+import { isPrefEnabled, isWithinQuietHours } from "@/lib/notifPrefs";
 import { sendPushToSelf, type PushKind } from "@/lib/sendPush";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
@@ -21,6 +21,7 @@ export async function notifySituation(params: {
   dedupeKey?: string;
 }) {
   if (params.prefKey && !isPrefEnabled(params.prefKey)) return { skipped: true };
+  if (isWithinQuietHours()) return { skipped: true, quietHours: true };
   if (params.dedupeKey) {
     const key = `bossify_notified_${params.dedupeKey}`;
     if (safeLocalStorage.getItem(key) === "1") return { skipped: true };

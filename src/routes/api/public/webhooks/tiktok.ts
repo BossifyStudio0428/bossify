@@ -2,20 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { externalSupabaseAdmin as supabaseAdmin } from "@/integrations/supabase/external-admin.server";
 import { verifyTikTokWebhook, mapTikTokStatus } from "@/lib/platforms/tiktok.server";
 
-/**
- * TikTok Shop order webhook receiver.
- * Docs: https://partner.tiktokshop.com/docv2/page/650a14868d0e3702c0727e6c
- *
- * Flow:
- *   1. Verify HMAC signature (rejects forged requests).
- *   2. Idempotency: insert into platform_order_events (unique constraint blocks duplicates).
- *   3. Look up which seller owns the shop_id and insert/update orders row.
- *
- * NOTE: this is the receive-and-record path. Order detail enrichment (line items,
- * customer name, amounts) is done by a separate fetch using the seller's stored
- * access token — kept out of the webhook to keep the response under TikTok's
- * 5-second timeout. That enrichment lives in the cron sync route.
- */
 export const Route = createFileRoute("/api/public/webhooks/tiktok")({
   server: {
     handlers: {
@@ -34,7 +20,6 @@ export const Route = createFileRoute("/api/public/webhooks/tiktok")({
           return new Response("Invalid JSON", { status: 400 });
         }
 
-        // TikTok payload shape: { type, shop_id, timestamp, data: { order_id, order_status, ... } }
         const shopId: string | undefined = payload.shop_id;
         const eventType: string = String(payload.type ?? "unknown");
         const orderId: string | undefined = payload?.data?.order_id;
@@ -44,7 +29,6 @@ export const Route = createFileRoute("/api/public/webhooks/tiktok")({
           return new Response("Missing shop_id or order_id", { status: 400 });
         }
 
-        // Idempotency log — duplicate deliveries are silently swallowed.
         const { error: logErr } = await supabaseAdmin
           .from("platform_order_events" as any)
           .insert({
@@ -56,49 +40,99 @@ export const Route = createFileRoute("/api/public/webhooks/tiktok")({
         if (logErr && !logErr.message.includes("duplicate")) {
           console.error("[tiktok webhook] event log error", logErr);
         } else if (logErr) {
-          // duplicate — ack and exit
           return new Response("ok", { status: 200 });
         }
 
-        // Find which Bossify user owns this shop.
-        const { data: conn } = await supabaseAdmin
+        // First try: connection already has this shop_id recorded.
+        let { data: conn } = await supabaseAdmin
           .from("platform_connections" as any)
-          .select("user_id")
+          .select("user_id, platform_shop_id")
           .eq("platform", "tiktok")
           .eq("platform_shop_id", shopId)
           .maybeSingle();
 
+        // Fallback: no connection matches this shop_id yet — this happens
+        // right after OAuth, since we can't call Get Authorized Shops until
+        // App Review is approved. Backfill the first active connection
+        // that's still missing a shop_id.
         if (!conn) {
-          // No connection — accept the webhook (to avoid retries) but skip processing.
+          const { data: pending } = await supabaseAdmin
+            .from("platform_connections" as any)
+            .select("user_id")
+            .eq("platform", "tiktok")
+            .is("platform_shop_id", null)
+            .eq("status", "active")
+            .order("connected_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (pending) {
+            const { data: updated, error: backfillErr } = await supabaseAdmin
+              .from("platform_connections" as any)
+              .update({ platform_shop_id: shopId })
+              .eq("user_id", (pending as any).user_id)
+              .eq("platform", "tiktok")
+              .select("user_id")
+              .maybeSingle();
+            if (backfillErr) {
+              console.error("[tiktok webhook] shop_id backfill error", backfillErr);
+            } else {
+              conn = updated as any;
+            }
+          }
+        }
+
+        if (!conn) {
           return new Response("ok (no connection)", { status: 200 });
         }
 
         const userId = (conn as any).user_id as string;
         const mappedStatus = status ? mapTikTokStatus(status) : "Pending";
 
-        // Upsert minimal order row. Detail enrichment happens in the cron sync.
-        const { error: orderErr } = await supabaseAdmin.from("orders").upsert(
-          {
+        // Check whether we already have a row for this TikTok order. If we
+        // do — and it's already been enriched with real financials by the
+        // Order Detail sync (financial_status = "complete") — this webhook
+        // must ONLY update the fulfillment status, never amount/cost/
+        // financial_status. Otherwise a later status-change event (e.g.
+        // "shipped") would silently overwrite real data back to a RM0
+        // placeholder.
+        const { data: existingOrder } = await supabaseAdmin
+          .from("orders")
+          .select("id, financial_status")
+          .eq("user_id", userId)
+          .eq("platform_order_id", orderId)
+          .maybeSingle();
+
+        if (existingOrder) {
+          const { error: updateErr } = await supabaseAdmin
+            .from("orders")
+            .update({ status: mappedStatus, platform_metadata: payload } as any)
+            .eq("id", (existingOrder as any).id);
+          if (updateErr) {
+            console.error("[tiktok webhook] order status update error", updateErr);
+            return new Response("Order update failed", { status: 500 });
+          }
+        } else {
+          const { error: insertErr } = await supabaseAdmin.from("orders").insert({
             user_id: userId,
             code: `TT-${orderId}`,
             customer_name: "TikTok customer",
             product: "Pending sync",
+            product_summary: "Pending sync",
             quantity: 1,
             amount: 0,
             status: mappedStatus,
             order_source: "tiktok",
             platform_order_id: orderId,
             platform_metadata: payload,
-          },
-          { onConflict: "user_id,platform_order_id" } as any
-        );
-        if (orderErr) {
-          console.error("[tiktok webhook] order upsert error", orderErr);
-          return new Response("Order write failed", { status: 500 });
+            financial_status: "pending",
+          } as any);
+          if (insertErr) {
+            console.error("[tiktok webhook] order insert error", insertErr);
+            return new Response("Order write failed", { status: 500 });
+          }
         }
 
-        // Best-effort in-app notification for the merchant's Activity feed.
-        // type="new_order_tiktok" so the client can render a TikTok badge.
         try {
           await supabaseAdmin.from("notifications" as any).insert({
             user_id: userId,

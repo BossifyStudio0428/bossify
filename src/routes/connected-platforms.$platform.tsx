@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
+import { Capacitor } from "@capacitor/core";
 import { ChevronLeft, Check, Loader2 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { getPlatform } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import {
@@ -11,10 +12,20 @@ import {
   disconnectPlatform,
   getPlatformConnection,
 } from "@/lib/platformConnect.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/connected-platforms/$platform")({
   component: PlatformConnectPage,
 });
+
+const API_ORIGIN = "https://tanstack-start-app.bossifystudio.workers.dev";
+const isNative = Capacitor.isNativePlatform();
+
+async function getAuthHeader(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 function PlatformConnectPage() {
   const { platform } = Route.useParams();
@@ -30,6 +41,11 @@ function PlatformConnectPage() {
     last_synced_at: string | null;
   }>(null);
 
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  const [importingProducts, setImportingProducts] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
+
   const cfg = getPlatform(platform);
   const startConnect = useServerFn(startPlatformConnect);
   const disconnect = useServerFn(disconnectPlatform);
@@ -39,10 +55,20 @@ function PlatformConnectPage() {
     if (!user || !cfg) return;
     (async () => {
       try {
-        const { connection: c } = await getConnection({
-          data: { platform: cfg.key as any },
-        });
-        setConnection(c as any);
+        if (isNative) {
+          const headers = await getAuthHeader();
+          const res = await fetch(
+            `${API_ORIGIN}/api/platforms/connect?platform=${encodeURIComponent(cfg.key)}`,
+            { headers },
+          );
+          const j = await res.json();
+          setConnection(j?.connection ?? null);
+        } else {
+          const { connection: c } = await getConnection({
+            data: { platform: cfg.key as any },
+          });
+          setConnection(c as any);
+        }
       } catch {
         setConnection(null);
       }
@@ -53,19 +79,108 @@ function PlatformConnectPage() {
 
   const handleConnect = async () => {
     if (!cfg) return;
-    // All platform integrations are pending API approval — show coming soon.
-    setSheetMessage("");
-    setSheetOpen(true);
+    setBusy(true);
+    try {
+      if (isNative) {
+        const headers = await getAuthHeader();
+        const res = await fetch(`${API_ORIGIN}/api/platforms/connect`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ platform: cfg.key }),
+        });
+        const j = await res.json();
+        if (!res.ok || !j?.authUrl) {
+          throw new Error(j?.message || "Something went wrong. Please try again.");
+        }
+        window.location.href = j.authUrl;
+      } else {
+        const { authUrl } = await startConnect({ data: { platform: cfg.key as any } });
+        window.location.href = authUrl;
+      }
+    } catch (err: any) {
+      setSheetMessage(err?.message || "Something went wrong. Please try again.");
+      setSheetOpen(true);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleDisconnect = async () => {
     if (!cfg) return;
     setBusy(true);
     try {
-      await disconnect({ data: { platform: cfg.key as any } });
+      if (isNative) {
+        const headers = await getAuthHeader();
+        await fetch(`${API_ORIGIN}/api/platforms/connect`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ platform: cfg.key }),
+        });
+      } else {
+        await disconnect({ data: { platform: cfg.key as any } });
+      }
       setConnection(null);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const headers = await getAuthHeader();
+      const res = await fetch(`${API_ORIGIN}/api/platforms/${cfg?.key}/sync`, {
+        method: "POST",
+        headers,
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.message || "Sync failed");
+      const skippedCount = (j.skipped ?? []).length;
+      setSyncMsg(
+        `${j.completed ?? 0} order(s) updated with real data` +
+          (skippedCount > 0 ? `, ${skippedCount} still pending` : ""),
+      );
+    } catch (err: any) {
+      setSyncMsg(err?.message || "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleImportProducts = async () => {
+    setImportingProducts(true);
+    setImportMsg(null);
+    try {
+      const headers = await getAuthHeader();
+      const res = await fetch(`${API_ORIGIN}/api/platforms/${cfg?.key}/sync-products`, {
+        method: "POST",
+        headers,
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.message || "Import failed");
+      const importedCount = (j.imported ?? []).length;
+      const refreshedCount = Number(j.refreshed ?? 0);
+      const delistedCount = Number(j.delisted ?? 0);
+      const parts: string[] = [];
+      if (importedCount > 0) {
+        parts.push(`${importedCount} new product(s) imported — set their real cost in Inventory before relying on profit numbers.`);
+      }
+      if (delistedCount > 0) {
+        parts.push(`${delistedCount} product(s) no longer found on TikTok — flagged in Inventory, not removed.`);
+      }
+      if (parts.length === 0) {
+        parts.push(
+          refreshedCount > 0
+            ? `No new products — refreshed price/stock on ${refreshedCount} already-linked product(s).`
+            : `No new products to import (${j.linked ?? 0} already linked).`,
+        );
+      }
+      setImportMsg(parts.join(" "));
+    } catch (err: any) {
+      setImportMsg(err?.message || "Import failed");
+    } finally {
+      setImportingProducts(false);
     }
   };
 
@@ -129,6 +244,32 @@ function PlatformConnectPage() {
         {busy && <Loader2 className="h-4 w-4 animate-spin" />}
         {connected ? "Disconnect" : cfg.connectLabel[lang]}
       </button>
+
+      {connected && cfg.key === "tiktok" && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            disabled={importingProducts}
+            onClick={handleImportProducts}
+            className="w-full py-3.5 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {importingProducts && <Loader2 className="h-4 w-4 animate-spin" />}
+            {importingProducts ? "Importing…" : "Import products from TikTok"}
+          </button>
+          {importMsg && <p className="text-xs text-center text-muted-foreground">{importMsg}</p>}
+
+          <button
+            type="button"
+            disabled={syncing}
+            onClick={handleSync}
+            className="w-full py-3.5 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {syncing && <Loader2 className="h-4 w-4 animate-spin" />}
+            {syncing ? "Syncing…" : "Sync pending orders now"}
+          </button>
+          {syncMsg && <p className="text-xs text-center text-muted-foreground">{syncMsg}</p>}
+        </div>
+      )}
 
       {sheetOpen && (
         <div

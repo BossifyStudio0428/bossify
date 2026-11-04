@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { logInventoryChange } from "@/lib/inventoryAudit";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { SheetShell, ConfirmSheet } from "@/components/InventorySheets";
 import { StockTabs } from "@/components/StockTabs";
@@ -21,7 +22,7 @@ type StockTake = {
   notes: string | null;
 };
 
-type InvItem = { id: string; name: string; stock: number; image_url: string | null; category: string | null };
+type InvItem = { id: string; name: string; stock: number; image_url: string | null; category: string | null; cost_price: number | null };
 type CountRow = {
   inventory_id: string; // for fnb this stores ingredient_id (not inserted into stock_take_items.inventory_id)
   product_name: string;
@@ -31,10 +32,11 @@ type CountRow = {
   system_quantity: number;
   actual_quantity: number | "";
   reason: string;
+  cost_price: number;
 };
 
 function StockTakePage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { type: bizType, loading: btLoading } = useBusinessType();
   const navigate = useNavigate();
@@ -104,11 +106,12 @@ function StockTakePage() {
         system_quantity: Number(i.current_stock ?? 0),
         actual_quantity: Number(i.current_stock ?? 0),
         reason: "",
+        cost_price: 0,
       })));
     } else {
       const { data, error } = await supabase
         .from("inventory")
-        .select("id, name, stock, image_url, category")
+        .select("id, name, stock, image_url, category, cost_price")
         .order("name", { ascending: true });
       if (error) { toast.error(error.message); return; }
       const items = (data ?? []) as InvItem[];
@@ -121,6 +124,7 @@ function StockTakePage() {
         system_quantity: i.stock ?? 0,
         actual_quantity: i.stock ?? 0,
         reason: "",
+        cost_price: Number(i.cost_price ?? 0),
       })));
     }
     setSearch("");
@@ -165,6 +169,7 @@ function StockTakePage() {
       if (e2) { setSaving(false); toast.error(e2.message); return; }
     }
     // Update stock quantities to actual
+    let shrinkageValue = 0;
     for (const r of rows) {
       const actual = typeof r.actual_quantity === "number" ? r.actual_quantity : r.system_quantity;
       if (actual !== r.system_quantity) {
@@ -172,13 +177,47 @@ function StockTakePage() {
           await supabase.from("ingredients" as any).update({ current_stock: actual }).eq("id", r.inventory_id);
         } else {
           await supabase.from("inventory").update({ stock: actual }).eq("id", r.inventory_id);
+          if (user) logInventoryChange({ userId: user.id, productId: r.inventory_id, productName: r.product_name, fieldName: "stock", oldValue: r.system_quantity, newValue: actual, source: "stock_take" });
+          // A shortage is real lost value — record it so Net Profit
+          // actually reflects it, not just a quieter stock number.
+          // Surpluses (found extra stock) are deliberately NOT booked as
+          // profit — conservative accounting: only count losses, not
+          // unexplained gains, since a surplus is more often a counting
+          // error than genuine free inventory.
+          if (actual < r.system_quantity) {
+            shrinkageValue += (r.system_quantity - actual) * (r.cost_price || 0);
+          }
         }
       }
+    }
+    if (shrinkageValue > 0) {
+      await supabase.from("operating_expenses" as any).insert({
+        user_id: user.id,
+        category: "other",
+        amount: Math.round(shrinkageValue * 100) / 100,
+        incurred_at: new Date().toISOString().slice(0, 10),
+        description:
+          lang === "zh"
+            ? `盘点损耗 — ${new Date().toLocaleDateString("en-MY")}`
+            : lang === "ms"
+              ? `Susut stok — ${new Date().toLocaleDateString("en-MY")}`
+              : `Stock shrinkage — ${new Date().toLocaleDateString("en-MY")}`,
+      } as any);
     }
     setSaving(false);
     setConfirmDone(false);
     setCounting(false);
     toast.success(t("stock_take_completed"));
+    if (shrinkageValue > 0) {
+      toast.info(
+        lang === "zh"
+          ? `已记录 RM ${shrinkageValue.toFixed(2)} 盘点损耗，计入营业费用`
+          : lang === "ms"
+            ? `RM ${shrinkageValue.toFixed(2)} susut stok direkodkan sebagai perbelanjaan`
+            : `RM ${shrinkageValue.toFixed(2)} shrinkage recorded as an expense`,
+        { duration: 6000 },
+      );
+    }
     load();
     navigate({ to: "/stock-take/$id", params: { id: takeId } });
   };

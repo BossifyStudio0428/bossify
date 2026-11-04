@@ -128,3 +128,29 @@ export const HIDE_ANALYTICS_MENU = true;
  * removed either way.
  */
 export const REPORTS_HUB_MODE = true;
+
+/**
+ * Disable actually purchasing a paid plan on /plans while subscription
+ * pricing (tiers, amounts, terms) is still being finalized.
+ *
+ * Plan cards, prices and feature lists stay visible — this only replaces
+ * each purchase/upgrade button (Starter, Pro, Business, and every Team
+ * tier) with a disabled "Coming soon" state, the same treatment the
+ * Annual billing toggle already uses. A user who already has an active
+ * plan still sees their normal "Current plan ✓" badge — only the ability
+ * to start a NEW purchase is disabled.
+ *
+ * Underlying purchase code (startStripeCheckout, purchasePlan,
+ * handleGooglePlayPurchase, etc.) is untouched; flip to `false` once
+ * pricing is locked in to re-enable purchasing.
+ */
+export const HIDE_PAID_PLANS = true;
+
+/**
+ * Hide the floating AI chat widget (bottom-right bubble, Gemini-backed)
+ * that renders on every screen via AppShell. Not considered necessary for
+ * now. The widget component, its `/api/public/ai-chat/*` endpoints and
+ * chat history data are all untouched — this only stops `<AiChatWidget />`
+ * from being mounted. Flip to `false` to bring it back.
+ */
+export const HIDE_AI_CHAT_WIDGET = true;

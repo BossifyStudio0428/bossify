@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,7 +13,7 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search, Plus } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
@@ -49,6 +49,17 @@ function formatTime(iso: string) {
   return d.toLocaleDateString("en-MY", { day: "numeric", month: "short" });
 }
 
+function timeAgo(iso: string | null, lang: string): string {
+  if (!iso) return lang === "zh" ? "从未同步" : lang === "ms" ? "Belum pernah disegerak" : "Never synced";
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 1) return lang === "zh" ? "刚刚" : lang === "ms" ? "Baru sahaja" : "Just now";
+  if (mins < 60) return lang === "zh" ? `${mins} 分钟前` : lang === "ms" ? `${mins} minit lalu` : `${mins} min ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return lang === "zh" ? `${hrs} 小时前` : lang === "ms" ? `${hrs} jam lalu` : `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  return lang === "zh" ? `${days} 天前` : lang === "ms" ? `${days} hari lalu` : `${days}d ago`;
+}
+
 function OrdersPage() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
@@ -58,6 +69,8 @@ function OrdersPage() {
   const [hydrated, setHydrated] = useState(false);
   const [active, setActive] = useState<Filter>("All");
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [orderCategories, setOrderCategories] = useState<Record<string, Set<string>>>({});
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("__all");
   const [loading, setLoading] = useState(true);
   const [productImages, setProductImages] = useState<Record<string, string>>({});
   const [refreshing, setRefreshing] = useState(false);
@@ -78,6 +91,74 @@ function OrdersPage() {
   const [ofCode, setOfCode] = useState<string | null>(null);
   const [ofEnabled, setOfEnabled] = useState<boolean>(true);
   const [ofBizType, setOfBizType] = useState<string | null>(null);
+  const [tiktokConnected, setTiktokConnected] = useState(false);
+  const [tiktokLastSynced, setTiktokLastSynced] = useState<string | null>(null);
+  const [tiktokSyncing, setTiktokSyncing] = useState(false);
+  const [tiktokMsg, setTiktokMsg] = useState<string | null>(null);
+
+  const syncTikTokOrders = async (silent: boolean) => {
+    setTiktokSyncing(true);
+    if (!silent) setTiktokMsg(null);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+      const res = await fetch("https://tanstack-start-app.bossifystudio.workers.dev/api/platforms/tiktok/sync", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.message || "Sync failed");
+      if (user) {
+        const { data: refreshed } = await supabase
+          .from("platform_connections" as any)
+          .select("last_synced_at")
+          .eq("user_id", user.id)
+          .eq("platform", "tiktok")
+          .maybeSingle();
+        setTiktokLastSynced((refreshed as any)?.last_synced_at ?? null);
+      }
+      const completed = j.completed ?? 0;
+      if (!silent || completed > 0) {
+        setTiktokMsg(
+          completed > 0
+            ? (lang === "zh" ? `${completed} 笔订单已更新真实数据` : lang === "ms" ? `${completed} pesanan dikemaskini` : `${completed} order(s) updated`)
+            : (lang === "zh" ? "没有新订单要处理" : lang === "ms" ? "Tiada pesanan baru" : "No new orders to process"),
+        );
+        setTimeout(() => setTiktokMsg(null), 4000);
+      }
+    } catch (err: any) {
+      if (!silent) {
+        setTiktokMsg(err?.message || "Sync failed");
+        setTimeout(() => setTiktokMsg(null), 4000);
+      }
+    } finally {
+      setTiktokSyncing(false);
+    }
+  };
+
+  // Check whether TikTok Shop is connected; if so, quietly sync pending
+  // orders on page load (throttled to once every 2 minutes).
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("platform_connections" as any)
+        .select("status,last_synced_at")
+        .eq("user_id", user.id)
+        .eq("platform", "tiktok")
+        .maybeSingle();
+      const isConnected = (data as any)?.status === "active";
+      setTiktokConnected(isConnected);
+      setTiktokLastSynced((data as any)?.last_synced_at ?? null);
+      if (!isConnected) return;
+      const key = "bossify_tiktok_orders_last_auto_sync";
+      const last = Number(sessionStorage.getItem(key) ?? 0);
+      if (Date.now() - last > 2 * 60 * 1000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        syncTikTokOrders(true);
+      }
+    })();
+  }, [user?.id]);
   const [ofQrOpen, setOfQrOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
@@ -138,6 +219,29 @@ function OrdersPage() {
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     else setOrders((data ?? []) as OrderRow[]);
+
+    // Build an order → categories lookup so orders can be filtered by
+    // product category. An order can span multiple categories (e.g. one
+    // order with both a food item and a toy) — it matches a category
+    // filter if ANY of its line items belong to that category.
+    const { data: items } = await supabase
+      .from("order_items" as any)
+      .select("order_id,product_id")
+      .in("order_id", ((data ?? []) as any[]).map((o) => o.id));
+    const productIds = Array.from(new Set(((items ?? []) as any[]).map((i) => i.product_id).filter(Boolean)));
+    if (productIds.length > 0) {
+      const { data: invRows } = await supabase.from("inventory").select("id,category").in("id", productIds);
+      const catByProduct: Record<string, string> = {};
+      for (const r of ((invRows ?? []) as any[])) catByProduct[r.id] = r.category || "";
+      const map: Record<string, Set<string>> = {};
+      for (const it of ((items ?? []) as any[])) {
+        const c = it.product_id ? catByProduct[it.product_id] : "";
+        if (!c) continue;
+        (map[it.order_id] ??= new Set()).add(c);
+      }
+      setOrderCategories(map);
+    }
+
     setLoading(false);
     setRefreshing(false);
   }, [user?.id]);
@@ -392,7 +496,7 @@ function OrdersPage() {
     setExportingPdf(true);
     await new Promise((r) => setTimeout(r, 30));
     try {
-      const rows = visible.map((o) => ({
+      const rows = visibleByCategory.map((o) => ({
         date: new Date(o.created_at).toLocaleDateString("en-MY"),
         code: o.code, customer: o.customer_name, product: o.product,
         qty: Number(o.quantity), amount: Number(o.amount), status: o.status,
@@ -570,9 +674,21 @@ function OrdersPage() {
         return hay.includes(q);
       })
     : byDate;
+  const visibleByCategory = activeCategoryFilter === "__all"
+    ? visible
+    : visible.filter((o) => orderCategories[o.id]?.has(activeCategoryFilter));
   const dateFilterActive = !!(dateFrom || dateTo);
   const todayCount = orders.filter((o) => new Date(o.created_at).toDateString() === new Date().toDateString()).length;
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
+  // "Needs attention": Unpaid, or a TikTok order still stuck financially
+  // pending (sync hasn't completed it yet), and older than 24h — a quiet
+  // reminder to yourself, not a message sent to any customer.
+  const needsAttention = orders.filter((o) => {
+    const ageMs = Date.now() - new Date(o.created_at).getTime();
+    const overADay = ageMs > 24 * 60 * 60 * 1000;
+    const stillPending = (o as any).financial_status === "pending";
+    return overADay && (o.status === "Unpaid" || stillPending);
+  });
 
   return (
     <div className="px-5 pt-10 pb-4 space-y-5">
@@ -600,6 +716,39 @@ function OrdersPage() {
           {exportingPdf ? "…" : "📄"}
         </button>
       </header>
+
+      {tiktokConnected && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={tiktokSyncing}
+              onClick={() => syncTikTokOrders(false)}
+              className="flex-1 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95 disabled:opacity-60"
+            >
+              {tiktokSyncing
+                ? (lang === "zh" ? "同步中…" : lang === "ms" ? "Menyegerak…" : "Syncing…")
+                : `🎵 ${lang === "zh" ? "同步 TikTok 订单" : lang === "ms" ? "Segerak pesanan TikTok" : "Sync TikTok orders"}`}
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground text-center">
+            {tiktokMsg ?? `${lang === "zh" ? "上次同步：" : lang === "ms" ? "Segerak terakhir: " : "Last synced: "}${timeAgo(tiktokLastSynced, lang)}`}
+          </p>
+        </div>
+      )}
+
+      {needsAttention.length > 0 && (
+        <div className="rounded-2xl bg-amber-50 border border-amber-200 px-3.5 py-3 flex items-center gap-2.5">
+          <span className="text-lg">⏰</span>
+          <p className="text-xs text-amber-800 flex-1">
+            {lang === "zh"
+              ? `${needsAttention.length} 笔订单超过 24 小时还没处理`
+              : lang === "ms"
+                ? `${needsAttention.length} pesanan belum diproses lebih 24 jam`
+                : `${needsAttention.length} order(s) unprocessed for over 24 hours`}
+          </p>
+        </div>
+      )}
 
       {/* Compact Public Order Form */}
       {!HIDE_ORDER_FORM && ofCode && (
@@ -756,6 +905,32 @@ function OrdersPage() {
         </div>
       </div>
 
+      {(() => {
+        const allCats = Array.from(new Set(Object.values(orderCategories).flatMap((s) => Array.from(s))));
+        if (allCats.length === 0) return null;
+        return (
+          <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
+            <div className="flex gap-2 w-max">
+              <button
+                onClick={() => setActiveCategoryFilter("__all")}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${activeCategoryFilter === "__all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+              >
+                {lang === "zh" ? "全部分类" : lang === "ms" ? "Semua kategori" : "All categories"}
+              </button>
+              {allCats.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setActiveCategoryFilter(c)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${activeCategoryFilter === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Date range filter */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
@@ -782,7 +957,7 @@ function OrdersPage() {
           )}
           {dateFilterActive && (
             <span className="text-[11px] text-muted-foreground ml-auto">
-              {visible.length} {lang === "zh" ? "条结果" : lang === "ms" ? "hasil" : "results"}
+              {visibleByCategory.length} {lang === "zh" ? "条结果" : lang === "ms" ? "hasil" : "results"}
             </span>
           )}
         </div>
@@ -844,7 +1019,7 @@ function OrdersPage() {
       <div className="space-y-3">
         {loading && <p className="text-center text-sm text-muted-foreground py-10">{t("loading")}</p>}
 
-        {!loading && visible.map((o) => {
+        {!loading && visibleByCategory.map((o) => {
           const statusLabel = o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending");
           const removing = removingId === o.id;
           const firstUnpaidId = visible.find((x) => x.status === "Unpaid")?.id;
@@ -1098,7 +1273,7 @@ function OrdersPage() {
           );
         })}
 
-        {!loading && visible.length === 0 && (
+        {!loading && visibleByCategory.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-10">
             {orders.length === 0 ? t("no_orders_create") : t("no_orders_here")}
           </p>
@@ -1157,6 +1332,28 @@ function OrdersPage() {
               <Row label={t("notes")} value={detail.notes || "—"} />
               <Row label={t("date_label")} value={new Date(detail.created_at).toLocaleString("en-MY")} />
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const lines = [
+                  `${t("code_label")}: ${detail.code}`,
+                  `${t("customer_name")}: ${detail.customer_name}`,
+                  detail.phone ? `${t("phone_number")}: ${detail.phone}` : null,
+                  `${t("product")}: ${detail.product} x${detail.quantity}`,
+                  `${t("price")}: RM ${Number(detail.amount).toFixed(2)}`,
+                  `${t("payment_status")}: ${detail.status}`,
+                ].filter(Boolean).join("\n");
+                navigator.clipboard?.writeText(lines);
+                toast.success(
+                  lang === "zh" ? "订单信息已复制" : lang === "ms" ? "Maklumat pesanan disalin" : "Order info copied",
+                );
+              }}
+              className="w-full py-3 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98]"
+            >
+              <Copy size={16} />
+              {lang === "zh" ? "复制订单信息" : lang === "ms" ? "Salin maklumat pesanan" : "Copy order info"}
+            </button>
 
             <div className="space-y-2 pt-2">
               <p className="text-[11px] font-semibold uppercase text-muted-foreground">{t("edit_status")}</p>
@@ -1260,6 +1457,16 @@ function OrdersPage() {
           </div>
         </div>
       )}
+
+      {/* Manual "add order" entry point — page previously had none; matches
+          the pill style now used on Products' "add product" button. */}
+      <Link
+        to="/new-order"
+        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98]"
+      >
+        <Plus className="h-5 w-5" strokeWidth={2.5} />
+        {t("ro_new_sale")}
+      </Link>
     </div>
   );
 }

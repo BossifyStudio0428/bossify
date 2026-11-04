@@ -12,6 +12,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { parsePurchaseOrderWithAi, type ParsedPoResult } from "@/lib/ai-parse-po.functions";
 import { PurchaseOrderAiReview } from "@/components/PurchaseOrderAiReview";
 import { mergeCategories } from "@/lib/ingredientCategories";
+import { calculateWeightedAverageCost } from "@/lib/orderMath";
+import { logInventoryChange } from "@/lib/inventoryAudit";
 
 export const Route = createFileRoute("/purchase-orders")({ component: PurchaseOrdersPage });
 
@@ -343,10 +345,10 @@ function PurchaseOrdersPage() {
       <button
         onClick={() => setFormOpen(true)}
         aria-label={t("po_add")}
-        className="fixed fab-above-nav z-30 h-14 w-14 rounded-full text-primary-foreground shadow-[var(--shadow-soft)] flex items-center justify-center active:scale-95 transition-transform bg-gradient-to-br from-primary to-primary/80"
-        style={{ right: "max(1.5rem, calc(50vw - 180px + 1rem))" }}
+        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-gradient-to-br from-primary to-primary/80"
       >
-        <Plus className="h-6 w-6" strokeWidth={2.5} />
+        <Plus className="h-5 w-5" strokeWidth={2.5} />
+        {t("po_add")}
       </button>
 
       {formOpen && (
@@ -655,7 +657,8 @@ export function PurchaseOrderForm({
     if (status === "received") {
       if (mode === "inventory") {
         await applyReceivedStockInventory(
-          validLines.map((l) => ({ inventory_id: l.ingredient_id, quantity: l.quantity })),
+          validLines.map((l) => ({ inventory_id: l.ingredient_id, quantity: l.quantity, unit_price: l.unit_price })),
+          user?.id,
         );
       } else {
         await applyReceivedStock(validLines);
@@ -842,22 +845,64 @@ export async function applyReceivedStock(
 }
 
 export async function applyReceivedStockInventory(
-  items: { inventory_id: string; quantity: string | number }[],
+  items: { inventory_id: string; quantity: string | number; unit_price?: string | number }[],
+  userId?: string,
 ) {
   const ids = Array.from(new Set(items.map((i) => i.inventory_id).filter(Boolean)));
   if (!ids.length) return;
-  const { data } = await supabase.from("inventory").select("id, stock").in("id", ids);
-  const stockMap = new Map<string, number>();
-  ((data ?? []) as any[]).forEach((r) => stockMap.set(r.id, Number(r.stock ?? 0)));
-  const delta = new Map<string, number>();
+  const { data } = await supabase.from("inventory").select("id, stock, cost_price").in("id", ids);
+  const rowMap = new Map<string, { stock: number; cost_price: number }>();
+  ((data ?? []) as any[]).forEach((r) => rowMap.set(r.id, { stock: Number(r.stock ?? 0), cost_price: Number(r.cost_price ?? 0) }));
+
+  // Group by item so a repeated line still nets to one weighted-average
+  // update per product, same as the manual Receive Stock flow does.
+  const grouped = new Map<string, { qty: number; totalCost: number }>();
   items.forEach((it) => {
     const q = Number(it.quantity) || 0;
     if (!it.inventory_id || q <= 0) return;
-    delta.set(it.inventory_id, (delta.get(it.inventory_id) ?? 0) + q);
+    const price = Number(it.unit_price) || 0;
+    const g = grouped.get(it.inventory_id) ?? { qty: 0, totalCost: 0 };
+    g.qty += q;
+    g.totalCost += q * price;
+    grouped.set(it.inventory_id, g);
   });
-  for (const [id, add] of delta.entries()) {
-    const next = Math.round((stockMap.get(id) ?? 0) + add);
-    await supabase.from("inventory").update({ stock: next }).eq("id", id);
+
+  for (const [id, g] of grouped.entries()) {
+    const existing = rowMap.get(id) ?? { stock: 0, cost_price: 0 };
+    const unitLandedCost = g.qty > 0 ? g.totalCost / g.qty : 0;
+    const newCost = unitLandedCost > 0
+      ? calculateWeightedAverageCost({
+          existingStock: existing.stock,
+          existingCostPrice: existing.cost_price,
+          quantityReceived: g.qty,
+          unitLandedCost,
+        })
+      : existing.cost_price; // no price data on this PO line — leave cost as-is, only stock moves
+    const newStock = Math.round(existing.stock + g.qty);
+    await supabase.from("inventory").update({ stock: newStock, cost_price: newCost } as any).eq("id", id);
+    if (userId) {
+      const { data: nameRow } = await supabase.from("inventory").select("name").eq("id", id).maybeSingle();
+      const productName = (nameRow as any)?.name ?? "";
+      logInventoryChange({ userId, productId: id, productName, fieldName: "stock", oldValue: existing.stock, newValue: newStock, source: "purchase_order_received" });
+      if (unitLandedCost > 0) {
+        logInventoryChange({ userId, productId: id, productName, fieldName: "cost_price", oldValue: existing.cost_price, newValue: newCost, source: "purchase_order_received" });
+      }
+    }
+
+    if (userId && unitLandedCost > 0) {
+      await supabase.from("stock_receipts" as any).insert({
+        user_id: userId,
+        product_id: id,
+        quantity_received: g.qty,
+        purchase_amount: g.totalCost,
+        landed_extra_costs: 0,
+        unit_landed_cost: unitLandedCost,
+        cost_before: existing.cost_price,
+        cost_after: newCost,
+        supplier_name: null,
+        notes: "Auto-applied from AI-parsed purchase order",
+      });
+    }
   }
 }
 

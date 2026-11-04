@@ -170,10 +170,10 @@ function RequirementsPage() {
         to="/requirement/$id"
         params={{ id: "new" }}
         aria-label={t("new_requirement")}
-        className="fixed fab-above-nav z-30 h-14 w-14 rounded-full text-primary-foreground shadow-[var(--shadow-soft)] flex items-center justify-center active:scale-95 transition-transform bg-gradient-to-br from-primary to-primary/80"
-        style={{ right: "max(1.5rem, calc(50vw - 180px + 1rem))" }}
+        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-gradient-to-br from-primary to-primary/80"
       >
-        <Plus className="h-6 w-6" strokeWidth={2.5} />
+        <Plus className="h-5 w-5" strokeWidth={2.5} />
+        {t("new_requirement")}
       </Link>
     </div>
   );

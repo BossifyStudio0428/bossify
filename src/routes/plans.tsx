@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Check, X, Sparkles, Crown, Rocket } from "lucide-react";
 import { toast } from "sonner";
@@ -34,7 +34,18 @@ import {
   type BillingError,
 } from "@/lib/billing";
 import { fetchStripePrices } from "@/lib/stripePrices.functions";
-import { HIDE_TEAM_PLAN } from "@/lib/featureFlags";
+import { HIDE_TEAM_PLAN, HIDE_PAID_PLANS } from "@/lib/featureFlags";
+
+// Absolute origin, not a relative "/api/..." path: on a real Android
+// device, a relative fetch() resolves against the WebView's own local
+// origin, not the deployed worker, so it was silently hitting the app's
+// HTML shell instead of this API route (surfaces as "Invalid response:
+// <!doctype..." below). Found and fixed the same bug in the AI chat/
+// campaign-suggestions calls first — see the long comment in
+// AiChatWidget.tsx — then found this pre-existing checkout call had the
+// identical issue, so it's fixed here too since it's the actual payment
+// flow.
+const API_ORIGIN = "https://tanstack-start-app.bossifystudio.workers.dev";
 
 export const Route = createFileRoute("/plans")({ component: PlansPage });
 
@@ -182,6 +193,34 @@ function TeamPlansSection({
   );
 }
 
+// Matches the Annual billing toggle's treatment exactly: not just a disabled
+// button, but the whole card collapsed — no price, no feature list, nothing
+// to look at until pricing is actually finalized.
+function ComingSoonPlanCard({
+  gradient,
+  icon,
+  title,
+}: {
+  gradient: string;
+  icon: ReactNode;
+  title: ReactNode;
+}) {
+  const { t } = useI18n();
+  return (
+    <section className={`relative rounded-3xl p-[2px] bg-gradient-to-br ${gradient} opacity-70`}>
+      <div className="rounded-[calc(1.5rem-2px)] bg-card p-5 flex items-center justify-between gap-2">
+        <h2 className="text-lg font-bold flex items-center gap-1.5 text-muted-foreground">
+          {icon}
+          {title}
+        </h2>
+        <span className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-muted-foreground/10 text-muted-foreground uppercase tracking-wide">
+          {t("coming_soon")}
+        </span>
+      </div>
+    </section>
+  );
+}
+
 async function startStripeCheckout(opts: {
   userId: string;
   planType:
@@ -195,7 +234,7 @@ async function startStripeCheckout(opts: {
   billingCycle: "monthly" | "annual" | "one";
 }) {
   const { data: { session } } = await supabase.auth.getSession();
-  const res = await fetch(`/api/public/stripe/checkout`, {
+  const res = await fetch(`${API_ORIGIN}/api/public/stripe/checkout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -353,13 +392,11 @@ function PlansPage() {
   const starterDeviceLabel = lang === "zh" ? "2 台设备" : lang === "ms" ? "2 Peranti" : "2 Devices";
   const proDeviceLabel = lang === "zh" ? "3 台设备" : lang === "ms" ? "3 Peranti" : "3 Devices";
   const lifetimeDeviceLabel = lang === "zh" ? "5 台设备" : lang === "ms" ? "5 Peranti" : "5 Devices";
+  // John's call: Free card shows only what's included — no struck-through
+  // "what you don't get" upsell rows. Keep this list positive-only.
   const freeRows: { ok: boolean; label: string }[] = [
     { ok: true, label: freeDeviceLabel },
     ...freePositive.map((k) => ({ ok: true, label: t(k) })),
-    // upsell hints (what you don't get on Free)
-    { ok: false, label: t("sales_reports") },
-    { ok: false, label: t("export_pdf") },
-    { ok: false, label: t("wa_template") },
   ];
   const starterRows = [starterDeviceLabel, ...STARTER[eff].map((k) => t(k))];
   const proRows = PRO[eff].map((k) => t(k));
@@ -370,6 +407,17 @@ function PlansPage() {
   const businessTagline = lang === "zh" ? "适合有 5 台设备的团队" : lang === "ms" ? "Untuk pasukan dengan 5 peranti" : "For teams with 5 devices";
   const upgradeToBusinessLabel = lang === "zh" ? "升级到商业版" : lang === "ms" ? "Naik Taraf ke Business" : "Upgrade to Business";
   const bestForDevicesLabel = lang === "zh" ? "5 台设备（专业版 3 台）" : lang === "ms" ? "5 peranti (Pro: 3 peranti)" : "5 devices (vs Pro's 3)";
+
+  // While HIDE_PAID_PLANS is on, a plan card only shows its full price +
+  // feature list when the user actually has that status to show (so an
+  // existing subscriber's own card still displays normally). Everyone else
+  // sees a collapsed "Coming soon" teaser with no price or feature list —
+  // same as the Annual tab, which can't be opened to peek at its content
+  // either. Flip HIDE_PAID_PLANS off and every card goes back to always
+  // showing full content.
+  const starterShowFull = !HIDE_PAID_PLANS || isLifetime || isPro || (isStarter && activeBillingPlan === billing);
+  const proShowFull = !HIDE_PAID_PLANS || isLifetime || (isPro && activeBillingPlan === billing);
+  const businessShowFull = !HIDE_PAID_PLANS || isLifetime || (isBusiness && activeBillingPlan === billing);
 
   const handleGooglePlayPurchase = async () => {
     if (!user) return;
@@ -698,20 +746,14 @@ function PlansPage() {
       </div>
 
       {scope === "individual" && (<>
-      {/* Free card */}
+      {/* Free card — John's call: no feature list at all, just the plan
+          name + price. (freeRows above is now unused for rendering but
+          left in place — harmless.) */}
       <section className="rounded-3xl bg-card border border-border/60 p-5">
         <div className="flex items-baseline justify-between">
           <h2 className="text-lg font-bold">{t("free_plan")}</h2>
           <p className="text-xl font-bold">{`RM 0`}<span className="text-xs text-muted-foreground font-normal"> {t("per_month")}</span></p>
         </div>
-        <ul className="mt-4 space-y-2">
-          {freeRows.map((r, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm">
-              {r.ok ? <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" /> : <X className="h-4 w-4 text-muted-foreground/60 shrink-0 mt-0.5" />}
-              <span className={r.ok ? "text-foreground" : "text-muted-foreground line-through"}>{r.label}</span>
-            </li>
-          ))}
-        </ul>
         {plan === "free" && (
           <button disabled className="mt-5 w-full py-3 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm">
             {t("current_plan")}
@@ -719,45 +761,17 @@ function PlansPage() {
         )}
       </section>
 
-      {/* Starter card */}
-      <section className="relative rounded-3xl p-[2px] bg-gradient-to-br from-sky-400 via-teal-400 to-cyan-500">
-        <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-bold flex items-center gap-1">{t("starter_plan")} <Rocket className="h-4 w-4 text-sky-500" /></h2>
-            <p className="text-xl font-bold text-sky-600">
-              <span className="text-sky-600">{starterPrice}</span>
-              <span className="text-xs text-muted-foreground font-normal"> {period}</span>
-            </p>
-          </div>
-          <ul className="mt-4 space-y-2">
-            {starterRows.map((r, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm">
-                <Check className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />
-                <span className="text-foreground">{r}</span>
-              </li>
-            ))}
-          </ul>
-          {isLifetime || isPro ? (
-            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm">
-              {isLifetime ? `${t("plan_badge_lifetime")} ✓` : `${t("pro_plan")} ✓`}
-            </button>
-          ) : isStarter && activeBillingPlan === billing ? (
-            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-sky-100 text-sky-700 font-semibold text-sm">
-              {t("current_plan")} ✓
-            </button>
-          ) : (
-            <button
-              onClick={handleStarterPurchase}
-              disabled={submittingPlan !== null}
-              className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-teal-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
-            >
-              {submittingPlan === "starter" ? "..." : `${t("start_starter_plan")} — ${starterPrice}`}
-            </button>
-          )}
-        </div>
-      </section>
+      {/* Starter card — hidden per John's call (2026-10): Starter isn't part
+          of the new Free/Pro/Business pricing, so it no longer renders at
+          all (not even as a "Coming soon" pill). The supporting constants/
+          handler (starterShowFull, starterRows, starterPrice,
+          handleStarterPurchase, STARTER map above) are left in place,
+          unused, so the Restore Purchases flow below — which still needs
+          to recognize a pre-existing Starter subscriber's receipt — keeps
+          working unchanged. */}
 
       {/* Pro card */}
+      {proShowFull ? (
       <section className="relative rounded-3xl p-[2px] bg-gradient-to-br from-primary via-primary/70 to-primary/40">
         <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
           <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow">
@@ -801,8 +815,16 @@ function PlansPage() {
           )}
         </div>
       </section>
+      ) : (
+        <ComingSoonPlanCard
+          gradient="from-primary via-primary/70 to-primary/40"
+          icon={<Sparkles className="h-4 w-4 text-primary" />}
+          title={t("pro_plan")}
+        />
+      )}
 
       {/* Business card — 5 devices vs Pro's 3. */}
+      {businessShowFull ? (
       <section className="relative rounded-3xl p-[2px] bg-gradient-to-br from-amber-400 via-amber-300 to-yellow-500">
         <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
           <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow">
@@ -847,6 +869,13 @@ function PlansPage() {
           )}
         </div>
       </section>
+      ) : (
+        <ComingSoonPlanCard
+          gradient="from-amber-400 via-amber-300 to-yellow-500"
+          icon={<Crown className="h-4 w-4 text-amber-500" />}
+          title={businessName}
+        />
+      )}
 
       <button
         onClick={async () => {

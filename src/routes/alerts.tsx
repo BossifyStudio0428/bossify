@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { getCachedPrefs, loadPrefs } from "@/lib/notifPrefs";
 
 type Row = {
   id: string;
@@ -14,8 +15,6 @@ type Row = {
   cost_price: number | null;
 };
 
-const LOW_STOCK_THRESHOLD = 5;
-
 export const Route = createFileRoute("/alerts")({ component: AlertsPage });
 
 function AlertsPage() {
@@ -23,6 +22,12 @@ function AlertsPage() {
   const { t } = useI18n();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lowThreshold, setLowThreshold] = useState<number>(getCachedPrefs().low_stock_threshold);
+
+  useEffect(() => {
+    if (!user) return;
+    loadPrefs(user.id).then((p) => setLowThreshold(p.low_stock_threshold)).catch(() => undefined);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -43,7 +48,7 @@ function AlertsPage() {
     const losing: Row[] = [];
     for (const r of rows) {
       const s = Number(r.stock ?? 0);
-      const thr = LOW_STOCK_THRESHOLD;
+      const thr = lowThreshold;
       const p = Number(r.price ?? 0);
       const c = Number(r.cost_price ?? 0);
       if (s <= 0) out.push(r);
@@ -51,7 +56,7 @@ function AlertsPage() {
       if (p > 0 && c > p) losing.push(r);
     }
     return { out, low, losing };
-  }, [rows]);
+  }, [rows, lowThreshold]);
 
   const total = groups.out.length + groups.low.length + groups.losing.length;
 
@@ -92,7 +97,7 @@ function AlertsPage() {
             renderMeta={(r) =>
               t("alerts_low_meta")
                 .replace("{n}", String(Number(r.stock ?? 0)))
-                .replace("{thr}", String(LOW_STOCK_THRESHOLD))
+                .replace("{thr}", String(lowThreshold))
             }
           />
           <Section

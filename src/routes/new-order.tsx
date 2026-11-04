@@ -16,6 +16,7 @@ import { getNotifMessage } from "@/lib/notifMessages";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
+import { calculateOrderFinancials } from "@/lib/orderMath";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
@@ -109,16 +110,23 @@ function NewOrderPage() {
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
   const [paymentPreviewBlock, setPaymentPreviewBlock] = useState<string>("");
   const [businessName, setBusinessName] = useState<string>("");
+  // Financial Engine: the seller's default platform commission %, snapshotted
+  // onto every order created here (real TikTok orders use actual fee data
+  // once the Order Detail sync is live — this default only applies to
+  // manually-entered orders).
+  const [platformFeePercent, setPlatformFeePercent] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
       if (!user) return;
-      const [{ data: inv }, { data: pref }] = await Promise.all([
+      const [{ data: inv }, { data: pref }, { data: prof }] = await Promise.all([
         supabase.from("inventory").select("*"),
         supabase.from("user_preferences").select("wa_order_template").eq("user_id", user.id).maybeSingle(),
+        supabase.from("profiles").select("platform_fee_percent").eq("id", user.id).maybeSingle(),
       ]);
       setInventory((inv ?? []) as InventoryRow[]);
       if (pref?.wa_order_template) setCustomOrderTpl(pref.wa_order_template);
+      setPlatformFeePercent(Number((prof as any)?.platform_fee_percent ?? 0));
       const wa = await fetchWAProfile(user.id, lang);
       setPaymentPreviewBlock(wa.paymentDetails);
       setBusinessName(wa.businessName);
@@ -226,13 +234,33 @@ function NewOrderPage() {
     const fullPhone = form.phone.replace(/\D/g, "");
     const productName = form.product.trim();
 
-    // Look up matching inventory item (case-insensitive) for cost & stock
+    // Look up matching inventory item (case-insensitive) for cost, packaging & stock
     const matchedItem = inventory.find(
       (i) => i.name.trim().toLowerCase() === productName.toLowerCase(),
     );
     const unitCost = matchedItem ? Number(matchedItem.cost_price ?? 0) : 0;
-    const cost = unitCost * quantity;
-    const gross_profit = amount - cost;
+    const packagingCost = matchedItem ? Number((matchedItem as any).packaging_cost ?? 0) : 0;
+    // The form's "amount" field is the TOTAL for this line (unit price × quantity,
+    // or a manually overridden total) — divide back down to a per-unit price for
+    // the Financial Engine, which works in per-unit terms.
+    const unitPriceAtSale = quantity > 0 ? amount / quantity : amount;
+
+    // ---- Financial Engine: single source of truth for the order economics ----
+    const financials = calculateOrderFinancials({
+      items: [
+        {
+          quantity,
+          unitPriceAtSale,
+          unitCostAtSale: unitCost,
+          packagingCostAtSale: packagingCost,
+        },
+      ],
+      sellerDiscount: 0, // no discount UI on this screen yet
+      deliveryFeeCharged: 0, // this screen doesn't compute delivery-zone fees
+      shippingCost: 0, // seller's own courier cost isn't captured here
+      platformFeePercent, // seller's default %, snapshotted at time of sale
+      affiliateCommission: 0, // not applicable — this order didn't come through TikTok
+    });
 
     // Build notes payload: include any extra type-specific fields above the user's note.
     const extraLines: string[] = [];
@@ -263,20 +291,45 @@ function NewOrderPage() {
         customer_name: form.customer_name.trim(),
         phone: fullPhone || null,
         product: productName,
+        product_summary: productName,
         quantity,
-        amount,
-        cost,
-        gross_profit,
+        amount: financials.netRevenue,
+        cost: financials.cogs,
+        gross_profit: financials.grossProfit,
+        seller_discount: 0,
+        delivery_fee_charged: 0,
+        shipping_cost: 0,
+        platform_fee_percent_at_sale: platformFeePercent,
+        platform_fee_amount: financials.platformFeeAmount,
+        affiliate_commission: 0,
+        financial_status: "complete",
         status: effectiveStatus,
         notes: combinedNotes,
         delivery_address: form.delivery_address.trim() || null,
-      })
+      } as any)
       .select("id, code")
       .single();
 
     if (orderErr || !inserted) {
       toast.error(t("order_save_failed"));
       return null;
+    }
+
+    // Write the single order_items row — historical snapshot of what was
+    // actually charged/costed at the time of sale.
+    try {
+      const { error: itemErr } = await supabase.from("order_items" as any).insert({
+        order_id: inserted.id,
+        product_id: matchedItem?.id ?? null,
+        product_name: productName,
+        quantity,
+        unit_price_at_sale: unitPriceAtSale,
+        unit_cost_at_sale: unitCost,
+        packaging_cost_at_sale: packagingCost,
+      });
+      if (itemErr) console.error("[new-order] order_items insert failed", itemErr);
+    } catch (e) {
+      console.error("[new-order] order_items insert threw", e);
     }
 
     // Stock deduction is handled by the DB trigger `trg_deduct_stock_on_order`.
@@ -317,7 +370,7 @@ function NewOrderPage() {
       if (existing) {
         await (supabase as any).from("customers").update({
           total_orders: (existing.total_orders ?? 0) + 1,
-          total_spent: Number(existing.total_spent ?? 0) + amount,
+          total_spent: Number(existing.total_spent ?? 0) + financials.netRevenue,
           last_order_at: new Date().toISOString(),
           name: existing.name || nameTrim,
           ...(eff === "property" && interestedListingId
@@ -331,7 +384,7 @@ function NewOrderPage() {
           name: nameTrim,
           phone: fullPhone || null,
           total_orders: 1,
-          total_spent: amount,
+          total_spent: financials.netRevenue,
           last_order_at: new Date().toISOString(),
           ...(eff === "property" && interestedListingId
             ? { interested_listing_id: interestedListingId }

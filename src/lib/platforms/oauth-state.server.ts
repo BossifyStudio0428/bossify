@@ -22,16 +22,18 @@ function b64urlDecode(s: string): Buffer {
 }
 
 export type OAuthStatePayload = {
-  userId: string;
+  userId?: string; // absent for mode="login" (user doesn't exist yet)
   platform: string;
+  mode?: "connect" | "login";
   nonce: string;
   exp: number; // unix seconds
 };
 
-export function signOAuthState(input: { userId: string; platform: string }): string {
+export function signOAuthState(input: { userId?: string; platform: string; mode?: "connect" | "login" }): string {
   const payload: OAuthStatePayload = {
     userId: input.userId,
     platform: input.platform,
+    mode: input.mode ?? "connect",
     nonce: randomBytes(8).toString("hex"),
     exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
   };

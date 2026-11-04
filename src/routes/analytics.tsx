@@ -14,6 +14,21 @@ export const Route = createFileRoute("/analytics")({ component: AnalyticsPage })
 
 type Range = "today" | "week" | "month" | "all";
 
+type OrderItemRow = {
+  order_id: string;
+  product_id: string | null;
+  product_name: string;
+  quantity: number;
+  unit_price_at_sale: number;
+};
+
+/** Strips the trailing " (SKU)" suffix tiktok-products-sync.server.ts
+ *  appends to variant rows, so "Top Products" ranks the parent product
+ *  instead of splitting it into weaker "T恤 (S)" / "T恤 (M)" entries. */
+function stripVariantSuffix(name: string): string {
+  return name.replace(/\s*\([^)]*\)\s*$/, "").trim() || name;
+}
+
 function AnalyticsPage() {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -24,6 +39,8 @@ function AnalyticsPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [eduRows, setEduRows] = useState<Array<{ university_preference: string | null; course_interest: string | null; application_status: string | null }>>([]);
+  const [orderItems, setOrderItems] = useState<OrderItemRow[]>([]);
+  const [tiktokIdByProduct, setTiktokIdByProduct] = useState<Record<string, string>>({});
 
   const loadOrders = useCallback(async () => {
     if (!user?.id) {
@@ -39,6 +56,27 @@ function AnalyticsPage() {
       .order("created_at", { ascending: false });
     setOrders((data ?? []) as OrderRow[]);
     setLoading(false);
+
+    const orderIds = ((data ?? []) as any[]).map((o) => o.id);
+    if (orderIds.length > 0) {
+      const { data: items } = await supabase
+        .from("order_items" as any)
+        .select("order_id,product_id,product_name,quantity,unit_price_at_sale")
+        .in("order_id", orderIds);
+      setOrderItems(((items ?? []) as any) as OrderItemRow[]);
+      const productIds = Array.from(new Set(((items ?? []) as any[]).map((i) => i.product_id).filter(Boolean)));
+      if (productIds.length > 0) {
+        const { data: invRows } = await supabase.from("inventory").select("id,tiktok_product_id").in("id", productIds);
+        const tidByProduct: Record<string, string> = {};
+        for (const r of ((invRows ?? []) as any[])) if (r.tiktok_product_id) tidByProduct[r.id] = r.tiktok_product_id;
+        setTiktokIdByProduct(tidByProduct);
+      } else {
+        setTiktokIdByProduct({});
+      }
+    } else {
+      setOrderItems([]);
+      setTiktokIdByProduct({});
+    }
   }, [user?.id]);
 
   useEffect(() => {
@@ -101,16 +139,52 @@ function AnalyticsPage() {
     trend.push({ date: `${d.getDate()}/${d.getMonth()+1}`, revenue: rev });
   }
 
-  // Top products
-  const prodMap = new Map<string, { qty: number; rev: number }>();
-  filtered.forEach((o) => {
-    const cur = prodMap.get(o.product) ?? { qty: 0, rev: 0 };
-    cur.qty += o.quantity;
-    if (o.status === "Paid") cur.rev += Number(o.amount);
-    prodMap.set(o.product, cur);
+  // Top products — from order LINE ITEMS, not the order-level "product"
+  // text field (every item in that order joined with commas, e.g. "T恤
+  // (S) × 2, 裤子 × 1" — that whole string was being ranked as one fake
+  // "product"). Same-product TikTok variants (S/M/L etc., sharing
+  // tiktok_product_id) are merged into one entry.
+  const filteredIds = new Set(filtered.map((o) => o.id));
+  const orderById = new Map(orders.map((o) => [o.id, o]));
+  const variantMap = new Map<string, { name: string; qty: number; rev: number; productId: string | null }>();
+  orderItems.forEach((it) => {
+    if (!filteredIds.has(it.order_id)) return;
+    const o = orderById.get(it.order_id);
+    const key = it.product_name || "—";
+    const cur = variantMap.get(key) ?? { name: key, qty: 0, rev: 0, productId: it.product_id ?? null };
+    cur.qty += Number(it.quantity ?? 0);
+    if (o?.status === "Paid") cur.rev += Number(it.unit_price_at_sale ?? 0) * Number(it.quantity ?? 0);
+    if (!cur.productId && it.product_id) cur.productId = it.product_id;
+    variantMap.set(key, cur);
   });
-  const topProducts = [...prodMap.entries()]
-    .map(([name, v]) => ({ name: name.length > 12 ? name.slice(0,12)+"…" : name, qty: v.qty, rev: v.rev }))
+  const prodByTiktokId = new Map<string, Array<{ name: string; qty: number; rev: number; productId: string | null }>>();
+  for (const v of variantMap.values()) {
+    const tid = v.productId ? tiktokIdByProduct[v.productId] : undefined;
+    if (!tid) continue;
+    if (!prodByTiktokId.has(tid)) prodByTiktokId.set(tid, []);
+    prodByTiktokId.get(tid)!.push(v);
+  }
+  const prodGroupedIds = new Set<string>();
+  for (const [tid, arr] of prodByTiktokId) if (arr.length > 1) prodGroupedIds.add(tid);
+  const mergedProducts: { name: string; qty: number; rev: number }[] = [];
+  const prodSeen = new Set<string>();
+  for (const v of variantMap.values()) {
+    const tid = v.productId ? tiktokIdByProduct[v.productId] : undefined;
+    if (tid && prodGroupedIds.has(tid)) {
+      if (prodSeen.has(tid)) continue;
+      prodSeen.add(tid);
+      const vs = prodByTiktokId.get(tid)!;
+      mergedProducts.push({
+        name: stripVariantSuffix(vs[0].name),
+        qty: vs.reduce((s, x) => s + x.qty, 0),
+        rev: vs.reduce((s, x) => s + x.rev, 0),
+      });
+    } else {
+      mergedProducts.push({ name: v.name, qty: v.qty, rev: v.rev });
+    }
+  }
+  const topProducts = mergedProducts
+    .map((v) => ({ name: v.name.length > 12 ? v.name.slice(0,12)+"…" : v.name, qty: v.qty, rev: v.rev }))
     .sort((a, b) => b.qty - a.qty).slice(0, 5);
 
   // Top customers/clients by spending (sum across ALL paid orders, case-insensitive name match)
