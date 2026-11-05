@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export function NotificationBellIcon() {
   const { user } = useAuth();
+  const instanceId = useId();
   const [unread, setUnread] = useState(0);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -48,8 +49,14 @@ export function NotificationBellIcon() {
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisible);
+    // Unique per mounted instance: this component now renders twice at
+    // once (mobile header + desktop top bar, one hidden via CSS at a time,
+    // both present in the DOM), and a shared hardcoded channel name made
+    // the second instance's .on() call land on an already-subscribing
+    // channel, crashing with "cannot add postgres_changes callbacks ...
+    // after subscribe()".
     const ch = supabase
-      .channel("notif-bell-rt")
+      .channel(`notif-bell-rt-${instanceId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
