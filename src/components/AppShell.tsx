@@ -19,6 +19,7 @@ import { initBilling } from "@/lib/billing";
 import { registerPushForUser } from "@/lib/pushRegister";
 import { registerWebPush, isWebPushSupported } from "@/lib/webPush";
 import { App as CapacitorApp } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
 import { BusinessTypeProvider, useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey, hasInventory } from "@/lib/businessType";
 import { RETAIL_ONLY_MODE, isArchivedRoute, HIDE_AI_CHAT_WIDGET } from "@/lib/featureFlags";
@@ -200,7 +201,8 @@ function ShellInner() {
   const isTrackRoute = locationPathname.startsWith("/track/");
   const isPrivacyPolicyRoute = locationPathname === "/privacy-policy";
   const isTermsRoute = locationPathname === "/terms";
-  const isPublicFlow = isSplashRoute || isLanguageRoute || isOrderFormRoute || isDineRoute || isTrackRoute || isPrivacyPolicyRoute || isTermsRoute;
+  const isWelcomeRoute = locationPathname === "/welcome";
+  const isPublicFlow = isSplashRoute || isLanguageRoute || isOrderFormRoute || isDineRoute || isTrackRoute || isPrivacyPolicyRoute || isTermsRoute || isWelcomeRoute;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const { type: bizType, loading: bizLoading } = useBusinessType();
@@ -260,12 +262,41 @@ function ShellInner() {
   }, [session?.user?.id]);
 
   useEffect(() => {
+    // Web (non-native) entry point: a logged-out visitor hitting any
+    // non-exempt route gets sent to the public /welcome landing page
+    // first, ahead of the language gate and the splash screen. The
+    // installed Android app (native platform) is unaffected and keeps
+    // the original splash -> language -> auth flow, since those users
+    // already chose to open the app.
+    if (
+      !Capacitor.isNativePlatform() &&
+      !session &&
+      !isWelcomeRoute &&
+      !isAuthFlowRoute &&
+      !isOrderFormRoute &&
+      !isDineRoute &&
+      !isTrackRoute &&
+      !isPrivacyPolicyRoute &&
+      !isTermsRoute
+    ) {
+      setShowInlineSplash(false);
+      navigate({ to: "/welcome", replace: true });
+      return;
+    }
     // Language gate runs FIRST and applies to every route except /language
     // itself. Even on /splash we redirect immediately if the user has not
     // tapped Continue on the language page yet.
-    if (!isLanguageRoute && !isOrderFormRoute && !isDineRoute && !isPrivacyPolicyRoute && !isTermsRoute && !hasPickedLanguageEver()) {
+    if (!isLanguageRoute && !isOrderFormRoute && !isDineRoute && !isPrivacyPolicyRoute && !isTermsRoute && !isWelcomeRoute && !hasPickedLanguageEver()) {
       setShowInlineSplash(false);
       navigate({ to: "/language", replace: true });
+      return;
+    }
+    // A signed-in user who lands on the public /welcome page (e.g. by
+    // bookmark or clicking the logo) is sent straight into the app
+    // instead of seeing the marketing page again.
+    if (isWelcomeRoute && session) {
+      setShowInlineSplash(false);
+      navigate({ to: "/", replace: true });
       return;
     }
     if (isPublicFlow) {

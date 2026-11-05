@@ -10,12 +10,18 @@ import { safeSessionStorage } from "@/lib/safeStorage";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 
-export const Route = createFileRoute("/auth")({ component: AuthPage });
+export const Route = createFileRoute("/auth")({
+  component: AuthPage,
+  validateSearch: (search: Record<string, unknown>): { mode?: string } => ({
+    mode: typeof search.mode === "string" ? search.mode : undefined,
+  }),
+});
 
 type Mode = "login" | "reg_email" | "reg_otp" | "reg_pw";
 
 function AuthPage() {
-  const [mode, setMode] = useState<Mode>("login");
+  const routeSearch = Route.useSearch();
+  const [mode, setMode] = useState<Mode>(routeSearch.mode === "reg" ? "reg_email" : "login");
   const [email, setEmail] = useState("");
   const [businessName, setBusinessName] = useState("");
   const { t } = useI18n();
