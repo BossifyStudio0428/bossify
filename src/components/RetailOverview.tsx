@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { TrendingUp, TrendingDown, ChevronDown, MessageCircle, Plus } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -295,6 +296,30 @@ export function RetailOverview() {
       losing,
     };
   }, [inv, curOrders, prevOrders, operatingExpenses, lowThreshold, curAdjustments, prevAdjustments]);
+
+  // Daily net-profit trend for the currently selected range — reuses
+  // curOrders (no extra query). Loss days render in red so a glance at
+  // the bar below the zero line is enough to spot a bad day.
+  const dailyChart = useMemo(() => {
+    const byDay = new Map<string, number>();
+    for (const o of curOrders as any[]) {
+      if (o.financial_status === "pending") continue;
+      const day = String(o.created_at ?? "").slice(0, 10);
+      if (!day) continue;
+      const p = orderGrossProfit({ amount: o.amount, cost: o.cost, gross_profit: o.gross_profit });
+      byDay.set(day, (byDay.get(day) ?? 0) + p);
+    }
+    return Array.from(byDay.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([day, profit]) => ({
+        day,
+        label: new Date(day + "T00:00:00").toLocaleDateString(
+          lang === "zh" ? "zh-CN" : lang === "ms" ? "ms-MY" : "en-MY",
+          { day: "numeric", month: "short" },
+        ),
+        profit: Math.round(profit * 100) / 100,
+      }));
+  }, [curOrders, lang]);
 
   const suggestion = useMemo(() => {
     if (loading) return null;
@@ -714,6 +739,31 @@ export function RetailOverview() {
                 ? "pesanan TikTok sedang disegerak, belum dikira"
                 : "TikTok order(s) syncing — not counted above yet"}
           </p>
+        </div>
+      )}
+
+      {dailyChart.length > 1 && (
+        <div className="mt-5 rounded-xl border border-border/60 bg-card p-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
+            {lang === "zh" ? "每日净利润趋势" : lang === "ms" ? "Trend Untung Bersih Harian" : "Daily Net Profit Trend"}
+          </p>
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+              <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 10 }} width={48} />
+              <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+              <Bar dataKey="profit" radius={[4, 4, 4, 4]}>
+                {dailyChart.map((d, i) => (
+                  <Cell key={i} fill={d.profit < 0 ? "#EF4444" : "#6C4AB6"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+      {!loading && dailyChart.length <= 1 && (
+        <div className="mt-5 rounded-xl border border-dashed border-border/60 bg-card/50 p-4 text-center">
+          <p className="text-xs text-muted-foreground">{lang === "zh" ? "这段时间还没有订单数据" : lang === "ms" ? "Tiada data pesanan untuk tempoh ini" : "No order data for this period yet"}</p>
         </div>
       )}
 

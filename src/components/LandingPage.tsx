@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Menu,
   X,
+  Play,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import bossifyLogo from "@/assets/bossify-logo.png";
@@ -45,6 +46,9 @@ type LandingCopy = {
   reportsTitle: string;
   reportsSub: string;
   reports: { name: string; desc: string }[];
+  videoTitle: string;
+  videoSub: string;
+  videoBadge: string;
   finalTitle: string;
   finalSub: string;
   finalCta: string;
@@ -91,6 +95,9 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { name: "Supplier Report", desc: "What you owe and what you've paid." },
       { name: "Order Reconciliation", desc: "Match orders against payouts, cleanly." },
     ],
+    videoBadge: "DEMO",
+    videoTitle: "See Bossify in action",
+    videoSub: "A 2-minute walkthrough of real profit tracking, alerts and reports. Coming soon.",
     finalTitle: "Ready to know your real numbers?",
     finalSub: "Set up your shop in minutes. No credit card required.",
     finalCta: "Start Free",
@@ -135,6 +142,9 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { name: "供应商报表", desc: "你欠多少、已付多少。" },
       { name: "订单对账单", desc: "清楚核对订单与款项。" },
     ],
+    videoBadge: "演示",
+    videoTitle: "看看 Bossify 实际怎么用",
+    videoSub: "2分钟看懂真实利润追踪、智能提醒跟报表功能。即将推出。",
     finalTitle: "准备好搞清楚你的真实数字了吗？",
     finalSub: "几分钟内设置好你的店铺，不需要信用卡。",
     finalCta: "免费开始使用",
@@ -179,6 +189,9 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { name: "Laporan Pembekal", desc: "Apa yang anda hutang dan telah bayar." },
       { name: "Penyesuaian Pesanan", desc: "Padankan pesanan dengan bayaran, dengan kemas." },
     ],
+    videoBadge: "DEMO",
+    videoTitle: "Lihat Bossify beraksi",
+    videoSub: "Tonton 2 minit cara jejak untung sebenar, amaran dan laporan berfungsi. Akan datang.",
     finalTitle: "Bersedia untuk tahu angka sebenar anda?",
     finalSub: "Sediakan kedai anda dalam beberapa minit. Tiada kad kredit diperlukan.",
     finalCta: "Mula Percuma",
@@ -256,6 +269,22 @@ export function LandingPage() {
 
   return (
     <div style={{ background: "#FFFFFF", fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
+      <style>{`
+        @keyframes bf-float {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(0, -18px, 0); }
+        }
+        @keyframes bf-pulse-glow {
+          0%, 100% { box-shadow: 0 12px 28px rgba(59,30,109,0.28), 0 0 0 0 rgba(255,59,92,0.0); }
+          50% { box-shadow: 0 12px 32px rgba(59,30,109,0.34), 0 0 0 6px rgba(255,59,92,0.08); }
+        }
+        .bf-glow-blob { animation: bf-float 7s ease-in-out infinite; }
+        .bf-glow-blob-slow { animation: bf-float 9s ease-in-out infinite; animation-delay: -3s; }
+        .bf-cta-pulse { animation: bf-pulse-glow 2.8s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .bf-glow-blob, .bf-glow-blob-slow, .bf-cta-pulse { animation: none; }
+        }
+      `}</style>
       {/* Header */}
       <header
         className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b"
@@ -335,7 +364,18 @@ export function LandingPage() {
         className="relative overflow-hidden px-5 lg:px-8 pt-14 pb-16 lg:pt-24 lg:pb-24"
         style={{ background: `linear-gradient(180deg, ${SURFACE} 0%, #FFFFFF 100%)` }}
       >
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+        {/* Ambient glow blobs — purely decorative, behind the content */}
+        <div
+          aria-hidden="true"
+          className="bf-glow-blob pointer-events-none absolute -top-24 -right-16 w-[420px] h-[420px] rounded-full opacity-40"
+          style={{ background: PRIMARY_LIGHT, filter: "blur(90px)" }}
+        />
+        <div
+          aria-hidden="true"
+          className="bf-glow-blob-slow pointer-events-none absolute -bottom-32 -left-20 w-[380px] h-[380px] rounded-full opacity-30"
+          style={{ background: ACCENT, filter: "blur(100px)" }}
+        />
+        <div className="relative max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <p
               className="text-[12px] font-bold tracking-wider mb-4"
@@ -357,8 +397,8 @@ export function LandingPage() {
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => goAuth("register")}
-                className="text-[15px] font-semibold px-6 py-3.5 rounded-xl text-white flex items-center gap-2 shadow-lg"
-                style={{ background: PRIMARY, boxShadow: `0 12px 28px rgba(59,30,109,0.28)` }}
+                className="bf-cta-pulse text-[15px] font-semibold px-6 py-3.5 rounded-xl text-white flex items-center gap-2"
+                style={{ background: PRIMARY }}
               >
                 {c.ctaPrimary}
                 <ArrowRight className="w-4 h-4" />
@@ -463,6 +503,51 @@ export function LandingPage() {
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Video */}
+      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: "#FFFFFF" }}>
+        <div className="max-w-3xl mx-auto text-center">
+          <span
+            className="inline-block text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-full mb-4"
+            style={{ color: ACCENT, background: "rgba(255,59,92,0.1)" }}
+          >
+            {c.videoBadge}
+          </span>
+          <h2
+            className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
+            style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+          >
+            {c.videoTitle}
+          </h2>
+          <p className="text-[15px] mb-8" style={{ color: INK_SOFT }}>
+            {c.videoSub}
+          </p>
+          {/* TODO(John): once the demo video is ready, replace this
+              placeholder with a real <video> tag or a YouTube/TikTok
+              embed inside the same rounded, glowing frame below. */}
+          <div
+            className="relative mx-auto max-w-3xl aspect-video rounded-2xl overflow-hidden border flex items-center justify-center"
+            style={{
+              borderColor: LINE,
+              background: `linear-gradient(135deg, ${PRIMARY} 0%, ${PRIMARY_LIGHT} 100%)`,
+              boxShadow: "0 20px 60px rgba(59,30,109,0.25)",
+            }}
+          >
+            <div
+              aria-hidden="true"
+              className="bf-glow-blob pointer-events-none absolute -top-10 -left-10 w-64 h-64 rounded-full opacity-30"
+              style={{ background: ACCENT, filter: "blur(70px)" }}
+            />
+            <button
+              type="button"
+              aria-label={c.videoTitle}
+              className="bf-cta-pulse relative z-10 w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-white/95 flex items-center justify-center"
+            >
+              <Play className="w-6 h-6 lg:w-8 lg:h-8 ml-1" style={{ color: PRIMARY }} fill={PRIMARY} />
+            </button>
           </div>
         </div>
       </section>
