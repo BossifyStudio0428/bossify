@@ -150,7 +150,7 @@ function StockPage() {
   };
 
   return (
-    <div className="px-4 pt-4 pb-24">
+    <div className="px-4 pt-4 pb-24 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
         <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
           <ChevronLeft className="h-5 w-5" />
@@ -197,7 +197,7 @@ function StockPage() {
       ) : filtered.length === 0 ? (
         <p className="mt-8 text-center text-sm text-muted-foreground">{t("stock_empty")}</p>
       ) : (
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 space-y-2 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-2.5 lg:items-start">
           {filtered.map((r) => {
             const st = tone(r);
             const badgeClass =

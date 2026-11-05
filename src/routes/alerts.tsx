@@ -61,7 +61,7 @@ function AlertsPage() {
   const total = groups.out.length + groups.low.length + groups.losing.length;
 
   return (
-    <div className="px-4 pt-4 pb-24">
+    <div className="px-4 pt-4 pb-24 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
         <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
           <ChevronLeft className="h-5 w-5" />
@@ -79,7 +79,7 @@ function AlertsPage() {
           <p className="mt-1 text-xs text-muted-foreground">{t("alerts_all_good_sub")}</p>
         </div>
       ) : (
-        <div className="mt-5 space-y-6">
+        <div className="mt-5 space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-5 lg:items-start">
           <Section
             icon={PackageX}
             title={t("alerts_out_title")}

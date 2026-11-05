@@ -110,7 +110,7 @@ function CampaignsListPage() {
         : "11.11, 12.12, festive sales — set up your own campaigns and see how much each one earns";
 
   return (
-    <div className="px-4 pt-4 pb-28 space-y-4">
+    <div className="px-4 pt-4 pb-28 space-y-4 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
         <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
           <ChevronLeft className="h-5 w-5" />
@@ -206,7 +206,7 @@ function CampaignsListPage() {
           </button>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:items-start">
           {rows.map((c) => {
             const status = statusOf(c);
             const targetPct =

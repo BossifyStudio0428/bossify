@@ -102,7 +102,7 @@ function MorePage() {
   ];
 
   return (
-    <div className="px-4 pt-4 pb-24 space-y-6">
+    <div className="px-4 pt-4 pb-24 space-y-6 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
         <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
           <ChevronLeft className="h-5 w-5" />
@@ -113,7 +113,7 @@ function MorePage() {
       {sections.map((section) => (
         <div key={section.title}>
           <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">{section.title}</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {section.items.map((it) => (
               <Link
                 key={it.to}

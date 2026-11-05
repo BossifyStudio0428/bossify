@@ -383,7 +383,7 @@ function CustomersPage() {
     : [];
 
   return (
-    <div className="px-5 pt-10 pb-4 space-y-5">
+    <div className="px-5 pt-10 pb-4 space-y-5 lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
       <header className="flex items-center gap-3">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t(bizKey(bizType, "customers"))}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
@@ -623,14 +623,14 @@ function CustomersPage() {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3 lg:items-start">
         {loading && (
-          <div className="flex justify-center py-10">
+          <div className="flex justify-center py-10 lg:col-span-full">
             <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
           </div>
         )}
         {!loading && customers.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_customers_create")}</p>
+          <p className="text-center text-sm text-muted-foreground py-10 px-4 lg:col-span-full">{t("no_customers_create")}</p>
         )}
         {!loading && customers.length > 0 && bizType === "education" && viewMode === "kanban" && (
           <CasesKanban customers={visible} eduInfo={mergedEduInfo} />
