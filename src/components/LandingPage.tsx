@@ -46,6 +46,15 @@ type LandingCopy = {
   reportsTitle: string;
   reportsSub: string;
   reports: { name: string; desc: string }[];
+  statStrip: string[];
+  stepsTitle: string;
+  stepsSub: string;
+  steps: { title: string; desc: string }[];
+  compareTitle: string;
+  compareSub: string;
+  compareSpreadsheet: string;
+  compareBossify: string;
+  compareRows: { label: string; spreadsheet: string; bossify: string }[];
   videoTitle: string;
   videoSub: string;
   videoBadge: string;
@@ -95,6 +104,25 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { name: "Supplier Report", desc: "What you owe and what you've paid." },
       { name: "Order Reconciliation", desc: "Match orders against payouts, cleanly." },
     ],
+    statStrip: ["7 PDF reports", "3 languages", "WhatsApp confirmations", "Real-time alerts"],
+    stepsTitle: "How Bossify works",
+    stepsSub: "Three steps from chaos to clarity.",
+    steps: [
+      { title: "Log your orders", desc: "Add orders in seconds — or let TikTok Shop auto-sync do it for you soon." },
+      { title: "Bossify does the math", desc: "Cost, fees and ads are subtracted automatically. No spreadsheet formulas." },
+      { title: "See your real numbers", desc: "Check real profit any time, export reports, get alerted before stock runs out." },
+    ],
+    compareTitle: "Spreadsheet vs. Bossify",
+    compareSub: "Same job, very different experience.",
+    compareSpreadsheet: "Spreadsheet",
+    compareBossify: "Bossify",
+    compareRows: [
+      { label: "Real profit after cost & fees", spreadsheet: "Manual, easy to miss", bossify: "Automatic, always accurate" },
+      { label: "Low stock alerts", spreadsheet: "None", bossify: "Built in, automatic" },
+      { label: "PDF reports", spreadsheet: "Build it yourself", bossify: "7 reports, one tap" },
+      { label: "WhatsApp order confirmation", spreadsheet: "Copy-paste manually", bossify: "1-tap send" },
+      { label: "Works on your phone", spreadsheet: "Awkward", bossify: "Built for mobile" },
+    ],
     videoBadge: "DEMO",
     videoTitle: "See Bossify in action",
     videoSub: "A 2-minute walkthrough of real profit tracking, alerts and reports. Coming soon.",
@@ -142,6 +170,25 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { name: "供应商报表", desc: "你欠多少、已付多少。" },
       { name: "订单对账单", desc: "清楚核对订单与款项。" },
     ],
+    statStrip: ["7份PDF报表", "支持3种语言", "WhatsApp订单确认", "实时提醒"],
+    stepsTitle: "Bossify怎么运作",
+    stepsSub: "三个步骤，从一团乱到一目了然。",
+    steps: [
+      { title: "记录你的订单", desc: "几秒钟就能输入订单，之后TikTok Shop还能自动同步。" },
+      { title: "Bossify自动帮你算", desc: "成本、平台费、广告费自动扣除，不用自己写Excel公式。" },
+      { title: "看到真实数字", desc: "随时查看真实利润，一键导出报表，库存不够之前就提醒你。" },
+    ],
+    compareTitle: "Excel vs. Bossify",
+    compareSub: "同样的工作，体验完全不一样。",
+    compareSpreadsheet: "Excel/手写",
+    compareBossify: "Bossify",
+    compareRows: [
+      { label: "追踪真实利润（扣成本+费用后）", spreadsheet: "手动算，容易漏算", bossify: "自动算，永远准确" },
+      { label: "低库存提醒", spreadsheet: "没有", bossify: "内建，自动提醒" },
+      { label: "PDF报表", spreadsheet: "自己做", bossify: "7份报表，一键导出" },
+      { label: "WhatsApp订单确认", spreadsheet: "手动复制贴上", bossify: "一键发送" },
+      { label: "手机上使用", spreadsheet: "不方便", bossify: "专为手机设计" },
+    ],
     videoBadge: "演示",
     videoTitle: "看看 Bossify 实际怎么用",
     videoSub: "2分钟看懂真实利润追踪、智能提醒跟报表功能。即将推出。",
@@ -188,6 +235,25 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { name: "Penyata Pelanggan", desc: "Sejarah pesanan penuh setiap pelanggan." },
       { name: "Laporan Pembekal", desc: "Apa yang anda hutang dan telah bayar." },
       { name: "Penyesuaian Pesanan", desc: "Padankan pesanan dengan bayaran, dengan kemas." },
+    ],
+    statStrip: ["7 laporan PDF", "3 bahasa", "Pengesahan WhatsApp", "Amaran masa nyata"],
+    stepsTitle: "Cara Bossify berfungsi",
+    stepsSub: "Tiga langkah dari kekeliruan kepada kejelasan.",
+    steps: [
+      { title: "Catat pesanan anda", desc: "Tambah pesanan dalam beberapa saat — atau biar segerak TikTok Shop buat untuk anda nanti." },
+      { title: "Bossify kira untuk anda", desc: "Kos, yuran dan iklan ditolak secara automatik. Tiada formula spreadsheet." },
+      { title: "Lihat angka sebenar anda", desc: "Semak untung sebenar bila-bila masa, eksport laporan, dapat amaran sebelum stok habis." },
+    ],
+    compareTitle: "Spreadsheet vs. Bossify",
+    compareSub: "Kerja yang sama, pengalaman yang sangat berbeza.",
+    compareSpreadsheet: "Spreadsheet",
+    compareBossify: "Bossify",
+    compareRows: [
+      { label: "Untung sebenar selepas kos & yuran", spreadsheet: "Manual, mudah tersilap", bossify: "Automatik, sentiasa tepat" },
+      { label: "Amaran stok rendah", spreadsheet: "Tiada", bossify: "Terbina dalam, automatik" },
+      { label: "Laporan PDF", spreadsheet: "Buat sendiri", bossify: "7 laporan, satu ketukan" },
+      { label: "Pengesahan pesanan WhatsApp", spreadsheet: "Salin-tampal manual", bossify: "Hantar satu ketukan" },
+      { label: "Berfungsi di telefon anda", spreadsheet: "Janggal", bossify: "Direka untuk mudah alih" },
     ],
     videoBadge: "DEMO",
     videoTitle: "Lihat Bossify beraksi",
@@ -418,6 +484,52 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Stat strip */}
+      <section className="px-5 lg:px-8 py-5" style={{ background: PRIMARY }}>
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-10 gap-y-2">
+          {c.statStrip.map((s) => (
+            <span key={s} className="text-[12.5px] font-semibold text-white/85">
+              {s}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: SURFACE }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center max-w-xl mx-auto mb-12">
+            <h2
+              className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
+              style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+            >
+              {c.stepsTitle}
+            </h2>
+            <p className="text-[15px]" style={{ color: INK_SOFT }}>
+              {c.stepsSub}
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-6 relative">
+            {c.steps.map((s, i) => (
+              <div key={s.title} className="relative">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[15px] mb-4"
+                  style={{ background: PRIMARY, color: "#FFFFFF" }}
+                >
+                  {i + 1}
+                </div>
+                <h3 className="text-[15px] font-bold mb-1.5" style={{ color: INK }}>
+                  {s.title}
+                </h3>
+                <p className="text-[13.5px] leading-relaxed" style={{ color: INK_SOFT }}>
+                  {s.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section id="features" className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: "#FFFFFF" }}>
         <div className="max-w-6xl mx-auto">
@@ -456,6 +568,57 @@ export function LandingPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Comparison */}
+      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: SURFACE }}>
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <h2
+              className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
+              style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+            >
+              {c.compareTitle}
+            </h2>
+            <p className="text-[15px]" style={{ color: INK_SOFT }}>
+              {c.compareSub}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-white border overflow-hidden" style={{ borderColor: LINE }}>
+            <div className="grid grid-cols-[1.4fr_1fr_1fr]" style={{ borderBottom: `1px solid ${LINE}` }}>
+              <div className="px-4 py-3" />
+              <div className="px-4 py-3 text-center text-[12.5px] font-semibold" style={{ color: INK_SOFT }}>
+                {c.compareSpreadsheet}
+              </div>
+              <div
+                className="px-4 py-3 text-center text-[12.5px] font-bold rounded-t-lg"
+                style={{ color: "#FFFFFF", background: PRIMARY }}
+              >
+                {c.compareBossify}
+              </div>
+            </div>
+            {c.compareRows.map((row, i) => (
+              <div
+                key={row.label}
+                className="grid grid-cols-[1.4fr_1fr_1fr] items-center"
+                style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}
+              >
+                <div className="px-4 py-3.5 text-[13px] font-medium" style={{ color: INK }}>
+                  {row.label}
+                </div>
+                <div className="px-4 py-3.5 text-center text-[12px]" style={{ color: INK_SOFT }}>
+                  {row.spreadsheet}
+                </div>
+                <div
+                  className="px-4 py-3.5 text-center text-[12px] font-bold"
+                  style={{ color: PRIMARY, background: "rgba(59,30,109,0.05)" }}
+                >
+                  {row.bossify}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
