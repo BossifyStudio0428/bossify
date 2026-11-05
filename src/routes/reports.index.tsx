@@ -584,7 +584,7 @@ function ReportsHub() {
   ];
 
   return (
-    <div className="px-5 pt-10 pb-6 space-y-5">
+    <div className="px-5 pt-10 pb-6 space-y-5 lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
       {!hasFullAccess && (
         <div className="rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/40 p-4 flex items-center gap-3">
           <span className="text-2xl">🔒</span>
@@ -681,7 +681,7 @@ function ReportsHub() {
         📄 {lang === "zh" ? "导出原始订单 CSV（给会计师/报税用）" : lang === "ms" ? "Eksport CSV pesanan mentah" : "Export raw orders CSV (for your accountant/tax)"}
       </button>
 
-      <section className="space-y-3">
+      <section className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3 lg:items-start">
         {cards.map((c) => {
           const Icon = c.icon;
           const isBusy = busy === c.key;

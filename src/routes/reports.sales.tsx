@@ -378,7 +378,7 @@ function ReportsPage() {
     : "rep_revenue";
 
   return (
-    <div className="px-5 pt-10 pb-6 space-y-5">
+    <div className="px-5 pt-10 pb-6 space-y-5 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       {!hasFullAccess && (
         <div className="rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/40 p-4 flex items-center gap-3">
           <span className="text-2xl">🔒</span>
@@ -440,7 +440,7 @@ function ReportsPage() {
         </div>
       )}
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {summaryCards.map((s) => (
           <div key={s.label} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
             <p className={`text-xl font-bold ${s.color}`}>{loading ? "…" : s.value}</p>
