@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { TrendingUp, TrendingDown, ChevronDown, MessageCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, ChevronDown, MessageCircle, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -403,7 +403,8 @@ export function RetailOverview() {
   };
 
   return (
-    <div className="px-4 pt-4 pb-6">
+    <>
+    <div className="px-4 pt-4 pb-6 lg:hidden">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-xl font-bold text-foreground">{t("ro_title")}</h1>
@@ -566,6 +567,7 @@ export function RetailOverview() {
                 key={o.id}
                 to="/orders/$orderId"
                 params={{ orderId: o.id! }}
+                search={{} as never}
                 className="flex items-center gap-3 py-2.5 active:bg-muted/50 rounded-lg -mx-1 px-1"
               >
                 <span className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
@@ -603,6 +605,204 @@ export function RetailOverview() {
       </div>
 
     </div>
+    {/* Desktop: same data/state as the mobile view above, laid out to
+        use the available width instead of a centered mobile column. */}
+    <div className="hidden lg:block">
+      <div className="flex items-start justify-between gap-4 mb-5">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-foreground">{t("ro_title")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("ro_subtitle")}</p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="relative">
+            <button
+              onClick={() => setRangePickerOpen((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-lg border border-border/60 bg-card text-foreground"
+            >
+              {rangeLabel}
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            {rangePickerOpen && (
+              <div className="absolute right-0 mt-1.5 z-20 rounded-xl border border-border/60 bg-card shadow-lg overflow-hidden min-w-[10rem]">
+                {(["week", "month", "custom"] as Range[]).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => {
+                      setRange(r);
+                      setRangePickerOpen(false);
+                    }}
+                    className={`w-full text-left text-sm px-3.5 py-2.5 hover:bg-muted ${
+                      range === r ? "text-primary font-semibold" : "text-foreground"
+                    }`}
+                  >
+                    {r === "week" ? t("this_week") : r === "month" ? t("this_month") : t("custom")}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <Link
+            to="/new-order"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            {t("ro_new_sale")}
+          </Link>
+        </div>
+      </div>
+
+      {range === "custom" && (
+        <div className="mb-5 flex gap-3">
+          <label className="text-xs text-muted-foreground">
+            {t("from_date")}
+            <input
+              type="date"
+              value={customFrom}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="mt-1 w-48 rounded-lg bg-card border border-border/60 px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="text-xs text-muted-foreground">
+            {t("to_date")}
+            <input
+              type="date"
+              value={customTo}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="mt-1 w-48 rounded-lg bg-card border border-border/60 px-3 py-2 text-sm"
+            />
+          </label>
+        </div>
+      )}
+
+      <CampaignBanner />
+
+      {/* Ledger stat strip — same underlying numbers as the mobile hero
+          card and KPI tiles, laid out as a single row now that desktop
+          has the width for it. */}
+      <div className="mt-4 grid grid-cols-5 rounded-xl border border-border/60 bg-card overflow-hidden">
+        <DesktopStatCell
+          label={t("ro_total_profit")}
+          value={loading ? "…" : money(stats.netProfit)}
+          delta={loading ? null : stats.profitDelta}
+        />
+        <DesktopStatCell
+          label={lang === "zh" ? "边际利润" : lang === "ms" ? "Untung sumbangan" : "Contribution profit"}
+          value={loading ? "…" : money(stats.contribution)}
+        />
+        <DesktopStatCell label={t("ro_total_sales")} value={loading ? "…" : money(stats.sales)} />
+        <DesktopStatCell
+          label={t("ro_orders_count")}
+          value={loading ? "…" : String(stats.count)}
+          delta={loading ? null : stats.countDelta}
+        />
+        <DesktopStatCell
+          label={t("ro_low_stock_items")}
+          value={loading ? "…" : String(stats.lowStockItems)}
+          tone={stats.lowStockItems > 0 ? "warn" : "success"}
+          last
+        />
+      </div>
+
+      {pendingSyncCount > 0 && (
+        <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-center gap-2">
+          <span className="text-sm">⏳</span>
+          <p className="text-xs text-amber-800">
+            {pendingSyncCount}{" "}
+            {lang === "zh"
+              ? "笔 TikTok 订单同步中，暂未计入以上数字"
+              : lang === "ms"
+                ? "pesanan TikTok sedang disegerak, belum dikira"
+                : "TikTok order(s) syncing — not counted above yet"}
+          </p>
+        </div>
+      )}
+
+      <div className="mt-5 grid grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] gap-5 items-start">
+        {/* Recent Orders table */}
+        <section className="rounded-xl border border-border/60 bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/60">
+            <h2 className="text-sm font-semibold text-foreground">{t("ro_recent_orders")}</h2>
+            <Link to="/orders" className="text-xs font-semibold text-primary">
+              {t("ro_view_all")}
+            </Link>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-muted/40">
+                <th className="text-left px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("customer_name")}
+                </th>
+                <th className="px-5 py-2.5" />
+                <th className="px-5 py-2.5" />
+                <th className="px-5 py-2.5" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-xs text-muted-foreground">
+                    …
+                  </td>
+                </tr>
+              ) : recentOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-xs text-muted-foreground">
+                    {t("ro_no_orders")}
+                  </td>
+                </tr>
+              ) : (
+                recentOrders.map((o) => (
+                  <tr key={o.id} className="hover:bg-muted/30">
+                    <td className="px-5 py-3">
+                      <Link to="/orders/$orderId" params={{ orderId: o.id! }} search={{} as never} className="flex items-center gap-2.5">
+                        <span className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
+                          {(o.customer_name ?? "?").slice(0, 1).toUpperCase()}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block font-medium text-foreground truncate">{o.customer_name || "—"}</span>
+                          <span className="block text-[11px] text-muted-foreground truncate">{o.code || ""}</span>
+                        </span>
+                      </Link>
+                    </td>
+                    <td className="px-5 py-3 text-right font-semibold text-foreground">
+                      {money(Number(o.amount ?? 0))}
+                    </td>
+                    <td className="px-5 py-3">
+                      <StatusPill status={o.status ?? ""} />
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      {o.status === "Unpaid" && (
+                        <button
+                          onClick={() => remind(o)}
+                          aria-label={t("remind")}
+                          className="h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-100 hover:opacity-90"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </section>
+
+        {/* Side panels */}
+        <div className="flex flex-col gap-4">
+          <SetupChecklist />
+          {suggestion && (
+            <div className="rounded-xl border border-border/60 bg-card p-4">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                {t("ro_today_focus")}
+              </p>
+              <p className="mt-1.5 text-sm font-medium text-foreground leading-snug">{suggestion.text}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+    </>
   );
 }
 
@@ -630,6 +830,36 @@ function KpiCard({
       <p className="text-[11px] text-muted-foreground font-medium truncate">{label}</p>
       <p className={`mt-1 text-xl font-bold ${toneClass}`}>{value}</p>
       <TrendPill delta={delta} />
+    </div>
+  );
+}
+
+function DesktopStatCell({
+  label,
+  value,
+  delta,
+  tone = "primary",
+  last,
+}: {
+  label: string;
+  value: string;
+  delta?: number | null;
+  tone?: "primary" | "success" | "danger" | "warn";
+  last?: boolean;
+}) {
+  const toneClass =
+    tone === "success"
+      ? "text-emerald-600"
+      : tone === "danger"
+        ? "text-red-600"
+        : tone === "warn"
+          ? "text-amber-600"
+          : "text-foreground";
+  return (
+    <div className={`px-4 py-3.5 ${last ? "" : "border-r border-border/60"}`}>
+      <p className="text-[10.5px] uppercase tracking-wide text-muted-foreground truncate">{label}</p>
+      <p className={`mt-1 text-lg font-bold ${toneClass}`}>{value}</p>
+      {delta !== undefined && <TrendPill delta={delta ?? null} />}
     </div>
   );
 }
