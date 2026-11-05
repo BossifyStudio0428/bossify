@@ -41,7 +41,17 @@ function AuthPage() {
   }, [mode]);
 
   return (
-    <div data-auth-surface className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}>
+    <div
+      data-auth-surface
+      className="min-h-screen px-5 pt-10 pb-8 flex flex-col lg:items-center lg:justify-center lg:px-6 lg:py-12"
+      style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}
+    >
+      {/* Desktop: the mobile screens below are already self-centering
+          (each sets its own max-w + mx-auto), so this just gives them a
+          card surface instead of floating on a flat background. Mobile
+          layout is untouched — flex flex-col flex-1 w-full matches what
+          this content had as a direct child of the surface div before. */}
+      <div className="flex flex-col flex-1 w-full lg:flex-none lg:max-w-[460px] lg:bg-white lg:rounded-2xl lg:border lg:border-[#E5E7EB] lg:shadow-[0_1px_2px_rgba(16,24,40,0.04),0_12px_32px_rgba(16,24,40,0.08)] lg:px-10 lg:py-10">
       {mode === "login" && <LoginScreen onGoRegister={() => setMode("reg_email")} tiktokPrefill={tiktokPrefill} />}
       {mode === "reg_email" && (
         <RegEmailScreen
@@ -69,7 +79,8 @@ function AuthPage() {
           }}
         />
       )}
-      <div className="mt-auto pt-4 flex items-center justify-center gap-3 text-[11px]" style={{ color: "#9CA3AF" }}>
+      </div>
+      <div className="mt-auto lg:mt-8 pt-4 flex items-center justify-center gap-3 text-[11px]" style={{ color: "#9CA3AF" }}>
         <Link to="/terms" className="underline hover:text-[#7C3AED]">{t("terms_conditions")}</Link>
         <span>·</span>
         <Link to="/privacy-policy" className="underline hover:text-[#7C3AED]">{t("privacy_policy")}</Link>
