@@ -55,6 +55,11 @@ type LandingCopy = {
   compareSpreadsheet: string;
   compareBossify: string;
   compareRows: { label: string; spreadsheet: string; bossify: string }[];
+  compare2Title: string;
+  compare2Sub: string;
+  compare2TiktokShop: string;
+  compare2Bossify: string;
+  compare2Rows: { label: string; tiktokShop: string; bossify: string }[];
   videoTitle: string;
   videoSub: string;
   videoBadge: string;
@@ -123,6 +128,17 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { label: "WhatsApp order confirmation", spreadsheet: "Copy-paste manually", bossify: "1-tap send" },
       { label: "Works on your phone", spreadsheet: "Awkward", bossify: "Built for mobile" },
     ],
+    compare2Title: "TikTok Shop Seller Center vs. Bossify",
+    compare2Sub: "TikTok Shop runs your store. Bossify tells you if you're actually making money.",
+    compare2TiktokShop: "Seller Center",
+    compare2Bossify: "Bossify",
+    compare2Rows: [
+      { label: "Real net profit after cost", tiktokShop: "Gross sales only", bossify: "Automatic, after every cost" },
+      { label: "Loss-making product alerts", tiktokShop: "Not available", bossify: "Built in" },
+      { label: "Full PDF reports (P&L, supplier...)", tiktokShop: "Basic exports only", bossify: "7 full reports" },
+      { label: "WhatsApp order confirmation", tiktokShop: "Not available", bossify: "1-tap send" },
+      { label: "Orders outside TikTok Shop too", tiktokShop: "TikTok orders only", bossify: "All orders, one place" },
+    ],
     videoBadge: "DEMO",
     videoTitle: "See Bossify in action",
     videoSub: "A 2-minute walkthrough of real profit tracking, alerts and reports. Coming soon.",
@@ -189,6 +205,17 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { label: "WhatsApp订单确认", spreadsheet: "手动复制贴上", bossify: "一键发送" },
       { label: "手机上使用", spreadsheet: "不方便", bossify: "专为手机设计" },
     ],
+    compare2Title: "TikTok Shop后台 vs. Bossify",
+    compare2Sub: "TikTok Shop帮你经营店铺，Bossify告诉你是不是真的有在赚钱。",
+    compare2TiktokShop: "TikTok Shop后台",
+    compare2Bossify: "Bossify",
+    compare2Rows: [
+      { label: "真实净利润（扣成本后）", tiktokShop: "只显示销售额", bossify: "自动算，扣除每一项成本" },
+      { label: "亏本产品提醒", tiktokShop: "没有", bossify: "内建功能" },
+      { label: "完整PDF报表（损益表、供应商等）", tiktokShop: "只有基本导出", bossify: "7份完整报表" },
+      { label: "WhatsApp订单确认", tiktokShop: "没有", bossify: "一键发送" },
+      { label: "也能追踪TikTok Shop以外的订单", tiktokShop: "只有TikTok订单", bossify: "所有订单集中一个地方" },
+    ],
     videoBadge: "演示",
     videoTitle: "看看 Bossify 实际怎么用",
     videoSub: "2分钟看懂真实利润追踪、智能提醒跟报表功能。即将推出。",
@@ -254,6 +281,17 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { label: "Laporan PDF", spreadsheet: "Buat sendiri", bossify: "7 laporan, satu ketukan" },
       { label: "Pengesahan pesanan WhatsApp", spreadsheet: "Salin-tampal manual", bossify: "Hantar satu ketukan" },
       { label: "Berfungsi di telefon anda", spreadsheet: "Janggal", bossify: "Direka untuk mudah alih" },
+    ],
+    compare2Title: "Seller Center TikTok Shop vs. Bossify",
+    compare2Sub: "TikTok Shop uruskan kedai anda. Bossify beritahu jika anda benar-benar untung.",
+    compare2TiktokShop: "Seller Center",
+    compare2Bossify: "Bossify",
+    compare2Rows: [
+      { label: "Untung bersih sebenar selepas kos", tiktokShop: "Jualan kasar sahaja", bossify: "Automatik, selepas setiap kos" },
+      { label: "Amaran produk rugi", tiktokShop: "Tiada", bossify: "Terbina dalam" },
+      { label: "Laporan PDF penuh (Untung Rugi, Pembekal...)", tiktokShop: "Eksport asas sahaja", bossify: "7 laporan penuh" },
+      { label: "Pengesahan pesanan WhatsApp", tiktokShop: "Tiada", bossify: "Hantar satu ketukan" },
+      { label: "Pesanan di luar TikTok Shop juga", tiktokShop: "Pesanan TikTok sahaja", bossify: "Semua pesanan, satu tempat" },
     ],
     videoBadge: "DEMO",
     videoTitle: "Lihat Bossify beraksi",
@@ -610,6 +648,57 @@ export function LandingPage() {
                 </div>
                 <div className="px-4 py-3.5 text-center text-[12px]" style={{ color: INK_SOFT }}>
                   {row.spreadsheet}
+                </div>
+                <div
+                  className="px-4 py-3.5 text-center text-[12px] font-bold"
+                  style={{ color: PRIMARY, background: "rgba(59,30,109,0.05)" }}
+                >
+                  {row.bossify}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Comparison: TikTok Shop Seller Center vs Bossify */}
+      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: "#FFFFFF" }}>
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <h2
+              className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
+              style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+            >
+              {c.compare2Title}
+            </h2>
+            <p className="text-[15px]" style={{ color: INK_SOFT }}>
+              {c.compare2Sub}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-white border overflow-hidden" style={{ borderColor: LINE }}>
+            <div className="grid grid-cols-[1.4fr_1fr_1fr]" style={{ borderBottom: `1px solid ${LINE}` }}>
+              <div className="px-4 py-3" />
+              <div className="px-4 py-3 text-center text-[12.5px] font-semibold" style={{ color: INK_SOFT }}>
+                {c.compare2TiktokShop}
+              </div>
+              <div
+                className="px-4 py-3 text-center text-[12.5px] font-bold rounded-t-lg"
+                style={{ color: "#FFFFFF", background: PRIMARY }}
+              >
+                {c.compare2Bossify}
+              </div>
+            </div>
+            {c.compare2Rows.map((row, i) => (
+              <div
+                key={row.label}
+                className="grid grid-cols-[1.4fr_1fr_1fr] items-center"
+                style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}
+              >
+                <div className="px-4 py-3.5 text-[13px] font-medium" style={{ color: INK }}>
+                  {row.label}
+                </div>
+                <div className="px-4 py-3.5 text-center text-[12px]" style={{ color: INK_SOFT }}>
+                  {row.tiktokShop}
                 </div>
                 <div
                   className="px-4 py-3.5 text-center text-[12px] font-bold"
