@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, X, Rocket, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ type Item = {
 
 export function SetupChecklist() {
   const { user } = useAuth();
+  const instanceId = useId();
   const { t } = useI18n();
   const { type: bizType } = useBusinessType();
   const [items, setItems] = useState<Item[] | null>(null);
@@ -125,8 +126,14 @@ export function SetupChecklist() {
   // Realtime: refresh as the user completes actions on other screens.
   useEffect(() => {
     if (!user) return;
+    // Unique per mounted instance: SetupChecklist can render twice at
+    // once (mobile Overview + desktop Overview, toggled via CSS, both
+    // present in the DOM), and a channel name keyed only by user id made
+    // the second instance's .on() calls land on an already-subscribing
+    // channel, crashing with "cannot add postgres_changes callbacks ...
+    // after subscribe()".
     const ch = supabase
-      .channel(`setup-checklist-${user.id}`)
+      .channel(`setup-checklist-${user.id}-${instanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "inventory", filter: `user_id=eq.${user.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "services", filter: `user_id=eq.${user.id}` }, load)
