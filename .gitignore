@@ -37,3 +37,7 @@ src/routeTree.gen.ts
 # Keystore - never commit signing credentials
 keystore-do-not-commit/
 keystore.properties
+# Build artifacts / local exports — never meant to be tracked
+android/
+build/
+*.zip
