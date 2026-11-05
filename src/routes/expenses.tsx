@@ -154,7 +154,7 @@ function ExpensesPage() {
   };
 
   return (
-    <div className="px-5 pt-10 pb-24 space-y-5 relative">
+    <div className="px-5 pt-10 pb-24 space-y-5 relative lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       <header className="flex items-center gap-2">
         <button onClick={() => navigate({ to: "/profile" })} className="-ml-2 p-2 rounded-full active:bg-muted">
           <ChevronLeft className="h-5 w-5" />
@@ -163,6 +163,15 @@ function ExpensesPage() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{c.title}</h1>
           <p className="text-xs text-muted-foreground mt-0.5">{c.subtitle}</p>
         </div>
+        {/* Desktop: same add-expense action as the mobile FAB below
+            (which hides on desktop), same handler. */}
+        <button
+          onClick={() => setSheet({ kind: "form" })}
+          className="hidden lg:inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" />
+          {c.addBtn}
+        </button>
       </header>
 
       <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
@@ -179,7 +188,7 @@ function ExpensesPage() {
         <p className="text-center text-sm text-muted-foreground py-10 px-4">{c.empty}</p>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3 lg:items-start">
         {items.map((it) => (
           <article key={it.id} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-1.5">
             <div className="flex items-start justify-between gap-2">
@@ -211,7 +220,7 @@ function ExpensesPage() {
       <button
         onClick={() => setSheet({ kind: "form" })}
         aria-label={c.addBtn}
-        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-gradient-to-br from-primary to-primary/80"
+        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-gradient-to-br from-primary to-primary/80 lg:hidden"
       >
         <Plus className="h-5 w-5" strokeWidth={2.5} />
         {c.addBtn}
