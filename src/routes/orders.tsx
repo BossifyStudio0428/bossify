@@ -691,7 +691,7 @@ function OrdersPage() {
   });
 
   return (
-    <div className="px-5 pt-10 pb-4 space-y-5">
+    <div className="px-5 pt-10 pb-4 space-y-5 lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
       <header className="flex items-center gap-3">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t(bizKey(bizType, "orders"))}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
@@ -1016,8 +1016,8 @@ function OrdersPage() {
         )}
       </div>
 
-      <div className="space-y-3">
-        {loading && <p className="text-center text-sm text-muted-foreground py-10">{t("loading")}</p>}
+      <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4 xl:grid-cols-3 lg:items-start">
+        {loading && <p className="text-center text-sm text-muted-foreground py-10 lg:col-span-full">{t("loading")}</p>}
 
         {!loading && visibleByCategory.map((o) => {
           const statusLabel = o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending");
@@ -1274,7 +1274,7 @@ function OrdersPage() {
         })}
 
         {!loading && visibleByCategory.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10">
+          <p className="text-center text-sm text-muted-foreground py-10 lg:col-span-full">
             {orders.length === 0 ? t("no_orders_create") : t("no_orders_here")}
           </p>
         )}
@@ -1462,7 +1462,7 @@ function OrdersPage() {
           the pill style now used on Products' "add product" button. */}
       <Link
         to="/new-order"
-        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98]"
+        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] lg:hidden"
       >
         <Plus className="h-5 w-5" strokeWidth={2.5} />
         {t("ro_new_sale")}
