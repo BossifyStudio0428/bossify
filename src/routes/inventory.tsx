@@ -340,7 +340,7 @@ function InventoryPage() {
   }, [visible]);
 
   return (
-    <div className="px-5 pt-10 pb-4 space-y-5 relative">
+    <div className="px-5 pt-10 pb-4 space-y-5 relative lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
       <header className="flex items-center gap-3">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t(bizKey(bizType, "inventory"))}</h1>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
@@ -354,6 +354,16 @@ function InventoryPage() {
             Free plan {productsUsed}/{productsLimit}
           </Link>
         )}
+        {/* Desktop: same add-product action as the mobile FAB below
+            (which hides on desktop), reusing the same handler — no
+            second form sheet, just a differently-placed trigger. */}
+        <button
+          onClick={() => (atLimit ? showUpgrade(t("limit_inventory")) : setSheet({ kind: "form" }))}
+          className="hidden lg:inline-flex ml-auto items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" />
+          {t("add_product")}
+        </button>
       </header>
 
       {tiktokConnected && (
@@ -462,14 +472,14 @@ function InventoryPage() {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4 xl:grid-cols-3 lg:items-start">
         {loading && (
-          <div className="flex justify-center py-10">
+          <div className="flex justify-center py-10 lg:col-span-full">
             <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
           </div>
         )}
         {!loading && items.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_products_create")}</p>
+          <p className="text-center text-sm text-muted-foreground py-10 px-4 lg:col-span-full">{t("no_products_create")}</p>
         )}
         {!loading && items.length > 0 && grouped.map((entry, idx) => {
           if (entry.kind === "group") {
@@ -690,7 +700,7 @@ function InventoryPage() {
         id="tour-inv-add"
         aria-label={t("add_product")}
         title={atLimit ? t("limit_inventory") : t("add_product")}
-        className={`fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform ${atLimit ? "bg-muted-foreground/60" : "bg-gradient-to-br from-primary to-primary/80"}`}
+        className={`fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform lg:hidden ${atLimit ? "bg-muted-foreground/60" : "bg-gradient-to-br from-primary to-primary/80"}`}
       >
         {atLimit ? <span className="text-base">🔒</span> : <Plus className="h-5 w-5" strokeWidth={2.5} />}
         {t("add_product")}
