@@ -116,7 +116,7 @@ function CostHealthPage() {
   );
 
   return (
-    <div className="px-4 pt-4 pb-24 space-y-5">
+    <div className="px-4 pt-4 pb-24 space-y-5 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
         <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
           <ChevronLeft className="h-5 w-5" />
@@ -152,7 +152,7 @@ function CostHealthPage() {
       {loading ? (
         <p className="text-sm text-muted-foreground text-center py-10">…</p>
       ) : (
-        <>
+        <div className="lg:grid lg:grid-cols-2 lg:gap-4 lg:items-start lg:space-y-0 space-y-5">
           <Section
             icon={PackageSearch}
             tone="danger"
@@ -216,7 +216,7 @@ function CostHealthPage() {
               </div>
             )}
           />
-        </>
+        </div>
       )}
     </div>
   );

@@ -216,7 +216,7 @@ function ProductProfitPage() {
   const title = lang === "zh" ? "商品利润分析" : lang === "ms" ? "Analisis Untung Produk" : "Product Profit";
 
   return (
-    <div className="px-4 pt-4 pb-24 space-y-4">
+    <div className="px-4 pt-4 pb-24 space-y-4 lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
         <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
           <ChevronLeft className="h-5 w-5" />
@@ -265,7 +265,7 @@ function ProductProfitPage() {
           {lang === "zh" ? "这段期间没有销售数据" : lang === "ms" ? "Tiada jualan dalam tempoh ini" : "No sales in this period"}
         </p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3 lg:items-start">
           {stats.map((entry) => {
             if (entry.kind === "group") {
               const { key, title, qty, revenue, cost, profit, margin, variants } = entry;

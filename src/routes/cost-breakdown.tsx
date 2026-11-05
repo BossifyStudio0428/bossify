@@ -190,7 +190,7 @@ function CostBreakdownPage() {
   const title = lang === "zh" ? "成本总览" : lang === "ms" ? "Gambaran Kos" : "Cost Breakdown";
 
   return (
-    <div className="px-4 pt-4 pb-24 space-y-4">
+    <div className="px-4 pt-4 pb-24 space-y-4 lg:max-w-4xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
         <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
           <ChevronLeft className="h-5 w-5" />
@@ -337,7 +337,7 @@ function CostBreakdownPage() {
               { name: lang === "zh" ? "营业费用" : lang === "ms" ? "Operasi" : "Opex", value: totalOperatingExpenses, color: "#EC4899" },
             ].filter((d) => d.value > 0);
             return (
-              <>
+              <div className="lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 space-y-4">
                 {chartData.length > 0 && (
                   <div className="rounded-2xl bg-card border border-border/60 p-4">
                     <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
@@ -371,7 +371,7 @@ function CostBreakdownPage() {
                     </ResponsiveContainer>
                   </div>
                 )}
-              </>
+              </div>
             );
           })()}
 
