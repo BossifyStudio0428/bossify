@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
   DollarSign,
   PackageX,
@@ -11,6 +11,8 @@ import {
   Menu,
   X,
   Play,
+  TrendingUp,
+  ShoppingBag,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import bossifyLogo from "@/assets/bossify-logo.png";
@@ -22,6 +24,16 @@ const INK = "#1E1730";
 const INK_SOFT = "#5B5270";
 const SURFACE = "#F7F5FA";
 const LINE = "#E1DCEC";
+
+// Cinematic dark theme — the whole page now runs on this palette.
+const BG_0 = "#0A0714"; // page background, near-black purple
+const BG_1 = "#120B22"; // section band, one step up
+const BG_2 = "#1A1130"; // card surface
+const GLOW = "#8B5CF6"; // bright purple for glow/accents on dark
+const GLOW_SOFT = "#A78BFA";
+const TEXT = "#F5F3FA"; // headings on dark
+const TEXT_MUTED = "#B4A9C9"; // body text on dark
+const BORDER_GLOW = "rgba(139,92,246,0.25)";
 
 type LandingCopy = {
   navFeatures: string;
@@ -303,58 +315,101 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
   },
 };
 
-function ReceiptCard({ c }: { c: LandingCopy }) {
-  const rows: [string, string, boolean][] = [
-    [c.gross, "RM 250.00", false],
-    [c.cost, "− RM 180.00", false],
-    [c.fee, "− RM 12.50", false],
-  ];
+function HeroMockup({ c }: { c: LandingCopy }) {
+  // A hand-drawn, purely decorative "product preview" — not real data.
+  // Smooth SVG area chart + two floating stat cards, echoing the real
+  // Dashboard's daily-profit chart without wiring up live data here.
+  const points = [18, 34, 26, 48, 40, 60, 52, 44, 66, 58, 78];
+  const w = 320;
+  const h = 120;
+  const step = w / (points.length - 1);
+  const max = Math.max(...points);
+  const coords = points.map((p, i) => [i * step, h - (p / max) * (h - 18) - 6]);
+  const linePath = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const areaPath = `${linePath} L${w},${h} L0,${h} Z`;
+
   return (
-    <div
-      className="w-full max-w-[320px] rounded-xl bg-white shadow-[0_20px_50px_rgba(59,30,109,0.18)] border"
-      style={{ borderColor: LINE, fontFamily: "IBM Plex Mono, ui-monospace, monospace" }}
-    >
-      <div className="px-5 pt-5 pb-3">
-        <p className="text-[11px] tracking-wide" style={{ color: INK_SOFT }}>
-          {c.receiptTitle}
-        </p>
-        <p className="text-[11px] tracking-wide" style={{ color: INK_SOFT }}>
-          {c.receiptSub}
-        </p>
-      </div>
+    <div className="relative w-full max-w-[420px]">
+      {/* ambient glow behind the whole mockup */}
       <div
-        className="mx-5 border-t border-dashed"
-        style={{ borderColor: LINE }}
+        aria-hidden="true"
+        className="bf-glow-blob pointer-events-none absolute -inset-10 rounded-[40px] opacity-60"
+        style={{ background: GLOW, filter: "blur(70px)" }}
       />
-      <div className="px-5 py-3 space-y-2">
-        {rows.map(([label, val]) => (
-          <div key={label} className="flex items-center justify-between text-[12.5px]" style={{ color: INK }}>
-            <span>{label}</span>
-            <span>{val}</span>
+
+      {/* main browser-chrome card */}
+      <div
+        className="relative rounded-2xl overflow-hidden border"
+        style={{ background: BG_2, borderColor: BORDER_GLOW, boxShadow: `0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px ${BORDER_GLOW}` }}
+      >
+        <div className="flex items-center gap-1.5 px-4 py-3 border-b" style={{ borderColor: BORDER_GLOW }}>
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#EF4444" }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#F59E0B" }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#22C55E" }} />
+          <span className="ml-3 text-[10.5px] px-2.5 py-1 rounded-full" style={{ color: TEXT_MUTED, background: "rgba(255,255,255,0.04)" }}>
+            bossifyapp.com/dashboard
+          </span>
+        </div>
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-[10.5px] uppercase tracking-wide" style={{ color: TEXT_MUTED }}>
+                {c.receiptSub}
+              </p>
+              <p className="text-[22px] font-bold" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+                RM 4,218.50
+              </p>
+            </div>
+            <span
+              className="text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"
+              style={{ color: "#4ADE80", background: "rgba(74,222,128,0.12)" }}
+            >
+              <TrendingUp className="w-3 h-3" />
+              +18%
+            </span>
           </div>
-        ))}
+          <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[110px]" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="bf-hero-area" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={GLOW} stopOpacity="0.45" />
+                <stop offset="100%" stopColor={GLOW} stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d={areaPath} fill="url(#bf-hero-area)" />
+            <path d={linePath} fill="none" stroke={GLOW_SOFT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx={coords[coords.length - 1][0]} cy={coords[coords.length - 1][1]} r="4.5" fill="#FFFFFF" />
+            <circle cx={coords[coords.length - 1][0]} cy={coords[coords.length - 1][1]} r="8" fill="none" stroke={GLOW_SOFT} strokeWidth="1.5" opacity="0.6" />
+          </svg>
+        </div>
       </div>
+
+      {/* floating stat card: total orders */}
       <div
-        className="mx-5 border-t border-dashed"
-        style={{ borderColor: LINE }}
-      />
-      <div className="px-5 py-4 flex items-center justify-between">
-        <span className="text-[13px] font-semibold" style={{ color: INK }}>
-          {c.net}
-        </span>
-        <span className="text-[19px] font-bold" style={{ color: ACCENT }}>
-          RM 57.50
-        </span>
+        className="bf-glow-blob absolute -top-6 -right-6 lg:-right-10 rounded-2xl border px-4 py-3.5 flex items-center gap-3"
+        style={{ background: BG_2, borderColor: BORDER_GLOW, boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}
+      >
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(139,92,246,0.18)" }}>
+          <ShoppingBag className="w-4 h-4" style={{ color: GLOW_SOFT }} />
+        </div>
+        <div>
+          <p className="text-[16px] font-bold leading-tight" style={{ color: TEXT }}>128</p>
+          <p className="text-[10px]" style={{ color: TEXT_MUTED }}>Orders today</p>
+        </div>
       </div>
+
+      {/* floating stat card: low stock alert */}
       <div
-        className="h-3 rounded-b-xl"
-        style={{
-          backgroundImage: `radial-gradient(circle at 10px 0, transparent 5px, white 5.5px)`,
-          backgroundSize: "20px 10px",
-          backgroundRepeat: "repeat-x",
-          backgroundPosition: "top",
-        }}
-      />
+        className="bf-glow-blob-slow absolute -bottom-6 -left-4 lg:-left-10 rounded-2xl border px-4 py-3.5 flex items-center gap-3"
+        style={{ background: BG_2, borderColor: "rgba(245,158,11,0.3)", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}
+      >
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.15)" }}>
+          <PackageX className="w-4 h-4" style={{ color: "#F59E0B" }} />
+        </div>
+        <div>
+          <p className="text-[16px] font-bold leading-tight" style={{ color: TEXT }}>3</p>
+          <p className="text-[10px]" style={{ color: TEXT_MUTED }}>Low stock</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -372,15 +427,15 @@ export function LandingPage() {
   };
 
   return (
-    <div style={{ background: "#FFFFFF", fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
+    <div style={{ background: BG_0, fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
       <style>{`
         @keyframes bf-float {
           0%, 100% { transform: translate3d(0, 0, 0); }
           50% { transform: translate3d(0, -18px, 0); }
         }
         @keyframes bf-pulse-glow {
-          0%, 100% { box-shadow: 0 12px 28px rgba(59,30,109,0.28), 0 0 0 0 rgba(255,59,92,0.0); }
-          50% { box-shadow: 0 12px 32px rgba(59,30,109,0.34), 0 0 0 6px rgba(255,59,92,0.08); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.45), 0 12px 28px rgba(139,92,246,0.3); }
+          50% { box-shadow: 0 0 0 8px rgba(139,92,246,0), 0 12px 36px rgba(139,92,246,0.45); }
         }
         .bf-glow-blob { animation: bf-float 7s ease-in-out infinite; }
         .bf-glow-blob-slow { animation: bf-float 9s ease-in-out infinite; animation-delay: -3s; }
@@ -389,41 +444,45 @@ export function LandingPage() {
           .bf-glow-blob, .bf-glow-blob-slow, .bf-cta-pulse { animation: none; }
         }
       `}</style>
+
       {/* Header */}
       <header
-        className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b"
-        style={{ borderColor: LINE }}
+        className="sticky top-0 z-30 backdrop-blur border-b"
+        style={{ background: "rgba(10,7,20,0.75)", borderColor: BORDER_GLOW }}
       >
         <div className="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src={bossifyLogo} alt="Bossify" className="h-8 w-8 rounded-lg object-cover" />
             <span
               className="text-lg font-bold tracking-tight"
-              style={{ color: PRIMARY, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
             >
               Bossify
             </span>
           </div>
           <nav className="hidden lg:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium" style={{ color: INK_SOFT }}>
+            <a href="#features" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>
               {c.navFeatures}
             </a>
-            <a href="#reports" className="text-sm font-medium" style={{ color: INK_SOFT }}>
+            <a href="#reports" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>
               {c.navReports}
+            </a>
+            <a href="#demo" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>
+              {c.ctaSecondary}
             </a>
           </nav>
           <div className="hidden lg:flex items-center gap-3">
             <button
               onClick={() => goAuth("login")}
               className="text-sm font-semibold px-4 py-2 rounded-lg"
-              style={{ color: PRIMARY }}
+              style={{ color: TEXT }}
             >
               {c.signIn}
             </button>
             <button
               onClick={() => goAuth("register")}
               className="text-sm font-semibold px-4 py-2.5 rounded-lg text-white flex items-center gap-1.5"
-              style={{ background: PRIMARY }}
+              style={{ background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
             >
               {c.startFree}
               <ArrowRight className="w-4 h-4" />
@@ -433,29 +492,30 @@ export function LandingPage() {
             className="lg:hidden p-2 -mr-2"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Menu"
+            style={{ color: TEXT }}
           >
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
         {menuOpen && (
-          <div className="lg:hidden border-t px-5 py-4 flex flex-col gap-3" style={{ borderColor: LINE }}>
-            <a href="#features" className="text-sm font-medium" onClick={() => setMenuOpen(false)} style={{ color: INK_SOFT }}>
+          <div className="lg:hidden border-t px-5 py-4 flex flex-col gap-3" style={{ borderColor: BORDER_GLOW }}>
+            <a href="#features" className="text-sm font-medium" onClick={() => setMenuOpen(false)} style={{ color: TEXT_MUTED }}>
               {c.navFeatures}
             </a>
-            <a href="#reports" className="text-sm font-medium" onClick={() => setMenuOpen(false)} style={{ color: INK_SOFT }}>
+            <a href="#reports" className="text-sm font-medium" onClick={() => setMenuOpen(false)} style={{ color: TEXT_MUTED }}>
               {c.navReports}
             </a>
             <button
               onClick={() => goAuth("login")}
               className="text-sm font-semibold px-4 py-2.5 rounded-lg border text-left"
-              style={{ color: PRIMARY, borderColor: LINE }}
+              style={{ color: TEXT, borderColor: BORDER_GLOW }}
             >
               {c.signIn}
             </button>
             <button
               onClick={() => goAuth("register")}
               className="text-sm font-semibold px-4 py-2.5 rounded-lg text-white text-left"
-              style={{ background: PRIMARY }}
+              style={{ background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
             >
               {c.startFree}
             </button>
@@ -464,69 +524,86 @@ export function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section
-        className="relative overflow-hidden px-5 lg:px-8 pt-14 pb-16 lg:pt-24 lg:pb-24"
-        style={{ background: `linear-gradient(180deg, ${SURFACE} 0%, #FFFFFF 100%)` }}
-      >
-        {/* Ambient glow blobs — purely decorative, behind the content */}
+      <section className="relative overflow-hidden px-5 lg:px-8 pt-16 pb-24 lg:pt-28 lg:pb-32">
+        {/* radial atmosphere */}
         <div
           aria-hidden="true"
-          className="bf-glow-blob pointer-events-none absolute -top-24 -right-16 w-[420px] h-[420px] rounded-full opacity-40"
-          style={{ background: PRIMARY_LIGHT, filter: "blur(90px)" }}
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `radial-gradient(ellipse 900px 500px at 50% -10%, rgba(139,92,246,0.25) 0%, transparent 60%)`,
+          }}
         />
         <div
           aria-hidden="true"
-          className="bf-glow-blob-slow pointer-events-none absolute -bottom-32 -left-20 w-[380px] h-[380px] rounded-full opacity-30"
-          style={{ background: ACCENT, filter: "blur(100px)" }}
+          className="bf-glow-blob pointer-events-none absolute -top-24 -right-16 w-[420px] h-[420px] rounded-full opacity-30"
+          style={{ background: GLOW, filter: "blur(110px)" }}
         />
-        <div className="relative max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+        <div
+          aria-hidden="true"
+          className="bf-glow-blob-slow pointer-events-none absolute -bottom-32 -left-20 w-[380px] h-[380px] rounded-full opacity-20"
+          style={{ background: ACCENT, filter: "blur(120px)" }}
+        />
+
+        <div className="relative max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <p
-              className="text-[12px] font-bold tracking-wider mb-4"
-              style={{ color: PRIMARY_LIGHT }}
-            >
+            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: GLOW_SOFT }}>
               {c.eyebrow}
             </p>
             <h1
-              className="text-[34px] leading-[1.1] lg:text-[52px] font-bold tracking-tight mb-5"
-              style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+              className="text-[36px] leading-[1.08] lg:text-[56px] font-bold tracking-tight mb-5"
+              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
             >
               {c.headline1}
               <br />
-              <span style={{ color: ACCENT }}>{c.headline2}</span>
+              <span
+                style={{
+                  background: `linear-gradient(90deg, ${GLOW_SOFT} 0%, ${ACCENT} 100%)`,
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                {c.headline2}
+              </span>
             </h1>
-            <p className="text-[15px] lg:text-[17px] leading-relaxed mb-8 max-w-[480px]" style={{ color: INK_SOFT }}>
+            <p className="text-[15px] lg:text-[17px] leading-relaxed mb-8 max-w-[460px]" style={{ color: TEXT_MUTED }}>
               {c.subhead}
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => goAuth("register")}
                 className="bf-cta-pulse text-[15px] font-semibold px-6 py-3.5 rounded-xl text-white flex items-center gap-2"
-                style={{ background: PRIMARY }}
+                style={{ background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
               >
                 {c.ctaPrimary}
                 <ArrowRight className="w-4 h-4" />
               </button>
               <a
-                href="#features"
-                className="text-[15px] font-semibold px-6 py-3.5 rounded-xl"
-                style={{ color: PRIMARY }}
+                href="#demo"
+                className="text-[15px] font-semibold px-6 py-3.5 rounded-xl border flex items-center gap-2"
+                style={{ color: TEXT, borderColor: BORDER_GLOW, background: "rgba(255,255,255,0.03)" }}
               >
+                <span
+                  className="w-6 h-6 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.1)" }}
+                >
+                  <Play className="w-3 h-3 ml-0.5" fill={TEXT} style={{ color: TEXT }} />
+                </span>
                 {c.ctaSecondary}
               </a>
             </div>
           </div>
-          <div className="flex justify-center lg:justify-end">
-            <ReceiptCard c={c} />
+          <div className="flex justify-center lg:justify-end lg:pr-6">
+            <HeroMockup c={c} />
           </div>
         </div>
       </section>
 
       {/* Stat strip */}
-      <section className="px-5 lg:px-8 py-5" style={{ background: PRIMARY }}>
+      <section className="px-5 lg:px-8 py-5 border-y" style={{ background: BG_1, borderColor: BORDER_GLOW }}>
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-10 gap-y-2">
           {c.statStrip.map((s) => (
-            <span key={s} className="text-[12.5px] font-semibold text-white/85">
+            <span key={s} className="text-[12.5px] font-semibold" style={{ color: TEXT_MUTED }}>
               {s}
             </span>
           ))}
@@ -534,32 +611,36 @@ export function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: SURFACE }}>
+      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_0 }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center max-w-xl mx-auto mb-12">
             <h2
               className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-              style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
             >
               {c.stepsTitle}
             </h2>
-            <p className="text-[15px]" style={{ color: INK_SOFT }}>
+            <p className="text-[15px]" style={{ color: TEXT_MUTED }}>
               {c.stepsSub}
             </p>
           </div>
           <div className="grid sm:grid-cols-3 gap-6 relative">
             {c.steps.map((s, i) => (
-              <div key={s.title} className="relative">
+              <div
+                key={s.title}
+                className="relative rounded-2xl p-5 border"
+                style={{ borderColor: BORDER_GLOW, background: BG_1 }}
+              >
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[15px] mb-4"
-                  style={{ background: PRIMARY, color: "#FFFFFF" }}
+                  style={{ background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)`, color: "#FFFFFF" }}
                 >
                   {i + 1}
                 </div>
-                <h3 className="text-[15px] font-bold mb-1.5" style={{ color: INK }}>
+                <h3 className="text-[15px] font-bold mb-1.5" style={{ color: TEXT }}>
                   {s.title}
                 </h3>
-                <p className="text-[13.5px] leading-relaxed" style={{ color: INK_SOFT }}>
+                <p className="text-[13.5px] leading-relaxed" style={{ color: TEXT_MUTED }}>
                   {s.desc}
                 </p>
               </div>
@@ -569,16 +650,16 @@ export function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: "#FFFFFF" }}>
+      <section id="features" className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_1 }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-xl mx-auto mb-12">
             <h2
               className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-              style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
             >
               {c.featuresTitle}
             </h2>
-            <p className="text-[15px]" style={{ color: INK_SOFT }}>
+            <p className="text-[15px]" style={{ color: TEXT_MUTED }}>
               {c.featuresSub}
             </p>
           </div>
@@ -589,18 +670,18 @@ export function LandingPage() {
                 <div
                   key={f.title}
                   className="rounded-2xl p-6 border"
-                  style={{ borderColor: LINE, background: SURFACE }}
+                  style={{ borderColor: BORDER_GLOW, background: "rgba(255,255,255,0.03)" }}
                 >
                   <div
                     className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                    style={{ background: "rgba(59,30,109,0.08)" }}
+                    style={{ background: "rgba(139,92,246,0.15)" }}
                   >
-                    <Icon className="w-5 h-5" style={{ color: PRIMARY }} />
+                    <Icon className="w-5 h-5" style={{ color: GLOW_SOFT }} />
                   </div>
-                  <h3 className="text-[15px] font-bold mb-1.5" style={{ color: INK }}>
+                  <h3 className="text-[15px] font-bold mb-1.5" style={{ color: TEXT }}>
                     {f.title}
                   </h3>
-                  <p className="text-[13.5px] leading-relaxed" style={{ color: INK_SOFT }}>
+                  <p className="text-[13.5px] leading-relaxed" style={{ color: TEXT_MUTED }}>
                     {f.desc}
                   </p>
                 </div>
@@ -610,29 +691,29 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Comparison */}
-      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: SURFACE }}>
+      {/* Comparison: Spreadsheet vs Bossify */}
+      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_0 }}>
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-10">
             <h2
               className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-              style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
             >
               {c.compareTitle}
             </h2>
-            <p className="text-[15px]" style={{ color: INK_SOFT }}>
+            <p className="text-[15px]" style={{ color: TEXT_MUTED }}>
               {c.compareSub}
             </p>
           </div>
-          <div className="rounded-2xl bg-white border overflow-hidden" style={{ borderColor: LINE }}>
-            <div className="grid grid-cols-[1.4fr_1fr_1fr]" style={{ borderBottom: `1px solid ${LINE}` }}>
+          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: BORDER_GLOW, background: BG_1 }}>
+            <div className="grid grid-cols-[1.4fr_1fr_1fr]" style={{ borderBottom: `1px solid ${BORDER_GLOW}` }}>
               <div className="px-4 py-3" />
-              <div className="px-4 py-3 text-center text-[12.5px] font-semibold" style={{ color: INK_SOFT }}>
+              <div className="px-4 py-3 text-center text-[12.5px] font-semibold" style={{ color: TEXT_MUTED }}>
                 {c.compareSpreadsheet}
               </div>
               <div
                 className="px-4 py-3 text-center text-[12.5px] font-bold rounded-t-lg"
-                style={{ color: "#FFFFFF", background: PRIMARY }}
+                style={{ color: "#FFFFFF", background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
               >
                 {c.compareBossify}
               </div>
@@ -641,17 +722,17 @@ export function LandingPage() {
               <div
                 key={row.label}
                 className="grid grid-cols-[1.4fr_1fr_1fr] items-center"
-                style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}
+                style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER_GLOW}` }}
               >
-                <div className="px-4 py-3.5 text-[13px] font-medium" style={{ color: INK }}>
+                <div className="px-4 py-3.5 text-[13px] font-medium" style={{ color: TEXT }}>
                   {row.label}
                 </div>
-                <div className="px-4 py-3.5 text-center text-[12px]" style={{ color: INK_SOFT }}>
+                <div className="px-4 py-3.5 text-center text-[12px]" style={{ color: TEXT_MUTED }}>
                   {row.spreadsheet}
                 </div>
                 <div
                   className="px-4 py-3.5 text-center text-[12px] font-bold"
-                  style={{ color: PRIMARY, background: "rgba(59,30,109,0.05)" }}
+                  style={{ color: GLOW_SOFT, background: "rgba(139,92,246,0.08)" }}
                 >
                   {row.bossify}
                 </div>
@@ -662,28 +743,28 @@ export function LandingPage() {
       </section>
 
       {/* Comparison: TikTok Shop Seller Center vs Bossify */}
-      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: "#FFFFFF" }}>
+      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_1 }}>
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-10">
             <h2
               className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-              style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
             >
               {c.compare2Title}
             </h2>
-            <p className="text-[15px]" style={{ color: INK_SOFT }}>
+            <p className="text-[15px]" style={{ color: TEXT_MUTED }}>
               {c.compare2Sub}
             </p>
           </div>
-          <div className="rounded-2xl bg-white border overflow-hidden" style={{ borderColor: LINE }}>
-            <div className="grid grid-cols-[1.4fr_1fr_1fr]" style={{ borderBottom: `1px solid ${LINE}` }}>
+          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: BORDER_GLOW, background: BG_0 }}>
+            <div className="grid grid-cols-[1.4fr_1fr_1fr]" style={{ borderBottom: `1px solid ${BORDER_GLOW}` }}>
               <div className="px-4 py-3" />
-              <div className="px-4 py-3 text-center text-[12.5px] font-semibold" style={{ color: INK_SOFT }}>
+              <div className="px-4 py-3 text-center text-[12.5px] font-semibold" style={{ color: TEXT_MUTED }}>
                 {c.compare2TiktokShop}
               </div>
               <div
                 className="px-4 py-3 text-center text-[12.5px] font-bold rounded-t-lg"
-                style={{ color: "#FFFFFF", background: PRIMARY }}
+                style={{ color: "#FFFFFF", background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
               >
                 {c.compare2Bossify}
               </div>
@@ -692,17 +773,17 @@ export function LandingPage() {
               <div
                 key={row.label}
                 className="grid grid-cols-[1.4fr_1fr_1fr] items-center"
-                style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}
+                style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER_GLOW}` }}
               >
-                <div className="px-4 py-3.5 text-[13px] font-medium" style={{ color: INK }}>
+                <div className="px-4 py-3.5 text-[13px] font-medium" style={{ color: TEXT }}>
                   {row.label}
                 </div>
-                <div className="px-4 py-3.5 text-center text-[12px]" style={{ color: INK_SOFT }}>
+                <div className="px-4 py-3.5 text-center text-[12px]" style={{ color: TEXT_MUTED }}>
                   {row.tiktokShop}
                 </div>
                 <div
                   className="px-4 py-3.5 text-center text-[12px] font-bold"
-                  style={{ color: PRIMARY, background: "rgba(59,30,109,0.05)" }}
+                  style={{ color: GLOW_SOFT, background: "rgba(139,92,246,0.08)" }}
                 >
                   {row.bossify}
                 </div>
@@ -713,43 +794,43 @@ export function LandingPage() {
       </section>
 
       {/* Reports ledger */}
-      <section id="reports" className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: SURFACE }}>
+      <section id="reports" className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_0 }}>
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-10">
             <h2
               className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-              style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
             >
               {c.reportsTitle}
             </h2>
-            <p className="text-[15px]" style={{ color: INK_SOFT }}>
+            <p className="text-[15px]" style={{ color: TEXT_MUTED }}>
               {c.reportsSub}
             </p>
           </div>
-          <div className="rounded-2xl bg-white border overflow-hidden" style={{ borderColor: LINE }}>
+          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: BORDER_GLOW, background: BG_1 }}>
             {c.reports.map((r, i) => (
               <div
                 key={r.name}
                 className="flex items-center gap-4 px-5 py-4"
-                style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}
+                style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER_GLOW}` }}
               >
                 <span
                   className="text-[12px] font-bold w-6 shrink-0"
-                  style={{ color: PRIMARY_LIGHT, fontFamily: "IBM Plex Mono, ui-monospace, monospace" }}
+                  style={{ color: GLOW_SOFT, fontFamily: "IBM Plex Mono, ui-monospace, monospace" }}
                 >
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-bold" style={{ color: INK }}>
+                  <p className="text-[14px] font-bold" style={{ color: TEXT }}>
                     {r.name}
                   </p>
-                  <p className="text-[12.5px] truncate" style={{ color: INK_SOFT }}>
+                  <p className="text-[12.5px] truncate" style={{ color: TEXT_MUTED }}>
                     {r.desc}
                   </p>
                 </div>
                 <span
                   className="text-[10px] font-bold px-2 py-1 rounded shrink-0"
-                  style={{ color: PRIMARY, background: "rgba(59,30,109,0.08)" }}
+                  style={{ color: GLOW_SOFT, background: "rgba(139,92,246,0.12)" }}
                 >
                   PDF
                 </span>
@@ -760,21 +841,21 @@ export function LandingPage() {
       </section>
 
       {/* Video */}
-      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: "#FFFFFF" }}>
+      <section id="demo" className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_1 }}>
         <div className="max-w-3xl mx-auto text-center">
           <span
             className="inline-block text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-full mb-4"
-            style={{ color: ACCENT, background: "rgba(255,59,92,0.1)" }}
+            style={{ color: ACCENT, background: "rgba(255,59,92,0.12)" }}
           >
             {c.videoBadge}
           </span>
           <h2
             className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-            style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+            style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
           >
             {c.videoTitle}
           </h2>
-          <p className="text-[15px] mb-8" style={{ color: INK_SOFT }}>
+          <p className="text-[15px] mb-8" style={{ color: TEXT_MUTED }}>
             {c.videoSub}
           </p>
           {/* TODO(John): once the demo video is ready, replace this
@@ -783,9 +864,9 @@ export function LandingPage() {
           <div
             className="relative mx-auto max-w-3xl aspect-video rounded-2xl overflow-hidden border flex items-center justify-center"
             style={{
-              borderColor: LINE,
-              background: `linear-gradient(135deg, ${PRIMARY} 0%, ${PRIMARY_LIGHT} 100%)`,
-              boxShadow: "0 20px 60px rgba(59,30,109,0.25)",
+              borderColor: BORDER_GLOW,
+              background: `linear-gradient(135deg, ${PRIMARY} 0%, ${GLOW} 100%)`,
+              boxShadow: "0 30px 80px rgba(139,92,246,0.3)",
             }}
           >
             <div
@@ -805,21 +886,26 @@ export function LandingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="px-5 lg:px-8 py-16 lg:py-20" style={{ background: PRIMARY }}>
-        <div className="max-w-2xl mx-auto text-center">
+      <section className="relative overflow-hidden px-5 lg:px-8 py-16 lg:py-20" style={{ background: BG_0 }}>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{ background: `radial-gradient(ellipse 700px 400px at 50% 50%, rgba(139,92,246,0.3) 0%, transparent 70%)` }}
+        />
+        <div className="relative max-w-2xl mx-auto text-center">
           <h2
-            className="text-[26px] lg:text-[32px] font-bold tracking-tight mb-3 text-white"
-            style={{ fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+            className="text-[26px] lg:text-[32px] font-bold tracking-tight mb-3"
+            style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
           >
             {c.finalTitle}
           </h2>
-          <p className="text-[15px] mb-8" style={{ color: "rgba(255,255,255,0.75)" }}>
+          <p className="text-[15px] mb-8" style={{ color: TEXT_MUTED }}>
             {c.finalSub}
           </p>
           <button
             onClick={() => goAuth("register")}
-            className="text-[15px] font-semibold px-7 py-3.5 rounded-xl inline-flex items-center gap-2"
-            style={{ background: "#FFFFFF", color: PRIMARY }}
+            className="bf-cta-pulse text-[15px] font-semibold px-7 py-3.5 rounded-xl inline-flex items-center gap-2 text-white"
+            style={{ background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
           >
             {c.finalCta}
             <ArrowRight className="w-4 h-4" />
@@ -828,18 +914,18 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="px-5 lg:px-8 py-10" style={{ background: "#FFFFFF" }}>
+      <footer className="px-5 lg:px-8 py-10 border-t" style={{ background: BG_0, borderColor: BORDER_GLOW }}>
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <img src={bossifyLogo} alt="Bossify" className="h-6 w-6 rounded object-cover" />
-            <span className="text-sm font-bold" style={{ color: PRIMARY }}>
+            <span className="text-sm font-bold" style={{ color: TEXT }}>
               Bossify
             </span>
-            <span className="text-[13px]" style={{ color: INK_SOFT }}>
+            <span className="text-[13px]" style={{ color: TEXT_MUTED }}>
               · {c.footerTag}
             </span>
           </div>
-          <p className="text-[12.5px]" style={{ color: INK_SOFT }}>
+          <p className="text-[12.5px]" style={{ color: TEXT_MUTED }}>
             © {new Date().getFullYear()} ZH Studio
           </p>
         </div>
