@@ -1,420 +1,843 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  DollarSign,
-  PackageX,
-  FileText,
-  Send,
-  RefreshCw,
-  Smile,
-  ArrowRight,
   Menu,
   X,
+  ArrowRight,
   Play,
   TrendingUp,
+  DollarSign,
+  Package,
+  PackageX,
+  FileText,
+  Truck,
+  Users,
+  ClipboardCheck,
+  MessageCircle,
+  Check,
+  Minus,
+  Maximize2,
+  LayoutDashboard,
   ShoppingBag,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import bossifyLogo from "@/assets/bossify-logo.png";
 
+// ---------------------------------------------------------------------------
+// Design tokens — Bossify's own light brand palette. No dark cinematic theme:
+// this is a premium, mostly-white SaaS page (Stripe/Linear/Vercel-adjacent),
+// with purple as the single confident accent and one near-black section for
+// contrast (the "sales vs. profit" moment and the closing CTA).
+// ---------------------------------------------------------------------------
 const PRIMARY = "#3B1E6D";
 const PRIMARY_LIGHT = "#6C4AB6";
 const ACCENT = "#FF3B5C";
+const GOLD = "#D4A017";
 const INK = "#1E1730";
 const INK_SOFT = "#5B5270";
 const SURFACE = "#F7F5FA";
 const LINE = "#E1DCEC";
+const NEARBLACK = "#0B0712";
+const NEARBLACK_SOFT = "#1A1430";
 
-// Cinematic dark theme — the whole page now runs on this palette.
-const BG_0 = "#0A0714"; // page background, near-black purple
-const BG_1 = "#120B22"; // section band, one step up
-const BG_2 = "#1A1130"; // card surface
-const GLOW = "#8B5CF6"; // bright purple for glow/accents on dark
-const GLOW_SOFT = "#A78BFA";
-const TEXT = "#F5F3FA"; // headings on dark
-const TEXT_MUTED = "#B4A9C9"; // body text on dark
-const BORDER_GLOW = "rgba(139,92,246,0.25)";
+type ShowcaseItem = { eyebrow: string; title: string; desc: string };
+type FlowStep = { num: string; title: string; desc: string };
+type CostLine = { label: string; value: string };
 
 type LandingCopy = {
   navFeatures: string;
+  navHowItWorks: string;
   navReports: string;
+  navPricing: string;
   signIn: string;
   startFree: string;
+
   eyebrow: string;
   headline1: string;
-  headline2: string;
+  headlineEmphasis: string;
   subhead: string;
   ctaPrimary: string;
   ctaSecondary: string;
-  receiptTitle: string;
-  receiptSub: string;
-  gross: string;
-  cost: string;
-  fee: string;
-  net: string;
-  featuresTitle: string;
-  featuresSub: string;
-  features: { title: string; desc: string }[];
-  reportsTitle: string;
-  reportsSub: string;
-  reports: { name: string; desc: string }[];
-  statStrip: string[];
+  trustBullets: string[];
+
+  demoBadge: string;
+  demoTitle: string;
+  demoSub: string;
+
+  problemEyebrow: string;
+  problemTitle: string;
+  problemSalesLabel: string;
+  problemSalesValue: string;
+  problemCostLines: CostLine[];
+  problemProfitLabel: string;
+  problemProfitValue: string;
+
+  showcaseProfit: ShowcaseItem;
+  showcaseInventory: ShowcaseItem;
+  showcaseOrders: ShowcaseItem;
+  showcaseReports: ShowcaseItem;
+  reports: string[];
+
+  tiktokEyebrow: string;
+  tiktokTitle: string;
+  tiktokSub: string;
+  tiktokComingSoon: string;
+  tiktokDestinations: string[];
+
   stepsTitle: string;
   stepsSub: string;
-  steps: { title: string; desc: string }[];
+  steps: FlowStep[];
+
   compareTitle: string;
   compareSub: string;
-  compareSpreadsheet: string;
-  compareBossify: string;
-  compareRows: { label: string; spreadsheet: string; bossify: string }[];
-  compare2Title: string;
-  compare2Sub: string;
-  compare2TiktokShop: string;
-  compare2Bossify: string;
-  compare2Rows: { label: string; tiktokShop: string; bossify: string }[];
-  videoTitle: string;
-  videoSub: string;
-  videoBadge: string;
-  finalTitle: string;
+  compareSpreadsheetLabel: string;
+  compareBossifyLabel: string;
+  compareSpreadsheetItems: string[];
+  compareBossifyItems: string[];
+
+  trustSectionTitle: string;
+  trustItems: string[];
+
+  finalTitle1: string;
+  finalTitle2: string;
   finalSub: string;
-  finalCta: string;
+  finalCtaPrimary: string;
+  finalCtaSecondary: string;
+
   footerTag: string;
 };
 
 const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
   en: {
     navFeatures: "Features",
+    navHowItWorks: "How it works",
     navReports: "Reports",
+    navPricing: "Pricing",
     signIn: "Sign In",
     startFree: "Start Free",
-    eyebrow: "FOR TIKTOK SHOP SELLERS IN MALAYSIA",
+
+    eyebrow: "BUILT FOR TIKTOK SHOP SELLERS",
     headline1: "Know what you",
-    headline2: "actually keep.",
+    headlineEmphasis: "actually keep.",
     subhead:
-      "Bossify tracks your real net profit after product cost and fees — not just gross sales. Built for sellers who don't have an accounting background.",
+      "Track real profit, inventory, orders and business performance — without complicated accounting.",
     ctaPrimary: "Start Free",
-    ctaSecondary: "See how it works",
-    receiptTitle: "ORDER #A1042",
-    receiptSub: "Bossify · Real Profit Slip",
-    gross: "Gross sales",
-    cost: "Product cost",
-    fee: "Platform fee",
-    net: "Net profit",
-    featuresTitle: "Everything you need to run your shop",
-    featuresSub: "No spreadsheets. No guesswork. Just your real numbers.",
-    features: [
-      { title: "Real profit tracking", desc: "Net profit after cost, not just gross sales." },
-      { title: "Smart alerts", desc: "Low stock and loss-making products, flagged automatically." },
-      { title: "7 exportable PDF reports", desc: "Sales, Profit, Stock, P&L, Customer, Supplier, Reconciliation." },
-      { title: "Fast order entry", desc: "1-tap WhatsApp order confirmation to your customers." },
-      { title: "TikTok Shop auto-sync", desc: "Coming soon — orders sync automatically." },
-      { title: "Built for non-accountants", desc: "Clean, simple interface. No jargon." },
+    ctaSecondary: "Watch 2-min Demo",
+    trustBullets: ["No credit card required", "Set up in minutes", "Built for small sellers"],
+
+    demoBadge: "PRODUCT DEMO",
+    demoTitle: "See your business clearly.",
+    demoSub: "From every order to your actual profit.",
+
+    problemEyebrow: "THE PROBLEM",
+    problemTitle: "Sales don't tell the whole story.",
+    problemSalesLabel: "Sales",
+    problemSalesValue: "RM10,000",
+    problemCostLines: [
+      { label: "Product Cost", value: "−RM5,000" },
+      { label: "Platform Fees", value: "−RM800" },
+      { label: "Shipping", value: "−RM600" },
+      { label: "Packaging", value: "−RM300" },
+      { label: "Other Expenses", value: "−RM450" },
     ],
-    reportsTitle: "7 reports, ready to export",
-    reportsSub: "Every report you need to run and prove your business — one tap to PDF.",
+    problemProfitLabel: "Actual Profit",
+    problemProfitValue: "RM2,850",
+
+    showcaseProfit: {
+      eyebrow: "REAL PROFIT",
+      title: "See what you actually keep.",
+      desc: "Know your profit after product costs, platform fees and other business expenses — not just what TikTok Shop shows you.",
+    },
+    showcaseInventory: {
+      eyebrow: "INVENTORY",
+      title: "Know what needs attention.",
+      desc: "Get alerted on low stock and loss-making products before they hurt your business — no more guessing what to restock.",
+    },
+    showcaseOrders: {
+      eyebrow: "ORDERS",
+      title: "Enter orders in seconds.",
+      desc: "Add orders fast and confirm them with your customer over WhatsApp in one tap — no switching between apps.",
+    },
+    showcaseReports: {
+      eyebrow: "REPORTS",
+      title: "7 reports, always ready.",
+      desc: "Export real business documents whenever you need them — ready to send, file, or hand to your accountant.",
+    },
     reports: [
-      { name: "Sales Report", desc: "Every order, every period, at a glance." },
-      { name: "Profit Report", desc: "Real net profit after all your costs." },
-      { name: "Stock Report", desc: "What's left, what's low, what's moving." },
-      { name: "Financial P&L", desc: "Profit & loss statement for your business." },
-      { name: "Customer Statement", desc: "Full order history per customer." },
-      { name: "Supplier Report", desc: "What you owe and what you've paid." },
-      { name: "Order Reconciliation", desc: "Match orders against payouts, cleanly." },
+      "Sales Report",
+      "Profit Report",
+      "Stock Report",
+      "Financial P&L",
+      "Customer Statement",
+      "Supplier Report",
+      "Order Reconciliation",
     ],
-    statStrip: ["7 PDF reports", "3 languages", "WhatsApp confirmations", "Real-time alerts"],
-    stepsTitle: "How Bossify works",
-    stepsSub: "Three steps from chaos to clarity.",
+
+    tiktokEyebrow: "INTEGRATION",
+    tiktokTitle: "Bring your TikTok Shop data into one place.",
+    tiktokSub: "Connect your shop and let Bossify organize your orders, products and profit automatically.",
+    tiktokComingSoon: "Automatic order sync — coming soon",
+    tiktokDestinations: ["Orders", "Products", "Inventory", "Profit", "Reports"],
+
+    stepsTitle: "From order to real profit.",
+    stepsSub: "Three steps. No accounting background needed.",
     steps: [
-      { title: "Log your orders", desc: "Add orders in seconds — or let TikTok Shop auto-sync do it for you soon." },
-      { title: "Bossify does the math", desc: "Cost, fees and ads are subtracted automatically. No spreadsheet formulas." },
-      { title: "See your real numbers", desc: "Check real profit any time, export reports, get alerted before stock runs out." },
+      { num: "01", title: "Add your orders", desc: "Enter orders manually in seconds, or sync automatically once TikTok Shop sync is live." },
+      { num: "02", title: "Bossify calculates the numbers", desc: "Product cost, platform fees and expenses are deducted automatically — no spreadsheet formulas." },
+      { num: "03", title: "See your real profit", desc: "Track performance, get alerts, and export reports whenever you need them." },
     ],
-    compareTitle: "Spreadsheet vs. Bossify",
-    compareSub: "Same job, very different experience.",
-    compareSpreadsheet: "Spreadsheet",
-    compareBossify: "Bossify",
-    compareRows: [
-      { label: "Real profit after cost & fees", spreadsheet: "Manual, easy to miss", bossify: "Automatic, always accurate" },
-      { label: "Low stock alerts", spreadsheet: "None", bossify: "Built in, automatic" },
-      { label: "PDF reports", spreadsheet: "Build it yourself", bossify: "7 reports, one tap" },
-      { label: "WhatsApp order confirmation", spreadsheet: "Copy-paste manually", bossify: "1-tap send" },
-      { label: "Works on your phone", spreadsheet: "Awkward", bossify: "Built for mobile" },
+
+    compareTitle: "Spreadsheets vs. Bossify",
+    compareSub: "What changes when you switch.",
+    compareSpreadsheetLabel: "Spreadsheet",
+    compareBossifyLabel: "Bossify",
+    compareSpreadsheetItems: [
+      "Manual data entry",
+      "Easy to miss mistakes",
+      "Separate calculations for every report",
+      "No automatic alerts",
+      "Hard to maintain as you grow",
     ],
-    compare2Title: "TikTok Shop Seller Center vs. Bossify",
-    compare2Sub: "TikTok Shop runs your store. Bossify tells you if you're actually making money.",
-    compare2TiktokShop: "Seller Center",
-    compare2Bossify: "Bossify",
-    compare2Rows: [
-      { label: "Real net profit after cost", tiktokShop: "Gross sales only", bossify: "Automatic, after every cost" },
-      { label: "Loss-making product alerts", tiktokShop: "Not available", bossify: "Built in" },
-      { label: "Full PDF reports (P&L, supplier...)", tiktokShop: "Basic exports only", bossify: "7 full reports" },
-      { label: "WhatsApp order confirmation", tiktokShop: "Not available", bossify: "1-tap send" },
-      { label: "Orders outside TikTok Shop too", tiktokShop: "TikTok orders only", bossify: "All orders, one place" },
+    compareBossifyItems: [
+      "Real profit tracking, automatically",
+      "Smart low-stock and loss alerts",
+      "All 7 reports in one place",
+      "Built specifically for sellers",
+      "Gets easier as your shop grows",
     ],
-    videoBadge: "DEMO",
-    videoTitle: "See Bossify in action",
-    videoSub: "A 2-minute walkthrough of real profit tracking, alerts and reports. Coming soon.",
-    finalTitle: "Ready to know your real numbers?",
-    finalSub: "Set up your shop in minutes. No credit card required.",
-    finalCta: "Start Free",
-    footerTag: "Manage your shop like a boss.",
+
+    trustSectionTitle: "Built to be trusted with your numbers.",
+    trustItems: [
+      "Built for small sellers, not accountants",
+      "Simple enough to use on day one",
+      "Every number traced back to a real order",
+    ],
+
+    finalTitle1: "Stop guessing.",
+    finalTitle2: "Start knowing.",
+    finalSub: "See what your business actually keeps with Bossify.",
+    finalCtaPrimary: "Start Free",
+    finalCtaSecondary: "Watch Demo",
+
+    footerTag: "Manage your shop like a boss",
   },
   zh: {
     navFeatures: "功能",
+    navHowItWorks: "使用流程",
     navReports: "报表",
-    signIn: "登入",
+    navPricing: "价格",
+    signIn: "登录",
     startFree: "免费开始",
-    eyebrow: "专为马来西亚 TIKTOK SHOP 卖家打造",
-    headline1: "清楚知道",
-    headline2: "你到底赚多少。",
-    subhead:
-      "Bossify 帮你追踪扣除成本与平台费用后的「真实净利润」，不只是销售额。专为没有会计背景的卖家设计。",
-    ctaPrimary: "免费开始使用",
-    ctaSecondary: "看看怎么运作",
-    receiptTitle: "订单 #A1042",
-    receiptSub: "Bossify · 真实利润单",
-    gross: "销售额",
-    cost: "产品成本",
-    fee: "平台费用",
-    net: "净利润",
-    featuresTitle: "经营你的网店所需要的一切",
-    featuresSub: "不用 Excel，不用猜。只看真实数字。",
-    features: [
-      { title: "真实利润追踪", desc: "扣除成本后的净利润，不只是销售额。" },
-      { title: "智能提醒", desc: "低库存与亏本产品，自动标示出来。" },
-      { title: "7 份可导出 PDF 报表", desc: "销售、利润、库存、损益表、客户、供应商、对账单。" },
-      { title: "快速下单", desc: "一键发送 WhatsApp 订单确认给顾客。" },
-      { title: "TikTok Shop 自动同步", desc: "即将推出 — 订单自动同步。" },
-      { title: "非会计人士也能上手", desc: "界面简单清楚，没有专业术语。" },
+
+    eyebrow: "专为 TIKTOK SHOP 卖家打造",
+    headline1: "知道你",
+    headlineEmphasis: "真正赚了多少。",
+    subhead: "追踪真实利润、库存、订单和业绩表现——不需要会计知识。",
+    ctaPrimary: "免费开始",
+    ctaSecondary: "观看 2 分钟演示",
+    trustBullets: ["无需信用卡", "几分钟即可上手", "专为小卖家设计"],
+
+    demoBadge: "产品演示",
+    demoTitle: "让你的生意一目了然。",
+    demoSub: "从每一笔订单,到你真正赚到的利润。",
+
+    problemEyebrow: "问题所在",
+    problemTitle: "销售额不代表真相。",
+    problemSalesLabel: "销售额",
+    problemSalesValue: "RM10,000",
+    problemCostLines: [
+      { label: "产品成本", value: "−RM5,000" },
+      { label: "平台费用", value: "−RM800" },
+      { label: "运费", value: "−RM600" },
+      { label: "包装费", value: "−RM300" },
+      { label: "其他支出", value: "−RM450" },
     ],
-    reportsTitle: "7 份报表，随时可导出",
-    reportsSub: "经营与证明生意所需的每一份报表 — 一键导出 PDF。",
+    problemProfitLabel: "实际利润",
+    problemProfitValue: "RM2,850",
+
+    showcaseProfit: {
+      eyebrow: "真实利润",
+      title: "看清你真正赚到的钱。",
+      desc: "扣除产品成本、平台费用和其他支出后的真实利润——不只是 TikTok Shop 显示的数字。",
+    },
+    showcaseInventory: {
+      eyebrow: "库存管理",
+      title: "知道哪里需要注意。",
+      desc: "在库存不足或亏本商品影响生意之前就收到提醒——不用再靠猜测补货。",
+    },
+    showcaseOrders: {
+      eyebrow: "订单管理",
+      title: "几秒钟完成订单输入。",
+      desc: "快速添加订单,一键通过 WhatsApp 跟客户确认订单——不用在不同 App 之间切换。",
+    },
+    showcaseReports: {
+      eyebrow: "报表",
+      title: "7 份报表,随时可用。",
+      desc: "随时导出真实的商业文件——方便发送、存档,或交给你的会计。",
+    },
     reports: [
-      { name: "销售报表", desc: "每一笔订单、每个时间段，一目了然。" },
-      { name: "利润报表", desc: "扣除所有成本后的真实净利润。" },
-      { name: "库存报表", desc: "剩多少、哪些库存低、哪些卖得快。" },
-      { name: "财务损益表", desc: "你生意的损益表。" },
-      { name: "客户对账单", desc: "每位客户的完整订单记录。" },
-      { name: "供应商报表", desc: "你欠多少、已付多少。" },
-      { name: "订单对账单", desc: "清楚核对订单与款项。" },
+      "销售报表",
+      "利润报表",
+      "库存报表",
+      "财务损益表",
+      "客户对账单",
+      "供应商报表",
+      "订单核对表",
     ],
-    statStrip: ["7份PDF报表", "支持3种语言", "WhatsApp订单确认", "实时提醒"],
-    stepsTitle: "Bossify怎么运作",
-    stepsSub: "三个步骤，从一团乱到一目了然。",
+
+    tiktokEyebrow: "数据整合",
+    tiktokTitle: "把你的 TikTok Shop 数据整合到一个地方。",
+    tiktokSub: "连接你的商店,让 Bossify 自动整理订单、产品和利润。",
+    tiktokComingSoon: "自动订单同步——即将推出",
+    tiktokDestinations: ["订单", "产品", "库存", "利润", "报表"],
+
+    stepsTitle: "从订单到真实利润。",
+    stepsSub: "三个步骤,不需要会计背景。",
     steps: [
-      { title: "记录你的订单", desc: "几秒钟就能输入订单，之后TikTok Shop还能自动同步。" },
-      { title: "Bossify自动帮你算", desc: "成本、平台费、广告费自动扣除，不用自己写Excel公式。" },
-      { title: "看到真实数字", desc: "随时查看真实利润，一键导出报表，库存不够之前就提醒你。" },
+      { num: "01", title: "添加你的订单", desc: "几秒钟手动输入订单,TikTok Shop 同步上线后也可以自动同步。" },
+      { num: "02", title: "Bossify 自动计算数字", desc: "自动扣除产品成本、平台费用和支出——不用再写电子表格公式。" },
+      { num: "03", title: "查看你的真实利润", desc: "追踪业绩、接收提醒,随时导出报表。" },
     ],
-    compareTitle: "Excel vs. Bossify",
-    compareSub: "同样的工作，体验完全不一样。",
-    compareSpreadsheet: "Excel/手写",
-    compareBossify: "Bossify",
-    compareRows: [
-      { label: "追踪真实利润（扣成本+费用后）", spreadsheet: "手动算，容易漏算", bossify: "自动算，永远准确" },
-      { label: "低库存提醒", spreadsheet: "没有", bossify: "内建，自动提醒" },
-      { label: "PDF报表", spreadsheet: "自己做", bossify: "7份报表，一键导出" },
-      { label: "WhatsApp订单确认", spreadsheet: "手动复制贴上", bossify: "一键发送" },
-      { label: "手机上使用", spreadsheet: "不方便", bossify: "专为手机设计" },
+
+    compareTitle: "电子表格 vs. Bossify",
+    compareSub: "换了之后会有什么不同。",
+    compareSpreadsheetLabel: "电子表格",
+    compareBossifyLabel: "Bossify",
+    compareSpreadsheetItems: [
+      "手动输入数据",
+      "容易漏掉错误",
+      "每份报表都要分开计算",
+      "没有自动提醒",
+      "生意越大越难维护",
     ],
-    compare2Title: "TikTok Shop后台 vs. Bossify",
-    compare2Sub: "TikTok Shop帮你经营店铺，Bossify告诉你是不是真的有在赚钱。",
-    compare2TiktokShop: "TikTok Shop后台",
-    compare2Bossify: "Bossify",
-    compare2Rows: [
-      { label: "真实净利润（扣成本后）", tiktokShop: "只显示销售额", bossify: "自动算，扣除每一项成本" },
-      { label: "亏本产品提醒", tiktokShop: "没有", bossify: "内建功能" },
-      { label: "完整PDF报表（损益表、供应商等）", tiktokShop: "只有基本导出", bossify: "7份完整报表" },
-      { label: "WhatsApp订单确认", tiktokShop: "没有", bossify: "一键发送" },
-      { label: "也能追踪TikTok Shop以外的订单", tiktokShop: "只有TikTok订单", bossify: "所有订单集中一个地方" },
+    compareBossifyItems: [
+      "自动追踪真实利润",
+      "智能库存和亏损提醒",
+      "7 份报表集中在一处",
+      "专为卖家设计",
+      "生意越大越好用",
     ],
-    videoBadge: "演示",
-    videoTitle: "看看 Bossify 实际怎么用",
-    videoSub: "2分钟看懂真实利润追踪、智能提醒跟报表功能。即将推出。",
-    finalTitle: "准备好搞清楚你的真实数字了吗？",
-    finalSub: "几分钟内设置好你的店铺，不需要信用卡。",
-    finalCta: "免费开始使用",
-    footerTag: "像老板一样经营你的网店。",
+
+    trustSectionTitle: "值得信赖的数字管理方式。",
+    trustItems: ["专为小卖家设计,不是为会计师", "第一天就能轻松上手", "每一个数字都能追溯到真实订单"],
+
+    finalTitle1: "别再猜测。",
+    finalTitle2: "开始真正了解。",
+    finalSub: "用 Bossify 看清你的生意真正赚到了多少。",
+    finalCtaPrimary: "免费开始",
+    finalCtaSecondary: "观看演示",
+
+    footerTag: "像老板一样管理你的生意",
   },
   ms: {
     navFeatures: "Ciri-ciri",
+    navHowItWorks: "Cara ia berfungsi",
     navReports: "Laporan",
+    navPricing: "Harga",
     signIn: "Log Masuk",
     startFree: "Mula Percuma",
-    eyebrow: "UNTUK PENJUAL TIKTOK SHOP DI MALAYSIA",
-    headline1: "Tahu untung",
-    headline2: "sebenar anda.",
-    subhead:
-      "Bossify menjejak untung bersih sebenar selepas kos produk dan yuran — bukan sekadar jualan kasar. Direka untuk penjual tanpa latar belakang perakaunan.",
+
+    eyebrow: "DIBINA UNTUK PENJUAL TIKTOK SHOP",
+    headline1: "Ketahui apa yang",
+    headlineEmphasis: "anda benar-benar untung.",
+    subhead: "Jejak keuntungan sebenar, inventori, pesanan dan prestasi perniagaan — tanpa perakaunan yang rumit.",
     ctaPrimary: "Mula Percuma",
-    ctaSecondary: "Lihat cara ia berfungsi",
-    receiptTitle: "PESANAN #A1042",
-    receiptSub: "Bossify · Slip Untung Sebenar",
-    gross: "Jualan kasar",
-    cost: "Kos produk",
-    fee: "Yuran platform",
-    net: "Untung bersih",
-    featuresTitle: "Semua yang anda perlukan untuk uruskan kedai",
-    featuresSub: "Tiada spreadsheet. Tiada teka-teki. Angka sebenar sahaja.",
-    features: [
-      { title: "Jejak untung sebenar", desc: "Untung bersih selepas kos, bukan sekadar jualan kasar." },
-      { title: "Amaran pintar", desc: "Stok rendah dan produk rugi, dikesan automatik." },
-      { title: "7 laporan PDF boleh eksport", desc: "Jualan, Untung, Stok, Untung Rugi, Pelanggan, Pembekal, Penyesuaian." },
-      { title: "Kemasukan pesanan pantas", desc: "Pengesahan pesanan WhatsApp satu ketukan." },
-      { title: "Segerak automatik TikTok Shop", desc: "Akan datang — pesanan segerak automatik." },
-      { title: "Direka untuk bukan akauntan", desc: "Antara muka ringkas dan jelas." },
+    ctaSecondary: "Tonton Demo 2 Minit",
+    trustBullets: ["Tidak perlu kad kredit", "Sedia dalam beberapa minit", "Dibina untuk penjual kecil"],
+
+    demoBadge: "DEMO PRODUK",
+    demoTitle: "Lihat perniagaan anda dengan jelas.",
+    demoSub: "Dari setiap pesanan, kepada keuntungan sebenar anda.",
+
+    problemEyebrow: "MASALAHNYA",
+    problemTitle: "Jualan tidak menunjukkan keseluruhan cerita.",
+    problemSalesLabel: "Jualan",
+    problemSalesValue: "RM10,000",
+    problemCostLines: [
+      { label: "Kos Produk", value: "−RM5,000" },
+      { label: "Yuran Platform", value: "−RM800" },
+      { label: "Penghantaran", value: "−RM600" },
+      { label: "Pembungkusan", value: "−RM300" },
+      { label: "Perbelanjaan Lain", value: "−RM450" },
     ],
-    reportsTitle: "7 laporan, sedia untuk dieksport",
-    reportsSub: "Setiap laporan yang anda perlukan untuk uruskan perniagaan — satu ketukan ke PDF.",
+    problemProfitLabel: "Keuntungan Sebenar",
+    problemProfitValue: "RM2,850",
+
+    showcaseProfit: {
+      eyebrow: "KEUNTUNGAN SEBENAR",
+      title: "Lihat apa yang anda benar-benar untung.",
+      desc: "Ketahui keuntungan selepas kos produk, yuran platform dan perbelanjaan lain — bukan sekadar apa yang ditunjukkan TikTok Shop.",
+    },
+    showcaseInventory: {
+      eyebrow: "INVENTORI",
+      title: "Ketahui apa yang perlu diberi perhatian.",
+      desc: "Dapat makluman stok rendah dan produk rugi sebelum ia menjejaskan perniagaan anda — tidak perlu meneka lagi.",
+    },
+    showcaseOrders: {
+      eyebrow: "PESANAN",
+      title: "Masukkan pesanan dalam beberapa saat.",
+      desc: "Tambah pesanan dengan pantas dan sahkan dengan pelanggan melalui WhatsApp sekali tekan.",
+    },
+    showcaseReports: {
+      eyebrow: "LAPORAN",
+      title: "7 laporan, sedia bila-bila masa.",
+      desc: "Eksport dokumen perniagaan sebenar bila-bila masa — sedia untuk dihantar, difailkan, atau diberikan kepada akauntan anda.",
+    },
     reports: [
-      { name: "Laporan Jualan", desc: "Setiap pesanan, setiap tempoh, sekali imbas." },
-      { name: "Laporan Untung", desc: "Untung bersih sebenar selepas semua kos." },
-      { name: "Laporan Stok", desc: "Apa yang tinggal, rendah, dan laju." },
-      { name: "Untung Rugi Kewangan", desc: "Penyata untung rugi perniagaan anda." },
-      { name: "Penyata Pelanggan", desc: "Sejarah pesanan penuh setiap pelanggan." },
-      { name: "Laporan Pembekal", desc: "Apa yang anda hutang dan telah bayar." },
-      { name: "Penyesuaian Pesanan", desc: "Padankan pesanan dengan bayaran, dengan kemas." },
+      "Laporan Jualan",
+      "Laporan Keuntungan",
+      "Laporan Stok",
+      "Penyata P&L",
+      "Penyata Pelanggan",
+      "Laporan Pembekal",
+      "Penyesuaian Pesanan",
     ],
-    statStrip: ["7 laporan PDF", "3 bahasa", "Pengesahan WhatsApp", "Amaran masa nyata"],
-    stepsTitle: "Cara Bossify berfungsi",
-    stepsSub: "Tiga langkah dari kekeliruan kepada kejelasan.",
+
+    tiktokEyebrow: "INTEGRASI",
+    tiktokTitle: "Bawa data TikTok Shop anda ke satu tempat.",
+    tiktokSub: "Sambungkan kedai anda dan biarkan Bossify menyusun pesanan, produk dan keuntungan secara automatik.",
+    tiktokComingSoon: "Penyegerakan pesanan automatik — akan datang",
+    tiktokDestinations: ["Pesanan", "Produk", "Inventori", "Keuntungan", "Laporan"],
+
+    stepsTitle: "Dari pesanan kepada keuntungan sebenar.",
+    stepsSub: "Tiga langkah. Tidak perlu latar belakang perakaunan.",
     steps: [
-      { title: "Catat pesanan anda", desc: "Tambah pesanan dalam beberapa saat — atau biar segerak TikTok Shop buat untuk anda nanti." },
-      { title: "Bossify kira untuk anda", desc: "Kos, yuran dan iklan ditolak secara automatik. Tiada formula spreadsheet." },
-      { title: "Lihat angka sebenar anda", desc: "Semak untung sebenar bila-bila masa, eksport laporan, dapat amaran sebelum stok habis." },
+      { num: "01", title: "Tambah pesanan anda", desc: "Masukkan pesanan secara manual dalam beberapa saat, atau segerak secara automatik sebaik sahaja penyegerakan TikTok Shop aktif." },
+      { num: "02", title: "Bossify mengira nombor", desc: "Kos produk, yuran platform dan perbelanjaan ditolak secara automatik — tanpa formula hamparan." },
+      { num: "03", title: "Lihat keuntungan sebenar anda", desc: "Jejak prestasi, terima makluman, dan eksport laporan bila-bila masa." },
     ],
-    compareTitle: "Spreadsheet vs. Bossify",
-    compareSub: "Kerja yang sama, pengalaman yang sangat berbeza.",
-    compareSpreadsheet: "Spreadsheet",
-    compareBossify: "Bossify",
-    compareRows: [
-      { label: "Untung sebenar selepas kos & yuran", spreadsheet: "Manual, mudah tersilap", bossify: "Automatik, sentiasa tepat" },
-      { label: "Amaran stok rendah", spreadsheet: "Tiada", bossify: "Terbina dalam, automatik" },
-      { label: "Laporan PDF", spreadsheet: "Buat sendiri", bossify: "7 laporan, satu ketukan" },
-      { label: "Pengesahan pesanan WhatsApp", spreadsheet: "Salin-tampal manual", bossify: "Hantar satu ketukan" },
-      { label: "Berfungsi di telefon anda", spreadsheet: "Janggal", bossify: "Direka untuk mudah alih" },
+
+    compareTitle: "Hamparan vs. Bossify",
+    compareSub: "Apa yang berubah apabila anda bertukar.",
+    compareSpreadsheetLabel: "Hamparan",
+    compareBossifyLabel: "Bossify",
+    compareSpreadsheetItems: [
+      "Kemasukan data secara manual",
+      "Mudah terlepas pandang kesilapan",
+      "Pengiraan berasingan untuk setiap laporan",
+      "Tiada makluman automatik",
+      "Sukar diselenggara apabila berkembang",
     ],
-    compare2Title: "Seller Center TikTok Shop vs. Bossify",
-    compare2Sub: "TikTok Shop uruskan kedai anda. Bossify beritahu jika anda benar-benar untung.",
-    compare2TiktokShop: "Seller Center",
-    compare2Bossify: "Bossify",
-    compare2Rows: [
-      { label: "Untung bersih sebenar selepas kos", tiktokShop: "Jualan kasar sahaja", bossify: "Automatik, selepas setiap kos" },
-      { label: "Amaran produk rugi", tiktokShop: "Tiada", bossify: "Terbina dalam" },
-      { label: "Laporan PDF penuh (Untung Rugi, Pembekal...)", tiktokShop: "Eksport asas sahaja", bossify: "7 laporan penuh" },
-      { label: "Pengesahan pesanan WhatsApp", tiktokShop: "Tiada", bossify: "Hantar satu ketukan" },
-      { label: "Pesanan di luar TikTok Shop juga", tiktokShop: "Pesanan TikTok sahaja", bossify: "Semua pesanan, satu tempat" },
+    compareBossifyItems: [
+      "Jejak keuntungan sebenar secara automatik",
+      "Makluman stok rendah dan kerugian yang pintar",
+      "Semua 7 laporan di satu tempat",
+      "Dibina khusus untuk penjual",
+      "Semakin mudah apabila kedai anda berkembang",
     ],
-    videoBadge: "DEMO",
-    videoTitle: "Lihat Bossify beraksi",
-    videoSub: "Tonton 2 minit cara jejak untung sebenar, amaran dan laporan berfungsi. Akan datang.",
-    finalTitle: "Bersedia untuk tahu angka sebenar anda?",
-    finalSub: "Sediakan kedai anda dalam beberapa minit. Tiada kad kredit diperlukan.",
-    finalCta: "Mula Percuma",
-    footerTag: "Uruskan kedai anda seperti bos.",
+
+    trustSectionTitle: "Dibina untuk dipercayai dengan nombor anda.",
+    trustItems: [
+      "Dibina untuk penjual kecil, bukan akauntan",
+      "Cukup mudah untuk digunakan pada hari pertama",
+      "Setiap nombor boleh dijejaki kembali ke pesanan sebenar",
+    ],
+
+    finalTitle1: "Berhenti meneka.",
+    finalTitle2: "Mula mengetahui.",
+    finalSub: "Lihat apa yang perniagaan anda benar-benar untung dengan Bossify.",
+    finalCtaPrimary: "Mula Percuma",
+    finalCtaSecondary: "Tonton Demo",
+
+    footerTag: "Uruskan kedai anda seperti bos",
   },
 };
 
-function HeroMockup({ c }: { c: LandingCopy }) {
-  // A hand-drawn, purely decorative "product preview" — not real data.
-  // Smooth SVG area chart + two floating stat cards, echoing the real
-  // Dashboard's daily-profit chart without wiring up live data here.
-  const points = [18, 34, 26, 48, 40, 60, 52, 44, 66, 58, 78];
-  const w = 320;
-  const h = 120;
+const REPORT_ICONS = [DollarSign, TrendingUp, Package, FileText, Users, Truck, ClipboardCheck];
+
+// ---------------------------------------------------------------------------
+// Product mockups — hand-built, data-free illustrations of the real Bossify
+// UI (sidebar, stat tiles, profit chart, orders list). No stock photos, no
+// screenshots pretending to be real data — these are clearly illustrative.
+// ---------------------------------------------------------------------------
+function DashboardMockup({ idPrefix = "hero" }: { idPrefix?: string }) {
+  const points = [22, 30, 26, 38, 34, 46, 40, 52, 48, 60, 56, 68];
+  const w = 460;
+  const h = 150;
   const step = w / (points.length - 1);
   const max = Math.max(...points);
-  const coords = points.map((p, i) => [i * step, h - (p / max) * (h - 18) - 6]);
+  const coords = points.map((p, i) => [i * step, h - (p / max) * (h - 24) - 10]);
   const linePath = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   const areaPath = `${linePath} L${w},${h} L0,${h} Z`;
 
-  return (
-    <div className="relative w-full max-w-[420px]">
-      {/* ambient glow behind the whole mockup */}
-      <div
-        aria-hidden="true"
-        className="bf-glow-blob pointer-events-none absolute -inset-10 rounded-[40px] opacity-60"
-        style={{ background: GLOW, filter: "blur(70px)" }}
-      />
+  const orders = [
+    { code: "#A1042", customer: "Aina R.", amount: "RM128.00", status: "Paid" },
+    { code: "#A1041", customer: "Faris K.", amount: "RM64.50", status: "Paid" },
+    { code: "#A1040", customer: "Mei Ling", amount: "RM212.00", status: "Pending" },
+  ];
 
-      {/* main browser-chrome card */}
-      <div
-        className="relative rounded-2xl overflow-hidden border"
-        style={{ background: BG_2, borderColor: BORDER_GLOW, boxShadow: `0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px ${BORDER_GLOW}` }}
-      >
-        <div className="flex items-center gap-1.5 px-4 py-3 border-b" style={{ borderColor: BORDER_GLOW }}>
-          <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#EF4444" }} />
-          <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#F59E0B" }} />
-          <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#22C55E" }} />
-          <span className="ml-3 text-[10.5px] px-2.5 py-1 rounded-full" style={{ color: TEXT_MUTED, background: "rgba(255,255,255,0.04)" }}>
-            bossifyapp.com/dashboard
-          </span>
+  const navItems = [
+    { Icon: LayoutDashboard, active: true },
+    { Icon: ShoppingBag, active: false },
+    { Icon: Package, active: false },
+    { Icon: FileText, active: false },
+    { Icon: Users, active: false },
+  ];
+
+  return (
+    <div
+      className="relative w-full max-w-[680px] rounded-[22px] overflow-hidden border bg-white"
+      style={{ borderColor: LINE, boxShadow: "0 50px 100px -24px rgba(59,30,109,0.3), 0 2px 10px rgba(30,23,48,0.06)" }}
+    >
+      <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: LINE, background: SURFACE }}>
+        <span className="w-2.5 h-2.5 rounded-full" style={{ background: LINE }} />
+        <span className="w-2.5 h-2.5 rounded-full" style={{ background: LINE }} />
+        <span className="w-2.5 h-2.5 rounded-full" style={{ background: LINE }} />
+        <span
+          className="ml-2 text-[10.5px] font-medium px-2.5 py-1 rounded-full bg-white"
+          style={{ color: INK_SOFT, border: `1px solid ${LINE}` }}
+        >
+          app.bossifyapp.com/dashboard
+        </span>
+      </div>
+      <div className="flex">
+        <div className="hidden sm:flex flex-col items-center gap-1.5 px-3 py-4 border-r" style={{ borderColor: LINE }}>
+          {navItems.map(({ Icon, active }, i) => (
+            <div
+              key={i}
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: active ? PRIMARY : "transparent" }}
+            >
+              <Icon className="w-4 h-4" style={{ color: active ? "#FFFFFF" : INK_SOFT }} />
+            </div>
+          ))}
         </div>
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-[10.5px] uppercase tracking-wide" style={{ color: TEXT_MUTED }}>
-                {c.receiptSub}
-              </p>
-              <p className="text-[22px] font-bold" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-                RM 4,218.50
+        <div className="flex-1 p-5">
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="rounded-xl p-3" style={{ background: SURFACE }}>
+              <p className="text-[10px] font-semibold" style={{ color: INK_SOFT }}>NET PROFIT</p>
+              <p className="text-[18px] font-bold" style={{ color: INK }}>RM4,218</p>
+              <p className="text-[10.5px] font-semibold flex items-center gap-0.5" style={{ color: "#16A34A" }}>
+                <TrendingUp className="w-3 h-3" /> +18%
               </p>
             </div>
-            <span
-              className="text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"
-              style={{ color: "#4ADE80", background: "rgba(74,222,128,0.12)" }}
-            >
-              <TrendingUp className="w-3 h-3" />
-              +18%
-            </span>
+            <div className="rounded-xl p-3" style={{ background: SURFACE }}>
+              <p className="text-[10px] font-semibold" style={{ color: INK_SOFT }}>SALES</p>
+              <p className="text-[18px] font-bold" style={{ color: INK }}>RM12,480</p>
+              <p className="text-[10.5px]" style={{ color: INK_SOFT }}>128 orders</p>
+            </div>
+            <div className="rounded-xl p-3" style={{ background: "rgba(255,59,92,0.07)" }}>
+              <p className="text-[10px] font-semibold" style={{ color: ACCENT }}>LOW STOCK</p>
+              <p className="text-[18px] font-bold" style={{ color: INK }}>3 items</p>
+              <p className="text-[10.5px]" style={{ color: ACCENT }}>needs attention</p>
+            </div>
           </div>
-          <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[110px]" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="bf-hero-area" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={GLOW} stopOpacity="0.45" />
-                <stop offset="100%" stopColor={GLOW} stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <path d={areaPath} fill="url(#bf-hero-area)" />
-            <path d={linePath} fill="none" stroke={GLOW_SOFT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx={coords[coords.length - 1][0]} cy={coords[coords.length - 1][1]} r="4.5" fill="#FFFFFF" />
-            <circle cx={coords[coords.length - 1][0]} cy={coords[coords.length - 1][1]} r="8" fill="none" stroke={GLOW_SOFT} strokeWidth="1.5" opacity="0.6" />
-          </svg>
-        </div>
-      </div>
-
-      {/* floating stat card: total orders */}
-      <div
-        className="bf-glow-blob absolute -top-6 -right-6 lg:-right-10 rounded-2xl border px-4 py-3.5 flex items-center gap-3"
-        style={{ background: BG_2, borderColor: BORDER_GLOW, boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}
-      >
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(139,92,246,0.18)" }}>
-          <ShoppingBag className="w-4 h-4" style={{ color: GLOW_SOFT }} />
-        </div>
-        <div>
-          <p className="text-[16px] font-bold leading-tight" style={{ color: TEXT }}>128</p>
-          <p className="text-[10px]" style={{ color: TEXT_MUTED }}>Orders today</p>
-        </div>
-      </div>
-
-      {/* floating stat card: low stock alert */}
-      <div
-        className="bf-glow-blob-slow absolute -bottom-6 -left-4 lg:-left-10 rounded-2xl border px-4 py-3.5 flex items-center gap-3"
-        style={{ background: BG_2, borderColor: "rgba(245,158,11,0.3)", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}
-      >
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.15)" }}>
-          <PackageX className="w-4 h-4" style={{ color: "#F59E0B" }} />
-        </div>
-        <div>
-          <p className="text-[16px] font-bold leading-tight" style={{ color: TEXT }}>3</p>
-          <p className="text-[10px]" style={{ color: TEXT_MUTED }}>Low stock</p>
+          <div className="mb-5">
+            <p className="text-[11px] font-semibold mb-2" style={{ color: INK_SOFT }}>NET PROFIT — LAST 30 DAYS</p>
+            <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[90px]" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id={`bf-area-${idPrefix}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={PRIMARY_LIGHT} stopOpacity="0.22" />
+                  <stop offset="100%" stopColor={PRIMARY_LIGHT} stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d={areaPath} fill={`url(#bf-area-${idPrefix})`} />
+              <path d={linePath} fill="none" stroke={PRIMARY} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx={coords[coords.length - 1][0]} cy={coords[coords.length - 1][1]} r="4" fill={PRIMARY} />
+            </svg>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold mb-2" style={{ color: INK_SOFT }}>RECENT ORDERS</p>
+            <div className="rounded-xl border overflow-hidden" style={{ borderColor: LINE }}>
+              {orders.map((o, i) => (
+                <div
+                  key={o.code}
+                  className="flex items-center justify-between px-3 py-2.5"
+                  style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[11px] font-mono font-semibold shrink-0" style={{ color: INK_SOFT }}>{o.code}</span>
+                    <span className="text-[12px] truncate" style={{ color: INK }}>{o.customer}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[12px] font-semibold" style={{ color: INK }}>{o.amount}</span>
+                    <span
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      style={{
+                        color: o.status === "Paid" ? "#16A34A" : "#B45309",
+                        background: o.status === "Paid" ? "rgba(22,163,74,0.1)" : "rgba(180,83,9,0.1)",
+                      }}
+                    >
+                      {o.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-const FEATURE_ICONS = [DollarSign, PackageX, FileText, Send, RefreshCw, Smile];
+function DemoPlayer() {
+  return (
+    <div
+      className="relative mx-auto max-w-4xl rounded-2xl overflow-hidden border"
+      style={{ borderColor: LINE, boxShadow: "0 60px 110px -30px rgba(11,7,18,0.35)" }}
+    >
+      <div className="relative aspect-video overflow-hidden flex items-center justify-center" style={{ background: SURFACE }}>
+        <div className="absolute inset-0 flex items-center justify-center scale-[1.5]">
+          <DashboardMockup idPrefix="demo" />
+        </div>
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(180deg, rgba(11,7,18,0.1) 0%, rgba(11,7,18,0.38) 100%)" }}
+        />
+        <button type="button" aria-label="Watch demo" className="absolute inset-0 flex items-center justify-center group">
+          <span className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-white flex items-center justify-center shadow-lg transition-transform group-hover:scale-105">
+            <Play className="w-6 h-6 lg:w-7 lg:h-7 ml-0.5" style={{ color: PRIMARY }} fill={PRIMARY} />
+          </span>
+        </button>
+        <button type="button" aria-label="Fullscreen" className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-black/30 flex items-center justify-center">
+          <Maximize2 className="w-4 h-4 text-white" />
+        </button>
+        <div className="absolute left-5 right-5 bottom-4">
+          <div className="h-1 rounded-full bg-white/30 overflow-hidden">
+            <div className="h-full w-[28%] rounded-full bg-white" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfitPanel() {
+  const points = [20, 34, 28, 46, 38, 56, 50, 64, 58, 72];
+  const w = 380;
+  const h = 140;
+  const step = w / (points.length - 1);
+  const max = Math.max(...points);
+  const coords = points.map((p, i) => [i * step, h - (p / max) * (h - 20) - 8]);
+  const linePath = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const areaPath = `${linePath} L${w},${h} L0,${h} Z`;
+
+  return (
+    <div
+      className="w-full max-w-[420px] rounded-[20px] border bg-white p-6"
+      style={{ borderColor: LINE, boxShadow: "0 30px 70px -20px rgba(59,30,109,0.22)" }}
+    >
+      <p className="text-[11px] font-semibold mb-1" style={{ color: INK_SOFT }}>NET PROFIT</p>
+      <div className="flex items-end gap-3 mb-5">
+        <p className="text-[32px] font-bold leading-none" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>RM4,218.50</p>
+        <span className="text-[12px] font-bold flex items-center gap-0.5 mb-1" style={{ color: "#16A34A" }}>
+          <TrendingUp className="w-3.5 h-3.5" />
+          +18%
+        </span>
+      </div>
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[100px]" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="bf-profit-area" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={PRIMARY_LIGHT} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={PRIMARY_LIGHT} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={areaPath} fill="url(#bf-profit-area)" />
+        <path d={linePath} fill="none" stroke={PRIMARY} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: `1px solid ${LINE}` }}>
+        <div>
+          <p className="text-[10px] font-semibold" style={{ color: INK_SOFT }}>GROSS SALES</p>
+          <p className="text-[14px] font-bold" style={{ color: INK }}>RM12,480</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold" style={{ color: INK_SOFT }}>COSTS &amp; FEES</p>
+          <p className="text-[14px] font-bold" style={{ color: ACCENT }}>−RM8,261</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InventoryPanel() {
+  const items = [
+    { name: "Matte Lip Tint — Coral", stock: 2, level: "critical" as const },
+    { name: "Phone Case — Clear", stock: 5, level: "low" as const },
+    { name: "Bluetooth Earbuds Pro", stock: 0, level: "critical" as const },
+  ];
+  return (
+    <div
+      className="relative w-full max-w-[420px] rounded-[20px] overflow-hidden border bg-white"
+      style={{ borderColor: LINE, boxShadow: "0 30px 70px -20px rgba(59,30,109,0.22)" }}
+    >
+      <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: LINE }}>
+        <p className="text-[13px] font-bold" style={{ color: INK }}>Low Stock Alerts</p>
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ color: ACCENT, background: "rgba(255,59,92,0.1)" }}>
+          3 need attention
+        </span>
+      </div>
+      <div>
+        {items.map((it, i) => (
+          <div key={it.name} className="flex items-center justify-between px-5 py-3.5" style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}>
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: it.level === "critical" ? "rgba(255,59,92,0.1)" : "rgba(212,160,23,0.12)" }}
+              >
+                <PackageX className="w-4 h-4" style={{ color: it.level === "critical" ? ACCENT : GOLD }} />
+              </div>
+              <span className="text-[12.5px] font-medium truncate" style={{ color: INK }}>{it.name}</span>
+            </div>
+            <span className="text-[11px] font-bold shrink-0" style={{ color: it.level === "critical" ? ACCENT : GOLD }}>
+              {it.stock === 0 ? "Out of stock" : `${it.stock} left`}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OrdersPanel() {
+  const rows: { code: string; customer: string; product: string; status: "confirmed" | "paid" | "pending" }[] = [
+    { code: "#A1042", customer: "Aina R.", product: "Matte Lip Tint", status: "confirmed" },
+    { code: "#A1041", customer: "Faris K.", product: "Phone Case", status: "paid" },
+    { code: "#A1040", customer: "Mei Ling", product: "Earbuds Pro", status: "pending" },
+  ];
+  const statusStyle: Record<string, { bg: string; fg: string; label: string }> = {
+    confirmed: { bg: "rgba(59,30,109,0.08)", fg: PRIMARY, label: "Confirmed" },
+    paid: { bg: "rgba(22,163,74,0.1)", fg: "#16A34A", label: "Paid" },
+    pending: { bg: "rgba(180,83,9,0.1)", fg: "#B45309", label: "Pending" },
+  };
+  return (
+    <div
+      className="relative w-full max-w-[420px] rounded-[20px] overflow-hidden border bg-white"
+      style={{ borderColor: LINE, boxShadow: "0 30px 70px -20px rgba(59,30,109,0.22)" }}
+    >
+      <div className="px-5 py-4 border-b" style={{ borderColor: LINE }}>
+        <p className="text-[13px] font-bold" style={{ color: INK }}>New Order</p>
+      </div>
+      {rows.map((r, i) => (
+        <div key={r.code} className="px-5 py-3.5 flex items-center justify-between gap-3" style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}>
+          <div className="min-w-0">
+            <p className="text-[12.5px] font-semibold truncate" style={{ color: INK }}>{r.customer} · {r.product}</p>
+            <p className="text-[11px] font-mono" style={{ color: INK_SOFT }}>{r.code}</p>
+          </div>
+          <span
+            className="text-[10.5px] font-bold px-2.5 py-1 rounded-full shrink-0"
+            style={{ color: statusStyle[r.status].fg, background: statusStyle[r.status].bg }}
+          >
+            {statusStyle[r.status].label}
+          </span>
+        </div>
+      ))}
+      <div className="px-5 py-3.5 flex items-center gap-2" style={{ borderTop: `1px solid ${LINE}`, background: SURFACE }}>
+        <MessageCircle className="w-4 h-4" style={{ color: "#16A34A" }} />
+        <span className="text-[11.5px] font-semibold" style={{ color: INK }}>Confirm via WhatsApp</span>
+        <ArrowRight className="w-3.5 h-3.5 ml-auto" style={{ color: INK_SOFT }} />
+      </div>
+    </div>
+  );
+}
+
+function ReportsStack({ reports }: { reports: string[] }) {
+  const shown = reports.slice(0, 4);
+  const rest = reports.slice(4);
+  const rotations = [-8, -3, 3, 8];
+  const offsets = [20, 6, 6, 20];
+
+  return (
+    <div className="relative w-full max-w-[460px] mx-auto">
+      <div className="relative h-[230px]">
+        {shown.map((name, i) => {
+          const Icon = REPORT_ICONS[i] ?? FileText;
+          return (
+            <div
+              key={name}
+              className="absolute left-1/2 w-[220px] rounded-xl border bg-white px-4 py-3.5"
+              style={{
+                borderColor: LINE,
+                transform: `translateX(-50%) rotate(${rotations[i]}deg)`,
+                top: offsets[i],
+                boxShadow: "0 20px 40px -15px rgba(59,30,109,0.25)",
+                zIndex: i,
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <Icon className="w-3.5 h-3.5" style={{ color: PRIMARY }} />
+                <span className="text-[10px] font-bold tracking-wide" style={{ color: PRIMARY }}>PDF</span>
+              </div>
+              <p className="text-[12.5px] font-bold" style={{ color: INK, fontFamily: "IBM Plex Mono, ui-monospace, monospace" }}>{name}</p>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap justify-center gap-2 mt-3">
+        {rest.map((name) => (
+          <span key={name} className="text-[11px] font-semibold px-3 py-1.5 rounded-full border" style={{ color: INK_SOFT, borderColor: LINE }}>
+            {name}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProblemWaterfall({ c }: { c: LandingCopy }) {
+  return (
+    <div
+      className="relative max-w-md mx-auto rounded-[24px] border overflow-hidden"
+      style={{ borderColor: "rgba(255,255,255,0.1)", background: NEARBLACK_SOFT }}
+    >
+      <div className="px-7 py-8 text-center" style={{ fontFamily: "IBM Plex Mono, ui-monospace, monospace" }}>
+        <p className="text-[11px] font-bold tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.5)" }}>
+          {c.problemSalesLabel.toUpperCase()}
+        </p>
+        <p className="text-[40px] font-bold mb-5" style={{ color: "#FFFFFF" }}>{c.problemSalesValue}</p>
+        <div>
+          {c.problemCostLines.map((line) => (
+            <div key={line.label} className="flex items-center justify-between py-2.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+              <span className="text-[12.5px]" style={{ color: "rgba(255,255,255,0.65)" }}>{line.label}</span>
+              <span className="text-[13px] font-semibold" style={{ color: "#F87171" }}>{line.value}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 pt-5" style={{ borderTop: `2px solid ${ACCENT}` }}>
+          <p className="text-[11px] font-bold tracking-widest mb-2" style={{ color: GOLD }}>{c.problemProfitLabel.toUpperCase()}</p>
+          <p className="text-[44px] font-bold" style={{ color: GOLD }}>{c.problemProfitValue}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TikTokFlow({ c }: { c: LandingCopy }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div
+        className="px-6 py-3 rounded-xl border text-[13px] font-bold"
+        style={{ borderColor: LINE, color: INK, background: "#FFFFFF", boxShadow: "0 10px 24px -10px rgba(30,23,48,0.12)" }}
+      >
+        TikTok Shop
+      </div>
+      <div className="w-px h-8" style={{ background: LINE }} />
+      <div
+        className="px-6 py-3 rounded-xl text-[13px] font-bold text-white flex items-center gap-2"
+        style={{ background: PRIMARY, boxShadow: "0 16px 32px -12px rgba(59,30,109,0.4)" }}
+      >
+        <img src={bossifyLogo} alt="" className="w-4 h-4 rounded" />
+        Bossify
+      </div>
+      <span className="mt-2 text-[10.5px] font-bold px-2.5 py-1 rounded-full" style={{ color: GOLD, background: "rgba(212,160,23,0.12)" }}>
+        {c.tiktokComingSoon}
+      </span>
+      <div className="w-px h-8" style={{ background: LINE }} />
+      <div className="flex flex-wrap justify-center gap-2.5 max-w-sm">
+        {c.tiktokDestinations.map((d) => (
+          <span
+            key={d}
+            className="text-[12px] font-semibold px-3.5 py-2 rounded-full border"
+            style={{ color: INK_SOFT, borderColor: LINE, background: SURFACE }}
+          >
+            {d}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function LandingPage() {
   const { lang } = useI18n();
@@ -427,96 +850,49 @@ export function LandingPage() {
   };
 
   return (
-    <div style={{ background: BG_0, fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
-      <style>{`
-        @keyframes bf-float {
-          0%, 100% { transform: translate3d(0, 0, 0); }
-          50% { transform: translate3d(0, -18px, 0); }
-        }
-        @keyframes bf-pulse-glow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.45), 0 12px 28px rgba(139,92,246,0.3); }
-          50% { box-shadow: 0 0 0 8px rgba(139,92,246,0), 0 12px 36px rgba(139,92,246,0.45); }
-        }
-        .bf-glow-blob { animation: bf-float 7s ease-in-out infinite; }
-        .bf-glow-blob-slow { animation: bf-float 9s ease-in-out infinite; animation-delay: -3s; }
-        .bf-cta-pulse { animation: bf-pulse-glow 2.8s ease-in-out infinite; }
-        @media (prefers-reduced-motion: reduce) {
-          .bf-glow-blob, .bf-glow-blob-slow, .bf-cta-pulse { animation: none; }
-        }
-      `}</style>
-
+    <div style={{ fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
       {/* Header */}
-      <header
-        className="sticky top-0 z-30 backdrop-blur border-b"
-        style={{ background: "rgba(10,7,20,0.75)", borderColor: BORDER_GLOW }}
-      >
+      <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(255,255,255,0.85)", borderColor: LINE }}>
         <div className="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src={bossifyLogo} alt="Bossify" className="h-8 w-8 rounded-lg object-cover" />
-            <span
-              className="text-lg font-bold tracking-tight"
-              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
-            >
+            <span className="text-lg font-bold tracking-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
               Bossify
             </span>
           </div>
           <nav className="hidden lg:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>
-              {c.navFeatures}
-            </a>
-            <a href="#reports" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>
-              {c.navReports}
-            </a>
-            <a href="#demo" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>
-              {c.ctaSecondary}
-            </a>
+            <a href="#features" className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navFeatures}</a>
+            <a href="#how-it-works" className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navHowItWorks}</a>
+            <a href="#reports" className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navReports}</a>
+            <a href="#pricing" className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navPricing}</a>
           </nav>
           <div className="hidden lg:flex items-center gap-3">
-            <button
-              onClick={() => goAuth("login")}
-              className="text-sm font-semibold px-4 py-2 rounded-lg"
-              style={{ color: TEXT }}
-            >
+            <button onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2 rounded-lg" style={{ color: INK }}>
               {c.signIn}
             </button>
             <button
               onClick={() => goAuth("register")}
-              className="text-sm font-semibold px-4 py-2.5 rounded-lg text-white flex items-center gap-1.5"
-              style={{ background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
+              className="text-sm font-semibold px-5 py-2.5 rounded-lg text-white flex items-center gap-1.5"
+              style={{ background: PRIMARY }}
             >
               {c.startFree}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-          <button
-            className="lg:hidden p-2 -mr-2"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Menu"
-            style={{ color: TEXT }}
-          >
+          <button className="lg:hidden p-2 -mr-2" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu" style={{ color: INK }}>
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
         {menuOpen && (
-          <div className="lg:hidden border-t px-5 py-4 flex flex-col gap-3" style={{ borderColor: BORDER_GLOW }}>
-            <a href="#features" className="text-sm font-medium" onClick={() => setMenuOpen(false)} style={{ color: TEXT_MUTED }}>
-              {c.navFeatures}
-            </a>
-            <a href="#reports" className="text-sm font-medium" onClick={() => setMenuOpen(false)} style={{ color: TEXT_MUTED }}>
-              {c.navReports}
-            </a>
-            <button
-              onClick={() => goAuth("login")}
-              className="text-sm font-semibold px-4 py-2.5 rounded-lg border text-left"
-              style={{ color: TEXT, borderColor: BORDER_GLOW }}
-            >
+          <div className="lg:hidden border-t px-5 py-4 flex flex-col gap-3 bg-white" style={{ borderColor: LINE }}>
+            <a href="#features" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navFeatures}</a>
+            <a href="#how-it-works" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navHowItWorks}</a>
+            <a href="#reports" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navReports}</a>
+            <a href="#pricing" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navPricing}</a>
+            <button onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2.5 rounded-lg border text-left" style={{ color: INK, borderColor: LINE }}>
               {c.signIn}
             </button>
-            <button
-              onClick={() => goAuth("register")}
-              className="text-sm font-semibold px-4 py-2.5 rounded-lg text-white text-left"
-              style={{ background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
-            >
+            <button onClick={() => goAuth("register")} className="text-sm font-semibold px-4 py-2.5 rounded-lg text-white text-left" style={{ background: PRIMARY }}>
               {c.startFree}
             </button>
           </div>
@@ -524,410 +900,292 @@ export function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-5 lg:px-8 pt-16 pb-24 lg:pt-28 lg:pb-32">
-        {/* radial atmosphere */}
+      <section className="relative px-5 lg:px-8 pt-20 pb-20 lg:pt-28 lg:pb-28 overflow-hidden bg-white">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{
-            background: `radial-gradient(ellipse 900px 500px at 50% -10%, rgba(139,92,246,0.25) 0%, transparent 60%)`,
-          }}
+          style={{ background: "radial-gradient(ellipse 700px 380px at 50% -5%, rgba(108,74,182,0.08) 0%, transparent 65%)" }}
         />
-        <div
-          aria-hidden="true"
-          className="bf-glow-blob pointer-events-none absolute -top-24 -right-16 w-[420px] h-[420px] rounded-full opacity-30"
-          style={{ background: GLOW, filter: "blur(110px)" }}
-        />
-        <div
-          aria-hidden="true"
-          className="bf-glow-blob-slow pointer-events-none absolute -bottom-32 -left-20 w-[380px] h-[380px] rounded-full opacity-20"
-          style={{ background: ACCENT, filter: "blur(120px)" }}
-        />
-
-        <div className="relative max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: GLOW_SOFT }}>
-              {c.eyebrow}
-            </p>
-            <h1
-              className="text-[36px] leading-[1.08] lg:text-[56px] font-bold tracking-tight mb-5"
-              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+        <div className="relative max-w-3xl mx-auto text-center">
+          <p className="text-[12px] font-bold tracking-wider mb-5" style={{ color: PRIMARY_LIGHT }}>{c.eyebrow}</p>
+          <h1 className="text-[38px] leading-[1.08] lg:text-[60px] font-bold tracking-tight mb-6" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+            {c.headline1}
+            <br />
+            <span style={{ color: ACCENT }}>{c.headlineEmphasis}</span>
+          </h1>
+          <p className="text-[15px] lg:text-[18px] leading-relaxed mb-9 max-w-xl mx-auto" style={{ color: INK_SOFT }}>{c.subhead}</p>
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
+            <button
+              onClick={() => goAuth("register")}
+              className="text-[15px] font-semibold px-7 py-3.5 rounded-xl text-white flex items-center gap-2"
+              style={{ background: PRIMARY }}
             >
-              {c.headline1}
-              <br />
-              <span
-                style={{
-                  background: `linear-gradient(90deg, ${GLOW_SOFT} 0%, ${ACCENT} 100%)`,
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                {c.headline2}
-              </span>
-            </h1>
-            <p className="text-[15px] lg:text-[17px] leading-relaxed mb-8 max-w-[460px]" style={{ color: TEXT_MUTED }}>
-              {c.subhead}
-            </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => goAuth("register")}
-                className="bf-cta-pulse text-[15px] font-semibold px-6 py-3.5 rounded-xl text-white flex items-center gap-2"
-                style={{ background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
-              >
-                {c.ctaPrimary}
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <a
-                href="#demo"
-                className="text-[15px] font-semibold px-6 py-3.5 rounded-xl border flex items-center gap-2"
-                style={{ color: TEXT, borderColor: BORDER_GLOW, background: "rgba(255,255,255,0.03)" }}
-              >
-                <span
-                  className="w-6 h-6 rounded-full flex items-center justify-center"
-                  style={{ background: "rgba(255,255,255,0.1)" }}
-                >
-                  <Play className="w-3 h-3 ml-0.5" fill={TEXT} style={{ color: TEXT }} />
-                </span>
-                {c.ctaSecondary}
-              </a>
-            </div>
+              {c.ctaPrimary}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <a href="#demo" className="text-[15px] font-semibold px-7 py-3.5 rounded-xl border flex items-center gap-2" style={{ color: INK, borderColor: LINE }}>
+              <Play className="w-3.5 h-3.5" style={{ color: INK }} fill={INK} />
+              {c.ctaSecondary}
+            </a>
           </div>
-          <div className="flex justify-center lg:justify-end lg:pr-6">
-            <HeroMockup c={c} />
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5">
+            {c.trustBullets.map((t) => (
+              <span key={t} className="inline-flex items-center gap-1.5 text-[12.5px] font-medium" style={{ color: INK_SOFT }}>
+                <Check className="w-3.5 h-3.5" style={{ color: PRIMARY_LIGHT }} />
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="relative mt-16 lg:mt-20">
+          <div className="flex justify-center">
+            <DashboardMockup />
+          </div>
+          <div className="flex justify-center mt-[-28px] relative z-10">
+            <a
+              href="#demo"
+              className="flex items-center gap-3 pl-2 pr-5 py-2 rounded-full bg-white border shadow-lg hover:scale-[1.03] transition-transform"
+              style={{ borderColor: LINE }}
+            >
+              <span className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: PRIMARY }}>
+                <Play className="w-3.5 h-3.5 ml-0.5" fill="#FFFFFF" style={{ color: "#FFFFFF" }} />
+              </span>
+              <span className="text-[13px] font-bold" style={{ color: INK }}>{c.ctaSecondary}</span>
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Stat strip */}
-      <section className="px-5 lg:px-8 py-5 border-y" style={{ background: BG_1, borderColor: BORDER_GLOW }}>
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-10 gap-y-2">
-          {c.statStrip.map((s) => (
-            <span key={s} className="text-[12.5px] font-semibold" style={{ color: TEXT_MUTED }}>
-              {s}
-            </span>
-          ))}
+      {/* Product demo */}
+      <section id="demo" className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
+        <div className="max-w-3xl mx-auto text-center mb-10">
+          <span className="inline-block text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-full mb-4" style={{ color: PRIMARY, background: "rgba(59,30,109,0.08)" }}>
+            {c.demoBadge}
+          </span>
+          <h2 className="text-[28px] lg:text-[38px] font-bold tracking-tight mb-3" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+            {c.demoTitle}
+          </h2>
+          <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.demoSub}</p>
         </div>
+        {/* TODO(John): once the real demo video is ready, replace DemoPlayer's
+            mockup poster with an actual <video> tag or an embed, inside the
+            same rounded, bordered frame. */}
+        <DemoPlayer />
+      </section>
+
+      {/* Problem: sales vs profit */}
+      <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: ACCENT }}>{c.problemEyebrow}</p>
+            <h2 className="text-[28px] lg:text-[38px] font-bold tracking-tight leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+              {c.problemTitle}
+            </h2>
+          </div>
+          <ProblemWaterfall c={c} />
+        </div>
+      </section>
+
+      {/* Showcase A: Real profit */}
+      <section id="features" className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+          <div className="order-2 lg:order-1 flex justify-center">
+            <ProfitPanel />
+          </div>
+          <div className="order-1 lg:order-2">
+            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseProfit.eyebrow}</p>
+            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+              {c.showcaseProfit.title}
+            </h2>
+            <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseProfit.desc}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Showcase B: Inventory */}
+      <section className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+          <div>
+            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseInventory.eyebrow}</p>
+            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+              {c.showcaseInventory.title}
+            </h2>
+            <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseInventory.desc}</p>
+          </div>
+          <div className="flex justify-center">
+            <InventoryPanel />
+          </div>
+        </div>
+      </section>
+
+      {/* Showcase C: Orders */}
+      <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+          <div className="order-2 lg:order-1 flex justify-center">
+            <OrdersPanel />
+          </div>
+          <div className="order-1 lg:order-2">
+            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseOrders.eyebrow}</p>
+            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+              {c.showcaseOrders.title}
+            </h2>
+            <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseOrders.desc}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Showcase D: Reports */}
+      <section id="reports" className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+          <div>
+            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseReports.eyebrow}</p>
+            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+              {c.showcaseReports.title}
+            </h2>
+            <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseReports.desc}</p>
+          </div>
+          <ReportsStack reports={c.reports} />
+        </div>
+      </section>
+
+      {/* TikTok Shop integration */}
+      <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
+        <div className="max-w-3xl mx-auto text-center mb-14">
+          <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.tiktokEyebrow}</p>
+          <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+            {c.tiktokTitle}
+          </h2>
+          <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.tiktokSub}</p>
+        </div>
+        <TikTokFlow c={c} />
       </section>
 
       {/* How it works */}
-      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_0 }}>
+      <section id="how-it-works" className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
         <div className="max-w-5xl mx-auto">
-          <div className="text-center max-w-xl mx-auto mb-12">
-            <h2
-              className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
-            >
+          <div className="text-center max-w-xl mx-auto mb-16">
+            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
               {c.stepsTitle}
             </h2>
-            <p className="text-[15px]" style={{ color: TEXT_MUTED }}>
-              {c.stepsSub}
-            </p>
+            <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.stepsSub}</p>
           </div>
-          <div className="grid sm:grid-cols-3 gap-6 relative">
-            {c.steps.map((s, i) => (
-              <div
-                key={s.title}
-                className="relative rounded-2xl p-5 border"
-                style={{ borderColor: BORDER_GLOW, background: BG_1 }}
-              >
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[15px] mb-4"
-                  style={{ background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)`, color: "#FFFFFF" }}
+          <div className="relative grid sm:grid-cols-3 gap-10">
+            <div aria-hidden="true" className="hidden sm:block absolute top-6 left-[16%] right-[16%] h-px" style={{ background: LINE }} />
+            {c.steps.map((s) => (
+              <div key={s.num} className="relative text-center sm:text-left">
+                <p
+                  className="text-[52px] font-bold leading-none mb-4"
+                  style={{
+                    color: "transparent",
+                    fontFamily: "Space Grotesk, system-ui, sans-serif",
+                    WebkitTextStroke: `1.5px ${PRIMARY_LIGHT}`,
+                  }}
                 >
-                  {i + 1}
-                </div>
-                <h3 className="text-[15px] font-bold mb-1.5" style={{ color: TEXT }}>
-                  {s.title}
-                </h3>
-                <p className="text-[13.5px] leading-relaxed" style={{ color: TEXT_MUTED }}>
-                  {s.desc}
+                  {s.num}
                 </p>
+                <h3 className="text-[16px] font-bold mb-2" style={{ color: INK }}>{s.title}</h3>
+                <p className="text-[13.5px] leading-relaxed" style={{ color: INK_SOFT }}>{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_1 }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-xl mx-auto mb-12">
-            <h2
-              className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
-            >
-              {c.featuresTitle}
-            </h2>
-            <p className="text-[15px]" style={{ color: TEXT_MUTED }}>
-              {c.featuresSub}
-            </p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {c.features.map((f, i) => {
-              const Icon = FEATURE_ICONS[i] ?? DollarSign;
-              return (
-                <div
-                  key={f.title}
-                  className="rounded-2xl p-6 border"
-                  style={{ borderColor: BORDER_GLOW, background: "rgba(255,255,255,0.03)" }}
-                >
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                    style={{ background: "rgba(139,92,246,0.15)" }}
-                  >
-                    <Icon className="w-5 h-5" style={{ color: GLOW_SOFT }} />
-                  </div>
-                  <h3 className="text-[15px] font-bold mb-1.5" style={{ color: TEXT }}>
-                    {f.title}
-                  </h3>
-                  <p className="text-[13.5px] leading-relaxed" style={{ color: TEXT_MUTED }}>
-                    {f.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Comparison: Spreadsheet vs Bossify */}
-      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_0 }}>
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-10">
-            <h2
-              className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
-            >
+      {/* Spreadsheet vs Bossify */}
+      <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center max-w-xl mx-auto mb-14">
+            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
               {c.compareTitle}
             </h2>
-            <p className="text-[15px]" style={{ color: TEXT_MUTED }}>
-              {c.compareSub}
-            </p>
+            <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.compareSub}</p>
           </div>
-          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: BORDER_GLOW, background: BG_1 }}>
-            <div className="grid grid-cols-[1.4fr_1fr_1fr]" style={{ borderBottom: `1px solid ${BORDER_GLOW}` }}>
-              <div className="px-4 py-3" />
-              <div className="px-4 py-3 text-center text-[12.5px] font-semibold" style={{ color: TEXT_MUTED }}>
-                {c.compareSpreadsheet}
-              </div>
-              <div
-                className="px-4 py-3 text-center text-[12.5px] font-bold rounded-t-lg"
-                style={{ color: "#FFFFFF", background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
-              >
-                {c.compareBossify}
-              </div>
+          <div className="grid md:grid-cols-2 gap-6 md:gap-0 items-center">
+            <div className="rounded-2xl p-7 md:mr-[-12px]" style={{ background: SURFACE }}>
+              <p className="text-[13px] font-bold uppercase tracking-wide mb-5" style={{ color: INK_SOFT }}>{c.compareSpreadsheetLabel}</p>
+              <ul className="space-y-3.5">
+                {c.compareSpreadsheetItems.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-[13.5px]" style={{ color: INK_SOFT }}>
+                    <Minus className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#9A90B5" }} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-            {c.compareRows.map((row, i) => (
-              <div
-                key={row.label}
-                className="grid grid-cols-[1.4fr_1fr_1fr] items-center"
-                style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER_GLOW}` }}
-              >
-                <div className="px-4 py-3.5 text-[13px] font-medium" style={{ color: TEXT }}>
-                  {row.label}
-                </div>
-                <div className="px-4 py-3.5 text-center text-[12px]" style={{ color: TEXT_MUTED }}>
-                  {row.spreadsheet}
-                </div>
-                <div
-                  className="px-4 py-3.5 text-center text-[12px] font-bold"
-                  style={{ color: GLOW_SOFT, background: "rgba(139,92,246,0.08)" }}
-                >
-                  {row.bossify}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Comparison: TikTok Shop Seller Center vs Bossify */}
-      <section className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_1 }}>
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-10">
-            <h2
-              className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
-            >
-              {c.compare2Title}
-            </h2>
-            <p className="text-[15px]" style={{ color: TEXT_MUTED }}>
-              {c.compare2Sub}
-            </p>
-          </div>
-          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: BORDER_GLOW, background: BG_0 }}>
-            <div className="grid grid-cols-[1.4fr_1fr_1fr]" style={{ borderBottom: `1px solid ${BORDER_GLOW}` }}>
-              <div className="px-4 py-3" />
-              <div className="px-4 py-3 text-center text-[12.5px] font-semibold" style={{ color: TEXT_MUTED }}>
-                {c.compare2TiktokShop}
-              </div>
-              <div
-                className="px-4 py-3 text-center text-[12.5px] font-bold rounded-t-lg"
-                style={{ color: "#FFFFFF", background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
-              >
-                {c.compare2Bossify}
-              </div>
-            </div>
-            {c.compare2Rows.map((row, i) => (
-              <div
-                key={row.label}
-                className="grid grid-cols-[1.4fr_1fr_1fr] items-center"
-                style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER_GLOW}` }}
-              >
-                <div className="px-4 py-3.5 text-[13px] font-medium" style={{ color: TEXT }}>
-                  {row.label}
-                </div>
-                <div className="px-4 py-3.5 text-center text-[12px]" style={{ color: TEXT_MUTED }}>
-                  {row.tiktokShop}
-                </div>
-                <div
-                  className="px-4 py-3.5 text-center text-[12px] font-bold"
-                  style={{ color: GLOW_SOFT, background: "rgba(139,92,246,0.08)" }}
-                >
-                  {row.bossify}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Reports ledger */}
-      <section id="reports" className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_0 }}>
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-10">
-            <h2
-              className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-              style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
-            >
-              {c.reportsTitle}
-            </h2>
-            <p className="text-[15px]" style={{ color: TEXT_MUTED }}>
-              {c.reportsSub}
-            </p>
-          </div>
-          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: BORDER_GLOW, background: BG_1 }}>
-            {c.reports.map((r, i) => (
-              <div
-                key={r.name}
-                className="flex items-center gap-4 px-5 py-4"
-                style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER_GLOW}` }}
-              >
-                <span
-                  className="text-[12px] font-bold w-6 shrink-0"
-                  style={{ color: GLOW_SOFT, fontFamily: "IBM Plex Mono, ui-monospace, monospace" }}
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-bold" style={{ color: TEXT }}>
-                    {r.name}
-                  </p>
-                  <p className="text-[12.5px] truncate" style={{ color: TEXT_MUTED }}>
-                    {r.desc}
-                  </p>
-                </div>
-                <span
-                  className="text-[10px] font-bold px-2 py-1 rounded shrink-0"
-                  style={{ color: GLOW_SOFT, background: "rgba(139,92,246,0.12)" }}
-                >
-                  PDF
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Video */}
-      <section id="demo" className="px-5 lg:px-8 py-16 lg:py-24" style={{ background: BG_1 }}>
-        <div className="max-w-3xl mx-auto text-center">
-          <span
-            className="inline-block text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-full mb-4"
-            style={{ color: ACCENT, background: "rgba(255,59,92,0.12)" }}
-          >
-            {c.videoBadge}
-          </span>
-          <h2
-            className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3"
-            style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
-          >
-            {c.videoTitle}
-          </h2>
-          <p className="text-[15px] mb-8" style={{ color: TEXT_MUTED }}>
-            {c.videoSub}
-          </p>
-          {/* TODO(John): once the demo video is ready, replace this
-              placeholder with a real <video> tag or a YouTube/TikTok
-              embed inside the same rounded, glowing frame below. */}
-          <div
-            className="relative mx-auto max-w-3xl aspect-video rounded-2xl overflow-hidden border flex items-center justify-center"
-            style={{
-              borderColor: BORDER_GLOW,
-              background: `linear-gradient(135deg, ${PRIMARY} 0%, ${GLOW} 100%)`,
-              boxShadow: "0 30px 80px rgba(139,92,246,0.3)",
-            }}
-          >
             <div
-              aria-hidden="true"
-              className="bf-glow-blob pointer-events-none absolute -top-10 -left-10 w-64 h-64 rounded-full opacity-30"
-              style={{ background: ACCENT, filter: "blur(70px)" }}
-            />
-            <button
-              type="button"
-              aria-label={c.videoTitle}
-              className="bf-cta-pulse relative z-10 w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-white/95 flex items-center justify-center"
+              className="relative rounded-2xl p-7 md:scale-[1.04] bg-white"
+              style={{ boxShadow: "0 30px 70px -20px rgba(59,30,109,0.3)", border: `1px solid ${LINE}` }}
             >
-              <Play className="w-6 h-6 lg:w-8 lg:h-8 ml-1" style={{ color: PRIMARY }} fill={PRIMARY} />
-            </button>
+              <div className="absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl" style={{ background: PRIMARY }} />
+              <p className="text-[13px] font-bold uppercase tracking-wide mb-5" style={{ color: PRIMARY }}>{c.compareBossifyLabel}</p>
+              <ul className="space-y-3.5">
+                {c.compareBossifyItems.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-[13.5px] font-medium" style={{ color: INK }}>
+                    <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: PRIMARY }} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust */}
+      <section className="px-5 lg:px-8 py-16 lg:py-20" style={{ background: SURFACE }}>
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-[20px] lg:text-[24px] font-bold tracking-tight mb-10" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+            {c.trustSectionTitle}
+          </h2>
+          <div className="grid sm:grid-cols-3 gap-8">
+            {c.trustItems.map((t) => (
+              <div key={t} className="flex flex-col items-center gap-3">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(59,30,109,0.08)" }}>
+                  <Check className="w-4 h-4" style={{ color: PRIMARY }} />
+                </div>
+                <p className="text-[13.5px] font-medium max-w-[220px]" style={{ color: INK_SOFT }}>{t}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="relative overflow-hidden px-5 lg:px-8 py-16 lg:py-20" style={{ background: BG_0 }}>
+      <section id="pricing" className="relative overflow-hidden px-5 lg:px-8 py-24 lg:py-32" style={{ background: NEARBLACK }}>
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{ background: `radial-gradient(ellipse 700px 400px at 50% 50%, rgba(139,92,246,0.3) 0%, transparent 70%)` }}
+          style={{ background: "radial-gradient(ellipse 800px 400px at 50% 0%, rgba(108,74,182,0.25) 0%, transparent 70%)" }}
         />
         <div className="relative max-w-2xl mx-auto text-center">
-          <h2
-            className="text-[26px] lg:text-[32px] font-bold tracking-tight mb-3"
-            style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
-          >
-            {c.finalTitle}
+          <h2 className="text-[34px] lg:text-[46px] font-bold tracking-tight leading-[1.1] mb-4" style={{ color: "#FFFFFF", fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+            {c.finalTitle1}
+            <br />
+            {c.finalTitle2}
           </h2>
-          <p className="text-[15px] mb-8" style={{ color: TEXT_MUTED }}>
-            {c.finalSub}
-          </p>
-          <button
-            onClick={() => goAuth("register")}
-            className="bf-cta-pulse text-[15px] font-semibold px-7 py-3.5 rounded-xl inline-flex items-center gap-2 text-white"
-            style={{ background: `linear-gradient(135deg, ${GLOW} 0%, ${PRIMARY} 100%)` }}
-          >
-            {c.finalCta}
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <p className="text-[15px] lg:text-[16px] mb-3" style={{ color: "rgba(255,255,255,0.65)" }}>{c.finalSub}</p>
+          <p className="text-[12.5px] mb-9" style={{ color: "rgba(255,255,255,0.4)" }}>{c.trustBullets.join(" · ")}</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button onClick={() => goAuth("register")} className="text-[15px] font-semibold px-7 py-3.5 rounded-xl text-white" style={{ background: PRIMARY_LIGHT }}>
+              {c.finalCtaPrimary}
+            </button>
+            <a href="#demo" className="text-[15px] font-semibold px-7 py-3.5 rounded-xl border flex items-center gap-2" style={{ color: "#FFFFFF", borderColor: "rgba(255,255,255,0.25)" }}>
+              <Play className="w-4 h-4" fill="#FFFFFF" style={{ color: "#FFFFFF" }} />
+              {c.finalCtaSecondary}
+            </a>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="px-5 lg:px-8 py-10 border-t" style={{ background: BG_0, borderColor: BORDER_GLOW }}>
+      <footer className="px-5 lg:px-8 py-10 bg-white border-t" style={{ borderColor: LINE }}>
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <img src={bossifyLogo} alt="Bossify" className="h-6 w-6 rounded object-cover" />
-            <span className="text-sm font-bold" style={{ color: TEXT }}>
-              Bossify
-            </span>
-            <span className="text-[13px]" style={{ color: TEXT_MUTED }}>
-              · {c.footerTag}
-            </span>
+            <span className="text-sm font-bold" style={{ color: INK }}>Bossify</span>
+            <span className="text-[13px]" style={{ color: INK_SOFT }}>· {c.footerTag}</span>
           </div>
-          <p className="text-[12.5px]" style={{ color: TEXT_MUTED }}>
-            © {new Date().getFullYear()} ZH Studio
-          </p>
+          <p className="text-[12.5px]" style={{ color: INK_SOFT }}>© {new Date().getFullYear()} ZH Studio</p>
         </div>
       </footer>
     </div>
