@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { MoreVertical, X } from "lucide-react";
+import {
+  MoreVertical, X, Package, Repeat, BarChart3, GraduationCap, Scale, List,
+  LayoutGrid, Search, Clock, Gem, Calendar, Smartphone, School, MessageCircle,
+  Phone, Pencil, Trash2, AlertTriangle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type CustomerStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,7 +30,7 @@ const CUSTOMER_STATUS_STYLES: Record<CustomerStatus, string> = {
   rejected: "bg-red-500/15 text-red-600",
 };
 const CUSTOMER_STATUS_DOT: Record<CustomerStatus, string> = {
-  enquiry: "🔵", in_progress: "🟡", completed: "🟢", rejected: "🔴",
+  enquiry: "bg-blue-500", in_progress: "bg-amber-500", completed: "bg-emerald-500", rejected: "bg-red-500",
 };
 
 function relTime(iso: string | null, t: (k: any) => string) {
@@ -395,7 +399,7 @@ function CustomersPage() {
               to="/services"
               className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95 transition"
             >
-              📦 {t("bl_packages")}
+              <Package className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("bl_packages")}
             </Link>
             <button
               onClick={() => setNewCustomerOpen(true)}
@@ -419,8 +423,9 @@ function CustomersPage() {
       {tiktokBuyers.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase">
-              🎵 {lang === "zh" ? "TikTok 回购客户" : lang === "ms" ? "Pelanggan Berulang TikTok" : "TikTok Repeat Buyers"}
+            <p className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5">
+              <Repeat className="h-3.5 w-3.5" />
+              {lang === "zh" ? "TikTok 回购客户" : lang === "ms" ? "Pelanggan Berulang TikTok" : "TikTok Repeat Buyers"}
             </p>
             {tiktokBuyers.length > 5 && (
               <Link to="/top-buyers" className="text-[11px] font-semibold text-primary shrink-0">
@@ -452,39 +457,39 @@ function CustomersPage() {
             to="/pipeline-overview"
             className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary/10 text-primary active:scale-95"
           >
-            📊 {t("pipeline_overview")}
+            <BarChart3 className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("pipeline_overview")}
           </Link>
           <Link
             to="/services-summary"
             className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary/10 text-primary active:scale-95"
           >
-            🎓 {t("services_summary")}
+            <GraduationCap className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("services_summary")}
           </Link>
           <Link
             to="/clients-compare"
             className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary text-primary-foreground active:scale-95"
           >
-            ⚖️ {t("edu_compare")}
+            <Scale className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("edu_compare")}
           </Link>
           <div className="ml-auto inline-flex rounded-2xl bg-muted p-0.5 shrink-0">
             <button
               onClick={() => setViewMode("list")}
               className={`text-[11px] font-semibold px-3 py-1.5 rounded-xl transition ${viewMode === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
             >
-              📋 {t("view_list")}
+              <List className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("view_list")}
             </button>
             <button
               onClick={() => setViewMode("kanban")}
               className={`text-[11px] font-semibold px-3 py-1.5 rounded-xl transition ${viewMode === "kanban" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
             >
-              🔀 {t("view_kanban")}
+              <LayoutGrid className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("view_kanban")}
             </button>
           </div>
         </div>
       )}
 
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🔍</span>
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -507,7 +512,7 @@ function CustomersPage() {
               onClick={() => setStatusFilter(s)}
               className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === s ? CUSTOMER_STATUS_STYLES[s] + " ring-2 ring-offset-1 ring-current" : "bg-muted text-muted-foreground"}`}
             >
-              {CUSTOMER_STATUS_DOT[s]} {t(`cs_${s}` as any)}
+              <span className={`inline-block h-1.5 w-1.5 rounded-full ${CUSTOMER_STATUS_DOT[s]}`} /> {t(`cs_${s}` as any)}
             </button>
           ))}
         </div>
@@ -518,9 +523,9 @@ function CustomersPage() {
           {t("sort_by")}
         </span>
         {([
-          { id: "recent", label: t("sort_recent"), emoji: "🕒" },
-          { id: "most_orders", label: t("sort_most_orders"), emoji: "📦" },
-          { id: "top_spender", label: t("sort_top_spender"), emoji: "💎" },
+          { id: "recent", label: t("sort_recent"), icon: Clock },
+          { id: "most_orders", label: t("sort_most_orders"), icon: Package },
+          { id: "top_spender", label: t("sort_top_spender"), icon: Gem },
         ] as const).map((opt) => (
           <button
             key={opt.id}
@@ -532,7 +537,7 @@ function CustomersPage() {
                 : "bg-muted text-muted-foreground"
             }`}
           >
-            {opt.emoji} {opt.label}
+            <opt.icon className="h-3 w-3 inline-block mr-1 -mt-0.5" />{opt.label}
           </button>
         ))}
       </div>
@@ -547,7 +552,7 @@ function CustomersPage() {
               : "bg-card text-foreground border-border"
           }`}
         >
-          📅 {dateLabel}
+          <Calendar className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{dateLabel}
           {dateFilterActive && <span className="text-[10px] opacity-80">●</span>}
         </button>
         {dateFilterActive && (
@@ -603,7 +608,7 @@ function CustomersPage() {
             onClick={() => setPackageFilter("all")}
             className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${packageFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
           >
-            📦 {t("all_packages")}
+            <Package className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("all_packages")}
           </button>
           <button
             onClick={() => setPackageFilter("__none__")}
@@ -653,18 +658,18 @@ function CustomersPage() {
                   <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
                 </div>
                 {c.phone && (
-                  <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>
+                  <p className="text-[11px] text-primary font-medium mt-0.5 truncate flex items-center gap-1"><Smartphone className="h-3 w-3 shrink-0" /> {c.phone}</p>
                 )}
                 {followUpByCustomerId[c.id] && (
-                  <p className="text-[11px] text-amber-600 font-medium mt-0.5 truncate">
-                    📅 {new Date(followUpByCustomerId[c.id] + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
+                  <p className="text-[11px] text-amber-600 font-medium mt-0.5 truncate flex items-center gap-1">
+                    <Calendar className="h-3 w-3 shrink-0" /> {new Date(followUpByCustomerId[c.id] + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
                   </p>
                 )}
                 {bizType === "education" ? (
                   <>
                     <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                       {eduDetails[c.id]?.university_preference
-                        ? <>🏫 {eduDetails[c.id]!.university_preference}{eduDetails[c.id]?.application_status ? ` · 📋 ${eduDetails[c.id]!.application_status}` : ""}</>
+                        ? <><School className="h-3 w-3 inline-block mr-1 -mt-0.5" />{eduDetails[c.id]!.university_preference}{eduDetails[c.id]?.application_status ? ` · ${eduDetails[c.id]!.application_status}` : ""}</>
                         : t("no_university_set")}
                     </p>
                     <div className="mt-1 flex items-center gap-1.5">
@@ -680,13 +685,13 @@ function CustomersPage() {
                   </p>
                 )}
                 {bizType === "property" && c.package_name && (
-                  <span className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                    📦 {c.package_name}
+                  <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    <Package className="h-2.5 w-2.5" /> {c.package_name}
                   </span>
                 )}
                 {c.remarks && (
-                  <p className="text-[11px] text-muted-foreground/90 mt-1 truncate italic">
-                    💬 {c.remarks.length > 50 ? c.remarks.slice(0, 50) + "…" : c.remarks}
+                  <p className="text-[11px] text-muted-foreground/90 mt-1 truncate italic flex items-center gap-1">
+                    <MessageCircle className="h-3 w-3 shrink-0 not-italic" /> {c.remarks.length > 50 ? c.remarks.slice(0, 50) + "…" : c.remarks}
                   </p>
                 )}
               </div>
@@ -706,7 +711,7 @@ function CustomersPage() {
                   aria-label="Status"
                   className={`text-[10px] font-semibold px-2 py-0.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[(c.customer_status ?? "enquiry") as CustomerStatus]}`}
                 >
-                  {CUSTOMER_STATUS_DOT[(c.customer_status ?? "enquiry") as CustomerStatus]} {t(`cs_${(c.customer_status ?? "enquiry") as CustomerStatus}` as any)}
+                  <span className={`inline-block h-1.5 w-1.5 rounded-full ${CUSTOMER_STATUS_DOT[(c.customer_status ?? "enquiry") as CustomerStatus]}`} /> {t(`cs_${(c.customer_status ?? "enquiry") as CustomerStatus}` as any)}
                 </button>
               )}
               {bizType === "education" && (
@@ -718,7 +723,7 @@ function CustomersPage() {
                     aria-label={t("open_pipeline")}
                     className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary active:scale-95"
                   >
-                    📞
+                    <Phone className="h-3 w-3" />
                   </Link>
                   <Link
                     to="/customer/$customerId"
@@ -727,7 +732,7 @@ function CustomersPage() {
                     aria-label={t("open_services")}
                     className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary active:scale-95"
                   >
-                    🎓
+                    <GraduationCap className="h-3 w-3" />
                   </Link>
                 </div>
               )}
@@ -739,7 +744,7 @@ function CustomersPage() {
                 id={idx === 0 ? "tour-cust-wa" : undefined}
                 className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500 text-white active:scale-95 transition-transform"
               >
-                📲 WA
+                <MessageCircle className="h-3 w-3 inline-block mr-1 -mt-0.5" />WA
               </button>
             </div>
             <button
@@ -821,13 +826,13 @@ function CustomersPage() {
               onClick={() => { const c = menuFor; setMenuFor(null); navigate({ to: "/customer/$customerId", params: { customerId: c.id } }); }}
               className="w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold hover:bg-muted"
             >
-              ✏️ {t("edit_customer")}
+              <Pencil className="h-3.5 w-3.5 inline-block mr-1.5 -mt-0.5" />{t("edit_customer")}
             </button>
             <button
               onClick={() => { setConfirmDelete(menuFor); setMenuFor(null); }}
               className="w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold text-red-500 hover:bg-red-500/10"
             >
-              🗑️ {t("delete_customer")}
+              <Trash2 className="h-3.5 w-3.5 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
             </button>
             <button onClick={() => setMenuFor(null)} className="w-full px-4 py-3 rounded-2xl text-sm text-muted-foreground">
               {t("cancel")}
@@ -840,7 +845,7 @@ function CustomersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5" onClick={() => setConfirmDelete(null)}>
           <div className="w-full max-w-sm bg-card rounded-3xl p-5 space-y-4 animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-red-500/15 text-red-500 flex items-center justify-center text-xl">⚠️</div>
+              <div className="h-10 w-10 rounded-full bg-red-500/15 text-red-500 flex items-center justify-center"><AlertTriangle className="h-5 w-5" /></div>
               <h3 className="text-base font-bold text-foreground">{t("delete_customer")}?</h3>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">

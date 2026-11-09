@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { ArrowLeft, X, Calendar as CalendarIcon, Check, Plus, Home } from "lucide-react";
+import {
+  ArrowLeft, X, Calendar as CalendarIcon, Check, Plus, Home, MapPin,
+  MessageCircle, Pencil, Trash2, Package, House,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type OrderRow, type CustomerStatus, type FollowUpRow } from "@/integrations/supabase/client";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
@@ -28,7 +31,7 @@ const CUSTOMER_STATUS_STYLES: Record<CustomerStatus, string> = {
   rejected: "bg-red-500/15 text-red-600",
 };
 const CUSTOMER_STATUS_DOT: Record<CustomerStatus, string> = {
-  enquiry: "🔵", in_progress: "🟡", completed: "🟢", rejected: "🔴",
+  enquiry: "bg-blue-500", in_progress: "bg-amber-500", completed: "bg-emerald-500", rejected: "bg-red-500",
 };
 
 function buildWA(phone: string, message: string) {
@@ -200,7 +203,7 @@ function CustomerDetail() {
       </div>
 
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-5 flex flex-col items-center text-center gap-2">
-        <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-2xl font-bold shadow-[var(--shadow-soft)]">
+        <div className="h-20 w-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold shadow-[var(--shadow-soft)]">
           {customer.name.charAt(0).toUpperCase()}
         </div>
         <h2 className="text-xl font-bold">{customer.name}</h2>
@@ -226,7 +229,7 @@ function CustomerDetail() {
             onClick={cycleStatus}
             className={`mt-2 text-xs font-semibold px-3 py-1.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[currentStatus]}`}
           >
-            {CUSTOMER_STATUS_DOT[currentStatus]} {t(`cs_${currentStatus}` as any)}
+            <span className={`inline-block h-1.5 w-1.5 rounded-full ${CUSTOMER_STATUS_DOT[currentStatus]}`} /> {t(`cs_${currentStatus}` as any)}
           </button>
         )}
       </section>
@@ -338,8 +341,8 @@ function CustomerDetail() {
                 <p className="text-xs font-mono text-muted-foreground">{o.code}</p>
                 <p className="text-sm font-semibold truncate">{o.product} {o.quantity > 1 ? `x${o.quantity}` : ""}</p>
                 {o.delivery_address && (
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    📍 {t("delivery_address" as any)}: {o.delivery_address}
+                  <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
+                    <MapPin className="h-3 w-3 shrink-0" /> {t("delivery_address" as any)}: {o.delivery_address}
                   </p>
                 )}
                 <p className="text-[10px] text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</p>
@@ -363,19 +366,19 @@ function CustomerDetail() {
           }}
           className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white font-semibold active:scale-[0.99]"
         >
-          📲 {t("send_whatsapp")}
+          <MessageCircle className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("send_whatsapp")}
         </button>
         <button
           onClick={() => setEditing(true)}
           className="w-full py-3.5 rounded-2xl bg-primary/10 text-primary font-semibold active:scale-[0.99]"
         >
-          ✏️ {t("edit_customer")}
+          <Pencil className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("edit_customer")}
         </button>
         <button
           onClick={() => setConfirmDelete(true)}
           className="w-full py-3.5 rounded-2xl bg-red-500/10 text-red-600 font-semibold active:scale-[0.99]"
         >
-          🗑️ {t("delete_customer")}
+          <Trash2 className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
         </button>
       </section>
 
@@ -412,7 +415,7 @@ function CustomerDetail() {
             </div>
             <button
               onClick={saveFollowUp} disabled={savingFu || !fuDate}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60"
+              className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-60"
             >
               {savingFu ? t("saving") : t("save")}
             </button>
@@ -607,7 +610,7 @@ function EditSheet({
         )}
         <button
           onClick={save} disabled={saving}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60"
+          className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-60"
         >
           {saving ? t("saving") : t("save")}
         </button>
@@ -641,7 +644,7 @@ function PackageSection({ customer, onChange }: { customer: CustomerRow; onChang
         {t("package_label")}
       </p>
       <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-lg">📦</div>
+        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Package className="h-4 w-4" /></div>
         <div className="flex-1 min-w-0">
           {customer.package_name ? (
             <>
@@ -718,11 +721,11 @@ function InterestedListings({ customer }: { customer: CustomerRow }) {
           <a key={r.id} href={`/listing/${r.id}`} className="block p-3 active:bg-muted/40">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                🏠
+                <House className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{r.title}</p>
-                {r.address && <p className="text-[11px] text-muted-foreground truncate">📍 {r.address}</p>}
+                {r.address && <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1"><MapPin className="h-3 w-3 shrink-0" /> {r.address}</p>}
                 <p className="text-[11px] font-semibold text-primary mt-0.5">
                   RM {Number(r.price || 0).toLocaleString()}
                 </p>
