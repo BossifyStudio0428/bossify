@@ -658,7 +658,7 @@ export function PurchaseOrderForm({
       if (mode === "inventory") {
         await applyReceivedStockInventory(
           validLines.map((l) => ({ inventory_id: l.ingredient_id, quantity: l.quantity, unit_price: l.unit_price })),
-          user?.id,
+          userId,
         );
       } else {
         await applyReceivedStock(validLines);

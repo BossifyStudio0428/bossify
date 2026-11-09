@@ -91,7 +91,7 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
     .eq("financial_status", "pending")
     .limit(BATCH_SIZE);
 
-  const orders = (pendingOrders ?? []) as Array<{ id: string; platform_order_id: string | null }>;
+  const orders = (pendingOrders ?? []) as unknown as Array<{ id: string; platform_order_id: string | null }>;
   if (orders.length === 0) return result;
 
   const orderIds = orders.map((o) => o.platform_order_id).filter((x): x is string => !!x);

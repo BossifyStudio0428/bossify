@@ -17,7 +17,7 @@ export type LogAiUsageInput = {
   model: string;
   inputTokens?: number;
   outputTokens?: number;
-  status?: "ok" | "rate_limit" | "credit_exhausted" | "error" | "parse_failed";
+  status?: "ok" | "rate_limit" | "credit_exhausted" | "error" | "parse_failed" | "overloaded";
   errorMsg?: string | null;
 };
 

@@ -16,6 +16,11 @@ export const Route = createFileRoute("/reports/sales")({ component: ReportsPage 
 
 type Range = "today" | "week" | "month" | "custom";
 
+type SalesOrderRow = Pick<
+  OrderRow,
+  "id" | "code" | "customer_name" | "product" | "quantity" | "amount" | "cost" | "gross_profit" | "status" | "created_at"
+> & { financial_status: string | null };
+
 function startOfDay(d: Date) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
 function endOfDay(d: Date) { const x = new Date(d); x.setHours(23,59,59,999); return x; }
 
@@ -44,7 +49,7 @@ function ReportsPage() {
     | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
   const showCostProfit = eff === "retail" || eff === "fnb";
   const [range, setRange] = useState<Range>("month");
-  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [orders, setOrders] = useState<SalesOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState<string>(() => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   const [to, setTo] = useState<string>(() => new Date().toISOString().slice(0, 10));
@@ -66,7 +71,7 @@ function ReportsPage() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (cancelled) return;
-      setOrders((data ?? []) as OrderRow[]);
+      setOrders((data ?? []) as SalesOrderRow[]);
       setLoading(false);
 
       const orderIds = ((data ?? []) as any[]).map((o) => o.id);
