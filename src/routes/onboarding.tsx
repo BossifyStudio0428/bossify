@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import {
+  ArrowLeft, ArrowRight, Check, Smartphone, BookOpen, BarChart3, X,
+  FolderOpen, TrendingDown, Package, Users, Briefcase, Moon, CheckCircle2,
+  Wallet, Clock, Zap, TrendingUp, Rocket, ClipboardList, type LucideIcon,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
@@ -16,7 +20,7 @@ type Q = {
   key: string;
   labelKey: TKey;
   titleKey: TKey;
-  options: { emoji: string; textKey: TKey }[];
+  options: { icon: LucideIcon; textKey: TKey }[];
 };
 
 const QUESTIONS: Q[] = [
@@ -25,10 +29,10 @@ const QUESTIONS: Q[] = [
     labelKey: "ob_q2_label",
     titleKey: "ob_q2_title",
     options: [
-      { emoji: "📱", textKey: "ob_q2_o1" },
-      { emoji: "📓", textKey: "ob_q2_o2" },
-      { emoji: "📊", textKey: "ob_q2_o3" },
-      { emoji: "❌", textKey: "ob_q2_o4" },
+      { icon: Smartphone, textKey: "ob_q2_o1" },
+      { icon: BookOpen, textKey: "ob_q2_o2" },
+      { icon: BarChart3, textKey: "ob_q2_o3" },
+      { icon: X, textKey: "ob_q2_o4" },
     ],
   },
   {
@@ -36,10 +40,10 @@ const QUESTIONS: Q[] = [
     labelKey: "ob_q3_label",
     titleKey: "ob_q3_title",
     options: [
-      { emoji: "🗂️", textKey: "ob_q3_o1" },
-      { emoji: "💸", textKey: "ob_q3_o2" },
-      { emoji: "📦", textKey: "ob_q3_o3" },
-      { emoji: "👥", textKey: "ob_q3_o4" },
+      { icon: FolderOpen, textKey: "ob_q3_o1" },
+      { icon: TrendingDown, textKey: "ob_q3_o2" },
+      { icon: Package, textKey: "ob_q3_o3" },
+      { icon: Users, textKey: "ob_q3_o4" },
     ],
   },
   {
@@ -47,10 +51,10 @@ const QUESTIONS: Q[] = [
     labelKey: "ob_q4_label",
     titleKey: "ob_q4_title",
     options: [
-      { emoji: "📋", textKey: "ob_q4_o1" },
-      { emoji: "📋", textKey: "ob_q4_o2" },
-      { emoji: "📋", textKey: "ob_q4_o3" },
-      { emoji: "📋", textKey: "ob_q4_o4" },
+      { icon: ClipboardList, textKey: "ob_q4_o1" },
+      { icon: ClipboardList, textKey: "ob_q4_o2" },
+      { icon: ClipboardList, textKey: "ob_q4_o3" },
+      { icon: ClipboardList, textKey: "ob_q4_o4" },
     ],
   },
   {
@@ -58,8 +62,8 @@ const QUESTIONS: Q[] = [
     labelKey: "ob_q5_label",
     titleKey: "ob_q5_title",
     options: [
-      { emoji: "💼", textKey: "ob_q5_o1" },
-      { emoji: "🌙", textKey: "ob_q5_o2" },
+      { icon: Briefcase, textKey: "ob_q5_o1" },
+      { icon: Moon, textKey: "ob_q5_o2" },
     ],
   },
   {
@@ -67,10 +71,10 @@ const QUESTIONS: Q[] = [
     labelKey: "ob_q6_label",
     titleKey: "ob_q6_title",
     options: [
-      { emoji: "✅", textKey: "ob_q6_o1" },
-      { emoji: "💰", textKey: "ob_q6_o2" },
-      { emoji: "👥", textKey: "ob_q6_o3" },
-      { emoji: "⏱️", textKey: "ob_q6_o4" },
+      { icon: CheckCircle2, textKey: "ob_q6_o1" },
+      { icon: Wallet, textKey: "ob_q6_o2" },
+      { icon: Users, textKey: "ob_q6_o3" },
+      { icon: Clock, textKey: "ob_q6_o4" },
     ],
   },
   {
@@ -78,10 +82,10 @@ const QUESTIONS: Q[] = [
     labelKey: "ob_q7_label",
     titleKey: "ob_q7_title",
     options: [
-      { emoji: "🗂️", textKey: "ob_q7_o1" },
-      { emoji: "⚡", textKey: "ob_q7_o2" },
-      { emoji: "📈", textKey: "ob_q7_o3" },
-      { emoji: "🚀", textKey: "ob_q7_o4" },
+      { icon: FolderOpen, textKey: "ob_q7_o1" },
+      { icon: Zap, textKey: "ob_q7_o2" },
+      { icon: TrendingUp, textKey: "ob_q7_o3" },
+      { icon: Rocket, textKey: "ob_q7_o4" },
     ],
   },
 ];
@@ -359,7 +363,7 @@ function QuestionScreen({
               }}
             >
               <span
-                className="flex items-center justify-center text-base shrink-0"
+                className="flex items-center justify-center text-base shrink-0 text-primary"
                 style={{
                   width: 28,
                   height: 28,
@@ -367,7 +371,7 @@ function QuestionScreen({
                   background: "#EFEAFA",
                 }}
               >
-                {o.emoji}
+                <o.icon className="h-4 w-4" />
               </span>
               <span className="text-[13px] font-medium">{optText}</span>
             </button>

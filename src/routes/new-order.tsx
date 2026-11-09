@@ -17,6 +17,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { calculateOrderFinancials } from "@/lib/orderMath";
+import { User, Wallet, MapPin, MessageCircle, GraduationCap, Sparkles, Briefcase, ShoppingBag } from "lucide-react";
 
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
@@ -40,7 +41,7 @@ function NewOrderPage() {
   const navigate = useNavigate();
   const { hasFullAccess, ordersUsed, ordersLimit, ordersRemaining, showUpgrade } = useSubscription();
   const statusLabels: Record<OrderStatus, string> = {
-    Paid: `${t("paid")} ✓`,
+    Paid: t("paid"),
     Unpaid: t("unpaid"),
     Pending: t("pending"),
   };
@@ -525,7 +526,7 @@ function NewOrderPage() {
     <div className="px-5 pt-10 pb-6 space-y-6">
       <header>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          {t(bizKey(bizType, "new_order"))} <span className="text-primary">✦</span>
+          {t(bizKey(bizType, "new_order"))}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("fill_details")}</p>
       </header>
@@ -557,7 +558,7 @@ function NewOrderPage() {
             </select>
           </div>
         )}
-        <Field label={customerLabel} icon="👤" placeholder={customerPh} value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
+        <Field label={customerLabel} icon={<User className="h-4 w-4" />} placeholder={customerPh} value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
         <PhoneInput
           label={t("phone_number")}
           value={form.phone}
@@ -616,7 +617,7 @@ function NewOrderPage() {
             }
             return (
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base z-10 pointer-events-none">{eff === "education" ? "🎓" : eff === "beauty" ? "✨" : eff === "freelance" ? "💼" : "🛍️"}</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-muted-foreground flex items-center">{eff === "education" ? <GraduationCap className="h-4 w-4" /> : eff === "beauty" ? <Sparkles className="h-4 w-4" /> : eff === "freelance" ? <Briefcase className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}</span>
                 <select
                   value={form.product}
                   onChange={(e) => {
@@ -711,7 +712,7 @@ function NewOrderPage() {
 
         <Field
           label={priceLabel}
-          icon="💰"
+          icon={<Wallet className="h-4 w-4" />}
           placeholder="0.00"
           value={form.amount}
           onChange={onAmountChange}
@@ -773,8 +774,8 @@ function NewOrderPage() {
         )}
 
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
-            📍 {t("delivery_address" as any)}
+          <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1 flex items-center gap-1">
+            <MapPin className="h-3 w-3" /> {t("delivery_address" as any)}
           </label>
           <PlacesAutocomplete
             value={form.delivery_address}
@@ -798,7 +799,7 @@ function NewOrderPage() {
         <div className="space-y-3 pt-2">
           <button
             type="submit" disabled={saving}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition-transform disabled:opacity-60"
+            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition-transform disabled:opacity-60"
           >
             {saving ? t("saving") : saveLabel}
           </button>
@@ -815,9 +816,9 @@ function NewOrderPage() {
             onClick={saveAndWhatsApp}
             id="tour-no-wa"
             disabled={saving}
-            className="w-full py-4 rounded-2xl bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 font-semibold text-sm active:scale-[0.99] transition-transform disabled:opacity-60"
+            className="w-full py-4 rounded-2xl bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 font-semibold text-sm active:scale-[0.99] transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            📲 {t("save_whatsapp")}
+            <MessageCircle className="h-4 w-4" /> {t("save_whatsapp")}
           </button>
         </div>
 
@@ -834,12 +835,12 @@ function NewOrderPage() {
 
 function Field({
   label, icon, error, hint, ...rest
-}: { label: string; icon: string; error?: string; hint?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+}: { label: string; icon: React.ReactNode; error?: string; hint?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div className="space-y-1.5">
       <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{label}</label>
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">{icon}</span>
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground flex items-center justify-center">{icon}</span>
         <input
           {...rest}
           className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${error ? "border-red-400" : "border-border/60"}`}

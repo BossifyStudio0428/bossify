@@ -64,15 +64,15 @@ function GuidePage() {
         ),
         tr(
           lang,
-          "WhatsApp 订单确认：保存订单时点击「📲 保存并 WhatsApp」，系统会用你设定好的消息模板自动发给客人确认订单。模板可在 更多 → WhatsApp 模板 自行修改。",
-          "Pengesahan WhatsApp: Semasa simpan pesanan, tekan \"📲 Simpan & WhatsApp\" — mesej pengesahan akan dihantar kepada pelanggan menggunakan templat anda sendiri. Boleh ubah templat di Lagi → Templat WhatsApp.",
-          "WhatsApp confirmation: When saving an order, tap \"📲 Save & WhatsApp\" and Bossify sends your customer an order confirmation using your own message template. Edit the template under More → WhatsApp Templates.",
+          "WhatsApp 订单确认：保存订单时点击「保存并 WhatsApp」，系统会用你设定好的消息模板自动发给客人确认订单。模板可在 更多 → WhatsApp 模板 自行修改。",
+          "Pengesahan WhatsApp: Semasa simpan pesanan, tekan \"Simpan & WhatsApp\" — mesej pengesahan akan dihantar kepada pelanggan menggunakan templat anda sendiri. Boleh ubah templat di Lagi → Templat WhatsApp.",
+          "WhatsApp confirmation: When saving an order, tap \"Save & WhatsApp\" and Bossify sends your customer an order confirmation using your own message template. Edit the template under More → WhatsApp Templates.",
         ),
         tr(
           lang,
-          "批量导入：在「订单」页面右上角点击上传图标 ⬆️，上传 Excel/CSV 文件即可一次导入多笔订单，适合从 TikTok Shop 后台导出的订单记录。",
-          "Import pukal: Di halaman Pesanan, tekan ikon muat naik ⬆️ di atas kanan, muat naik fail Excel/CSV untuk import banyak pesanan sekaligus — sesuai untuk rekod yang dieksport dari TikTok Shop.",
-          "Bulk import: On the Orders page, tap the upload icon ⬆️ (top right) and upload an Excel/CSV file to import many orders at once — handy for records exported from TikTok Shop.",
+          "批量导入：在「订单」页面右上角点击上传图标，上传 Excel/CSV 文件即可一次导入多笔订单，适合从 TikTok Shop 后台导出的订单记录。",
+          "Import pukal: Di halaman Pesanan, tekan ikon muat naik di atas kanan, muat naik fail Excel/CSV untuk import banyak pesanan sekaligus — sesuai untuk rekod yang dieksport dari TikTok Shop.",
+          "Bulk import: On the Orders page, tap the upload icon (top right) and upload an Excel/CSV file to import many orders at once — handy for records exported from TikTok Shop.",
         ),
         tr(
           lang,
@@ -132,9 +132,9 @@ function GuidePage() {
         ),
         tr(
           lang,
-          "点击报告卡片上的「📄 打开 PDF」即可生成并打开该报告，可另存或分享给会计/客户。",
-          "Tekan \"📄 Buka PDF\" pada kad laporan untuk jana dan buka laporan tersebut — boleh simpan atau kongsi kepada akauntan/pelanggan.",
-          "Tap \"📄 Open PDF\" on a report card to generate and open it — you can save or share it with your accountant or a customer.",
+          "点击报告卡片上的「打开 PDF」即可生成并打开该报告，可另存或分享给会计/客户。",
+          "Tekan \"Buka PDF\" pada kad laporan untuk jana dan buka laporan tersebut — boleh simpan atau kongsi kepada akauntan/pelanggan.",
+          "Tap \"Open PDF\" on a report card to generate and open it — you can save or share it with your accountant or a customer.",
         ),
         tr(
           lang,
