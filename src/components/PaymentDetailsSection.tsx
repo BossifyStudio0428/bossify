@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, CreditCard, Landmark, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -229,11 +229,11 @@ export default function PaymentDetailsSection() {
     if (!hasMethod(m)) return null;
     return (
       <div className="relative rounded-2xl border border-border/60 bg-background/40 p-3 flex gap-3">
-        {m.qr_url ? <img src={m.qr_url} alt="QR" className="h-16 w-16 rounded-xl object-cover border border-border/60 shrink-0" /> : <div className="h-16 w-16 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">💳</div>}
+        {m.qr_url ? <img src={m.qr_url} alt="QR" className="h-16 w-16 rounded-xl object-cover border border-border/60 shrink-0" /> : <div className="h-16 w-16 rounded-xl bg-muted flex items-center justify-center shrink-0"><CreditCard className="h-6 w-6 text-muted-foreground" /></div>}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-foreground truncate">{m.type || t("pay_method")}</p>
           {m.number ? <p className="text-sm text-foreground mt-1 break-all">{m.number}</p> : null}
-          {m.bank ? <p className="text-xs text-muted-foreground mt-1 truncate">🏦 {m.bank}</p> : null}
+          {m.bank ? <p className="text-xs text-muted-foreground mt-1 truncate flex items-center gap-1"><Landmark className="h-3 w-3 shrink-0" /> {m.bank}</p> : null}
           {m.name ? <p className="text-xs text-muted-foreground mt-1 truncate">{m.name}</p> : null}
           {m.qr_url ? <p className="text-[10px] text-primary font-semibold mt-1">{t("qr_uploaded")}</p> : null}
         </div>
@@ -271,7 +271,7 @@ export default function PaymentDetailsSection() {
 
   return (
     <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-4">
-      <h2 className="text-sm font-bold flex items-center gap-2">💳 {t("pay_details")}</h2>
+      <h2 className="text-sm font-bold flex items-center gap-2"><CreditCard className="h-4 w-4" /> {t("pay_details")}</h2>
 
       {editingSlot === 1 ? renderForm(1, `${t("pay_method")} 1`, m1, setM1) : null}
       {editingSlot === 2 ? renderForm(2, `${t("pay_method")} 2`, m2, setM2) : null}
@@ -336,7 +336,7 @@ function QrUploader({
           disabled={uploading}
           className="px-3 py-2 rounded-xl bg-card border border-border/60 text-xs font-semibold text-foreground disabled:opacity-60"
         >
-          📷 {uploading ? t("uploading_qr") : t("upload_qr")}
+          <Camera className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{uploading ? t("uploading_qr") : t("upload_qr")}
         </button>
         {value ? (
           <button

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Smartphone } from "lucide-react";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
 export const PHONE_COUNTRIES: { code: string; flag: string; name: string }[] = [
@@ -95,7 +96,7 @@ export function PhoneInput({ label, value, onChange, placeholder = "123456789", 
           <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">▼</span>
         </div>
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">📱</span>
+          <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="tel"
             inputMode="numeric"

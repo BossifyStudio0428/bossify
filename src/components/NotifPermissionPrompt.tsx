@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Bell } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import { hasAskedNotifPermission, requestNotifPermission, markNotifAsked } from "@/lib/notifications";
 
@@ -27,7 +28,7 @@ export function NotifPermissionPrompt({ enabled }: { enabled: boolean }) {
     <Dialog open={open} onOpenChange={(o) => { if (!o) onLater(); }}>
       <DialogContent className="max-w-[340px] rounded-2xl">
         <DialogHeader className="items-center text-center space-y-3">
-          <div className="text-5xl">🔔</div>
+          <div className="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center"><Bell className="h-7 w-7" /></div>
           <DialogTitle className="text-base font-bold">{t("notification_title")}</DialogTitle>
           <DialogDescription className="text-sm">{t("notification_message")}</DialogDescription>
         </DialogHeader>

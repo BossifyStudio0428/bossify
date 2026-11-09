@@ -14,7 +14,7 @@ export function PlaceholderPage({
 
       <div className="mt-8 rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-6 min-h-[60vh] flex items-center justify-center">
         <p className="text-sm text-muted-foreground text-center">
-          Coming soon ✨
+          Coming soon
         </p>
       </div>
     </div>
