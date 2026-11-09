@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, PieChart, Pie } from "recharts";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -197,13 +197,33 @@ function ExpensesPage() {
         </button>
       </header>
 
-      <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
+      <div className="lg:hidden rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
         <p className="text-xs text-muted-foreground">{c.thisMonth}</p>
         <p className="text-2xl font-bold text-foreground mt-1">RM {thisMonthTotal.toFixed(2)}</p>
       </div>
 
+      {/* Desktop-only KPI row \u2014 this month's total + a card per category
+          that actually has spend this month (no fabricated categories like
+          "Platform Fees"/"Shipping" \u2014 those are order-level costs tracked
+          on the Real Profit page, not operating expenses). */}
+      <div className="hidden lg:grid lg:gap-4" style={{ gridTemplateColumns: `repeat(${1 + categoryBreakdown.length}, minmax(0, 1fr))` }}>
+        <div className="rounded-2xl bg-primary/5 border border-primary/20 p-4 space-y-1">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{c.thisMonth}</p>
+          <p className="text-2xl font-bold text-foreground">RM {thisMonthTotal.toFixed(2)}</p>
+        </div>
+        {categoryBreakdown.map((d) => (
+          <div key={d.name} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full shrink-0" style={{ background: d.color }} />
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">{d.name}</p>
+            </div>
+            <p className="text-2xl font-bold text-foreground">RM {d.value.toFixed(2)}</p>
+          </div>
+        ))}
+      </div>
+
       {categoryBreakdown.length > 0 && (
-        <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
+        <div className="lg:hidden rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
           <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
             {lang === "zh" ? "\u672c\u6708\u652f\u51fa\u5206\u7c7b" : lang === "ms" ? "Perbelanjaan Mengikut Kategori" : "Expenses by category"}
           </p>
@@ -222,6 +242,33 @@ function ExpensesPage() {
         </div>
       )}
 
+      {/* Desktop-only Expenses by Category donut */}
+      {categoryBreakdown.length > 0 && (
+        <div className="hidden lg:block rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
+            {lang === "zh" ? "\u672c\u6708\u652f\u51fa\u5206\u7c7b" : lang === "ms" ? "Perbelanjaan Mengikut Kategori" : "Expenses by Category"}
+          </p>
+          <div className="flex items-center gap-6">
+            <ResponsiveContainer width={200} height={200}>
+              <PieChart>
+                <Pie data={categoryBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={52} outerRadius={78} paddingAngle={2}>
+                  {categoryBreakdown.map((d, i) => <Cell key={i} fill={d.color} />)}
+                </Pie>
+                <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex flex-col gap-2">
+              {categoryBreakdown.map((d) => (
+                <span key={d.name} className="inline-flex items-center gap-2 text-sm text-foreground">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} />
+                  {d.name} <span className="text-muted-foreground">(RM {d.value.toFixed(2)})</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading && (
         <div className="flex justify-center py-10">
           <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
@@ -231,7 +278,7 @@ function ExpensesPage() {
         <p className="text-center text-sm text-muted-foreground py-10 px-4">{c.empty}</p>
       )}
 
-      <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3 lg:items-start">
+      <div className="lg:hidden space-y-3">
         {items.map((it) => (
           <article key={it.id} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-1.5">
             <div className="flex items-start justify-between gap-2">
@@ -259,6 +306,47 @@ function ExpensesPage() {
           </article>
         ))}
       </div>
+
+      {/* Desktop: expense transactions table */}
+      {!loading && items.length > 0 && (
+        <div className="hidden lg:block rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/60 bg-muted/30 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-4 py-3">{lang === "zh" ? "日期" : lang === "ms" ? "Tarikh" : "Date"}</th>
+                <th className="px-4 py-3">{c.category}</th>
+                <th className="px-4 py-3">{c.description}</th>
+                <th className="px-4 py-3 text-right">{lang === "zh" ? "金额" : lang === "ms" ? "Jumlah" : "Amount"}</th>
+                <th className="px-4 py-3 text-right">{lang === "zh" ? "操作" : lang === "ms" ? "Tindakan" : "Action"}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it) => (
+                <tr key={it.id} className="border-b border-border/40 last:border-0 hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{it.incurred_at}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                      {categoryLabel(it.category, lang)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-foreground truncate max-w-[280px]">{it.description || "—"}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-foreground">RM {Number(it.amount).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => setSheet({ kind: "form", item: it })} className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted/40 transition-colors">
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => setSheet({ kind: "delete", item: it })} className="h-8 w-8 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-500/10 transition-colors">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <button
         onClick={() => setSheet({ kind: "form" })}
