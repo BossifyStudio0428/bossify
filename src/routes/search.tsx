@@ -61,7 +61,7 @@ function SearchPage() {
         <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)}
           placeholder={t("search_placeholder")}
           className="flex-1 bg-transparent outline-none text-base" />
-        <button onClick={close} className="p-2 rounded-full active:bg-muted"><X className="h-5 w-5" /></button>
+        <button onClick={close} aria-label={t("close")} className="p-2 rounded-full active:bg-muted"><X className="h-5 w-5" /></button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-5">

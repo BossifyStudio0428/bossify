@@ -7,7 +7,7 @@ export type Lang = "en" | "ms" | "zh";
 const dict = {
   en: {
     continue: "Continue", back: "Back", save: "Save", cancel: "Cancel", delete: "Delete",
-    edit: "Edit", search: "Search", loading: "Loading...", logout: "Log Out",
+    edit: "Edit", search: "Search", loading: "Loading...", logout: "Log Out", close: "Close", clear_chat: "Clear chat", send: "Send",
     login_title: "Welcome", login_subtitle: "Log in to your account",
     email: "Email", password: "Password", login_btn: "Log In",
     no_account: "Don't have an account?", register: "Sign Up",
@@ -1684,7 +1684,7 @@ const dict = {
   },
   ms: {
     continue: "Teruskan", back: "Kembali", save: "Simpan", cancel: "Batal", delete: "Padam",
-    edit: "Edit", search: "Cari", loading: "Memuatkan...", logout: "Log Keluar",
+    edit: "Edit", search: "Cari", loading: "Memuatkan...", logout: "Log Keluar", close: "Tutup", clear_chat: "Kosongkan chat", send: "Hantar",
     login_title: "Selamat Kembali", login_subtitle: "Log masuk ke akaun anda",
     email: "E-mel", password: "Kata Laluan", login_btn: "Log Masuk",
     no_account: "Tiada akaun?", register: "Daftar",
@@ -3336,7 +3336,7 @@ const dict = {
   },
   zh: {
     continue: "继续", back: "返回", save: "保存", cancel: "取消", delete: "删除",
-    edit: "编辑", search: "搜索", loading: "加载中...", logout: "登出",
+    edit: "编辑", search: "搜索", loading: "加载中...", logout: "登出", close: "关闭", clear_chat: "清空对话", send: "发送",
     login_title: "欢迎回来", login_subtitle: "登录您的账号",
     email: "电子邮件", password: "密码", login_btn: "登录",
     no_account: "没有账号？", register: "注册",

@@ -152,8 +152,9 @@ function ProgressDots({ step, total = 3 }: { step: number; total?: number }) {
 }
 
 function BackArrow({ onClick }: { onClick: () => void }) {
+  const { t } = useI18n();
   return (
-    <button onClick={onClick} className="h-10 w-10 rounded-full bg-[#F7F5FA] border border-[#E4DEF0] flex items-center justify-center self-start">
+    <button onClick={onClick} aria-label={t("back_arrow")} className="h-10 w-10 rounded-full bg-[#F7F5FA] border border-[#E4DEF0] flex items-center justify-center self-start">
       <ChevronLeft className="h-5 w-5" style={{ color: "#1A1225" }} />
     </button>
   );

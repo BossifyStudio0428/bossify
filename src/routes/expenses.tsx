@@ -249,6 +249,7 @@ function ExpensesPage() {
 function ExpenseFormSheet({
   item, userId, lang, onClose, onSaved,
 }: { item?: Expense; userId: string; lang: string; onClose: () => void; onSaved: () => void }) {
+  const { t } = useI18n();
   const c = pageCopy(lang);
   const todayStr = new Date().toISOString().slice(0, 10);
   const [incurredAt, setIncurredAt] = useState(item?.incurred_at ?? todayStr);
@@ -284,7 +285,7 @@ function ExpenseFormSheet({
     <SheetShell onClose={onClose}>
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-foreground">{item ? c.editTitle : c.addTitle}</h3>
-        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
+        <button onClick={onClose} aria-label={t("close")} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
       </div>
 
       <div className="space-y-1.5">

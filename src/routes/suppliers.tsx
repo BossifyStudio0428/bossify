@@ -242,7 +242,7 @@ function SupplierFormSheet({
     <SheetShell onClose={onClose}>
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-foreground">{item ? t("edit_supplier") : t("add_supplier")}</h3>
-        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
+        <button onClick={onClose} aria-label={t("close")} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"><X className="h-4 w-4" /></button>
       </div>
       <SheetField label={t("supplier_name")} value={name} onChange={setName} />
       <SheetField label={t("supplier_phone")} value={phone} onChange={setPhone} type="tel" />

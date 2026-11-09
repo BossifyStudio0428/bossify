@@ -462,7 +462,7 @@ function AiSourceSheet({
           <Sparkles className="h-4 w-4 text-primary" />
           <h3 className="text-lg font-bold text-foreground">{t("po_ai_choose_source")}</h3>
         </div>
-        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted">
+        <button onClick={onClose} aria-label={t("close")} className="p-1.5 rounded-full hover:bg-muted">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -675,7 +675,7 @@ export function PurchaseOrderForm({
     <SheetShell onClose={onClose}>
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-foreground">{t("po_add")}</h3>
-        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground">
+        <button onClick={onClose} aria-label={t("close")} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground">
           <X className="h-4 w-4" />
         </button>
       </div>

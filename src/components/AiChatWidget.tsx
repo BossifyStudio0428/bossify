@@ -197,10 +197,10 @@ export function AiChatWidget() {
                 <h2 className="text-sm font-bold">{title}</h2>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={clearChat} className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+                <button onClick={clearChat} aria-label={lang === "zh" ? "清空对话" : lang === "ms" ? "Kosongkan chat" : "Clear chat"} className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
                   <Trash2 className="h-4 w-4" />
                 </button>
-                <button onClick={() => setOpen(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+                <button onClick={() => setOpen(false)} aria-label={lang === "zh" ? "关闭" : lang === "ms" ? "Tutup" : "Close"} className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -267,6 +267,7 @@ export function AiChatWidget() {
               <button
                 onClick={send}
                 disabled={sending || !input.trim()}
+                aria-label={lang === "zh" ? "发送" : lang === "ms" ? "Hantar" : "Send"}
                 className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-50 active:scale-95"
               >
                 <Send className="h-4 w-4" />

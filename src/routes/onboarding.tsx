@@ -382,6 +382,7 @@ function QuestionScreen({
       <div className="flex gap-3 pt-6 pb-2">
         <button
           onClick={onBack}
+          aria-label={t("back_arrow")}
           className="h-12 w-12 rounded-xl border border-border flex items-center justify-center text-muted-foreground active:scale-95"
         >
           <ArrowLeft className="h-4 w-4" />

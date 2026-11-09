@@ -586,10 +586,10 @@ function CampaignDetailPage() {
           </div>
           {!editingCampaign && campaign && (
             <div className="flex items-center gap-1">
-              <button onClick={() => setEditingCampaign(true)} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+              <button onClick={() => setEditingCampaign(true)} aria-label={lang === "zh" ? "编辑" : lang === "ms" ? "Edit" : "Edit"} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
                 <Pencil className="h-3.5 w-3.5" />
               </button>
-              <button disabled={deleting} onClick={removeCampaign} className="h-7 w-7 rounded-full flex items-center justify-center text-red-600 active:scale-95 disabled:opacity-60">
+              <button disabled={deleting} onClick={removeCampaign} aria-label={lang === "zh" ? "删除" : lang === "ms" ? "Padam" : "Delete"} className="h-7 w-7 rounded-full flex items-center justify-center text-red-600 active:scale-95 disabled:opacity-60">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>

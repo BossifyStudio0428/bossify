@@ -583,7 +583,7 @@ function EditSheet({
       <div className="w-full max-w-[390px] rounded-t-3xl bg-card p-5 pb-8 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold">{t("edit_customer")}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted"><X className="h-4 w-4" /></button>
+          <button onClick={onClose} aria-label={t("close")} className="p-1.5 rounded-full hover:bg-muted"><X className="h-4 w-4" /></button>
         </div>
         <div className="space-y-1.5">
           <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{t("customer_name")}</label>
