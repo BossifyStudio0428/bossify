@@ -30,30 +30,30 @@ function PrivacyPolicyPage() {
   ];
 
   return (
-    <div className="min-h-screen w-full" style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}>
+    <div className="min-h-screen w-full" style={{ background: "#0A0614", fontFamily: "DM Sans, system-ui, sans-serif" }}>
       <div className="w-full max-w-[640px] mx-auto px-5 pt-8 pb-12">
         {/* Header */}
         <header className="flex items-center gap-3 mb-6">
-          <Link to="/" className="h-10 w-10 rounded-full bg-white border border-[#E0DCF0] flex items-center justify-center shrink-0">
-            <ChevronLeft className="h-5 w-5" style={{ color: "#1E1333" }} />
+          <Link to="/" className="h-10 w-10 rounded-full bg-[#140D22] border border-[#291D41] flex items-center justify-center shrink-0">
+            <ChevronLeft className="h-5 w-5" style={{ color: "#F5F3FA" }} />
           </Link>
           <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6" style={{ color: "#7C3AED" }} />
-            <h1 className="text-xl font-bold" style={{ color: "#1E1333" }}>{t("pp_title")}</h1>
+            <Shield className="h-6 w-6" style={{ color: "#8B5CF6" }} />
+            <h1 className="text-xl font-bold" style={{ color: "#F5F3FA" }}>{t("pp_title")}</h1>
           </div>
         </header>
 
-        <p className="text-xs mb-6" style={{ color: "#6B7280" }}>{t("pp_updated")}</p>
+        <p className="text-xs mb-6" style={{ color: "#9D93B5" }}>{t("pp_updated")}</p>
 
         {/* Sections */}
         <div className="space-y-4">
           {sections.map((s, i) => (
             <section
               key={i}
-              className="bg-white rounded-2xl p-5 shadow-[0_4px_20px_rgba(124,58,237,0.06)]"
+              className="bg-[#140D22] rounded-2xl p-5 shadow-[0_4px_20px_rgba(124,58,237,0.06)]"
             >
-              <h2 className="text-sm font-bold mb-2" style={{ color: "#1E1333" }}>{s.title}</h2>
-              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "#4B5563" }}>{s.body}</p>
+              <h2 className="text-sm font-bold mb-2" style={{ color: "#F5F3FA" }}>{s.title}</h2>
+              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "#9D93B5" }}>{s.body}</p>
             </section>
           ))}
         </div>
@@ -62,13 +62,13 @@ function PrivacyPolicyPage() {
         <footer className="mt-10 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 28, height: 28 }} />
-            <span className="text-sm font-bold" style={{ color: "#1E1333" }}>Bossify</span>
+            <span className="text-sm font-bold" style={{ color: "#F5F3FA" }}>Bossify</span>
           </div>
-          <p className="text-[11px]" style={{ color: "#9CA3AF" }}>© 2026 ZH Studio, Malaysia</p>
+          <p className="text-[11px]" style={{ color: "#9D93B5" }}>© 2026 ZH Studio, Malaysia</p>
           <div className="flex items-center justify-center gap-3 mt-2">
-            <Link to="/terms" className="text-[11px] underline" style={{ color: "#7C3AED" }}>{t("terms_conditions")}</Link>
-            <span style={{ color: "#D1D5DB" }}>|</span>
-            <Link to="/privacy-policy" className="text-[11px] underline" style={{ color: "#7C3AED" }}>{t("privacy_policy")}</Link>
+            <Link to="/terms" className="text-[11px] underline" style={{ color: "#8B5CF6" }}>{t("terms_conditions")}</Link>
+            <span style={{ color: "#352553" }}>|</span>
+            <Link to="/privacy-policy" className="text-[11px] underline" style={{ color: "#8B5CF6" }}>{t("privacy_policy")}</Link>
           </div>
         </footer>
       </div>

@@ -29,13 +29,13 @@ function LanguagePage() {
   };
 
   return (
-    <div className="min-h-screen px-5 pt-12 pb-8 flex flex-col" style={{ background: "#F4F3F8" }}>
+    <div className="min-h-screen px-5 pt-12 pb-8 flex flex-col" style={{ background: "#0A0614" }}>
       <img src="/assets/bossify-logo.png" alt="Bossify" width={64} height={64} className="object-contain" />
 
-      <h1 className="mt-6 text-[20px] font-bold" style={{ color: "#1E1333" }}>
+      <h1 className="mt-6 text-[20px] font-bold" style={{ color: "#F5F3FA" }}>
         Choose Your Language
       </h1>
-      <div className="mt-2 text-[12px]" style={{ color: "#6B7280", lineHeight: 1.7 }}>
+      <div className="mt-2 text-[12px]" style={{ color: "#9D93B5", lineHeight: 1.7 }}>
         <p>Choose your language</p>
         <p>Pilih bahasa anda</p>
         <p>选择您的语言</p>
@@ -51,19 +51,19 @@ function LanguagePage() {
               onClick={() => setSelected(l.code)}
               className="w-full flex items-center gap-3 transition-all active:scale-[0.99]"
               style={{
-                background: sel ? "#F3F0FF" : "#FFFFFF",
-                border: sel ? "1.5px solid #7C3AED" : "0.5px solid #E0DCF0",
+                background: sel ? "#241B3D" : "#140D22",
+                border: sel ? "1.5px solid #8B5CF6" : "0.5px solid #291D41",
                 borderRadius: 14,
                 padding: "14px 16px",
               }}
             >
               <span className="text-[22px] leading-none">{l.flag}</span>
               <div className="flex-1 text-left">
-                <p className="text-[14px] font-bold" style={{ color: "#1E1333" }}>{l.name}</p>
-                <p className="text-[11px]" style={{ color: "#6B7280" }}>{l.native}</p>
+                <p className="text-[14px] font-bold" style={{ color: "#F5F3FA" }}>{l.name}</p>
+                <p className="text-[11px]" style={{ color: "#9D93B5" }}>{l.native}</p>
               </div>
               {sel && (
-                <span className="h-6 w-6 rounded-full flex items-center justify-center" style={{ background: "#7C3AED" }}>
+                <span className="h-6 w-6 rounded-full flex items-center justify-center" style={{ background: "#8B5CF6" }}>
                   <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
                 </span>
               )}
@@ -76,7 +76,7 @@ function LanguagePage() {
         type="button"
         onClick={onContinue}
         className="w-full text-white font-bold text-sm active:scale-[0.99] transition-transform mt-6"
-        style={{ background: "#7C3AED", borderRadius: 12, padding: 14 }}
+        style={{ background: "#8B5CF6", borderRadius: 12, padding: 14 }}
       >
         Continue / Teruskan / 继续 →
       </button>

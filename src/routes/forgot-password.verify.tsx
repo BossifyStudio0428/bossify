@@ -80,19 +80,19 @@ function VerifyPage() {
   };
 
   return (
-    <div className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}>
+    <div className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#0A0614", fontFamily: "DM Sans, system-ui, sans-serif" }}>
       <div className="w-full max-w-[400px] mx-auto space-y-4 flex-1">
-        <button onClick={() => navigate({ to: "/forgot-password" })} className="h-10 w-10 rounded-full bg-white border border-[#E0DCF0] flex items-center justify-center self-start">
-          <ChevronLeft className="h-5 w-5" style={{ color: "#1E1333" }} />
+        <button onClick={() => navigate({ to: "/forgot-password" })} className="h-10 w-10 rounded-full bg-[#140D22] border border-[#291D41] flex items-center justify-center self-start">
+          <ChevronLeft className="h-5 w-5" style={{ color: "#F5F3FA" }} />
         </button>
 
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="h-14 w-14 rounded-full flex items-center justify-center" style={{ background: "#F3F0FF" }}>
-            <Mail className="h-7 w-7" style={{ color: "#7C3AED" }} />
+          <div className="h-14 w-14 rounded-full flex items-center justify-center" style={{ background: "#241B3D" }}>
+            <Mail className="h-7 w-7" style={{ color: "#8B5CF6" }} />
           </div>
-          <h1 className="text-[20px] font-bold" style={{ color: "#1E1333" }}>{t("verify")}</h1>
-          <p className="text-[13px]" style={{ color: "#6B7280" }}>
-            {t("sent_code_to")} <span className="font-semibold" style={{ color: "#1E1333" }}>{email}</span>
+          <h1 className="text-[20px] font-bold" style={{ color: "#F5F3FA" }}>{t("verify")}</h1>
+          <p className="text-[13px]" style={{ color: "#9D93B5" }}>
+            {t("sent_code_to")} <span className="font-semibold" style={{ color: "#F5F3FA" }}>{email}</span>
           </p>
         </div>
 
@@ -109,33 +109,33 @@ function VerifyPage() {
               onKeyDown={(e) => {
                 if (e.key === "Backspace" && !digits[i] && i > 0) refs.current[i - 1]?.focus();
               }}
-              className="bg-white text-center text-[20px] font-bold outline-none transition"
+              className="bg-[#140D22] text-center text-[20px] font-bold outline-none transition"
               style={{
                 width: 48, height: 56, borderRadius: 12,
-                border: d ? "1.5px solid #7C3AED" : "1.5px solid #E0DCF0",
+                border: d ? "1.5px solid #8B5CF6" : "1.5px solid #291D41",
                 boxShadow: d ? "0 0 0 4px rgba(124,58,237,0.15)" : "none",
-                color: "#1E1333",
+                color: "#F5F3FA",
               }}
             />
           ))}
         </div>
 
-        <div className="text-center text-[12px]" style={{ color: "#6B7280" }}>
+        <div className="text-center text-[12px]" style={{ color: "#9D93B5" }}>
           {seconds > 0 ? (
             <span>{t("fp_resend_in")} 0:{seconds.toString().padStart(2, "0")}</span>
           ) : (
-            <button onClick={resend} className="font-bold" style={{ color: "#7C3AED" }}>{t("fp_resend_code")}</button>
+            <button onClick={resend} className="font-bold" style={{ color: "#8B5CF6" }}>{t("fp_resend_code")}</button>
           )}
         </div>
 
         <button
           onClick={verify} disabled={!allFilled || loading}
           className="w-full text-white font-bold text-[14px] disabled:opacity-60"
-          style={{ background: "#7C3AED", borderRadius: 12, padding: 13 }}
+          style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
         >
           {loading ? "…" : t("verify")}
         </button>
-        {error && <p className="text-[12px] text-center" style={{ color: "#EF4444" }}>{error}</p>}
+        {error && <p className="text-[12px] text-center" style={{ color: "#F87171" }}>{error}</p>}
 
         <style>{`@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }`}</style>
       </div>

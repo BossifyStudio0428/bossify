@@ -38,7 +38,7 @@ function ResetPage() {
   }), [pw, confirm]);
   const allOk = checks.len && checks.num && checks.match;
   const strength = pwStrength(pw);
-  const barColor = strength === "weak" ? "#EF4444" : strength === "fair" ? "#F59E0B" : "#10B981";
+  const barColor = strength === "weak" ? "#F87171" : strength === "fair" ? "#FBBF24" : "#4ADE80";
   const barWidth = strength === "weak" ? "33%" : strength === "fair" ? "66%" : "100%";
 
   const submit = async () => {
@@ -61,71 +61,71 @@ function ResetPage() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F4F3F8" }}>
-        <p className="text-[13px]" style={{ color: "#6B7280" }}>{t("loading")}</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0A0614" }}>
+        <p className="text-[13px]" style={{ color: "#9D93B5" }}>{t("loading")}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}>
+    <div className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#0A0614", fontFamily: "DM Sans, system-ui, sans-serif" }}>
       <div className="w-full max-w-[400px] mx-auto space-y-4 flex-1">
         <div className="flex flex-col items-center">
           <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 84, height: 84 }} />
         </div>
         <div className="text-center">
-          <h1 className="text-[20px] font-bold" style={{ color: "#1E1333" }}>{t("set_new_password")}</h1>
-          <p className="text-[13px]" style={{ color: "#6B7280" }}>{t("choose_strong_pw")}</p>
+          <h1 className="text-[20px] font-bold" style={{ color: "#F5F3FA" }}>{t("set_new_password")}</h1>
+          <p className="text-[13px]" style={{ color: "#9D93B5" }}>{t("choose_strong_pw")}</p>
         </div>
 
-        <div className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-3">
-          <label className="text-[12px] font-semibold" style={{ color: "#1E1333" }}>{t("set_new_password")}</label>
+        <div className="bg-[#140D22] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-3">
+          <label className="text-[12px] font-semibold" style={{ color: "#F5F3FA" }}>{t("set_new_password")}</label>
           <div className="relative">
             <input
               type={showA ? "text" : "password"} autoComplete="new-password"
               value={pw} onChange={(e) => setPw(e.target.value)}
               placeholder={t("fp_min_8_ph")}
-              className="w-full bg-white border border-[#E0DCF0] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/15"
-              style={{ color: "#1E1333" }}
+              className="w-full bg-[#140D22] border border-[#291D41] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#8B5CF6] focus:ring-4 focus:ring-[#8B5CF6]/15"
+              style={{ color: "#F5F3FA" }}
             />
-            <button type="button" onClick={() => setShowA((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]">
+            <button type="button" onClick={() => setShowA((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9D93B5]">
               {showA ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
           {pw.length > 0 && (
-            <div className="h-1.5 bg-[#E0DCF0] rounded-full overflow-hidden">
+            <div className="h-1.5 bg-[#291D41] rounded-full overflow-hidden">
               <div style={{ width: barWidth, background: barColor, height: "100%" }} />
             </div>
           )}
 
-          <label className="text-[12px] font-semibold" style={{ color: "#1E1333" }}>{t("confirm_password")}</label>
+          <label className="text-[12px] font-semibold" style={{ color: "#F5F3FA" }}>{t("confirm_password")}</label>
           <div className="relative">
             <input
               type={showB ? "text" : "password"} autoComplete="new-password"
               value={confirm} onChange={(e) => setConfirm(e.target.value)}
               placeholder={t("fp_reenter_ph")}
-              className="w-full bg-white border border-[#E0DCF0] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/15"
-              style={{ color: "#1E1333" }}
+              className="w-full bg-[#140D22] border border-[#291D41] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#8B5CF6] focus:ring-4 focus:ring-[#8B5CF6]/15"
+              style={{ color: "#F5F3FA" }}
             />
-            <button type="button" onClick={() => setShowB((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]">
+            <button type="button" onClick={() => setShowB((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9D93B5]">
               {showB ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
 
           <ul className="space-y-1 text-[12px]">
-            <li className="flex items-center gap-2" style={{ color: checks.len ? "#10B981" : "#6B7280" }}><Check className="h-3.5 w-3.5" strokeWidth={3} />{t("pw_min_8")}</li>
-            <li className="flex items-center gap-2" style={{ color: checks.num ? "#10B981" : "#6B7280" }}><Check className="h-3.5 w-3.5" strokeWidth={3} />{t("pw_has_num")}</li>
-            <li className="flex items-center gap-2" style={{ color: checks.match ? "#10B981" : "#6B7280" }}><Check className="h-3.5 w-3.5" strokeWidth={3} />{t("pw_match")}</li>
+            <li className="flex items-center gap-2" style={{ color: checks.len ? "#4ADE80" : "#9D93B5" }}><Check className="h-3.5 w-3.5" strokeWidth={3} />{t("pw_min_8")}</li>
+            <li className="flex items-center gap-2" style={{ color: checks.num ? "#4ADE80" : "#9D93B5" }}><Check className="h-3.5 w-3.5" strokeWidth={3} />{t("pw_has_num")}</li>
+            <li className="flex items-center gap-2" style={{ color: checks.match ? "#4ADE80" : "#9D93B5" }}><Check className="h-3.5 w-3.5" strokeWidth={3} />{t("pw_match")}</li>
           </ul>
 
           <button
             onClick={submit} disabled={!allOk || loading}
             className="w-full text-white font-bold text-[14px] disabled:opacity-60"
-            style={{ background: "#7C3AED", borderRadius: 12, padding: 13 }}
+            style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
           >
             {loading ? "…" : t("update_password")}
           </button>
-          {error && <p className="text-[12px]" style={{ color: "#EF4444" }}>{error}</p>}
+          {error && <p className="text-[12px]" style={{ color: "#F87171" }}>{error}</p>}
         </div>
       </div>
     </div>
