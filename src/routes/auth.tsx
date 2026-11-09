@@ -50,14 +50,14 @@ function AuthPage() {
     <div
       data-auth-surface
       className="min-h-screen px-5 pt-10 pb-8 flex flex-col lg:items-center lg:justify-center lg:px-6 lg:py-12"
-      style={{ background: "#F4F3F8", fontFamily: "DM Sans, system-ui, sans-serif" }}
+      style={{ background: "#0A0614", fontFamily: "DM Sans, system-ui, sans-serif" }}
     >
       {/* Desktop: the mobile screens below are already self-centering
           (each sets its own max-w + mx-auto), so this just gives them a
           card surface instead of floating on a flat background. Mobile
           layout is untouched — flex flex-col flex-1 w-full matches what
           this content had as a direct child of the surface div before. */}
-      <div className="flex flex-col flex-1 w-full lg:flex-none lg:max-w-[460px] lg:bg-white lg:rounded-2xl lg:border lg:border-[#E5E7EB] lg:shadow-[0_1px_2px_rgba(16,24,40,0.04),0_12px_32px_rgba(16,24,40,0.08)] lg:px-10 lg:py-10">
+      <div className="flex flex-col flex-1 w-full lg:flex-none lg:max-w-[460px] lg:bg-[#140D22] lg:rounded-2xl lg:border lg:border-[#352553] lg:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_12px_32px_rgba(0,0,0,0.5)] lg:px-10 lg:py-10">
       {mode === "login" && <LoginScreen onGoRegister={() => setMode("reg_email")} tiktokPrefill={tiktokPrefill} />}
       {mode === "reg_email" && (
         <RegEmailScreen
@@ -86,10 +86,10 @@ function AuthPage() {
         />
       )}
       </div>
-      <div className="mt-auto lg:mt-8 pt-4 flex items-center justify-center gap-3 text-[11px]" style={{ color: "#9CA3AF" }}>
-        <Link to="/terms" className="underline hover:text-[#7C3AED]">{t("terms_conditions")}</Link>
+      <div className="mt-auto lg:mt-8 pt-4 flex items-center justify-center gap-3 text-[11px]" style={{ color: "#9D93B5" }}>
+        <Link to="/terms" className="underline hover:text-[#8B5CF6]">{t("terms_conditions")}</Link>
         <span>·</span>
-        <Link to="/privacy-policy" className="underline hover:text-[#7C3AED]">{t("privacy_policy")}</Link>
+        <Link to="/privacy-policy" className="underline hover:text-[#8B5CF6]">{t("privacy_policy")}</Link>
       </div>
     </div>
   );
@@ -101,13 +101,13 @@ function Logo({ size = 110 }: { size?: number }) {
   return (
     <div className="flex flex-col items-center">
       <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: size, height: size, objectFit: "contain" }} />
-      <p className="mt-2 text-[24px] font-bold" style={{ color: "#1E1333" }}>Bossify</p>
+      <p className="mt-2 text-[24px] font-bold" style={{ color: "#F5F3FA" }}>Bossify</p>
     </div>
   );
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="text-[12px] font-semibold" style={{ color: "#1E1333" }}>{children}</label>;
+  return <label className="text-[12px] font-semibold" style={{ color: "#F5F3FA" }}>{children}</label>;
 }
 
 function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
@@ -115,10 +115,10 @@ function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={
-        "w-full bg-white border border-[#E0DCF0] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/15 transition " +
+        "w-full bg-[#140D22] border border-[#291D41] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#8B5CF6] focus:ring-4 focus:ring-[#8B5CF6]/15 transition " +
         (props.className || "")
       }
-      style={{ color: "#1E1333" }}
+      style={{ color: "#F5F3FA" }}
     />
   );
 }
@@ -129,7 +129,7 @@ function PrimaryButton({ loading, children, ...rest }: React.ButtonHTMLAttribute
       {...rest}
       disabled={rest.disabled || loading}
       className="w-full text-white font-bold text-[14px] active:scale-[0.99] transition disabled:opacity-60"
-      style={{ background: "#7C3AED", borderRadius: 12, padding: 13 }}
+      style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
     >
       {loading ? "…" : children}
     </button>
@@ -138,14 +138,14 @@ function PrimaryButton({ loading, children, ...rest }: React.ButtonHTMLAttribute
 
 function ErrorText({ children }: { children: React.ReactNode }) {
   if (!children) return null;
-  return <p className="text-[12px]" style={{ color: "#EF4444" }}>{children}</p>;
+  return <p className="text-[12px]" style={{ color: "#F87171" }}>{children}</p>;
 }
 
 function ProgressDots({ step, total = 3 }: { step: number; total?: number }) {
   return (
     <div className="flex gap-1.5 justify-center mt-3">
       {Array.from({ length: total }).map((_, i) => (
-        <span key={i} style={{ width: 8, height: 8, borderRadius: 999, background: i < step ? "#7C3AED" : "#E0DCF0" }} />
+        <span key={i} style={{ width: 8, height: 8, borderRadius: 999, background: i < step ? "#8B5CF6" : "#291D41" }} />
       ))}
     </div>
   );
@@ -153,8 +153,8 @@ function ProgressDots({ step, total = 3 }: { step: number; total?: number }) {
 
 function BackArrow({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} className="h-10 w-10 rounded-full bg-white border border-[#E0DCF0] flex items-center justify-center self-start">
-      <ChevronLeft className="h-5 w-5" style={{ color: "#1E1333" }} />
+    <button onClick={onClick} className="h-10 w-10 rounded-full bg-[#140D22] border border-[#291D41] flex items-center justify-center self-start">
+      <ChevronLeft className="h-5 w-5" style={{ color: "#F5F3FA" }} />
     </button>
   );
 }
@@ -248,15 +248,15 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
   return (
     <div className="w-full max-w-[400px] mx-auto space-y-5 flex-1 flex flex-col">
       <Logo />
-      <p className="text-[12px] italic text-center" style={{ color: "#6B7280" }}>{t("slogan")}</p>
-      <p className="text-[12px] text-center leading-relaxed -mt-2 px-2" style={{ color: "#6B7280" }}>
+      <p className="text-[12px] italic text-center" style={{ color: "#9D93B5" }}>{t("slogan")}</p>
+      <p className="text-[12px] text-center leading-relaxed -mt-2 px-2" style={{ color: "#9D93B5" }}>
         {t("auth_subheadline")}
       </p>
 
-      <div className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-4">
+      <div className="bg-[#140D22] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.35)] space-y-4">
         <div>
-          <h1 className="text-[18px] font-bold" style={{ color: "#1E1333" }}>{t("welcome_back")}</h1>
-          <p className="text-[13px]" style={{ color: "#6B7280" }}>{t("login_subtitle")}</p>
+          <h1 className="text-[18px] font-bold" style={{ color: "#F5F3FA" }}>{t("welcome_back")}</h1>
+          <p className="text-[13px]" style={{ color: "#9D93B5" }}>{t("login_subtitle")}</p>
         </div>
 
         <form onSubmit={submit} className="space-y-3" autoComplete="on" action="#" method="post">
@@ -277,7 +277,7 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
                 placeholder={t("enter_password_ph")} value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(null); }}
               />
-              <button type="button" onClick={() => setShowPw((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]">
+              <button type="button" onClick={() => setShowPw((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9D93B5]">
                 {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
@@ -288,7 +288,7 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
               type="button"
               onClick={() => navigate({ to: "/forgot-password" })}
               className="text-[12px] font-semibold"
-              style={{ color: "#7C3AED" }}
+              style={{ color: "#8B5CF6" }}
             >
               {t("forgot_password")}
             </button>
@@ -299,20 +299,20 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
         </form>
 
         <div className="flex items-center gap-3 my-1">
-          <div className="flex-1 h-px bg-[#E0DCF0]" />
-          <span className="text-[11px]" style={{ color: "#6B7280" }}>{t("or_label")}</span>
-          <div className="flex-1 h-px bg-[#E0DCF0]" />
+          <div className="flex-1 h-px bg-[#291D41]" />
+          <span className="text-[11px]" style={{ color: "#9D93B5" }}>{t("or_label")}</span>
+          <div className="flex-1 h-px bg-[#291D41]" />
         </div>
 
         <button
           type="button"
           disabled={tiktokStarting}
           onClick={startTikTokLogin}
-          className="w-full flex items-center gap-3 rounded-xl border border-[#E0DCF0] bg-white text-[13px] font-semibold text-[#1E1333] px-3 py-2.5 active:scale-[0.99] disabled:opacity-60"
+          className="w-full flex items-center gap-3 rounded-xl border border-[#291D41] bg-[#140D22] text-[13px] font-semibold text-[#F5F3FA] px-3 py-2.5 active:scale-[0.99] disabled:opacity-60"
         >
           <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" className="shrink-0">
             <path
-              fill="#1E1333"
+              fill="#F5F3FA"
               d="M16.5 3.2c.1 1.3.6 2.5 1.5 3.4.9.9 2.1 1.4 3.3 1.5v3c-1.7-.1-3.3-.6-4.8-1.5v6.6c0 3.6-2.9 6.5-6.5 6.5S3.5 19.8 3.5 16.2s2.9-6.5 6.5-6.5c.3 0 .7 0 1 .1v3.1c-.3-.1-.6-.1-1-.1-1.9 0-3.5 1.6-3.5 3.5s1.6 3.5 3.5 3.5 3.5-1.6 3.5-3.5V3.2h3z"
             />
           </svg>
@@ -324,13 +324,13 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
           type="button"
           onClick={() => setShowTikTokCode(true)}
           className="text-[11px] text-center w-full"
-          style={{ color: "#7C3AED" }}
+          style={{ color: "#8B5CF6" }}
         >
           Already have a TikTok Shop login code?
         </button>
-        <p className="text-[13px] text-center" style={{ color: "#6B7280" }}>
+        <p className="text-[13px] text-center" style={{ color: "#9D93B5" }}>
           {t("no_account")}{" "}
-          <button onClick={onGoRegister} className="font-bold" style={{ color: "#7C3AED" }}>{t("register")}</button>
+          <button onClick={onGoRegister} className="font-bold" style={{ color: "#8B5CF6" }}>{t("register")}</button>
         </p>
       </div>
     </div>
@@ -346,7 +346,7 @@ function ComingSoonSocialButton({ provider }: { provider: "tiktok" | "google" })
     provider === "tiktok" ? (
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" className="shrink-0">
         <path
-          fill="#1E1333"
+          fill="#F5F3FA"
           d="M16.5 3.2c.1 1.3.6 2.5 1.5 3.4.9.9 2.1 1.4 3.3 1.5v3c-1.7-.1-3.3-.6-4.8-1.5v6.6c0 3.6-2.9 6.5-6.5 6.5S3.5 19.8 3.5 16.2s2.9-6.5 6.5-6.5c.3 0 .7 0 1 .1v3.1c-.3-.1-.6-.1-1-.1-1.9 0-3.5 1.6-3.5 3.5s1.6 3.5 3.5 3.5 3.5-1.6 3.5-3.5V3.2h3z"
         />
       </svg>
@@ -362,14 +362,14 @@ function ComingSoonSocialButton({ provider }: { provider: "tiktok" | "google" })
     <button
       type="button"
       onClick={() => toast.message(t("auth_coming_soon_toast"))}
-      className="w-full flex items-center gap-3 rounded-xl border border-[#E0DCF0] bg-white text-[13px] font-semibold text-[#1E1333] opacity-60 cursor-not-allowed px-3 py-2.5"
+      className="w-full flex items-center gap-3 rounded-xl border border-[#291D41] bg-[#140D22] text-[13px] font-semibold text-[#F5F3FA] opacity-60 cursor-not-allowed px-3 py-2.5"
       aria-disabled="true"
     >
       {icon}
       <span className="min-w-0 flex-1 truncate text-left">{label}</span>
       <span
         className="shrink-0 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full"
-        style={{ background: "#F3F0FF", color: "#7C3AED", letterSpacing: "0.5px" }}
+        style={{ background: "#241B3D", color: "#8B5CF6", letterSpacing: "0.5px" }}
       >
         {t("auth_coming_soon")}
       </span>
@@ -421,15 +421,15 @@ function TikTokLoginCodeScreen({ onBack, prefill }: { onBack: () => void; prefil
       <BackArrow onClick={onBack} />
       <div className="flex flex-col items-center gap-1">
         <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 64, height: 64 }} />
-        <p className="text-[16px] font-bold" style={{ color: "#1E1333" }}>Bossify</p>
+        <p className="text-[16px] font-bold" style={{ color: "#F5F3FA" }}>Bossify</p>
       </div>
       <div className="text-center">
-        <h1 className="text-[20px] font-bold" style={{ color: "#1E1333" }}>TikTok Shop login code</h1>
-        <p className="text-[13px]" style={{ color: "#6B7280" }}>
+        <h1 className="text-[20px] font-bold" style={{ color: "#F5F3FA" }}>TikTok Shop login code</h1>
+        <p className="text-[13px]" style={{ color: "#9D93B5" }}>
           Enter the email and code shown on the TikTok authorization page.
         </p>
       </div>
-      <form onSubmit={verify} className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-3">
+      <form onSubmit={verify} className="bg-[#140D22] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.35)] space-y-3">
         <div className="space-y-1.5">
           <FieldLabel>Email shown on that page</FieldLabel>
           <TextInput
@@ -462,25 +462,25 @@ function DeviceLimitBlock({
   return (
     <div className="w-full max-w-[400px] mx-auto space-y-5 flex-1 flex flex-col">
       <Logo />
-      <div className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-4 text-center">
-        <div className="mx-auto h-14 w-14 rounded-2xl bg-amber-100 flex items-center justify-center text-2xl">📱</div>
-        <h1 className="text-[18px] font-bold" style={{ color: "#1E1333" }}>{t("device_limit_title")}</h1>
-        <p className="text-[13px]" style={{ color: "#6B7280" }}>
+      <div className="bg-[#140D22] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.35)] space-y-4 text-center">
+        <div className="mx-auto h-14 w-14 rounded-2xl bg-amber-500/15 flex items-center justify-center text-2xl">📱</div>
+        <h1 className="text-[18px] font-bold" style={{ color: "#F5F3FA" }}>{t("device_limit_title")}</h1>
+        <p className="text-[13px]" style={{ color: "#9D93B5" }}>
           {t("device_limit_message")
             .replace("{plan}", planName)
             .replace("{limit}", String(limit))}
         </p>
-        <div className="rounded-xl bg-[#F4F3F8] p-3">
-          <p className="text-[12px] font-semibold" style={{ color: "#1E1333" }}>
+        <div className="rounded-xl bg-[#0A0614] p-3">
+          <p className="text-[12px] font-semibold" style={{ color: "#F5F3FA" }}>
             {used}/{limit}
           </p>
-          <p className="text-[11px] mt-1" style={{ color: "#6B7280" }}>{t("device_limit_plans_hint")}</p>
+          <p className="text-[11px] mt-1" style={{ color: "#9D93B5" }}>{t("device_limit_plans_hint")}</p>
         </div>
         <button
           type="button"
           onClick={onManage}
           className="w-full text-white font-bold text-[14px] active:scale-[0.99]"
-          style={{ background: "#7C3AED", borderRadius: 12, padding: 13 }}
+          style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
         >
           {t("device_limit_manage")}
         </button>
@@ -524,15 +524,15 @@ function RegEmailScreen({
       <BackArrow onClick={onBack} />
       <div className="flex flex-col items-center gap-1">
         <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 64, height: 64 }} />
-        <p className="text-[16px] font-bold" style={{ color: "#1E1333" }}>Bossify</p>
+        <p className="text-[16px] font-bold" style={{ color: "#F5F3FA" }}>Bossify</p>
       </div>
       <ProgressDots step={1} />
       <div className="text-center">
-        <h1 className="text-[20px] font-bold" style={{ color: "#1E1333" }}>{t("create_account")}</h1>
-        <p className="text-[13px]" style={{ color: "#6B7280" }}>{t("enter_email_started")}</p>
+        <h1 className="text-[20px] font-bold" style={{ color: "#F5F3FA" }}>{t("create_account")}</h1>
+        <p className="text-[13px]" style={{ color: "#9D93B5" }}>{t("enter_email_started")}</p>
       </div>
 
-      <form onSubmit={submit} className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-3" autoComplete="on" action="#" method="post">
+      <form onSubmit={submit} className="bg-[#140D22] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.35)] space-y-3" autoComplete="on" action="#" method="post">
         <div className="space-y-1.5">
           <FieldLabel>{t("business_name")}</FieldLabel>
           <TextInput
@@ -549,8 +549,8 @@ function RegEmailScreen({
             onChange={(e) => { setEmail(e.target.value); setError(null); }}
           />
         </div>
-        <label className="flex items-start gap-2 text-[12px]" style={{ color: "#1E1333" }}>
-          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 accent-[#7C3AED]" />
+        <label className="flex items-start gap-2 text-[12px]" style={{ color: "#F5F3FA" }}>
+          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 accent-[#8B5CF6]" />
           <span>{t("agree_terms")}</span>
         </label>
         <PrimaryButton type="submit" loading={loading}>{t("send_otp")}</PrimaryButton>
@@ -628,14 +628,14 @@ function RegOtpScreen({ email, onBack, onNext }: { email: string; onBack: () => 
       <BackArrow onClick={onBack} />
       <ProgressDots step={2} />
       <div className="flex flex-col items-center gap-3 text-center">
-        <div className="h-14 w-14 rounded-full flex items-center justify-center" style={{ background: "#F3F0FF" }}>
-          <Mail className="h-7 w-7" style={{ color: "#7C3AED" }} />
+        <div className="h-14 w-14 rounded-full flex items-center justify-center" style={{ background: "#241B3D" }}>
+          <Mail className="h-7 w-7" style={{ color: "#8B5CF6" }} />
         </div>
-        <h1 className="text-[20px] font-bold" style={{ color: "#1E1333" }}>{t("check_email")}</h1>
-        <p className="text-[13px]" style={{ color: "#6B7280" }}>
-          {t("sent_code_to")} <span className="font-semibold" style={{ color: "#1E1333" }}>{email}</span>
+        <h1 className="text-[20px] font-bold" style={{ color: "#F5F3FA" }}>{t("check_email")}</h1>
+        <p className="text-[13px]" style={{ color: "#9D93B5" }}>
+          {t("sent_code_to")} <span className="font-semibold" style={{ color: "#F5F3FA" }}>{email}</span>
         </p>
-        <button onClick={onBack} className="text-[12px] underline" style={{ color: "#6B7280" }}>{t("wrong_email")}</button>
+        <button onClick={onBack} className="text-[12px] underline" style={{ color: "#9D93B5" }}>{t("wrong_email")}</button>
       </div>
 
       <div className={"flex justify-center gap-2 " + (shake ? "animate-[shake_0.4s]" : "")}>
@@ -651,22 +651,22 @@ function RegOtpScreen({ email, onBack, onNext }: { email: string; onBack: () => 
             onKeyDown={(e) => {
               if (e.key === "Backspace" && !digits[i] && i > 0) refs.current[i - 1]?.focus();
             }}
-            className="bg-white text-center text-[20px] font-bold outline-none transition"
+            className="bg-[#140D22] text-center text-[20px] font-bold outline-none transition"
             style={{
               width: 48, height: 56, borderRadius: 12,
-              border: d ? "1.5px solid #7C3AED" : "1.5px solid #E0DCF0",
-              boxShadow: d ? "0 0 0 4px rgba(124,58,237,0.15)" : "none",
-              color: "#1E1333",
+              border: d ? "1.5px solid #8B5CF6" : "1.5px solid #291D41",
+              boxShadow: d ? "0 0 0 4px rgba(139,92,246,0.25)" : "none",
+              color: "#F5F3FA",
             }}
           />
         ))}
       </div>
 
-      <div className="text-center text-[12px]" style={{ color: "#6B7280" }}>
+      <div className="text-center text-[12px]" style={{ color: "#9D93B5" }}>
         {seconds > 0 ? (
           <span>{t("resend_in")} 0:{seconds.toString().padStart(2, "0")}</span>
         ) : (
-          <button onClick={resend} className="font-bold" style={{ color: "#7C3AED" }}>{t("resend_code")}</button>
+          <button onClick={resend} className="font-bold" style={{ color: "#8B5CF6" }}>{t("resend_code")}</button>
         )}
       </div>
 
@@ -724,16 +724,16 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
     setTimeout(onDone, 1500);
   };
 
-  const barColor = strength === "weak" ? "#EF4444" : strength === "fair" ? "#F59E0B" : "#10B981";
+  const barColor = strength === "weak" ? "#F87171" : strength === "fair" ? "#FBBF24" : "#4ADE80";
   const barWidth = strength === "weak" ? "33%" : strength === "fair" ? "66%" : "100%";
 
   if (success) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3">
-        <div className="h-20 w-20 rounded-full flex items-center justify-center" style={{ background: "#10B981" }}>
+        <div className="h-20 w-20 rounded-full flex items-center justify-center" style={{ background: "#4ADE80" }}>
           <Check className="h-10 w-10 text-white" strokeWidth={3} />
         </div>
-        <p className="text-[18px] font-bold" style={{ color: "#1E1333" }}>{t("account_created")}</p>
+        <p className="text-[18px] font-bold" style={{ color: "#F5F3FA" }}>{t("account_created")}</p>
       </div>
     );
   }
@@ -742,8 +742,8 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
     <div className="w-full max-w-[400px] mx-auto space-y-4 flex-1">
       <ProgressDots step={3} />
       <div className="text-center">
-        <h1 className="text-[20px] font-bold" style={{ color: "#1E1333" }}>{t("create_password")}</h1>
-        <p className="text-[13px]" style={{ color: "#6B7280" }}>{t("choose_strong_pw")}</p>
+        <h1 className="text-[20px] font-bold" style={{ color: "#F5F3FA" }}>{t("create_password")}</h1>
+        <p className="text-[13px]" style={{ color: "#9D93B5" }}>{t("choose_strong_pw")}</p>
       </div>
 
       <form
@@ -751,7 +751,7 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
         autoComplete="on"
         action="#"
         method="post"
-        className="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] space-y-3"
+        className="bg-[#140D22] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.35)] space-y-3"
       >
         {/* Hidden username field helps Google Password Manager associate the
             new password with the account being created. */}
@@ -772,13 +772,13 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
               placeholder="Min. 8 characters" value={pw}
               onChange={(e) => setPw(e.target.value)}
             />
-            <button type="button" onClick={() => setShowA((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]">
+            <button type="button" onClick={() => setShowA((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9D93B5]">
               {showA ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
           {pw.length > 0 && (
             <div className="space-y-1">
-              <div className="h-1.5 bg-[#E0DCF0] rounded-full overflow-hidden">
+              <div className="h-1.5 bg-[#291D41] rounded-full overflow-hidden">
                 <div style={{ width: barWidth, background: barColor, height: "100%", transition: "all 0.2s" }} />
               </div>
               <p className="text-[11px]" style={{ color: barColor }}>
@@ -796,7 +796,7 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
               placeholder="Re-enter your password" value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
             />
-            <button type="button" onClick={() => setShowB((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]">
+            <button type="button" onClick={() => setShowB((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9D93B5]">
               {showB ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
@@ -817,7 +817,7 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
 
 function ReqLine({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
-    <li className="flex items-center gap-2" style={{ color: ok ? "#10B981" : "#6B7280" }}>
+    <li className="flex items-center gap-2" style={{ color: ok ? "#4ADE80" : "#9D93B5" }}>
       <Check className="h-3.5 w-3.5" strokeWidth={3} />
       <span>{children}</span>
     </li>
