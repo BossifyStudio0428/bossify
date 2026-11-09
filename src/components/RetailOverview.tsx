@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { TrendingUp, TrendingDown, ChevronDown, ChevronRight, MessageCircle, Plus, Trophy, Package, Wallet, FileText, PieChart as PieChartIcon } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, PieChart, Pie } from "recharts";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie } from "recharts";
 import { useServerFn } from "@tanstack/react-start";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
@@ -767,16 +767,20 @@ export function RetailOverview() {
         {dailyChart.length > 1 ? (
           <div className="mt-2 -mx-1">
             <ResponsiveContainer width="100%" height={120}>
-              <BarChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+              <LineChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
                 <XAxis dataKey="label" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
                 <YAxis hide />
                 <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-                <Bar dataKey="profit" radius={[3, 3, 3, 3]}>
-                  {dailyChart.map((d, i) => (
-                    <Cell key={i} fill={d.profit < 0 ? "#DC2626" : "#8B5CF6"} />
-                  ))}
-                </Bar>
-              </BarChart>
+                <Line
+                  type="monotone"
+                  dataKey="profit"
+                  stroke="#8B5CF6"
+                  strokeWidth={2}
+                  dot={(props: any) => (
+                    <circle key={props.index} cx={props.cx} cy={props.cy} r={2.5} fill={props.payload.profit < 0 ? "#DC2626" : "#8B5CF6"} stroke="none" />
+                  )}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         ) : (
@@ -1090,16 +1094,21 @@ export function RetailOverview() {
             {lang === "zh" ? "每日利润趋势" : lang === "ms" ? "Trend Untung Harian" : "Daily Profit Trend"}
           </p>
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+            <LineChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10 }} width={48} />
               <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-              <Bar dataKey="profit" radius={[4, 4, 4, 4]}>
-                {dailyChart.map((d, i) => (
-                  <Cell key={i} fill={d.profit < 0 ? "#DC2626" : "#8B5CF6"} />
-                ))}
-              </Bar>
-            </BarChart>
+              <Line
+                type="monotone"
+                dataKey="profit"
+                stroke="#8B5CF6"
+                strokeWidth={2}
+                dot={(props: any) => (
+                  <circle key={props.index} cx={props.cx} cy={props.cy} r={3} fill={props.payload.profit < 0 ? "#DC2626" : "#8B5CF6"} stroke="none" />
+                )}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       )}
