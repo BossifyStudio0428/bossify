@@ -6,7 +6,11 @@ import type {
   submitPublicOrder,
 } from "@/lib/public-order.functions";
 import { stripEmoji } from "@/lib/wa";
-import { ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ShoppingBag, ShoppingCart, ArrowLeft, X, Plus, Minus, Check, Globe,
+  Search, ChevronLeft, ChevronRight, Frown, Package, Bike, Store,
+  MapPin, CreditCard, Paperclip, Landmark, Banknote,
+} from "lucide-react";
 import bossifyLogo from "@/assets/bossify-logo.png";
 import { PhoneInput } from "@/components/PhoneInput";
 import { formatCategory, formatUnit } from "@/lib/labels";
@@ -464,7 +468,7 @@ function PublicOrderFormPage() {
       <div className="pof-scope min-h-screen flex items-center justify-center px-6">
         <PofStyles />
         <div className="text-center max-w-sm">
-          <div className="text-5xl mb-3">😢</div>
+          <Frown className="h-12 w-12 mb-3 text-muted-foreground mx-auto" />
           <h1 className="text-xl font-bold">
             {state.reason === "disabled" ? t("pof_form_disabled") : t("pof_not_found")}
           </h1>
@@ -490,25 +494,11 @@ function PublicOrderFormPage() {
       { code: "zh" as Lang, label: "中文", sub: "继续使用中文", flag: "🇨🇳", tag: "ZH" },
     ];
     return (
-      <div
-        className="pof-scope min-h-screen flex flex-col px-5 pt-8 pb-10"
-        style={{
-          background:
-            "radial-gradient(120% 60% at 50% 0%, hsl(var(--primary) / 0.18) 0%, transparent 60%), linear-gradient(180deg, #FCFBFE 0%, #FCFBFE 100%)",
-        }}
-      >
+      <div className="pof-scope min-h-screen flex flex-col px-5 pt-8 pb-10 bg-background">
         <PofStyles />
         <div className="w-full max-w-sm mx-auto flex-1 flex flex-col">
           {/* Hero card */}
-          <div
-            className="relative overflow-hidden rounded-[28px] p-6 text-white shadow-[0_20px_50px_-20px_rgba(124,58,237,0.55)]"
-            style={{
-              background:
-                "linear-gradient(135deg, #7c3aed 0%, #6d28d9 45%, #4f46e5 100%)",
-            }}
-          >
-            <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
-            <div className="absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-fuchsia-400/20 blur-2xl" />
+          <div className="relative overflow-hidden rounded-[28px] p-6 bg-primary text-white">
             <div className="relative flex items-center gap-3">
               <div className="h-14 w-14 rounded-2xl bg-white/95 flex items-center justify-center shadow-sm flex-shrink-0">
                 <img src={bossifyLogo} alt="Bossify" className="h-10 w-10 object-contain" />
@@ -536,12 +526,12 @@ function PublicOrderFormPage() {
                 key={opt.code}
                 type="button"
                 onClick={() => pickLang(opt.code)}
-                className="group w-full px-4 py-3.5 rounded-2xl bg-[#F7F5FA] border border-[#D9D0EC] text-left flex items-center gap-3 transition-all active:scale-[0.99] hover:border-primary/40 hover:shadow-[0_8px_24px_-12px_rgba(124,58,237,0.35)]"
+                className="group w-full px-4 py-3.5 rounded-2xl bg-[#F7F5FA] border border-[#D9D0EC] text-left flex items-center gap-3 transition-all active:scale-[0.99] hover:border-primary/40"
                 style={{ animation: `fade-in 0.4s ease ${i * 60}ms both` }}
               >
                 <span
                   className="h-11 w-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg, #EFEAFA 0%, #EFEAFA 100%)" }}
+                  style={{ background: "#EFEAFA" }}
                 >
                   {opt.flag}
                 </span>
@@ -555,17 +545,17 @@ function PublicOrderFormPage() {
                   <span className="block text-[11.5px] text-muted-foreground mt-0.5 truncate">{opt.sub}</span>
                 </span>
                 <span
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-primary text-base transition-all group-hover:bg-primary group-hover:text-white"
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-primary transition-all group-hover:bg-primary group-hover:text-white"
                   style={{ background: "#EFEAFA" }}
                 >
-                  →
+                  <ChevronRight className="h-4 w-4" />
                 </span>
               </button>
             ))}
           </div>
 
           <p className="text-center text-[11px] text-muted-foreground mt-8 mb-2">
-            Powered by <span className="font-semibold text-foreground/70">Bossify</span> 💜
+            Powered by <span className="font-semibold text-foreground/70">Bossify</span>
           </p>
         </div>
       </div>
@@ -591,7 +581,7 @@ function PublicOrderFormPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold">
-            {t("pof_thanks").replace("{name}", done.name)} 🎉
+            {t("pof_thanks").replace("{name}", done.name)}
           </h1>
           <p className="text-sm text-muted-foreground mt-3">{t("pof_will_contact")}</p>
           <div className="mt-6 rounded-2xl border border-border bg-card px-5 py-4">
@@ -607,14 +597,14 @@ function PublicOrderFormPage() {
                 href={trackUrl}
                 className="mt-4 inline-flex w-full items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-md active:scale-[0.99] transition"
               >
-                📦 {lang === "zh" ? "追踪订单" : lang === "ms" ? "Jejaki pesanan" : "Track your order"}
+                <Package className="h-4 w-4" /> {lang === "zh" ? "追踪订单" : lang === "ms" ? "Jejaki pesanan" : "Track your order"}
               </a>
             );
           })()}
           {done.deliveryMethod === "pickup" && (
             <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 px-5 py-4 text-left">
               <p className="text-[11px] uppercase tracking-wider text-primary font-bold text-center">
-                📍 {lang === "zh" ? "自取地点" : lang === "ms" ? "Lokasi ambil" : "Pickup location"}
+                <MapPin className="h-3 w-3 inline-block mr-1 -mt-0.5" />{lang === "zh" ? "自取地点" : lang === "ms" ? "Lokasi ambil" : "Pickup location"}
               </p>
               <p className="mt-2 text-sm font-semibold text-foreground whitespace-pre-wrap text-center">
                 {done.pickupAddress?.trim() ||
@@ -629,7 +619,7 @@ function PublicOrderFormPage() {
           {done.paymentMethod !== "cash_on_delivery" && (done.paymentMethods?.some((m) => m && m.type)) && (
             <div className="mt-4 rounded-2xl border border-border bg-card px-5 py-4 text-left">
               <p className="text-[11px] uppercase tracking-wider text-muted-foreground text-center">
-                💳 {lang === "zh" ? "付款方式" : lang === "ms" ? "Maklumat Pembayaran" : "Payment Details"}
+                <CreditCard className="h-3 w-3 inline-block mr-1 -mt-0.5" />{lang === "zh" ? "付款方式" : lang === "ms" ? "Maklumat Pembayaran" : "Payment Details"}
               </p>
               <div className="mt-3 space-y-3">
                 {done.paymentMethods!.filter((m) => m && m.type).map((m, i) => (
@@ -667,10 +657,10 @@ function PublicOrderFormPage() {
             const href = `https://wa.me/${phone}?text=${encodeURIComponent(stripEmoji(msg))}`;
             const label =
               lang === "zh"
-                ? "📎 发送付款收据"
+                ? "发送付款收据"
                 : lang === "ms"
-                ? "📎 Hantar Resit Pembayaran"
-                : "📎 Send Payment Receipt";
+                ? "Hantar Resit Pembayaran"
+                : "Send Payment Receipt";
             return (
               <a
                 href={href}
@@ -678,13 +668,13 @@ function PublicOrderFormPage() {
                 rel="noopener noreferrer"
                 className="mt-6 inline-flex w-full items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm shadow-md active:scale-[0.99] transition"
               >
-                {label}
+                <Paperclip className="h-4 w-4" /> {label}
               </a>
             );
           })()}
         </div>
         <p className="text-[11px] text-muted-foreground mt-10">
-          {lang === "ms" ? "Dikuasakan oleh" : lang === "zh" ? "由" : "Powered by"} Bossify 💜
+          {lang === "ms" ? "Dikuasakan oleh" : lang === "zh" ? "由" : "Powered by"} Bossify
         </p>
       </div>
     );
@@ -1125,7 +1115,7 @@ function PublicOrderFormPage() {
                       <img src={l.image_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center text-xl text-muted-foreground/40">
-                        {isRetailish ? "🛍️" : "✨"}
+                        {isRetailish ? <ShoppingBag className="h-5 w-5" /> : <Package className="h-5 w-5" />}
                       </div>
                     )}
                   </div>
@@ -1195,23 +1185,23 @@ function PublicOrderFormPage() {
                       type="button"
                       onClick={() => setDeliveryMethod("delivery")}
                       aria-pressed={deliveryMethod === "delivery"}
-                      className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${deliveryMethod === "delivery" ? "border-[#6d28d9] bg-[#7c3aed] text-white shadow-[0_8px_18px_-8px_rgba(124,58,237,0.75)] scale-[1.02]" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
+                      className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${deliveryMethod === "delivery" ? "border-[#6d28d9] bg-[#7c3aed] text-white scale-[1.02]" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
                     >
-                      🛵 {delivery}
+                      <Bike className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{delivery}
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeliveryMethod("pickup")}
                       aria-pressed={deliveryMethod === "pickup"}
-                      className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${deliveryMethod === "pickup" ? "border-[#6d28d9] bg-[#7c3aed] text-white shadow-[0_8px_18px_-8px_rgba(124,58,237,0.75)] scale-[1.02]" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
+                      className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${deliveryMethod === "pickup" ? "border-[#6d28d9] bg-[#7c3aed] text-white scale-[1.02]" : "border-border bg-card text-muted-foreground hover:bg-muted/50"}`}
                     >
-                      🏬 {L("Self-pickup", "Ambil sendiri", "自取")}
+                      <Store className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{L("Self-pickup", "Ambil sendiri", "自取")}
                     </button>
                   </div>
                   {deliveryMethod === "pickup" && state.status === "ready" && (
                     <div className="mt-2 rounded-2xl border border-border bg-muted/30 px-3 py-2.5 text-xs">
                       <p className="font-semibold text-foreground mb-1">
-                        📍 {L("Pickup location", "Lokasi ambil", "自取地点")}
+                        <MapPin className="h-3 w-3 inline-block mr-1 -mt-0.5" />{L("Pickup location", "Lokasi ambil", "自取地点")}
                       </p>
                       {state.profile.store_address ? (
                         <p className="text-muted-foreground whitespace-pre-wrap">{state.profile.store_address}</p>
@@ -1257,7 +1247,7 @@ function PublicOrderFormPage() {
               {useDelivery && state.status === "ready" && (
                 <div className="rounded-2xl border border-border bg-muted/30 px-3 py-2.5 text-xs">
                   <p className="font-semibold text-foreground mb-1">
-                    🏬 {L("Delivering from", "Dihantar dari", "发货地点")}
+                    <Store className="h-3 w-3 inline-block mr-1 -mt-0.5" />{L("Delivering from", "Dihantar dari", "发货地点")}
                   </p>
                   {state.profile.store_address ? (
                     <p className="text-muted-foreground whitespace-pre-wrap">{state.profile.store_address}</p>
@@ -1282,7 +1272,7 @@ function PublicOrderFormPage() {
                   )}
                   {deliveryQuote.status === "ok" && (
                     <div className="flex items-center justify-between">
-                      <span>📍 {deliveryQuote.km.toFixed(2)} km</span>
+                      <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {deliveryQuote.km.toFixed(2)} km</span>
                       <span className="font-semibold">{L("Delivery", "Penghantaran", "运费")}: RM {deliveryQuote.fee.toFixed(2)}</span>
                     </div>
                   )}
@@ -1360,7 +1350,7 @@ function PublicOrderFormPage() {
                           className="mt-1 accent-primary"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold">🏦 {t("bank_transfer")}</p>
+                          <p className="text-sm font-semibold flex items-center gap-1.5"><Landmark className="h-4 w-4" /> {t("bank_transfer")}</p>
                           {methods.length > 0 ? (
                             <ul className="mt-1.5 space-y-1">
                               {methods.map((m, i) => (
@@ -1389,7 +1379,7 @@ function PublicOrderFormPage() {
                             className="mt-1 accent-primary"
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold">💵 {t("cash_on_delivery")}</p>
+                            <p className="text-sm font-semibold flex items-center gap-1.5"><Banknote className="h-4 w-4" /> {t("cash_on_delivery")}</p>
                           </div>
                         </label>
                       )}
@@ -1444,10 +1434,9 @@ function CategoryChip({ label, active, onClick }: { label: string; active: boole
       style={
         active
           ? {
-              background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+              background: "#7c3aed",
               color: "#ffffff",
               borderColor: "#6d28d9",
-              boxShadow: "0 6px 16px -6px rgba(124,58,237,0.55)",
               transform: "scale(1.03)",
             }
           : {
@@ -2130,20 +2119,20 @@ function PofStyles() {
   return (
     <style>{`
       .pof-scope {
-        --background: 257 54% 5%;
-        --foreground: 257 41% 97%;
-        --card: 260 45% 9%;
-        --card-foreground: 257 41% 97%;
-        --muted: 255 41% 13%;
-        --muted-foreground: 258 19% 64%;
-        --border: 260 38% 18%;
+        --background: 260 60% 99%;
+        --foreground: 265 35% 11%;
+        --card: 264 33% 97%;
+        --card-foreground: 265 35% 11%;
+        --muted: 259 62% 95%;
+        --muted-foreground: 258 15% 38%;
+        --border: 259 42% 87%;
         --primary: 258 90% 66%;
         --primary-foreground: 0 0% 100%;
         background: hsl(var(--background));
         color: hsl(var(--foreground));
       }
       .pof-hero {
-        background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+        background: hsl(var(--primary));
       }
       .pof-card {
         border: 1px solid hsl(var(--border));

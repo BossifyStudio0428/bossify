@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useParams } from "@tanstack/react-router";
-import { Check, ChefHat, Truck, Package } from "lucide-react";
+import {
+  Check, ChefHat, Truck, Package, Frown, Store, User, ShoppingBag,
+  Banknote, MapPin, MessageCircle, Clock,
+} from "lucide-react";
 
 export const Route = createFileRoute("/track/$orderRef")({
   component: TrackingPage,
@@ -143,7 +146,7 @@ function TrackingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-6 bg-[#FCFBFE]">
         <div className="text-center max-w-sm">
-          <div className="text-5xl mb-3">😢</div>
+          <Frown className="h-12 w-12 mb-3 text-muted-foreground mx-auto" />
           <h1 className="text-xl font-bold">{tr.notFound}</h1>
           <p className="text-sm text-muted-foreground mt-2">{tr.notFoundSub}</p>
         </div>
@@ -166,9 +169,7 @@ function TrackingPage() {
   };
 
   return (
-    <div className="min-h-screen px-5 pt-8 pb-12" style={{
-      background: "radial-gradient(120% 60% at 50% 0%, hsl(var(--primary) / 0.18) 0%, transparent 60%), linear-gradient(180deg, #FCFBFE 0%, #FCFBFE 100%)",
-    }}>
+    <div className="min-h-screen px-5 pt-8 pb-12 bg-background">
       <div className="max-w-md mx-auto space-y-5">
         {/* Language picker */}
         <div className="flex justify-end gap-1.5">
@@ -192,10 +193,7 @@ function TrackingPage() {
         </div>
 
         {/* Hero */}
-        <div
-          className="rounded-[28px] p-6 text-white shadow-[0_20px_50px_-20px_rgba(124,58,237,0.55)]"
-          style={{ background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 45%, #4f46e5 100%)" }}
-        >
+        <div className="rounded-[28px] p-6 bg-primary text-white">
           <p className="text-[10px] font-bold tracking-[0.22em] text-white/70 uppercase">{tr.title}</p>
           <h1 className="text-2xl font-extrabold mt-1">{business.name || "Store"}</h1>
           <p className="text-xs text-white/85 mt-2 font-mono">{order.code}</p>
@@ -204,7 +202,7 @@ function TrackingPage() {
         {/* Progress (delivery only) */}
         {!isPickup && (
         <div className="rounded-2xl bg-[#F7F5FA] border border-border/60 p-5 shadow-sm">
-          <p className="text-sm font-semibold mb-4">🚚 {tr.statusTitle}</p>
+          <p className="text-sm font-semibold mb-4 flex items-center gap-1.5"><Truck className="h-4 w-4" /> {tr.statusTitle}</p>
           <div className="space-y-4">
             {STATUSES.map((s, i) => {
               const reached = i <= currentIndex;
@@ -225,8 +223,8 @@ function TrackingPage() {
                       {tr[s]}
                     </p>
                     {active && s === "on_the_way" && order.estimated_arrival && (
-                      <p className="text-xs text-primary mt-0.5">
-                        ⏰ {tr.eta}: <span className="font-semibold">{order.estimated_arrival}</span>
+                      <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {tr.eta}: <span className="font-semibold">{order.estimated_arrival}</span>
                       </p>
                     )}
                   </div>
@@ -242,7 +240,7 @@ function TrackingPage() {
 
         {isPickup && business.store_address && (
           <div className="rounded-2xl bg-[#F7F5FA] border border-border/60 p-5 shadow-sm space-y-2">
-            <p className="text-sm font-semibold">🏪 {tr.selfPickup}</p>
+            <p className="text-sm font-semibold flex items-center gap-1.5"><Store className="h-4 w-4" /> {tr.selfPickup}</p>
             <p className="text-xs text-muted-foreground">{tr.selfPickupSub}</p>
             <div className="rounded-xl bg-muted/40 px-3 py-2.5 text-sm whitespace-pre-wrap">
               {business.store_address}
@@ -252,12 +250,12 @@ function TrackingPage() {
 
         {/* Order details */}
         <div className="rounded-2xl bg-[#F7F5FA] border border-border/60 p-5 shadow-sm space-y-2 text-sm">
-          <Row k={`👤 ${tr.customer}`} v={order.customer_name} />
-          <Row k={`🛍️ ${tr.product}`} v={order.product} />
-          <Row k={`📦 ${tr.qty}`} v={String(order.quantity)} />
-          <Row k={`💰 ${tr.total}`} v={`RM ${order.amount.toFixed(2)}`} />
+          <Row k={tr.customer} icon={User} v={order.customer_name} />
+          <Row k={tr.product} icon={ShoppingBag} v={order.product} />
+          <Row k={tr.qty} icon={Package} v={String(order.quantity)} />
+          <Row k={tr.total} icon={Banknote} v={`RM ${order.amount.toFixed(2)}`} />
           {order.delivery_address && (
-            <Row k={`📍 ${tr.deliveryTo}`} v={order.delivery_address} />
+            <Row k={tr.deliveryTo} icon={MapPin} v={order.delivery_address} />
           )}
         </div>
 
@@ -268,22 +266,24 @@ function TrackingPage() {
             rel="noreferrer"
             className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-[#25D366] text-white font-semibold text-sm shadow-md"
           >
-            📱 {tr.contactSeller}
+            <MessageCircle className="h-4 w-4" /> {tr.contactSeller}
           </a>
         )}
 
         <p className="text-center text-[10px] text-muted-foreground">
-          Powered by Bossify 💜
+          Powered by Bossify
         </p>
       </div>
     </div>
   );
 }
 
-function Row({ k, v }: { k: string; v: string }) {
+function Row({ k, icon: Icon, v }: { k: string; icon: React.ComponentType<{ className?: string }>; v: string }) {
   return (
     <div className="flex items-start justify-between gap-3 py-1.5 border-b border-border/40 last:border-0">
-      <span className="text-xs text-muted-foreground">{k}</span>
+      <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+        <Icon className="h-3.5 w-3.5 shrink-0" /> {k}
+      </span>
       <span className="text-sm font-medium text-right break-words max-w-[60%]">{v}</span>
     </div>
   );
