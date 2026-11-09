@@ -159,7 +159,7 @@ function CostHealthPage() {
             title={lang === "zh" ? "商品没填成本价" : lang === "ms" ? "Produk tiada kos" : "Products missing cost price"}
             desc={lang === "zh" ? "这些商品的利润数字目前不可信（成本按 0 算）" : lang === "ms" ? "Untung produk ini tidak boleh dipercayai (kos dikira RM0)" : "Profit for these is not trustworthy (cost counted as RM0)"}
             items={missingCost}
-            emptyText={lang === "zh" ? "全部商品都有成本价 👍" : lang === "ms" ? "Semua produk ada kos 👍" : "All products have a cost price 👍"}
+            emptyText={lang === "zh" ? "全部商品都有成本价" : lang === "ms" ? "Semua produk ada kos" : "All products have a cost price"}
             render={(it: InvRow) => (
               <Link key={it.id} to="/inventory/$itemId" params={{ itemId: it.id }} className="flex items-center gap-3 p-3 active:bg-muted/40">
                 <p className="text-sm font-semibold flex-1 min-w-0 truncate">{it.name}</p>
@@ -176,7 +176,7 @@ function CostHealthPage() {
             title={lang === "zh" ? "商品没设定包装成本" : lang === "ms" ? "Produk tiada kos pembungkusan" : "Products missing packaging cost"}
             desc={lang === "zh" ? "如果你的商品有额外包装费，没填会低估成本" : lang === "ms" ? "Jika ada kos pembungkusan tambahan, kos akan dianggarkan rendah" : "If your product has extra packaging cost, leaving this blank understates cost"}
             items={missingPackaging}
-            emptyText={lang === "zh" ? "全部商品都设定了包装成本 👍" : lang === "ms" ? "Semua produk ada kos pembungkusan 👍" : "All products have packaging cost set 👍"}
+            emptyText={lang === "zh" ? "全部商品都设定了包装成本" : lang === "ms" ? "Semua produk ada kos pembungkusan" : "All products have packaging cost set"}
             render={(it: InvRow) => (
               <Link key={it.id} to="/inventory/$itemId" params={{ itemId: it.id }} className="flex items-center gap-3 p-3 active:bg-muted/40">
                 <p className="text-sm font-semibold flex-1 min-w-0 truncate">{it.name}</p>
@@ -193,7 +193,7 @@ function CostHealthPage() {
             title={lang === "zh" ? "TikTok 订单还没同步完成" : lang === "ms" ? "Pesanan TikTok belum disegerak" : "TikTok orders not yet synced"}
             desc={lang === "zh" ? "这些订单还没有真实金额，暂时不算进报表" : lang === "ms" ? "Pesanan ini belum ada jumlah sebenar" : "These don't have real amounts yet"}
             items={stillPending}
-            emptyText={lang === "zh" ? "没有卡住的订单 👍" : lang === "ms" ? "Tiada pesanan tersekat 👍" : "No stuck orders 👍"}
+            emptyText={lang === "zh" ? "没有卡住的订单" : lang === "ms" ? "Tiada pesanan tersekat" : "No stuck orders"}
             render={(o: OrderRow) => (
               <div key={o.id} className="flex items-center gap-3 p-3">
                 <p className="text-sm font-semibold flex-1 min-w-0 truncate">{o.product ?? o.code}</p>
@@ -208,7 +208,7 @@ function CostHealthPage() {
             title={lang === "zh" ? "平台抽成还是估算值" : lang === "ms" ? "Yuran platform masih anggaran" : "Platform fee still estimated"}
             desc={lang === "zh" ? "这些订单还没结算，抽成用固定%估算，不是真实扣款" : lang === "ms" ? "Pesanan ini belum diselesaikan; yuran adalah anggaran" : "Not yet settled by TikTok; fee shown is an estimate, not the real deduction"}
             items={estimatedFee}
-            emptyText={lang === "zh" ? "没有卡在估算阶段的订单 👍" : lang === "ms" ? "Tiada pesanan dalam anggaran 👍" : "No orders stuck on estimates 👍"}
+            emptyText={lang === "zh" ? "没有卡在估算阶段的订单" : lang === "ms" ? "Tiada pesanan dalam anggaran" : "No orders stuck on estimates"}
             render={(o: OrderRow) => (
               <div key={o.id} className="flex items-center gap-3 p-3">
                 <p className="text-sm font-semibold flex-1 min-w-0 truncate">{o.product ?? o.code}</p>

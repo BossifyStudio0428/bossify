@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Calendar, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -221,7 +221,7 @@ function CostBreakdownPage() {
                 : "bg-card text-foreground border-border"
             }`}
           >
-            📅 {lang === "zh" ? "自选时间" : lang === "ms" ? "Tarikh tersuai" : "Custom range"}
+            <Calendar className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{lang === "zh" ? "自选时间" : lang === "ms" ? "Tarikh tersuai" : "Custom range"}
             {dateFilterActive && <span className="text-[10px] opacity-80">●</span>}
           </button>
           {dateFilterActive && (
@@ -309,8 +309,9 @@ function CostBreakdownPage() {
         </div>
       )}
       {activeCategory !== "__all" && (
-        <p className="text-[10px] text-muted-foreground">
-          {lang === "zh" ? "⚠️ 退款/营业费用/走势图暂不分类,仍显示全店数据" : lang === "ms" ? "⚠️ Bayaran balik/perbelanjaan/trend masih data keseluruhan" : "⚠️ Refunds/expenses/trend still show store-wide data, not category-filtered"}
+        <p className="text-[10px] text-muted-foreground flex items-start gap-1">
+          <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
+          {lang === "zh" ? "退款/营业费用/走势图暂不分类,仍显示全店数据" : lang === "ms" ? "Bayaran balik/perbelanjaan/trend masih data keseluruhan" : "Refunds/expenses/trend still show store-wide data, not category-filtered"}
         </p>
       )}
 
@@ -319,12 +320,13 @@ function CostBreakdownPage() {
       ) : (
         <>
           {estimateCount > 0 && (
-            <p className="text-[11px] text-muted-foreground rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5">
+            <p className="text-[11px] text-muted-foreground rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5 flex items-start gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600" />
               {lang === "zh"
-                ? `⚠️ ${estimateCount} 笔订单的平台抽成还是估算值，TikTok 结算后会自动更新`
+                ? `${estimateCount} 笔订单的平台抽成还是估算值，TikTok 结算后会自动更新`
                 : lang === "ms"
-                  ? `⚠️ ${estimateCount} pesanan masih anggaran yuran, akan dikemaskini bila TikTok selesai`
-                  : `⚠️ ${estimateCount} order(s) still using an estimated platform fee — updates automatically once TikTok settles`}
+                  ? `${estimateCount} pesanan masih anggaran yuran, akan dikemaskini bila TikTok selesai`
+                  : `${estimateCount} order(s) still using an estimated platform fee — updates automatically once TikTok settles`}
             </p>
           )}
 

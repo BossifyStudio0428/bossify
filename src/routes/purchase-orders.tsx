@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, X, Trash2, ChevronRight, ClipboardList, Sparkles, Camera, Image as ImageIcon, FileText, Type, Search } from "lucide-react";
+import { Plus, X, Trash2, ChevronRight, ClipboardList, Sparkles, Camera, Image as ImageIcon, FileText, Type, Search, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -209,7 +209,7 @@ function PurchaseOrdersPage() {
                 : "bg-card text-foreground border-border"
             }`}
           >
-            📅 {lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date"}
+            <Calendar className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date"}
             {(dateFrom || dateTo) && <span className="text-[10px] opacity-80">●</span>}
           </button>
           {(dateFrom || dateTo) && (
@@ -284,7 +284,7 @@ function PurchaseOrdersPage() {
 
       <button
         onClick={() => setAiSourceOpen(true)}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-primary/15 to-primary/5 border border-primary/30 text-primary font-semibold text-sm active:scale-[0.99] transition-transform"
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary/10 border border-primary/30 text-primary font-semibold text-sm active:scale-[0.99] transition-transform"
       >
         <Sparkles className="h-4 w-4" />
         {t("po_ai_scan")}
@@ -345,7 +345,7 @@ function PurchaseOrdersPage() {
       <button
         onClick={() => setFormOpen(true)}
         aria-label={t("po_add")}
-        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-gradient-to-br from-primary to-primary/80"
+        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-primary"
       >
         <Plus className="h-5 w-5" strokeWidth={2.5} />
         {t("po_add")}
@@ -404,7 +404,7 @@ function PurchaseOrdersPage() {
               await runAiParse("text", txt);
               setAiText("");
             }}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold active:scale-[0.99]"
+            className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold active:scale-[0.99]"
           >
             {t("po_ai_scan")}
           </button>
@@ -812,7 +812,7 @@ export function PurchaseOrderForm({
       <button
         onClick={save}
         disabled={saving}
-        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99]"
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99]"
       >
         {saving ? t("saving") : t("save")}
       </button>

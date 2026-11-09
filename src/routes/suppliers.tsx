@@ -153,7 +153,7 @@ function SuppliersPage() {
       <button
         onClick={() => setSheet({ kind: "form" })}
         aria-label={t("add_supplier")}
-        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-gradient-to-br from-primary to-primary/80"
+        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-primary"
       >
         <Plus className="h-5 w-5" strokeWidth={2.5} />
         {t("add_supplier")}
@@ -307,7 +307,7 @@ function SupplierFormSheet({
       <button
         onClick={save}
         disabled={saving}
-        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99]"
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99]"
       >
         {saving ? t("saving") : t("save")}
       </button>
