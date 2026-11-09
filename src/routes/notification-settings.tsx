@@ -1,5 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, Settings, Bell, Info } from "lucide-react";
+import {
+  ChevronLeft, Settings, Bell, Info, GraduationCap, Sparkles, Home,
+  Briefcase, ShoppingBag, Calendar, Wallet, Package, TrendingDown,
+  Sunrise, Moon, Target, CheckCircle2, AlertTriangle, type LucideIcon,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
@@ -313,15 +317,15 @@ function NotifSettingsPage() {
   const newItem = (() => {
     switch (bizType) {
       case "education":
-        return { icon: "🎓", labelKey: "notif_setting_new_case" as const, descKey: "notif_setting_new_case_desc" as const };
+        return { icon: GraduationCap, labelKey: "notif_setting_new_case" as const, descKey: "notif_setting_new_case_desc" as const };
       case "beauty":
-        return { icon: "💄", labelKey: "notif_setting_new_appointment" as const, descKey: "notif_setting_new_appointment_desc" as const };
+        return { icon: Sparkles, labelKey: "notif_setting_new_appointment" as const, descKey: "notif_setting_new_appointment_desc" as const };
       case "property":
-        return { icon: "🏠", labelKey: "notif_setting_new_lead" as const, descKey: "notif_setting_new_lead_desc" as const };
+        return { icon: Home, labelKey: "notif_setting_new_lead" as const, descKey: "notif_setting_new_lead_desc" as const };
       case "freelance":
-        return { icon: "💼", labelKey: "notif_setting_new_project" as const, descKey: "notif_setting_new_project_desc" as const };
+        return { icon: Briefcase, labelKey: "notif_setting_new_project" as const, descKey: "notif_setting_new_project_desc" as const };
       default:
-        return { icon: "🛍", labelKey: "notif_setting_new_order" as const, descKey: "notif_setting_new_order_desc" as const };
+        return { icon: ShoppingBag, labelKey: "notif_setting_new_order" as const, descKey: "notif_setting_new_order_desc" as const };
     }
   })();
 
@@ -357,37 +361,37 @@ function NotifSettingsPage() {
 
   const isRetailFnb = bizType === "retail" || bizType === "fnb";
 
-  const items: { icon: string; label: string; desc: string; prefKey: keyof NotifPrefs }[] = [
+  const items: { icon: LucideIcon; label: string; desc: string; prefKey: keyof NotifPrefs }[] = [
     { icon: newItem.icon, label: t(newItem.labelKey as any), desc: t(newItem.descKey as any), prefKey: "notif_new_order" },
   ];
 
   if (bizType === "property") {
     items.push(
-      { icon: "📅", label: t("notif_setting_followup" as any), desc: t("notif_setting_followup_desc" as any), prefKey: "notif_unpaid" },
-      { icon: "💰", label: t("notif_setting_unpaid"), desc: t(unpaidDescKey as any), prefKey: "notif_unpaid" },
+      { icon: Calendar, label: t("notif_setting_followup" as any), desc: t("notif_setting_followup_desc" as any), prefKey: "notif_unpaid" },
+      { icon: Wallet, label: t("notif_setting_unpaid"), desc: t(unpaidDescKey as any), prefKey: "notif_unpaid" },
     );
   } else {
     items.push(
-      { icon: "💰", label: t("notif_setting_unpaid"), desc: t(unpaidDescKey as any), prefKey: "notif_unpaid" },
+      { icon: Wallet, label: t("notif_setting_unpaid"), desc: t(unpaidDescKey as any), prefKey: "notif_unpaid" },
     );
     if (!isRetailFnb) {
       items.push(
-        { icon: "📅", label: t("notif_setting_followup" as any), desc: t("notif_setting_followup_desc" as any), prefKey: "notif_unpaid" },
+        { icon: Calendar, label: t("notif_setting_followup" as any), desc: t("notif_setting_followup_desc" as any), prefKey: "notif_unpaid" },
       );
     }
   }
 
   if (isRetailFnb) {
     items.push(
-      { icon: "📦", label: t("notif_setting_inventory"), desc: t("notif_setting_inventory_desc"), prefKey: "notif_inventory" },
-      { icon: "📉", label: t("notif_setting_losing" as any), desc: t("notif_setting_losing_desc" as any), prefKey: "notif_losing" },
+      { icon: Package, label: t("notif_setting_inventory"), desc: t("notif_setting_inventory_desc"), prefKey: "notif_inventory" },
+      { icon: TrendingDown, label: t("notif_setting_losing" as any), desc: t("notif_setting_losing_desc" as any), prefKey: "notif_losing" },
     );
   }
 
   items.push(
-    { icon: "🌅", label: t("notif_setting_morning"), desc: t(morningDescKey as any), prefKey: "notif_morning" },
-    { icon: "🌙", label: t("notif_setting_evening"), desc: t(eveningDescKey as any), prefKey: "notif_evening" },
-    { icon: "🎯", label: t("notif_setting_milestone"), desc: t("notif_setting_milestone_desc"), prefKey: "notif_milestone" },
+    { icon: Sunrise, label: t("notif_setting_morning"), desc: t(morningDescKey as any), prefKey: "notif_morning" },
+    { icon: Moon, label: t("notif_setting_evening"), desc: t(eveningDescKey as any), prefKey: "notif_evening" },
+    { icon: Target, label: t("notif_setting_milestone"), desc: t("notif_setting_milestone_desc"), prefKey: "notif_milestone" },
   );
 
   return (
@@ -401,7 +405,7 @@ function NotifSettingsPage() {
 
       {!isNativeApp && webPermission === "granted" && (
         <div className="rounded-2xl border border-emerald-300 bg-emerald-500/10 p-4 flex items-center gap-2">
-          <span className="text-emerald-600 text-lg">✓</span>
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
           <p className="text-sm font-semibold text-emerald-900">{t("notif_web_enabled" as any)}</p>
         </div>
       )}
@@ -433,7 +437,7 @@ function NotifSettingsPage() {
       <div className="rounded-2xl border border-border/60 bg-card divide-y divide-border/40">
         {items.map((it) => (
           <div key={it.label} className="flex items-start gap-3 p-4">
-            <span className="text-2xl">{it.icon}</span>
+            <it.icon className="h-6 w-6 text-muted-foreground shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold">{it.label}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{it.desc}</p>
@@ -449,7 +453,7 @@ function NotifSettingsPage() {
 
       {isRetailFnb && (
         <div className="rounded-2xl border border-border/60 bg-card p-4 flex items-center gap-3">
-          <span className="text-2xl">📦</span>
+          <Package className="h-6 w-6 text-muted-foreground shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">
               {lang === "zh" ? "低库存提醒阈值" : lang === "ms" ? "Ambang stok rendah" : "Low-stock alert threshold"}
@@ -476,7 +480,7 @@ function NotifSettingsPage() {
           {lang === "zh" ? "早晚摘要推送时间" : lang === "ms" ? "Masa ringkasan pagi/malam" : "Summary notification times"}
         </p>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-muted-foreground flex items-center gap-1.5">🌅 {t("notif_setting_morning")}</span>
+          <span className="text-xs text-muted-foreground flex items-center gap-1.5"><Sunrise className="h-3.5 w-3.5" /> {t("notif_setting_morning")}</span>
           <select
             value={prefs.morning_hour}
             onChange={async (e) => {
@@ -492,7 +496,7 @@ function NotifSettingsPage() {
           </select>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-muted-foreground flex items-center gap-1.5">🌙 {t("notif_setting_evening")}</span>
+          <span className="text-xs text-muted-foreground flex items-center gap-1.5"><Moon className="h-3.5 w-3.5" /> {t("notif_setting_evening")}</span>
           <select
             value={prefs.evening_hour}
             onChange={async (e) => {
@@ -558,12 +562,13 @@ function NotifSettingsPage() {
             </select>
           </div>
         )}
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-[10px] text-muted-foreground flex items-start gap-1">
+          <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
           {lang === "zh"
-            ? "⚠️ 新订单的部分推播由系统自动触发，不受这个设置影响，仍可能收到"
+            ? "新订单的部分推播由系统自动触发，不受这个设置影响，仍可能收到"
             : lang === "ms"
-              ? "⚠️ Sesetengah makluman pesanan baru dicetus oleh sistem dan tidak terjejas oleh tetapan ini"
-              : "⚠️ Some new-order push notifications are server-triggered and not affected by this setting"}
+              ? "Sesetengah makluman pesanan baru dicetus oleh sistem dan tidak terjejas oleh tetapan ini"
+              : "Some new-order push notifications are server-triggered and not affected by this setting"}
         </p>
       </div>
 

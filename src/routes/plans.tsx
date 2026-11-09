@@ -136,7 +136,7 @@ function TeamPlansSection({
     ? (lang === "zh" ? "/月" : lang === "ms" ? "/bulan" : "/month")
     : (lang === "zh" ? "/年" : lang === "ms" ? "/tahun" : "/year");
   const subscribeLabel = lang === "zh" ? "订阅" : lang === "ms" ? "Langgan" : "Subscribe";
-  const currentLabel = lang === "zh" ? "当前方案 ✓" : lang === "ms" ? "Pelan Semasa ✓" : "Current Plan ✓";
+  const currentLabel = lang === "zh" ? "当前方案" : lang === "ms" ? "Pelan Semasa" : "Current Plan";
 
   return (
     <>
@@ -173,8 +173,8 @@ function TeamPlansSection({
                 ))}
               </ul>
               {isCurrent ? (
-                <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-500/15 text-emerald-700 font-semibold text-sm">
-                  {currentLabel}
+                <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-500/15 text-emerald-700 font-semibold text-sm flex items-center justify-center gap-1.5">
+                  <Check className="h-4 w-4" /> {currentLabel}
                 </button>
               ) : (
                 <button
@@ -797,12 +797,12 @@ function PlansPage() {
             ))}
           </ul>
           {isLifetime ? (
-            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-500/15 text-amber-700 font-semibold text-sm">
-              {t("plan_badge_lifetime")} ✓
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-500/15 text-amber-700 font-semibold text-sm flex items-center justify-center gap-1.5">
+              <Check className="h-4 w-4" /> {t("plan_badge_lifetime")}
             </button>
           ) : isPro && activeBillingPlan === billing ? (
-            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-500/15 text-emerald-700 font-semibold text-sm">
-              {t("current_plan")} ✓
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-500/15 text-emerald-700 font-semibold text-sm flex items-center justify-center gap-1.5">
+              <Check className="h-4 w-4" /> {t("current_plan")}
             </button>
           ) : (
             <button
@@ -851,12 +851,12 @@ function PlansPage() {
             ))}
           </ul>
           {isLifetime ? (
-            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-500/15 text-amber-700 font-semibold text-sm">
-              {t("plan_badge_lifetime")} ✓
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-500/15 text-amber-700 font-semibold text-sm flex items-center justify-center gap-1.5">
+              <Check className="h-4 w-4" /> {t("plan_badge_lifetime")}
             </button>
           ) : isBusiness && activeBillingPlan === billing ? (
-            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-500/15 text-emerald-700 font-semibold text-sm">
-              {t("current_plan")} ✓
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-500/15 text-emerald-700 font-semibold text-sm flex items-center justify-center gap-1.5">
+              <Check className="h-4 w-4" /> {t("current_plan")}
             </button>
           ) : (
             <button

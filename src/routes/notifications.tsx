@@ -121,7 +121,7 @@ function NotificationsPage() {
                     </p>
                     {isTikTok && (
                       <span className="shrink-0 px-2 py-0.5 bg-black text-white text-[10px] font-medium rounded-full">
-                        🎵 TikTok
+                        TikTok
                       </span>
                     )}
                   </div>

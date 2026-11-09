@@ -96,7 +96,7 @@ function BusinessProfilePage() {
           className="relative h-28 w-28 rounded-full shadow-[var(--shadow-soft)]"
           aria-label={t("change_photo")}
         >
-          <span className="block h-full w-full rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-3xl font-bold overflow-hidden">
+          <span className="block h-full w-full rounded-full bg-primary text-primary-foreground flex items-center justify-center text-3xl font-bold overflow-hidden">
             {form.avatar_url
               ? <img src={form.avatar_url} alt="" className="h-full w-full object-cover" />
               : (form.business_name || t("name_initial_ph")).slice(0, 2).toUpperCase()}
@@ -122,7 +122,7 @@ function BusinessProfilePage() {
       <button
         onClick={save}
         disabled={saving}
-        className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] disabled:opacity-60"
+        className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] disabled:opacity-60"
       >
         {saving ? t("saving") : t("save")}
       </button>

@@ -187,8 +187,8 @@ function PlatformConnectPage() {
   if (!cfg) {
     return (
       <div className="px-5 pt-10 pb-8">
-        <button onClick={() => navigate({ to: "/profile" })} className="text-sm text-muted-foreground underline">
-          ← {t("back")}
+        <button onClick={() => navigate({ to: "/profile" })} className="text-sm text-muted-foreground underline inline-flex items-center gap-1">
+          <ChevronLeft className="h-3.5 w-3.5" /> {t("back")}
         </button>
         <p className="mt-6 text-sm">Platform not found.</p>
       </div>
@@ -219,7 +219,7 @@ function PlatformConnectPage() {
               : "bg-muted text-muted-foreground"
           }`}
         >
-          {connected ? `${t("connected")} ✅` : t("not_connected")}
+          {connected ? t("connected") : t("not_connected")}
         </span>
         <p className="text-sm text-muted-foreground max-w-sm">{cfg.description[lang]}</p>
       </div>
@@ -239,7 +239,7 @@ function PlatformConnectPage() {
         type="button"
         disabled={busy}
         onClick={connected ? handleDisconnect : handleConnect}
-        className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2"
+        className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2"
       >
         {busy && <Loader2 className="h-4 w-4 animate-spin" />}
         {connected ? "Disconnect" : cfg.connectLabel[lang]}

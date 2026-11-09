@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Bike, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -98,7 +98,7 @@ function DeliverySettingsPage() {
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-foreground">🛵 {t("ds_title")}</h1>
+          <h1 className="text-lg font-bold text-foreground flex items-center gap-1.5"><Bike className="h-4 w-4" /> {t("ds_title")}</h1>
           <p className="text-[11px] text-muted-foreground">{t("ds_subtitle")}</p>
         </div>
       </header>
@@ -143,7 +143,7 @@ function DeliverySettingsPage() {
               className="w-full rounded-xl bg-muted/40 border border-border/60 px-3 py-2.5 text-sm"
             />
             {lat != null && lng != null && (
-              <p className="text-[10px] text-muted-foreground">📍 {lat.toFixed(5)}, {lng.toFixed(5)}</p>
+              <p className="text-[10px] text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {lat.toFixed(5)}, {lng.toFixed(5)}</p>
             )}
           </section>
 

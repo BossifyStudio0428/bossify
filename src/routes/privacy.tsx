@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -92,7 +92,7 @@ function PrivacyPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={() => setDel({ open: false, text: "" })}>
           <div className="w-full max-w-[390px] bg-card rounded-t-3xl sm:rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
-              <span className="text-xl">⚠️</span>
+              <AlertTriangle className="h-5 w-5 text-red-600" />
               <h3 className="text-base font-bold text-red-600">{t("delete_acc_title")}</h3>
             </div>
             <p className="text-xs text-muted-foreground">{t("delete_acc_warn")}</p>

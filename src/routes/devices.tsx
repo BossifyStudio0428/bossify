@@ -149,7 +149,7 @@ function DevicesPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 to-primary/5 p-4">
+      <div className="rounded-2xl border border-border/60 bg-primary/10 p-4">
         <p className="text-sm font-semibold text-foreground">
           {t("devices_used").replace("{used}", String(used)).replace("{limit}", String(limit))}
         </p>

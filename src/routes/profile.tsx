@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronRight, LogOut, Check } from "lucide-react";
+import {
+  ChevronRight, LogOut, Check, Store, Package, Wrench, BarChart3,
+  UtensilsCrossed, ChefHat, Tag, Link2, Bike, Calendar, Settings, Bell,
+  Users, Globe, Smartphone, Lock, Trash2, type LucideIcon,
+} from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,26 +90,26 @@ function ProfilePage() {
           : "analytics_label";
 
   const menuTop: {
-    icon: string;
+    icon: LucideIcon;
     key: string;
     label: string;
     value?: string;
     onClick?: () => void;
   }[] = [
     {
-      icon: "🏪",
+      icon: Store,
       key: "biz",
       label: t("business_profile"),
       onClick: () => navigate({ to: "/business-profile" }),
     },
   ];
 
-  type MenuItem = { icon: string; key: string; label: string; value?: string; onClick?: () => void };
-  type MenuSection = { key: string; title: string; emoji: string; items: MenuItem[] };
+  type MenuItem = { icon: LucideIcon; key: string; label: string; value?: string; onClick?: () => void };
+  type MenuSection = { key: string; title: string; emoji: LucideIcon; items: MenuItem[] };
 
   const servicesItem: MenuItem | null = !hasInventory(bizType)
     ? {
-        icon: bizType === "property" ? "📦" : "🧰",
+        icon: bizType === "property" ? Package : Wrench,
         key: "services",
         label: t(bizType === "property" ? "packages_title" : "services_title"),
         onClick: () => navigate({ to: "/services" }),
@@ -116,19 +120,19 @@ function ProfilePage() {
     {
       key: "business",
       title: t("section_business"),
-      emoji: "📊",
+      emoji: BarChart3,
       items: [
         ...(servicesItem ? [servicesItem] : []),
         ...(bizType === "fnb" && bizSubType === "restaurant"
           ? [
               {
-                icon: "🍽️",
+                icon: UtensilsCrossed,
                 key: "tables",
                 label: t("manage_tables"),
                 onClick: () => navigate({ to: "/tables" }),
               } as MenuItem,
               {
-                icon: "🧑‍🍳",
+                icon: ChefHat,
                 key: "dinein",
                 label: t("dine_in"),
                 onClick: () => navigate({ to: "/dine-in" }),
@@ -139,7 +143,7 @@ function ProfilePage() {
           ? []
           : [
               {
-                icon: BIZ_TYPES.find((b) => b.key === bizType)?.emoji ?? "🏷️",
+                icon: Tag,
                 key: "biztype",
                 label: t("business_type_menu"),
                 value: bizType ? t(BIZ_TYPES.find((b) => b.key === bizType)!.nameKey) : "—",
@@ -150,7 +154,7 @@ function ProfilePage() {
           ? []
           : [
               {
-                icon: "🔗",
+                icon: Link2,
                 key: "orderform",
                 label: t(pofSectionTitleKey(bizType)),
                 onClick: () => navigate({ to: "/order-form" }),
@@ -159,7 +163,7 @@ function ProfilePage() {
         ...((!HIDE_ORDER_FORM && (bizType === "retail" || bizType === "fnb"))
           ? [
               {
-                icon: "🛵",
+                icon: Bike,
                 key: "delivery",
                 label: t("delivery_settings_menu"),
                 onClick: () => navigate({ to: "/delivery-settings" }),
@@ -170,13 +174,13 @@ function ProfilePage() {
           ? []
           : [
               {
-                icon: "📅",
+                icon: Calendar,
                 key: "bookings",
                 label: t("bookings"),
                 onClick: () => navigate({ to: "/bookings" }),
               } as MenuItem,
               {
-                icon: "⚙️",
+                icon: Settings,
                 key: "bookingsettings",
                 label: t("booking_settings"),
                 onClick: () => navigate({ to: "/booking-settings" }),
@@ -185,7 +189,7 @@ function ProfilePage() {
         ...(HIDE_ANALYTICS_MENU
           ? []
           : [{
-              icon: "📊",
+              icon: BarChart3,
               key: "analytics",
               label: t(analyticsLabelKey),
               onClick: () => navigate({ to: "/analytics" }),
@@ -195,16 +199,16 @@ function ProfilePage() {
     {
       key: "notifications",
       title: t("section_notifications"),
-      emoji: "🔔",
+      emoji: Bell,
       items: [
         {
-          icon: "🔔",
+          icon: Bell,
           key: "notif2",
           label: t("notifications"),
           onClick: () => navigate({ to: "/notifications" }),
         },
         {
-          icon: "⚙️",
+          icon: Settings,
           key: "notifsettings",
           label: t("notification_settings"),
           onClick: () => navigate({ to: "/notification-settings" }),
@@ -214,17 +218,17 @@ function ProfilePage() {
     {
       key: "account",
       title: t("section_account"),
-      emoji: "👥",
+      emoji: Users,
       items: [
         {
-          icon: "🌐",
+          icon: Globe,
           key: "lang",
           label: t("language"),
           value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`,
           onClick: () => setLangOpen(true),
         },
         {
-          icon: "📱",
+          icon: Smartphone,
           key: "devices",
           label: t("my_devices"),
           onClick: () => navigate({ to: "/devices" }),
@@ -236,10 +240,10 @@ function ProfilePage() {
           {
             key: "team",
             title: t("section_team"),
-            emoji: "👨‍👩‍👧",
+            emoji: Users,
             items: [
               {
-                icon: "👥",
+                icon: Users,
                 key: "myteam",
                 label: t("team_my_team"),
                 onClick: () => navigate({ to: "/team" }),
@@ -251,17 +255,17 @@ function ProfilePage() {
     {
       key: "integrations",
       title: t("section_integrations"),
-      emoji: "🔗",
+      emoji: Link2,
       items: [],
     },
     {
       key: "advanced",
       title: t("section_advanced"),
-      emoji: "⚙️",
+      emoji: Settings,
       items: [
-        { icon: "🔒", key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
+        { icon: Lock, key: "priv", label: t("privacy"), onClick: () => navigate({ to: "/privacy" }) },
         {
-          icon: "🗑️",
+          icon: Trash2,
           key: "deldata",
           label: t("data_deletion"),
           onClick: () => navigate({ to: "/data-deletion" }),
@@ -269,7 +273,7 @@ function ProfilePage() {
         ...(isAdmin
           ? [
               {
-                icon: "⚙️",
+                icon: Settings,
                 key: "admin",
                 label: t("admin_panel"),
                 value: "PRO",
@@ -391,7 +395,7 @@ function ProfilePage() {
   return (
     <div className="px-5 pt-10 pb-6 space-y-6">
       <header className="flex flex-col items-center text-center">
-        <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-3xl font-bold shadow-[var(--shadow-soft)] overflow-hidden">
+        <div className="h-24 w-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-3xl font-bold shadow-[var(--shadow-soft)] overflow-hidden">
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
           ) : (
@@ -400,7 +404,7 @@ function ProfilePage() {
         </div>
         <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">{businessName}</h1>
         <span
-          className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isLifetime ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white" : isTeam ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white" : isPro ? "bg-gradient-to-r from-primary to-primary/70 text-primary-foreground" : isStarter ? "bg-gradient-to-r from-sky-500 to-teal-500 text-white" : "bg-muted text-muted-foreground"}`}
+          className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${isLifetime ? "bg-amber-500 text-white" : isTeam ? "bg-violet-500 text-white" : isPro ? "bg-primary text-primary-foreground" : isStarter ? "bg-sky-500 text-white" : "bg-muted text-muted-foreground"}`}
         >
           {isLifetime ? (
             t("plan_badge_lifetime")
@@ -451,8 +455,8 @@ function ProfilePage() {
         id="tour-payment-card"
         className={`w-full rounded-2xl border p-4 flex items-center gap-3 text-left active:scale-[0.99] transition ${
           paySummary?.hasMethod
-            ? "bg-gradient-to-br from-emerald-50 to-emerald-50/40 border-emerald-500/30"
-            : "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-500/30"
+            ? "bg-emerald-50 border-emerald-500/30"
+            : "bg-amber-50 border-amber-500/30"
         }`}
       >
         <div
@@ -472,14 +476,16 @@ function ProfilePage() {
           <p
             className={`text-sm font-bold ${paySummary?.hasMethod ? "text-emerald-700" : "text-amber-900"}`}
           >
-            {paySummary?.hasMethod ? `✓ ${t("payment_active")}` : `⚠️ ${t("payment_not_setup")}`}
+            {paySummary?.hasMethod ? t("payment_active") : t("payment_not_setup")}
           </p>
           {paySummary?.hasMethod ? (
             <p className="text-xs text-emerald-700/80 mt-0.5 truncate">
               {paySummary.type ?? "—"} {paySummary.number ? `· ${paySummary.number}` : ""}
             </p>
           ) : (
-            <p className="text-[11px] text-amber-700 font-semibold mt-0.5">{t("set_up_now")} →</p>
+            <p className="text-[11px] text-amber-700 font-semibold mt-0.5 flex items-center gap-0.5">
+              {t("set_up_now")} <ChevronRightIcon className="h-3 w-3" />
+            </p>
           )}
         </div>
         <ChevronRightIcon
@@ -496,7 +502,7 @@ function ProfilePage() {
             onClick={m.onClick}
             className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
           >
-            <span className="text-lg w-6 text-center">{m.icon}</span>
+            <span className="w-6 flex items-center justify-center text-muted-foreground"><m.icon className="h-5 w-5" /></span>
             <span className="flex-1 text-sm font-medium text-foreground">{m.label}</span>
             {m.value && <span className="text-xs text-muted-foreground">{m.value}</span>}
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -509,7 +515,7 @@ function ProfilePage() {
         .map((sec) => (
         <section key={sec.key} className="space-y-2">
           <div className="flex items-center gap-2 px-1">
-            <span className="text-base">{sec.emoji}</span>
+            <sec.emoji className="h-4 w-4 text-muted-foreground" />
             <p className="text-[11px] uppercase font-bold tracking-wider text-muted-foreground">
               {sec.title}
             </p>
@@ -523,7 +529,7 @@ function ProfilePage() {
                 onClick={m.onClick}
                 className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
               >
-                <span className="text-lg w-6 text-center">{m.icon}</span>
+                <span className="w-6 flex items-center justify-center text-muted-foreground"><m.icon className="h-5 w-5" /></span>
                 <span className="flex-1 text-sm font-medium text-foreground">{m.label}</span>
                 {m.value && <span className="text-xs text-muted-foreground">{m.value}</span>}
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -554,7 +560,7 @@ function ProfilePage() {
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        {isConn ? `${t("connected")} ✅` : t("not_connected")}
+                        {isConn ? t("connected") : t("not_connected")}
                       </span>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </button>

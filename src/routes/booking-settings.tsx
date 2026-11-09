@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Copy, Share2 } from "lucide-react";
+import { ArrowLeft, Copy, Share2, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,7 +86,7 @@ function BookingSettingsPage() {
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-foreground">📅 {t("booking_settings")}</h1>
+          <h1 className="text-lg font-bold text-foreground flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {t("booking_settings")}</h1>
         </div>
       </header>
 
