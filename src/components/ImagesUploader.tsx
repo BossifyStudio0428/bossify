@@ -68,7 +68,7 @@ export function ImagesUploader({ images, onChange, userId, max = 6 }: Props) {
         <div className="grid grid-cols-3 gap-2">
           {images.map((url, i) => (
             <div key={url + i} className="relative aspect-square rounded-xl overflow-hidden bg-muted/50 border border-border/60 group">
-              <img src={url} alt="" className="h-full w-full object-cover" />
+              <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" />
               {i === 0 && (
                 <span className="absolute top-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-primary text-primary-foreground">
                   MAIN

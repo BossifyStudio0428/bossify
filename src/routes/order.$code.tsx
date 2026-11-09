@@ -1112,7 +1112,7 @@ function PublicOrderFormPage() {
                 <div key={`${l.productId}-${l.variant}-${i}`} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5">
                   <div className="h-14 w-14 rounded-xl bg-muted/40 overflow-hidden flex-shrink-0">
                     {l.image_url ? (
-                      <img src={l.image_url} alt="" className="h-full w-full object-cover" />
+                      <img src={l.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center text-xl text-muted-foreground/40">
                         {isRetailish ? <ShoppingBag className="h-5 w-5" /> : <Package className="h-5 w-5" />}
@@ -1884,7 +1884,7 @@ function ProductSlide({
                   <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold bg-black/30">▶</span>
                 </>
               ) : (
-                <img src={s.url} alt="" className="h-full w-full object-cover" />
+                <img src={s.url} alt="" loading="lazy" className="h-full w-full object-cover" />
               )}
             </button>
           ))}

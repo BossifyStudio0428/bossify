@@ -91,7 +91,7 @@ export function DetailPhotosList({ items, onChange, userId, maxImageMB = 5 }: Pr
               </button>
             </div>
           </div>
-          <img src={it.url} alt={`${t("detail_label")} ${i + 1}`} className="w-full h-auto block bg-black/5" />
+          <img src={it.url} alt={`${t("detail_label")} ${i + 1}`} loading="lazy" className="w-full h-auto block bg-black/5" />
           <div className="p-2">
             <textarea
               value={it.description}

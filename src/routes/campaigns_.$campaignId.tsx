@@ -714,7 +714,7 @@ function CampaignDetailPage() {
                   return (
                     <div key={it.id} className="flex items-center gap-3 p-3">
                       <div className="h-9 w-9 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0 overflow-hidden">
-                        {it.image_url ? <img src={it.image_url} className="h-full w-full object-cover" /> : <PackageX className="h-4 w-4 text-red-500" />}
+                        {it.image_url ? <img src={it.image_url} alt="" loading="lazy" className="h-full w-full object-cover" /> : <PackageX className="h-4 w-4 text-red-500" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{it.name}</p>
@@ -735,7 +735,7 @@ function CampaignDetailPage() {
                   return (
                     <div key={it.id} className="flex items-center gap-3 p-3">
                       <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 overflow-hidden">
-                        {it.image_url ? <img src={it.image_url} className="h-full w-full object-cover" /> : <PackageX className="h-4 w-4 text-amber-500" />}
+                        {it.image_url ? <img src={it.image_url} alt="" loading="lazy" className="h-full w-full object-cover" /> : <PackageX className="h-4 w-4 text-amber-500" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{it.name}</p>

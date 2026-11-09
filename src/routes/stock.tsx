@@ -218,7 +218,7 @@ function StockPage() {
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 shrink-0 rounded-xl bg-muted overflow-hidden">
                     {img ? (
-                      <img src={img} alt="" className="h-full w-full object-cover" />
+                      <img src={img} alt="" loading="lazy" className="h-full w-full object-cover" />
                     ) : null}
                   </div>
                   <div className="flex-1 min-w-0">

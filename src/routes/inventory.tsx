@@ -505,7 +505,7 @@ function InventoryPage() {
                   <div className="flex items-start gap-3 flex-1 min-w-0">
                     <div className="h-12 w-12 shrink-0 rounded-xl bg-muted/50 border border-border/60 overflow-hidden flex items-center justify-center">
                       {coverImage ? (
-                        <img src={coverImage} alt={title} className="h-full w-full object-cover" />
+                        <img src={coverImage} alt={title} loading="lazy" className="h-full w-full object-cover" />
                       ) : (
                         <ImageIcon className="h-4 w-4 text-muted-foreground" />
                       )}
@@ -619,7 +619,7 @@ function InventoryPage() {
                 >
                   <div className="h-12 w-12 shrink-0 rounded-xl bg-muted/50 border border-border/60 overflow-hidden flex items-center justify-center">
                     {it.image_url ? (
-                      <img src={it.image_url} alt={it.name} className="h-full w-full object-cover" />
+                      <img src={it.image_url} alt={it.name} loading="lazy" className="h-full w-full object-cover" />
                     ) : (
                       <ImageIcon className="h-4 w-4 text-muted-foreground" />
                     )}

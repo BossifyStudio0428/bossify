@@ -276,7 +276,7 @@ function SortableImageCell({
       {...listeners}
       className="relative aspect-square rounded-xl overflow-hidden bg-muted/50 border border-border/60 select-none"
     >
-      <img src={url} alt="" className="h-full w-full object-cover pointer-events-none" draggable={false} />
+      <img src={url} alt="" loading="lazy" className="h-full w-full object-cover pointer-events-none" draggable={false} />
       {idx === 0 && (
         <span className="absolute top-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-primary text-primary-foreground">
           COVER

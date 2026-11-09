@@ -338,7 +338,7 @@ function StockTakePage() {
               <div key={r.inventory_id} className="rounded-2xl bg-card border border-border/60 p-3 space-y-2">
                 <div className="flex items-center gap-3">
                   {!isFnb && r.image_url ? (
-                    <img src={r.image_url} alt={r.product_name} className="h-12 w-12 rounded-xl object-cover bg-muted" />
+                    <img src={r.image_url} alt={r.product_name} loading="lazy" className="h-12 w-12 rounded-xl object-cover bg-muted" />
                   ) : !isFnb ? (
                     <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
                       <Package className="h-5 w-5 text-muted-foreground" />
