@@ -740,6 +740,57 @@ function MiniOrdersPreview() {
   );
 }
 
+function CursorGlow() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const el = ref.current;
+    if (!el) return;
+
+    let x = window.innerWidth / 2;
+    let y = window.innerHeight / 2;
+    let targetX = x;
+    let targetY = y;
+    let raf = 0;
+
+    const onMove = (e: PointerEvent) => {
+      targetX = e.clientX;
+      targetY = e.clientY;
+    };
+    const tick = () => {
+      x += (targetX - x) * 0.09;
+      y += (targetY - y) * 0.09;
+      el.style.transform = `translate3d(${(x - 320).toFixed(1)}px, ${(y - 320).toFixed(1)}px, 0)`;
+      raf = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    raf = requestAnimationFrame(tick);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      aria-hidden="true"
+      className="pointer-events-none fixed top-0 left-0 -z-10"
+      style={{
+        width: 640,
+        height: 640,
+        borderRadius: "9999px",
+        background: `radial-gradient(circle, ${GRAD_FROM}26 0%, ${GRAD_TO}14 38%, transparent 70%)`,
+        filter: "blur(20px)",
+        willChange: "transform",
+      }}
+    />
+  );
+}
+
 export function LandingPage() {
   const { lang } = useI18n();
   const navigate = useNavigate();
@@ -755,14 +806,14 @@ export function LandingPage() {
   const featureMinis = [<MiniProfitPreview key="p" />, <MiniInventoryPreview key="i" />, <MiniReportsPreview key="r" reports={c.reports} />, <MiniOrdersPreview key="o" />];
 
   return (
-    <div style={{ background: BG, fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
+    <div className="relative isolate" style={{ background: BG, fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
+      <CursorGlow />
+      <div className="relative z-10">
       {/* Header */}
       <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(10,6,20,0.8)", borderColor: BORDER }}>
         <div className="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden" style={{ background: GRADIENT }}>
-              <img src={bossifyLogo} alt="Bossify" className="h-6 w-6 object-cover" />
-            </div>
+            <img src={bossifyLogo} alt="Bossify" className="h-9 w-9 rounded-lg object-contain" />
             <span className="text-lg font-bold tracking-tight" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
               Bossify
             </span>
@@ -1158,6 +1209,7 @@ export function LandingPage() {
           <p className="text-[12.5px]" style={{ color: TEXT_MUTED }}>© {new Date().getFullYear()} ZH Studio</p>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
