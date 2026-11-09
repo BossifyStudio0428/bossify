@@ -61,94 +61,96 @@
 }
 
 :root {
-  /* Bossify is dark-theme only (no light mode) — these are the single
+  /* Bossify is light-theme only (no dark mode) — these are the single
      source of truth and are duplicated into .dark below so the look is
-     identical whether or not JS has added the "dark" class yet (SSR). */
+     identical regardless of which class is on <html> (SSR, and any
+     leftover ".dark"-scoped selectors elsewhere in the app/libraries). */
   --radius: 1rem;
-  /* #0A0614 */
-  --background: oklch(0.138 0.032 296.563);
-  /* #F5F3FA */
-  --foreground: oklch(0.968 0.01 299.241);
-  /* #140D22 */
-  --card: oklch(0.181 0.043 297.34);
-  --card-foreground: oklch(0.968 0.01 299.241);
-  /* #1B1430 */
-  --popover: oklch(0.216 0.054 292.876);
-  --popover-foreground: oklch(0.968 0.01 299.241);
-  /* #8B5CF6 */
+  /* #FCFBFE */
+  --background: oklch(0.991 0.004 296.563);
+  /* #1A1225 */
+  --foreground: oklch(0.205 0.04 296.8);
+  /* #F7F5FA */
+  --card: oklch(0.973 0.008 296.563);
+  --card-foreground: oklch(0.205 0.04 296.8);
+  /* #FFFFFF */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0.04 296.8);
+  /* #8B5CF6 -- unchanged brand purple */
   --primary: oklch(0.606 0.219 292.717);
   --primary-foreground: oklch(1 0 0);
-  /* #1B1430 */
-  --secondary: oklch(0.216 0.054 292.876);
-  --secondary-foreground: oklch(0.968 0.01 299.241);
-  --muted: oklch(0.216 0.054 292.876);
-  /* #9D93B5 */
-  --muted-foreground: oklch(0.683 0.051 298.513);
-  /* #241B3D */
-  --accent: oklch(0.252 0.063 293.591);
-  --accent-foreground: oklch(0.968 0.01 299.241);
-  /* #F87171 */
-  --destructive: oklch(0.711 0.166 22.216);
-  --destructive-foreground: oklch(0.968 0.01 299.241);
-  /* border base #A87CFF */
-  --border: oklch(0.688 0.188 296.648 / 14%);
-  --input: oklch(0.688 0.188 296.648 / 22%);
+  /* #EFEAFA */
+  --secondary: oklch(0.936 0.02 296.563);
+  --secondary-foreground: oklch(0.205 0.04 296.8);
+  --muted: oklch(0.95 0.012 296.563);
+  /* #5B5270 */
+  --muted-foreground: oklch(0.47 0.045 297.3);
+  /* #ECE5FB */
+  --accent: oklch(0.925 0.03 296.563);
+  --accent-foreground: oklch(0.205 0.04 296.8);
+  /* #DC2626 -- darkened a step from the dark-mode coral so it stays
+     legible on a light background */
+  --destructive: oklch(0.577 0.21 25.3);
+  --destructive-foreground: oklch(1 0 0);
+  /* border base #8B5CF6, light tint */
+  --border: oklch(0.606 0.219 292.717 / 16%);
+  --input: oklch(0.606 0.219 292.717 / 26%);
   --ring: oklch(0.606 0.219 292.717);
-  --shadow-soft: 0 8px 24px -8px color-mix(in oklab, var(--primary) 40%, transparent);
-  --shadow-card: 0 4px 16px -6px color-mix(in oklab, black 60%, transparent);
+  --shadow-soft: 0 8px 24px -8px color-mix(in oklab, var(--primary) 16%, transparent);
+  --shadow-card: 0 1px 3px -1px color-mix(in oklab, black 10%, transparent);
   /* violet / magenta / green / blue / red */
   --chart-1: oklch(0.606 0.219 292.717);
   --chart-2: oklch(0.667 0.259 322.15);
-  --chart-3: oklch(0.8 0.182 151.711);
-  --chart-4: oklch(0.714 0.143 254.624);
-  --chart-5: oklch(0.711 0.166 22.216);
-  /* #140D22 */
-  --sidebar: oklch(0.181 0.043 297.34);
-  --sidebar-foreground: oklch(0.968 0.01 299.241);
+  --chart-3: oklch(0.65 0.17 151.711);
+  --chart-4: oklch(0.6 0.15 254.624);
+  --chart-5: oklch(0.577 0.21 25.3);
+  /* #F7F5FA */
+  --sidebar: oklch(0.973 0.008 296.563);
+  --sidebar-foreground: oklch(0.205 0.04 296.8);
   --sidebar-primary: oklch(0.606 0.219 292.717);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.216 0.054 292.876);
-  --sidebar-accent-foreground: oklch(0.968 0.01 299.241);
-  --sidebar-border: oklch(0.688 0.188 296.648 / 14%);
+  --sidebar-accent: oklch(0.925 0.03 296.563);
+  --sidebar-accent-foreground: oklch(0.205 0.04 296.8);
+  --sidebar-border: oklch(0.606 0.219 292.717 / 16%);
   --sidebar-ring: oklch(0.606 0.219 292.717);
 }
 
 .dark {
   /* Same values as :root — kept so `.dark`-scoped selectors (e.g. chart.tsx's
-     per-theme color configs) keep working if that class is ever toggled. */
-  --background: oklch(0.138 0.032 296.563);
-  --foreground: oklch(0.968 0.01 299.241);
-  --card: oklch(0.181 0.043 297.34);
-  --card-foreground: oklch(0.968 0.01 299.241);
-  --popover: oklch(0.216 0.054 292.876);
-  --popover-foreground: oklch(0.968 0.01 299.241);
+     per-theme color configs) keep working if that class is ever present. */
+  --background: oklch(0.991 0.004 296.563);
+  --foreground: oklch(0.205 0.04 296.8);
+  --card: oklch(0.973 0.008 296.563);
+  --card-foreground: oklch(0.205 0.04 296.8);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0.04 296.8);
   --primary: oklch(0.606 0.219 292.717);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.216 0.054 292.876);
-  --secondary-foreground: oklch(0.968 0.01 299.241);
-  --muted: oklch(0.216 0.054 292.876);
-  --muted-foreground: oklch(0.683 0.051 298.513);
-  --accent: oklch(0.252 0.063 293.591);
-  --accent-foreground: oklch(0.968 0.01 299.241);
-  --destructive: oklch(0.711 0.166 22.216);
-  --destructive-foreground: oklch(0.968 0.01 299.241);
-  --border: oklch(0.688 0.188 296.648 / 14%);
-  --input: oklch(0.688 0.188 296.648 / 22%);
+  --secondary: oklch(0.936 0.02 296.563);
+  --secondary-foreground: oklch(0.205 0.04 296.8);
+  --muted: oklch(0.95 0.012 296.563);
+  --muted-foreground: oklch(0.47 0.045 297.3);
+  --accent: oklch(0.925 0.03 296.563);
+  --accent-foreground: oklch(0.205 0.04 296.8);
+  --destructive: oklch(0.577 0.21 25.3);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.606 0.219 292.717 / 16%);
+  --input: oklch(0.606 0.219 292.717 / 26%);
   --ring: oklch(0.606 0.219 292.717);
-  --shadow-soft: 0 8px 24px -8px color-mix(in oklab, var(--primary) 40%, transparent);
-  --shadow-card: 0 4px 16px -6px color-mix(in oklab, black 60%, transparent);
+  --shadow-soft: 0 8px 24px -8px color-mix(in oklab, var(--primary) 16%, transparent);
+  --shadow-card: 0 1px 3px -1px color-mix(in oklab, black 10%, transparent);
   --chart-1: oklch(0.606 0.219 292.717);
   --chart-2: oklch(0.667 0.259 322.15);
-  --chart-3: oklch(0.8 0.182 151.711);
-  --chart-4: oklch(0.714 0.143 254.624);
-  --chart-5: oklch(0.711 0.166 22.216);
-  --sidebar: oklch(0.181 0.043 297.34);
-  --sidebar-foreground: oklch(0.968 0.01 299.241);
+  --chart-3: oklch(0.65 0.17 151.711);
+  --chart-4: oklch(0.6 0.15 254.624);
+  --chart-5: oklch(0.577 0.21 25.3);
+  --sidebar: oklch(0.973 0.008 296.563);
+  --sidebar-foreground: oklch(0.205 0.04 296.8);
   --sidebar-primary: oklch(0.606 0.219 292.717);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.216 0.054 292.876);
-  --sidebar-accent-foreground: oklch(0.968 0.01 299.241);
-  --sidebar-border: oklch(0.688 0.188 296.648 / 14%);
+  --sidebar-accent: oklch(0.925 0.03 296.563);
+  --sidebar-accent-foreground: oklch(0.205 0.04 296.8);
+  --sidebar-border: oklch(0.606 0.219 292.717 / 16%);
   --sidebar-ring: oklch(0.606 0.219 292.717);
 }
 
@@ -170,7 +172,7 @@
   }
 
   html {
-    background-color: #0A0614;
+    background-color: #FCFBFE;
   }
 }
 

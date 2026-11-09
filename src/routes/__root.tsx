@@ -61,7 +61,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
-      { name: "theme-color", content: "#0A0614" },
+      { name: "theme-color", content: "#FCFBFE" },
       { name: "google", content: "notranslate" },
       { title: "Bossify" },
       { name: "description", content: "Bossify — order & payment app for Malaysian WhatsApp sellers. Track orders, payments, inventory & customers. English, BM & Chinese." },
@@ -116,16 +116,16 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <style
           dangerouslySetInnerHTML={{
             __html: `
-              html, body { background-color: #0A0614 !important; margin: 0; }
+              html, body { background-color: #FCFBFE !important; margin: 0; }
               #bossify-prepaint {
                 position: fixed; inset: 0; z-index: 0;
-                background-color: #0A0614;
+                background-color: #FCFBFE;
                 display: flex; align-items: center; justify-content: center;
                 pointer-events: none;
               }
               #bossify-prepaint p {
                 margin: 16px 0 0; font-weight: 800; font-size: 28px;
-                color: #F5F3FA; letter-spacing: -0.02em;
+                color: #1A1225; letter-spacing: -0.02em;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
               }
               #bossify-prepaint .col {
@@ -136,7 +136,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
           }}
         />
       </head>
-      <body style={{ backgroundColor: "#0A0614" }}>
+      <body style={{ backgroundColor: "#FCFBFE" }}>
         <div id="bossify-prepaint" aria-hidden="true">
           <div className="col">
             <p>Bossify</p>
