@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Pencil } from "lucide-react";
+import { ChevronLeft, Pencil, Phone, MessageCircle, Trash2, RotateCcw, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +8,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchWAProfile } from "@/lib/wa";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { PhoneInput } from "@/components/PhoneInput";
-import { orderCost, calculateOrderFinancials, calculateAdjustment, type AdjustmentType } from "@/lib/orderMath";
+import { orderCost, orderContributionProfit, calculateOrderFinancials, calculateAdjustment, type AdjustmentType } from "@/lib/orderMath";
 import { logInventoryChange } from "@/lib/inventoryAudit";
 
 export const Route = createFileRoute("/orders_/$orderId")({
@@ -450,29 +450,29 @@ function OrderDetailPage() {
               {order.customer_name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate">👤 {order.customer_name}</p>
+              <p className="text-sm font-semibold truncate">{order.customer_name}</p>
               {buyerOrderCount !== null && buyerOrderCount > 1 && (
                 <p className="text-[11px] font-semibold text-primary mt-0.5">
-                  🔁 {lang === "zh" ? `回购客户 · 共 ${buyerOrderCount} 笔订单` : lang === "ms" ? `Pelanggan berulang · ${buyerOrderCount} pesanan` : `Repeat buyer · ${buyerOrderCount} orders`}
+                  {lang === "zh" ? `回购客户 · 共 ${buyerOrderCount} 笔订单` : lang === "ms" ? `Pelanggan berulang · ${buyerOrderCount} pesanan` : `Repeat buyer · ${buyerOrderCount} orders`}
                 </p>
               )}
               {order.phone ? (
                 <div className="flex gap-3 mt-1">
-                  <a href={`tel:${order.phone}`} className="text-xs text-primary">📞 {t("call")}</a>
-                  <a href={buildWhatsAppLink(order.phone, "")} target="_blank" rel="noreferrer" className="text-xs text-emerald-600">📱 WhatsApp</a>
+                  <a href={`tel:${order.phone}`} className="text-xs text-primary inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {t("call")}</a>
+                  <a href={buildWhatsAppLink(order.phone, "")} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 inline-flex items-center gap-1"><MessageCircle className="h-3 w-3" /> WhatsApp</a>
                 </div>
               ) : <p className="text-xs text-muted-foreground mt-1">{t("no_phone")}</p>}
             </div>
           </div>
 
           <div className="rounded-2xl bg-card border border-border/60 p-4 space-y-2 text-sm">
-            <Row label={`🛍️ ${t("product")}`} value={order.product} />
-            <Row label={`📦 ${t("quantity")}`} value={String(order.quantity)} />
-            <Row label={`💰 ${t("price")}`} value={`RM ${Number(order.amount).toFixed(2)}`} />
-            <Row label={`📅 ${t("date_label")}`} value={new Date(order.created_at).toLocaleString("en-MY")} />
-            <Row label={`📋 ${t("code_label")}`} value={order.code} />
+            <Row label={t("product")} value={order.product} />
+            <Row label={t("quantity")} value={String(order.quantity)} />
+            <Row label={t("price")} value={`RM ${Number(order.amount).toFixed(2)}`} />
+            <Row label={t("date_label")} value={new Date(order.created_at).toLocaleString("en-MY")} />
+            <Row label={t("code_label")} value={order.code} />
             {order.delivery_address && (
-              <Row label={`📍 ${t("delivery_address" as any)}`} value={order.delivery_address} />
+              <Row label={t("delivery_address" as any)} value={order.delivery_address} />
             )}
             {(() => {
               const dm = (order as any).delivery_method as string | undefined;
@@ -480,7 +480,7 @@ function OrderDetailPage() {
               const isDel = dm === "delivery";
               return (
                 <Row
-                  label={`${isDel ? "🚗" : "🏪"} ${t("delivery_type" as any)}`}
+                  label={t("delivery_type" as any)}
                   value={isDel ? t("order_delivery" as any) : t("order_pickup" as any)}
                 />
               );
@@ -492,14 +492,14 @@ function OrderDetailPage() {
               const isDel = dm === "delivery";
               return (
                 <Row
-                  label={`🏬 ${isDel ? t("delivering_from" as any) : t("pickup_at" as any)}`}
+                  label={isDel ? t("delivering_from" as any) : t("pickup_at" as any)}
                   value={storeAddr}
                 />
               );
             })()}
             {(order as any).payment_method && (
               <Row
-                label={`💳 ${t("pof_payment_method" as any)}`}
+                label={t("pof_payment_method" as any)}
                 value={
                   (order as any).payment_method === "cash_on_delivery"
                     ? t("cash_on_delivery" as any)
@@ -509,13 +509,77 @@ function OrderDetailPage() {
                 }
               />
             )}
-            <Row label={`📝 ${t("notes")}`} value={order.notes || t("no_notes")} />
+            <Row label={t("notes")} value={order.notes || t("no_notes")} />
           </div>
+
+          {(order as any).financial_status === "pending" ? (
+            <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4">
+              <p className="text-xs text-amber-700">
+                {lang === "zh"
+                  ? "此 TikTok 订单的财务数据还在同步中，暂时无法显示利润明细"
+                  : lang === "ms"
+                    ? "Data kewangan pesanan TikTok ini masih disegerak -- butiran untung belum tersedia"
+                    : "This TikTok order's financial data is still syncing -- profit details aren't available yet"}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-card border border-border/60 p-4 space-y-2 text-sm">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                {lang === "zh" ? "财务摘要" : lang === "ms" ? "Ringkasan Kewangan" : "Financial Summary"}
+              </p>
+              <Row
+                label={lang === "zh" ? "销售额" : lang === "ms" ? "Jualan" : "Sales"}
+                value={`RM ${Number(order.amount).toFixed(2)}`}
+              />
+              <Row
+                label={lang === "zh" ? "产品成本" : lang === "ms" ? "Kos produk" : "Product Cost"}
+                value={`-RM ${Number(order.cost ?? 0).toFixed(2)}`}
+              />
+              {Number((order as any).platform_fee_amount ?? 0) > 0 && (
+                <Row
+                  label={lang === "zh" ? "平台费用" : lang === "ms" ? "Yuran platform" : "Platform Fees"}
+                  value={`-RM ${Number((order as any).platform_fee_amount ?? 0).toFixed(2)}`}
+                />
+              )}
+              {Number((order as any).shipping_cost ?? 0) > 0 && (
+                <Row
+                  label={lang === "zh" ? "运费" : lang === "ms" ? "Penghantaran" : "Shipping"}
+                  value={`-RM ${Number((order as any).shipping_cost ?? 0).toFixed(2)}`}
+                />
+              )}
+              {Number((order as any).affiliate_commission ?? 0) > 0 && (
+                <Row
+                  label={lang === "zh" ? "其他费用" : lang === "ms" ? "Kos lain" : "Other Costs"}
+                  value={`-RM ${Number((order as any).affiliate_commission ?? 0).toFixed(2)}`}
+                />
+              )}
+              <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">
+                  {lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}
+                </span>
+                {(() => {
+                  const realProfit = orderContributionProfit({
+                    amount: order.amount,
+                    cost: order.cost,
+                    gross_profit: order.gross_profit,
+                    platform_fee_amount: (order as any).platform_fee_amount,
+                    shipping_cost: (order as any).shipping_cost,
+                    affiliate_commission: (order as any).affiliate_commission,
+                  });
+                  return (
+                    <span className={`text-lg font-bold font-mono ${realProfit < 0 ? "text-red-600" : "text-primary"}`}>
+                      RM {realProfit.toFixed(2)}
+                    </span>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
 
           {isDelivery && (
             <div className="rounded-2xl bg-card border border-border/60 p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">🚚 {lang === "zh" ? "配送状态" : lang === "ms" ? "Status Penghantaran" : "Delivery Status"}</p>
+                <p className="text-sm font-semibold flex items-center gap-1.5"><Truck className="h-4 w-4" /> {lang === "zh" ? "配送状态" : lang === "ms" ? "Status Penghantaran" : "Delivery Status"}</p>
                 <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary">
                   {deliveryStatusLabel(currentDeliveryStatus, lang)}
                 </span>
@@ -554,7 +618,7 @@ function OrderDetailPage() {
               </p>
               <div className="rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-[11px]">
                 <p className="text-muted-foreground mb-1">
-                  🔗 {lang === "zh" ? "追踪链接" : lang === "ms" ? "Pautan penjejakan" : "Tracking link"}
+                  {lang === "zh" ? "追踪链接" : lang === "ms" ? "Pautan penjejakan" : "Tracking link"}
                 </p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 truncate font-mono text-[10px]">{trackingUrlFor(order.code)}</code>
@@ -574,16 +638,17 @@ function OrderDetailPage() {
           )}
 
           <div className="grid grid-cols-3 gap-2">
-            <button onClick={sendWA} className="py-3 rounded-2xl bg-emerald-500 text-white font-semibold text-xs">📲 WhatsApp</button>
-            <button onClick={() => setEditing(true)} className="py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-xs">✏️ {t("edit")}</button>
-            <button onClick={remove} className="py-3 rounded-2xl bg-red-500 text-white font-semibold text-xs">🗑️ {t("delete")}</button>
+            <button onClick={sendWA} className="py-3 rounded-2xl bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</button>
+            <button onClick={() => setEditing(true)} className="py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-xs flex items-center justify-center gap-1.5"><Pencil className="h-3.5 w-3.5" /> {t("edit")}</button>
+            <button onClick={remove} className="py-3 rounded-2xl bg-red-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5"><Trash2 className="h-3.5 w-3.5" /> {t("delete")}</button>
           </div>
 
           <button
             onClick={() => setRefundModal(true)}
             className="w-full py-3 rounded-2xl bg-card border border-border/60 text-amber-700 font-semibold text-xs"
           >
-            ↩️ {lang === "zh" ? "记录退款 / 退货" : lang === "ms" ? "Rekod bayaran balik / pemulangan" : "Record refund / return"}
+            <RotateCcw className="h-3.5 w-3.5 inline-block mr-1.5 -mt-0.5" />
+            {lang === "zh" ? "记录退款 / 退货" : lang === "ms" ? "Rekod bayaran balik / pemulangan" : "Record refund / return"}
           </button>
 
           {(order as any).is_refunded && (
@@ -636,7 +701,7 @@ function OrderDetailPage() {
         <div className="w-full max-w-sm rounded-2xl bg-card border border-border p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
           <div>
             <p className="text-base font-bold">
-              🚗 {lang === "zh" ? "预计到达时间" : lang === "ms" ? "Anggaran ketibaan" : "Estimated Arrival"}
+              {lang === "zh" ? "预计到达时间" : lang === "ms" ? "Anggaran ketibaan" : "Estimated Arrival"}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               {lang === "zh"
@@ -668,8 +733,8 @@ function OrderDetailPage() {
     {refundModal && order && (
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4" onClick={() => setRefundModal(false)}>
         <div className="w-full max-w-sm rounded-2xl bg-card border border-border p-5 space-y-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <p className="text-base font-bold">
-            ↩️ {lang === "zh" ? "记录退款 / 退货" : lang === "ms" ? "Rekod bayaran balik" : "Record refund / return"}
+          <p className="text-base font-bold flex items-center gap-2">
+            <RotateCcw className="h-4 w-4" /> {lang === "zh" ? "记录退款 / 退货" : lang === "ms" ? "Rekod bayaran balik" : "Record refund / return"}
           </p>
           <div className="space-y-2">
             {([
