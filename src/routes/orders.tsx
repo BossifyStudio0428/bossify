@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell } from "recharts";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -677,6 +678,30 @@ function OrdersPage() {
   const visibleByCategory = activeCategoryFilter === "__all"
     ? visible
     : visible.filter((o) => orderCategories[o.id]?.has(activeCategoryFilter));
+
+  const salesTrendByDay = new Map<string, number>();
+  for (const o of byDate) {
+    if (o.status !== "Paid") continue;
+    const day = String(o.created_at ?? "").slice(0, 10);
+    if (!day) continue;
+    salesTrendByDay.set(day, (salesTrendByDay.get(day) ?? 0) + Number(o.amount ?? 0));
+  }
+  const salesTrend = Array.from(salesTrendByDay.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([day, amount]) => ({
+      day,
+      label: new Date(day + "T00:00:00").toLocaleDateString(
+        lang === "zh" ? "zh-CN" : lang === "ms" ? "ms-MY" : "en-MY",
+        { day: "numeric", month: "short" },
+      ),
+      amount: Math.round(amount * 100) / 100,
+    }));
+
+  const statusBar = [
+    { name: t("paid"), value: byDate.filter((o) => o.status === "Paid").length, color: "#10B981" },
+    { name: t("unpaid"), value: byDate.filter((o) => o.status === "Unpaid").length, color: "#DC2626" },
+    { name: t("pending"), value: byDate.filter((o) => o.status === "Pending").length, color: "#F59E0B" },
+  ].filter((d) => d.value > 0);
   const dateFilterActive = !!(dateFrom || dateTo);
   const todayCount = orders.filter((o) => new Date(o.created_at).toDateString() === new Date().toDateString()).length;
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
@@ -859,6 +884,43 @@ function OrdersPage() {
               </span>
             )}
         </button>
+      )}
+
+      {!loading && salesTrend.length > 1 && (
+        <div className="rounded-2xl bg-card border border-border/60 p-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
+            {lang === "zh" ? "\u9500\u552e\u8d8b\u52bf" : lang === "ms" ? "Trend Jualan" : "Sales trend"}
+          </p>
+          <ResponsiveContainer width="100%" height={140}>
+            <LineChart data={salesTrend} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 10 }} width={44} />
+              <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+              <Line type="monotone" dataKey="amount" stroke="#8B5CF6" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {!loading && statusBar.length > 0 && (
+        <div className="rounded-2xl bg-card border border-border/60 p-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
+            {lang === "zh" ? "\u8ba2\u5355\u72b6\u6001" : lang === "ms" ? "Status Pesanan" : "Order status"}
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(90, statusBar.length * 34)}>
+            <BarChart data={statusBar} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
+              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={64} />
+              <Tooltip />
+              <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                {statusBar.map((d, i) => (
+                  <Cell key={i} fill={d.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       )}
 
       <div className="relative">
