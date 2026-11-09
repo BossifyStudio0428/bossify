@@ -535,7 +535,7 @@ const BottomNav = memo(function BottomNav() {
               id="tour-new-order"
               to="/new-order"
               aria-label={t(bizKey(type, "new_order"))}
-              className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
+              className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
             >
               <Plus className="h-7 w-7" strokeWidth={2.5} />
             </Link>
@@ -667,7 +667,7 @@ const DesktopSidebar = memo(function DesktopSidebar() {
       </nav>
 
       {!isPro && (
-        <div className="m-3 rounded-xl border border-border/60 bg-gradient-to-br from-primary/10 to-primary/5 p-4">
+        <div className="m-3 rounded-xl border border-border/60 bg-primary/10 p-4">
           <p className="text-[13px] font-semibold text-foreground">{t("more_subscription")}</p>
           <p className="mt-1 text-[12px] text-muted-foreground">
             {lang === "zh"

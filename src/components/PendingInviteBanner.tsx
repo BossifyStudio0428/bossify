@@ -78,7 +78,7 @@ export function PendingInviteBanner() {
   };
 
   return (
-    <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5 p-4 space-y-3">
+    <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 space-y-3">
       <div className="flex items-start gap-3">
         <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
           <Mail className="h-5 w-5" />

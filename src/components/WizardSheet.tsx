@@ -105,7 +105,7 @@ export function WizardSheet({ title, steps, saving, saveLabel, onClose, onSave }
               type="button"
               onClick={onSave}
               disabled={saving}
-              className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
+              className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
             >
               {saving ? t("saving") : (saveLabel ?? t("save"))}
             </button>
@@ -113,7 +113,7 @@ export function WizardSheet({ title, steps, saving, saveLabel, onClose, onSave }
             <button
               type="button"
               onClick={() => go(idx + 1)}
-              className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold active:scale-[0.99] transition-transform"
+              className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.99] transition-transform"
             >
               {t("continue")}
             </button>

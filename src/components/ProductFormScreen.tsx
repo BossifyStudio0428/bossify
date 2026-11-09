@@ -60,7 +60,7 @@ export function ProductFormScreen({
             type="button"
             onClick={onSave}
             disabled={saving}
-            className="px-4 py-2 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-xs font-bold disabled:opacity-60 active:scale-[0.98]"
+            className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-bold disabled:opacity-60 active:scale-[0.98]"
           >
             {saving ? t("saving") : (saveLabel ?? t("save"))}
           </button>
@@ -93,7 +93,7 @@ export function ProductFormScreen({
             type="button"
             onClick={onSave}
             disabled={saving}
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-bold disabled:opacity-60 active:scale-[0.99]"
+            className="w-full py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-60 active:scale-[0.99]"
           >
             {saving ? t("saving") : (saveLabel ?? t("save"))}
           </button>

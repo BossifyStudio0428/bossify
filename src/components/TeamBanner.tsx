@@ -47,7 +47,7 @@ export function TeamBanner() {
   return (
     <Link
       to="/team"
-      className="block rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 p-3 flex items-center gap-3 active:scale-[0.99] transition-transform"
+      className="block rounded-2xl bg-primary/10 border border-primary/30 p-3 flex items-center gap-3 active:scale-[0.99] transition-transform"
     >
       <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
         <Users className="h-5 w-5" />

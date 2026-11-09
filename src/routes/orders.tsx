@@ -1473,7 +1473,7 @@ function OrdersPage() {
           the pill style now used on Products' "add product" button. */}
       <Link
         to="/new-order"
-        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] lg:hidden"
+        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] lg:hidden"
       >
         <Plus className="h-5 w-5" strokeWidth={2.5} />
         {t("ro_new_sale")}

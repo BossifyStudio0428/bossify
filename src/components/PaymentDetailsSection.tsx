@@ -216,7 +216,7 @@ export default function PaymentDetailsSection() {
           type="button"
           onClick={save}
           disabled={saving || !!numberError}
-          className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm disabled:opacity-60"
+          className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm disabled:opacity-60"
         >
           {saving ? t("saving") : t("save")}
         </button>

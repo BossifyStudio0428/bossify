@@ -52,7 +52,7 @@ export function UpgradeModal() {
         className="w-full max-w-[340px] bg-card rounded-3xl p-6 text-center shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center shadow-[var(--shadow-soft)]">
+        <div className="mx-auto h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-[var(--shadow-soft)]">
           <Lock className="h-7 w-7" />
         </div>
         <h2 className="mt-4 text-lg font-bold text-foreground">{title}</h2>
@@ -61,7 +61,7 @@ export function UpgradeModal() {
         </p>
         <button
           onClick={() => { hideUpgrade(); navigate({ to: "/plans" }); }}
-          className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition"
+          className="mt-5 w-full py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition"
         >
           {t("upgrade_to_pro")} → {proMonthlyPrice}/{t("per_month").replace(/^\s*\/\s*/, "")}
         </button>

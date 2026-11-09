@@ -180,9 +180,9 @@ export function SetupChecklist() {
   }
 
   return (
-    <section className="rounded-2xl bg-gradient-to-br from-primary/10 via-card to-card border border-primary/30 shadow-[var(--shadow-card)] p-3">
+    <section className="rounded-2xl bg-primary/10 border border-primary/30 shadow-[var(--shadow-card)] p-3">
       <div className="flex items-center gap-2">
-        <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center shrink-0">
+        <div className="h-7 w-7 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
           <Rocket className="h-3.5 w-3.5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -203,7 +203,7 @@ export function SetupChecklist() {
 
       <div className="mt-2 h-1 w-full rounded-full bg-muted overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-500"
+          className="h-full bg-primary transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
