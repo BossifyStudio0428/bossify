@@ -539,9 +539,9 @@ export function RetailOverview() {
       </div>
 
       {pendingSyncCount > 0 && (
-        <div className="mt-2.5 rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 flex items-center gap-2">
+        <div className="mt-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 px-3.5 py-2.5 flex items-center gap-2">
           <span className="text-sm">⏳</span>
-          <p className="text-[11px] text-amber-800">
+          <p className="text-[11px] text-amber-300">
             {pendingSyncCount} {lang === "zh" ? "笔 TikTok 订单同步中，暂未计入以上数字" : lang === "ms" ? "pesanan TikTok sedang disegerak, belum dikira" : "TikTok order(s) syncing — not counted above yet"}
           </p>
         </div>
@@ -729,9 +729,9 @@ export function RetailOverview() {
       </div>
 
       {pendingSyncCount > 0 && (
-        <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-center gap-2">
+        <div className="mt-3 rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-2.5 flex items-center gap-2">
           <span className="text-sm">⏳</span>
-          <p className="text-xs text-amber-800">
+          <p className="text-xs text-amber-300">
             {pendingSyncCount}{" "}
             {lang === "zh"
               ? "笔 TikTok 订单同步中，暂未计入以上数字"
@@ -754,7 +754,7 @@ export function RetailOverview() {
               <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
               <Bar dataKey="profit" radius={[4, 4, 4, 4]}>
                 {dailyChart.map((d, i) => (
-                  <Cell key={i} fill={d.profit < 0 ? "#EF4444" : "#6C4AB6"} />
+                  <Cell key={i} fill={d.profit < 0 ? "#F87171" : "#8B5CF6"} />
                 ))}
               </Bar>
             </BarChart>
@@ -935,11 +935,11 @@ function StatusPill({ status }: { status: string }) {
   const s = (status || "").toLowerCase();
   const cls =
     s === "paid"
-      ? "bg-emerald-100 text-emerald-700"
+      ? "bg-emerald-500/15 text-emerald-300"
       : s === "unpaid"
-        ? "bg-red-100 text-red-600"
+        ? "bg-red-500/15 text-red-300"
         : s === "pending"
-          ? "bg-amber-100 text-amber-700"
+          ? "bg-amber-500/15 text-amber-300"
           : "bg-muted text-muted-foreground";
   return (
     <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${cls}`}>
