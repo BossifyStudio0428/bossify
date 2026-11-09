@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { TrendingUp, TrendingDown, ChevronDown, MessageCircle, Plus, Crown, Trophy, PieChart as PieChartIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, ChevronDown, MessageCircle, Plus, Trophy, PieChart as PieChartIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, PieChart, Pie } from "recharts";
 import { useServerFn } from "@tanstack/react-start";
 import { Capacitor } from "@capacitor/core";
@@ -620,25 +620,22 @@ export function RetailOverview() {
           gradient (blue → purple, sampled from bossify-logo.png). Shows
           both Contribution Profit (before operating expenses) and Net
           Profit (after) — two different numbers, deliberately not one. */}
-      <div
-        className="mt-4 rounded-2xl p-4"
-        style={{ background: "linear-gradient(135deg, #2925EC, #7B25F5)" }}
-      >
-        <div className="flex items-baseline justify-between pb-2.5 mb-2.5 border-b border-white/20">
-          <span className="text-[11px] text-white/70">
+      <div className="mt-4 rounded-2xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)]">
+        <div className="flex items-baseline justify-between pb-2.5 mb-2.5 border-b border-border/60">
+          <span className="text-[11px] text-muted-foreground">
             {lang === "zh" ? "边际利润" : lang === "ms" ? "Untung sumbangan" : "Contribution profit"}
           </span>
-          <span className="text-sm font-semibold text-white/90">
+          <span className="text-sm font-semibold text-foreground font-mono">
             {loading ? "…" : money(stats.contribution)}
           </span>
         </div>
-        <p className="text-[11px] text-white/70">{t("ro_total_profit")}</p>
-        <p className="mt-1 text-3xl font-bold text-white">
+        <p className="text-[11px] text-muted-foreground">{t("ro_total_profit")}</p>
+        <p className="mt-1 text-3xl font-bold text-primary font-mono tracking-tight">
           {loading ? "…" : money(stats.netProfit)}
         </p>
-        <TrendPill delta={loading ? null : stats.profitDelta} onDark />
+        <TrendPill delta={loading ? null : stats.profitDelta} />
         {stats.operatingExpenses > 0 && (
-          <p className="mt-1 text-[10px] text-white/60">
+          <p className="mt-1 text-[10px] text-muted-foreground">
             {lang === "zh"
               ? `已扣除 ${money(stats.operatingExpenses)} 营业费用`
               : lang === "ms"
@@ -646,22 +643,21 @@ export function RetailOverview() {
                 : `After ${money(stats.operatingExpenses)} operating expenses`}
           </p>
         )}
-        <div className="mt-3 flex items-center gap-5 pt-3 border-t border-white/20">
+        <div className="mt-3 flex items-center gap-5 pt-3 border-t border-border/60">
           <div>
-            <p className="text-[10px] text-white/70">{t("ro_total_sales")}</p>
-            <p className="text-sm font-semibold text-white">{loading ? "…" : money(stats.sales)}</p>
+            <p className="text-[10px] text-muted-foreground">{t("ro_total_sales")}</p>
+            <p className="text-sm font-semibold text-foreground font-mono">{loading ? "…" : money(stats.sales)}</p>
           </div>
           <div>
-            <p className="text-[10px] text-white/70">{t("ro_orders_count")}</p>
-            <p className="text-sm font-semibold text-white">{loading ? "…" : String(stats.count)}</p>
+            <p className="text-[10px] text-muted-foreground">{t("ro_orders_count")}</p>
+            <p className="text-sm font-semibold text-foreground font-mono">{loading ? "…" : String(stats.count)}</p>
           </div>
         </div>
       </div>
 
       {pendingSyncCount > 0 && (
         <div className="mt-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 px-3.5 py-2.5 flex items-center gap-2">
-          <span className="text-sm">⏳</span>
-          <p className="text-[11px] text-amber-300">
+          <p className="text-[11px] text-amber-700 font-medium">
             {pendingSyncCount} {lang === "zh" ? "笔 TikTok 订单同步中，暂未计入以上数字" : lang === "ms" ? "pesanan TikTok sedang disegerak, belum dikira" : "TikTok order(s) syncing — not counted above yet"}
           </p>
         </div>
@@ -886,8 +882,7 @@ export function RetailOverview() {
 
       {pendingSyncCount > 0 && (
         <div className="mt-3 rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-2.5 flex items-center gap-2">
-          <span className="text-sm">⏳</span>
-          <p className="text-xs text-amber-300">
+          <p className="text-xs text-amber-700 font-medium">
             {pendingSyncCount}{" "}
             {lang === "zh"
               ? "笔 TikTok 订单同步中，暂未计入以上数字"
@@ -1036,11 +1031,11 @@ function KpiCard({
 }) {
   const toneClass =
     tone === "success"
-      ? "text-emerald-400"
+      ? "text-emerald-600"
       : tone === "danger"
-        ? "text-red-400"
+        ? "text-red-600"
         : tone === "warn"
-          ? "text-amber-400"
+          ? "text-amber-600"
           : "text-foreground";
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-3.5 shadow-[var(--shadow-card)]">
@@ -1066,11 +1061,11 @@ function DesktopStatCell({
 }) {
   const toneClass =
     tone === "success"
-      ? "text-emerald-400"
+      ? "text-emerald-600"
       : tone === "danger"
-        ? "text-red-400"
+        ? "text-red-600"
         : tone === "warn"
-          ? "text-amber-400"
+          ? "text-amber-600"
           : "text-foreground";
   return (
     <div className={`px-4 py-3.5 ${last ? "" : "border-r border-border/60"}`}>
@@ -1102,11 +1097,11 @@ function StatusPill({ status }: { status: string }) {
   const s = (status || "").toLowerCase();
   const cls =
     s === "paid"
-      ? "bg-emerald-500/15 text-emerald-300"
+      ? "bg-emerald-500/15 text-emerald-700"
       : s === "unpaid"
-        ? "bg-red-500/15 text-red-300"
+        ? "bg-red-500/15 text-red-700"
         : s === "pending"
-          ? "bg-amber-500/15 text-amber-300"
+          ? "bg-amber-500/15 text-amber-700"
           : "bg-muted text-muted-foreground";
   return (
     <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${cls}`}>
@@ -1122,7 +1117,7 @@ function TikTokStatusPill({ connected, lang }: { connected: boolean | null; lang
   const content = (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-        connected ? "bg-emerald-500/15 text-emerald-300" : "bg-muted text-muted-foreground"
+        connected ? "bg-emerald-500/15 text-emerald-700" : "bg-muted text-muted-foreground"
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-emerald-400" : "bg-muted-foreground/50"}`} />
@@ -1134,14 +1129,14 @@ function TikTokStatusPill({ connected, lang }: { connected: boolean | null; lang
 
 function UpgradeToProCard({ onUpgrade, lang }: { onUpgrade: () => void; lang: string }) {
   return (
-    <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/15 to-primary/5 p-4">
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">
-          <Crown className="h-4 w-4" />
-        </span>
+    <div className="rounded-xl border border-primary/30 bg-card p-4">
+      <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-foreground">
           {lang === "zh" ? "升级到 Pro" : lang === "ms" ? "Naik taraf ke Pro" : "Upgrade to Pro"}
         </p>
+        <span className="text-[10px] font-bold uppercase tracking-wide text-primary border border-primary/40 rounded-full px-2 py-0.5">
+          Pro
+        </span>
       </div>
       <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
         {lang === "zh"
@@ -1193,7 +1188,7 @@ function TopProductsCard({
                 {i + 1}
               </span>
               <span className="flex-1 truncate text-xs font-medium text-foreground">{p.name}</span>
-              <span className={`text-xs font-bold ${p.profit < 0 ? "text-red-400" : "text-emerald-400"}`}>
+              <span className={`text-xs font-bold font-mono ${p.profit < 0 ? "text-red-600" : "text-emerald-600"}`}>
                 {money(p.profit)}
               </span>
             </div>
