@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -140,6 +141,28 @@ function ExpensesPage() {
       .reduce((s, e) => s + Number(e.amount), 0);
   }, [items]);
 
+  const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
+    advertising: "#8B5CF6",
+    affiliate_influencer: "#FBBF24",
+    subscriptions: "#60A5FA",
+    ai_software: "#F472B6",
+    other: "#9CA3AF",
+  };
+
+  const categoryBreakdown = useMemo(() => {
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const byCat = new Map<ExpenseCategory, number>();
+    for (const e of items) {
+      if (!e.incurred_at.startsWith(ym)) continue;
+      byCat.set(e.category, (byCat.get(e.category) ?? 0) + Number(e.amount));
+    }
+    return CATEGORIES
+      .map((cat) => ({ name: categoryLabel(cat, lang), value: Math.round((byCat.get(cat) ?? 0) * 100) / 100, color: CATEGORY_COLORS[cat] }))
+      .filter((d) => d.value > 0)
+      .sort((a, b) => b.value - a.value);
+  }, [items, lang]);
+
   const handleDelete = async (it: Expense) => {
     const prev = items;
     setItems((p) => p.filter((x) => x.id !== it.id));
@@ -178,6 +201,26 @@ function ExpensesPage() {
         <p className="text-xs text-muted-foreground">{c.thisMonth}</p>
         <p className="text-2xl font-bold text-foreground mt-1">RM {thisMonthTotal.toFixed(2)}</p>
       </div>
+
+      {categoryBreakdown.length > 0 && (
+        <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
+            {lang === "zh" ? "\u672c\u6708\u652f\u51fa\u5206\u7c7b" : lang === "ms" ? "Perbelanjaan Mengikut Kategori" : "Expenses by category"}
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(100, categoryBreakdown.length * 36)}>
+            <BarChart data={categoryBreakdown} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
+              <XAxis type="number" tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={110} />
+              <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+              <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                {categoryBreakdown.map((d, i) => (
+                  <Cell key={i} fill={d.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {loading && (
         <div className="flex justify-center py-10">
