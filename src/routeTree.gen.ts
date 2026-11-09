@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhatsappTemplatesRouteImport } from './routes/whatsapp-templates'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as ViewingsRouteImport } from './routes/viewings'
 import { Route as UniversityInsightsRouteImport } from './routes/university-insights'
+import { Route as TopBuyersRouteImport } from './routes/top-buyers'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TablesRouteImport } from './routes/tables'
@@ -29,6 +31,7 @@ import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as PurchaseOrdersRouteImport } from './routes/purchase-orders'
 import { Route as ProfitRouteImport } from './routes/profit'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ProductProfitRouteImport } from './routes/product-profit'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PlansRouteImport } from './routes/plans'
@@ -48,18 +51,24 @@ import { Route as LoanCalculatorRouteImport } from './routes/loan-calculator'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LanguageRouteImport } from './routes/language'
+import { Route as InventoryHistoryRouteImport } from './routes/inventory-history'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as IngredientsRouteImport } from './routes/ingredients'
 import { Route as ImportOrdersRouteImport } from './routes/import-orders'
+import { Route as GuideRouteImport } from './routes/guide'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as DineInRouteImport } from './routes/dine-in'
 import { Route as DevicesRouteImport } from './routes/devices'
 import { Route as DeliverySettingsRouteImport } from './routes/delivery-settings'
 import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as CostHealthRouteImport } from './routes/cost-health'
+import { Route as CostBreakdownRouteImport } from './routes/cost-breakdown'
 import { Route as CommissionsRouteImport } from './routes/commissions'
 import { Route as ClientsCompareRouteImport } from './routes/clients-compare'
+import { Route as CampaignsRouteImport } from './routes/campaigns'
 import { Route as BusinessTypeRouteImport } from './routes/business-type'
 import { Route as BusinessProfileRouteImport } from './routes/business-profile'
 import { Route as BookingsRouteImport } from './routes/bookings'
@@ -68,20 +77,21 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AddCostRouteImport } from './routes/add-cost'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReportsIndexRouteImport } from './routes/reports.index'
 import { Route as ViewingIdRouteImport } from './routes/viewing.$id'
 import { Route as TrackOrderRefRouteImport } from './routes/track.$orderRef'
-import { Route as TeamWelcomeRouteImport } from './routes/team.welcome'
+import { Route as TeamWelcomeRouteImport } from './routes/team_.welcome'
 import { Route as StockTakeIdRouteImport } from './routes/stock-take_.$id'
 import { Route as RequirementIdRouteImport } from './routes/requirement.$id'
 import { Route as ReportsSalesRouteImport } from './routes/reports.sales'
 import { Route as RenewalIdRouteImport } from './routes/renewal.$id'
 import { Route as PurchaseOrdersIdRouteImport } from './routes/purchase-orders_.$id'
-import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
+import { Route as OrdersOrderIdRouteImport } from './routes/orders_.$orderId'
 import { Route as OrderCodeRouteImport } from './routes/order.$code'
 import { Route as ListingIdRouteImport } from './routes/listing.$id'
-import { Route as InventoryItemIdRouteImport } from './routes/inventory.$itemId'
+import { Route as InventoryItemIdRouteImport } from './routes/inventory_.$itemId'
 import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
 import { Route as DocumentIdRouteImport } from './routes/document.$id'
@@ -89,21 +99,34 @@ import { Route as DineTableIdRouteImport } from './routes/dine/$tableId'
 import { Route as CustomerCustomerIdRouteImport } from './routes/customer.$customerId'
 import { Route as ConnectedPlatformsPlatformRouteImport } from './routes/connected-platforms.$platform'
 import { Route as CommissionIdRouteImport } from './routes/commission.$id'
+import { Route as CampaignsCampaignIdRouteImport } from './routes/campaigns_.$campaignId'
 import { Route as BookCodeRouteImport } from './routes/book.$code'
-import { Route as TeamJoinTokenRouteImport } from './routes/team.join.$token'
+import { Route as TeamJoinTokenRouteImport } from './routes/team_.join.$token'
 import { Route as ApiPublicTrackingRouteImport } from './routes/api/public/tracking'
 import { Route as ApiPublicOrderFormRouteImport } from './routes/api/public/order-form'
 import { Route as ApiPublicDeliveryQuoteRouteImport } from './routes/api/public/delivery-quote'
 import { Route as ApiPublicAdminRouteImport } from './routes/api/public/admin'
+import { Route as ApiPlatformsConnectRouteImport } from './routes/api/platforms/connect'
 import { Route as ApiPublicWebhooksTiktokRouteImport } from './routes/api/public/webhooks/tiktok'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe/webhook'
 import { Route as ApiPublicStripeCheckoutRouteImport } from './routes/api/public/stripe/checkout'
 import { Route as ApiPublicStripeActivateRouteImport } from './routes/api/public/stripe/activate'
+import { Route as ApiPublicCampaignAiSuggestRouteImport } from './routes/api/public/campaign-ai/suggest'
+import { Route as ApiPublicAiChatSendRouteImport } from './routes/api/public/ai-chat/send'
+import { Route as ApiPublicAiChatHistoryRouteImport } from './routes/api/public/ai-chat/history'
+import { Route as ApiPlatformsTiktokSyncProductsRouteImport } from './routes/api/platforms/tiktok/sync-products'
+import { Route as ApiPlatformsTiktokSyncRouteImport } from './routes/api/platforms/tiktok/sync'
+import { Route as ApiPublicOauthTiktokLoginStartRouteImport } from './routes/api/public/oauth/tiktok/login-start'
 import { Route as ApiPublicOauthTiktokCallbackRouteImport } from './routes/api/public/oauth/tiktok/callback'
 
 const WhatsappTemplatesRoute = WhatsappTemplatesRouteImport.update({
   id: '/whatsapp-templates',
   path: '/whatsapp-templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ViewingsRoute = ViewingsRouteImport.update({
@@ -114,6 +137,11 @@ const ViewingsRoute = ViewingsRouteImport.update({
 const UniversityInsightsRoute = UniversityInsightsRouteImport.update({
   id: '/university-insights',
   path: '/university-insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TopBuyersRoute = TopBuyersRouteImport.update({
+  id: '/top-buyers',
+  path: '/top-buyers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -199,6 +227,11 @@ const ProfitRoute = ProfitRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductProfitRoute = ProductProfitRouteImport.update({
+  id: '/product-profit',
+  path: '/product-profit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
@@ -296,6 +329,11 @@ const LanguageRoute = LanguageRouteImport.update({
   path: '/language',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InventoryHistoryRoute = InventoryHistoryRouteImport.update({
+  id: '/inventory-history',
+  path: '/inventory-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InventoryRoute = InventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
@@ -311,9 +349,19 @@ const ImportOrdersRoute = ImportOrdersRouteImport.update({
   path: '/import-orders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuideRoute = GuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpensesRoute = ExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsRoute = DocumentsRouteImport.update({
@@ -346,6 +394,16 @@ const CustomersRoute = CustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CostHealthRoute = CostHealthRouteImport.update({
+  id: '/cost-health',
+  path: '/cost-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CostBreakdownRoute = CostBreakdownRouteImport.update({
+  id: '/cost-breakdown',
+  path: '/cost-breakdown',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CommissionsRoute = CommissionsRouteImport.update({
   id: '/commissions',
   path: '/commissions',
@@ -354,6 +412,11 @@ const CommissionsRoute = CommissionsRouteImport.update({
 const ClientsCompareRoute = ClientsCompareRouteImport.update({
   id: '/clients-compare',
   path: '/clients-compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampaignsRoute = CampaignsRouteImport.update({
+  id: '/campaigns',
+  path: '/campaigns',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BusinessTypeRoute = BusinessTypeRouteImport.update({
@@ -396,6 +459,11 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AddCostRoute = AddCostRouteImport.update({
+  id: '/add-cost',
+  path: '/add-cost',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -417,9 +485,9 @@ const TrackOrderRefRoute = TrackOrderRefRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeamWelcomeRoute = TeamWelcomeRouteImport.update({
-  id: '/welcome',
-  path: '/welcome',
-  getParentRoute: () => TeamRoute,
+  id: '/team_/welcome',
+  path: '/team/welcome',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const StockTakeIdRoute = StockTakeIdRouteImport.update({
   id: '/stock-take_/$id',
@@ -447,9 +515,9 @@ const PurchaseOrdersIdRoute = PurchaseOrdersIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
-  id: '/$orderId',
-  path: '/$orderId',
-  getParentRoute: () => OrdersRoute,
+  id: '/orders_/$orderId',
+  path: '/orders/$orderId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OrderCodeRoute = OrderCodeRouteImport.update({
   id: '/order/$code',
@@ -462,9 +530,9 @@ const ListingIdRoute = ListingIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const InventoryItemIdRoute = InventoryItemIdRouteImport.update({
-  id: '/$itemId',
-  path: '/$itemId',
-  getParentRoute: () => InventoryRoute,
+  id: '/inventory_/$itemId',
+  path: '/inventory/$itemId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordVerifyRoute = ForgotPasswordVerifyRouteImport.update({
   id: '/verify',
@@ -502,15 +570,20 @@ const CommissionIdRoute = CommissionIdRouteImport.update({
   path: '/commission/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CampaignsCampaignIdRoute = CampaignsCampaignIdRouteImport.update({
+  id: '/campaigns_/$campaignId',
+  path: '/campaigns/$campaignId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookCodeRoute = BookCodeRouteImport.update({
   id: '/book/$code',
   path: '/book/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeamJoinTokenRoute = TeamJoinTokenRouteImport.update({
-  id: '/join/$token',
-  path: '/join/$token',
-  getParentRoute: () => TeamRoute,
+  id: '/team_/join/$token',
+  path: '/team/join/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTrackingRoute = ApiPublicTrackingRouteImport.update({
   id: '/api/public/tracking',
@@ -530,6 +603,11 @@ const ApiPublicDeliveryQuoteRoute = ApiPublicDeliveryQuoteRouteImport.update({
 const ApiPublicAdminRoute = ApiPublicAdminRouteImport.update({
   id: '/api/public/admin',
   path: '/api/public/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformsConnectRoute = ApiPlatformsConnectRouteImport.update({
+  id: '/api/platforms/connect',
+  path: '/api/platforms/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicWebhooksTiktokRoute = ApiPublicWebhooksTiktokRouteImport.update({
@@ -552,6 +630,39 @@ const ApiPublicStripeActivateRoute = ApiPublicStripeActivateRouteImport.update({
   path: '/api/public/stripe/activate',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCampaignAiSuggestRoute =
+  ApiPublicCampaignAiSuggestRouteImport.update({
+    id: '/api/public/campaign-ai/suggest',
+    path: '/api/public/campaign-ai/suggest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAiChatSendRoute = ApiPublicAiChatSendRouteImport.update({
+  id: '/api/public/ai-chat/send',
+  path: '/api/public/ai-chat/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAiChatHistoryRoute = ApiPublicAiChatHistoryRouteImport.update({
+  id: '/api/public/ai-chat/history',
+  path: '/api/public/ai-chat/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformsTiktokSyncProductsRoute =
+  ApiPlatformsTiktokSyncProductsRouteImport.update({
+    id: '/api/platforms/tiktok/sync-products',
+    path: '/api/platforms/tiktok/sync-products',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPlatformsTiktokSyncRoute = ApiPlatformsTiktokSyncRouteImport.update({
+  id: '/api/platforms/tiktok/sync',
+  path: '/api/platforms/tiktok/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicOauthTiktokLoginStartRoute =
+  ApiPublicOauthTiktokLoginStartRouteImport.update({
+    id: '/api/public/oauth/tiktok/login-start',
+    path: '/api/public/oauth/tiktok/login-start',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicOauthTiktokCallbackRoute =
   ApiPublicOauthTiktokCallbackRouteImport.update({
     id: '/api/public/oauth/tiktok/callback',
@@ -561,6 +672,7 @@ const ApiPublicOauthTiktokCallbackRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/add-cost': typeof AddCostRoute
   '/admin': typeof AdminRoute
   '/alerts': typeof AlertsRoute
   '/analytics': typeof AnalyticsRoute
@@ -569,18 +681,24 @@ export interface FileRoutesByFullPath {
   '/bookings': typeof BookingsRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
+  '/campaigns': typeof CampaignsRoute
   '/clients-compare': typeof ClientsCompareRoute
   '/commissions': typeof CommissionsRoute
+  '/cost-breakdown': typeof CostBreakdownRoute
+  '/cost-health': typeof CostHealthRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/delivery-settings': typeof DeliverySettingsRoute
   '/devices': typeof DevicesRoute
   '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
+  '/expenses': typeof ExpensesRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
+  '/guide': typeof GuideRoute
   '/import-orders': typeof ImportOrdersRoute
   '/ingredients': typeof IngredientsRoute
-  '/inventory': typeof InventoryRouteWithChildren
+  '/inventory': typeof InventoryRoute
+  '/inventory-history': typeof InventoryHistoryRoute
   '/language': typeof LanguageRoute
   '/legal': typeof LegalRoute
   '/listings': typeof ListingsRoute
@@ -592,7 +710,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/order-form': typeof OrderFormRoute
-  '/orders': typeof OrdersRouteWithChildren
+  '/orders': typeof OrdersRoute
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
   '/payment-success': typeof PaymentSuccessRoute
@@ -600,6 +718,7 @@ export interface FileRoutesByFullPath {
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/product-profit': typeof ProductProfitRoute
   '/profile': typeof ProfileRoute
   '/profit': typeof ProfitRoute
   '/purchase-orders': typeof PurchaseOrdersRoute
@@ -615,12 +734,15 @@ export interface FileRoutesByFullPath {
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
   '/tables': typeof TablesRoute
-  '/team': typeof TeamRouteWithChildren
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/top-buyers': typeof TopBuyersRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/viewings': typeof ViewingsRoute
+  '/welcome': typeof WelcomeRoute
   '/whatsapp-templates': typeof WhatsappTemplatesRoute
   '/book/$code': typeof BookCodeRoute
+  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -641,19 +763,27 @@ export interface FileRoutesByFullPath {
   '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/reports/': typeof ReportsIndexRoute
+  '/api/platforms/connect': typeof ApiPlatformsConnectRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/api/public/tracking': typeof ApiPublicTrackingRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
+  '/api/platforms/tiktok/sync': typeof ApiPlatformsTiktokSyncRoute
+  '/api/platforms/tiktok/sync-products': typeof ApiPlatformsTiktokSyncProductsRoute
+  '/api/public/ai-chat/history': typeof ApiPublicAiChatHistoryRoute
+  '/api/public/ai-chat/send': typeof ApiPublicAiChatSendRoute
+  '/api/public/campaign-ai/suggest': typeof ApiPublicCampaignAiSuggestRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
+  '/api/public/oauth/tiktok/login-start': typeof ApiPublicOauthTiktokLoginStartRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/add-cost': typeof AddCostRoute
   '/admin': typeof AdminRoute
   '/alerts': typeof AlertsRoute
   '/analytics': typeof AnalyticsRoute
@@ -662,18 +792,24 @@ export interface FileRoutesByTo {
   '/bookings': typeof BookingsRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
+  '/campaigns': typeof CampaignsRoute
   '/clients-compare': typeof ClientsCompareRoute
   '/commissions': typeof CommissionsRoute
+  '/cost-breakdown': typeof CostBreakdownRoute
+  '/cost-health': typeof CostHealthRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/delivery-settings': typeof DeliverySettingsRoute
   '/devices': typeof DevicesRoute
   '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
+  '/expenses': typeof ExpensesRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
+  '/guide': typeof GuideRoute
   '/import-orders': typeof ImportOrdersRoute
   '/ingredients': typeof IngredientsRoute
-  '/inventory': typeof InventoryRouteWithChildren
+  '/inventory': typeof InventoryRoute
+  '/inventory-history': typeof InventoryHistoryRoute
   '/language': typeof LanguageRoute
   '/legal': typeof LegalRoute
   '/listings': typeof ListingsRoute
@@ -685,7 +821,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/order-form': typeof OrderFormRoute
-  '/orders': typeof OrdersRouteWithChildren
+  '/orders': typeof OrdersRoute
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
   '/payment-success': typeof PaymentSuccessRoute
@@ -693,6 +829,7 @@ export interface FileRoutesByTo {
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/product-profit': typeof ProductProfitRoute
   '/profile': typeof ProfileRoute
   '/profit': typeof ProfitRoute
   '/purchase-orders': typeof PurchaseOrdersRoute
@@ -707,12 +844,15 @@ export interface FileRoutesByTo {
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
   '/tables': typeof TablesRoute
-  '/team': typeof TeamRouteWithChildren
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/top-buyers': typeof TopBuyersRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/viewings': typeof ViewingsRoute
+  '/welcome': typeof WelcomeRoute
   '/whatsapp-templates': typeof WhatsappTemplatesRoute
   '/book/$code': typeof BookCodeRoute
+  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -733,20 +873,28 @@ export interface FileRoutesByTo {
   '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/reports': typeof ReportsIndexRoute
+  '/api/platforms/connect': typeof ApiPlatformsConnectRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/api/public/tracking': typeof ApiPublicTrackingRoute
   '/team/join/$token': typeof TeamJoinTokenRoute
+  '/api/platforms/tiktok/sync': typeof ApiPlatformsTiktokSyncRoute
+  '/api/platforms/tiktok/sync-products': typeof ApiPlatformsTiktokSyncProductsRoute
+  '/api/public/ai-chat/history': typeof ApiPublicAiChatHistoryRoute
+  '/api/public/ai-chat/send': typeof ApiPublicAiChatSendRoute
+  '/api/public/campaign-ai/suggest': typeof ApiPublicCampaignAiSuggestRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
+  '/api/public/oauth/tiktok/login-start': typeof ApiPublicOauthTiktokLoginStartRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/add-cost': typeof AddCostRoute
   '/admin': typeof AdminRoute
   '/alerts': typeof AlertsRoute
   '/analytics': typeof AnalyticsRoute
@@ -755,18 +903,24 @@ export interface FileRoutesById {
   '/bookings': typeof BookingsRoute
   '/business-profile': typeof BusinessProfileRoute
   '/business-type': typeof BusinessTypeRoute
+  '/campaigns': typeof CampaignsRoute
   '/clients-compare': typeof ClientsCompareRoute
   '/commissions': typeof CommissionsRoute
+  '/cost-breakdown': typeof CostBreakdownRoute
+  '/cost-health': typeof CostHealthRoute
   '/customers': typeof CustomersRoute
   '/data-deletion': typeof DataDeletionRoute
   '/delivery-settings': typeof DeliverySettingsRoute
   '/devices': typeof DevicesRoute
   '/dine-in': typeof DineInRoute
   '/documents': typeof DocumentsRoute
+  '/expenses': typeof ExpensesRoute
   '/forgot-password': typeof ForgotPasswordRouteWithChildren
+  '/guide': typeof GuideRoute
   '/import-orders': typeof ImportOrdersRoute
   '/ingredients': typeof IngredientsRoute
-  '/inventory': typeof InventoryRouteWithChildren
+  '/inventory': typeof InventoryRoute
+  '/inventory-history': typeof InventoryHistoryRoute
   '/language': typeof LanguageRoute
   '/legal': typeof LegalRoute
   '/listings': typeof ListingsRoute
@@ -778,7 +932,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/order-form': typeof OrderFormRoute
-  '/orders': typeof OrdersRouteWithChildren
+  '/orders': typeof OrdersRoute
   '/payment-details': typeof PaymentDetailsRoute
   '/payment-setup': typeof PaymentSetupRoute
   '/payment-success': typeof PaymentSuccessRoute
@@ -786,6 +940,7 @@ export interface FileRoutesById {
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/product-profit': typeof ProductProfitRoute
   '/profile': typeof ProfileRoute
   '/profit': typeof ProfitRoute
   '/purchase-orders': typeof PurchaseOrdersRoute
@@ -801,12 +956,15 @@ export interface FileRoutesById {
   '/stock-take': typeof StockTakeRoute
   '/suppliers': typeof SuppliersRoute
   '/tables': typeof TablesRoute
-  '/team': typeof TeamRouteWithChildren
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/top-buyers': typeof TopBuyersRoute
   '/university-insights': typeof UniversityInsightsRoute
   '/viewings': typeof ViewingsRoute
+  '/welcome': typeof WelcomeRoute
   '/whatsapp-templates': typeof WhatsappTemplatesRoute
   '/book/$code': typeof BookCodeRoute
+  '/campaigns_/$campaignId': typeof CampaignsCampaignIdRoute
   '/commission/$id': typeof CommissionIdRoute
   '/connected-platforms/$platform': typeof ConnectedPlatformsPlatformRoute
   '/customer/$customerId': typeof CustomerCustomerIdRoute
@@ -814,34 +972,42 @@ export interface FileRoutesById {
   '/document/$id': typeof DocumentIdRoute
   '/forgot-password/reset': typeof ForgotPasswordResetRoute
   '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
-  '/inventory/$itemId': typeof InventoryItemIdRoute
+  '/inventory_/$itemId': typeof InventoryItemIdRoute
   '/listing/$id': typeof ListingIdRoute
   '/order/$code': typeof OrderCodeRoute
-  '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/orders_/$orderId': typeof OrdersOrderIdRoute
   '/purchase-orders_/$id': typeof PurchaseOrdersIdRoute
   '/renewal/$id': typeof RenewalIdRoute
   '/reports/sales': typeof ReportsSalesRoute
   '/requirement/$id': typeof RequirementIdRoute
   '/stock-take_/$id': typeof StockTakeIdRoute
-  '/team/welcome': typeof TeamWelcomeRoute
+  '/team_/welcome': typeof TeamWelcomeRoute
   '/track/$orderRef': typeof TrackOrderRefRoute
   '/viewing/$id': typeof ViewingIdRoute
   '/reports/': typeof ReportsIndexRoute
+  '/api/platforms/connect': typeof ApiPlatformsConnectRoute
   '/api/public/admin': typeof ApiPublicAdminRoute
   '/api/public/delivery-quote': typeof ApiPublicDeliveryQuoteRoute
   '/api/public/order-form': typeof ApiPublicOrderFormRoute
   '/api/public/tracking': typeof ApiPublicTrackingRoute
-  '/team/join/$token': typeof TeamJoinTokenRoute
+  '/team_/join/$token': typeof TeamJoinTokenRoute
+  '/api/platforms/tiktok/sync': typeof ApiPlatformsTiktokSyncRoute
+  '/api/platforms/tiktok/sync-products': typeof ApiPlatformsTiktokSyncProductsRoute
+  '/api/public/ai-chat/history': typeof ApiPublicAiChatHistoryRoute
+  '/api/public/ai-chat/send': typeof ApiPublicAiChatSendRoute
+  '/api/public/campaign-ai/suggest': typeof ApiPublicCampaignAiSuggestRoute
   '/api/public/stripe/activate': typeof ApiPublicStripeActivateRoute
   '/api/public/stripe/checkout': typeof ApiPublicStripeCheckoutRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/webhooks/tiktok': typeof ApiPublicWebhooksTiktokRoute
   '/api/public/oauth/tiktok/callback': typeof ApiPublicOauthTiktokCallbackRoute
+  '/api/public/oauth/tiktok/login-start': typeof ApiPublicOauthTiktokLoginStartRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/add-cost'
     | '/admin'
     | '/alerts'
     | '/analytics'
@@ -850,18 +1016,24 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/business-profile'
     | '/business-type'
+    | '/campaigns'
     | '/clients-compare'
     | '/commissions'
+    | '/cost-breakdown'
+    | '/cost-health'
     | '/customers'
     | '/data-deletion'
     | '/delivery-settings'
     | '/devices'
     | '/dine-in'
     | '/documents'
+    | '/expenses'
     | '/forgot-password'
+    | '/guide'
     | '/import-orders'
     | '/ingredients'
     | '/inventory'
+    | '/inventory-history'
     | '/language'
     | '/legal'
     | '/listings'
@@ -881,6 +1053,7 @@ export interface FileRouteTypes {
     | '/plans'
     | '/privacy'
     | '/privacy-policy'
+    | '/product-profit'
     | '/profile'
     | '/profit'
     | '/purchase-orders'
@@ -898,10 +1071,13 @@ export interface FileRouteTypes {
     | '/tables'
     | '/team'
     | '/terms'
+    | '/top-buyers'
     | '/university-insights'
     | '/viewings'
+    | '/welcome'
     | '/whatsapp-templates'
     | '/book/$code'
+    | '/campaigns/$campaignId'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -922,19 +1098,27 @@ export interface FileRouteTypes {
     | '/track/$orderRef'
     | '/viewing/$id'
     | '/reports/'
+    | '/api/platforms/connect'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
     | '/api/public/tracking'
     | '/team/join/$token'
+    | '/api/platforms/tiktok/sync'
+    | '/api/platforms/tiktok/sync-products'
+    | '/api/public/ai-chat/history'
+    | '/api/public/ai-chat/send'
+    | '/api/public/campaign-ai/suggest'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/stripe/webhook'
     | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
+    | '/api/public/oauth/tiktok/login-start'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/add-cost'
     | '/admin'
     | '/alerts'
     | '/analytics'
@@ -943,18 +1127,24 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/business-profile'
     | '/business-type'
+    | '/campaigns'
     | '/clients-compare'
     | '/commissions'
+    | '/cost-breakdown'
+    | '/cost-health'
     | '/customers'
     | '/data-deletion'
     | '/delivery-settings'
     | '/devices'
     | '/dine-in'
     | '/documents'
+    | '/expenses'
     | '/forgot-password'
+    | '/guide'
     | '/import-orders'
     | '/ingredients'
     | '/inventory'
+    | '/inventory-history'
     | '/language'
     | '/legal'
     | '/listings'
@@ -974,6 +1164,7 @@ export interface FileRouteTypes {
     | '/plans'
     | '/privacy'
     | '/privacy-policy'
+    | '/product-profit'
     | '/profile'
     | '/profit'
     | '/purchase-orders'
@@ -990,10 +1181,13 @@ export interface FileRouteTypes {
     | '/tables'
     | '/team'
     | '/terms'
+    | '/top-buyers'
     | '/university-insights'
     | '/viewings'
+    | '/welcome'
     | '/whatsapp-templates'
     | '/book/$code'
+    | '/campaigns/$campaignId'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -1014,19 +1208,27 @@ export interface FileRouteTypes {
     | '/track/$orderRef'
     | '/viewing/$id'
     | '/reports'
+    | '/api/platforms/connect'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
     | '/api/public/tracking'
     | '/team/join/$token'
+    | '/api/platforms/tiktok/sync'
+    | '/api/platforms/tiktok/sync-products'
+    | '/api/public/ai-chat/history'
+    | '/api/public/ai-chat/send'
+    | '/api/public/campaign-ai/suggest'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/stripe/webhook'
     | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
+    | '/api/public/oauth/tiktok/login-start'
   id:
     | '__root__'
     | '/'
+    | '/add-cost'
     | '/admin'
     | '/alerts'
     | '/analytics'
@@ -1035,18 +1237,24 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/business-profile'
     | '/business-type'
+    | '/campaigns'
     | '/clients-compare'
     | '/commissions'
+    | '/cost-breakdown'
+    | '/cost-health'
     | '/customers'
     | '/data-deletion'
     | '/delivery-settings'
     | '/devices'
     | '/dine-in'
     | '/documents'
+    | '/expenses'
     | '/forgot-password'
+    | '/guide'
     | '/import-orders'
     | '/ingredients'
     | '/inventory'
+    | '/inventory-history'
     | '/language'
     | '/legal'
     | '/listings'
@@ -1066,6 +1274,7 @@ export interface FileRouteTypes {
     | '/plans'
     | '/privacy'
     | '/privacy-policy'
+    | '/product-profit'
     | '/profile'
     | '/profit'
     | '/purchase-orders'
@@ -1083,10 +1292,13 @@ export interface FileRouteTypes {
     | '/tables'
     | '/team'
     | '/terms'
+    | '/top-buyers'
     | '/university-insights'
     | '/viewings'
+    | '/welcome'
     | '/whatsapp-templates'
     | '/book/$code'
+    | '/campaigns_/$campaignId'
     | '/commission/$id'
     | '/connected-platforms/$platform'
     | '/customer/$customerId'
@@ -1094,33 +1306,41 @@ export interface FileRouteTypes {
     | '/document/$id'
     | '/forgot-password/reset'
     | '/forgot-password/verify'
-    | '/inventory/$itemId'
+    | '/inventory_/$itemId'
     | '/listing/$id'
     | '/order/$code'
-    | '/orders/$orderId'
+    | '/orders_/$orderId'
     | '/purchase-orders_/$id'
     | '/renewal/$id'
     | '/reports/sales'
     | '/requirement/$id'
     | '/stock-take_/$id'
-    | '/team/welcome'
+    | '/team_/welcome'
     | '/track/$orderRef'
     | '/viewing/$id'
     | '/reports/'
+    | '/api/platforms/connect'
     | '/api/public/admin'
     | '/api/public/delivery-quote'
     | '/api/public/order-form'
     | '/api/public/tracking'
-    | '/team/join/$token'
+    | '/team_/join/$token'
+    | '/api/platforms/tiktok/sync'
+    | '/api/platforms/tiktok/sync-products'
+    | '/api/public/ai-chat/history'
+    | '/api/public/ai-chat/send'
+    | '/api/public/campaign-ai/suggest'
     | '/api/public/stripe/activate'
     | '/api/public/stripe/checkout'
     | '/api/public/stripe/webhook'
     | '/api/public/webhooks/tiktok'
     | '/api/public/oauth/tiktok/callback'
+    | '/api/public/oauth/tiktok/login-start'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AddCostRoute: typeof AddCostRoute
   AdminRoute: typeof AdminRoute
   AlertsRoute: typeof AlertsRoute
   AnalyticsRoute: typeof AnalyticsRoute
@@ -1129,18 +1349,24 @@ export interface RootRouteChildren {
   BookingsRoute: typeof BookingsRoute
   BusinessProfileRoute: typeof BusinessProfileRoute
   BusinessTypeRoute: typeof BusinessTypeRoute
+  CampaignsRoute: typeof CampaignsRoute
   ClientsCompareRoute: typeof ClientsCompareRoute
   CommissionsRoute: typeof CommissionsRoute
+  CostBreakdownRoute: typeof CostBreakdownRoute
+  CostHealthRoute: typeof CostHealthRoute
   CustomersRoute: typeof CustomersRoute
   DataDeletionRoute: typeof DataDeletionRoute
   DeliverySettingsRoute: typeof DeliverySettingsRoute
   DevicesRoute: typeof DevicesRoute
   DineInRoute: typeof DineInRoute
   DocumentsRoute: typeof DocumentsRoute
+  ExpensesRoute: typeof ExpensesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
+  GuideRoute: typeof GuideRoute
   ImportOrdersRoute: typeof ImportOrdersRoute
   IngredientsRoute: typeof IngredientsRoute
-  InventoryRoute: typeof InventoryRouteWithChildren
+  InventoryRoute: typeof InventoryRoute
+  InventoryHistoryRoute: typeof InventoryHistoryRoute
   LanguageRoute: typeof LanguageRoute
   LegalRoute: typeof LegalRoute
   ListingsRoute: typeof ListingsRoute
@@ -1152,7 +1378,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
   OrderFormRoute: typeof OrderFormRoute
-  OrdersRoute: typeof OrdersRouteWithChildren
+  OrdersRoute: typeof OrdersRoute
   PaymentDetailsRoute: typeof PaymentDetailsRoute
   PaymentSetupRoute: typeof PaymentSetupRoute
   PaymentSuccessRoute: typeof PaymentSuccessRoute
@@ -1160,6 +1386,7 @@ export interface RootRouteChildren {
   PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  ProductProfitRoute: typeof ProductProfitRoute
   ProfileRoute: typeof ProfileRoute
   ProfitRoute: typeof ProfitRoute
   PurchaseOrdersRoute: typeof PurchaseOrdersRoute
@@ -1175,34 +1402,48 @@ export interface RootRouteChildren {
   StockTakeRoute: typeof StockTakeRoute
   SuppliersRoute: typeof SuppliersRoute
   TablesRoute: typeof TablesRoute
-  TeamRoute: typeof TeamRouteWithChildren
+  TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  TopBuyersRoute: typeof TopBuyersRoute
   UniversityInsightsRoute: typeof UniversityInsightsRoute
   ViewingsRoute: typeof ViewingsRoute
+  WelcomeRoute: typeof WelcomeRoute
   WhatsappTemplatesRoute: typeof WhatsappTemplatesRoute
   BookCodeRoute: typeof BookCodeRoute
+  CampaignsCampaignIdRoute: typeof CampaignsCampaignIdRoute
   CommissionIdRoute: typeof CommissionIdRoute
   ConnectedPlatformsPlatformRoute: typeof ConnectedPlatformsPlatformRoute
   CustomerCustomerIdRoute: typeof CustomerCustomerIdRoute
   DineTableIdRoute: typeof DineTableIdRoute
   DocumentIdRoute: typeof DocumentIdRoute
+  InventoryItemIdRoute: typeof InventoryItemIdRoute
   ListingIdRoute: typeof ListingIdRoute
   OrderCodeRoute: typeof OrderCodeRoute
+  OrdersOrderIdRoute: typeof OrdersOrderIdRoute
   PurchaseOrdersIdRoute: typeof PurchaseOrdersIdRoute
   RenewalIdRoute: typeof RenewalIdRoute
   RequirementIdRoute: typeof RequirementIdRoute
   StockTakeIdRoute: typeof StockTakeIdRoute
+  TeamWelcomeRoute: typeof TeamWelcomeRoute
   TrackOrderRefRoute: typeof TrackOrderRefRoute
   ViewingIdRoute: typeof ViewingIdRoute
+  ApiPlatformsConnectRoute: typeof ApiPlatformsConnectRoute
   ApiPublicAdminRoute: typeof ApiPublicAdminRoute
   ApiPublicDeliveryQuoteRoute: typeof ApiPublicDeliveryQuoteRoute
   ApiPublicOrderFormRoute: typeof ApiPublicOrderFormRoute
   ApiPublicTrackingRoute: typeof ApiPublicTrackingRoute
+  TeamJoinTokenRoute: typeof TeamJoinTokenRoute
+  ApiPlatformsTiktokSyncRoute: typeof ApiPlatformsTiktokSyncRoute
+  ApiPlatformsTiktokSyncProductsRoute: typeof ApiPlatformsTiktokSyncProductsRoute
+  ApiPublicAiChatHistoryRoute: typeof ApiPublicAiChatHistoryRoute
+  ApiPublicAiChatSendRoute: typeof ApiPublicAiChatSendRoute
+  ApiPublicCampaignAiSuggestRoute: typeof ApiPublicCampaignAiSuggestRoute
   ApiPublicStripeActivateRoute: typeof ApiPublicStripeActivateRoute
   ApiPublicStripeCheckoutRoute: typeof ApiPublicStripeCheckoutRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
   ApiPublicWebhooksTiktokRoute: typeof ApiPublicWebhooksTiktokRoute
   ApiPublicOauthTiktokCallbackRoute: typeof ApiPublicOauthTiktokCallbackRoute
+  ApiPublicOauthTiktokLoginStartRoute: typeof ApiPublicOauthTiktokLoginStartRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1212,6 +1453,13 @@ declare module '@tanstack/react-router' {
       path: '/whatsapp-templates'
       fullPath: '/whatsapp-templates'
       preLoaderRoute: typeof WhatsappTemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/viewings': {
@@ -1226,6 +1474,13 @@ declare module '@tanstack/react-router' {
       path: '/university-insights'
       fullPath: '/university-insights'
       preLoaderRoute: typeof UniversityInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/top-buyers': {
+      id: '/top-buyers'
+      path: '/top-buyers'
+      fullPath: '/top-buyers'
+      preLoaderRoute: typeof TopBuyersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -1345,6 +1600,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product-profit': {
+      id: '/product-profit'
+      path: '/product-profit'
+      fullPath: '/product-profit'
+      preLoaderRoute: typeof ProductProfitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy-policy': {
@@ -1480,6 +1742,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LanguageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inventory-history': {
+      id: '/inventory-history'
+      path: '/inventory-history'
+      fullPath: '/inventory-history'
+      preLoaderRoute: typeof InventoryHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/inventory': {
       id: '/inventory'
       path: '/inventory'
@@ -1501,11 +1770,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ImportOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guide': {
+      id: '/guide'
+      path: '/guide'
+      fullPath: '/guide'
+      preLoaderRoute: typeof GuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/expenses': {
+      id: '/expenses'
+      path: '/expenses'
+      fullPath: '/expenses'
+      preLoaderRoute: typeof ExpensesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents': {
@@ -1550,6 +1833,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cost-health': {
+      id: '/cost-health'
+      path: '/cost-health'
+      fullPath: '/cost-health'
+      preLoaderRoute: typeof CostHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cost-breakdown': {
+      id: '/cost-breakdown'
+      path: '/cost-breakdown'
+      fullPath: '/cost-breakdown'
+      preLoaderRoute: typeof CostBreakdownRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/commissions': {
       id: '/commissions'
       path: '/commissions'
@@ -1562,6 +1859,13 @@ declare module '@tanstack/react-router' {
       path: '/clients-compare'
       fullPath: '/clients-compare'
       preLoaderRoute: typeof ClientsCompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campaigns': {
+      id: '/campaigns'
+      path: '/campaigns'
+      fullPath: '/campaigns'
+      preLoaderRoute: typeof CampaignsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/business-type': {
@@ -1620,6 +1924,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/add-cost': {
+      id: '/add-cost'
+      path: '/add-cost'
+      fullPath: '/add-cost'
+      preLoaderRoute: typeof AddCostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -1648,12 +1959,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrackOrderRefRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/team/welcome': {
-      id: '/team/welcome'
-      path: '/welcome'
+    '/team_/welcome': {
+      id: '/team_/welcome'
+      path: '/team/welcome'
       fullPath: '/team/welcome'
       preLoaderRoute: typeof TeamWelcomeRouteImport
-      parentRoute: typeof TeamRoute
+      parentRoute: typeof rootRouteImport
     }
     '/stock-take_/$id': {
       id: '/stock-take_/$id'
@@ -1690,12 +2001,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PurchaseOrdersIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/orders/$orderId': {
-      id: '/orders/$orderId'
-      path: '/$orderId'
+    '/orders_/$orderId': {
+      id: '/orders_/$orderId'
+      path: '/orders/$orderId'
       fullPath: '/orders/$orderId'
       preLoaderRoute: typeof OrdersOrderIdRouteImport
-      parentRoute: typeof OrdersRoute
+      parentRoute: typeof rootRouteImport
     }
     '/order/$code': {
       id: '/order/$code'
@@ -1711,12 +2022,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/inventory/$itemId': {
-      id: '/inventory/$itemId'
-      path: '/$itemId'
+    '/inventory_/$itemId': {
+      id: '/inventory_/$itemId'
+      path: '/inventory/$itemId'
       fullPath: '/inventory/$itemId'
       preLoaderRoute: typeof InventoryItemIdRouteImport
-      parentRoute: typeof InventoryRoute
+      parentRoute: typeof rootRouteImport
     }
     '/forgot-password/verify': {
       id: '/forgot-password/verify'
@@ -1767,6 +2078,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommissionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/campaigns_/$campaignId': {
+      id: '/campaigns_/$campaignId'
+      path: '/campaigns/$campaignId'
+      fullPath: '/campaigns/$campaignId'
+      preLoaderRoute: typeof CampaignsCampaignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book/$code': {
       id: '/book/$code'
       path: '/book/$code'
@@ -1774,12 +2092,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/team/join/$token': {
-      id: '/team/join/$token'
-      path: '/join/$token'
+    '/team_/join/$token': {
+      id: '/team_/join/$token'
+      path: '/team/join/$token'
       fullPath: '/team/join/$token'
       preLoaderRoute: typeof TeamJoinTokenRouteImport
-      parentRoute: typeof TeamRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/tracking': {
       id: '/api/public/tracking'
@@ -1807,6 +2125,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/admin'
       fullPath: '/api/public/admin'
       preLoaderRoute: typeof ApiPublicAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platforms/connect': {
+      id: '/api/platforms/connect'
+      path: '/api/platforms/connect'
+      fullPath: '/api/platforms/connect'
+      preLoaderRoute: typeof ApiPlatformsConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/webhooks/tiktok': {
@@ -1837,6 +2162,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicStripeActivateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/campaign-ai/suggest': {
+      id: '/api/public/campaign-ai/suggest'
+      path: '/api/public/campaign-ai/suggest'
+      fullPath: '/api/public/campaign-ai/suggest'
+      preLoaderRoute: typeof ApiPublicCampaignAiSuggestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ai-chat/send': {
+      id: '/api/public/ai-chat/send'
+      path: '/api/public/ai-chat/send'
+      fullPath: '/api/public/ai-chat/send'
+      preLoaderRoute: typeof ApiPublicAiChatSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ai-chat/history': {
+      id: '/api/public/ai-chat/history'
+      path: '/api/public/ai-chat/history'
+      fullPath: '/api/public/ai-chat/history'
+      preLoaderRoute: typeof ApiPublicAiChatHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platforms/tiktok/sync-products': {
+      id: '/api/platforms/tiktok/sync-products'
+      path: '/api/platforms/tiktok/sync-products'
+      fullPath: '/api/platforms/tiktok/sync-products'
+      preLoaderRoute: typeof ApiPlatformsTiktokSyncProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platforms/tiktok/sync': {
+      id: '/api/platforms/tiktok/sync'
+      path: '/api/platforms/tiktok/sync'
+      fullPath: '/api/platforms/tiktok/sync'
+      preLoaderRoute: typeof ApiPlatformsTiktokSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/oauth/tiktok/login-start': {
+      id: '/api/public/oauth/tiktok/login-start'
+      path: '/api/public/oauth/tiktok/login-start'
+      fullPath: '/api/public/oauth/tiktok/login-start'
+      preLoaderRoute: typeof ApiPublicOauthTiktokLoginStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/oauth/tiktok/callback': {
       id: '/api/public/oauth/tiktok/callback'
       path: '/api/public/oauth/tiktok/callback'
@@ -1861,29 +2228,6 @@ const ForgotPasswordRouteWithChildren = ForgotPasswordRoute._addFileChildren(
   ForgotPasswordRouteChildren,
 )
 
-interface InventoryRouteChildren {
-  InventoryItemIdRoute: typeof InventoryItemIdRoute
-}
-
-const InventoryRouteChildren: InventoryRouteChildren = {
-  InventoryItemIdRoute: InventoryItemIdRoute,
-}
-
-const InventoryRouteWithChildren = InventoryRoute._addFileChildren(
-  InventoryRouteChildren,
-)
-
-interface OrdersRouteChildren {
-  OrdersOrderIdRoute: typeof OrdersOrderIdRoute
-}
-
-const OrdersRouteChildren: OrdersRouteChildren = {
-  OrdersOrderIdRoute: OrdersOrderIdRoute,
-}
-
-const OrdersRouteWithChildren =
-  OrdersRoute._addFileChildren(OrdersRouteChildren)
-
 interface ReportsRouteChildren {
   ReportsSalesRoute: typeof ReportsSalesRoute
   ReportsIndexRoute: typeof ReportsIndexRoute
@@ -1897,20 +2241,9 @@ const ReportsRouteChildren: ReportsRouteChildren = {
 const ReportsRouteWithChildren =
   ReportsRoute._addFileChildren(ReportsRouteChildren)
 
-interface TeamRouteChildren {
-  TeamWelcomeRoute: typeof TeamWelcomeRoute
-  TeamJoinTokenRoute: typeof TeamJoinTokenRoute
-}
-
-const TeamRouteChildren: TeamRouteChildren = {
-  TeamWelcomeRoute: TeamWelcomeRoute,
-  TeamJoinTokenRoute: TeamJoinTokenRoute,
-}
-
-const TeamRouteWithChildren = TeamRoute._addFileChildren(TeamRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AddCostRoute: AddCostRoute,
   AdminRoute: AdminRoute,
   AlertsRoute: AlertsRoute,
   AnalyticsRoute: AnalyticsRoute,
@@ -1919,18 +2252,24 @@ const rootRouteChildren: RootRouteChildren = {
   BookingsRoute: BookingsRoute,
   BusinessProfileRoute: BusinessProfileRoute,
   BusinessTypeRoute: BusinessTypeRoute,
+  CampaignsRoute: CampaignsRoute,
   ClientsCompareRoute: ClientsCompareRoute,
   CommissionsRoute: CommissionsRoute,
+  CostBreakdownRoute: CostBreakdownRoute,
+  CostHealthRoute: CostHealthRoute,
   CustomersRoute: CustomersRoute,
   DataDeletionRoute: DataDeletionRoute,
   DeliverySettingsRoute: DeliverySettingsRoute,
   DevicesRoute: DevicesRoute,
   DineInRoute: DineInRoute,
   DocumentsRoute: DocumentsRoute,
+  ExpensesRoute: ExpensesRoute,
   ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
+  GuideRoute: GuideRoute,
   ImportOrdersRoute: ImportOrdersRoute,
   IngredientsRoute: IngredientsRoute,
-  InventoryRoute: InventoryRouteWithChildren,
+  InventoryRoute: InventoryRoute,
+  InventoryHistoryRoute: InventoryHistoryRoute,
   LanguageRoute: LanguageRoute,
   LegalRoute: LegalRoute,
   ListingsRoute: ListingsRoute,
@@ -1942,7 +2281,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
   OrderFormRoute: OrderFormRoute,
-  OrdersRoute: OrdersRouteWithChildren,
+  OrdersRoute: OrdersRoute,
   PaymentDetailsRoute: PaymentDetailsRoute,
   PaymentSetupRoute: PaymentSetupRoute,
   PaymentSuccessRoute: PaymentSuccessRoute,
@@ -1950,6 +2289,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
+  ProductProfitRoute: ProductProfitRoute,
   ProfileRoute: ProfileRoute,
   ProfitRoute: ProfitRoute,
   PurchaseOrdersRoute: PurchaseOrdersRoute,
@@ -1965,35 +2305,59 @@ const rootRouteChildren: RootRouteChildren = {
   StockTakeRoute: StockTakeRoute,
   SuppliersRoute: SuppliersRoute,
   TablesRoute: TablesRoute,
-  TeamRoute: TeamRouteWithChildren,
+  TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  TopBuyersRoute: TopBuyersRoute,
   UniversityInsightsRoute: UniversityInsightsRoute,
   ViewingsRoute: ViewingsRoute,
+  WelcomeRoute: WelcomeRoute,
   WhatsappTemplatesRoute: WhatsappTemplatesRoute,
   BookCodeRoute: BookCodeRoute,
+  CampaignsCampaignIdRoute: CampaignsCampaignIdRoute,
   CommissionIdRoute: CommissionIdRoute,
   ConnectedPlatformsPlatformRoute: ConnectedPlatformsPlatformRoute,
   CustomerCustomerIdRoute: CustomerCustomerIdRoute,
   DineTableIdRoute: DineTableIdRoute,
   DocumentIdRoute: DocumentIdRoute,
+  InventoryItemIdRoute: InventoryItemIdRoute,
   ListingIdRoute: ListingIdRoute,
   OrderCodeRoute: OrderCodeRoute,
+  OrdersOrderIdRoute: OrdersOrderIdRoute,
   PurchaseOrdersIdRoute: PurchaseOrdersIdRoute,
   RenewalIdRoute: RenewalIdRoute,
   RequirementIdRoute: RequirementIdRoute,
   StockTakeIdRoute: StockTakeIdRoute,
+  TeamWelcomeRoute: TeamWelcomeRoute,
   TrackOrderRefRoute: TrackOrderRefRoute,
   ViewingIdRoute: ViewingIdRoute,
+  ApiPlatformsConnectRoute: ApiPlatformsConnectRoute,
   ApiPublicAdminRoute: ApiPublicAdminRoute,
   ApiPublicDeliveryQuoteRoute: ApiPublicDeliveryQuoteRoute,
   ApiPublicOrderFormRoute: ApiPublicOrderFormRoute,
   ApiPublicTrackingRoute: ApiPublicTrackingRoute,
+  TeamJoinTokenRoute: TeamJoinTokenRoute,
+  ApiPlatformsTiktokSyncRoute: ApiPlatformsTiktokSyncRoute,
+  ApiPlatformsTiktokSyncProductsRoute: ApiPlatformsTiktokSyncProductsRoute,
+  ApiPublicAiChatHistoryRoute: ApiPublicAiChatHistoryRoute,
+  ApiPublicAiChatSendRoute: ApiPublicAiChatSendRoute,
+  ApiPublicCampaignAiSuggestRoute: ApiPublicCampaignAiSuggestRoute,
   ApiPublicStripeActivateRoute: ApiPublicStripeActivateRoute,
   ApiPublicStripeCheckoutRoute: ApiPublicStripeCheckoutRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
   ApiPublicWebhooksTiktokRoute: ApiPublicWebhooksTiktokRoute,
   ApiPublicOauthTiktokCallbackRoute: ApiPublicOauthTiktokCallbackRoute,
+  ApiPublicOauthTiktokLoginStartRoute: ApiPublicOauthTiktokLoginStartRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
