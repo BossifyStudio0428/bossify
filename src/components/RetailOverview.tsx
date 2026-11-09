@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { TrendingUp, TrendingDown, ChevronDown, MessageCircle, Plus } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
+import { TrendingUp, TrendingDown, ChevronDown, MessageCircle, Plus, Crown, Trophy, PieChart as PieChartIcon } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, PieChart, Pie } from "recharts";
+import { useServerFn } from "@tanstack/react-start";
+import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { orderGrossProfit, orderContributionProfit } from "@/lib/orderMath";
 import { SetupChecklist } from "@/components/SetupChecklist";
 import { CampaignBanner } from "@/components/CampaignBanner";
 import { getCachedPrefs, loadPrefs } from "@/lib/notifPrefs";
 import { fetchPeriodAdjustments, type PeriodAdjustments } from "@/lib/refundAdjustments";
+import { getPlatformConnection } from "@/lib/platformConnect.functions";
 import {
   renderTemplate,
   getReminderTemplate,
@@ -64,6 +68,14 @@ function money(n: number) {
   return `RM ${n.toFixed(2)}`;
 }
 
+const API_ORIGIN = "https://tanstack-start-app.bossifystudio.workers.dev";
+
+async function getAuthHeader(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 type Range = "week" | "month" | "custom";
 
 function rangeWindows(range: Range, customFrom?: string, customTo?: string) {
@@ -102,6 +114,8 @@ export function RetailOverview() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
   const { type: bizType } = useBusinessType();
+  const { hasFullAccess, showUpgrade } = useSubscription();
+  const getConnection = useServerFn(getPlatformConnection);
   const [loading, setLoading] = useState(true);
   const [inv, setInv] = useState<InvRow[]>([]);
   const [range, setRange] = useState<Range>("month");
@@ -120,6 +134,8 @@ export function RetailOverview() {
   const [weekOrders, setWeekOrders] = useState<OrderRow[]>([]);
   const [weekItems, setWeekItems] = useState<WeekItemRow[]>([]);
   const [tiktokIdByProduct, setTiktokIdByProduct] = useState<Record<string, string>>({});
+  const [topProducts, setTopProducts] = useState<{ name: string; revenue: number; profit: number }[]>([]);
+  const [tiktokConnected, setTiktokConnected] = useState<boolean | null>(null);
   const [operatingExpenses, setOperatingExpenses] = useState(0);
   const [curAdjustments, setCurAdjustments] = useState<PeriodAdjustments>({ revenueReversed: 0, cogsReversed: 0, count: 0 });
   const [prevAdjustments, setPrevAdjustments] = useState<PeriodAdjustments>({ revenueReversed: 0, cogsReversed: 0, count: 0 });
@@ -154,6 +170,34 @@ export function RetailOverview() {
     };
   }, [user?.id, lang]);
 
+  // TikTok Shop connection status — same check as the Profile page, just
+  // for "tiktok" alone, so the dashboard can show a live connected/not
+  // connected pill instead of a placeholder.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        let connected = false;
+        if (Capacitor.isNativePlatform()) {
+          const headers = await getAuthHeader();
+          const res = await fetch(`${API_ORIGIN}/api/platforms/connect?platform=tiktok`, { headers });
+          const j = await res.json();
+          connected = j?.connection?.status === "active";
+        } else {
+          const { connection } = await getConnection({ data: { platform: "tiktok" as any } });
+          connected = (connection as any)?.status === "active";
+        }
+        if (!cancelled) setTiktokConnected(connected);
+      } catch {
+        if (!cancelled) setTiktokConnected(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -170,7 +214,7 @@ export function RetailOverview() {
           .eq("user_id", user.id),
         supabase
           .from("orders")
-          .select("amount,cost,gross_profit,product,created_at,status,financial_status,platform_fee_amount,shipping_cost,affiliate_commission")
+          .select("id,amount,cost,gross_profit,product,created_at,status,financial_status,platform_fee_amount,shipping_cost,affiliate_commission")
           .eq("user_id", user.id)
           .gte("created_at", curStart.toISOString())
           .lte("created_at", curEnd.toISOString()),
@@ -236,6 +280,69 @@ export function RetailOverview() {
         setWeekItems([]);
         setTiktokIdByProduct({});
       }
+
+      // Top products by profit for the SELECTED period (not the fixed
+      // 7-day window above) — same accurate line-item math as the
+      // dedicated /product-profit page (unit_cost_at_sale +
+      // packaging_cost_at_sale, netted against refunds/returns),
+      // condensed to the top 3 for this dashboard card.
+      const curOrderIds = ((curRes.data ?? []) as any[]).map((o) => o.id).filter(Boolean);
+      if (curOrderIds.length > 0) {
+        const [{ data: curItems }, { data: curAdjRows }] = await Promise.all([
+          supabase
+            .from("order_items" as any)
+            .select("product_name,quantity,unit_price_at_sale,unit_cost_at_sale,packaging_cost_at_sale")
+            .in("order_id", curOrderIds),
+          supabase
+            .from("order_adjustments" as any)
+            .select("id")
+            .eq("user_id", user.id)
+            .gte("created_at", curStart.toISOString())
+            .lte("created_at", curEnd.toISOString()),
+        ]);
+        const adjIds = ((curAdjRows ?? []) as any[]).map((a) => a.id);
+        let adjItems: { product_name: string; revenue_reversed: number; cogs_reversed: number }[] = [];
+        if (adjIds.length > 0) {
+          const { data: adjItemRows } = await supabase
+            .from("order_adjustment_items" as any)
+            .select("product_name,revenue_reversed,cogs_reversed")
+            .in("adjustment_id", adjIds);
+          adjItems = ((adjItemRows ?? []) as any) ?? [];
+        }
+        const rawMap = new Map<string, { revenue: number; cost: number }>();
+        for (const it of ((curItems ?? []) as any[])) {
+          const key = it.product_name || "—";
+          const qty = Number(it.quantity ?? 0);
+          const revenue = Number(it.unit_price_at_sale ?? 0) * qty;
+          const cost = (Number(it.unit_cost_at_sale ?? 0) + Number(it.packaging_cost_at_sale ?? 0)) * qty;
+          const existing = rawMap.get(key) ?? { revenue: 0, cost: 0 };
+          existing.revenue += revenue;
+          existing.cost += cost;
+          rawMap.set(key, existing);
+        }
+        for (const a of adjItems) {
+          const key = a.product_name || "—";
+          const existing = rawMap.get(key);
+          if (!existing) continue;
+          existing.revenue -= Number(a.revenue_reversed ?? 0);
+          existing.cost -= Number(a.cogs_reversed ?? 0);
+        }
+        const grouped = new Map<string, { name: string; revenue: number; cost: number }>();
+        for (const [rawName, v] of rawMap) {
+          const key = stripVariantSuffix(rawName);
+          const existing = grouped.get(key) ?? { name: key, revenue: 0, cost: 0 };
+          existing.revenue += v.revenue;
+          existing.cost += v.cost;
+          grouped.set(key, existing);
+        }
+        const ranked = Array.from(grouped.values())
+          .map((p) => ({ name: p.name, revenue: p.revenue, profit: p.revenue - p.cost }))
+          .sort((a, b) => b.profit - a.profit)
+          .slice(0, 3);
+        if (!cancelled) setTopProducts(ranked);
+      } else if (!cancelled) {
+        setTopProducts([]);
+      }
     })();
     return () => {
       cancelled = true;
@@ -262,13 +369,24 @@ export function RetailOverview() {
           affiliate_commission: o.affiliate_commission,
         });
       }
-      return { sales, profit, contribution, count: complete.length };
+      // cogs = sales - gross profit; sellingCosts = gross profit -
+      // contribution profit (platform fee + shipping + affiliate commission
+      // bundled together) — both derived rather than re-summed so they
+      // stay exactly consistent with the profit figures above, for the
+      // Profit Breakdown chart.
+      const cogs = sales - profit;
+      const sellingCosts = profit - contribution;
+      return { sales, profit, contribution, cogs, sellingCosts, count: complete.length };
     };
-    const applyAdjustments = (s: { sales: number; profit: number; contribution: number; count: number }, adj: PeriodAdjustments) => ({
+    const applyAdjustments = (
+      s: { sales: number; profit: number; contribution: number; cogs: number; sellingCosts: number; count: number },
+      adj: PeriodAdjustments,
+    ) => ({
       ...s,
       sales: s.sales - adj.revenueReversed,
       profit: s.profit - (adj.revenueReversed - adj.cogsReversed),
       contribution: s.contribution - (adj.revenueReversed - adj.cogsReversed),
+      cogs: s.cogs - adj.cogsReversed,
     });
     const cur = applyAdjustments(sum(curOrders), curAdjustments);
     const prev = applyAdjustments(sum(prevOrders), prevAdjustments);
@@ -286,6 +404,8 @@ export function RetailOverview() {
       sales: cur.sales,
       profit: cur.profit,
       contribution: cur.contribution,
+      cogs: cur.cogs,
+      sellingCosts: cur.sellingCosts,
       netProfit,
       operatingExpenses,
       count: cur.count,
@@ -547,9 +667,18 @@ export function RetailOverview() {
         </div>
       )}
 
+      <div className="mt-2.5">
+        <TikTokStatusPill connected={tiktokConnected} lang={lang} />
+      </div>
+
       {/* Secondary stats: order count trend, low stock — kept as plain
           white cards so the hero card above stays the single visual anchor. */}
-      <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+      <div className="mt-2.5 grid grid-cols-3 gap-2.5">
+        <KpiCard
+          label={lang === "zh" ? "毛利润" : lang === "ms" ? "Untung kasar" : "Gross profit"}
+          value={loading ? "…" : money(stats.profit)}
+          delta={null}
+        />
         <KpiCard
           label={t("ro_orders_count")}
           value={loading ? "…" : String(stats.count)}
@@ -629,13 +758,36 @@ export function RetailOverview() {
         </div>
       </div>
 
+      {!hasFullAccess && (
+        <div className="mt-4">
+          <UpgradeToProCard onUpgrade={() => showUpgrade("dashboard")} lang={lang} />
+        </div>
+      )}
+
+      <div className="mt-4">
+        <TopProductsCard products={topProducts} lang={lang} t={t} />
+      </div>
+
+      <div className="mt-4">
+        <ProfitBreakdownCard
+          cogs={stats.cogs}
+          sellingCosts={stats.sellingCosts}
+          operatingExpenses={stats.operatingExpenses}
+          netProfit={stats.netProfit}
+          lang={lang}
+        />
+      </div>
+
     </div>
     {/* Desktop: same data/state as the mobile view above, laid out to
         use the available width instead of a centered mobile column. */}
     <div className="hidden lg:block">
       <div className="flex items-start justify-between gap-4 mb-5">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-foreground">{t("ro_title")}</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold text-foreground">{t("ro_title")}</h1>
+            <TikTokStatusPill connected={tiktokConnected} lang={lang} />
+          </div>
           <p className="text-sm text-muted-foreground mt-0.5">{t("ro_subtitle")}</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
@@ -704,7 +856,7 @@ export function RetailOverview() {
       {/* Ledger stat strip — same underlying numbers as the mobile hero
           card and KPI tiles, laid out as a single row now that desktop
           has the width for it. */}
-      <div className="mt-4 grid grid-cols-5 rounded-xl border border-border/60 bg-card overflow-hidden">
+      <div className="mt-4 grid grid-cols-6 rounded-xl border border-border/60 bg-card overflow-hidden">
         <DesktopStatCell
           label={t("ro_total_profit")}
           value={loading ? "…" : money(stats.netProfit)}
@@ -713,6 +865,10 @@ export function RetailOverview() {
         <DesktopStatCell
           label={lang === "zh" ? "边际利润" : lang === "ms" ? "Untung sumbangan" : "Contribution profit"}
           value={loading ? "…" : money(stats.contribution)}
+        />
+        <DesktopStatCell
+          label={lang === "zh" ? "毛利润" : lang === "ms" ? "Untung kasar" : "Gross profit"}
+          value={loading ? "…" : money(stats.profit)}
         />
         <DesktopStatCell label={t("ro_total_sales")} value={loading ? "…" : money(stats.sales)} />
         <DesktopStatCell
@@ -849,6 +1005,17 @@ export function RetailOverview() {
               <p className="mt-1.5 text-sm font-medium text-foreground leading-snug">{suggestion.text}</p>
             </div>
           )}
+          {!hasFullAccess && (
+            <UpgradeToProCard onUpgrade={() => showUpgrade("dashboard")} lang={lang} />
+          )}
+          <TopProductsCard products={topProducts} lang={lang} t={t} />
+          <ProfitBreakdownCard
+            cogs={stats.cogs}
+            sellingCosts={stats.sellingCosts}
+            operatingExpenses={stats.operatingExpenses}
+            netProfit={stats.netProfit}
+            lang={lang}
+          />
         </div>
       </div>
     </div>
@@ -869,11 +1036,11 @@ function KpiCard({
 }) {
   const toneClass =
     tone === "success"
-      ? "text-emerald-600"
+      ? "text-emerald-400"
       : tone === "danger"
-        ? "text-red-600"
+        ? "text-red-400"
         : tone === "warn"
-          ? "text-amber-600"
+          ? "text-amber-400"
           : "text-foreground";
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-3.5 shadow-[var(--shadow-card)]">
@@ -899,11 +1066,11 @@ function DesktopStatCell({
 }) {
   const toneClass =
     tone === "success"
-      ? "text-emerald-600"
+      ? "text-emerald-400"
       : tone === "danger"
-        ? "text-red-600"
+        ? "text-red-400"
         : tone === "warn"
-          ? "text-amber-600"
+          ? "text-amber-400"
           : "text-foreground";
   return (
     <div className={`px-4 py-3.5 ${last ? "" : "border-r border-border/60"}`}>
@@ -922,7 +1089,7 @@ function TrendPill({ delta, onDark }: { delta: number | null; onDark?: boolean }
   const Icon = up ? TrendingUp : TrendingDown;
   const color = onDark
     ? (up ? "text-emerald-300" : "text-red-300")
-    : (up ? "text-emerald-600" : "text-red-600");
+    : (up ? "text-emerald-400" : "text-red-400");
   return (
     <p className={`mt-1 flex items-center gap-1 text-[11px] font-semibold ${color}`}>
       <Icon className="h-3 w-3" />
@@ -945,5 +1112,162 @@ function StatusPill({ status }: { status: string }) {
     <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${cls}`}>
       {status || "—"}
     </span>
+  );
+}
+function TikTokStatusPill({ connected, lang }: { connected: boolean | null; lang: string }) {
+  if (connected === null) return null;
+  const label = connected
+    ? (lang === "zh" ? "TikTok Shop 已连接" : lang === "ms" ? "TikTok Shop disambungkan" : "TikTok Shop connected")
+    : (lang === "zh" ? "TikTok Shop 未连接" : lang === "ms" ? "TikTok Shop belum disambung" : "TikTok Shop not connected");
+  const content = (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+        connected ? "bg-emerald-500/15 text-emerald-300" : "bg-muted text-muted-foreground"
+      }`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-emerald-400" : "bg-muted-foreground/50"}`} />
+      {label}
+    </span>
+  );
+  return connected ? content : <Link to="/profile">{content}</Link>;
+}
+
+function UpgradeToProCard({ onUpgrade, lang }: { onUpgrade: () => void; lang: string }) {
+  return (
+    <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/15 to-primary/5 p-4">
+      <div className="flex items-center gap-2">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">
+          <Crown className="h-4 w-4" />
+        </span>
+        <p className="text-sm font-semibold text-foreground">
+          {lang === "zh" ? "升级到 Pro" : lang === "ms" ? "Naik taraf ke Pro" : "Upgrade to Pro"}
+        </p>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+        {lang === "zh"
+          ? "解锁无限订单、自动 TikTok Shop 同步，以及完整的 7 份报表导出。"
+          : lang === "ms"
+            ? "Buka kunci pesanan tanpa had, penyegerakan TikTok Shop automatik, dan ke-7 laporan PDF."
+            : "Unlock unlimited orders, automatic TikTok Shop sync, and all 7 exportable reports."}
+      </p>
+      <button
+        type="button"
+        onClick={onUpgrade}
+        className="mt-3 w-full rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90"
+      >
+        {lang === "zh" ? "查看方案" : lang === "ms" ? "Lihat pelan" : "View plans"}
+      </button>
+    </div>
+  );
+}
+
+function TopProductsCard({
+  products,
+  lang,
+  t,
+}: {
+  products: { name: string; revenue: number; profit: number }[];
+  lang: string;
+  t: (key: any) => string;
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+          <Trophy className="h-3.5 w-3.5 text-primary" />
+          {lang === "zh" ? "利润最高的产品" : lang === "ms" ? "Produk paling untung" : "Top products by profit"}
+        </p>
+        <Link to="/product-profit" className="text-xs font-semibold text-primary">
+          {t("ro_view_all")}
+        </Link>
+      </div>
+      <div className="mt-3 space-y-2.5">
+        {products.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-2">
+            {lang === "zh" ? "这段时间还没有产品利润数据" : lang === "ms" ? "Tiada data untung produk untuk tempoh ini" : "No product profit data for this period yet"}
+          </p>
+        ) : (
+          products.map((p, i) => (
+            <div key={p.name + i} className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">
+                {i + 1}
+              </span>
+              <span className="flex-1 truncate text-xs font-medium text-foreground">{p.name}</span>
+              <span className={`text-xs font-bold ${p.profit < 0 ? "text-red-400" : "text-emerald-400"}`}>
+                {money(p.profit)}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProfitBreakdownCard({
+  cogs,
+  sellingCosts,
+  operatingExpenses,
+  netProfit,
+  lang,
+}: {
+  cogs: number;
+  sellingCosts: number;
+  operatingExpenses: number;
+  netProfit: number;
+  lang: string;
+}) {
+  const slices = [
+    { key: "cogs", label: lang === "zh" ? "产品成本" : lang === "ms" ? "Kos produk" : "Product cost", value: Math.max(cogs, 0), color: "#8B5CF6" },
+    { key: "selling", label: lang === "zh" ? "平台/运费" : lang === "ms" ? "Yuran platform/penghantaran" : "Platform & shipping fees", value: Math.max(sellingCosts, 0), color: "#D946EF" },
+    { key: "opex", label: lang === "zh" ? "营业费用" : lang === "ms" ? "Perbelanjaan operasi" : "Operating expenses", value: Math.max(operatingExpenses, 0), color: "#60A5FA" },
+    { key: "net", label: lang === "zh" ? "净利润" : lang === "ms" ? "Untung bersih" : "Net profit", value: Math.max(netProfit, 0), color: "#4ADE80" },
+  ];
+  const total = slices.reduce((s, x) => s + x.value, 0);
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-4">
+      <p className="text-sm font-semibold text-foreground">
+        {lang === "zh" ? "利润构成" : lang === "ms" ? "Pecahan untung" : "Profit breakdown"}
+      </p>
+      {total <= 0 ? (
+        <p className="mt-3 text-xs text-muted-foreground py-2">
+          {lang === "zh" ? "这段时间还没有数据" : lang === "ms" ? "Tiada data untuk tempoh ini" : "No data for this period yet"}
+        </p>
+      ) : (
+        <div className="mt-2 flex items-center gap-4">
+          <div className="h-[110px] w-[110px] shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={slices} dataKey="value" nameKey="label" innerRadius={32} outerRadius={50} paddingAngle={2} strokeWidth={0}>
+                  {slices.map((s) => (
+                    <Cell key={s.key} fill={s.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v: number) => money(v)} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex-1 space-y-1.5 min-w-0">
+            {slices.map((s) => (
+              <div key={s.key} className="flex items-center gap-1.5 text-[11px]">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
+                <span className="flex-1 truncate text-muted-foreground">{s.label}</span>
+                <span className="font-semibold text-foreground">{money(s.value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {(cogs < 0 || sellingCosts < 0 || netProfit < 0) && (
+        <p className="mt-2 text-[10px] text-muted-foreground">
+          {lang === "zh"
+            ? "注：本期有退款/亏损，图表只显示正数部分"
+            : lang === "ms"
+              ? "Nota: tempoh ini ada bayaran balik/kerugian, carta hanya tunjuk nilai positif"
+              : "Note: this period includes refunds/losses — the chart shows positive amounts only"}
+        </p>
+      )}
+    </div>
   );
 }
