@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import {
   ArrowLeft, X, Calendar as CalendarIcon, Check, Plus, Home, MapPin,
-  MessageCircle, Pencil, Trash2, Package, House,
+  MessageCircle, Pencil, Trash2, Package, House, TrendingUp, Wallet, Percent,
 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type OrderRow, type CustomerStatus, type FollowUpRow } from "@/integrations/supabase/client";
 import { useI18n, type TKey } from "@/contexts/I18nContext";
@@ -14,6 +15,7 @@ import { FollowupPipeline } from "@/components/FollowupPipeline";
 import { AdditionalServices } from "@/components/AdditionalServices";
 import { reqStatusKey } from "@/routes/requirements";
 import { stripEmoji } from "@/lib/wa";
+import { orderContributionProfit } from "@/lib/orderMath";
 
 export const Route = createFileRoute("/customer/$customerId")({ component: CustomerDetail });
 
@@ -40,7 +42,7 @@ function buildWA(phone: string, message: string) {
 }
 
 function CustomerDetail() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const { type: bizType } = useBusinessType();
   const { customerId } = Route.useParams();
@@ -192,9 +194,34 @@ function CustomerDetail() {
   // customer-update paths, or when the customer row is recreated.
   const derivedOrderCount = orders.length;
   const derivedTotalSpent = orders.reduce((s, o) => s + Number(o.amount ?? 0), 0);
+  // These two aren't stored on the customer row — derive from the already-
+  // loaded order history, the same way the desktop customers list does.
+  const derivedTotalProfit = orders.reduce((s, o) => {
+    if ((o as any).financial_status === "pending") return s;
+    return s + orderContributionProfit(o as any);
+  }, 0);
+  const derivedProfitMargin = derivedTotalSpent > 0 ? (derivedTotalProfit / derivedTotalSpent) * 100 : 0;
+  const derivedOutstanding = orders.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount ?? 0), 0);
+  // Sales & Profit Trend: group this customer's orders by month (oldest → newest).
+  const trendByMonth = (() => {
+    const map = new Map<string, { revenue: number; profit: number }>();
+    [...orders].reverse().forEach((o) => {
+      const d = new Date(o.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const entry = map.get(key) ?? { revenue: 0, profit: 0 };
+      entry.revenue += Number(o.amount ?? 0);
+      if ((o as any).financial_status !== "pending") entry.profit += orderContributionProfit(o as any);
+      map.set(key, entry);
+    });
+    return Array.from(map.entries()).map(([key, v]) => {
+      const [y, m] = key.split("-");
+      const label = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("en-MY", { month: "short" });
+      return { day: label, revenue: v.revenue, profit: v.profit };
+    });
+  })();
 
   return (
-    <div className="px-5 pt-10 pb-6 space-y-5">
+    <div className="px-5 pt-10 pb-6 space-y-5 lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate({ to: "/customers" })} className="p-2 -ml-2 rounded-full hover:bg-muted">
           <ArrowLeft className="h-5 w-5" />
@@ -202,6 +229,218 @@ function CustomerDetail() {
         <h1 className="text-xl font-bold">{t("customer_detail")}</h1>
       </div>
 
+      <div className="hidden lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
+        <div className="space-y-4">
+          <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-5 flex flex-col items-center text-center gap-2">
+            <div className="h-20 w-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold shadow-[var(--shadow-soft)]">
+              {customer.name.charAt(0).toUpperCase()}
+            </div>
+            <h2 className="text-xl font-bold">{customer.name}</h2>
+            {customer.phone ? (
+              <a href={`tel:${customer.phone}`} className="text-sm text-primary">{customer.phone}</a>
+            ) : (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+            {bizType === "retail" ? (
+              (() => {
+                const spent = derivedTotalSpent;
+                const ordersCount = derivedOrderCount;
+                let badge: { label: string; cls: string } | null = null;
+                if (spent >= 500) badge = { label: t("customer_top_spender"), cls: "bg-amber-500/15 text-amber-700" };
+                else if (ordersCount >= 2) badge = { label: t("customer_repeat"), cls: "bg-primary/10 text-primary" };
+                else if (ordersCount === 1) badge = { label: t("customer_new"), cls: "bg-emerald-500/15 text-emerald-700" };
+                return badge ? (
+                  <span className={`mt-2 text-xs font-semibold px-3 py-1.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+                ) : null;
+              })()
+            ) : (
+              <button
+                onClick={cycleStatus}
+                className={`mt-2 text-xs font-semibold px-3 py-1.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[currentStatus]}`}
+              >
+                <span className={`inline-block h-1.5 w-1.5 rounded-full ${CUSTOMER_STATUS_DOT[currentStatus]}`} /> {t(`cs_${currentStatus}` as any)}
+              </button>
+            )}
+            <p className="text-[11px] text-muted-foreground mt-1">{t("member_since")}: {memberSince}</p>
+          </section>
+
+          <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3">
+            <button
+              onClick={() => {
+                if (!customer.phone) { toast.error(t("no_phone_for_wa")); return; }
+                window.open(buildWA(customer.phone, t("thank_customer_msg" as TKey).replace("{name}", customer.name)), "_blank");
+              }}
+              className="w-full py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold active:scale-[0.99] transition-transform"
+            >
+              <MessageCircle className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("send_whatsapp")}
+            </button>
+            <button
+              onClick={() => setEditing(true)}
+              className="w-full py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold active:scale-[0.99] transition-transform"
+            >
+              <Pencil className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("edit_customer")}
+            </button>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-600 text-sm font-semibold active:scale-[0.99] transition-transform"
+            >
+              <Trash2 className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
+            </button>
+          </section>
+
+          <section className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+                {t(bizType === "retail" ? "checkin_reminder" : "followup_reminder")}
+              </p>
+              <button
+                onClick={() => setShowFollowUp(true)}
+                className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95 transition-transform"
+              >
+                <CalendarIcon className="h-3.5 w-3.5" /> {t("set_followup")}
+              </button>
+            </div>
+            <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60">
+              {openFollowUps.length === 0 && (
+                <p className="text-center text-xs text-muted-foreground py-5">{t("no_followups")}</p>
+              )}
+              {openFollowUps.map((f) => {
+                const overdue = f.follow_up_date < todayStr;
+                return (
+                  <div key={f.id} className="p-3 flex items-center gap-3">
+                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${overdue ? "bg-red-500/10 text-red-600" : "bg-primary/10 text-primary"}`}>
+                      <CalendarIcon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold ${overdue ? "text-red-600" : "text-foreground"}`}>
+                        {new Date(f.follow_up_date).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })}
+                        {overdue && <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-600">{t("followup_overdue")}</span>}
+                      </p>
+                      {f.note && <p className="text-xs text-muted-foreground truncate">{f.note}</p>}
+                    </div>
+                    <button onClick={() => markFollowUpDone(f)} aria-label="done" className="p-2 rounded-full bg-emerald-500/10 text-emerald-600 active:scale-95 transition-transform">
+                      <Check className="h-4 w-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">
+              {t("remarks")}
+            </p>
+            <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 space-y-2">
+              <textarea
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder={t("remarks_placeholder")}
+                rows={4}
+                className="w-full resize-y rounded-xl bg-muted/40 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15"
+              />
+              {remarks !== (customer.remarks ?? "") && (
+                <button
+                  onClick={saveRemarks}
+                  disabled={savingRemarks}
+                  className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
+                >
+                  {savingRemarks ? t("saving") : t("save")}
+                </button>
+              )}
+            </div>
+          </section>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-4 gap-4">
+            <DetailKpiCard
+              icon={TrendingUp}
+              label={lang === "zh" ? "销售总额" : lang === "ms" ? "Jumlah Jualan" : "Total Sales"}
+              value={`RM ${derivedTotalSpent.toFixed(2)}`}
+            />
+            <DetailKpiCard
+              icon={Wallet}
+              label={lang === "zh" ? "总利润" : lang === "ms" ? "Jumlah Keuntungan" : "Total Profit"}
+              value={`RM ${derivedTotalProfit.toFixed(2)}`}
+              tone={derivedTotalProfit >= 0 ? "emerald" : "red"}
+            />
+            <DetailKpiCard
+              icon={Percent}
+              label={lang === "zh" ? "利润率" : lang === "ms" ? "Margin Keuntungan" : "Profit Margin"}
+              value={`${derivedProfitMargin.toFixed(1)}%`}
+            />
+            <DetailKpiCard
+              icon={Wallet}
+              label={lang === "zh" ? "未付款" : lang === "ms" ? "Belum Dibayar" : "Outstanding"}
+              value={`RM ${derivedOutstanding.toFixed(2)}`}
+              tone={derivedOutstanding > 0 ? "amber" : "default"}
+            />
+          </div>
+
+          {trendByMonth.length > 1 && (
+            <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {lang === "zh" ? "销售与利润趋势" : lang === "ms" ? "Trend Jualan & Keuntungan" : "Sales & Profit Trend"}
+              </p>
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendByMonth} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                    <XAxis dataKey="day" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <Tooltip formatter={(v: number) => `RM ${Number(v).toFixed(2)}`} />
+                    <Line type="monotone" dataKey="revenue" stroke="#60A5FA" strokeWidth={2} dot={false} name={lang === "zh" ? "销售额" : "Revenue"} />
+                    <Line type="monotone" dataKey="profit" stroke="#10B981" strokeWidth={2} dot={false} name={lang === "zh" ? "利润" : "Profit"} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
+            <div className="px-4 py-3 border-b border-border/60">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t("order_history")}</p>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground border-b border-border/40">
+                  <th className="px-4 py-2.5">{lang === "zh" ? "订单" : "Order"}</th>
+                  <th className="px-4 py-2.5">{lang === "zh" ? "商品" : "Product"}</th>
+                  <th className="px-4 py-2.5 text-right">{lang === "zh" ? "金额" : "Amount"}</th>
+                  <th className="px-4 py-2.5 text-right">{lang === "zh" ? "利润" : "Profit"}</th>
+                  <th className="px-4 py-2.5">{lang === "zh" ? "状态" : "Status"}</th>
+                  <th className="px-4 py-2.5">{lang === "zh" ? "日期" : "Date"}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {orders.length === 0 && (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">{t("no_orders_found")}</td></tr>
+                )}
+                {orders.map((o) => {
+                  const profit = (o as any).financial_status === "pending" ? null : orderContributionProfit(o as any);
+                  return (
+                    <tr key={o.id} className="hover:bg-muted/30 transition">
+                      <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{o.code}</td>
+                      <td className="px-4 py-2.5 text-foreground truncate max-w-[220px]">{o.product}{o.quantity > 1 ? ` x${o.quantity}` : ""}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-foreground">RM {Number(o.amount).toFixed(2)}</td>
+                      <td className={`px-4 py-2.5 text-right font-semibold ${profit === null ? "text-muted-foreground" : profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {profit === null ? "—" : `RM ${profit.toFixed(2)}`}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}>{o.status}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div className="lg:hidden space-y-5">
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-5 flex flex-col items-center text-center gap-2">
         <div className="h-20 w-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold shadow-[var(--shadow-soft)]">
           {customer.name.charAt(0).toUpperCase()}
@@ -381,6 +620,7 @@ function CustomerDetail() {
           <Trash2 className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
         </button>
       </section>
+      </div>
 
       {editing && (
         <EditSheet
@@ -434,6 +674,32 @@ function CustomerDetail() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function DetailKpiCard({
+  icon: Icon, label, value, tone = "default",
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string; value: string;
+  tone?: "default" | "emerald" | "red" | "amber";
+}) {
+  const toneClasses: Record<string, string> = {
+    default: "bg-primary/10 text-primary",
+    emerald: "bg-emerald-500/10 text-emerald-600",
+    red: "bg-red-500/10 text-red-600",
+    amber: "bg-amber-500/10 text-amber-700",
+  };
+  return (
+    <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</span>
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${toneClasses[tone]}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <p className="text-xl font-bold text-foreground">{value}</p>
     </div>
   );
 }

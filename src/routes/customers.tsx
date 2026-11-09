@@ -3,8 +3,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   MoreVertical, X, Package, Repeat, BarChart3, GraduationCap, Scale, List,
   LayoutGrid, Search, Clock, Gem, Calendar, Smartphone, School, MessageCircle,
-  Phone, Pencil, Trash2, AlertTriangle,
+  Phone, Pencil, Trash2, AlertTriangle, Users, Wallet, TrendingUp, ShoppingBag,
 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "sonner";
 import { supabase, type CustomerRow, type CustomerStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +15,7 @@ import { bizKey } from "@/lib/businessType";
 import { CasesKanban, type EduStageInfo } from "@/components/CasesKanban";
 import { PhoneInput } from "@/components/PhoneInput";
 import { stripEmoji } from "@/lib/wa";
+import { orderContributionProfit } from "@/lib/orderMath";
 
 function buildWA(phone: string, message: string) {
   const cleaned = phone.replace(/[^0-9]/g, "");
@@ -32,6 +34,30 @@ const CUSTOMER_STATUS_STYLES: Record<CustomerStatus, string> = {
 const CUSTOMER_STATUS_DOT: Record<CustomerStatus, string> = {
   enquiry: "bg-blue-500", in_progress: "bg-amber-500", completed: "bg-emerald-500", rejected: "bg-red-500",
 };
+
+function CustomerKpiCard({
+  icon: Icon, label, value, tone = "default",
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string; value: string;
+  tone?: "default" | "amber";
+}) {
+  const toneClasses: Record<string, string> = {
+    default: "bg-primary/10 text-primary",
+    amber: "bg-amber-500/10 text-amber-700",
+  };
+  return (
+    <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</span>
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${toneClasses[tone]}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-foreground">{value}</p>
+    </div>
+  );
+}
 
 function relTime(iso: string | null, t: (k: any) => string) {
   if (!iso) return t("never");
@@ -72,6 +98,7 @@ function CustomersPage() {
   const [dateTo, setDateTo] = useState<string>("");
   const [dateOpen, setDateOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"recent" | "most_orders" | "top_spender">("recent");
+  const [orderAgg, setOrderAgg] = useState<Record<string, { orders: number; sales: number; profit: number; outstanding: number }>>({});
 
   const ordersWordKey: TKey =
     bizType === "education" ? "case_word"
@@ -169,6 +196,44 @@ function CustomersPage() {
       map.set(o.platform_buyer_id, existing);
     }
     setTiktokBuyers(Array.from(map.values()).filter((b) => b.orders > 1).sort((a, b) => b.totalSpent - a.totalSpent));
+
+    // Desktop KPI/table data: Outstanding and Total Profit aren't stored on
+    // the customers row, so derive them by matching each customer's orders
+    // the same way doDelete() above does — by phone digits first, falling
+    // back to customer_name only for orders with no phone on file.
+    const { data: ordersForAgg } = await supabase
+      .from("orders" as any)
+      .select("phone,customer_name,amount,status,cost,gross_profit,platform_fee_amount,shipping_cost,affiliate_commission,financial_status")
+      .eq("user_id", user.id);
+    const byPhone = new Map<string, any[]>();
+    const byName = new Map<string, any[]>();
+    for (const o of ((ordersForAgg ?? []) as any[])) {
+      const pd = (o.phone ?? "").replace(/\D/g, "");
+      if (pd) {
+        if (!byPhone.has(pd)) byPhone.set(pd, []);
+        byPhone.get(pd)!.push(o);
+      } else {
+        const key = (o.customer_name ?? "").trim().toLowerCase();
+        if (!key) continue;
+        if (!byName.has(key)) byName.set(key, []);
+        byName.get(key)!.push(o);
+      }
+    }
+    const agg: Record<string, { orders: number; sales: number; profit: number; outstanding: number }> = {};
+    for (const c of rows) {
+      const pd = (c.phone ?? "").replace(/\D/g, "");
+      const list = pd ? (byPhone.get(pd) ?? []) : (byName.get(c.name.trim().toLowerCase()) ?? []);
+      let sales = 0, profit = 0, outstanding = 0;
+      for (const o of list) {
+        const amt = Number(o.amount ?? 0);
+        sales += amt;
+        if (o.financial_status !== "pending") profit += orderContributionProfit(o);
+        if (o.status === "Unpaid") outstanding += amt;
+      }
+      agg[c.id] = { orders: list.length, sales, profit, outstanding };
+    }
+    setOrderAgg(agg);
+
     if (rows.length) {
       const { data: fuRows } = await supabase
         .from("follow_ups")
@@ -386,6 +451,39 @@ function CustomersPage() {
       )
     : [];
 
+  // Desktop-only KPI row + Customer Insights panel data.
+  const totalCustomers = customers.length;
+  const totalOrdersAgg = Object.values(orderAgg).reduce((s, a) => s + a.orders, 0);
+  const totalSalesAgg = Object.values(orderAgg).reduce((s, a) => s + a.sales, 0);
+  const totalOutstandingAgg = Object.values(orderAgg).reduce((s, a) => s + a.outstanding, 0);
+  const avgOrderValue = totalOrdersAgg > 0 ? totalSalesAgg / totalOrdersAgg : 0;
+  const repeatCustomerCount = customers.filter((c) => (c.total_orders ?? 0) >= 2).length;
+  const repeatRate = totalCustomers > 0 ? (repeatCustomerCount / totalCustomers) * 100 : 0;
+  const withOutstandingCount = Object.values(orderAgg).filter((a) => a.outstanding > 0).length;
+
+  const distributionData = bizType === "retail"
+    ? (() => {
+        let top = 0, repeat = 0, neu = 0, other = 0;
+        customers.forEach((c) => {
+          const b = retailBadge(c);
+          if (b?.label === t("customer_top_spender")) top++;
+          else if (b?.label === t("customer_repeat")) repeat++;
+          else if (b?.label === t("customer_new")) neu++;
+          else other++;
+        });
+        return [
+          { name: t("customer_top_spender"), value: top, color: "#D4A017" },
+          { name: t("customer_repeat"), value: repeat, color: "#3B82F6" },
+          { name: t("customer_new"), value: neu, color: "#10B981" },
+          { name: lang === "zh" ? "其他" : lang === "ms" ? "Lain" : "Other", value: other, color: "#9CA3AF" },
+        ].filter((d) => d.value > 0);
+      })()
+    : CUSTOMER_STATUS_ORDER.map((s) => ({
+        name: t(`cs_${s}` as any),
+        value: customers.filter((c) => (c.customer_status ?? "enquiry") === s).length,
+        color: s === "enquiry" ? "#3B82F6" : s === "in_progress" ? "#F59E0B" : s === "completed" ? "#10B981" : "#EF4444",
+      })).filter((d) => d.value > 0);
+
   return (
     <div className="px-5 pt-10 pb-4 space-y-5 lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
       <header className="flex items-center gap-3">
@@ -419,6 +517,30 @@ function CustomersPage() {
           </button>
         )}
       </header>
+
+      <div className="hidden lg:grid lg:grid-cols-4 lg:gap-4">
+        <CustomerKpiCard
+          icon={Users}
+          label={lang === "zh" ? "客户总数" : lang === "ms" ? "Jumlah Pelanggan" : "Total Customers"}
+          value={String(totalCustomers)}
+        />
+        <CustomerKpiCard
+          icon={ShoppingBag}
+          label={lang === "zh" ? "订单总数" : lang === "ms" ? "Jumlah Pesanan" : "Total Orders"}
+          value={String(totalOrdersAgg)}
+        />
+        <CustomerKpiCard
+          icon={TrendingUp}
+          label={lang === "zh" ? "销售总额" : lang === "ms" ? "Jumlah Jualan" : "Total Sales"}
+          value={`RM ${totalSalesAgg.toFixed(2)}`}
+        />
+        <CustomerKpiCard
+          icon={Wallet}
+          label={lang === "zh" ? "未付款金额" : lang === "ms" ? "Belum Dibayar" : "Outstanding"}
+          value={`RM ${totalOutstandingAgg.toFixed(2)}`}
+          tone={totalOutstandingAgg > 0 ? "amber" : "default"}
+        />
+      </div>
 
       {tiktokBuyers.length > 0 && (
         <div className="space-y-2">
@@ -628,7 +750,7 @@ function CustomersPage() {
         </div>
       )}
 
-      <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3 lg:items-start">
+      <div className="lg:hidden space-y-3">
         {loading && (
           <div className="flex justify-center py-10 lg:col-span-full">
             <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
@@ -760,6 +882,149 @@ function CustomersPage() {
           <p className="text-center text-sm text-muted-foreground py-10">{t("no_customers")}</p>
         )}
       </div>
+
+      {!loading && customers.length > 0 && (
+        <div className="hidden lg:grid lg:grid-cols-[1fr_300px] lg:gap-6 lg:items-start">
+          <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/60 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3">{lang === "zh" ? "客户" : lang === "ms" ? "Pelanggan" : "Customer"}</th>
+                  <th className="px-4 py-3 text-right">{lang === "zh" ? "订单" : lang === "ms" ? "Pesanan" : "Orders"}</th>
+                  <th className="px-4 py-3 text-right">{lang === "zh" ? "销售总额" : lang === "ms" ? "Jualan" : "Total Sales"}</th>
+                  <th className="px-4 py-3 text-right">{lang === "zh" ? "总利润" : lang === "ms" ? "Keuntungan" : "Total Profit"}</th>
+                  <th className="px-4 py-3 text-right">{lang === "zh" ? "未付款" : lang === "ms" ? "Belum Bayar" : "Outstanding"}</th>
+                  <th className="px-4 py-3">{lang === "zh" ? "最后订单" : lang === "ms" ? "Pesanan Terakhir" : "Last Order"}</th>
+                  <th className="px-4 py-3">{lang === "zh" ? "状态" : lang === "ms" ? "Status" : "Status"}</th>
+                  <th className="px-4 py-3 text-right">{lang === "zh" ? "操作" : lang === "ms" ? "Tindakan" : "Action"}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {visible.map((c) => {
+                  const a = orderAgg[c.id] ?? { orders: 0, sales: 0, profit: 0, outstanding: 0 };
+                  const b = bizType === "retail" ? retailBadge(c) : null;
+                  return (
+                    <tr key={c.id} className="hover:bg-muted/30 transition">
+                      <td className="px-4 py-3">
+                        <Link to="/customer/$customerId" params={{ customerId: c.id }} className="flex items-center gap-2.5 min-w-0">
+                          <div className="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold text-xs shrink-0">
+                            {c.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-foreground truncate">{c.name}</p>
+                            {c.phone && <p className="text-[11px] text-muted-foreground truncate">{c.phone}</p>}
+                          </div>
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-right text-foreground">{a.orders}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-foreground">RM {a.sales.toFixed(2)}</td>
+                      <td className={`px-4 py-3 text-right font-semibold ${a.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        RM {a.profit.toFixed(2)}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-semibold ${a.outstanding > 0 ? "text-amber-600" : "text-muted-foreground"}`}>
+                        {a.outstanding > 0 ? `RM ${a.outstanding.toFixed(2)}` : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">{relTime(c.last_order_at, t)}</td>
+                      <td className="px-4 py-3">
+                        {bizType === "retail" ? (
+                          b ? <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${b.cls}`}>{b.label}</span> : <span className="text-muted-foreground text-xs">—</span>
+                        ) : (
+                          <button
+                            onClick={() => cycleStatus(c)}
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full active:scale-95 transition ${CUSTOMER_STATUS_STYLES[(c.customer_status ?? "enquiry") as CustomerStatus]}`}
+                          >
+                            {t(`cs_${(c.customer_status ?? "enquiry") as CustomerStatus}` as any)}
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => {
+                              if (!c.phone) { toast.error(t("no_phone_for_wa")); return; }
+                              window.open(buildWA(c.phone, t("thank_customer_msg" as TKey).replace("{name}", c.name)), "_blank");
+                            }}
+                            aria-label="WhatsApp"
+                            className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-500/10 transition"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => navigate({ to: "/customer/$customerId", params: { customerId: c.id } })}
+                            aria-label="Edit"
+                            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted transition"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(c)}
+                            aria-label="Delete"
+                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {visible.length === 0 && (
+                  <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-muted-foreground">{t("no_customers")}</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {lang === "zh" ? "客户洞察" : lang === "ms" ? "Wawasan Pelanggan" : "Customer Insights"}
+              </p>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{lang === "zh" ? "平均订单金额" : lang === "ms" ? "Purata Nilai Pesanan" : "Avg. Order Value"}</span>
+                <span className="font-semibold text-foreground">RM {avgOrderValue.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{lang === "zh" ? "回购率" : lang === "ms" ? "Kadar Ulangan" : "Repeat Rate"}</span>
+                <span className="font-semibold text-foreground">{repeatRate.toFixed(0)}%</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{lang === "zh" ? "有未付款的客户" : lang === "ms" ? "Ada Belum Bayar" : "With Outstanding"}</span>
+                <span className={`font-semibold ${withOutstandingCount > 0 ? "text-amber-600" : "text-foreground"}`}>{withOutstandingCount}</span>
+              </div>
+            </div>
+
+            {distributionData.length > 0 && (
+              <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {lang === "zh" ? "客户分布" : lang === "ms" ? "Taburan Pelanggan" : "Customer Distribution"}
+                </p>
+                <div className="h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={distributionData} dataKey="value" nameKey="name" innerRadius={38} outerRadius={60} paddingAngle={2}>
+                        {distributionData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                      </Pie>
+                      <Tooltip formatter={(v: number) => [v, lang === "zh" ? "位客户" : "customers"]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-1.5">
+                  {distributionData.map((d, i) => (
+                    <div key={i} className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
+                        {d.name}
+                      </span>
+                      <span className="font-semibold text-foreground">{d.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {newCustomerOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setNewCustomerOpen(false)}>
