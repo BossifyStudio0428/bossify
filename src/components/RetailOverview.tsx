@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { TrendingUp, TrendingDown, ChevronDown, ChevronRight, MessageCircle, Plus, Trophy, Package, Wallet, FileText, PieChart as PieChartIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, ChevronDown, ChevronRight, MessageCircle, Plus, Trophy, Package, Wallet, FileText, PieChart as PieChartIcon, Sparkles } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie } from "recharts";
 import { useServerFn } from "@tanstack/react-start";
 import { Capacitor } from "@capacitor/core";
@@ -233,10 +233,10 @@ export function RetailOverview() {
           .lte("created_at", prevEnd.toISOString()),
         supabase
           .from("orders")
-          .select("id,code,customer_name,phone,quantity,amount,cost,gross_profit,product,created_at,status,financial_status")
+          .select("id,code,customer_name,phone,quantity,amount,cost,gross_profit,product,created_at,status,financial_status,platform_fee_amount,shipping_cost,affiliate_commission")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
-          .limit(3),
+          .limit(5),
         supabase
           .from("orders")
           .select("id,amount,cost,gross_profit,product,created_at,financial_status")
@@ -433,7 +433,7 @@ export function RetailOverview() {
   // curOrders (no extra query). Loss days render in red so a glance at
   // the bar below the zero line is enough to spot a bad day.
   const dailyChart = useMemo(() => {
-    const byDay = new Map<string, number>();
+    const byDay = new Map<string, { sales: number; profit: number }>();
     for (const o of curOrders as any[]) {
       if (o.financial_status === "pending") continue;
       const day = String(o.created_at ?? "").slice(0, 10);
@@ -446,22 +446,26 @@ export function RetailOverview() {
         shipping_cost: o.shipping_cost,
         affiliate_commission: o.affiliate_commission,
       });
-      byDay.set(day, (byDay.get(day) ?? 0) + p);
+      const entry = byDay.get(day) ?? { sales: 0, profit: 0 };
+      entry.sales += Number(o.amount ?? 0);
+      entry.profit += p;
+      byDay.set(day, entry);
     }
     return Array.from(byDay.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([day, profit]) => ({
+      .map(([day, v]) => ({
         day,
         label: new Date(day + "T00:00:00").toLocaleDateString(
           lang === "zh" ? "zh-CN" : lang === "ms" ? "ms-MY" : "en-MY",
           { day: "numeric", month: "short" },
         ),
-        profit: Math.round(profit * 100) / 100,
+        sales: Math.round(v.sales * 100) / 100,
+        profit: Math.round(v.profit * 100) / 100,
       }));
   }, [curOrders, lang]);
 
-  const suggestion = useMemo(() => {
-    if (loading) return null;
+  const { suggestion, businessInsights } = useMemo(() => {
+    if (loading) return { suggestion: null, businessInsights: [] as { key: string; text: string }[] };
 
     // Priority 1: loss-making SKUs (money leaking every sale)
     const losing = inv.filter(
@@ -529,8 +533,11 @@ export function RetailOverview() {
     if (topName && topRev > 0) {
       pool.push({ key: `top:${topName}`, text: t("ro_sug_top").replace("{name}", topName) });
     }
-    if (pool.length === 0) return { key: "ok", text: t("ro_sug_ok") };
-    return pool[tick % pool.length];
+    if (pool.length === 0) {
+      const ok = { key: "ok", text: t("ro_sug_ok") };
+      return { suggestion: ok, businessInsights: [ok] };
+    }
+    return { suggestion: pool[tick % pool.length], businessInsights: pool.slice(0, 3) };
   }, [inv, weekItems, tiktokIdByProduct, loading, t, tick, lowThreshold]);
 
   const rangeLabel =
@@ -1010,6 +1017,13 @@ export function RetailOverview() {
             )}
           </div>
           <Link
+            to="/reports"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-lg border border-border/60 bg-card text-foreground hover:bg-muted"
+          >
+            <FileText className="h-4 w-4" />
+            {lang === "zh" ? "导出" : lang === "ms" ? "Eksport" : "Export"}
+          </Link>
+          <Link
             to="/new-order"
             className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"
           >
@@ -1044,34 +1058,34 @@ export function RetailOverview() {
 
       <CampaignBanner />
 
-      {/* Ledger stat strip — same underlying numbers as the mobile hero
-          card and KPI tiles, laid out as a single row now that desktop
-          has the width for it. */}
-      <div className="mt-4 grid grid-cols-6 rounded-xl border border-border/60 bg-card overflow-hidden">
-        <DesktopStatCell
-          label={t("ro_total_profit")}
+      {/* KPI row: Sales, Real Profit, Expenses, Orders — same underlying
+          numbers as the mobile hero card, laid out as 4 cards now that
+          desktop has the width for it. */}
+      <div className="mt-4 grid grid-cols-4 gap-4">
+        <KpiCard
+          label={t("ro_total_sales")}
+          value={loading ? "…" : money(stats.sales)}
+          delta={loading ? null : stats.salesDelta}
+          icon={Wallet}
+        />
+        <KpiCard
+          label={lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}
           value={loading ? "…" : money(stats.netProfit)}
           delta={loading ? null : stats.profitDelta}
+          icon={TrendingUp}
+          highlight
         />
-        <DesktopStatCell
-          label={lang === "zh" ? "边际利润" : lang === "ms" ? "Untung sumbangan" : "Contribution profit"}
-          value={loading ? "…" : money(stats.contribution)}
+        <KpiCard
+          label={lang === "zh" ? "总支出" : lang === "ms" ? "Perbelanjaan" : "Expenses"}
+          value={loading ? "…" : money(Math.max(stats.sales - stats.netProfit, 0))}
+          delta={null}
+          icon={FileText}
         />
-        <DesktopStatCell
-          label={lang === "zh" ? "毛利润" : lang === "ms" ? "Untung kasar" : "Gross profit"}
-          value={loading ? "…" : money(stats.profit)}
-        />
-        <DesktopStatCell label={t("ro_total_sales")} value={loading ? "…" : money(stats.sales)} />
-        <DesktopStatCell
+        <KpiCard
           label={t("ro_orders_count")}
           value={loading ? "…" : String(stats.count)}
           delta={loading ? null : stats.countDelta}
-        />
-        <DesktopStatCell
-          label={t("ro_low_stock_items")}
-          value={loading ? "…" : String(stats.lowStockItems)}
-          tone={stats.lowStockItems > 0 ? "warn" : "success"}
-          last
+          icon={Package}
         />
       </div>
 
@@ -1088,43 +1102,130 @@ export function RetailOverview() {
         </div>
       )}
 
-      {dailyChart.length > 1 && (
-        <div className="mt-5 rounded-xl border border-border/60 bg-card p-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
-            {lang === "zh" ? "每日利润趋势" : lang === "ms" ? "Trend Untung Harian" : "Daily Profit Trend"}
-          </p>
-          <ResponsiveContainer width="100%" height={160}>
-            <LineChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 10 }} width={48} />
-              <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-              <Line
-                type="monotone"
-                dataKey="profit"
-                stroke="#8B5CF6"
-                strokeWidth={2}
-                dot={(props: any) => (
-                  <circle key={props.index} cx={props.cx} cy={props.cy} r={3} fill={props.payload.profit < 0 ? "#DC2626" : "#8B5CF6"} stroke="none" />
-                )}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Row 2: Sales & Real Profit trend, Profit Performance breakdown,
+          Business Insight. */}
+      <div className="mt-5 grid grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(240px,1fr)_minmax(240px,1fr)] gap-5">
+        <div className="rounded-xl border border-border/60 bg-card p-4">
+          <div className="flex items-center justify-between mb-3 gap-3">
+            <p className="text-sm font-semibold text-foreground">
+              {lang === "zh" ? "销售额与真实利润" : lang === "ms" ? "Jualan & Untung Sebenar" : "Sales & Real Profit"}
+            </p>
+            <div className="flex items-center gap-3 text-[11px] text-muted-foreground shrink-0">
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-[#60A5FA]" />
+                {lang === "zh" ? "销售额" : lang === "ms" ? "Jualan" : "Sales"}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-[#8B5CF6]" />
+                {lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}
+              </span>
+            </div>
+          </div>
+          {dailyChart.length > 1 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 10 }} width={48} />
+                <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+                <Line type="monotone" dataKey="sales" stroke="#60A5FA" strokeWidth={2} dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="profit"
+                  stroke="#8B5CF6"
+                  strokeWidth={2}
+                  dot={(props: any) => (
+                    <circle key={props.index} cx={props.cx} cy={props.cy} r={3} fill={props.payload.profit < 0 ? "#DC2626" : "#8B5CF6"} stroke="none" />
+                  )}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            !loading && (
+              <div className="rounded-lg border border-dashed border-border/60 bg-card/50 py-16 text-center">
+                <p className="text-xs text-muted-foreground">
+                  {lang === "zh" ? "这段时间还没有订单数据" : lang === "ms" ? "Tiada data pesanan untuk tempoh ini" : "No order data for this period yet"}
+                </p>
+              </div>
+            )
+          )}
         </div>
-      )}
-      {!loading && dailyChart.length <= 1 && (
-        <div className="mt-5 rounded-xl border border-dashed border-border/60 bg-card/50 p-4 text-center">
-          <p className="text-xs text-muted-foreground">{lang === "zh" ? "这段时间还没有订单数据" : lang === "ms" ? "Tiada data pesanan untuk tempoh ini" : "No order data for this period yet"}</p>
-        </div>
-      )}
 
+        <div className="rounded-xl border border-border/60 bg-card p-4">
+          <p className="text-sm font-semibold text-foreground mb-3">
+            {lang === "zh" ? "利润表现" : lang === "ms" ? "Prestasi Untung" : "Profit Performance"}
+          </p>
+          <div className="space-y-2 text-[13px]">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                {lang === "zh" ? "营业额" : lang === "ms" ? "Hasil" : "Revenue"}
+              </span>
+              <span className="font-semibold text-foreground font-mono">{loading ? "…" : money(stats.sales)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                {lang === "zh" ? "− 产品成本" : lang === "ms" ? "− Kos produk" : "− Product cost"}
+              </span>
+              <span className="font-medium text-red-600 font-mono">{loading ? "…" : `-${money(Math.max(stats.cogs, 0))}`}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                {lang === "zh" ? "− 平台/运费" : lang === "ms" ? "− Yuran platform/penghantaran" : "− Platform & shipping fees"}
+              </span>
+              <span className="font-medium text-red-600 font-mono">{loading ? "…" : `-${money(Math.max(stats.sellingCosts, 0))}`}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                {lang === "zh" ? "− 营业费用" : lang === "ms" ? "− Perbelanjaan operasi" : "− Operating expenses"}
+              </span>
+              <span className="font-medium text-red-600 font-mono">{loading ? "…" : `-${money(Math.max(stats.operatingExpenses, 0))}`}</span>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-border/60">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-foreground">
+                {lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}
+              </span>
+              <span className="text-base font-bold text-primary font-mono">{loading ? "…" : money(stats.netProfit)}</span>
+            </div>
+            {!loading && stats.sales > 0 && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {lang === "zh" ? "利润率" : lang === "ms" ? "Margin untung" : "Profit margin"}{" "}
+                <span className="font-semibold text-foreground">{((stats.netProfit / stats.sales) * 100).toFixed(1)}%</span>
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border/60 bg-card p-4">
+          <p className="text-sm font-semibold text-foreground mb-3">
+            {lang === "zh" ? "经营洞察" : lang === "ms" ? "Wawasan Perniagaan" : "Business Insight"}
+          </p>
+          <div className="space-y-2.5">
+            {loading ? (
+              <p className="text-xs text-muted-foreground">…</p>
+            ) : businessInsights.length === 0 ? (
+              <p className="text-xs text-muted-foreground">{t("ro_sug_ok")}</p>
+            ) : (
+              businessInsights.map((ins) => (
+                <div key={ins.key} className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2.5">
+                  <Sparkles className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-foreground leading-snug">{ins.text}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Row 3: Recent Orders table + Business Health */}
       <div className="mt-5 grid grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] gap-5 items-stretch">
-        {/* Recent Orders table */}
         <section className="rounded-xl border border-border/60 bg-card overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/60 shrink-0">
             <h2 className="text-sm font-semibold text-foreground">{t("ro_recent_orders")}</h2>
-            <Link to="/orders" className="text-xs font-semibold text-primary">
+            <Link to="/orders" className="text-xs font-semibold text-primary flex items-center gap-1">
               {t("ro_view_all")}
+              <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
           {loading ? (
@@ -1138,7 +1239,7 @@ export function RetailOverview() {
               </span>
               <p className="text-sm font-medium text-foreground">{t("ro_no_orders")}</p>
               <p className="text-xs text-muted-foreground max-w-[240px] leading-relaxed">
-                {lang === "zh" ? "\u8bb0\u5f55\u4f60\u7684\u7b2c\u4e00\u7b14\u8ba2\u5355\uff0c\u8fd9\u91cc\u5c31\u4f1a\u5f00\u59cb\u663e\u793a\u6700\u8fd1\u8ba2\u5355\u548c\u5229\u6da6\u8d8b\u52bf\u3002" : lang === "ms" ? "Rekod pesanan pertama anda dan pesanan terkini akan muncul di sini." : "Record your first order and it'll start showing up here, along with your profit trend."}
+                {lang === "zh" ? "记录你的第一笔订单，这里就会开始显示最近订单和利润趋势。" : lang === "ms" ? "Rekod pesanan pertama anda dan pesanan terkini akan muncul di sini." : "Record your first order and it'll start showing up here, along with your profit trend."}
               </p>
               <Link
                 to="/new-order"
@@ -1155,71 +1256,123 @@ export function RetailOverview() {
                   <th className="text-left px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     {t("customer_name")}
                   </th>
-                  <th className="px-5 py-2.5" />
-                  <th className="px-5 py-2.5" />
+                  <th className="text-left px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {lang === "zh" ? "商品" : lang === "ms" ? "Produk" : "Product"}
+                  </th>
+                  <th className="text-right px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {lang === "zh" ? "销售额" : lang === "ms" ? "Jualan" : "Sales"}
+                  </th>
+                  <th className="text-right px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}
+                  </th>
+                  <th className="px-3 py-2.5" />
+                  <th className="text-left px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {lang === "zh" ? "日期" : lang === "ms" ? "Tarikh" : "Date"}
+                  </th>
                   <th className="px-5 py-2.5" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {recentOrders.map((o) => (
-                  <tr key={o.id} className="hover:bg-muted/30">
-                    <td className="px-5 py-3">
-                      <Link to="/orders/$orderId" params={{ orderId: o.id! }} search={{} as never} className="flex items-center gap-2.5">
-                        <span className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
-                          {(o.customer_name ?? "?").slice(0, 1).toUpperCase()}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block font-medium text-foreground truncate">{o.customer_name || "—"}</span>
-                          <span className="block text-[11px] text-muted-foreground truncate">{o.code || ""}</span>
-                        </span>
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3 text-right font-semibold text-foreground">
-                      {money(Number(o.amount ?? 0))}
-                    </td>
-                    <td className="px-5 py-3">
-                      <StatusPill status={o.status ?? ""} />
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      {o.status === "Unpaid" && (
-                        <button
-                          onClick={() => remind(o)}
-                          aria-label={t("remind")}
-                          className="h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-100 hover:opacity-90"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {recentOrders.map((o) => {
+                  const realProfit = orderContributionProfit({
+                    amount: o.amount,
+                    cost: o.cost,
+                    gross_profit: o.gross_profit,
+                    platform_fee_amount: o.platform_fee_amount,
+                    shipping_cost: o.shipping_cost,
+                    affiliate_commission: o.affiliate_commission,
+                  });
+                  const dateLabel = new Date(o.created_at).toLocaleDateString(
+                    lang === "zh" ? "zh-CN" : lang === "ms" ? "ms-MY" : "en-MY",
+                    { day: "numeric", month: "short" },
+                  );
+                  return (
+                    <tr key={o.id} className="hover:bg-muted/30">
+                      <td className="px-5 py-3">
+                        <Link to="/orders/$orderId" params={{ orderId: o.id! }} search={{} as never} className="flex items-center gap-2.5">
+                          <span className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
+                            {(o.customer_name ?? "?").slice(0, 1).toUpperCase()}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block font-medium text-foreground truncate">{o.customer_name || "—"}</span>
+                            <span className="block text-[11px] text-muted-foreground truncate">{o.code || ""}</span>
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3 max-w-[160px]">
+                        <span className="block text-xs text-foreground truncate">{o.product || "—"}</span>
+                        {!!o.quantity && (
+                          <span className="block text-[11px] text-muted-foreground">×{o.quantity}</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-3 text-right font-semibold text-foreground">
+                        {money(Number(o.amount ?? 0))}
+                      </td>
+                      <td className={`px-3 py-3 text-right font-semibold font-mono ${realProfit < 0 ? "text-red-600" : "text-emerald-600"}`}>
+                        {money(realProfit)}
+                      </td>
+                      <td className="px-3 py-3">
+                        <StatusPill status={o.status ?? ""} />
+                      </td>
+                      <td className="px-3 py-3 text-xs text-muted-foreground whitespace-nowrap">{dateLabel}</td>
+                      <td className="px-5 py-3 text-right">
+                        {o.status === "Unpaid" && (
+                          <button
+                            onClick={() => remind(o)}
+                            aria-label={t("remind")}
+                            className="h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-100 hover:opacity-90"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
         </section>
 
-        {/* Side panels */}
-        <div className="flex flex-col gap-4">
-          <SetupChecklist />
-          {suggestion && (
-            <div className="rounded-xl border border-border/60 bg-card p-4">
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                {t("ro_today_focus")}
-              </p>
-              <p className="mt-1.5 text-sm font-medium text-foreground leading-snug">{suggestion.text}</p>
-            </div>
-          )}
-          {!hasFullAccess && (
-            <UpgradeToProCard onUpgrade={() => showUpgrade("dashboard")} lang={lang} />
-          )}
-          <TopProductsCard products={topProducts} lang={lang} t={t} />
-          <ProfitBreakdownCard
-            cogs={stats.cogs}
-            sellingCosts={stats.sellingCosts}
-            operatingExpenses={stats.operatingExpenses}
-            netProfit={stats.netProfit}
-            lang={lang}
-          />
+        {/* Business Health */}
+        <div className="rounded-xl border border-border/60 bg-card p-4">
+          <p className="text-sm font-semibold text-foreground mb-3">
+            {lang === "zh" ? "经营健康度" : lang === "ms" ? "Kesihatan Perniagaan" : "Business Health"}
+          </p>
+          <div className="space-y-1">
+            <Link to="/inventory" className="flex items-center gap-2.5 -mx-1 px-1 py-2 rounded-lg hover:bg-muted/40">
+              <span className={`h-2 w-2 rounded-full shrink-0 ${stats.lowStockItems > 0 ? "bg-amber-500" : "bg-emerald-500"}`} />
+              <span className="flex-1 text-xs text-foreground">
+                {lang === "zh" ? "低库存产品" : lang === "ms" ? "Produk stok rendah" : "Low stock products"}
+              </span>
+              <span className="text-xs font-semibold text-foreground">{loading ? "…" : stats.lowStockItems}</span>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            </Link>
+            <Link to="/product-profit" className="flex items-center gap-2.5 -mx-1 px-1 py-2 rounded-lg hover:bg-muted/40">
+              <span className={`h-2 w-2 rounded-full shrink-0 ${stats.losing > 0 ? "bg-red-600" : "bg-emerald-500"}`} />
+              <span className="flex-1 text-xs text-foreground">
+                {lang === "zh" ? "亏本产品" : lang === "ms" ? "Produk rugi" : "Loss-making products"}
+              </span>
+              <span className="text-xs font-semibold text-foreground">{loading ? "…" : stats.losing}</span>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            </Link>
+            <Link to="/orders" className="flex items-center gap-2.5 -mx-1 px-1 py-2 rounded-lg hover:bg-muted/40">
+              <span className={`h-2 w-2 rounded-full shrink-0 ${pendingSyncCount > 0 ? "bg-amber-500" : "bg-emerald-500"}`} />
+              <span className="flex-1 text-xs text-foreground">
+                {lang === "zh" ? "待处理订单" : lang === "ms" ? "Pesanan belum selesai" : "Pending orders"}
+              </span>
+              <span className="text-xs font-semibold text-foreground">{pendingSyncCount}</span>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            </Link>
+            <Link to="/orders" className="flex items-center gap-2.5 -mx-1 px-1 py-2 rounded-lg hover:bg-muted/40">
+              <span className={`h-2 w-2 rounded-full shrink-0 ${stats.unpaidCount > 0 ? "bg-orange-500" : "bg-emerald-500"}`} />
+              <span className="flex-1 text-xs text-foreground">
+                {lang === "zh" ? "客户欠款" : lang === "ms" ? "Bayaran pelanggan tertunggak" : "Outstanding customer payments"}
+              </span>
+              <span className="text-xs font-semibold text-foreground">{loading ? "…" : money(stats.unpaidTotal)}</span>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            </Link>
+          </div>
         </div>
       </div>
     </div>
@@ -1232,11 +1385,15 @@ function KpiCard({
   value,
   delta,
   tone = "primary",
+  icon: Icon,
+  highlight,
 }: {
   label: string;
   value: string;
   delta: number | null;
   tone?: "primary" | "success" | "danger" | "warn";
+  icon?: React.ComponentType<{ className?: string }>;
+  highlight?: boolean;
 }) {
   const toneClass =
     tone === "success"
@@ -1245,11 +1402,28 @@ function KpiCard({
         ? "text-red-600"
         : tone === "warn"
           ? "text-amber-600"
-          : "text-foreground";
+          : highlight
+            ? "text-primary"
+            : "text-foreground";
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-3.5 shadow-[var(--shadow-card)]">
-      <p className="text-[11px] text-muted-foreground font-medium truncate">{label}</p>
-      <p className={`mt-1 text-xl font-bold ${toneClass}`}>{value}</p>
+    <div
+      className={`rounded-2xl border p-4 shadow-[var(--shadow-card)] ${
+        highlight ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-muted-foreground font-medium truncate">{label}</p>
+        {Icon && (
+          <span
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+              highlight ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+          </span>
+        )}
+      </div>
+      <p className={`mt-2 text-xl font-bold ${toneClass}`}>{value}</p>
       <TrendPill delta={delta} />
     </div>
   );

@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet, TrendingUp, Bell as BellIcon, MoreHorizontal, ShoppingBag, HeartPulse, BarChart3, FileText, Flame, TriangleAlert, User, CreditCard, MessageCircle, ScrollText, BookOpen, Layers, Search as SearchIcon } from "lucide-react";
+import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet, TrendingUp, Bell as BellIcon, MoreHorizontal, ShoppingBag, HeartPulse, BarChart3, FileText, Flame, TriangleAlert, MessageCircle, BookOpen, Layers, Search as SearchIcon, Settings as SettingsIcon, ChevronDown, Sparkles } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -432,8 +432,8 @@ function ShellInner() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-background lg:flex">
-      {!isSetupFlowRoute && <DesktopSidebar />}
+    <div className="min-h-screen w-full bg-background flex flex-col">
+      {!isSetupFlowRoute && <DesktopTopNav />}
 
       <div className="flex w-full flex-1 justify-center lg:block lg:min-w-0">
         <div className="relative flex min-h-screen w-full max-w-[390px] flex-col bg-background md:max-w-3xl lg:max-w-none lg:min-h-screen">
@@ -449,8 +449,6 @@ function ShellInner() {
               <NotificationBellIcon />
             </div>
           </header>
-
-          {!isSetupFlowRoute && <DesktopTopbar />}
 
           <main className="flex-1 pb-28 lg:pb-0 relative overflow-x-hidden">
             <div className="lg:mx-auto lg:w-full lg:max-w-[1280px] lg:px-8 lg:py-6">
@@ -576,161 +574,122 @@ function NavItem({
 
 type NavLink = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; id?: string };
 
-// Desktop (lg+) left sidebar. Mirrors the real information architecture of
-// the mobile "More" hub (src/routes/more.tsx) — same routes, same i18n
-// keys/labels — just laid out as a persistent sidebar instead of a grid of
-// tappable tiles. Retail-only mode: no business-type branching needed here
-// since the whole desktop shell only ships while RETAIL_ONLY_MODE is on.
-const DesktopSidebar = memo(function DesktopSidebar() {
+// Desktop (lg+) top navigation bar. Replaces the previous left sidebar +
+// separate topbar with a single horizontal bar: logo, primary nav links,
+// search, a "More" overflow menu for secondary pages (mirrors the mobile
+// "More" hub at src/routes/more.tsx — same routes/labels), notification
+// bell, and the profile menu. Retail-only mode: no business-type branching
+// needed here since the whole desktop shell only ships while
+// RETAIL_ONLY_MODE is on.
+const DesktopTopNav = memo(function DesktopTopNav() {
   const { t, lang } = useI18n();
   const { isPro } = useSubscription();
-
-  const primaryLinks: NavLink[] = [
-    { to: "/", label: t("ro_title"), icon: Home, id: "desktop-nav-home" },
-    { to: "/orders", label: t("ro_open_orders"), icon: ShoppingBag, id: "desktop-nav-orders" },
-    { to: "/inventory", label: t("ro_open_products"), icon: Package, id: "desktop-nav-inventory" },
-    { to: "/cost-breakdown", label: t("ro_open_cost"), icon: TrendingUp, id: "desktop-nav-cost" },
-  ];
-
-  // Same inline per-language labels as more.tsx (kept consistent rather
-  // than adding new I18nContext keys for one entry each).
-  const expensesLabel = lang === "zh" ? "营业费用" : lang === "ms" ? "Perbelanjaan" : "Expenses";
-  const guideSectionTitle = lang === "zh" ? "帮助" : lang === "ms" ? "Bantuan" : "Help";
-  const guideLabel = lang === "zh" ? "使用教学" : lang === "ms" ? "Panduan" : "Guide";
-
-  const sections: { title: string; items: NavLink[] }[] = [
-    {
-      title: t("more_section_profit"),
-      items: [
-        { to: "/cost-health", label: t("more_cost_health"), icon: HeartPulse },
-        { to: "/product-profit", label: t("more_product_profit"), icon: TrendingUp },
-        { to: "/expenses", label: expensesLabel, icon: FileText },
-      ],
-    },
-    {
-      title: t("more_section_stock"),
-      items: [
-        { to: "/stock", label: t("stock_title"), icon: Layers },
-        { to: "/campaigns", label: t("more_campaign"), icon: Flame },
-        { to: "/alerts", label: t("more_alerts"), icon: TriangleAlert },
-      ],
-    },
-    {
-      title: t("more_section_customers"),
-      items: [
-        { to: "/customers", label: t("more_customers"), icon: Users },
-        { to: "/reports", label: t("more_reports"), icon: BarChart3 },
-      ],
-    },
-    {
-      title: t("more_section_account"),
-      items: [
-        { to: "/notifications", label: t("more_notifications"), icon: BellIcon },
-        { to: "/profile", label: t("more_profile"), icon: User },
-        { to: "/plans", label: t("more_subscription"), icon: CreditCard },
-        { to: "/whatsapp-templates", label: t("more_wa_templates"), icon: MessageCircle },
-        { to: "/legal", label: t("more_legal"), icon: ScrollText },
-      ],
-    },
-    {
-      title: guideSectionTitle,
-      items: [{ to: "/guide", label: guideLabel, icon: BookOpen }],
-    },
-  ];
-
-  return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-border/60 bg-card lg:flex">
-      <div className="flex items-center gap-2 px-5 py-5">
-        <img src={bossifyLogo} alt="Bossify" className="h-8 w-8 object-contain" />
-        <span className="text-[15px] font-bold tracking-tight text-foreground">Bossify</span>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto px-3 pb-4">
-        <ul className="space-y-0.5">
-          {primaryLinks.map((item) => (
-            <SidebarLink key={item.to} {...item} />
-          ))}
-        </ul>
-
-        {sections.map((section) => (
-          <div key={section.title} className="mt-5">
-            <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {section.title}
-            </p>
-            <ul className="space-y-0.5">
-              {section.items.map((item) => (
-                <SidebarLink key={item.to} {...item} />
-              ))}
-            </ul>
-          </div>
-        ))}
-      </nav>
-
-      {!isPro && (
-        <div className="m-3 rounded-xl border border-border/60 bg-primary/10 p-4">
-          <p className="text-[13px] font-semibold text-foreground">{t("more_subscription")}</p>
-          <p className="mt-1 text-[12px] text-muted-foreground">
-            {lang === "zh"
-              ? "解锁全部报告、TikTok 同步等功能"
-              : lang === "ms"
-                ? "Buka semua laporan, penyegerakan TikTok dan banyak lagi"
-                : "Unlock all reports, TikTok sync and more."}
-          </p>
-          <Link
-            to="/plans"
-            className="mt-3 flex items-center justify-center rounded-lg bg-primary px-3 py-2 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            {lang === "zh" ? "立即升级" : lang === "ms" ? "Naik Taraf Sekarang" : "Upgrade Now"}
-          </Link>
-        </div>
-      )}
-    </aside>
-  );
-});
-
-function SidebarLink({ to, label, icon: Icon, id }: NavLink) {
-  return (
-    <li id={id}>
-      <Link
-        to={to}
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] font-medium text-muted-foreground truncate transition-colors hover:bg-accent hover:text-foreground"
-        activeProps={{ className: "bg-primary/10 text-primary font-semibold" }}
-        activeOptions={{ exact: to === "/" }}
-      >
-        <Icon className="h-[17px] w-[17px] shrink-0" />
-        <span className="truncate">{label}</span>
-      </Link>
-    </li>
-  );
-}
-
-// Desktop (lg+) top bar: real search (routes to the existing /search page —
-// no fake/decorative input), a New Order shortcut, the same notification
-// bell used on mobile, and a profile menu backed by the real auth session.
-const DesktopTopbar = memo(function DesktopTopbar() {
-  const { t, lang } = useI18n();
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
 
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
 
+  // Same inline per-language labels as more.tsx (kept consistent rather
+  // than adding new I18nContext keys for one entry each).
+  const expensesLabel = lang === "zh" ? "营业费用" : lang === "ms" ? "Perbelanjaan" : "Expenses";
+  const guideLabel = lang === "zh" ? "使用教学" : lang === "ms" ? "Panduan" : "Guide";
+
+  // Primary links, shown directly in the bar.
+  const primaryLinks: NavLink[] = [
+    { to: "/", label: t("ro_title"), icon: Home, id: "desktop-nav-home" },
+    { to: "/orders", label: t("ro_open_orders"), icon: ShoppingBag, id: "desktop-nav-orders" },
+    { to: "/inventory", label: t("ro_open_products"), icon: Package, id: "desktop-nav-inventory" },
+    { to: "/cost-breakdown", label: t("ro_open_cost"), icon: TrendingUp, id: "desktop-nav-cost" },
+    { to: "/stock", label: t("stock_title"), icon: Layers, id: "desktop-nav-stock" },
+    { to: "/expenses", label: expensesLabel, icon: FileText, id: "desktop-nav-expenses" },
+    { to: "/reports", label: t("more_reports"), icon: BarChart3, id: "desktop-nav-reports" },
+  ];
+
+  // Secondary links, tucked under the "More" overflow menu so the bar
+  // doesn't get overcrowded. Grouped the same way the sidebar used to.
+  const moreGroups: { items: NavLink[] }[] = [
+    {
+      items: [
+        { to: "/cost-health", label: t("more_cost_health"), icon: HeartPulse },
+        { to: "/product-profit", label: t("more_product_profit"), icon: TrendingUp },
+      ],
+    },
+    {
+      items: [
+        { to: "/campaigns", label: t("more_campaign"), icon: Flame },
+        { to: "/alerts", label: t("more_alerts"), icon: TriangleAlert },
+      ],
+    },
+    {
+      items: [{ to: "/customers", label: t("more_customers"), icon: Users }],
+    },
+    {
+      items: [
+        { to: "/notifications", label: t("more_notifications"), icon: BellIcon },
+        { to: "/whatsapp-templates", label: t("more_wa_templates"), icon: MessageCircle },
+        { to: "/guide", label: guideLabel, icon: BookOpen },
+      ],
+    },
+  ];
+
   return (
-    <header className="sticky top-0 z-30 hidden items-center gap-3 border-b border-border/60 bg-background/90 px-6 py-3 backdrop-blur lg:flex">
-      <Link
-        to="/search"
-        className="flex h-9 w-full max-w-sm items-center gap-2 rounded-lg border border-border bg-card px-3 text-[13px] text-muted-foreground transition-colors hover:border-primary/40"
-      >
-        <SearchIcon className="h-4 w-4 shrink-0" />
-        <span className="truncate">
-          {lang === "zh"
-            ? "搜索订单、商品、客户…"
-            : lang === "ms"
-              ? "Cari pesanan, produk, pelanggan…"
-              : "Search orders, products, customers…"}
-        </span>
+    <header className="sticky top-0 z-30 hidden w-full items-center gap-1 border-b border-border/60 bg-background/95 px-6 backdrop-blur lg:flex lg:h-16">
+      <Link to="/" className="mr-5 flex shrink-0 items-center gap-2">
+        <img src={bossifyLogo} alt="Bossify" className="h-8 w-8 object-contain" />
+        <span className="text-[15px] font-bold tracking-tight text-foreground">Bossify</span>
       </Link>
 
+      <nav className="flex items-center gap-1">
+        {primaryLinks.map((item) => (
+          <TopNavLink key={item.to} {...item} />
+        ))}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-1 rounded-lg px-3 py-2 text-[13.5px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <MoreHorizontal className="h-[17px] w-[17px]" />
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {moreGroups.map((group, gi) => (
+              <div key={gi}>
+                {gi > 0 && <DropdownMenuSeparator />}
+                {group.items.map((item) => (
+                  <DropdownMenuItem key={item.to} asChild>
+                    <Link to={item.to} className="flex items-center gap-2">
+                      <item.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      {item.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </div>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </nav>
+
       <div className="ml-auto flex items-center gap-2">
+        <Link
+          to="/search"
+          aria-label={
+            lang === "zh"
+              ? "搜索订单、商品、客户"
+              : lang === "ms"
+                ? "Cari pesanan, produk, pelanggan"
+                : "Search orders, products, customers"
+          }
+          className="flex h-9 w-56 items-center gap-2 rounded-lg border border-border bg-card px-3 text-[13px] text-muted-foreground transition-colors hover:border-primary/40"
+        >
+          <SearchIcon className="h-4 w-4 shrink-0" />
+          <span className="truncate">
+            {lang === "zh" ? "搜索…" : lang === "ms" ? "Cari…" : "Search…"}
+          </span>
+        </Link>
+
         <Link
           to="/new-order"
           className="flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
@@ -739,7 +698,37 @@ const DesktopTopbar = memo(function DesktopTopbar() {
           {lang === "zh" ? "新订单" : lang === "ms" ? "Pesanan Baharu" : "New Order"}
         </Link>
 
+        {!isPro && (
+          <Link
+            to="/plans"
+            className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-[13px] font-semibold text-primary transition-colors hover:bg-primary/15"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {lang === "zh" ? "升级" : lang === "ms" ? "Naik Taraf" : "Upgrade"}
+          </Link>
+        )}
+
         <NotificationBellIcon />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              aria-label={lang === "zh" ? "更多设置" : lang === "ms" ? "Tetapan lain" : "More settings"}
+            >
+              <SettingsIcon className="h-[17px] w-[17px]" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem asChild>
+              <Link to="/legal">{t("more_legal")}</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/guide">{guideLabel}</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -772,3 +761,18 @@ const DesktopTopbar = memo(function DesktopTopbar() {
     </header>
   );
 });
+
+function TopNavLink({ to, label, icon: Icon, id }: NavLink) {
+  return (
+    <Link
+      id={id}
+      to={to}
+      className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13.5px] font-medium text-muted-foreground truncate transition-colors hover:bg-accent hover:text-foreground"
+      activeProps={{ className: "bg-primary/10 text-primary font-semibold" }}
+      activeOptions={{ exact: to === "/" }}
+    >
+      <Icon className="h-[16px] w-[16px] shrink-0" />
+      <span className="truncate">{label}</span>
+    </Link>
+  );
+}
