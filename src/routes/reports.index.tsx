@@ -681,33 +681,33 @@ function ReportsHub() {
         <FileDown className="h-4 w-4" /> {lang === "zh" ? "导出原始订单 CSV（给会计师/报税用）" : lang === "ms" ? "Eksport CSV pesanan mentah" : "Export raw orders CSV (for your accountant/tax)"}
       </button>
 
-      <section className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3 lg:items-start">
+      <section className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:items-start">
         {cards.map((c) => {
           const Icon = c.icon;
           const isBusy = busy === c.key;
           return (
-            <div key={c.key} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4">
+            <div key={c.key} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 lg:p-5">
               <div className="flex items-start gap-3">
-                <span className={`h-10 w-10 rounded-xl flex items-center justify-center ${c.tint}`}>
-                  <Icon className="h-5 w-5" />
+                <span className={`h-10 w-10 lg:h-12 lg:w-12 rounded-xl flex items-center justify-center shrink-0 ${c.tint}`}>
+                  <Icon className="h-5 w-5 lg:h-6 lg:w-6" />
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground">{c.title}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{c.desc}</p>
+                  <p className="text-sm lg:text-base font-bold text-foreground">{c.title}</p>
+                  <p className="text-[11px] lg:text-xs text-muted-foreground mt-0.5">{c.desc}</p>
                 </div>
               </div>
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-3 lg:mt-4 flex items-center gap-2">
                 <button
                   onClick={c.onExport}
                   disabled={isBusy || busy !== null}
-                  className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs active:scale-[0.98] transition disabled:opacity-60 flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 lg:py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs active:scale-[0.98] transition disabled:opacity-60 flex items-center justify-center gap-1.5"
                 >
                   {isBusy ? "…" : (<><FileDown className="h-3.5 w-3.5" />{t("reports_open_pdf")}</>)}
                 </button>
                 {c.linkTo && (
                   <Link
                     to={c.linkTo}
-                    className="px-3 py-2.5 rounded-xl bg-muted text-foreground text-xs font-semibold flex items-center gap-1 active:scale-[0.98] transition-transform"
+                    className="px-3 py-2.5 rounded-xl bg-muted text-foreground text-xs font-semibold flex items-center gap-1 active:scale-[0.98] transition-transform whitespace-nowrap"
                   >
                     {t("reports_view_details")} <ChevronRight className="h-3.5 w-3.5" />
                   </Link>

@@ -66,6 +66,7 @@ function ProfilePage() {
   const [profile, setProfile] = useState<Omit<ProfileSummary, "is_admin"> | null>(null);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({});
   const [langOpen, setLangOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("business");
   const [paySummary, setPaySummary] = useState<PaymentSummary | null>(null);
 
   const getConnection = useServerFn(getPlatformConnection);
@@ -393,7 +394,8 @@ function ProfilePage() {
   };
 
   return (
-    <div className="px-5 pt-10 pb-6 space-y-6">
+    <div className="px-5 pt-10 pb-6 space-y-6 lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
+      <div className="lg:hidden space-y-6">
       <header className="flex flex-col items-center text-center">
         <div className="h-24 w-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-3xl font-bold shadow-[var(--shadow-soft)] overflow-hidden">
           {profile?.avatar_url ? (
@@ -584,6 +586,142 @@ function ProfilePage() {
       <Link to="/" className="block text-center text-xs text-muted-foreground underline">
         {t("back_to_dashboard")}
       </Link>
+      </div>
+
+      {/* Desktop: Settings shell — sidebar nav + active section panel + business summary */}
+      <div className="hidden lg:block space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          {lang === "zh" ? "设置" : lang === "ms" ? "Tetapan" : "Settings"}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {lang === "zh" ? "管理你的业务、账户和应用设置" : lang === "ms" ? "Urus perniagaan, akaun dan tetapan app anda" : "Manage your business, account, and app preferences."}
+        </p>
+      </div>
+
+      {(() => {
+        const desktopSections = sections
+          .filter((sec) => sec.items.length > 0 || sec.key === "integrations")
+          .map((sec) =>
+            sec.key === "business" ? { ...sec, items: [...menuTop, ...sec.items] } : sec,
+          );
+        const active = desktopSections.find((s) => s.key === activeSection) ?? desktopSections[0];
+        return (
+          <div className="hidden lg:grid lg:grid-cols-[220px_1fr_300px] lg:gap-6 lg:items-start">
+            {/* Section nav */}
+            <nav className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-2 space-y-0.5">
+              {desktopSections.map((sec) => (
+                <button
+                  key={sec.key}
+                  onClick={() => setActiveSection(sec.key)}
+                  className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-left transition-colors ${
+                    active?.key === sec.key ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <sec.emoji className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span className="text-sm font-semibold">{sec.title}</span>
+                </button>
+              ))}
+            </nav>
+
+            {/* Active section panel */}
+            <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/60 overflow-hidden">
+              {active?.items.map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={m.onClick}
+                  className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50"
+                >
+                  <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0"><m.icon className="h-4 w-4" /></span>
+                  <span className="flex-1 text-sm font-medium text-foreground">{m.label}</span>
+                  {m.value && <span className="text-xs text-muted-foreground">{m.value}</span>}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              ))}
+              {active?.key === "integrations" && (
+                <div className="divide-y divide-border/60">
+                  {VISIBLE_PLATFORMS.map((p) => {
+                    const isConn = !!connectedPlatforms[p.key];
+                    return (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => navigate({ to: "/connected-platforms/$platform", params: { platform: p.key } })}
+                        className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50"
+                      >
+                        <PlatformIcon platform={p.key} size={32} />
+                        <span className="flex-1 text-sm font-medium text-foreground">{p.name}</span>
+                        <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${isConn ? "bg-emerald-500/15 text-emerald-700" : "bg-muted text-muted-foreground"}`}>
+                          {isConn ? t("connected") : t("not_connected")}
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {(!active?.items.length && active?.key !== "integrations") && (
+                <p className="p-6 text-center text-sm text-muted-foreground">
+                  {lang === "zh" ? "暂无设置项" : lang === "ms" ? "Tiada tetapan" : "Nothing here yet"}
+                </p>
+              )}
+            </div>
+
+            {/* Right: Business Profile summary + quick actions */}
+            <div className="space-y-4">
+              <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold text-foreground">
+                    {lang === "zh" ? "业务信息" : lang === "ms" ? "Profil Perniagaan" : "Business Profile"}
+                  </p>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isLifetime ? "bg-amber-500 text-white" : isTeam ? "bg-violet-500 text-white" : isPro ? "bg-primary text-primary-foreground" : isStarter ? "bg-sky-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                    {isLifetime ? t("plan_badge_lifetime") : isTeam && teamTier ? t(`plan_badge_${teamTier}` as any) : isPro ? t("pro_plan") : isStarter ? t("plan_badge_starter") : t("free_plan")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-base font-bold overflow-hidden shrink-0">
+                    {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : initials}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{businessName}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{t("member_since_label")} {memberSince}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  {businessStats.map((s) => (
+                    <div key={s.label} className="text-center">
+                      <p className="text-sm font-bold text-foreground">{s.value}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-1">
+                <p className="text-sm font-bold text-foreground mb-1">
+                  {lang === "zh" ? "快速操作" : lang === "ms" ? "Tindakan Pantas" : "Quick Actions"}
+                </p>
+                <button onClick={() => navigate({ to: "/business-profile" })} className="w-full flex items-center justify-between py-2 text-sm text-foreground hover:text-primary transition-colors">
+                  {lang === "zh" ? "查看业务详情" : lang === "ms" ? "Lihat Profil Perniagaan" : "View Business Profile"} <ChevronRight className="h-4 w-4" />
+                </button>
+                <button onClick={() => navigate({ to: "/payment-details" })} className="w-full flex items-center justify-between py-2 text-sm text-foreground hover:text-primary transition-colors">
+                  {paySummary?.hasMethod ? (lang === "zh" ? "付款方式" : lang === "ms" ? "Kaedah Pembayaran" : "Payment Details") : (lang === "zh" ? "设置收款方式" : lang === "ms" ? "Sediakan Pembayaran" : "Set Up Payment")} <ChevronRight className="h-4 w-4" />
+                </button>
+                <button onClick={handleLogout} className="w-full flex items-center justify-between py-2 text-sm text-red-500 hover:text-red-600 transition-colors">
+                  {t("logout")} <LogOut className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {!paySummary?.hasMethod && (
+                <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 flex items-start gap-2.5">
+                  <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-700 leading-relaxed">{t("payment_not_setup")}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {langOpen && (
         <div

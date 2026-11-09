@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, AlertCircle, Clock, PackageSearch } from "lucide-react";
+import { ChevronLeft, AlertCircle, Clock, PackageSearch, Gauge, Boxes, RefreshCw, Coins } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,18 +28,49 @@ type OrderRow = {
 
 export const Route = createFileRoute("/cost-health")({ component: CostHealthPage });
 
+function CostKpiCard({
+  icon: Icon,
+  label,
+  value,
+  tone = "default",
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  tone?: "default" | "amber" | "red" | "emerald";
+}) {
+  const toneClasses: Record<string, string> = {
+    default: "bg-primary/10 text-primary",
+    amber: "bg-amber-500/10 text-amber-700",
+    red: "bg-red-500/10 text-red-600",
+    emerald: "bg-emerald-500/10 text-emerald-600",
+  };
+  return (
+    <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</span>
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${toneClasses[tone]}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-foreground">{value}</p>
+    </div>
+  );
+}
+
 function CostHealthPage() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
   const [invRows, setInvRows] = useState<InvRow[]>([]);
   const [orderRows, setOrderRows] = useState<OrderRow[]>([]);
+  const [recentSales, setRecentSales] = useState<Array<{ product: string | null; amount: number | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>("__all");
 
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [{ data: inv, error: invErr }, { data: ord, error: ordErr }] = await Promise.all([
+      const [{ data: inv, error: invErr }, { data: ord, error: ordErr }, { data: sales }] = await Promise.all([
         supabase.from("inventory").select("id,name,cost_price,packaging_cost,stock,category").eq("user_id", user.id),
         supabase
           .from("orders" as any)
@@ -47,11 +79,22 @@ function CostHealthPage() {
           .eq("order_source", "tiktok")
           .order("created_at", { ascending: false })
           .limit(200),
+        // Desktop "Profit Impact Estimate" — revenue earned on products that
+        // currently have no cost price set, i.e. the slice of sales whose
+        // profit number cannot be trusted yet (cost counted as RM0).
+        supabase
+          .from("orders" as any)
+          .select("product,amount")
+          .eq("user_id", user.id)
+          .eq("status", "Paid")
+          .order("created_at", { ascending: false })
+          .limit(500),
       ]);
       if (invErr) toast.error(invErr.message);
       if (ordErr) toast.error(ordErr.message);
       setInvRows((inv ?? []) as InvRow[]);
       setOrderRows(((ord ?? []) as any) as OrderRow[]);
+      setRecentSales(((sales ?? []) as any) as Array<{ product: string | null; amount: number | null }>);
       setLoading(false);
     })();
   }, [user?.id]);
@@ -76,6 +119,36 @@ function CostHealthPage() {
     () => orderRows.filter((o) => o.financial_status === "complete" && o.platform_metadata?.platform_fee_source === "estimate"),
     [orderRows],
   );
+
+  // Desktop KPIs — mutually-exclusive categorization so the donut's
+  // segments add up to 100%: a product missing BOTH cost and packaging
+  // counts once, under "missing cost price" (the more severe gap).
+  const totalProducts = invByCategory.length;
+  const missingPackagingOnly = useMemo(
+    () => invByCategory.filter((i) => (i.cost_price ?? 0) > 0 && i.packaging_cost == null),
+    [invByCategory],
+  );
+  const completeCount = Math.max(0, totalProducts - missingCost.length - missingPackagingOnly.length);
+  const completenessPct = totalProducts > 0 ? (completeCount / totalProducts) * 100 : 100;
+
+  // Revenue booked against products that have no cost price set — the
+  // slice of sales whose profit figure is currently unreliable (cost
+  // counted as RM0), matched by product name the same way stock.tsx
+  // matches sales velocity to inventory rows.
+  const atRiskRevenue = useMemo(() => {
+    if (missingCost.length === 0) return 0;
+    const names = new Set(missingCost.map((i) => i.name.trim().toLowerCase()));
+    return recentSales.reduce((s, o) => {
+      const p = (o.product ?? "").trim().toLowerCase();
+      return names.has(p) ? s + Number(o.amount ?? 0) : s;
+    }, 0);
+  }, [missingCost, recentSales]);
+
+  const costDonutData = [
+    { name: lang === "zh" ? "完整" : lang === "ms" ? "Lengkap" : "Complete", value: completeCount, color: "#10B981" },
+    { name: lang === "zh" ? "缺成本价" : lang === "ms" ? "Tiada kos" : "Missing cost price", value: missingCost.length, color: "#DC2626" },
+    { name: lang === "zh" ? "缺包装成本" : lang === "ms" ? "Tiada kos bungkus" : "Missing packaging cost", value: missingPackagingOnly.length, color: "#F59E0B" },
+  ].filter((d) => d.value > 0);
 
   const title = lang === "zh" ? "成本健康检查" : lang === "ms" ? "Semakan Kesihatan Kos" : "Cost Health";
   const subtitle = lang === "zh"
@@ -148,6 +221,82 @@ function CostHealthPage() {
           </div>
         );
       })()}
+
+      {!loading && (
+        <>
+          {/* Desktop-only KPI row */}
+          <div className="hidden lg:grid lg:grid-cols-4 lg:gap-4">
+            <CostKpiCard
+              icon={Gauge}
+              label={lang === "zh" ? "成本完整度" : lang === "ms" ? "Kelengkapan Kos" : "Cost Completeness"}
+              value={`${completenessPct.toFixed(0)}%`}
+              tone={completenessPct >= 90 ? "emerald" : completenessPct >= 70 ? "amber" : "red"}
+            />
+            <CostKpiCard
+              icon={Boxes}
+              label={lang === "zh" ? "商品缺成本价" : lang === "ms" ? "Produk Tiada Kos" : "Products Missing Cost Price"}
+              value={String(missingCost.length)}
+              tone={missingCost.length > 0 ? "red" : "emerald"}
+            />
+            <CostKpiCard
+              icon={PackageSearch}
+              label={lang === "zh" ? "商品缺包装成本" : lang === "ms" ? "Produk Tiada Kos Bungkus" : "Products Missing Packaging Cost"}
+              value={String(missingPackagingOnly.length)}
+              tone={missingPackagingOnly.length > 0 ? "amber" : "emerald"}
+            />
+            <CostKpiCard
+              icon={RefreshCw}
+              label={lang === "zh" ? "TikTok 订单未同步" : lang === "ms" ? "Pesanan TikTok Belum Segerak" : "TikTok Orders Not Synced"}
+              value={String(stillPending.length)}
+              tone={stillPending.length > 0 ? "amber" : "emerald"}
+            />
+          </div>
+
+          {/* Desktop-only Cost Data Status donut + Profit Impact Estimate */}
+          <div className="hidden lg:grid lg:grid-cols-2 lg:gap-4">
+            <div className="rounded-2xl bg-card border border-border/60 p-4">
+              <p className="text-sm font-bold text-foreground">{lang === "zh" ? "成本数据状态" : lang === "ms" ? "Status Data Kos" : "Cost Data Status"}</p>
+              <p className="text-xs text-muted-foreground mb-3">{lang === "zh" ? "商品成本数据完整度总览" : lang === "ms" ? "Gambaran kelengkapan data kos produk" : "Overall breakdown of your product cost setup."}</p>
+              {costDonutData.length > 0 ? (
+                <div className="flex items-center gap-6">
+                  <ResponsiveContainer width={160} height={160}>
+                    <PieChart>
+                      <Pie data={costDonutData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={44} outerRadius={64} paddingAngle={2}>
+                        {costDonutData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-col gap-2">
+                    {costDonutData.map((d) => (
+                      <span key={d.name} className="inline-flex items-center gap-2 text-sm text-foreground">
+                        <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+                        {d.name} <span className="text-muted-foreground">({d.value} {lang === "zh" ? "个商品" : lang === "ms" ? "produk" : "products"}, {totalProducts > 0 ? Math.round((d.value / totalProducts) * 100) : 0}%)</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-8 text-center">{lang === "zh" ? "暂无商品数据" : lang === "ms" ? "Tiada data produk" : "No products yet"}</p>
+              )}
+            </div>
+
+            <div className="rounded-2xl bg-card border border-border/60 p-4">
+              <p className="text-sm font-bold text-foreground">{lang === "zh" ? "利润影响估算" : lang === "ms" ? "Anggaran Kesan Untung" : "Profit Impact Estimate"}</p>
+              <p className="text-xs text-muted-foreground mb-3">{lang === "zh" ? "来自缺成本价商品的销售额——这部分利润数字暂时不可信" : lang === "ms" ? "Jualan daripada produk tanpa kos — untung bahagian ini tidak boleh dipercayai" : "Revenue booked on products with no cost price set — profit on these isn't trustworthy yet."}</p>
+              <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-4 flex items-center gap-3">
+                <span className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-700 flex items-center justify-center shrink-0">
+                  <Coins className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">RM {atRiskRevenue.toFixed(2)}</p>
+                  <p className="text-[11px] text-muted-foreground">{lang === "zh" ? "来自最近已付款订单" : lang === "ms" ? "Daripada pesanan dibayar terkini" : "From recent paid orders"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {loading ? (
         <p className="text-sm text-muted-foreground text-center py-10">…</p>
