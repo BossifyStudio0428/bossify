@@ -13,11 +13,11 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search, Plus } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search, Plus, Globe, Calendar, Send, Lock, Download, Link2, Clock, Store, Car, Utensils, ShoppingBag } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
-import { orderCost } from "@/lib/orderMath";
+import { orderCost, orderGrossProfit } from "@/lib/orderMath";
 import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -713,7 +713,7 @@ function OrdersPage() {
           <Upload className="h-4 w-4" />
         </button>
         <button onClick={exportPDF} disabled={exportingPdf} className="p-2 rounded-full bg-card border border-border/60 active:scale-95 disabled:opacity-60" aria-label={t("export_pdf")}>
-          {exportingPdf ? "…" : "📄"}
+          {exportingPdf ? "…" : <Download className="h-4 w-4" />}
         </button>
       </header>
 
@@ -728,7 +728,7 @@ function OrdersPage() {
             >
               {tiktokSyncing
                 ? (lang === "zh" ? "同步中…" : lang === "ms" ? "Menyegerak…" : "Syncing…")
-                : `🎵 ${lang === "zh" ? "同步 TikTok 订单" : lang === "ms" ? "Segerak pesanan TikTok" : "Sync TikTok orders"}`}
+                : (lang === "zh" ? "同步 TikTok 订单" : lang === "ms" ? "Segerak pesanan TikTok" : "Sync TikTok orders")}
             </button>
           </div>
           <p className="text-[11px] text-muted-foreground text-center">
@@ -739,7 +739,7 @@ function OrdersPage() {
 
       {needsAttention.length > 0 && (
         <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 px-3.5 py-3 flex items-center gap-2.5">
-          <span className="text-lg">⏰</span>
+          <Clock className="h-4 w-4 text-amber-700 shrink-0" />
           <p className="text-xs text-amber-700 flex-1">
             {lang === "zh"
               ? `${needsAttention.length} 笔订单超过 24 小时还没处理`
@@ -755,7 +755,7 @@ function OrdersPage() {
         <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3.5 space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-sm">🔗</span>
+              <Link2 className="h-4 w-4 text-foreground" />
               <div>
                 <p className="text-xs font-semibold text-foreground">{t(pofSectionTitleKey(ofBizType as BizType | null))}</p>
                 <p className={`text-[10px] ${ofEnabled ? "text-emerald-500" : "text-muted-foreground"}`}>
@@ -852,7 +852,12 @@ function OrdersPage() {
           className="w-full py-3 rounded-2xl bg-orange-500 text-white font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60">
           {bulkProgress
             ? t("sending_progress").replace("{i}", String(bulkProgress.i)).replace("{n}", String(bulkProgress.n))
-            : `${hasFullAccess ? "📲" : "🔒"} ${t("remind_all_unpaid")} (${orders.filter((o) => o.status === "Unpaid" && o.phone).length})`}
+            : (
+              <span className="inline-flex items-center gap-1.5">
+                {hasFullAccess ? <Send className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+                {t("remind_all_unpaid")} ({orders.filter((o) => o.status === "Unpaid" && o.phone).length})
+              </span>
+            )}
         </button>
       )}
 
@@ -889,7 +894,7 @@ function OrdersPage() {
                 onClick={() => setActive(f)}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
                   isActive
-                    ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-[var(--shadow-soft)]"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -943,7 +948,8 @@ function OrdersPage() {
                 : "bg-card text-foreground border-border"
             }`}
           >
-            📅 {lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date"}
+            <Calendar className="h-3.5 w-3.5" />
+            {lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date"}
             {dateFilterActive && <span className="text-[10px] opacity-80">●</span>}
           </button>
           {dateFilterActive && (
@@ -1030,7 +1036,7 @@ function OrdersPage() {
                 if ((e.target as HTMLElement).closest("button,a,[role='menuitem']")) return;
                 navigate({ to: "/orders/$orderId", params: { orderId: o.id }, search: {} as never });
               }}
-              className={`rounded-2xl bg-[#F7F5FA] border border-border/40 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] overflow-hidden cursor-pointer transition-all ${removing ? "opacity-0 scale-95" : "opacity-100"}`}
+              className={`rounded-2xl bg-card border border-border/40 shadow-[var(--shadow-card)] overflow-hidden cursor-pointer transition-all ${removing ? "opacity-0 scale-95" : "opacity-100"}`}
             >
               {/* Header */}
               <div className="p-4 pb-3">
@@ -1043,13 +1049,13 @@ function OrdersPage() {
                       <div className="flex items-center gap-2 min-w-0 flex-wrap">
                         <span className="font-bold text-slate-900 text-base leading-tight truncate">{o.customer_name}</span>
                         {(o as any).order_source === "online_form" && (
-                          <span className="shrink-0 px-2 py-0.5 bg-indigo-500/10 text-indigo-600 text-[10px] font-medium rounded-full border border-indigo-500/20">
-                            🌐 {t("pof_source_online")}
+                          <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/10 text-indigo-600 text-[10px] font-medium rounded-full border border-indigo-500/20">
+                            <Globe className="h-2.5 w-2.5" /> {t("pof_source_online")}
                           </span>
                         )}
                         {(o as any).order_source === "tiktok" && (
                           <span className="shrink-0 px-2 py-0.5 bg-black text-white text-[10px] font-medium rounded-full">
-                            🎵 TikTok
+                            TikTok
                           </span>
                         )}
                       </div>
@@ -1156,14 +1162,15 @@ function OrdersPage() {
                   const storeAddr = (o as any).store_address_snapshot as string | null | undefined;
                   const tableLabel = (o as any).table_label as string | undefined;
                   if (!dm) return null;
-                  let emoji = "🏪", label = t("order_pickup" as any), cls = "bg-amber-500/10 text-amber-700", sub: string | null = null;
+                  let icon: React.ReactNode = <Store className="h-2.5 w-2.5" />;
+                  let label = t("order_pickup" as any), cls = "bg-amber-500/10 text-amber-700", sub: string | null = null;
                   if (dm === "delivery") {
-                    emoji = "🚗"; label = t("order_delivery" as any); cls = "bg-blue-500/10 text-blue-600";
+                    icon = <Car className="h-2.5 w-2.5" />; label = t("order_delivery" as any); cls = "bg-blue-500/10 text-blue-600";
                   } else if (dm === "dine_in") {
-                    emoji = "🍽️"; label = t("dine_in" as any); cls = "bg-violet-500/10 text-violet-700";
-                    sub = tableLabel ? `🪑 ${tableLabel}` : null;
+                    icon = <Utensils className="h-2.5 w-2.5" />; label = t("dine_in" as any); cls = "bg-violet-500/10 text-violet-700";
+                    sub = tableLabel ?? null;
                   } else if (dm === "takeaway") {
-                    emoji = "🛍️"; cls = "bg-amber-500/10 text-amber-700";
+                    icon = <ShoppingBag className="h-2.5 w-2.5" />; cls = "bg-amber-500/10 text-amber-700";
                     label = lang === "zh" ? "外带" : lang === "ms" ? "Bungkus" : "Takeaway";
                     sub = storeAddr ?? null;
                   } else { // pickup
@@ -1172,7 +1179,7 @@ function OrdersPage() {
                   return (
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${cls}`}>
-                        {emoji} {label}
+                        {icon} {label}
                       </span>
                       {sub ? (
                         <span className="text-slate-500 text-xs leading-relaxed break-words flex-1 min-w-0">{sub}</span>
@@ -1186,6 +1193,10 @@ function OrdersPage() {
               <div className="p-4 flex items-center justify-between gap-3">
                 <div className="flex flex-col shrink-0">
                   <span className="text-xl font-bold text-slate-900 leading-tight">RM {Number(o.amount).toFixed(2)}</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {lang === "zh" ? "利润 " : lang === "ms" ? "Untung " : "Profit "}
+                    RM {orderGrossProfit({ amount: o.amount, cost: o.cost, gross_profit: o.gross_profit }).toFixed(2)}
+                  </span>
                 </div>
                 {o.status === "Unpaid" && (
                   <button
@@ -1311,11 +1322,11 @@ function OrdersPage() {
               {(() => {
                 const dm = (detail as any).delivery_method as string | undefined;
                 if (!dm) return null;
-                let emoji = "🏪", label = t("order_pickup" as any);
-                if (dm === "delivery") { emoji = "🚗"; label = t("order_delivery" as any); }
-                else if (dm === "dine_in") { emoji = "🍽️"; label = t("dine_in" as any); }
-                else if (dm === "takeaway") { emoji = "🛍️"; label = lang === "zh" ? "外带" : lang === "ms" ? "Bungkus" : "Takeaway"; }
-                return <Row label={t("delivery_type" as any)} value={`${emoji} ${label}`} />;
+                let label = t("order_pickup" as any);
+                if (dm === "delivery") { label = t("order_delivery" as any); }
+                else if (dm === "dine_in") { label = t("dine_in" as any); }
+                else if (dm === "takeaway") { label = lang === "zh" ? "外带" : lang === "ms" ? "Bungkus" : "Takeaway"; }
+                return <Row label={t("delivery_type" as any)} value={label} />;
               })()}
               {(() => {
                 const dm = (detail as any).delivery_method as string | undefined;
@@ -1374,7 +1385,7 @@ function OrdersPage() {
               onClick={() => setPendingDelete(detail)}
               className="w-full py-3 rounded-2xl bg-red-500/10 text-red-600 border border-red-500/30 font-semibold text-sm"
             >
-              🗑 {t("delete_order")}
+              <Trash2 className="h-4 w-4 inline-block mr-1.5 -mt-0.5" /> {t("delete_order")}
             </button>
           </div>
         </div>
