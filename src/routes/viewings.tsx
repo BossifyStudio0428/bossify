@@ -223,6 +223,7 @@ function ViewingsPage() {
             key={r.id}
             to="/viewing/$id"
             params={{ id: r.id }}
+            search={{ customerId: undefined, listingId: undefined }}
             className="block rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2 active:scale-[0.99] transition-transform"
           >
             <div className="flex items-start justify-between gap-2">

@@ -906,7 +906,7 @@ function CampaignDetailPage() {
                 {needsShipping.map((o) => {
                   const hrs = Math.round(hoursAgo(o.created_at));
                   return (
-                    <Link key={o.id} to="/orders/$orderId" params={{ orderId: o.id }} className="flex items-center gap-3 p-3 active:bg-muted/40">
+                    <Link key={o.id} to="/orders/$orderId" params={{ orderId: o.id }} search={{ edit: false }} className="flex items-center gap-3 p-3 active:bg-muted/40">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{o.customer_name}</p>
                         <p className="text-xs text-muted-foreground truncate">{o.product ?? o.code}</p>

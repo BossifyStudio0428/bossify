@@ -1108,6 +1108,7 @@ function Index() {
                 key={v.id}
                 to="/viewing/$id"
                 params={{ id: v.id }}
+                search={{ customerId: undefined, listingId: undefined }}
                 className="flex items-center gap-3 p-4"
               >
                 <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
