@@ -494,7 +494,7 @@ function PublicOrderFormPage() {
         className="pof-scope min-h-screen flex flex-col px-5 pt-8 pb-10"
         style={{
           background:
-            "radial-gradient(120% 60% at 50% 0%, hsl(var(--primary) / 0.18) 0%, transparent 60%), linear-gradient(180deg, #0A0614 0%, #0D0919 100%)",
+            "radial-gradient(120% 60% at 50% 0%, hsl(var(--primary) / 0.18) 0%, transparent 60%), linear-gradient(180deg, #FCFBFE 0%, #FCFBFE 100%)",
         }}
       >
         <PofStyles />
@@ -536,19 +536,19 @@ function PublicOrderFormPage() {
                 key={opt.code}
                 type="button"
                 onClick={() => pickLang(opt.code)}
-                className="group w-full px-4 py-3.5 rounded-2xl bg-[#140D22] border border-[#352553] text-left flex items-center gap-3 transition-all active:scale-[0.99] hover:border-primary/40 hover:shadow-[0_8px_24px_-12px_rgba(124,58,237,0.35)]"
+                className="group w-full px-4 py-3.5 rounded-2xl bg-[#F7F5FA] border border-[#D9D0EC] text-left flex items-center gap-3 transition-all active:scale-[0.99] hover:border-primary/40 hover:shadow-[0_8px_24px_-12px_rgba(124,58,237,0.35)]"
                 style={{ animation: `fade-in 0.4s ease ${i * 60}ms both` }}
               >
                 <span
                   className="h-11 w-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg, #241B3D 0%, #241B3D 100%)" }}
+                  style={{ background: "linear-gradient(135deg, #EFEAFA 0%, #EFEAFA 100%)" }}
                 >
                   {opt.flag}
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="flex items-center gap-2">
-                    <span className="text-[15px] font-bold text-[#F5F3FA] truncate">{opt.label}</span>
-                    <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-[#241B3D] text-primary">
+                    <span className="text-[15px] font-bold text-[#1A1225] truncate">{opt.label}</span>
+                    <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-[#EFEAFA] text-primary">
                       {opt.tag}
                     </span>
                   </span>
@@ -556,7 +556,7 @@ function PublicOrderFormPage() {
                 </span>
                 <span
                   className="h-8 w-8 rounded-full flex items-center justify-center text-primary text-base transition-all group-hover:bg-primary group-hover:text-white"
-                  style={{ background: "#241B3D" }}
+                  style={{ background: "#EFEAFA" }}
                 >
                   →
                 </span>
@@ -1451,9 +1451,9 @@ function CategoryChip({ label, active, onClick }: { label: string; active: boole
               transform: "scale(1.03)",
             }
           : {
-              background: "#140D22",
-              color: "#9D93B5",
-              borderColor: "#352553",
+              background: "#F7F5FA",
+              color: "#5B5270",
+              borderColor: "#D9D0EC",
             }
       }
     >
@@ -1494,7 +1494,7 @@ function LangSwitcher({
             className="fixed inset-0 z-40"
             onClick={onToggle}
           />
-          <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-2xl bg-[#140D22] border border-border shadow-xl overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-2xl bg-[#F7F5FA] border border-border shadow-xl overflow-hidden">
             {([
               { code: "en" as Lang, label: "English" },
               { code: "ms" as Lang, label: "Bahasa Malaysia" },
@@ -1506,8 +1506,8 @@ function LangSwitcher({
                 onClick={() => onPick(opt.code)}
                 className={`w-full px-4 py-3 text-left text-sm flex items-center justify-between transition-colors ${
                   lang === opt.code
-                    ? "bg-[#241B3D] text-[#8B5CF6] font-semibold"
-                    : "text-[#F5F3FA] hover:bg-muted/30"
+                    ? "bg-[#EFEAFA] text-[#8B5CF6] font-semibold"
+                    : "text-[#1A1225] hover:bg-muted/30"
                 }`}
               >
                 <span>{opt.label}</span>
@@ -1600,7 +1600,7 @@ function DetailSheet({
           <button
             type="button"
             onClick={onClose}
-            className="pointer-events-auto h-10 w-10 rounded-full bg-black/75 backdrop-blur text-white shadow-[0_4px_14px_rgba(0,0,0,0.35)] ring-2 ring-white/80 flex items-center justify-center transition active:scale-90"
+            className="pointer-events-auto h-10 w-10 rounded-full bg-black/75 backdrop-blur text-white shadow-[0_4px_14px_rgba(17,12,33,0.06)] ring-2 ring-white/80 flex items-center justify-center transition active:scale-90"
             aria-label="Close"
           >
             <X size={20} strokeWidth={3} />

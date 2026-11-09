@@ -1030,7 +1030,7 @@ function OrdersPage() {
                 if ((e.target as HTMLElement).closest("button,a,[role='menuitem']")) return;
                 navigate({ to: "/orders/$orderId", params: { orderId: o.id }, search: {} as never });
               }}
-              className={`rounded-2xl bg-[#140D22] border border-border/40 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] overflow-hidden cursor-pointer transition-all ${removing ? "opacity-0 scale-95" : "opacity-100"}`}
+              className={`rounded-2xl bg-[#F7F5FA] border border-border/40 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] overflow-hidden cursor-pointer transition-all ${removing ? "opacity-0 scale-95" : "opacity-100"}`}
             >
               {/* Header */}
               <div className="p-4 pb-3">

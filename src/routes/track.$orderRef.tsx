@@ -133,7 +133,7 @@ function TrackingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0A0614]">
+      <div className="min-h-screen flex items-center justify-center bg-[#FCFBFE]">
         <p className="text-sm text-muted-foreground">Loading…</p>
       </div>
     );
@@ -141,7 +141,7 @@ function TrackingPage() {
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 bg-[#0A0614]">
+      <div className="min-h-screen flex items-center justify-center px-6 bg-[#FCFBFE]">
         <div className="text-center max-w-sm">
           <div className="text-5xl mb-3">😢</div>
           <h1 className="text-xl font-bold">{tr.notFound}</h1>
@@ -167,7 +167,7 @@ function TrackingPage() {
 
   return (
     <div className="min-h-screen px-5 pt-8 pb-12" style={{
-      background: "radial-gradient(120% 60% at 50% 0%, hsl(var(--primary) / 0.18) 0%, transparent 60%), linear-gradient(180deg, #0A0614 0%, #0D0919 100%)",
+      background: "radial-gradient(120% 60% at 50% 0%, hsl(var(--primary) / 0.18) 0%, transparent 60%), linear-gradient(180deg, #FCFBFE 0%, #FCFBFE 100%)",
     }}>
       <div className="max-w-md mx-auto space-y-5">
         {/* Language picker */}
@@ -183,7 +183,7 @@ function TrackingPage() {
               className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
                 lang === l
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-[#140D22] text-muted-foreground border-border"
+                  : "bg-[#F7F5FA] text-muted-foreground border-border"
               }`}
             >
               {l.toUpperCase()}
@@ -203,7 +203,7 @@ function TrackingPage() {
 
         {/* Progress (delivery only) */}
         {!isPickup && (
-        <div className="rounded-2xl bg-[#140D22] border border-border/60 p-5 shadow-sm">
+        <div className="rounded-2xl bg-[#F7F5FA] border border-border/60 p-5 shadow-sm">
           <p className="text-sm font-semibold mb-4">🚚 {tr.statusTitle}</p>
           <div className="space-y-4">
             {STATUSES.map((s, i) => {
@@ -241,7 +241,7 @@ function TrackingPage() {
         )}
 
         {isPickup && business.store_address && (
-          <div className="rounded-2xl bg-[#140D22] border border-border/60 p-5 shadow-sm space-y-2">
+          <div className="rounded-2xl bg-[#F7F5FA] border border-border/60 p-5 shadow-sm space-y-2">
             <p className="text-sm font-semibold">🏪 {tr.selfPickup}</p>
             <p className="text-xs text-muted-foreground">{tr.selfPickupSub}</p>
             <div className="rounded-xl bg-muted/40 px-3 py-2.5 text-sm whitespace-pre-wrap">
@@ -251,7 +251,7 @@ function TrackingPage() {
         )}
 
         {/* Order details */}
-        <div className="rounded-2xl bg-[#140D22] border border-border/60 p-5 shadow-sm space-y-2 text-sm">
+        <div className="rounded-2xl bg-[#F7F5FA] border border-border/60 p-5 shadow-sm space-y-2 text-sm">
           <Row k={`👤 ${tr.customer}`} v={order.customer_name} />
           <Row k={`🛍️ ${tr.product}`} v={order.product} />
           <Row k={`📦 ${tr.qty}`} v={String(order.quantity)} />

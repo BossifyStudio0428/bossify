@@ -20,7 +20,7 @@ function htmlResponse(title: string, body: string, status = 200, backHref = "/pr
   return new Response(
     `<!doctype html><meta charset=utf-8><title>${safeTitle}</title>${meta}` +
       `<meta name=viewport content="width=device-width,initial-scale=1">` +
-      `<style>body{font-family:system-ui;padding:40px 24px;max-width:480px;margin:auto;text-align:center;font-size:19px;line-height:1.5;background:#0A0614;color:#F5F3FA}` +
+      `<style>body{font-family:system-ui;padding:40px 24px;max-width:480px;margin:auto;text-align:center;font-size:19px;line-height:1.5;background:#FCFBFE;color:#1A1225}` +
       `h1{font-size:26px;margin-bottom:16px}` +
       `p{margin:16px 0}` +
       `a{display:inline-block;margin-top:20px;font-size:20px;font-weight:700;color:#8B5CF6;text-decoration:none}</style>` +

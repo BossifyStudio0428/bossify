@@ -268,7 +268,7 @@ function Welcome({ onStart }: { onStart: () => void }) {
         {t("welcome_sub")}
       </p>
       <div className="mt-6 flex gap-2">
-        <span className="px-4 py-1.5 rounded-full bg-[#241B3D] text-primary text-xs font-medium">
+        <span className="px-4 py-1.5 rounded-full bg-[#EFEAFA] text-primary text-xs font-medium">
           {t("takes_1min")}
         </span>
       </div>
@@ -320,7 +320,7 @@ function QuestionScreen({
                   ? "#8B5CF6"
                   : i === qIndex
                     ? "#A855F7"
-                    : "#291D41",
+                    : "#E4DEF0",
             }}
           />
         ))}
@@ -353,9 +353,9 @@ function QuestionScreen({
               style={{
                 padding: "11px 14px",
                 borderRadius: 12,
-                border: selected ? "1.5px solid #8B5CF6" : "0.5px solid #291D41",
-                background: selected ? "#241B3D" : "#140D22",
-                color: selected ? "#F5F3FA" : "#9D93B5",
+                border: selected ? "1.5px solid #8B5CF6" : "0.5px solid #E4DEF0",
+                background: selected ? "#EFEAFA" : "#F7F5FA",
+                color: selected ? "#1A1225" : "#5B5270",
               }}
             >
               <span
@@ -364,7 +364,7 @@ function QuestionScreen({
                   width: 28,
                   height: 28,
                   borderRadius: 8,
-                  background: "#241B3D",
+                  background: "#EFEAFA",
                 }}
               >
                 {o.emoji}
@@ -385,7 +385,7 @@ function QuestionScreen({
         <button
           onClick={onContinue}
           disabled={!value}
-          className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:bg-[#291D41] disabled:text-muted-foreground transition"
+          className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:bg-[#E4DEF0] disabled:text-muted-foreground transition"
         >
           {isLast ? t("ob_finish") : t("continue")} <ArrowRight className="h-4 w-4" />
         </button>
@@ -426,7 +426,7 @@ function Completion({
 
       <div
         className="w-full mt-6 bg-card text-left p-4 space-y-3"
-        style={{ borderRadius: 12, border: "1px solid #291D41" }}
+        style={{ borderRadius: 12, border: "1px solid #E4DEF0" }}
       >
         {summary.map((s) => (
           <div key={s.key} className="flex items-start justify-between gap-3">

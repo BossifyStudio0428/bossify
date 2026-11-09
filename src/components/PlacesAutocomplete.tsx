@@ -103,12 +103,12 @@ export function PlacesAutocomplete({ value, onChange, placeholder, className, co
           className="absolute left-0 right-0 mt-1 border border-border rounded-xl max-h-64 overflow-auto"
           style={{
             zIndex: 9999,
-            backgroundColor: "#140D22",
+            backgroundColor: "#F7F5FA",
             boxShadow: "0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1)",
           }}
         >
           {suggestions.map((s) => (
-            <li key={s.placeId} style={{ backgroundColor: "#140D22" }}>
+            <li key={s.placeId} style={{ backgroundColor: "#F7F5FA" }}>
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
