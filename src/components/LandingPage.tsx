@@ -478,12 +478,63 @@ function TiltWrap({ children, max = 6 }: { children: ReactNode; max?: number }) 
 }
 
 // ---------------------------------------------------------------------------
+// Count-up number animation -- animates 0 -> target once `start` flips true
+// (mount, or IntersectionObserver visibility), using an eased RAF loop.
+// Jumps straight to the final value under prefers-reduced-motion.
+// ---------------------------------------------------------------------------
+function useCountUp(target: number, start: boolean, durationMs = 1400) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!start) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setValue(target);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const ease = (x: number) => 1 - Math.pow(1 - x, 3);
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / durationMs);
+      setValue(Math.round(target * ease(p)));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, start, durationMs]);
+  return value;
+}
+
+const fmtRM = (n: number) => `RM${n.toLocaleString("en-US")}`;
+const fmtInt = (n: number) => n.toLocaleString("en-US");
+
+function polylineLength(coords: number[][]) {
+  let len = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const [x1, y1] = coords[i - 1];
+    const [x2, y2] = coords[i];
+    len += Math.hypot(x2 - x1, y2 - y1);
+  }
+  return len;
+}
+
+// ---------------------------------------------------------------------------
 // Hero product mockup -- a tilted "laptop screen" showing the real Bossify
 // dashboard: sidebar, stat tiles, a two-series profit/sales chart with a
 // decorative play button, plus two floating cards for depth. Entirely
-// hand-built illustration -- no real data, no screenshots.
+// hand-built illustration -- no real data, no screenshots. Runs as a live
+// "product is working" showcase: the chart draws itself in, the KPI
+// numbers count up, the low-stock badge pulses occasionally, and the two
+// floating cards slide in with a stagger once the hero mounts.
 // ---------------------------------------------------------------------------
-function LaptopMockup() {
+function LaptopMockup({ onPlay }: { onPlay: () => void }) {
+  const [started, setStarted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setStarted(true), 300);
+    return () => clearTimeout(t);
+  }, []);
+  const sales = useCountUp(12480, started);
+  const profit = useCountUp(3842, started);
+  const orders = useCountUp(428, started);
   const salesPts = [30, 42, 38, 52, 46, 60, 54, 68, 62, 76, 70, 84];
   const profitPts = [10, 16, 13, 20, 17, 24, 20, 28, 24, 32, 28, 36];
   const w = 520;
@@ -497,6 +548,8 @@ function LaptopMockup() {
   const profitCoords = build(profitPts);
   const toPath = (coords: number[][]) => coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   const profitArea = `${toPath(profitCoords)} L${w},${h} L0,${h} Z`;
+  const salesLen = polylineLength(salesCoords);
+  const profitLen = polylineLength(profitCoords);
 
   const sidebarItems = [
     { icon: TrendingUp, label: "Dashboard", active: true },
@@ -555,17 +608,17 @@ function LaptopMockup() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
               <div className="rounded-xl p-2.5" style={{ background: CARD_SOFT }}>
                 <p className="text-[9px] font-semibold" style={{ color: TEXT_MUTED }}>SALES (GMV)</p>
-                <p className="text-[14px] font-bold" style={{ color: TEXT }}>RM12,480</p>
+                <p className="text-[14px] font-bold tabular-nums" style={{ color: TEXT }}>{fmtRM(sales)}</p>
                 <p className="text-[9.5px] font-semibold" style={{ color: GREEN }}>+18.4%</p>
               </div>
               <div className="rounded-xl p-2.5" style={{ background: CARD_SOFT }}>
                 <p className="text-[9px] font-semibold" style={{ color: TEXT_MUTED }}>NET PROFIT</p>
-                <p className="text-[14px] font-bold" style={{ color: TEXT }}>RM3,842</p>
+                <p className="text-[14px] font-bold tabular-nums" style={{ color: TEXT }}>{fmtRM(profit)}</p>
                 <p className="text-[9.5px] font-semibold" style={{ color: GREEN }}>+20.1%</p>
               </div>
               <div className="rounded-xl p-2.5" style={{ background: CARD_SOFT }}>
                 <p className="text-[9px] font-semibold" style={{ color: TEXT_MUTED }}>ORDERS</p>
-                <p className="text-[14px] font-bold" style={{ color: TEXT }}>428</p>
+                <p className="text-[14px] font-bold tabular-nums" style={{ color: TEXT }}>{fmtInt(orders)}</p>
                 <p className="text-[9.5px] font-semibold" style={{ color: GREEN }}>+12.7%</p>
               </div>
               <div className="rounded-xl p-2.5" style={{ background: "rgba(248,113,113,0.1)" }}>
@@ -597,17 +650,49 @@ function LaptopMockup() {
                       <stop offset="100%" stopColor={GRAD_FROM} stopOpacity="0" />
                     </linearGradient>
                   </defs>
-                  <path d={profitArea} fill="url(#bf-profit-area)" />
-                  <path d={toPath(salesCoords)} fill="none" stroke={GRAD_TO} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
-                  <path d={toPath(profitCoords)} fill="none" stroke={GRAD_FROM} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d={profitArea}
+                    fill="url(#bf-profit-area)"
+                    style={{ opacity: started ? 1 : 0, transition: "opacity 0.9s ease-out 1.1s" }}
+                  />
+                  <path
+                    d={toPath(salesCoords)}
+                    fill="none"
+                    stroke={GRAD_TO}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.85"
+                    style={{
+                      strokeDasharray: salesLen,
+                      strokeDashoffset: started ? 0 : salesLen,
+                      transition: "stroke-dashoffset 1.3s cubic-bezier(0.16,1,0.3,1) 0.25s",
+                    }}
+                  />
+                  <path
+                    d={toPath(profitCoords)}
+                    fill="none"
+                    stroke={GRAD_FROM}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      strokeDasharray: profitLen,
+                      strokeDashoffset: started ? 0 : profitLen,
+                      transition: "stroke-dashoffset 1.3s cubic-bezier(0.16,1,0.3,1) 0.45s",
+                    }}
+                  />
                 </svg>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span
-                    className="w-11 h-11 rounded-full flex items-center justify-center border"
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={onPlay}
+                    aria-label="Watch demo"
+                    className="w-11 h-11 rounded-full flex items-center justify-center border transition-transform hover:scale-110"
                     style={{ background: "rgba(10,6,20,0.55)", borderColor: "rgba(255,255,255,0.3)", backdropFilter: "blur(2px)" }}
                   >
                     <Play className="w-4 h-4 ml-0.5" style={{ color: "#FFFFFF" }} fill="#FFFFFF" />
-                  </span>
+                  </button>
                 </div>
               </div>
               <div className="flex justify-between mt-1.5">
@@ -621,25 +706,46 @@ function LaptopMockup() {
       </div>
 
       <div
-        className="absolute -top-5 -left-4 sm:-left-8 rounded-2xl border px-3.5 py-3 flex items-center gap-2.5"
-        style={{ background: CARD, borderColor: BORDER_STRONG, boxShadow: "0 20px 50px -15px rgba(0,0,0,0.6)" }}
+        className="absolute -top-5 -left-4 sm:-left-8"
+        style={{
+          opacity: started ? 1 : 0,
+          transform: started ? "translate(0,0)" : "translate(-14px,-10px)",
+          transition: "opacity 0.6s ease-out 0.7s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.7s",
+        }}
       >
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#000000" }}>
-          <ShoppingBag className="w-4 h-4" style={{ color: "#FFFFFF" }} />
-        </div>
-        <div>
-          <p className="text-[11px] font-bold" style={{ color: TEXT }}>TikTok Shop</p>
-          <p className="text-[9px]" style={{ color: TEXT_MUTED }}>Synced</p>
+        <div
+          className="rounded-2xl border px-3.5 py-3 flex items-center gap-2.5"
+          style={{ background: CARD, borderColor: BORDER_STRONG, boxShadow: "0 20px 50px -15px rgba(0,0,0,0.6)" }}
+        >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#000000" }}>
+            <ShoppingBag className="w-4 h-4" style={{ color: "#FFFFFF" }} />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: TEXT }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 bossify-animate-status-dot" />
+              TikTok Shop
+            </p>
+            <p className="text-[9px]" style={{ color: TEXT_MUTED }}>Synced</p>
+          </div>
         </div>
       </div>
 
       <div
-        className="absolute -bottom-6 -right-4 sm:-right-10 rounded-2xl border px-4 py-3.5"
-        style={{ background: CARD, borderColor: BORDER_STRONG, boxShadow: "0 20px 50px -15px rgba(139,92,246,0.4)" }}
+        className="absolute -bottom-6 -right-4 sm:-right-10 rounded-2xl"
+        style={{
+          opacity: started ? 1 : 0,
+          transform: started ? "translate(0,0)" : "translate(14px,10px)",
+          transition: "opacity 0.6s ease-out 0.9s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.9s",
+        }}
       >
-        <p className="text-[10px] font-semibold" style={{ color: TEXT_MUTED }}>Real Profit</p>
-        <p className="text-[18px] font-bold" style={{ color: TEXT }}>RM3,842</p>
-        <p className="text-[10.5px] font-bold" style={{ color: GREEN }}>↑ +20.1%</p>
+        <div
+          className="rounded-2xl border px-4 py-3.5"
+          style={{ background: CARD, borderColor: BORDER_STRONG }}
+        >
+          <p className="text-[10px] font-semibold" style={{ color: TEXT_MUTED }}>Real Profit</p>
+          <p className="text-[18px] font-bold tabular-nums" style={{ color: TEXT }}>{fmtRM(profit)}</p>
+          <p className="text-[10.5px] font-bold" style={{ color: GREEN }}>↑ +20.1%</p>
+        </div>
       </div>
     </div>
   );
@@ -740,54 +846,254 @@ function MiniOrdersPreview() {
   );
 }
 
-function CursorGlow() {
+// ---------------------------------------------------------------------------
+// Scroll-driven profit waterfall -- "Sales don't tell the whole story" made
+// visual: Sales appears, then each real cost slides in one at a time as
+// the section scrolls into view, ending on an emphasized Real Profit
+// reveal. Triggers once via IntersectionObserver (not continuously
+// scroll-scrubbed) so it stays smooth on mobile and doesn't fight the
+// user's scroll direction.
+// ---------------------------------------------------------------------------
+function ProfitWaterfall({ copy }: { copy: LandingCopy }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [step, setStep] = useState(0);
+  const totalSteps = copy.problemCostLines.length + 1;
 
   useEffect(() => {
-    if (!window.matchMedia("(pointer: fine)").matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const el = ref.current;
     if (!el) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      setStep(totalSteps);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        const timers: number[] = [];
+        for (let i = 1; i <= totalSteps; i++) {
+          timers.push(window.setTimeout(() => setStep(i), i * 420));
+        }
+      },
+      { threshold: 0.35 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [totalSteps]);
 
-    let x = window.innerWidth / 2;
-    let y = window.innerHeight / 2;
-    let targetX = x;
-    let targetY = y;
-    let raf = 0;
+  const finalReached = step > copy.problemCostLines.length;
 
-    const onMove = (e: PointerEvent) => {
-      targetX = e.clientX;
-      targetY = e.clientY;
-    };
-    const tick = () => {
-      x += (targetX - x) * 0.09;
-      y += (targetY - y) * 0.09;
-      el.style.transform = `translate3d(${(x - 320).toFixed(1)}px, ${(y - 320).toFixed(1)}px, 0)`;
-      raf = requestAnimationFrame(tick);
-    };
+  return (
+    <div ref={ref} className="rounded-2xl border overflow-hidden" style={{ background: CARD, borderColor: BORDER }}>
+      <div
+        className="px-5 py-4 flex items-center justify-between"
+        style={{
+          opacity: step > 0 ? 1 : 0,
+          transform: step > 0 ? "translateY(0)" : "translateY(10px)",
+          transition: "opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.16,1,0.3,1)",
+        }}
+      >
+        <span className="text-[11px] font-semibold" style={{ color: TEXT_MUTED }}>{copy.problemSalesLabel}</span>
+        <span className="text-[20px] font-bold tabular-nums" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+          {copy.problemSalesValue}
+        </span>
+      </div>
+      {copy.problemCostLines.map((line, i) => {
+        const Icon = COST_ICONS[i] ?? Minus;
+        const revealed = step > i + 1;
+        return (
+          <div
+            key={line.label}
+            className="flex items-center justify-between gap-3 px-5 py-3 border-t"
+            style={{
+              borderColor: BORDER,
+              opacity: revealed ? 1 : 0,
+              transform: revealed ? "translateX(0)" : "translateX(-16px)",
+              transition: "opacity 0.45s ease-out, transform 0.45s cubic-bezier(0.16,1,0.3,1)",
+            }}
+          >
+            <span className="flex items-center gap-2 text-[12.5px]" style={{ color: TEXT_MUTED }}>
+              <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: TEXT_MUTED }} />
+              {line.label}
+            </span>
+            <span className="text-[13px] font-bold shrink-0 tabular-nums" style={{ color: RED }}>{line.value}</span>
+          </div>
+        );
+      })}
+      <div
+        className="mx-4 my-4 rounded-xl px-5 py-4 flex items-center justify-between"
+        style={{
+          background: finalReached ? GRADIENT : "rgba(139,92,246,0.1)",
+          transition: "background 0.6s ease-out, transform 0.5s cubic-bezier(0.16,1,0.3,1)",
+          transform: finalReached ? "scale(1.02)" : "scale(1)",
+          boxShadow: finalReached ? "0 20px 50px -15px rgba(139,92,246,0.5)" : "none",
+        }}
+      >
+        <span
+          className="text-[11px] font-bold uppercase tracking-wide"
+          style={{ color: finalReached ? "rgba(255,255,255,0.85)" : TEXT_MUTED }}
+        >
+          {copy.problemProfitLabel}
+        </span>
+        <span
+          className="text-[22px] font-bold tabular-nums"
+          style={{
+            color: finalReached ? "#FFFFFF" : TEXT,
+            fontFamily: "Space Grotesk, system-ui, sans-serif",
+            textShadow: finalReached ? "0 0 20px rgba(255,255,255,0.4)" : "none",
+          }}
+        >
+          {copy.problemProfitValue}
+        </span>
+      </div>
+    </div>
+  );
+}
 
-    window.addEventListener("pointermove", onMove);
-    raf = requestAnimationFrame(tick);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      cancelAnimationFrame(raf);
+// ---------------------------------------------------------------------------
+// Demo video modal -- since there's no recorded demo video yet, this is a
+// simulated product walkthrough built from the same copy as the Problem
+// section: Sales appears, each real cost is subtracted one at a time with
+// a running total, and the sequence lands on Real Profit with emphasis.
+// Auto-plays on open, replayable, closes on Escape/backdrop/X.
+// ---------------------------------------------------------------------------
+function DemoVideoModal({ open, onClose, copy }: { open: boolean; onClose: () => void; copy: LandingCopy }) {
+  const [step, setStep] = useState(0);
+  const [replayKey, setReplayKey] = useState(0);
+  const totalSteps = copy.problemCostLines.length + 1; // + final profit reveal
+
+  useEffect(() => {
+    if (!open) return;
+    setStep(0);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      setStep(totalSteps);
+      return;
+    }
+    const timers: number[] = [];
+    for (let i = 1; i <= totalSteps; i++) {
+      timers.push(window.setTimeout(() => setStep(i), 500 + i * 650));
+    }
+    return () => timers.forEach(clearTimeout);
+  }, [open, totalSteps, replayKey]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
     };
-  }, []);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const parseRM = (s: string) => Number(s.replace(/[^0-9.-]/g, ""));
+  const salesN = parseRM(copy.problemSalesValue);
+  let runningTotal = salesN;
+  const linesWithRunning = copy.problemCostLines.map((line) => {
+    runningTotal += parseRM(line.value); // values are already negative, e.g. "-RM5,000"
+    return { ...line, runningAfter: runningTotal };
+  });
+  const finalReached = step > copy.problemCostLines.length;
 
   return (
     <div
-      ref={ref}
-      aria-hidden="true"
-      className="pointer-events-none fixed top-0 left-0 -z-10"
-      style={{
-        width: 640,
-        height: 640,
-        borderRadius: "9999px",
-        background: `radial-gradient(circle, ${GRAD_FROM}26 0%, ${GRAD_TO}14 38%, transparent 70%)`,
-        filter: "blur(20px)",
-        willChange: "transform",
-      }}
-    />
+      role="dialog"
+      aria-modal="true"
+      aria-label="Bossify profit demo"
+      className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+      style={{ background: "rgba(5,3,10,0.82)", backdropFilter: "blur(4px)" }}
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-[24px] border overflow-hidden"
+        style={{ background: CARD, borderColor: BORDER_STRONG, boxShadow: "0 40px 100px -20px rgba(139,92,246,0.5)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close demo"
+          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center border transition-transform hover:scale-110"
+          style={{ background: "rgba(10,6,20,0.6)", borderColor: BORDER, color: TEXT }}
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        <div className="px-6 pt-8 pb-3 text-center">
+          <p className="text-[11px] font-bold tracking-wide uppercase mb-1" style={{ color: TEXT_MUTED }}>
+            {copy.problemSalesLabel}
+          </p>
+          <p
+            className="text-[34px] font-bold tabular-nums tracking-tight"
+            style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+          >
+            {copy.problemSalesValue}
+          </p>
+        </div>
+
+        <div className="px-6 pb-2">
+          {linesWithRunning.map((line, i) => {
+            const revealed = step > i;
+            return (
+              <div
+                key={line.label}
+                className="flex items-center justify-between gap-3 py-2.5 border-t"
+                style={{
+                  borderColor: BORDER,
+                  opacity: revealed ? 1 : 0,
+                  transform: revealed ? "translateX(0)" : "translateX(-10px)",
+                  transition: "opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+                }}
+              >
+                <span className="text-[13px]" style={{ color: TEXT_MUTED }}>{line.label}</span>
+                <span className="text-[13.5px] font-bold tabular-nums shrink-0" style={{ color: RED }}>{line.value}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div
+          className="mx-6 my-4 rounded-2xl p-5 text-center"
+          style={{
+            background: finalReached ? GRADIENT : "rgba(139,92,246,0.1)",
+            transition: "background 0.6s ease-out",
+            transform: finalReached ? "scale(1.03)" : "scale(1)",
+            boxShadow: finalReached ? "0 20px 50px -15px rgba(139,92,246,0.55)" : "none",
+          }}
+        >
+          <p
+            className="text-[11px] font-bold tracking-wide uppercase mb-1"
+            style={{ color: finalReached ? "rgba(255,255,255,0.85)" : TEXT_MUTED }}
+          >
+            {copy.problemProfitLabel}
+          </p>
+          <p
+            className="text-[30px] font-bold tabular-nums tracking-tight"
+            style={{
+              color: finalReached ? "#FFFFFF" : TEXT,
+              fontFamily: "Space Grotesk, system-ui, sans-serif",
+              textShadow: finalReached ? "0 0 24px rgba(255,255,255,0.4)" : "none",
+            }}
+          >
+            {copy.problemProfitValue}
+          </p>
+        </div>
+
+        <div className="px-6 pb-6 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => setReplayKey((k) => k + 1)}
+            className="text-[12.5px] font-semibold px-4 py-2 rounded-full border transition-colors hover:border-[rgba(168,124,255,0.5)]"
+            style={{ color: TEXT_MUTED, borderColor: BORDER }}
+          >
+            ↺ Replay
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -795,6 +1101,7 @@ export function LandingPage() {
   const { lang } = useI18n();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
   const c = COPY[lang] ?? COPY.en;
 
   const goAuth = (mode: "login" | "register") => {
@@ -807,7 +1114,6 @@ export function LandingPage() {
 
   return (
     <div className="relative isolate" style={{ background: BG, fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
-      <CursorGlow />
       <div className="relative z-10">
       {/* Header */}
       <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(10,6,20,0.8)", borderColor: BORDER }}>
@@ -860,7 +1166,7 @@ export function LandingPage() {
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(ellipse 900px 520px at 50% 0%, rgba(139,92,246,0.22) 0%, transparent 65%)" }}
+          style={{ background: "radial-gradient(ellipse 900px 460px at 50% 0%, rgba(139,92,246,0.1) 0%, transparent 65%)" }}
         />
         <div className="relative max-w-6xl mx-auto grid lg:grid-cols-[0.85fr_1.15fr] gap-12 items-center">
           <Reveal mode="mount">
@@ -882,16 +1188,16 @@ export function LandingPage() {
               <div className="flex flex-wrap items-center gap-3 mb-6">
                 <button
                   onClick={() => goAuth("register")}
-                  className="text-[14.5px] font-semibold px-6 py-3 rounded-full text-white flex items-center gap-2"
+                  className="group text-[14.5px] font-semibold px-6 py-3 rounded-full text-white flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-8px_rgba(139,92,246,0.6)]"
                   style={{ background: GRADIENT }}
                 >
                   {c.ctaPrimary}
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                {/* TODO(John): wire this up to a real video/lightbox once the demo is recorded. */}
                 <button
                   type="button"
-                  className="text-[14.5px] font-semibold px-6 py-3 rounded-full border flex items-center gap-2"
+                  onClick={() => setDemoOpen(true)}
+                  className="text-[14.5px] font-semibold px-6 py-3 rounded-full border flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:border-[rgba(168,124,255,0.5)]"
                   style={{ color: TEXT, borderColor: BORDER }}
                 >
                   <Play className="w-3.5 h-3.5" style={{ color: TEXT }} fill={TEXT} />
@@ -914,33 +1220,29 @@ export function LandingPage() {
           <Reveal mode="mount" delay={150}>
             <div style={{ transform: "perspective(1600px) rotateY(-10deg) rotateX(5deg)", transformStyle: "preserve-3d" }}>
               <TiltWrap max={4}>
-                <LaptopMockup />
+                <LaptopMockup onPlay={() => setDemoOpen(true)} />
               </TiltWrap>
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* Capability strip */}
-      <section className="px-5 lg:px-8 py-6 border-y" style={{ borderColor: BORDER }}>
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
-          {c.capabilityStrip.map((label, i) => {
-            const Icon = CAPABILITY_ICONS[i] ?? TrendingUp;
-            return (
-              <span key={label} className="inline-flex items-center gap-2.5 text-[13px] font-semibold" style={{ color: TEXT_MUTED }}>
-                <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: GRADIENT }}>
-                  <Icon className="w-3.5 h-3.5 text-white" />
-                </span>
-                {label}
-              </span>
-            );
-          })}
+      {/* Capability strip -- plain typography + a dot separator, not an
+          icon-in-gradient-box for every single item. */}
+      <section className="px-5 lg:px-8 py-5 border-y" style={{ borderColor: BORDER }}>
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-8 gap-y-2.5">
+          {c.capabilityStrip.map((label, i) => (
+            <span key={label} className="inline-flex items-center gap-2.5 text-[12.5px] font-semibold" style={{ color: TEXT_MUTED }}>
+              {i > 0 && <span className="hidden sm:inline w-1 h-1 rounded-full -ml-5" style={{ background: BORDER_STRONG }} />}
+              {label}
+            </span>
+          ))}
         </div>
       </section>
 
-      {/* Problem */}
+      {/* Problem -- scroll-driven profit waterfall */}
       <section className="px-5 lg:px-8 py-20 lg:py-28">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-[0.9fr_1fr_0.85fr] gap-8 items-center">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-[0.9fr_1fr] gap-10 lg:gap-14 items-center">
           <Reveal>
             <div>
               <h2 className="text-[28px] lg:text-[32px] font-bold tracking-tight leading-tight mb-4" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
@@ -954,39 +1256,7 @@ export function LandingPage() {
             </div>
           </Reveal>
           <Reveal delay={100}>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 rounded-2xl p-5 border" style={{ background: CARD, borderColor: BORDER }}>
-                <p className="text-[11px] font-semibold mb-1.5" style={{ color: TEXT_MUTED }}>{c.problemSalesLabel}</p>
-                <p className="text-[24px] font-bold" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>{c.problemSalesValue}</p>
-              </div>
-              <ArrowRight className="w-5 h-5 shrink-0 hidden sm:block" style={{ color: TEXT_MUTED }} />
-              <ArrowDown className="w-5 h-5 shrink-0 sm:hidden" style={{ color: TEXT_MUTED }} />
-              <div className="flex-1 rounded-2xl p-5 border" style={{ background: "rgba(139,92,246,0.1)", borderColor: BORDER_STRONG }}>
-                <p className="text-[11px] font-semibold mb-1.5" style={{ color: TEXT_MUTED }}>{c.problemProfitLabel}</p>
-                <p
-                  className="text-[24px] font-bold"
-                  style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", fontFamily: "Space Grotesk, system-ui, sans-serif" }}
-                >
-                  {c.problemProfitValue}
-                </p>
-              </div>
-            </div>
-          </Reveal>
-          <Reveal delay={200}>
-            <div className="rounded-2xl border overflow-hidden" style={{ background: CARD, borderColor: BORDER }}>
-              {c.problemCostLines.map((line, i) => {
-                const Icon = COST_ICONS[i] ?? Minus;
-                return (
-                  <div key={line.label} className="flex items-center justify-between gap-3 px-4 py-3" style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER}` }}>
-                    <span className="flex items-center gap-2 text-[12px]" style={{ color: TEXT_MUTED }}>
-                      <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: TEXT_MUTED }} />
-                      {line.label}
-                    </span>
-                    <span className="text-[12.5px] font-bold shrink-0" style={{ color: RED }}>{line.value}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <ProfitWaterfall copy={c} />
           </Reveal>
         </div>
       </section>
@@ -1003,23 +1273,20 @@ export function LandingPage() {
             </div>
           </Reveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {featureCards.map((f, i) => {
-              const Icon = FEATURE_ICONS[i] ?? TrendingUp;
-              return (
-                <Reveal key={f.title} delay={i * 80}>
-                  <TiltWrap max={3}>
-                    <div className="rounded-2xl p-5 border h-full" style={{ background: CARD, borderColor: BORDER }}>
-                      <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3" style={{ background: GRADIENT }}>
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                      <h3 className="text-[14.5px] font-bold mb-1" style={{ color: TEXT }}>{f.title}</h3>
-                      <p className="text-[12.5px] leading-relaxed mb-4" style={{ color: TEXT_MUTED }}>{f.desc}</p>
-                      {featureMinis[i]}
+            {featureCards.map((f, i) => (
+              <Reveal key={f.title} delay={i * 80}>
+                <TiltWrap max={3}>
+                  <div className="rounded-2xl p-5 border h-full" style={{ background: CARD, borderColor: BORDER }}>
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="text-[11px] font-bold tabular-nums" style={{ color: GRAD_FROM }}>0{i + 1}</span>
+                      <h3 className="text-[14.5px] font-bold" style={{ color: TEXT }}>{f.title}</h3>
                     </div>
-                  </TiltWrap>
-                </Reveal>
-              );
-            })}
+                    <p className="text-[12.5px] leading-relaxed mb-4" style={{ color: TEXT_MUTED }}>{f.desc}</p>
+                    {featureMinis[i]}
+                  </div>
+                </TiltWrap>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -1047,8 +1314,7 @@ export function LandingPage() {
                 <ArrowRight className="w-4 h-4 shrink-0" style={{ color: TEXT_MUTED }} />
                 <div className="flex flex-col gap-1.5">
                   {c.tiktokOutcomes.map((o) => (
-                    <span key={o} className="flex items-center gap-1.5 text-[11.5px] font-medium" style={{ color: TEXT }}>
-                      <Check className="w-3.5 h-3.5 shrink-0" style={{ color: GREEN }} />
+                    <span key={o} className="text-[11.5px] font-medium" style={{ color: TEXT }}>
                       {o}
                     </span>
                   ))}
@@ -1064,19 +1330,26 @@ export function LandingPage() {
           </Reveal>
           <Reveal delay={150}>
             <div className="rounded-2xl border p-7" style={{ background: CARD, borderColor: BORDER }}>
-              <h3 className="text-[15px] font-bold mb-4" style={{ color: TEXT }}>{c.reportsGridTitle}</h3>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                {c.reports.map((name, i) => {
-                  const Icon = REPORT_ICONS[i] ?? FileText;
-                  return (
-                    <div key={name} className="rounded-xl p-3 flex flex-col items-center text-center gap-1.5" style={{ background: CARD_SOFT }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(139,92,246,0.15)" }}>
-                        <Icon className="w-3.5 h-3.5" style={{ color: GRAD_FROM }} />
-                      </div>
-                      <span className="text-[9.5px] font-semibold leading-tight" style={{ color: TEXT_MUTED }}>{name}</span>
-                    </div>
-                  );
-                })}
+              <h3 className="text-[15px] font-bold mb-3" style={{ color: TEXT }}>{c.reportsGridTitle}</h3>
+              <div className="flex flex-col">
+                {c.reports.map((name, i) => (
+                  <div
+                    key={name}
+                    className="flex items-center gap-3 py-2.5"
+                    style={{ borderTop: i > 0 ? `1px solid ${BORDER}` : "none" }}
+                  >
+                    <span className="text-[11px] font-bold tabular-nums w-5" style={{ color: TEXT_MUTED, opacity: 0.6 }}>
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="text-[13px] font-medium flex-1" style={{ color: TEXT }}>{name}</span>
+                    <span
+                      className="text-[9.5px] font-bold px-2 py-0.5 rounded-full tracking-wide"
+                      style={{ color: GRAD_FROM, background: "rgba(139,92,246,0.12)" }}
+                    >
+                      PDF
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </Reveal>
@@ -1141,12 +1414,10 @@ export function LandingPage() {
             <h2 className="text-[19px] lg:text-[22px] font-bold tracking-tight mb-10" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
               {c.trustSectionTitle}
             </h2>
-            <div className="grid sm:grid-cols-3 gap-8">
+            <div className="grid sm:grid-cols-3 gap-8 sm:divide-x" style={{ borderColor: BORDER }}>
               {c.trustItems.map((t) => (
-                <div key={t} className="flex flex-col items-center gap-3">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(139,92,246,0.15)" }}>
-                    <Check className="w-4 h-4" style={{ color: GRAD_FROM }} />
-                  </div>
+                <div key={t} className="flex flex-col items-center gap-2 sm:px-6">
+                  <span className="w-5 h-px" style={{ background: GRAD_FROM }} />
                   <p className="text-[13px] font-medium max-w-[220px]" style={{ color: TEXT_MUTED }}>{t}</p>
                 </div>
               ))}
@@ -1160,7 +1431,7 @@ export function LandingPage() {
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(ellipse 800px 420px at 50% 20%, rgba(139,92,246,0.3) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse 800px 380px at 50% 20%, rgba(139,92,246,0.14) 0%, transparent 70%)" }}
         />
         <svg aria-hidden="true" className="pointer-events-none absolute bottom-0 left-0 w-full h-[220px]" viewBox="0 0 1200 220" preserveAspectRatio="none">
           <defs>
@@ -1185,11 +1456,11 @@ export function LandingPage() {
             </h2>
             <p className="text-[14.5px] lg:text-[15.5px] mb-9" style={{ color: TEXT_MUTED }}>{c.finalSub}</p>
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <button onClick={() => goAuth("register")} className="text-[15px] font-semibold px-7 py-3.5 rounded-full text-white flex items-center gap-2" style={{ background: GRADIENT }}>
+              <button onClick={() => goAuth("register")} className="group text-[15px] font-semibold px-7 py-3.5 rounded-full text-white flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-8px_rgba(139,92,246,0.6)]" style={{ background: GRADIENT }}>
                 {c.finalCtaPrimary}
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </button>
-              <button type="button" className="text-[15px] font-semibold px-7 py-3.5 rounded-full border flex items-center gap-2" style={{ color: TEXT, borderColor: BORDER }}>
+              <button type="button" onClick={() => setDemoOpen(true)} className="text-[15px] font-semibold px-7 py-3.5 rounded-full border flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:border-[rgba(168,124,255,0.5)]" style={{ color: TEXT, borderColor: BORDER }}>
                 <Play className="w-4 h-4" fill={TEXT} style={{ color: TEXT }} />
                 {c.finalCtaSecondary}
               </button>
@@ -1210,6 +1481,7 @@ export function LandingPage() {
         </div>
       </footer>
       </div>
+      <DemoVideoModal open={demoOpen} onClose={() => setDemoOpen(false)} copy={c} />
     </div>
   );
 }
