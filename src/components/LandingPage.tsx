@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Menu,
@@ -444,6 +444,101 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
 };
 
 const REPORT_ICONS = [DollarSign, TrendingUp, Package, FileText, Users, Truck, ClipboardCheck];
+
+// ---------------------------------------------------------------------------
+// Motion: lightweight scroll-reveal + cursor-follow tilt. No animation
+// libraries -- just IntersectionObserver and pointermove, both skipped
+// entirely under prefers-reduced-motion.
+// ---------------------------------------------------------------------------
+function Reveal({
+  children,
+  delay = 0,
+  mode = "scroll",
+}: {
+  children: ReactNode;
+  delay?: number;
+  mode?: "scroll" | "mount";
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      setVisible(true);
+      return;
+    }
+    if (mode === "mount") {
+      const t = setTimeout(() => setVisible(true), 60);
+      return () => clearTimeout(t);
+    }
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [mode]);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(26px)",
+        transition: `opacity 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function TiltWrap({ children, max = 6 }: { children: ReactNode; max?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let frame = 0;
+    const onMove = (e: PointerEvent) => {
+      const rect = el.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width - 0.5;
+      const py = (e.clientY - rect.top) / rect.height - 0.5;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        el.style.transform = `perspective(1200px) rotateX(${(-py * max).toFixed(2)}deg) rotateY(${(px * max).toFixed(2)}deg)`;
+      });
+    };
+    const onLeave = () => {
+      cancelAnimationFrame(frame);
+      el.style.transform = "perspective(1200px) rotateX(0deg) rotateY(0deg)";
+    };
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerleave", onLeave);
+    return () => {
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerleave", onLeave);
+      cancelAnimationFrame(frame);
+    };
+  }, [max]);
+
+  return (
+    <div ref={ref} style={{ transition: "transform 0.2s ease-out", willChange: "transform" }}>
+      {children}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Product mockups — hand-built, data-free illustrations of the real Bossify
@@ -906,6 +1001,7 @@ export function LandingPage() {
           className="pointer-events-none absolute inset-0"
           style={{ background: "radial-gradient(ellipse 700px 380px at 50% -5%, rgba(108,74,182,0.08) 0%, transparent 65%)" }}
         />
+        <Reveal mode="mount">
         <div className="relative max-w-3xl mx-auto text-center">
           <p className="text-[12px] font-bold tracking-wider mb-5" style={{ color: PRIMARY_LIGHT }}>{c.eyebrow}</p>
           <h1 className="text-[38px] leading-[1.08] lg:text-[60px] font-bold tracking-tight mb-6" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
@@ -937,9 +1033,13 @@ export function LandingPage() {
             ))}
           </div>
         </div>
+        </Reveal>
+        <Reveal mode="mount" delay={150}>
         <div className="relative mt-16 lg:mt-20">
           <div className="flex justify-center">
-            <DashboardMockup />
+            <TiltWrap max={5}>
+              <DashboardMockup />
+            </TiltWrap>
           </div>
           <div className="flex justify-center mt-[-28px] relative z-10">
             <a
@@ -954,10 +1054,12 @@ export function LandingPage() {
             </a>
           </div>
         </div>
+        </Reveal>
       </section>
 
       {/* Product demo */}
       <section id="demo" className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
+        <Reveal>
         <div className="max-w-3xl mx-auto text-center mb-10">
           <span className="inline-block text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-full mb-4" style={{ color: PRIMARY, background: "rgba(59,30,109,0.08)" }}>
             {c.demoBadge}
@@ -967,31 +1069,45 @@ export function LandingPage() {
           </h2>
           <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.demoSub}</p>
         </div>
+        </Reveal>
         {/* TODO(John): once the real demo video is ready, replace DemoPlayer's
             mockup poster with an actual <video> tag or an embed, inside the
             same rounded, bordered frame. */}
-        <DemoPlayer />
+        <Reveal delay={120}>
+          <DemoPlayer />
+        </Reveal>
       </section>
 
       {/* Problem: sales vs profit */}
       <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
         <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+          <Reveal>
           <div>
             <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: ACCENT }}>{c.problemEyebrow}</p>
             <h2 className="text-[28px] lg:text-[38px] font-bold tracking-tight leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
               {c.problemTitle}
             </h2>
           </div>
-          <ProblemWaterfall c={c} />
+          </Reveal>
+          <Reveal delay={150}>
+            <TiltWrap max={4}>
+              <ProblemWaterfall c={c} />
+            </TiltWrap>
+          </Reveal>
         </div>
       </section>
 
       {/* Showcase A: Real profit */}
       <section id="features" className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
         <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+          <Reveal>
           <div className="order-2 lg:order-1 flex justify-center">
-            <ProfitPanel />
+            <TiltWrap max={5}>
+              <ProfitPanel />
+            </TiltWrap>
           </div>
+          </Reveal>
+          <Reveal>
           <div className="order-1 lg:order-2">
             <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseProfit.eyebrow}</p>
             <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
@@ -999,12 +1115,14 @@ export function LandingPage() {
             </h2>
             <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseProfit.desc}</p>
           </div>
+          </Reveal>
         </div>
       </section>
 
       {/* Showcase B: Inventory */}
       <section className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
         <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+          <Reveal>
           <div>
             <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseInventory.eyebrow}</p>
             <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
@@ -1012,8 +1130,13 @@ export function LandingPage() {
             </h2>
             <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseInventory.desc}</p>
           </div>
+          </Reveal>
           <div className="flex justify-center">
-            <InventoryPanel />
+            <Reveal>
+              <TiltWrap max={5}>
+                <InventoryPanel />
+              </TiltWrap>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -1021,9 +1144,14 @@ export function LandingPage() {
       {/* Showcase C: Orders */}
       <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
         <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+          <Reveal>
           <div className="order-2 lg:order-1 flex justify-center">
-            <OrdersPanel />
+            <TiltWrap max={5}>
+              <OrdersPanel />
+            </TiltWrap>
           </div>
+          </Reveal>
+          <Reveal>
           <div className="order-1 lg:order-2">
             <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseOrders.eyebrow}</p>
             <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
@@ -1031,12 +1159,14 @@ export function LandingPage() {
             </h2>
             <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseOrders.desc}</p>
           </div>
+          </Reveal>
         </div>
       </section>
 
       {/* Showcase D: Reports */}
       <section id="reports" className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
         <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+          <Reveal>
           <div>
             <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseReports.eyebrow}</p>
             <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
@@ -1044,12 +1174,16 @@ export function LandingPage() {
             </h2>
             <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseReports.desc}</p>
           </div>
-          <ReportsStack reports={c.reports} />
+          </Reveal>
+          <Reveal delay={100}>
+            <ReportsStack reports={c.reports} />
+          </Reveal>
         </div>
       </section>
 
       {/* TikTok Shop integration */}
       <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
+        <Reveal>
         <div className="max-w-3xl mx-auto text-center mb-14">
           <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.tiktokEyebrow}</p>
           <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
@@ -1057,7 +1191,10 @@ export function LandingPage() {
           </h2>
           <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.tiktokSub}</p>
         </div>
-        <TikTokFlow c={c} />
+        </Reveal>
+        <Reveal delay={150}>
+          <TikTokFlow c={c} />
+        </Reveal>
       </section>
 
       {/* How it works */}
@@ -1071,21 +1208,23 @@ export function LandingPage() {
           </div>
           <div className="relative grid sm:grid-cols-3 gap-10">
             <div aria-hidden="true" className="hidden sm:block absolute top-6 left-[16%] right-[16%] h-px" style={{ background: LINE }} />
-            {c.steps.map((s) => (
-              <div key={s.num} className="relative text-center sm:text-left">
-                <p
-                  className="text-[52px] font-bold leading-none mb-4"
-                  style={{
-                    color: "transparent",
-                    fontFamily: "Space Grotesk, system-ui, sans-serif",
-                    WebkitTextStroke: `1.5px ${PRIMARY_LIGHT}`,
-                  }}
-                >
-                  {s.num}
-                </p>
-                <h3 className="text-[16px] font-bold mb-2" style={{ color: INK }}>{s.title}</h3>
-                <p className="text-[13.5px] leading-relaxed" style={{ color: INK_SOFT }}>{s.desc}</p>
-              </div>
+            {c.steps.map((s, i) => (
+              <Reveal key={s.num} delay={i * 100}>
+                <div className="relative text-center sm:text-left">
+                  <p
+                    className="text-[52px] font-bold leading-none mb-4"
+                    style={{
+                      color: "transparent",
+                      fontFamily: "Space Grotesk, system-ui, sans-serif",
+                      WebkitTextStroke: `1.5px ${PRIMARY_LIGHT}`,
+                    }}
+                  >
+                    {s.num}
+                  </p>
+                  <h3 className="text-[16px] font-bold mb-2" style={{ color: INK }}>{s.title}</h3>
+                  <p className="text-[13.5px] leading-relaxed" style={{ color: INK_SOFT }}>{s.desc}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -1101,6 +1240,7 @@ export function LandingPage() {
             <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.compareSub}</p>
           </div>
           <div className="grid md:grid-cols-2 gap-6 md:gap-0 items-center">
+            <Reveal>
             <div className="rounded-2xl p-7 md:mr-[-12px]" style={{ background: SURFACE }}>
               <p className="text-[13px] font-bold uppercase tracking-wide mb-5" style={{ color: INK_SOFT }}>{c.compareSpreadsheetLabel}</p>
               <ul className="space-y-3.5">
@@ -1112,6 +1252,8 @@ export function LandingPage() {
                 ))}
               </ul>
             </div>
+            </Reveal>
+            <Reveal delay={120}>
             <div
               className="relative rounded-2xl p-7 md:scale-[1.04] bg-white"
               style={{ boxShadow: "0 30px 70px -20px rgba(59,30,109,0.3)", border: `1px solid ${LINE}` }}
@@ -1127,12 +1269,14 @@ export function LandingPage() {
                 ))}
               </ul>
             </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
       {/* Trust */}
       <section className="px-5 lg:px-8 py-16 lg:py-20" style={{ background: SURFACE }}>
+        <Reveal>
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-[20px] lg:text-[24px] font-bold tracking-tight mb-10" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
             {c.trustSectionTitle}
@@ -1148,6 +1292,7 @@ export function LandingPage() {
             ))}
           </div>
         </div>
+        </Reveal>
       </section>
 
       {/* Final CTA */}
@@ -1157,6 +1302,7 @@ export function LandingPage() {
           className="pointer-events-none absolute inset-0"
           style={{ background: "radial-gradient(ellipse 800px 400px at 50% 0%, rgba(108,74,182,0.25) 0%, transparent 70%)" }}
         />
+        <Reveal>
         <div className="relative max-w-2xl mx-auto text-center">
           <h2 className="text-[34px] lg:text-[46px] font-bold tracking-tight leading-[1.1] mb-4" style={{ color: "#FFFFFF", fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
             {c.finalTitle1}
@@ -1175,6 +1321,7 @@ export function LandingPage() {
             </a>
           </div>
         </div>
+        </Reveal>
       </section>
 
       {/* Footer */}
