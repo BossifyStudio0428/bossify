@@ -1118,41 +1118,50 @@ export function RetailOverview() {
         </div>
       )}
 
-      <div className="mt-5 grid grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] gap-5 items-start">
+      <div className="mt-5 grid grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] gap-5 items-stretch">
         {/* Recent Orders table */}
-        <section className="rounded-xl border border-border/60 bg-card overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/60">
+        <section className="rounded-xl border border-border/60 bg-card overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/60 shrink-0">
             <h2 className="text-sm font-semibold text-foreground">{t("ro_recent_orders")}</h2>
             <Link to="/orders" className="text-xs font-semibold text-primary">
               {t("ro_view_all")}
             </Link>
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-muted/40">
-                <th className="text-left px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("customer_name")}
-                </th>
-                <th className="px-5 py-2.5" />
-                <th className="px-5 py-2.5" />
-                <th className="px-5 py-2.5" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {loading ? (
-                <tr>
-                  <td colSpan={4} className="py-8 text-center text-xs text-muted-foreground">
-                    …
-                  </td>
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center py-8">
+              <p className="text-xs text-muted-foreground">…</p>
+            </div>
+          ) : recentOrders.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 py-10 text-center min-h-[220px]">
+              <span className="h-11 w-11 rounded-full bg-muted/60 flex items-center justify-center">
+                <Package className="h-5 w-5 text-muted-foreground" />
+              </span>
+              <p className="text-sm font-medium text-foreground">{t("ro_no_orders")}</p>
+              <p className="text-xs text-muted-foreground max-w-[240px] leading-relaxed">
+                {lang === "zh" ? "\u8bb0\u5f55\u4f60\u7684\u7b2c\u4e00\u7b14\u8ba2\u5355\uff0c\u8fd9\u91cc\u5c31\u4f1a\u5f00\u59cb\u663e\u793a\u6700\u8fd1\u8ba2\u5355\u548c\u5229\u6da6\u8d8b\u52bf\u3002" : lang === "ms" ? "Rekod pesanan pertama anda dan pesanan terkini akan muncul di sini." : "Record your first order and it'll start showing up here, along with your profit trend."}
+              </p>
+              <Link
+                to="/new-order"
+                className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t("new_order")}
+              </Link>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/40">
+                  <th className="text-left px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("customer_name")}
+                  </th>
+                  <th className="px-5 py-2.5" />
+                  <th className="px-5 py-2.5" />
+                  <th className="px-5 py-2.5" />
                 </tr>
-              ) : recentOrders.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="py-8 text-center text-xs text-muted-foreground">
-                    {t("ro_no_orders")}
-                  </td>
-                </tr>
-              ) : (
-                recentOrders.map((o) => (
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {recentOrders.map((o) => (
                   <tr key={o.id} className="hover:bg-muted/30">
                     <td className="px-5 py-3">
                       <Link to="/orders/$orderId" params={{ orderId: o.id! }} search={{} as never} className="flex items-center gap-2.5">
@@ -1183,10 +1192,10 @@ export function RetailOverview() {
                       )}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          )}
         </section>
 
         {/* Side panels */}
