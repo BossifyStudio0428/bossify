@@ -40,10 +40,18 @@ import bossifyLogo from "@/assets/bossify-logo.png";
 // unchanged on purpose so the landing page still reads as the same product
 // as the dark, logged-in app -- only the canvas flips from dark to light.
 const BG = "#FCFBFE";
-const CARD = "#F7F5FA";
-const CARD_SOFT = "#EFEAFA";
-const BORDER = "rgba(139,92,246,0.16)";
-const BORDER_STRONG = "rgba(139,92,246,0.32)";
+// Deepened from the original #F7F5FA/#EFEAFA/0.16/0.32 — those sat within
+// ~1-2% lightness of BG and each other, so cards barely separated from the
+// page and from one another ("too white/empty" feedback). Same hue, more
+// contrast, still a light theme.
+const CARD = "#F3EEFC";
+const CARD_SOFT = "#EAE1FA";
+const BORDER = "rgba(139,92,246,0.22)";
+const BORDER_STRONG = "rgba(139,92,246,0.42)";
+// A soft lavender wash used as a section-level background band (not a
+// card), so a handful of otherwise-plain text sections visually separate
+// from the page canvas instead of all sitting on identical flat BG.
+const SECTION_TINT = "linear-gradient(180deg, #F6F1FD 0%, #FBF9FE 100%)";
 const TEXT = "#1A1225";
 const TEXT_MUTED = "#5B5270";
 const GRAD_FROM = "#8B5CF6";
@@ -1173,7 +1181,11 @@ export function LandingPage() {
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(ellipse 900px 460px at 50% 0%, rgba(139,92,246,0.1) 0%, transparent 65%)" }}
+          style={{
+            background:
+              "radial-gradient(ellipse 820px 480px at 18% 15%, rgba(139,92,246,0.16) 0%, transparent 60%), " +
+              "radial-gradient(ellipse 900px 460px at 85% 10%, rgba(217,70,239,0.12) 0%, transparent 65%)",
+          }}
         />
         <div className="relative max-w-6xl mx-auto grid lg:grid-cols-[0.85fr_1.15fr] gap-12 items-center">
           <Reveal mode="mount">
@@ -1236,7 +1248,7 @@ export function LandingPage() {
 
       {/* Capability strip -- plain typography + a dot separator, not an
           icon-in-gradient-box for every single item. */}
-      <section className="px-5 lg:px-8 py-5 border-y" style={{ borderColor: BORDER }}>
+      <section className="px-5 lg:px-8 py-5 border-y" style={{ borderColor: BORDER, background: SECTION_TINT }}>
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-8 gap-y-2.5">
           {c.capabilityStrip.map((label, i) => (
             <span key={label} className="inline-flex items-center gap-2.5 text-[12.5px] font-semibold" style={{ color: TEXT_MUTED }}>
@@ -1248,7 +1260,7 @@ export function LandingPage() {
       </section>
 
       {/* Problem -- scroll-driven profit waterfall */}
-      <section className="px-5 lg:px-8 py-20 lg:py-28">
+      <section className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SECTION_TINT }}>
         <div className="max-w-5xl mx-auto grid lg:grid-cols-[0.9fr_1fr] gap-10 lg:gap-14 items-center">
           <Reveal>
             <div>
@@ -1415,7 +1427,7 @@ export function LandingPage() {
       </section>
 
       {/* Trust */}
-      <section className="px-5 lg:px-8 py-16 lg:py-20">
+      <section className="px-5 lg:px-8 py-16 lg:py-20" style={{ background: SECTION_TINT }}>
         <Reveal>
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-[19px] lg:text-[22px] font-bold tracking-tight mb-10" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
@@ -1438,7 +1450,7 @@ export function LandingPage() {
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(ellipse 800px 380px at 50% 20%, rgba(139,92,246,0.14) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse 800px 380px at 50% 20%, rgba(139,92,246,0.22) 0%, transparent 70%)" }}
         />
         <svg aria-hidden="true" className="pointer-events-none absolute bottom-0 left-0 w-full h-[220px]" viewBox="0 0 1200 220" preserveAspectRatio="none">
           <defs>
