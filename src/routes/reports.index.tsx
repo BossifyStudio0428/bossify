@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, BarChart3, TrendingUp, Package, FileText, Users, Truck, ClipboardCheck, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, BarChart3, TrendingUp, Package, FileText, Users, Truck, ClipboardCheck, X, Lock, AlertTriangle, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type OrderRow } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -586,8 +586,8 @@ function ReportsHub() {
   return (
     <div className="px-5 pt-10 pb-6 space-y-5 lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
       {!hasFullAccess && (
-        <div className="rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/40 p-4 flex items-center gap-3">
-          <span className="text-2xl">🔒</span>
+        <div className="rounded-2xl bg-primary/10 border border-primary/40 p-4 flex items-center gap-3">
+          <Lock className="h-6 w-6 text-primary shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-bold text-foreground">{t("upgrade_title")}</p>
             <p className="text-[11px] text-muted-foreground">{t("upgrade_desc")}</p>
@@ -667,7 +667,7 @@ function ReportsHub() {
             </div>
             {activeCategoryFilter !== "__all" && (
               <p className="text-[10px] text-muted-foreground">
-                {lang === "zh" ? "⚠️ 客户对账单/供应商报表不受此筛选影响" : lang === "ms" ? "⚠️ Penyata pelanggan/pembekal tidak terjejas" : "⚠️ Customer statement/Supplier report are not affected by this filter"}
+                <span className="inline-flex items-center gap-1"><AlertTriangle className="h-3 w-3 shrink-0" />{lang === "zh" ? "客户对账单/供应商报表不受此筛选影响" : lang === "ms" ? "Penyata pelanggan/pembekal tidak terjejas" : "Customer statement/Supplier report are not affected by this filter"}</span>
               </p>
             )}
           </div>
@@ -678,7 +678,7 @@ function ReportsHub() {
         onClick={handleCSVExport}
         className="w-full py-3 rounded-2xl bg-card border border-border/60 text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98]"
       >
-        📄 {lang === "zh" ? "导出原始订单 CSV（给会计师/报税用）" : lang === "ms" ? "Eksport CSV pesanan mentah" : "Export raw orders CSV (for your accountant/tax)"}
+        <FileDown className="h-4 w-4" /> {lang === "zh" ? "导出原始订单 CSV（给会计师/报税用）" : lang === "ms" ? "Eksport CSV pesanan mentah" : "Export raw orders CSV (for your accountant/tax)"}
       </button>
 
       <section className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3 lg:items-start">
@@ -700,9 +700,9 @@ function ReportsHub() {
                 <button
                   onClick={c.onExport}
                   disabled={isBusy || busy !== null}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-xs active:scale-[0.98] transition disabled:opacity-60"
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs active:scale-[0.98] transition disabled:opacity-60 flex items-center justify-center gap-1.5"
                 >
-                  {isBusy ? "…" : `📄 ${t("reports_open_pdf")}`}
+                  {isBusy ? "…" : (<><FileDown className="h-3.5 w-3.5" />{t("reports_open_pdf")}</>)}
                 </button>
                 {c.linkTo && (
                   <Link

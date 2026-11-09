@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Lock, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
 import { supabase, type OrderRow } from "@/integrations/supabase/client";
@@ -380,8 +380,8 @@ function ReportsPage() {
   return (
     <div className="px-5 pt-10 pb-6 space-y-5 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       {!hasFullAccess && (
-        <div className="rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/40 p-4 flex items-center gap-3">
-          <span className="text-2xl">🔒</span>
+        <div className="rounded-2xl bg-primary/10 border border-primary/40 p-4 flex items-center gap-3">
+          <Lock className="h-6 w-6 text-primary shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-bold text-foreground">{t("upgrade_title")}</p>
             <p className="text-[11px] text-muted-foreground">{t("upgrade_desc")}</p>
@@ -552,8 +552,8 @@ function ReportsPage() {
       )}
 
       <button onClick={handleExport} disabled={exporting}
-        className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.98] transition disabled:opacity-60">
-        {exporting ? "…" : `📄 ${t("export_pdf")}`}
+        className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.98] transition disabled:opacity-60 flex items-center justify-center gap-2">
+        {exporting ? "…" : (<><FileDown className="h-4 w-4" />{t("export_pdf")}</>)}
       </button>
     </div>
   );
