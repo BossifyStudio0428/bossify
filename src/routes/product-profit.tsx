@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, TrendingUp, TrendingDown, Trophy } from "lucide-react";
 import { toast } from "sonner";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -213,6 +214,26 @@ function ProductProfitPage() {
     });
   }, [items, adjItems, activeCategory, categoryByProduct, tiktokIdByProduct]);
 
+  const chartProducts = useMemo(
+    () =>
+      stats.map((entry) =>
+        entry.kind === "group"
+          ? { name: entry.title, profit: Math.round(entry.profit * 100) / 100 }
+          : { name: entry.stat.name, profit: Math.round(entry.stat.profit * 100) / 100 },
+      ),
+    [stats],
+  );
+
+  const topProfitable = useMemo(
+    () => chartProducts.filter((p) => p.profit > 0).slice(0, 8),
+    [chartProducts],
+  );
+
+  const lossMaking = useMemo(
+    () => chartProducts.filter((p) => p.profit < 0).sort((a, b) => a.profit - b.profit).slice(0, 8),
+    [chartProducts],
+  );
+
   const title = lang === "zh" ? "商品利润分析" : lang === "ms" ? "Analisis Untung Produk" : "Product Profit";
 
   return (
@@ -257,6 +278,38 @@ function ProductProfitPage() {
       )}
 
 
+
+      {!loading && topProfitable.length > 0 && (
+        <div className="rounded-2xl bg-card border border-border/60 p-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
+            {lang === "zh" ? "\u6700\u8d5a\u94b1\u7684\u5546\u54c1" : lang === "ms" ? "Produk Paling Menguntungkan" : "Most profitable products"}
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(120, topProfitable.length * 36)}>
+            <BarChart data={topProfitable} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
+              <XAxis type="number" tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={110} />
+              <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+              <Bar dataKey="profit" radius={[0, 6, 6, 0]} fill="#8B5CF6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {!loading && lossMaking.length > 0 && (
+        <div className="rounded-2xl bg-card border border-border/60 p-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
+            {lang === "zh" ? "\u4ea7\u751f\u4e8f\u635f\u7684\u5546\u54c1" : lang === "ms" ? "Produk Mengalami Kerugian" : "Loss-making products"}
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(120, lossMaking.length * 36)}>
+            <BarChart data={lossMaking} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
+              <XAxis type="number" tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={110} />
+              <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+              <Bar dataKey="profit" radius={[6, 0, 0, 6]} fill="#DC2626" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-sm text-muted-foreground text-center py-10">…</p>
