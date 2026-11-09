@@ -135,13 +135,13 @@ function ProfitPage() {
           </span>
           <div>
             <p className="text-[11px] text-muted-foreground">{t("profit_net")}</p>
-            <p className={`text-2xl font-bold ${stats.profit < 0 ? "text-red-400" : "text-emerald-400"}`}>
+            <p className={`text-2xl font-bold ${stats.profit < 0 ? "text-red-600" : "text-emerald-600"}`}>
               {loading ? "…" : money(stats.profit)}
             </p>
           </div>
           <div className="ml-auto text-right">
             <p className="text-[11px] text-muted-foreground">{t("profit_margin")}</p>
-            <p className={`text-lg font-bold ${stats.margin < 0 ? "text-red-400" : "text-foreground"}`}>
+            <p className={`text-lg font-bold ${stats.margin < 0 ? "text-red-600" : "text-foreground"}`}>
               {loading || stats.revenue === 0 ? "—" : `${stats.margin.toFixed(1)}%`}
             </p>
           </div>

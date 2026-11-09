@@ -15,7 +15,7 @@ function Row({ label, value, bold, tint }: { label: string; value: number; bold?
   return (
     <div className="flex items-center justify-between py-2">
       <span className={`text-sm ${bold ? "font-bold" : "text-muted-foreground"}`}>{label}</span>
-      <span className={`text-sm ${bold ? "font-bold" : ""} ${tint === "neg" ? "text-red-400" : tint === "pos" ? "text-emerald-400" : ""}`}>
+      <span className={`text-sm ${bold ? "font-bold" : ""} ${tint === "neg" ? "text-red-600" : tint === "pos" ? "text-emerald-600" : ""}`}>
         {value < 0 ? "−" : ""}RM {Math.abs(value).toFixed(2)}
       </span>
     </div>

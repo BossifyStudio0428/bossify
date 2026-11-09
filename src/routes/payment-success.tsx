@@ -118,9 +118,9 @@ function PaymentSuccessPage() {
       <div className="text-center max-w-sm">
         <div className="mx-auto h-20 w-20 rounded-full bg-emerald-500/15 flex items-center justify-center">
           {confirmedPlan ? (
-            <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+            <CheckCircle2 className="h-10 w-10 text-emerald-600" />
           ) : (
-            <Loader2 className="h-10 w-10 text-emerald-400 animate-spin" />
+            <Loader2 className="h-10 w-10 text-emerald-600 animate-spin" />
           )}
         </div>
         <h1 className="mt-5 text-2xl font-bold">

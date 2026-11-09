@@ -215,7 +215,7 @@ function PlatformConnectPage() {
         <span
           className={`text-xs font-semibold px-3 py-1 rounded-full ${
             connected
-              ? "bg-emerald-500/15 text-emerald-300"
+              ? "bg-emerald-500/15 text-emerald-700"
               : "bg-muted text-muted-foreground"
           }`}
         >
@@ -227,7 +227,7 @@ function PlatformConnectPage() {
       <section className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3">
         {cfg.benefits[lang].map((b, i) => (
           <div key={i} className="flex items-start gap-3">
-            <span className="h-6 w-6 rounded-full bg-emerald-500/15 text-emerald-300 flex items-center justify-center shrink-0 mt-0.5">
+            <span className="h-6 w-6 rounded-full bg-emerald-500/15 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
               <Check className="h-3.5 w-3.5" strokeWidth={3} />
             </span>
             <p className="text-sm text-foreground flex-1">{b}</p>

@@ -91,9 +91,9 @@ function ProfitRow({
             !hasCost
               ? "text-muted-foreground"
               : negative
-                ? "text-red-400"
+                ? "text-red-600"
                 : positive
-                  ? "text-emerald-400"
+                  ? "text-emerald-600"
                   : "text-foreground"
           }`}
         >
@@ -349,7 +349,7 @@ function InventoryPage() {
         {!hasFullAccess && (
           <Link
             to="/plans"
-            className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 hover:bg-amber-500/20 active:scale-95 transition"
+            className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-500/15 text-amber-700 hover:bg-amber-500/20 active:scale-95 transition"
           >
             Free plan {productsUsed}/{productsLimit}
           </Link>
@@ -426,7 +426,7 @@ function InventoryPage() {
           className="w-full text-left rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 flex items-start gap-2 active:scale-[0.99] transition-transform"
         >
           <span className="text-base leading-tight">⚠️</span>
-          <p className="text-xs text-amber-300 leading-snug">
+          <p className="text-xs text-amber-700 leading-snug">
             <span className="font-semibold">{lowItems.length} {t("low_stock_alert")}</span> — {t("restock_before")}
           </p>
         </button>
@@ -520,7 +520,7 @@ function InventoryPage() {
                     </div>
                   </div>
                   {anyLow && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 shrink-0">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-600 shrink-0">
                       {t("low_stock_badge")}
                     </span>
                   )}
@@ -543,7 +543,7 @@ function InventoryPage() {
                           <div className="flex items-center gap-1.5 shrink-0">
                             {!!(v as any).tiktok_delisted_at && <DelistedBadge lang={lang} />}
                             {vLow && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-600">
                                 {t("low_stock_badge")}
                               </span>
                             )}
@@ -631,7 +631,7 @@ function InventoryPage() {
                 <div className="flex items-center gap-1.5">
                   {!!(it as any).tiktok_delisted_at && <DelistedBadge lang={lang} />}
                   {low && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-600">
                       {t("low_stock_badge")}
                     </span>
                   )}

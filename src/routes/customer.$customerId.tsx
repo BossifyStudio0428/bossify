@@ -15,17 +15,17 @@ import { stripEmoji } from "@/lib/wa";
 export const Route = createFileRoute("/customer/$customerId")({ component: CustomerDetail });
 
 const statusStyles: Record<string, string> = {
-  Paid: "bg-emerald-500/15 text-emerald-300",
-  Unpaid: "bg-red-500/15 text-red-400",
-  Pending: "bg-amber-500/15 text-amber-300",
+  Paid: "bg-emerald-500/15 text-emerald-700",
+  Unpaid: "bg-red-500/15 text-red-600",
+  Pending: "bg-amber-500/15 text-amber-700",
 };
 
 const CUSTOMER_STATUS_ORDER: CustomerStatus[] = ["enquiry", "in_progress", "completed", "rejected"];
 const CUSTOMER_STATUS_STYLES: Record<CustomerStatus, string> = {
-  enquiry: "bg-blue-500/15 text-blue-300",
-  in_progress: "bg-amber-500/15 text-amber-300",
-  completed: "bg-emerald-500/15 text-emerald-300",
-  rejected: "bg-red-500/15 text-red-400",
+  enquiry: "bg-blue-500/15 text-blue-700",
+  in_progress: "bg-amber-500/15 text-amber-700",
+  completed: "bg-emerald-500/15 text-emerald-700",
+  rejected: "bg-red-500/15 text-red-600",
 };
 const CUSTOMER_STATUS_DOT: Record<CustomerStatus, string> = {
   enquiry: "🔵", in_progress: "🟡", completed: "🟢", rejected: "🔴",
@@ -214,9 +214,9 @@ function CustomerDetail() {
             const spent = derivedTotalSpent;
             const ordersCount = derivedOrderCount;
             let badge: { label: string; cls: string } | null = null;
-            if (spent >= 500) badge = { label: t("customer_top_spender"), cls: "bg-amber-500/15 text-amber-300" };
+            if (spent >= 500) badge = { label: t("customer_top_spender"), cls: "bg-amber-500/15 text-amber-700" };
             else if (ordersCount >= 2) badge = { label: t("customer_repeat"), cls: "bg-primary/10 text-primary" };
-            else if (ordersCount === 1) badge = { label: t("customer_new"), cls: "bg-emerald-500/15 text-emerald-300" };
+            else if (ordersCount === 1) badge = { label: t("customer_new"), cls: "bg-emerald-500/15 text-emerald-700" };
             return badge ? (
               <span className={`mt-2 text-xs font-semibold px-3 py-1.5 rounded-full ${badge.cls}`}>{badge.label}</span>
             ) : null;
@@ -305,17 +305,17 @@ function CustomerDetail() {
             const overdue = f.follow_up_date < todayStr;
             return (
               <div key={f.id} className="p-3 flex items-center gap-3">
-                <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${overdue ? "bg-red-500/10 text-red-400" : "bg-primary/10 text-primary"}`}>
+                <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${overdue ? "bg-red-500/10 text-red-600" : "bg-primary/10 text-primary"}`}>
                   <CalendarIcon className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold ${overdue ? "text-red-400" : "text-foreground"}`}>
+                  <p className={`text-sm font-semibold ${overdue ? "text-red-600" : "text-foreground"}`}>
                     {new Date(f.follow_up_date).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })}
-                    {overdue && <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400">{t("followup_overdue")}</span>}
+                    {overdue && <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-600">{t("followup_overdue")}</span>}
                   </p>
                   {f.note && <p className="text-xs text-muted-foreground truncate">{f.note}</p>}
                 </div>
-                <button onClick={() => markFollowUpDone(f)} aria-label="done" className="p-2 rounded-full bg-emerald-500/10 text-emerald-400 active:scale-95">
+                <button onClick={() => markFollowUpDone(f)} aria-label="done" className="p-2 rounded-full bg-emerald-500/10 text-emerald-600 active:scale-95">
                   <Check className="h-4 w-4" />
                 </button>
               </div>
@@ -373,7 +373,7 @@ function CustomerDetail() {
         </button>
         <button
           onClick={() => setConfirmDelete(true)}
-          className="w-full py-3.5 rounded-2xl bg-red-500/10 text-red-400 font-semibold active:scale-[0.99]"
+          className="w-full py-3.5 rounded-2xl bg-red-500/10 text-red-600 font-semibold active:scale-[0.99]"
         >
           🗑️ {t("delete_customer")}
         </button>

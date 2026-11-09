@@ -202,10 +202,10 @@ function StockPage() {
             const st = tone(r);
             const badgeClass =
               st === "danger"
-                ? "bg-red-500/15 text-red-300"
+                ? "bg-red-500/15 text-red-700"
                 : st === "warn"
-                  ? "bg-amber-500/15 text-amber-300"
-                  : "bg-emerald-500/15 text-emerald-300";
+                  ? "bg-amber-500/15 text-amber-700"
+                  : "bg-emerald-500/15 text-emerald-700";
             const badgeText =
               st === "danger" ? t("stock_badge_out") : st === "warn" ? t("stock_badge_low") : t("stock_badge_ok");
             const img = r.cover_image_url || r.image_url;

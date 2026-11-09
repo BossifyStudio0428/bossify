@@ -372,7 +372,7 @@ function StockTakePage() {
                   </div>
                   <div>
                     <p className="text-[10px] uppercase text-muted-foreground">{t("difference")}</p>
-                    <p className={`text-base font-bold ${diff < 0 ? "text-red-500" : diff > 0 ? "text-green-400" : "text-muted-foreground"}`}>
+                    <p className={`text-base font-bold ${diff < 0 ? "text-red-500" : diff > 0 ? "text-green-600" : "text-muted-foreground"}`}>
                       {diff > 0 ? "+" : ""}{diff}
                     </p>
                   </div>
@@ -499,7 +499,7 @@ function StockTakePage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${tk.status === "completed" ? "bg-green-500/15 text-green-300" : "bg-amber-500/15 text-amber-300"}`}>
+                  <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${tk.status === "completed" ? "bg-green-500/15 text-green-700" : "bg-amber-500/15 text-amber-700"}`}>
                     {tk.status === "completed" ? t("stock_take_done") : t("stock_take_in_progress")}
                   </span>
                 </div>
@@ -507,7 +507,7 @@ function StockTakePage() {
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs text-muted-foreground">
                   {t("discrepancies")}:{" "}
-                  <span className={`font-bold ${(discrepMap[tk.id] ?? 0) > 0 ? "text-amber-400" : "text-green-400"}`}>
+                  <span className={`font-bold ${(discrepMap[tk.id] ?? 0) > 0 ? "text-amber-600" : "text-green-600"}`}>
                     {discrepMap[tk.id] ?? 0}
                   </span>
                 </span>
@@ -522,7 +522,7 @@ function StockTakePage() {
                   setDeleteTarget(tk.id);
                   setConfirmDeleteOpen(true);
                 }}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-400 hover:bg-red-500/10 px-2.5 py-1.5 rounded-xl transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600 hover:bg-red-500/10 px-2.5 py-1.5 rounded-xl transition-colors"
               >
                 <Trash2 className="h-3.5 w-3.5" /> {t("delete")}
               </button>

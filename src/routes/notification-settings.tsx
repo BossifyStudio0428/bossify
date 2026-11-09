@@ -401,7 +401,7 @@ function NotifSettingsPage() {
 
       {!isNativeApp && webPermission === "granted" && (
         <div className="rounded-2xl border border-emerald-300 bg-emerald-500/10 p-4 flex items-center gap-2">
-          <span className="text-emerald-400 text-lg">✓</span>
+          <span className="text-emerald-600 text-lg">✓</span>
           <p className="text-sm font-semibold text-emerald-900">{t("notif_web_enabled" as any)}</p>
         </div>
       )}
@@ -415,7 +415,7 @@ function NotifSettingsPage() {
       {(isNativeApp || webPermission === "unsupported") && !granted && (
         <div className="rounded-2xl border border-amber-300 bg-amber-500/10 p-4">
           <p className="text-sm font-semibold text-amber-900">{t("notif_perm_off_title")}</p>
-          <p className="text-xs text-amber-300 mt-1">{t("notif_perm_off_desc")}</p>
+          <p className="text-xs text-amber-700 mt-1">{t("notif_perm_off_desc")}</p>
           <button
             onClick={openSysSettings}
             className="mt-3 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[.98]"

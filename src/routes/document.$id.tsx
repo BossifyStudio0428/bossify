@@ -159,8 +159,8 @@ function DocumentEditor() {
     s === "pending" ? "received" : s === "received" ? "verified" : "pending";
 
   const statusCls = (s: DocStatus) =>
-    s === "verified" ? "bg-emerald-500/15 text-emerald-300"
-      : s === "received" ? "bg-amber-500/15 text-amber-300"
+    s === "verified" ? "bg-emerald-500/15 text-emerald-700"
+      : s === "received" ? "bg-amber-500/15 text-amber-700"
       : "bg-muted text-foreground";
 
   return (

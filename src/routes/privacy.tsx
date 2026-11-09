@@ -83,8 +83,8 @@ function PrivacyPage() {
       </section>
 
       <section className="rounded-2xl bg-red-500/10 dark:bg-red-950/30 border border-red-500/30 dark:border-red-900 p-5 space-y-3">
-        <h2 className="text-sm font-bold text-red-300 dark:text-red-400">{t("danger_zone")}</h2>
-        <p className="text-xs text-red-400 dark:text-red-300">{t("danger_zone_desc")}</p>
+        <h2 className="text-sm font-bold text-red-700 dark:text-red-600">{t("danger_zone")}</h2>
+        <p className="text-xs text-red-600 dark:text-red-700">{t("danger_zone_desc")}</p>
         <button onClick={() => setDel({ open: true, text: "" })} className="w-full py-3 rounded-2xl bg-red-600 text-white font-semibold text-sm">{t("delete_account")}</button>
       </section>
 
@@ -93,7 +93,7 @@ function PrivacyPage() {
           <div className="w-full max-w-[390px] bg-card rounded-t-3xl sm:rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
               <span className="text-xl">⚠️</span>
-              <h3 className="text-base font-bold text-red-400">{t("delete_acc_title")}</h3>
+              <h3 className="text-base font-bold text-red-600">{t("delete_acc_title")}</h3>
             </div>
             <p className="text-xs text-muted-foreground">{t("delete_acc_warn")}</p>
             <Input

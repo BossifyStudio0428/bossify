@@ -1083,8 +1083,8 @@ function TrendPill({ delta, onDark }: { delta: number | null; onDark?: boolean }
   const up = delta >= 0;
   const Icon = up ? TrendingUp : TrendingDown;
   const color = onDark
-    ? (up ? "text-emerald-300" : "text-red-300")
-    : (up ? "text-emerald-400" : "text-red-400");
+    ? (up ? "text-emerald-700" : "text-red-700")
+    : (up ? "text-emerald-600" : "text-red-600");
   return (
     <p className={`mt-1 flex items-center gap-1 text-[11px] font-semibold ${color}`}>
       <Icon className="h-3 w-3" />

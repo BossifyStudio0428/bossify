@@ -38,9 +38,9 @@ import { RetailOverview } from "@/components/RetailOverview";
 export const Route = createFileRoute("/")({ component: Index });
 
 const statusStyles: Record<string, string> = {
-  Paid: "bg-emerald-500/15 text-emerald-300",
-  Unpaid: "bg-red-500/15 text-red-400",
-  Pending: "bg-amber-500/15 text-amber-300",
+  Paid: "bg-emerald-500/15 text-emerald-700",
+  Unpaid: "bg-red-500/15 text-red-600",
+  Pending: "bg-amber-500/15 text-amber-700",
 };
 
 function Index() {
@@ -474,7 +474,7 @@ function Index() {
   // Dine-in paid tickets are now reflected as Paid `orders` rows (linked via
   // ticket_id), so `todayRevenue` already includes them — don't double-count.
   const totalTodayRevenue = todayRevenue;
-  const revenueCard: Stat = { label: t("todays_revenue"), value: `RM ${totalTodayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-400", bg: "bg-emerald-500/10" };
+  const revenueCard: Stat = { label: t("todays_revenue"), value: `RM ${totalTodayRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-500/10" };
   const profitCard: Stat = { label: t("todays_profit"), value: `RM ${todayGrossProfit.toFixed(0)}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" };
   const newOrdersCard: Stat = { label: t("new_orders"), value: String(todayOrders.length), icon: ShoppingBag, color: "text-primary", bg: "bg-primary/10" };
   const unpaidCard: Stat = { label: t("unpaid"), value: String(unpaidCount), icon: AlertCircle, color: "text-red-500", bg: "bg-red-500/10" };
@@ -485,12 +485,12 @@ function Index() {
   const totalClientsCard: Stat = { label: t("stat_total_clients"), value: String(totalClients), icon: Users, color: "text-primary", bg: "bg-primary/10" };
   const followupsTodayCard: Stat = { label: t("stat_followups_today"), value: String(followUpsToday), icon: Calendar, color: "text-primary", bg: "bg-primary/10" };
   const followupsWeekCard: Stat = { label: t("followups_this_week"), value: String(followUpsThisWeek), icon: Calendar, color: "text-primary", bg: "bg-primary/10" };
-  const inProgressCard: Stat = { label: t("stat_in_progress"), value: String(inProgressCount), icon: Clock, color: "text-amber-400", bg: "bg-amber-500/10" };
-  const completedMonthCard: Stat = { label: t("stat_completed_month"), value: String(completedThisMonth), icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10" };
+  const inProgressCard: Stat = { label: t("stat_in_progress"), value: String(inProgressCount), icon: Clock, color: "text-amber-600", bg: "bg-amber-500/10" };
+  const completedMonthCard: Stat = { label: t("stat_completed_month"), value: String(completedThisMonth), icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-500/10" };
   const activeProjectsCard: Stat = { label: t("stat_active_projects"), value: String(activeProjects), icon: Briefcase, color: "text-primary", bg: "bg-primary/10" };
-  const monthRevenueCard: Stat = { label: t("stat_month_revenue"), value: `RM ${monthRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-400", bg: "bg-emerald-500/10" };
+  const monthRevenueCard: Stat = { label: t("stat_month_revenue"), value: `RM ${monthRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-500/10" };
   const activeTablesCard: Stat = { label: `🪑 ${t("tables")}`, value: String(activeTables), icon: UtensilsCrossed, color: "text-primary", bg: "bg-primary/10" };
-  const openTicketsCard: Stat = { label: t("open_tickets"), value: String(openTickets), icon: ClipboardList, color: "text-amber-400", bg: "bg-amber-500/10" };
+  const openTicketsCard: Stat = { label: t("open_tickets"), value: String(openTickets), icon: ClipboardList, color: "text-amber-600", bg: "bg-amber-500/10" };
 
   const STATS_BY_TYPE: Record<BizType, Stat[]> = {
     retail:    [revenueCard, profitCard, newOrdersCard, unpaidCard],
@@ -652,7 +652,7 @@ function Index() {
 
       {hasPayment === false && !bannerDismissed && (
         <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-500/30 p-3 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-300 flex items-center justify-center shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-700 flex items-center justify-center shrink-0">
             <CreditCard className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
@@ -661,7 +661,7 @@ function Index() {
             </p>
             <Link
               to="/payment-details"
-              className="mt-1 inline-block text-[11px] font-bold text-amber-300 underline"
+              className="mt-1 inline-block text-[11px] font-bold text-amber-700 underline"
             >
               {t("set_up_arrow")} →
             </Link>
@@ -673,7 +673,7 @@ function Index() {
               dismissPaymentBanner();
               setBannerDismissed(true);
             }}
-            className="h-7 w-7 rounded-full text-amber-300 active:bg-amber-500/15 flex items-center justify-center shrink-0"
+            className="h-7 w-7 rounded-full text-amber-700 active:bg-amber-500/15 flex items-center justify-center shrink-0"
           >
             <X className="h-4 w-4" />
           </button>
@@ -723,7 +723,7 @@ function Index() {
               <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
               {i === 0 && showRevenueDelta && revDelta !== null && (
                 <p
-                  className={`text-[10px] mt-0.5 font-semibold ${revDelta >= 0 ? "text-emerald-400" : "text-red-500"}`}
+                  className={`text-[10px] mt-0.5 font-semibold ${revDelta >= 0 ? "text-emerald-600" : "text-red-500"}`}
                 >
                   {revDelta >= 0 ? "↑" : "↓"} {Math.abs(revDelta)}% {t("vs_yesterday")}
                 </p>
@@ -774,7 +774,7 @@ function Index() {
               📅 {followUpsThisWeek} {t("followups_this_week")}
             </p>
             {followUpsOverdue > 0 && (
-              <p className="text-[11px] font-semibold text-red-400 mt-0.5">
+              <p className="text-[11px] font-semibold text-red-600 mt-0.5">
                 {followUpsOverdue} {t("followup_overdue")}
               </p>
             )}
@@ -911,7 +911,7 @@ function Index() {
                   <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
                   {c.phone && <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>}
                   {latestClientFollowUps[c.id] && (
-                    <p className="text-[11px] text-amber-400 font-medium mt-0.5 truncate">
+                    <p className="text-[11px] text-amber-600 font-medium mt-0.5 truncate">
                       📅 {new Date(latestClientFollowUps[c.id] + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
                     </p>
                   )}
@@ -978,7 +978,7 @@ function Index() {
           to="/inventory"
           className="block rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 active:scale-[0.99] transition-transform"
         >
-          <p className="text-xs text-amber-300 font-semibold">
+          <p className="text-xs text-amber-700 font-semibold">
             ⚠️ {lowStock} {t("inventory_alert")}
           </p>
         </Link>
@@ -1147,7 +1147,7 @@ function Index() {
                 params={{ id: r.id }}
                 className="flex items-center gap-3 p-4"
               >
-                <div className="h-10 w-10 rounded-full bg-amber-500/15 text-amber-300 flex items-center justify-center font-semibold">
+                <div className="h-10 w-10 rounded-full bg-amber-500/15 text-amber-700 flex items-center justify-center font-semibold">
                   ⚠️
                 </div>
                 <div className="flex-1 min-w-0">

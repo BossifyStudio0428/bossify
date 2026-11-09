@@ -21,9 +21,9 @@ import { calculateOrderFinancials } from "@/lib/orderMath";
 export const Route = createFileRoute("/new-order")({ component: NewOrderPage });
 
 const statuses: { key: OrderStatus; bg: string; text: string; ring: string }[] = [
-  { key: "Paid", bg: "bg-emerald-500/10", text: "text-emerald-300", ring: "ring-emerald-500" },
-  { key: "Unpaid", bg: "bg-red-500/10", text: "text-red-400", ring: "ring-red-500" },
-  { key: "Pending", bg: "bg-amber-500/10", text: "text-amber-300", ring: "ring-amber-500" },
+  { key: "Paid", bg: "bg-emerald-500/10", text: "text-emerald-700", ring: "ring-emerald-500" },
+  { key: "Unpaid", bg: "bg-red-500/10", text: "text-red-600", ring: "ring-red-500" },
+  { key: "Pending", bg: "bg-amber-500/10", text: "text-amber-700", ring: "ring-amber-500" },
 ];
 
 function genCode() {
@@ -655,7 +655,7 @@ function NewOrderPage() {
           })()}
           {errors.product && <p className="text-[11px] text-red-500 px-1">{errors.product}</p>}
           {isRetailish && matchedInventory && (
-            <p className="text-[11px] text-emerald-400 px-1 flex items-center gap-1">
+            <p className="text-[11px] text-emerald-600 px-1 flex items-center gap-1">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
               {t("from_inventory")} · {t("stock_available")
                 .replace("{x}", String(matchedInventory.stock))
@@ -806,7 +806,7 @@ function NewOrderPage() {
             <p className="text-center text-[11px] text-muted-foreground">
               {t("orders_used").replace("{x}", String(ordersUsed)).replace("{limit}", String(ordersLimit))}
               {ordersRemaining <= 5 && ordersRemaining > 0 && (
-                <span className="ml-1 text-amber-400 font-semibold">· {ordersRemaining} left</span>
+                <span className="ml-1 text-amber-600 font-semibold">· {ordersRemaining} left</span>
               )}
             </p>
           )}
@@ -815,7 +815,7 @@ function NewOrderPage() {
             onClick={saveAndWhatsApp}
             id="tour-no-wa"
             disabled={saving}
-            className="w-full py-4 rounded-2xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-semibold text-sm active:scale-[0.99] transition-transform disabled:opacity-60"
+            className="w-full py-4 rounded-2xl bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 font-semibold text-sm active:scale-[0.99] transition-transform disabled:opacity-60"
           >
             📲 {t("save_whatsapp")}
           </button>
@@ -823,7 +823,7 @@ function NewOrderPage() {
 
         {(form.customer_name || form.product) && (
           <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 p-3">
-            <p className="text-[10px] uppercase font-semibold text-emerald-300 mb-1">{t("live_preview")}</p>
+            <p className="text-[10px] uppercase font-semibold text-emerald-700 mb-1">{t("live_preview")}</p>
             <pre className="whitespace-pre-wrap text-[11px] text-emerald-900 font-sans">{livePreview}</pre>
           </div>
         )}
@@ -846,7 +846,7 @@ function Field({
         />
       </div>
       {error && <p className="text-[11px] text-red-500 px-1">{error}</p>}
-      {!error && hint && <p className="text-[11px] text-emerald-400 px-1">{hint}</p>}
+      {!error && hint && <p className="text-[11px] text-emerald-600 px-1">{hint}</p>}
     </div>
   );
 }

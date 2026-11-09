@@ -936,7 +936,7 @@ function PublicOrderFormPage() {
                         </button>
                         <div className="p-3 space-y-1.5">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-500/15 text-blue-300" : "bg-emerald-500/15 text-emerald-300"}`}>
+                            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-500/15 text-blue-700" : "bg-emerald-500/15 text-emerald-700"}`}>
                               {typeLabel}
                             </span>
                             {prop?.property_type && (
@@ -1287,10 +1287,10 @@ function PublicOrderFormPage() {
                     </div>
                   )}
                   {deliveryQuote.status === "unavailable" && (
-                    <span className="text-rose-400">{L("Outside delivery area", "Di luar kawasan penghantaran", "超出送货范围")}</span>
+                    <span className="text-rose-600">{L("Outside delivery area", "Di luar kawasan penghantaran", "超出送货范围")}</span>
                   )}
                   {deliveryQuote.status === "error" && (
-                    <span className="text-rose-400">{L("Could not calculate fee. Try again.", "Tidak dapat mengira caj. Cuba lagi.", "无法计算运费，请重试。")}</span>
+                    <span className="text-rose-600">{L("Could not calculate fee. Try again.", "Tidak dapat mengira caj. Cuba lagi.", "无法计算运费，请重试。")}</span>
                   )}
                 </div>
               )}
@@ -1915,7 +1915,7 @@ function ProductSlide({
       <div className="px-5 pt-5 space-y-3.5">
         {isProperty ? (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-500/15 text-blue-300" : "bg-emerald-500/15 text-emerald-300"}`}>
+            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-500/15 text-blue-700" : "bg-emerald-500/15 text-emerald-700"}`}>
               {propStatusLabel}
             </span>
             {prop?.property_type && (
@@ -1943,15 +1943,15 @@ function ProductSlide({
         {isRetailish && stock !== null && (showStock || isOutOfStock) && (
           <div>
             {isOutOfStock ? (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500/15 text-red-300 text-[11px] font-semibold">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500/15 text-red-700 text-[11px] font-semibold">
                 {outOfStockLabel}
               </span>
             ) : stock < 5 ? (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 text-[11px] font-semibold">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-700 text-[11px] font-semibold">
                 {lowStockLabel(stock)}
               </span>
             ) : (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-[11px] font-semibold">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 text-[11px] font-semibold">
                 {inStockLabel} · {leftLabel(stock)}
               </span>
             )}
@@ -2023,7 +2023,7 @@ function ProductSlide({
           </div>
         )}
         {product.requirements && (
-          <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-300">
+          <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-700">
             <p className="font-semibold mb-1">📋 {lang === "ms" ? "Syarat" : lang === "zh" ? "入学要求" : "Requirements"}</p>
             <p className="whitespace-pre-wrap">{product.requirements}</p>
           </div>

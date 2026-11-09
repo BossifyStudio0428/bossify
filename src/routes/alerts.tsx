@@ -135,7 +135,7 @@ function Section({
   renderMeta: (r: Row) => string;
 }) {
   if (items.length === 0) return null;
-  const iconClass = tone === "danger" ? "text-red-400 bg-red-500/15" : "text-amber-400 bg-amber-500/15";
+  const iconClass = tone === "danger" ? "text-red-600 bg-red-500/15" : "text-amber-600 bg-amber-500/15";
   return (
     <section>
       <div className="flex items-center gap-2">

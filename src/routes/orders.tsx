@@ -33,9 +33,9 @@ type Filter = "All" | OrderStatus;
 const filters: Filter[] = ["All", "Unpaid", "Paid", "Pending"];
 
 const statusStyles: Record<OrderStatus, string> = {
-  Paid: "bg-emerald-500/15 text-emerald-300",
-  Unpaid: "bg-red-500/15 text-red-400",
-  Pending: "bg-amber-500/15 text-amber-300",
+  Paid: "bg-emerald-500/15 text-emerald-700",
+  Unpaid: "bg-red-500/15 text-red-600",
+  Pending: "bg-amber-500/15 text-amber-700",
 };
 
 function formatTime(iso: string) {
@@ -740,7 +740,7 @@ function OrdersPage() {
       {needsAttention.length > 0 && (
         <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 px-3.5 py-3 flex items-center gap-2.5">
           <span className="text-lg">⏰</span>
-          <p className="text-xs text-amber-300 flex-1">
+          <p className="text-xs text-amber-700 flex-1">
             {lang === "zh"
               ? `${needsAttention.length} 笔订单超过 24 小时还没处理`
               : lang === "ms"
@@ -1036,14 +1036,14 @@ function OrdersPage() {
               <div className="p-4 pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex gap-3 min-w-0 flex-1">
-                    <div className="h-12 w-12 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-lg shrink-0">
+                    <div className="h-12 w-12 rounded-full bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-bold text-lg shrink-0">
                       {o.customer_name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex flex-col gap-0.5 min-w-0">
                       <div className="flex items-center gap-2 min-w-0 flex-wrap">
                         <span className="font-bold text-slate-900 text-base leading-tight truncate">{o.customer_name}</span>
                         {(o as any).order_source === "online_form" && (
-                          <span className="shrink-0 px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-medium rounded-full border border-indigo-500/20">
+                          <span className="shrink-0 px-2 py-0.5 bg-indigo-500/10 text-indigo-600 text-[10px] font-medium rounded-full border border-indigo-500/20">
                             🌐 {t("pof_source_online")}
                           </span>
                         )}
@@ -1105,7 +1105,7 @@ function OrdersPage() {
                           <Pencil className="h-4 w-4 mr-2" /> {t("edit") || "Edit"}
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="text-red-400 focus:text-red-400"
+                          className="text-red-600 focus:text-red-600"
                           onSelect={(e) => { e.preventDefault(); setPendingDelete(o); }}
                         >
                           <Trash2 className="h-4 w-4 mr-2" /> {t("delete_order") || "Delete"}
@@ -1147,7 +1147,7 @@ function OrdersPage() {
                 </div>
                 {o.delivery_address ? (
                   <div className="flex gap-2 items-start">
-                    <MapPin className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+                    <MapPin className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
                     <p className="text-slate-500 text-xs leading-relaxed flex-1 break-words">{o.delivery_address}</p>
                   </div>
                 ) : null}
@@ -1156,14 +1156,14 @@ function OrdersPage() {
                   const storeAddr = (o as any).store_address_snapshot as string | null | undefined;
                   const tableLabel = (o as any).table_label as string | undefined;
                   if (!dm) return null;
-                  let emoji = "🏪", label = t("order_pickup" as any), cls = "bg-amber-500/10 text-amber-300", sub: string | null = null;
+                  let emoji = "🏪", label = t("order_pickup" as any), cls = "bg-amber-500/10 text-amber-700", sub: string | null = null;
                   if (dm === "delivery") {
-                    emoji = "🚗"; label = t("order_delivery" as any); cls = "bg-blue-500/10 text-blue-400";
+                    emoji = "🚗"; label = t("order_delivery" as any); cls = "bg-blue-500/10 text-blue-600";
                   } else if (dm === "dine_in") {
-                    emoji = "🍽️"; label = t("dine_in" as any); cls = "bg-violet-500/10 text-violet-300";
+                    emoji = "🍽️"; label = t("dine_in" as any); cls = "bg-violet-500/10 text-violet-700";
                     sub = tableLabel ? `🪑 ${tableLabel}` : null;
                   } else if (dm === "takeaway") {
-                    emoji = "🛍️"; cls = "bg-amber-500/10 text-amber-300";
+                    emoji = "🛍️"; cls = "bg-amber-500/10 text-amber-700";
                     label = lang === "zh" ? "外带" : lang === "ms" ? "Bungkus" : "Takeaway";
                     sub = storeAddr ?? null;
                   } else { // pickup
@@ -1215,7 +1215,7 @@ function OrdersPage() {
                           onClick={() => toggleReceiptConfirmed(o)}
                           aria-label={confirmed ? t("receipt_unconfirmed") : t("receipt_confirmed")}
                           title={confirmed ? t("receipt_confirmed") : t("upload_receipt")}
-                          className={`h-8 w-8 rounded-lg flex items-center justify-center active:scale-95 transition ${confirmed ? "bg-emerald-500/10 text-emerald-400" : "text-slate-400 hover:bg-muted/30"}`}
+                          className={`h-8 w-8 rounded-lg flex items-center justify-center active:scale-95 transition ${confirmed ? "bg-emerald-500/10 text-emerald-600" : "text-slate-400 hover:bg-muted/30"}`}
                         >
                           <FileCheck2 className="h-4 w-4" />
                         </button>
@@ -1233,7 +1233,7 @@ function OrdersPage() {
                               onClick={() => removeReceipt(o)}
                               aria-label={t("receipt_remove")}
                               title={t("receipt_remove")}
-                              className="h-8 w-8 rounded-lg text-rose-400 hover:bg-rose-500/10 flex items-center justify-center active:scale-95"
+                              className="h-8 w-8 rounded-lg text-rose-600 hover:bg-rose-500/10 flex items-center justify-center active:scale-95"
                             >
                               <X className="h-4 w-4" />
                             </button>
@@ -1260,7 +1260,7 @@ function OrdersPage() {
                       </div>
                       <button
                         onClick={() => sendReceipt(o)}
-                        className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl shadow-md active:scale-95 transition-transform ${url ? "bg-emerald-500/15 text-emerald-300 shadow-emerald-50" : "bg-emerald-500 text-white shadow-emerald-100"}`}
+                        className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl shadow-md active:scale-95 transition-transform ${url ? "bg-emerald-500/15 text-emerald-700 shadow-emerald-50" : "bg-emerald-500 text-white shadow-emerald-100"}`}
                       >
                         <Check className="h-3.5 w-3.5" />
                         {url ? t("receipt_sent") : t("send_receipt")}
@@ -1372,7 +1372,7 @@ function OrdersPage() {
 
             <button
               onClick={() => setPendingDelete(detail)}
-              className="w-full py-3 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/30 font-semibold text-sm"
+              className="w-full py-3 rounded-2xl bg-red-500/10 text-red-600 border border-red-500/30 font-semibold text-sm"
             >
               🗑 {t("delete_order")}
             </button>

@@ -236,9 +236,9 @@ function CampaignsListPage() {
                     <span
                       className={`text-[10px] font-bold px-2 py-1 rounded-full ${
                         status === "live"
-                          ? "bg-emerald-500/15 text-emerald-300"
+                          ? "bg-emerald-500/15 text-emerald-700"
                           : status === "upcoming"
-                            ? "bg-amber-500/15 text-amber-300"
+                            ? "bg-amber-500/15 text-amber-700"
                             : "bg-muted text-muted-foreground"
                       }`}
                     >

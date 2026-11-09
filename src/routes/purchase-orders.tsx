@@ -36,9 +36,9 @@ type Ingredient = { id: string; name: string; unit: string; cost_per_unit: numbe
 type Counts = Record<string, { items: number; supplier: string | null }>;
 
 function statusColor(s: POStatus) {
-  if (s === "received") return "bg-emerald-500/15 text-emerald-300";
-  if (s === "cancelled") return "bg-red-500/15 text-red-300";
-  return "bg-amber-500/15 text-amber-300";
+  if (s === "received") return "bg-emerald-500/15 text-emerald-700";
+  if (s === "cancelled") return "bg-red-500/15 text-red-700";
+  return "bg-amber-500/15 text-amber-700";
 }
 
 function PurchaseOrdersPage() {

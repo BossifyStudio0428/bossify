@@ -459,7 +459,7 @@ function OrderDetailPage() {
               {order.phone ? (
                 <div className="flex gap-3 mt-1">
                   <a href={`tel:${order.phone}`} className="text-xs text-primary">📞 {t("call")}</a>
-                  <a href={buildWhatsAppLink(order.phone, "")} target="_blank" rel="noreferrer" className="text-xs text-emerald-400">📱 WhatsApp</a>
+                  <a href={buildWhatsAppLink(order.phone, "")} target="_blank" rel="noreferrer" className="text-xs text-emerald-600">📱 WhatsApp</a>
                 </div>
               ) : <p className="text-xs text-muted-foreground mt-1">{t("no_phone")}</p>}
             </div>
@@ -581,18 +581,18 @@ function OrderDetailPage() {
 
           <button
             onClick={() => setRefundModal(true)}
-            className="w-full py-3 rounded-2xl bg-card border border-border/60 text-amber-300 font-semibold text-xs"
+            className="w-full py-3 rounded-2xl bg-card border border-border/60 text-amber-700 font-semibold text-xs"
           >
             ↩️ {lang === "zh" ? "记录退款 / 退货" : lang === "ms" ? "Rekod bayaran balik / pemulangan" : "Record refund / return"}
           </button>
 
           {(order as any).is_refunded && (
             <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 space-y-2">
-              <p className="text-xs font-semibold text-amber-300">
+              <p className="text-xs font-semibold text-amber-700">
                 {lang === "zh" ? `已退款总额 RM ${Number((order as any).net_refunded_amount ?? 0).toFixed(2)}` : lang === "ms" ? `Jumlah bayaran balik RM ${Number((order as any).net_refunded_amount ?? 0).toFixed(2)}` : `Total refunded: RM ${Number((order as any).net_refunded_amount ?? 0).toFixed(2)}`}
               </p>
               {adjustments.map((a) => (
-                <div key={a.id} className="text-[11px] text-amber-300 flex items-center justify-between">
+                <div key={a.id} className="text-[11px] text-amber-700 flex items-center justify-between">
                   <span>{a.type} · {new Date(a.created_at).toLocaleDateString("en-MY")}</span>
                   <span>−RM {Number(a.revenue_reversed).toFixed(2)}</span>
                 </div>

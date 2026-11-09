@@ -116,7 +116,7 @@ function NotificationsPage() {
               >
                 <button onClick={() => tap(n)} className="w-full text-left">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className={`text-sm font-semibold ${isDeleted ? "text-red-400" : "text-foreground"}`}>
+                    <p className={`text-sm font-semibold ${isDeleted ? "text-red-600" : "text-foreground"}`}>
                       {n.title}
                     </p>
                     {isTikTok && (
