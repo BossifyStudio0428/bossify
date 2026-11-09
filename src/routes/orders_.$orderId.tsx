@@ -420,7 +420,7 @@ function OrderDetailPage() {
   if (!order) return (
     <div className="p-6 space-y-3">
       <p className="text-sm">{t("order_not_found")}</p>
-      <button onClick={() => navigate({ to: "/orders" })} className="text-primary text-sm">{t("back_arrow")}</button>
+      <button onClick={() => navigate({ to: "/orders" })} className="text-primary text-sm flex items-center gap-1"><ChevronLeft className="h-4 w-4" /> {t("back_arrow")}</button>
     </div>
   );
 

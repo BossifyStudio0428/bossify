@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, BarChart3 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
   BarChart, Bar, PieChart, Pie, Cell, Legend,
@@ -297,7 +297,7 @@ function AnalyticsPage() {
         <button onClick={() => navigate({ to: "/" })} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-2xl font-bold">📊 {t("analytics_label")}</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="h-5 w-5" /> {t("analytics_label")}</h1>
       </header>
 
       <div className="flex gap-2 overflow-x-auto -mx-5 px-5 scrollbar-none">
@@ -534,7 +534,7 @@ function PropertyAnalytics() {
         <button onClick={() => navigate({ to: "/" })} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-2xl font-bold">📊 {t("analytics_label")}</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="h-5 w-5" /> {t("analytics_label")}</h1>
       </header>
 
       {loading ? <p className="text-sm text-muted-foreground">{t("loading")}</p> : (

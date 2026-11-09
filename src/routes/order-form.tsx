@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Link2, Package, Banknote, Copy, MessageCircle, QrCode, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,7 +73,7 @@ function OrderFormPage() {
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-foreground">🔗 {t(pofSectionTitleKey(businessType as BizType | null))}</h1>
+          <h1 className="text-lg font-bold text-foreground flex items-center gap-1.5"><Link2 className="h-4 w-4" /> {t(pofSectionTitleKey(businessType as BizType | null))}</h1>
           <p className="text-[11px] text-muted-foreground">{t(pofSectionSubKey(businessType as BizType | null))}</p>
         </div>
       </header>
@@ -121,7 +121,7 @@ function OrderFormPage() {
             <>
               <div className="flex items-center justify-between rounded-xl bg-muted/40 border border-border/60 px-3 py-2">
                 <div className="min-w-0 pr-3">
-                  <p className="text-xs font-medium">📦 {t("pof_show_stock_label")}</p>
+                  <p className="text-xs font-medium flex items-center gap-1.5"><Package className="h-3.5 w-3.5" /> {t("pof_show_stock_label")}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">{t("pof_show_stock_sub")}</p>
                 </div>
                 <button
@@ -150,7 +150,7 @@ function OrderFormPage() {
               </div>
               <div className="flex items-center justify-between rounded-xl bg-muted/40 border border-border/60 px-3 py-2">
                 <div className="min-w-0 pr-3">
-                  <p className="text-xs font-medium">💵 {t("allow_cod_label")}</p>
+                  <p className="text-xs font-medium flex items-center gap-1.5"><Banknote className="h-3.5 w-3.5" /> {t("allow_cod_label")}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">{t("allow_cod_sub")}</p>
                 </div>
                 <button
@@ -191,7 +191,7 @@ function OrderFormPage() {
               }}
               className="py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold active:scale-95"
             >
-              📋 {t("pof_copy_link")}
+              <Copy className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />{t("pof_copy_link")}
             </button>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(stripEmoji(t(pofWaShareKey(businessType as BizType | null)).replace("{link}", link)))}`}
@@ -199,14 +199,14 @@ function OrderFormPage() {
               rel="noreferrer"
               className="py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-semibold text-center active:scale-95"
             >
-              💬 {t("pof_share_wa")}
+              <MessageCircle className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />{t("pof_share_wa")}
             </a>
             <button
               type="button"
               onClick={() => setQrOpen(true)}
               className="py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95"
             >
-              📱 {t("pof_qr_code")}
+              <QrCode className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />{t("pof_qr_code")}
             </button>
             <a
               href={link}
@@ -214,7 +214,7 @@ function OrderFormPage() {
               rel="noreferrer"
               className="py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold text-center active:scale-95"
             >
-              👁 {t("pof_view_form")}
+              <Eye className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />{t("pof_view_form")}
             </a>
           </div>
           {qrOpen && (

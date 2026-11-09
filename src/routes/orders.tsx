@@ -1202,9 +1202,9 @@ function OrdersPage() {
                   <button
                     onClick={(e) => { e.stopPropagation(); remind(o); }}
                     id={o.id === firstUnpaidId ? "tour-orders-remind" : undefined}
-                    className="text-xs font-bold px-4 py-2.5 rounded-xl bg-emerald-500 text-white shadow-md shadow-emerald-100 active:scale-95 transition-transform"
+                    className="text-xs font-bold px-4 py-2.5 rounded-xl bg-emerald-500 text-white shadow-md shadow-emerald-100 active:scale-95 transition-transform flex items-center gap-1.5"
                   >
-                    {t("remind")}
+                    <MessageCircle className="h-3.5 w-3.5" /> {t("remind")}
                   </button>
                 )}
                 {o.status === "Pending" && (

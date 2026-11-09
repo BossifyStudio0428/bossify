@@ -25,6 +25,7 @@ import {
   Zap,
   CreditCard,
   Smartphone,
+  RotateCcw,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import bossifyLogo from "@/assets/bossify-logo.png";
@@ -750,7 +751,7 @@ function LaptopMockup({ onPlay }: { onPlay: () => void }) {
         >
           <p className="text-[10px] font-semibold" style={{ color: TEXT_MUTED }}>Real Profit</p>
           <p className="text-[18px] font-bold tabular-nums" style={{ color: TEXT }}>{fmtRM(profit)}</p>
-          <p className="text-[10.5px] font-bold" style={{ color: GREEN }}>↑ +20.1%</p>
+          <p className="text-[10.5px] font-bold flex items-center gap-0.5" style={{ color: GREEN }}><TrendingUp className="h-3 w-3" /> +20.1%</p>
         </div>
       </div>
     </div>
@@ -1095,7 +1096,7 @@ function DemoVideoModal({ open, onClose, copy }: { open: boolean; onClose: () =>
             className="text-[12.5px] font-semibold px-4 py-2 rounded-full border transition-colors hover:border-[rgba(168,124,255,0.5)]"
             style={{ color: TEXT_MUTED, borderColor: BORDER }}
           >
-            ↺ Replay
+            <RotateCcw className="inline h-3 w-3 mr-1 -mt-0.5" />Replay
           </button>
         </div>
       </div>
