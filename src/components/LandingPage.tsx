@@ -34,19 +34,25 @@ import bossifyLogo from "@/assets/bossify-logo.png";
 // background for the whole page; depth comes from elevated card surfaces,
 // hairline borders and a purple->pink gradient accent, not section banding.
 // ---------------------------------------------------------------------------
-const BG = "#0A0614";
-const CARD = "#140D22";
-const CARD_SOFT = "#1B1430";
-const BORDER = "rgba(168,124,255,0.14)";
-const BORDER_STRONG = "rgba(168,124,255,0.3)";
-const TEXT = "#F5F3FA";
-const TEXT_MUTED = "#9D93B5";
+// Light mode. Background/text/surface tokens flipped from the previous
+// dark-only palette; the purple/pink brand accent (GRAD_FROM/GRAD_TO) is
+// unchanged on purpose so the landing page still reads as the same product
+// as the dark, logged-in app -- only the canvas flips from dark to light.
+const BG = "#FCFBFE";
+const CARD = "#F7F5FA";
+const CARD_SOFT = "#EFEAFA";
+const BORDER = "rgba(139,92,246,0.16)";
+const BORDER_STRONG = "rgba(139,92,246,0.32)";
+const TEXT = "#1A1225";
+const TEXT_MUTED = "#5B5270";
 const GRAD_FROM = "#8B5CF6";
 const GRAD_TO = "#D946EF";
 const GRADIENT = `linear-gradient(135deg, ${GRAD_FROM} 0%, ${GRAD_TO} 100%)`;
-const GREEN = "#4ADE80";
-const RED = "#F87171";
-const BLUE = "#60A5FA";
+// Status colors darkened a step from the dark-mode values for legible
+// contrast on a light background (same hues, ~600-weight instead of ~400).
+const GREEN = "#16A34A";
+const RED = "#DC2626";
+const BLUE = "#2563EB";
 
 type ShowcaseItem = { title: string; desc: string };
 type CostLine = { label: string; value: string };
@@ -1116,7 +1122,7 @@ export function LandingPage() {
     <div className="relative isolate" style={{ background: BG, fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
       <div className="relative z-10">
       {/* Header */}
-      <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(10,6,20,0.8)", borderColor: BORDER }}>
+      <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(252,251,254,0.85)", borderColor: BORDER }}>
         <div className="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src={bossifyLogo} alt="Bossify" className="h-9 w-9 rounded-lg object-contain" />
@@ -1177,7 +1183,7 @@ export function LandingPage() {
               >
                 {c.eyebrow}
               </span>
-              <h1 className="text-[36px] leading-[1.08] lg:text-[48px] font-bold tracking-tight mb-5" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+              <h1 className="text-[40px] leading-[1.05] lg:text-[58px] font-bold tracking-tight mb-5" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
                 {c.headline1}
                 <br />
                 <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
