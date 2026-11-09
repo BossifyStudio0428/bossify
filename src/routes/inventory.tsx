@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, Trash2, Pencil, ImageIcon } from "lucide-react";
+import { Plus, Trash2, Pencil, ImageIcon, RefreshCw, Package, AlertTriangle, Search, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { InvRow } from "@/lib/inventoryTypes";
@@ -375,9 +375,14 @@ function InventoryPage() {
               onClick={() => importFromTikTok(false)}
               className="flex-1 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95 disabled:opacity-60"
             >
-              {tiktokImporting
-                ? (lang === "zh" ? "同步中…" : lang === "ms" ? "Menyegerak…" : "Syncing…")
-                : `🎵 ${lang === "zh" ? "同步 TikTok 商品" : lang === "ms" ? "Segerak produk TikTok" : "Sync TikTok products"}`}
+              {tiktokImporting ? (
+                lang === "zh" ? "同步中…" : lang === "ms" ? "Menyegerak…" : "Syncing…"
+              ) : (
+                <span className="inline-flex items-center gap-1.5">
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  {lang === "zh" ? "同步 TikTok 商品" : lang === "ms" ? "Segerak produk TikTok" : "Sync TikTok products"}
+                </span>
+              )}
             </button>
           </div>
           <p className="text-[11px] text-muted-foreground text-center">
@@ -391,7 +396,7 @@ function InventoryPage() {
       {!HIDE_ORDER_FORM && (bizType === "retail" || bizType === "fnb") && (
         <div className="flex items-center justify-between rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-3 py-2">
           <div className="min-w-0 pr-3">
-            <p className="text-xs font-semibold">📦 {t("pof_show_stock_label")}</p>
+            <p className="text-xs font-semibold flex items-center gap-1.5"><Package className="h-3.5 w-3.5" /> {t("pof_show_stock_label")}</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">{t("pof_show_stock_sub")}</p>
           </div>
           <button
@@ -425,7 +430,7 @@ function InventoryPage() {
           onClick={() => firstLowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
           className="w-full text-left rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 flex items-start gap-2 active:scale-[0.99] transition-transform"
         >
-          <span className="text-base leading-tight">⚠️</span>
+          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-xs text-amber-700 leading-snug">
             <span className="font-semibold">{lowItems.length} {t("low_stock_alert")}</span> — {t("restock_before")}
           </p>
@@ -433,7 +438,7 @@ function InventoryPage() {
       )}
 
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🔍</span>
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -582,7 +587,7 @@ function InventoryPage() {
                           </button>
                           <button
                             onClick={() => setSheet({ kind: "restock", item: v })}
-                            className="py-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-xs font-semibold active:scale-[0.98] transition-transform"
+                            className="py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold active:scale-[0.98] transition-transform"
                           >
                             + {t("restock")}
                           </button>
@@ -663,7 +668,7 @@ function InventoryPage() {
               <ProfitRow price={it.price} cost={(it as any).cost_price} t={t} />
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${low ? "bg-red-500" : "bg-gradient-to-r from-primary to-primary/70"}`}
+                  className={`h-full rounded-full ${low ? "bg-red-500" : "bg-primary"}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -676,7 +681,7 @@ function InventoryPage() {
                 </button>
                 <button
                   onClick={() => setSheet({ kind: "restock", item: it })}
-                  className="py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold shadow-[var(--shadow-soft)] active:scale-[0.98] transition-transform"
+                  className="py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-[var(--shadow-soft)] active:scale-[0.98] transition-transform"
                 >
                   + {t("restock")}
                 </button>
@@ -700,9 +705,9 @@ function InventoryPage() {
         id="tour-inv-add"
         aria-label={t("add_product")}
         title={atLimit ? t("limit_inventory") : t("add_product")}
-        className={`fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform lg:hidden ${atLimit ? "bg-muted-foreground/60" : "bg-gradient-to-br from-primary to-primary/80"}`}
+        className={`fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform lg:hidden ${atLimit ? "bg-muted-foreground/60" : "bg-primary"}`}
       >
-        {atLimit ? <span className="text-base">🔒</span> : <Plus className="h-5 w-5" strokeWidth={2.5} />}
+        {atLimit ? <Lock className="h-4 w-4" /> : <Plus className="h-5 w-5" strokeWidth={2.5} />}
         {t("add_product")}
       </button>
 

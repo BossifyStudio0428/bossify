@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, TrendingUp, TrendingDown } from "lucide-react";
+import { ChevronLeft, TrendingUp, TrendingDown, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -302,7 +302,9 @@ function ProductProfitPage() {
                       <div key={v.name} className="flex items-center justify-between gap-2 px-3 py-2">
                         <span className="text-xs font-medium text-foreground truncate flex items-center gap-1 min-w-0">
                           {i === 0 && (
-                            <span title={lang === "zh" ? "这个规格最赚" : lang === "ms" ? "Paling untung" : "Top performer"}>🏆</span>
+                            <span title={lang === "zh" ? "这个规格最赚" : lang === "ms" ? "Paling untung" : "Top performer"}>
+                              <Trophy className="h-3 w-3 text-amber-500 shrink-0" />
+                            </span>
                           )}
                           <span className="truncate">{variantLabel(v.name)}</span>
                         </span>

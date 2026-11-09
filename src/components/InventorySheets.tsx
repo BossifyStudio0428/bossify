@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useEffect } from "react";
-import { X, Trash2, Plus } from "lucide-react";
+import { X, Trash2, Plus, Hash, Package, FlaskConical, Package2, Gift, Pencil, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/contexts/I18nContext";
@@ -63,7 +63,7 @@ export function QtySheet({
           if (max !== undefined && q > max) { toast.error(t("cant_remove_more")); return; }
           onConfirm(q);
         }}
-        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold active:scale-[0.99]"
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold active:scale-[0.99]"
       >
         {t("confirm")}
       </button>
@@ -98,12 +98,12 @@ export function ProductFormSheet({
 
   const [name, setName] = useState(item?.name ?? "");
   const [stock, setStock] = useState(item?.stock != null ? String(item.stock) : "");
-  const PRESET_UNITS = [
-    { value: "pcs", label: t("unit_pieces"), icon: "🔢" },
-    { value: "packs", label: t("unit_packs"), icon: "📦" },
-    { value: "bottles", label: t("unit_bottles"), icon: "🍶" },
-    { value: "jars", label: t("unit_jars"), icon: "🧴" },
-    { value: "boxes", label: t("unit_boxes"), icon: "🎁" },
+  const PRESET_UNITS: { value: string; label: string; icon: LucideIcon }[] = [
+    { value: "pcs", label: t("unit_pieces"), icon: Hash },
+    { value: "packs", label: t("unit_packs"), icon: Package },
+    { value: "bottles", label: t("unit_bottles"), icon: FlaskConical },
+    { value: "jars", label: t("unit_jars"), icon: Package2 },
+    { value: "boxes", label: t("unit_boxes"), icon: Gift },
   ];
   const initialUnit = item?.unit ?? "pcs";
   const isPreset = PRESET_UNITS.some((u) => u.value === initialUnit);
@@ -343,7 +343,7 @@ export function ProductFormSheet({
                             : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
                         }`}
                       >
-                        <span className="mr-1">{u.icon}</span>{u.label}
+                        <u.icon className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{u.label}
                       </button>
                     );
                   })}
@@ -356,7 +356,7 @@ export function ProductFormSheet({
                         : "bg-muted/40 text-foreground border-border/60 hover:bg-muted"
                     }`}
                   >
-                    <span className="mr-1">✏️</span>{t("unit_others")}
+                    <Pencil className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("unit_others")}
                   </button>
                 </div>
                 {unit === "other" && (
