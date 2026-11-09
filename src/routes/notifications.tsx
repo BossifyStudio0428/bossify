@@ -22,7 +22,7 @@ function buildWA(phone: string, message: string) {
   return `https://wa.me/${cleaned}?text=${encodeURIComponent(stripEmoji(message))}`;
 }
 
-export const Route = createFileRoute("/customers")({ component: CustomersPage });
+export const Route = createFileRoute("/notifications")({ component: CustomersPage });
 
 const CUSTOMER_STATUS_ORDER: CustomerStatus[] = ["enquiry", "in_progress", "completed", "rejected"];
 const CUSTOMER_STATUS_STYLES: Record<CustomerStatus, string> = {

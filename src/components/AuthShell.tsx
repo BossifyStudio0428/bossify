@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
+import { TiltCard } from "@/components/MotionFx";
 
 /**
  * Shared left-side brand panel for the auth experience (Login, Sign Up,
@@ -69,8 +70,9 @@ function DashboardPreview() {
         : { profit: "Real Profit", revenue: "Revenue", costs: "Costs" };
 
   return (
+    <TiltCard max={4}>
     <div
-      className="mt-7 rounded-2xl p-4"
+      className="bf-shine bossify-animate-float-sm mt-7 rounded-2xl p-4"
       style={{ background: "#FFFFFF", border: "1px solid #E4DEF0", boxShadow: "0 12px 32px rgba(139,92,246,0.12)" }}
     >
       <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#5B5270" }}>
@@ -102,6 +104,7 @@ function DashboardPreview() {
         </div>
       </div>
     </div>
+    </TiltCard>
   );
 }
 

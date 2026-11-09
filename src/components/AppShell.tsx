@@ -26,6 +26,7 @@ import { RETAIL_ONLY_MODE, isArchivedRoute, HIDE_AI_CHAT_WIDGET } from "@/lib/fe
 import { RetailPivotNotice } from "@/components/RetailPivotNotice";
 import { AiChatWidget } from "@/components/AiChatWidget";
 import { NotificationBellIcon } from "@/components/NotificationBellIcon";
+import { MouseGlow } from "@/components/MotionFx";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -426,6 +427,7 @@ function ShellInner() {
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
+        <MouseGlow />
         <Outlet />
       </div>
     );
@@ -433,6 +435,7 @@ function ShellInner() {
 
   return (
     <div className="min-h-screen w-full bg-background flex flex-col">
+      <MouseGlow />
       {!isSetupFlowRoute && <DesktopTopNav />}
 
       <div className="flex w-full flex-1 justify-center lg:block lg:min-w-0">
@@ -452,7 +455,13 @@ function ShellInner() {
 
           <main className="flex-1 pb-28 lg:pb-0 relative overflow-x-hidden">
             <div className="lg:mx-auto lg:w-full lg:max-w-[1280px] lg:px-8 lg:py-6">
-              <Outlet />
+              {/* key={pathname} replays the fade/rise on every route change
+                  (Overview -> Orders -> Products, etc) — desktop only via
+                  .bf-page-transition's own scoping is unnecessary here since
+                  the animation itself is cheap and reduced-motion-safe. */}
+              <div key={location.pathname} className="bf-page-transition">
+                <Outlet />
+              </div>
             </div>
           </main>
 

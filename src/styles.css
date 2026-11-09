@@ -335,6 +335,122 @@ textarea,
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 
+/* ===========================================================================
+   Desktop ambient micro-interactions (mouse glow, card hover light, shine
+   sweep, subtle float, page transition). All gated behind
+   `(hover: hover) and (pointer: fine)` so they never engage on the Android
+   app's touch WebView (where `:hover` can stick after a tap) and are fully
+   inert there. Effect TYPES are deliberately NOT all combined on every
+   element — shine/float/tilt are opt-in (`.bf-shine` / `.bossify-animate-
+   float-sm`, applied to one "hero" card per page), while the card-hover-
+   glow and button lift below are the only two that apply broadly, since
+   they only ever show on the element currently under the cursor. The
+   prefers-reduced-motion block above already disables every animation/
+   transition here.
+   =========================================================================== */
+@media (hover: hover) and (pointer: fine) {
+  /* Card hover lighting — a thin, soft light along the edge of ANY card
+     already using the app's standard `shadow-[var(--shadow-card)]` utility.
+     Matched on the class ATTRIBUTE (substring), not a CSS class selector,
+     so this needs no change to any component that already uses that
+     utility class. */
+  [class*="shadow-[var(--shadow-card)]"] {
+    transition: box-shadow 0.25s ease, transform 0.2s ease;
+  }
+  [class*="shadow-[var(--shadow-card)]"]:hover {
+    box-shadow:
+      var(--shadow-card),
+      0 0 0 1px color-mix(in oklab, var(--primary) 28%, transparent),
+      0 0 22px -6px color-mix(in oklab, var(--primary) 45%, transparent);
+  }
+
+  /* Cursor interaction — a very light lift on buttons/icon-buttons so the
+     UI feels responsive to the mouse without being "gamey". Scoped off
+     disabled buttons and off anything already carrying its own transform-
+     based hover (tilt/shine wrappers set inline transforms and would
+     otherwise fight this rule). */
+  button:not(:disabled):not(.bf-tilt):hover,
+  a[role="button"]:hover {
+    transition: transform 0.15s ease, filter 0.15s ease;
+    transform: translateY(-1px);
+    filter: brightness(1.02);
+  }
+}
+
+/* Mouse-follow ambient glow — one instance mounted near the app root,
+   position tracked via --mx/--my custom properties updated in JS (see
+   MouseGlow.tsx). Pure decoration: sits low in the stacking order, under
+   all real content, and never intercepts clicks. */
+.bf-mouse-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  background: radial-gradient(
+    480px circle at var(--mx, 50%) var(--my, 30%),
+    color-mix(in oklab, var(--primary) 14%, transparent),
+    color-mix(in oklab, white 8%, transparent) 42%,
+    transparent 72%
+  );
+}
+@media (prefers-reduced-motion: reduce), not (hover: hover), not (pointer: fine) {
+  .bf-mouse-glow { display: none; }
+}
+
+/* Shine sweep — a very faint diagonal highlight that crosses the card once
+   every ~7s, most of which is spent invisible at rest so it reads as
+   "occasional", not a constant animation. Opt-in: add `.bf-shine` to a
+   single hero/key card per page, never broadly. */
+.bf-shine {
+  position: relative;
+  overflow: hidden;
+}
+.bf-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 45%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in oklab, white 65%, transparent) 50%,
+    transparent
+  );
+  opacity: 0.4;
+  transform: skewX(-20deg);
+  animation: bossify-shine-sweep 7s ease-in-out infinite;
+}
+@keyframes bossify-shine-sweep {
+  0%, 80% { left: -60%; }
+  94% { left: 130%; }
+  100% { left: 130%; }
+}
+
+/* Subtle float — a much smaller-amplitude variant of the existing
+   bossify-float keyframe, for key cards (opt-in, not the splash/logo use). */
+@keyframes bossify-card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.bossify-animate-float-sm {
+  animation: bossify-card-float 6s ease-in-out infinite;
+}
+
+/* Page transition — short fade + rise, replayed on every route change by
+   giving the wrapper a `key={pathname}` so React remounts it. */
+@keyframes bossify-page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.bf-page-transition {
+  animation: bossify-page-enter 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Safe-area helpers for notch / gesture bar on Android + iOS.
    On web / non-notch devices env(safe-area-inset-*) resolves to 0, so these
    are inert there and only add spacing inside Capacitor WebView. */

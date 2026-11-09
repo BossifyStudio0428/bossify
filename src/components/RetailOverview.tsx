@@ -11,6 +11,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { orderGrossProfit, orderContributionProfit } from "@/lib/orderMath";
 import { SetupChecklist } from "@/components/SetupChecklist";
+import { TiltCard } from "@/components/MotionFx";
 import { CampaignBanner } from "@/components/CampaignBanner";
 import { getCachedPrefs, loadPrefs } from "@/lib/notifPrefs";
 import { fetchPeriodAdjustments, type PeriodAdjustments } from "@/lib/refundAdjustments";
@@ -1405,10 +1406,10 @@ function KpiCard({
           : highlight
             ? "text-primary"
             : "text-foreground";
-  return (
+  const card = (
     <div
       className={`rounded-2xl border p-4 shadow-[var(--shadow-card)] ${
-        highlight ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"
+        highlight ? "border-primary/40 bg-primary/5 bf-shine bossify-animate-float-sm" : "border-border/60 bg-card"
       }`}
     >
       <div className="flex items-center justify-between">
@@ -1427,6 +1428,11 @@ function KpiCard({
       <TrendPill delta={delta} />
     </div>
   );
+  // Real Profit is the one "hero" KPI — the only card on this page that
+  // gets the full tilt/shine/float treatment, deliberately not applied to
+  // the other three so the row doesn't feel like everything is animating
+  // at once.
+  return highlight ? <TiltCard max={4}>{card}</TiltCard> : card;
 }
 
 function DesktopStatCell({

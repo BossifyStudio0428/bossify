@@ -573,7 +573,7 @@ function LaptopMockup({ onPlay }: { onPlay: () => void }) {
   return (
     <div className="relative w-full max-w-[640px] mx-auto">
       <div
-        className="relative rounded-[20px] overflow-hidden border"
+        className="bf-shine bossify-animate-float-sm relative rounded-[20px] overflow-hidden border"
         style={{
           background: CARD,
           borderColor: BORDER_STRONG,
