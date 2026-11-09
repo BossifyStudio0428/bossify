@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { TrendingUp, TrendingDown, ChevronDown, MessageCircle, Plus, Trophy, PieChart as PieChartIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, ChevronDown, ChevronRight, MessageCircle, Plus, Trophy, Package, Wallet, FileText, PieChart as PieChartIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, PieChart, Pie } from "recharts";
 import { useServerFn } from "@tanstack/react-start";
 import { Capacitor } from "@capacitor/core";
@@ -76,16 +76,23 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-type Range = "week" | "month" | "custom";
+type Range = "today" | "week" | "days30" | "month" | "custom";
 
 function rangeWindows(range: Range, customFrom?: string, customTo?: string) {
   const now = new Date();
   const curEnd = new Date(now);
   let curStart: Date;
-  if (range === "week") {
+  if (range === "today") {
+    curStart = new Date(now);
+    curStart.setHours(0, 0, 0, 0);
+  } else if (range === "week") {
     curStart = new Date(now);
     curStart.setHours(0, 0, 0, 0);
     curStart.setDate(curStart.getDate() - 6);
+  } else if (range === "days30") {
+    curStart = new Date(now);
+    curStart.setHours(0, 0, 0, 0);
+    curStart.setDate(curStart.getDate() - 29);
   } else if (range === "month") {
     curStart = new Date(now.getFullYear(), now.getMonth(), 1);
   } else {
@@ -400,6 +407,9 @@ export function RetailOverview() {
       if (stock <= lowThreshold) lowStockItems++;
       if (price > 0 && cost > price) losing++;
     }
+    const unpaidOrders = curOrders.filter((o: any) => o.status === "Unpaid");
+    const unpaidTotal = unpaidOrders.reduce((s, o: any) => s + Number(o.amount ?? 0), 0);
+    const unpaidCount = unpaidOrders.length;
     return {
       sales: cur.sales,
       profit: cur.profit,
@@ -414,6 +424,8 @@ export function RetailOverview() {
       countDelta: pctDelta(cur.count, prev.count),
       lowStockItems,
       losing,
+      unpaidTotal,
+      unpaidCount,
     };
   }, [inv, curOrders, prevOrders, operatingExpenses, lowThreshold, curAdjustments, prevAdjustments]);
 
@@ -426,7 +438,14 @@ export function RetailOverview() {
       if (o.financial_status === "pending") continue;
       const day = String(o.created_at ?? "").slice(0, 10);
       if (!day) continue;
-      const p = orderGrossProfit({ amount: o.amount, cost: o.cost, gross_profit: o.gross_profit });
+      const p = orderContributionProfit({
+        amount: o.amount,
+        cost: o.cost,
+        gross_profit: o.gross_profit,
+        platform_fee_amount: o.platform_fee_amount,
+        shipping_cost: o.shipping_cost,
+        affiliate_commission: o.affiliate_commission,
+      });
       byDay.set(day, (byDay.get(day) ?? 0) + p);
     }
     return Array.from(byDay.entries())
@@ -515,7 +534,15 @@ export function RetailOverview() {
   }, [inv, weekItems, tiktokIdByProduct, loading, t, tick, lowThreshold]);
 
   const rangeLabel =
-    range === "week" ? t("this_week") : range === "month" ? t("this_month") : t("custom");
+    range === "today"
+      ? t("today_label")
+      : range === "week"
+        ? (lang === "zh" ? "过去7天" : lang === "ms" ? "7 Hari Lepas" : "Last 7 Days")
+        : range === "days30"
+          ? (lang === "zh" ? "过去30天" : lang === "ms" ? "30 Hari Lepas" : "Last 30 Days")
+          : range === "month"
+            ? t("this_month")
+            : t("custom");
 
   // Count of TikTok orders in the current period still awaiting real
   // financial data — shown as a soft indicator on the hero card so the
@@ -547,13 +574,36 @@ export function RetailOverview() {
     window.open(url, "_blank");
   };
 
+  // Home header: time-of-day greeting + the seller's own business name,
+  // read from their real profile (same source as the WhatsApp templates)
+  // -- never shown when it's still the unset "us" placeholder, so we
+  // never greet someone by a name they never set.
+  const greetingHour = new Date().getHours();
+  const greetingKey = greetingHour < 12 ? "good_morning" : greetingHour < 18 ? "good_afternoon" : "good_evening";
+  const sellerName = waProfile.businessName && waProfile.businessName !== "us" ? waProfile.businessName : null;
+  const todayDateLabel = new Date().toLocaleDateString(
+    lang === "zh" ? "zh-CN" : lang === "ms" ? "ms-MY" : "en-MY",
+    { weekday: "short", day: "numeric", month: "short" },
+  );
+  const greetingSubtitle =
+    lang === "zh"
+      ? "这是你今天的生意状况。"
+      : lang === "ms"
+        ? "Berikut cara perniagaan anda hari ini."
+        : "Here's how your business is doing today.";
+
   return (
     <>
     <div className="px-4 pt-4 pb-6 lg:hidden">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold text-foreground">{t("ro_title")}</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">{t("ro_subtitle")}</p>
+          <h1 className="text-xl font-bold text-foreground truncate">
+            {t(greetingKey)}
+            {sellerName ? `, ${sellerName}` : ""}
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {todayDateLabel} · {greetingSubtitle}
+          </p>
         </div>
         <div className="relative shrink-0">
           <button
@@ -564,8 +614,8 @@ export function RetailOverview() {
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
           {rangePickerOpen && (
-            <div className="absolute right-0 mt-1.5 z-20 rounded-xl border border-border/60 bg-card shadow-lg overflow-hidden min-w-[10rem]">
-              {(["week", "month", "custom"] as Range[]).map((r) => (
+            <div className="absolute right-0 mt-1.5 z-20 rounded-xl border border-border/60 bg-card shadow-lg overflow-hidden min-w-[9.5rem]">
+              {(["today", "week", "days30", "month", "custom"] as Range[]).map((r) => (
                 <button
                   key={r}
                   onClick={() => {
@@ -576,7 +626,15 @@ export function RetailOverview() {
                     range === r ? "text-primary font-semibold" : "text-foreground"
                   }`}
                 >
-                  {r === "week" ? t("this_week") : r === "month" ? t("this_month") : t("custom")}
+                  {r === "today"
+                    ? t("today_label")
+                    : r === "week"
+                      ? (lang === "zh" ? "过去7天" : lang === "ms" ? "7 Hari Lepas" : "Last 7 Days")
+                      : r === "days30"
+                        ? (lang === "zh" ? "过去30天" : lang === "ms" ? "30 Hari Lepas" : "Last 30 Days")
+                        : r === "month"
+                          ? t("this_month")
+                          : t("custom")}
                 </button>
               ))}
             </div>
@@ -616,26 +674,60 @@ export function RetailOverview() {
           saved on /campaign, and hides itself once the campaign has ended. */}
       <CampaignBanner />
 
-      {/* Hero card: net profit for the period, on the brand's real logo
-          gradient (blue → purple, sampled from bossify-logo.png). Shows
-          both Contribution Profit (before operating expenses) and Net
-          Profit (after) — two different numbers, deliberately not one. */}
+      {/* Main Business Summary: Revenue -> Costs -> Real Profit -> Margin.
+          Real Profit carries the strongest visual weight on purpose --
+          it's Bossify's core value proposition, not just another number
+          next to Revenue. Contribution profit + order count are kept as
+          small supporting text underneath rather than their own cards. */}
       <div className="mt-4 rounded-2xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)]">
-        <div className="flex items-baseline justify-between pb-2.5 mb-2.5 border-b border-border/60">
-          <span className="text-[11px] text-muted-foreground">
-            {lang === "zh" ? "边际利润" : lang === "ms" ? "Untung sumbangan" : "Contribution profit"}
+        <p className="text-[11px] text-muted-foreground">{rangeLabel}</p>
+        <div className="mt-2 flex items-baseline justify-between">
+          <span className="text-xs text-muted-foreground">
+            {lang === "zh" ? "营业额" : lang === "ms" ? "Hasil" : "Revenue"}
           </span>
           <span className="text-sm font-semibold text-foreground font-mono">
-            {loading ? "…" : money(stats.contribution)}
+            {loading ? "…" : money(stats.sales)}
           </span>
         </div>
-        <p className="text-[11px] text-muted-foreground">{t("ro_total_profit")}</p>
-        <p className="mt-1 text-3xl font-bold text-primary font-mono tracking-tight">
-          {loading ? "…" : money(stats.netProfit)}
-        </p>
-        <TrendPill delta={loading ? null : stats.profitDelta} />
+        <div className="mt-1.5 flex items-baseline justify-between">
+          <span className="text-xs text-muted-foreground">
+            {lang === "zh" ? "成本" : lang === "ms" ? "Kos" : "Costs"}
+          </span>
+          <span className="text-sm font-semibold text-foreground font-mono">
+            {loading ? "…" : money(stats.sales - stats.netProfit)}
+          </span>
+        </div>
+        <div className="mt-3 pt-3 border-t border-border/60">
+          <div className="flex items-baseline justify-between">
+            <span className="text-xs font-semibold text-foreground">
+              {lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}
+            </span>
+            <TrendPill delta={loading ? null : stats.profitDelta} />
+          </div>
+          <p className="mt-1 text-3xl font-bold text-primary font-mono tracking-tight">
+            {loading ? "…" : money(stats.netProfit)}
+          </p>
+          {!loading && stats.sales > 0 && (
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {lang === "zh" ? "利润率" : lang === "ms" ? "Margin untung" : "Profit margin"}{" "}
+              <span className="font-semibold text-foreground">
+                {((stats.netProfit / stats.sales) * 100).toFixed(1)}%
+              </span>
+            </p>
+          )}
+        </div>
+        <div className="mt-3 pt-3 border-t border-border/60 flex items-center gap-4 text-[11px] text-muted-foreground">
+          <span>
+            {lang === "zh" ? "边际利润" : lang === "ms" ? "Untung sumbangan" : "Contribution profit"}{" "}
+            <span className="font-semibold text-foreground font-mono">{loading ? "…" : money(stats.contribution)}</span>
+          </span>
+          <span>
+            {t("ro_orders_count")}{" "}
+            <span className="font-semibold text-foreground font-mono">{loading ? "…" : String(stats.count)}</span>
+          </span>
+        </div>
         {stats.operatingExpenses > 0 && (
-          <p className="mt-1 text-[10px] text-muted-foreground">
+          <p className="mt-1.5 text-[10px] text-muted-foreground">
             {lang === "zh"
               ? `已扣除 ${money(stats.operatingExpenses)} 营业费用`
               : lang === "ms"
@@ -643,16 +735,6 @@ export function RetailOverview() {
                 : `After ${money(stats.operatingExpenses)} operating expenses`}
           </p>
         )}
-        <div className="mt-3 flex items-center gap-5 pt-3 border-t border-border/60">
-          <div>
-            <p className="text-[10px] text-muted-foreground">{t("ro_total_sales")}</p>
-            <p className="text-sm font-semibold text-foreground font-mono">{loading ? "…" : money(stats.sales)}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-muted-foreground">{t("ro_orders_count")}</p>
-            <p className="text-sm font-semibold text-foreground font-mono">{loading ? "…" : String(stats.count)}</p>
-          </div>
-        </div>
       </div>
 
       {pendingSyncCount > 0 && (
@@ -667,36 +749,110 @@ export function RetailOverview() {
         <TikTokStatusPill connected={tiktokConnected} lang={lang} />
       </div>
 
-      {/* Secondary stats: order count trend, low stock — kept as plain
-          white cards so the hero card above stays the single visual anchor. */}
-      <div className="mt-2.5 grid grid-cols-3 gap-2.5">
-        <KpiCard
-          label={lang === "zh" ? "毛利润" : lang === "ms" ? "Untung kasar" : "Gross profit"}
-          value={loading ? "…" : money(stats.profit)}
-          delta={null}
-        />
-        <KpiCard
-          label={t("ro_orders_count")}
-          value={loading ? "…" : String(stats.count)}
-          delta={loading ? null : stats.countDelta}
-        />
-        <KpiCard
-          label={t("ro_low_stock_items")}
-          value={loading ? "…" : String(stats.lowStockItems)}
-          delta={null}
-          tone={stats.lowStockItems > 0 ? "warn" : "success"}
+      {/* Profit Trend — Contribution Profit per day for the selected
+          period. Operating expenses aren't dated per-day in the schema,
+          so they're deliberately left out of this chart rather than
+          faked; the Business Summary above already nets them into Real
+          Profit, which is the number that matters most. */}
+      <div className="mt-4 rounded-2xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)]">
+        <div className="flex items-baseline justify-between">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {lang === "zh" ? "利润趋势" : lang === "ms" ? "Trend Untung" : "Profit Trend"}
+          </p>
+          <TrendPill delta={loading ? null : stats.profitDelta} />
+        </div>
+        <p className="mt-1 text-xl font-bold text-foreground font-mono">
+          {loading ? "…" : money(stats.contribution)}
+        </p>
+        {dailyChart.length > 1 ? (
+          <div className="mt-2 -mx-1">
+            <ResponsiveContainer width="100%" height={120}>
+              <BarChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
+                <YAxis hide />
+                <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+                <Bar dataKey="profit" radius={[3, 3, 3, 3]}>
+                  {dailyChart.map((d, i) => (
+                    <Cell key={i} fill={d.profit < 0 ? "#DC2626" : "#8B5CF6"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          !loading && (
+            <p className="mt-3 text-xs text-muted-foreground text-center py-4">
+              {lang === "zh" ? "这段时间还没有订单数据" : lang === "ms" ? "Tiada data pesanan untuk tempoh ini" : "No order data for this period yet"}
+            </p>
+          )
+        )}
+      </div>
+
+      <div className="mt-2.5">
+        <ProfitBreakdownCard
+          cogs={stats.cogs}
+          sellingCosts={stats.sellingCosts}
+          operatingExpenses={stats.operatingExpenses}
+          netProfit={stats.netProfit}
+          lang={lang}
         />
       </div>
 
-      {/* Suggestion */}
-      {suggestion && (
-        <div className="mt-4 rounded-2xl border border-border/60 bg-card p-3.5 shadow-[var(--shadow-card)]">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-            {t("ro_today_focus")}
-          </p>
-          <p className="mt-1 text-sm font-medium text-foreground leading-snug">{suggestion.text}</p>
+      {/* Needs Attention — a real action list instead of the old single
+          rotating tip; each row links straight to where it gets fixed. */}
+      <div className="mt-4 rounded-2xl border border-border/60 bg-card shadow-[var(--shadow-card)] overflow-hidden">
+        <p className="px-3.5 pt-3.5 text-sm font-semibold text-foreground">
+          {lang === "zh" ? "需要关注" : lang === "ms" ? "Perlu Perhatian" : "Needs Attention"}
+        </p>
+        <div className="mt-1 divide-y divide-border/60">
+          {loading ? (
+            <p className="px-3.5 py-4 text-xs text-muted-foreground">…</p>
+          ) : stats.lowStockItems === 0 && stats.losing === 0 && stats.unpaidCount === 0 ? (
+            <p className="px-3.5 py-4 text-xs text-muted-foreground">
+              {lang === "zh" ? "今日一切正常" : lang === "ms" ? "Semua nampak baik hari ini" : "Everything looks healthy today"}
+            </p>
+          ) : (
+            <>
+              {stats.lowStockItems > 0 && (
+                <Link to="/inventory" className="flex items-center gap-2.5 px-3.5 py-2.5 active:bg-muted/50">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+                  <span className="flex-1 text-xs text-foreground">
+                    {lang === "zh"
+                      ? `${stats.lowStockItems} 个产品库存偏低`
+                      : lang === "ms"
+                        ? `${stats.lowStockItems} produk stok rendah`
+                        : `${stats.lowStockItems} ${stats.lowStockItems === 1 ? "product is" : "products are"} low in stock`}
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                </Link>
+              )}
+              {stats.losing > 0 && (
+                <Link to="/product-profit" className="flex items-center gap-2.5 px-3.5 py-2.5 active:bg-muted/50">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-600 shrink-0" />
+                  <span className="flex-1 text-xs text-foreground">
+                    {lang === "zh"
+                      ? `${stats.losing} 个产品正在亏本`
+                      : lang === "ms"
+                        ? `${stats.losing} produk sedang rugi`
+                        : `${stats.losing} ${stats.losing === 1 ? "product is" : "products are"} losing money`}
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                </Link>
+              )}
+              {stats.unpaidCount > 0 && (
+                <Link to="/orders" className="flex items-center gap-2.5 px-3.5 py-2.5 active:bg-muted/50">
+                  <span className="h-1.5 w-1.5 rounded-full bg-orange-500 shrink-0" />
+                  <span className="flex-1 text-xs text-foreground">
+                    {money(stats.unpaidTotal)}{" "}
+                    {lang === "zh" ? "未付款订单" : lang === "ms" ? "dalam pesanan belum bayar" : "in unpaid orders"}
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                </Link>
+              )}
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Recent Orders */}
       <div className="mt-4 rounded-2xl border border-border/60 bg-card p-3.5 shadow-[var(--shadow-card)]">
@@ -754,25 +910,52 @@ export function RetailOverview() {
         </div>
       </div>
 
+      <div className="mt-4">
+        <TopProductsCard products={topProducts} lang={lang} t={t} />
+      </div>
+
+      {/* Quick Actions — the most common things a seller does from Home. */}
+      <div className="mt-4">
+        <p className="text-sm font-semibold text-foreground mb-2">
+          {lang === "zh" ? "快捷操作" : lang === "ms" ? "Tindakan Pantas" : "Quick Actions"}
+        </p>
+        <div className="grid grid-cols-4 gap-2">
+          <Link
+            to="/new-order"
+            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
+          >
+            <Plus className="h-4 w-4 text-primary" />
+            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("new_order")}</span>
+          </Link>
+          <Link
+            to="/inventory"
+            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
+          >
+            <Package className="h-4 w-4 text-primary" />
+            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("add_product")}</span>
+          </Link>
+          <Link
+            to="/add-cost"
+            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
+          >
+            <Wallet className="h-4 w-4 text-primary" />
+            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("more_add_cost")}</span>
+          </Link>
+          <Link
+            to="/reports"
+            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
+          >
+            <FileText className="h-4 w-4 text-primary" />
+            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("more_reports")}</span>
+          </Link>
+        </div>
+      </div>
+
       {!hasFullAccess && (
         <div className="mt-4">
           <UpgradeToProCard onUpgrade={() => showUpgrade("dashboard")} lang={lang} />
         </div>
       )}
-
-      <div className="mt-4">
-        <TopProductsCard products={topProducts} lang={lang} t={t} />
-      </div>
-
-      <div className="mt-4">
-        <ProfitBreakdownCard
-          cogs={stats.cogs}
-          sellingCosts={stats.sellingCosts}
-          operatingExpenses={stats.operatingExpenses}
-          netProfit={stats.netProfit}
-          lang={lang}
-        />
-      </div>
 
     </div>
     {/* Desktop: same data/state as the mobile view above, laid out to
@@ -797,7 +980,7 @@ export function RetailOverview() {
             </button>
             {rangePickerOpen && (
               <div className="absolute right-0 mt-1.5 z-20 rounded-xl border border-border/60 bg-card shadow-lg overflow-hidden min-w-[10rem]">
-                {(["week", "month", "custom"] as Range[]).map((r) => (
+                {(["today", "week", "days30", "month", "custom"] as Range[]).map((r) => (
                   <button
                     key={r}
                     onClick={() => {
@@ -808,7 +991,15 @@ export function RetailOverview() {
                       range === r ? "text-primary font-semibold" : "text-foreground"
                     }`}
                   >
-                    {r === "week" ? t("this_week") : r === "month" ? t("this_month") : t("custom")}
+                    {r === "today"
+                      ? t("today_label")
+                      : r === "week"
+                        ? (lang === "zh" ? "过去7天" : lang === "ms" ? "7 Hari Lepas" : "Last 7 Days")
+                        : r === "days30"
+                          ? (lang === "zh" ? "过去30天" : lang === "ms" ? "30 Hari Lepas" : "Last 30 Days")
+                          : r === "month"
+                            ? t("this_month")
+                            : t("custom")}
                   </button>
                 ))}
               </div>
@@ -896,7 +1087,7 @@ export function RetailOverview() {
       {dailyChart.length > 1 && (
         <div className="mt-5 rounded-xl border border-border/60 bg-card p-4">
           <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
-            {lang === "zh" ? "每日净利润趋势" : lang === "ms" ? "Trend Untung Bersih Harian" : "Daily Net Profit Trend"}
+            {lang === "zh" ? "每日利润趋势" : lang === "ms" ? "Trend Untung Harian" : "Daily Profit Trend"}
           </p>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
@@ -905,7 +1096,7 @@ export function RetailOverview() {
               <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
               <Bar dataKey="profit" radius={[4, 4, 4, 4]}>
                 {dailyChart.map((d, i) => (
-                  <Cell key={i} fill={d.profit < 0 ? "#F87171" : "#8B5CF6"} />
+                  <Cell key={i} fill={d.profit < 0 ? "#DC2626" : "#8B5CF6"} />
                 ))}
               </Bar>
             </BarChart>
