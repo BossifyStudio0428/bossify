@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronLeft, Sparkles } from "lucide-react";
+import { ChevronLeft, Sparkles, FlaskConical, Package, Wallet, Crown, Bot, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -270,7 +270,7 @@ function AdminPage() {
 
   return (
     <div className="pb-8">
-      <header className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground px-5 pt-10 pb-6 rounded-b-3xl">
+      <header className="bg-primary text-primary-foreground px-5 pt-10 pb-6 rounded-b-3xl">
         <div className="flex items-center gap-3 mb-3">
           <button
             onClick={() => navigate({ to: "/profile" })}
@@ -280,7 +280,7 @@ function AdminPage() {
           </button>
           <Sparkles className="h-5 w-5" />
         </div>
-        <h1 className="text-2xl font-bold">{t("admin_panel")} ⚙️</h1>
+        <h1 className="text-2xl font-bold">{t("admin_panel")}</h1>
         <p className="text-xs opacity-80 mt-1">{t("admin_console_sub")}</p>
       </header>
 
@@ -308,8 +308,8 @@ function AdminPage() {
               <Stat label={t("admin_new_today")} value={newToday} />
             </div>
 
-            <section className="rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 p-4 space-y-3">
-              <h3 className="text-sm font-bold">🧪 {t("admin_test_mode")}</h3>
+            <section className="rounded-2xl bg-primary/10 border border-primary/30 p-4 space-y-3">
+              <h3 className="text-sm font-bold flex items-center gap-1.5"><FlaskConical className="h-4 w-4" /> {t("admin_test_mode")}</h3>
               <p className="text-xs text-muted-foreground">{t("admin_test_desc")}</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -356,10 +356,10 @@ function AdminPage() {
                   </span>
                 </div>
                 <div className="flex gap-3 text-[11px] text-muted-foreground">
-                  <span>📦 {u.total_orders}</span>
-                  <span>💰 RM {Number(u.total_revenue).toFixed(0)}</span>
+                  <span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {u.total_orders}</span>
+                  <span className="inline-flex items-center gap-1"><Wallet className="h-3 w-3" /> RM {Number(u.total_revenue).toFixed(0)}</span>
                   {u.is_admin && (
-                    <span className="text-primary font-semibold">👑 {t("admin_admin_badge")}</span>
+                    <span className="text-primary font-semibold inline-flex items-center gap-1"><Crown className="h-3 w-3" /> {t("admin_admin_badge")}</span>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -447,7 +447,7 @@ function AdminPage() {
         {tab === "ai" && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold">🤖 AI Usage</h3>
+              <h3 className="text-sm font-bold flex items-center gap-1.5"><Bot className="h-4 w-4" /> AI Usage</h3>
               <button
                 onClick={loadAiStats}
                 className="text-[11px] px-3 py-1 rounded-full bg-muted text-muted-foreground font-semibold"
@@ -501,7 +501,7 @@ function AdminPage() {
                 <div className="rounded-2xl bg-card border border-border/60 p-3 space-y-2">
                   <p className="text-xs font-bold">Recent failures</p>
                   {aiStats.recent_failures.length === 0 ? (
-                    <p className="text-[11px] text-muted-foreground">No failures 🎉</p>
+                    <p className="text-[11px] text-muted-foreground flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-emerald-600" /> No failures</p>
                   ) : (
                     aiStats.recent_failures.map((r) => (
                       <div
@@ -575,9 +575,9 @@ function AdminPage() {
               ))}
               <button
                 onClick={() => grantPro(grantOpen.uid, "lifetime", grantPlan)}
-                className="col-span-2 py-3 rounded-xl bg-gradient-to-r from-primary to-primary/70 text-primary-foreground font-bold text-sm"
+                className="col-span-2 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-1.5"
               >
-                ✨ {t("admin_lifetime")}
+                <Sparkles className="h-4 w-4" /> {t("admin_lifetime")}
               </button>
             </div>
             <button
@@ -604,7 +604,7 @@ function Stat({
 }) {
   return (
     <div
-      className={`rounded-2xl border p-4 ${accent ? "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground border-transparent" : "bg-card border-border/60"}`}
+      className={`rounded-2xl border p-4 ${accent ? "bg-primary text-primary-foreground border-transparent" : "bg-card border-border/60"}`}
     >
       <p className={`text-xl font-bold ${accent ? "" : "text-foreground"}`}>{value}</p>
       <p

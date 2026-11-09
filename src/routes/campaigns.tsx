@@ -289,7 +289,7 @@ function CampaignsListPage() {
       {rows.length > 0 && !showCreate && (
         <button
           onClick={() => setShowCreate(true)}
-          className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-gradient-to-br from-primary to-primary/80"
+          className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-primary"
         >
           <Plus className="h-5 w-5" strokeWidth={2.5} />
           {lang === "zh" ? "新增活动" : lang === "ms" ? "Kempen baharu" : "New campaign"}

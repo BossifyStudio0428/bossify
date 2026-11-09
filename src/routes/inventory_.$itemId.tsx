@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Pencil, Trash2, ImageIcon, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, ImageIcon, Plus, Minus, Package, History, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -290,22 +290,22 @@ function InventoryDetail() {
           </div>
           <button
             onClick={() => setSheet({ kind: "receive" })}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold active:scale-[0.98]"
+            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.98] flex items-center justify-center gap-1.5"
           >
-            📦 {lang === "zh" ? "收货（更新成本）" : lang === "ms" ? "Terima stok (kemas kini kos)" : "Receive stock (updates cost)"}
+            <Package className="h-4 w-4" /> {lang === "zh" ? "收货（更新成本）" : lang === "ms" ? "Terima stok (kemas kini kos)" : "Receive stock (updates cost)"}
           </button>
           <button
             onClick={() => setSheet({ kind: "supplier_refund" })}
-            className="w-full py-2.5 rounded-xl bg-card border border-border/60 text-amber-700 text-sm font-semibold active:scale-[0.98]"
+            className="w-full py-2.5 rounded-xl bg-card border border-border/60 text-amber-700 text-sm font-semibold active:scale-[0.98] flex items-center justify-center gap-1.5"
           >
-            ↩️ {lang === "zh" ? "退货给供应商" : lang === "ms" ? "Pulangkan kepada pembekal" : "Return to supplier"}
+            <Undo2 className="h-4 w-4" /> {lang === "zh" ? "退货给供应商" : lang === "ms" ? "Pulangkan kepada pembekal" : "Return to supplier"}
           </button>
           <Link
             to="/inventory-history"
             search={{ id: item.id }}
-            className="w-full py-2.5 rounded-xl bg-card border border-border/60 text-muted-foreground text-xs font-semibold active:scale-[0.98] flex items-center justify-center"
+            className="w-full py-2.5 rounded-xl bg-card border border-border/60 text-muted-foreground text-xs font-semibold active:scale-[0.98] flex items-center justify-center gap-1.5"
           >
-            🕘 {lang === "zh" ? "查看变更记录" : lang === "ms" ? "Lihat sejarah perubahan" : "View change history"}
+            <History className="h-3.5 w-3.5" /> {lang === "zh" ? "查看变更记录" : lang === "ms" ? "Lihat sejarah perubahan" : "View change history"}
           </Link>
         </div>
 
@@ -358,8 +358,8 @@ function InventoryDetail() {
       {sheet.kind === "receive" && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4" onClick={() => setSheet({ kind: "none" })}>
           <div className="w-full max-w-sm rounded-2xl bg-card border border-border p-5 space-y-3 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <p className="text-base font-bold">
-              📦 {lang === "zh" ? "收货" : lang === "ms" ? "Terima stok" : "Receive stock"} · {item.name}
+            <p className="text-base font-bold flex items-center gap-1.5">
+              <Package className="h-4 w-4" /> {lang === "zh" ? "收货" : lang === "ms" ? "Terima stok" : "Receive stock"} · {item.name}
             </p>
             <p className="text-[11px] text-muted-foreground">
               {lang === "zh"
@@ -400,8 +400,8 @@ function InventoryDetail() {
       {sheet.kind === "supplier_refund" && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4" onClick={() => setSheet({ kind: "none" })}>
           <div className="w-full max-w-sm rounded-2xl bg-card border border-border p-5 space-y-3 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <p className="text-base font-bold">
-              ↩️ {lang === "zh" ? "退货给供应商" : lang === "ms" ? "Pulangkan kepada pembekal" : "Return to supplier"} · {item.name}
+            <p className="text-base font-bold flex items-center gap-1.5">
+              <Undo2 className="h-4 w-4" /> {lang === "zh" ? "退货给供应商" : lang === "ms" ? "Pulangkan kepada pembekal" : "Return to supplier"} · {item.name}
             </p>
             <p className="text-[11px] text-muted-foreground">
               {lang === "zh"

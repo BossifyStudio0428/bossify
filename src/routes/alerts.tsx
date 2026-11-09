@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, AlertTriangle, PackageX, TrendingDown } from "lucide-react";
+import { ChevronLeft, AlertTriangle, PackageX, TrendingDown, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -74,7 +74,9 @@ function AlertsPage() {
         <p className="mt-8 text-center text-sm text-muted-foreground">{t("loading")}</p>
       ) : total === 0 ? (
         <div className="mt-10 text-center">
-          <p className="text-4xl">🎉</p>
+          <div className="mx-auto h-14 w-14 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+            <CheckCircle2 className="h-7 w-7" />
+          </div>
           <p className="mt-3 text-sm text-foreground font-semibold">{t("alerts_all_good")}</p>
           <p className="mt-1 text-xs text-muted-foreground">{t("alerts_all_good_sub")}</p>
         </div>

@@ -705,7 +705,7 @@ function CampaignDetailPage() {
             </div>
             {outOfStock.length === 0 && lowStock.length === 0 ? (
               <p className="text-xs text-muted-foreground rounded-2xl bg-card border border-border/60 p-3">
-                {lang === "zh" ? "库存暂时没问题 👍" : lang === "ms" ? "Stok anda okay buat masa ini 👍" : "Stock looks fine for now 👍"}
+                {lang === "zh" ? "库存暂时没问题" : lang === "ms" ? "Stok anda okay buat masa ini" : "Stock looks fine for now"}
               </p>
             ) : (
               <div className="rounded-2xl bg-card border border-border/60 divide-y divide-border/40">
@@ -899,7 +899,7 @@ function CampaignDetailPage() {
             </div>
             {needsShipping.length === 0 ? (
               <p className="text-xs text-muted-foreground rounded-2xl bg-card border border-border/60 p-3">
-                {lang === "zh" ? "发货进度正常 👍" : lang === "ms" ? "Penghantaran anda okay 👍" : "Shipping is on track 👍"}
+                {lang === "zh" ? "发货进度正常" : lang === "ms" ? "Penghantaran anda okay" : "Shipping is on track"}
               </p>
             ) : (
               <div className="rounded-2xl bg-card border border-border/60 divide-y divide-border/40">

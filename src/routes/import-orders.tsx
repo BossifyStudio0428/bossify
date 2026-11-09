@@ -282,12 +282,12 @@ function ImportOrdersPage() {
               {t("import_preview")}
             </h2>
             <div className="flex gap-2 text-xs">
-              <span className="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-700 font-medium">
-                ✓ {validCount} {t("import_ready")}
+              <span className="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-700 font-medium inline-flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" /> {validCount} {t("import_ready")}
               </span>
               {invalidCount > 0 && (
-                <span className="px-2 py-1 rounded-full bg-red-500/15 text-red-700 font-medium">
-                  ⚠ {invalidCount} {t("import_will_skip")}
+                <span className="px-2 py-1 rounded-full bg-red-500/15 text-red-700 font-medium inline-flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" /> {invalidCount} {t("import_will_skip")}
                 </span>
               )}
             </div>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CreditCard } from "lucide-react";
+import { CreditCard, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -83,7 +83,7 @@ function PaymentSetupPage() {
     <div className="min-h-screen w-full bg-background flex justify-center">
       <div className="w-full max-w-[420px] min-h-screen flex flex-col px-5 pt-10 pb-6">
         <div className="flex flex-col items-center text-center">
-          <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center shadow-[var(--shadow-soft)]">
+          <div className="h-20 w-20 rounded-3xl bg-primary text-primary-foreground flex items-center justify-center shadow-[var(--shadow-soft)]">
             <CreditCard className="h-10 w-10" strokeWidth={2} />
           </div>
           <h1 className="mt-5 text-[20px] font-bold text-foreground">
@@ -133,7 +133,7 @@ function PaymentSetupPage() {
               disabled={uploading}
               className="px-3 py-2 rounded-xl bg-card border border-border/60 text-xs font-semibold text-foreground disabled:opacity-60"
             >
-              📷 {uploading ? t("uploading_qr") : t("upload_qr")}
+              <Camera className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />{uploading ? t("uploading_qr") : t("upload_qr")}
             </button>
             {qrUrl && (
               <button
@@ -163,7 +163,7 @@ function PaymentSetupPage() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
+            className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
           >
             {saving ? t("saving") : t("setup_and_continue")}
           </button>

@@ -521,7 +521,7 @@ export function PurchaseOrderAiReview({
       <button
         onClick={save}
         disabled={saving}
-        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99]"
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99]"
       >
         {saving ? t("saving") : t("po_ai_confirm_create")}
       </button>

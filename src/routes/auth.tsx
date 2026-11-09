@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { ChevronLeft, Eye, EyeOff, Mail, Check } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff, Mail, Check, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -463,7 +463,7 @@ function DeviceLimitBlock({
     <div className="w-full max-w-[400px] mx-auto space-y-5 flex-1 flex flex-col">
       <Logo />
       <div className="bg-[#F7F5FA] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(17,12,33,0.06)] space-y-4 text-center">
-        <div className="mx-auto h-14 w-14 rounded-2xl bg-amber-500/15 flex items-center justify-center text-2xl">📱</div>
+        <div className="mx-auto h-14 w-14 rounded-2xl bg-amber-500/15 text-amber-600 flex items-center justify-center"><Smartphone className="h-7 w-7" /></div>
         <h1 className="text-[18px] font-bold" style={{ color: "#1A1225" }}>{t("device_limit_title")}</h1>
         <p className="text-[13px]" style={{ color: "#5B5270" }}>
           {t("device_limit_message")
