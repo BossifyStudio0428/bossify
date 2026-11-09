@@ -4,6 +4,7 @@ import {
   Menu,
   X,
   ArrowRight,
+  ArrowDown,
   Play,
   TrendingUp,
   DollarSign,
@@ -16,37 +17,42 @@ import {
   MessageCircle,
   Check,
   Minus,
-  Maximize2,
-  LayoutDashboard,
+  ChevronDown,
+  Layers,
+  Archive,
+  MoreHorizontal,
   ShoppingBag,
+  Zap,
+  CreditCard,
+  Smartphone,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import bossifyLogo from "@/assets/bossify-logo.png";
 
 // ---------------------------------------------------------------------------
-// Design tokens — Bossify's own light brand palette. No dark cinematic theme:
-// this is a premium, mostly-white SaaS page (Stripe/Linear/Vercel-adjacent),
-// with purple as the single confident accent and one near-black section for
-// contrast (the "sales vs. profit" moment and the closing CTA).
+// Design tokens -- premium dark canvas. One consistent near-black-purple
+// background for the whole page; depth comes from elevated card surfaces,
+// hairline borders and a purple->pink gradient accent, not section banding.
 // ---------------------------------------------------------------------------
-const PRIMARY = "#3B1E6D";
-const PRIMARY_LIGHT = "#6C4AB6";
-const ACCENT = "#FF3B5C";
-const GOLD = "#D4A017";
-const INK = "#1E1730";
-const INK_SOFT = "#5B5270";
-const SURFACE = "#F7F5FA";
-const LINE = "#E1DCEC";
-const NEARBLACK = "#0B0712";
-const NEARBLACK_SOFT = "#1A1430";
+const BG = "#0A0614";
+const CARD = "#140D22";
+const CARD_SOFT = "#1B1430";
+const BORDER = "rgba(168,124,255,0.14)";
+const BORDER_STRONG = "rgba(168,124,255,0.3)";
+const TEXT = "#F5F3FA";
+const TEXT_MUTED = "#9D93B5";
+const GRAD_FROM = "#8B5CF6";
+const GRAD_TO = "#D946EF";
+const GRADIENT = `linear-gradient(135deg, ${GRAD_FROM} 0%, ${GRAD_TO} 100%)`;
+const GREEN = "#4ADE80";
+const RED = "#F87171";
+const BLUE = "#60A5FA";
 
-type ShowcaseItem = { eyebrow: string; title: string; desc: string };
-type FlowStep = { num: string; title: string; desc: string };
+type ShowcaseItem = { title: string; desc: string };
 type CostLine = { label: string; value: string };
 
 type LandingCopy = {
   navFeatures: string;
-  navHowItWorks: string;
   navReports: string;
   navPricing: string;
   signIn: string;
@@ -59,34 +65,31 @@ type LandingCopy = {
   ctaPrimary: string;
   ctaSecondary: string;
   trustBullets: string[];
+  capabilityStrip: string[];
 
-  demoBadge: string;
-  demoTitle: string;
-  demoSub: string;
-
-  problemEyebrow: string;
   problemTitle: string;
+  problemTitleEmphasis: string;
+  problemDesc: string;
   problemSalesLabel: string;
   problemSalesValue: string;
   problemCostLines: CostLine[];
   problemProfitLabel: string;
   problemProfitValue: string;
 
+  featuresTitle: string;
+  featuresSub: string;
   showcaseProfit: ShowcaseItem;
   showcaseInventory: ShowcaseItem;
-  showcaseOrders: ShowcaseItem;
   showcaseReports: ShowcaseItem;
+  showcaseOrders: ShowcaseItem;
   reports: string[];
 
   tiktokEyebrow: string;
   tiktokTitle: string;
   tiktokSub: string;
   tiktokComingSoon: string;
-  tiktokDestinations: string[];
-
-  stepsTitle: string;
-  stepsSub: string;
-  steps: FlowStep[];
+  tiktokOutcomes: string[];
+  reportsGridTitle: string;
 
   compareTitle: string;
   compareSub: string;
@@ -110,28 +113,26 @@ type LandingCopy = {
 const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
   en: {
     navFeatures: "Features",
-    navHowItWorks: "How it works",
     navReports: "Reports",
     navPricing: "Pricing",
     signIn: "Sign In",
     startFree: "Start Free",
 
-    eyebrow: "BUILT FOR TIKTOK SHOP SELLERS",
+    eyebrow: "FOR TIKTOK SHOP SELLERS IN MALAYSIA",
     headline1: "Know what you",
     headlineEmphasis: "actually keep.",
     subhead:
       "Track real profit, inventory, orders and business performance — without complicated accounting.",
     ctaPrimary: "Start Free",
-    ctaSecondary: "Watch 2-min Demo",
-    trustBullets: ["No credit card required", "Set up in minutes", "Built for small sellers"],
+    ctaSecondary: "Watch Demo (2 min)",
+    trustBullets: ["Set up in minutes", "No credit card", "Mobile & Web"],
+    capabilityStrip: ["Real Profit Tracking", "Inventory Management", "7 Business Reports", "Order Management"],
 
-    demoBadge: "PRODUCT DEMO",
-    demoTitle: "See your business clearly.",
-    demoSub: "From every order to your actual profit.",
-
-    problemEyebrow: "THE PROBLEM",
-    problemTitle: "Sales don't tell the whole story.",
-    problemSalesLabel: "Sales",
+    problemTitle: "Sales don't tell",
+    problemTitleEmphasis: "the whole story.",
+    problemDesc:
+      "You may see good sales on TikTok Shop, but after product costs, platform fees, shipping and other expenses, your actual profit can be much lower.",
+    problemSalesLabel: "Sales (GMV)",
     problemSalesValue: "RM10,000",
     problemCostLines: [
       { label: "Product Cost", value: "−RM5,000" },
@@ -140,29 +141,15 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { label: "Packaging", value: "−RM300" },
       { label: "Other Expenses", value: "−RM450" },
     ],
-    problemProfitLabel: "Actual Profit",
+    problemProfitLabel: "What you actually keep",
     problemProfitValue: "RM2,850",
 
-    showcaseProfit: {
-      eyebrow: "REAL PROFIT",
-      title: "See what you actually keep.",
-      desc: "Know your profit after product costs, platform fees and other business expenses — not just what TikTok Shop shows you.",
-    },
-    showcaseInventory: {
-      eyebrow: "INVENTORY",
-      title: "Know what needs attention.",
-      desc: "Get alerted on low stock and loss-making products before they hurt your business — no more guessing what to restock.",
-    },
-    showcaseOrders: {
-      eyebrow: "ORDERS",
-      title: "Enter orders in seconds.",
-      desc: "Add orders fast and confirm them with your customer over WhatsApp in one tap — no switching between apps.",
-    },
-    showcaseReports: {
-      eyebrow: "REPORTS",
-      title: "7 reports, always ready.",
-      desc: "Export real business documents whenever you need them — ready to send, file, or hand to your accountant.",
-    },
+    featuresTitle: "Everything you need to run the numbers.",
+    featuresSub: "Manage your sales, profit, stock and reports in one place.",
+    showcaseProfit: { title: "Real Profit", desc: "See profit after real business costs." },
+    showcaseInventory: { title: "Inventory", desc: "Track stock levels and receive alerts." },
+    showcaseReports: { title: "Business Reports", desc: "Generate 7 professional reports in PDF." },
+    showcaseOrders: { title: "Orders", desc: "Record and manage orders quickly, with WhatsApp confirmation." },
     reports: [
       "Sales Report",
       "Profit Report",
@@ -174,18 +161,11 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     ],
 
     tiktokEyebrow: "INTEGRATION",
-    tiktokTitle: "Bring your TikTok Shop data into one place.",
-    tiktokSub: "Connect your shop and let Bossify organize your orders, products and profit automatically.",
-    tiktokComingSoon: "Automatic order sync — coming soon",
-    tiktokDestinations: ["Orders", "Products", "Inventory", "Profit", "Reports"],
-
-    stepsTitle: "From order to real profit.",
-    stepsSub: "Three steps. No accounting background needed.",
-    steps: [
-      { num: "01", title: "Add your orders", desc: "Enter orders manually in seconds, or sync automatically once TikTok Shop sync is live." },
-      { num: "02", title: "Bossify calculates the numbers", desc: "Product cost, platform fees and expenses are deducted automatically — no spreadsheet formulas." },
-      { num: "03", title: "See your real profit", desc: "Track performance, get alerts, and export reports whenever you need them." },
-    ],
+    tiktokTitle: "From TikTok Shop to your real profit.",
+    tiktokSub: "Connect your store, bring in orders and products, then see your profit, stock and reports in Bossify.",
+    tiktokComingSoon: "Automatic TikTok Shop order sync — Coming soon",
+    tiktokOutcomes: ["Profit Analysis", "Inventory Control", "Business Reports"],
+    reportsGridTitle: "7 Professional Reports",
 
     compareTitle: "Spreadsheets vs. Bossify",
     compareSub: "What changes when you switch.",
@@ -215,35 +195,32 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
 
     finalTitle1: "Stop guessing.",
     finalTitle2: "Start knowing.",
-    finalSub: "See what your business actually keeps with Bossify.",
+    finalSub: "See what your business actually earns with Bossify.",
     finalCtaPrimary: "Start Free",
-    finalCtaSecondary: "Watch Demo",
+    finalCtaSecondary: "Watch Demo (2 min)",
 
     footerTag: "Manage your shop like a boss",
   },
   zh: {
     navFeatures: "功能",
-    navHowItWorks: "使用流程",
     navReports: "报表",
     navPricing: "价格",
     signIn: "登录",
     startFree: "免费开始",
 
-    eyebrow: "专为 TIKTOK SHOP 卖家打造",
+    eyebrow: "专为马来西亚 TIKTOK SHOP 卖家打造",
     headline1: "知道你",
     headlineEmphasis: "真正赚了多少。",
     subhead: "追踪真实利润、库存、订单和业绩表现——不需要会计知识。",
     ctaPrimary: "免费开始",
-    ctaSecondary: "观看 2 分钟演示",
-    trustBullets: ["无需信用卡", "几分钟即可上手", "专为小卖家设计"],
+    ctaSecondary: "观看演示(2 分钟)",
+    trustBullets: ["几分钟即可上手", "无需信用卡", "手机 & 网页皆可用"],
+    capabilityStrip: ["真实利润追踪", "库存管理", "7 份业务报表", "订单管理"],
 
-    demoBadge: "产品演示",
-    demoTitle: "让你的生意一目了然。",
-    demoSub: "从每一笔订单,到你真正赚到的利润。",
-
-    problemEyebrow: "问题所在",
-    problemTitle: "销售额不代表真相。",
-    problemSalesLabel: "销售额",
+    problemTitle: "销售额不代表",
+    problemTitleEmphasis: "真相。",
+    problemDesc: "你在 TikTok Shop 上可能看到不错的销售额,但扣除产品成本、平台费用、运费和其他支出后,实际利润可能低很多。",
+    problemSalesLabel: "销售额 (GMV)",
     problemSalesValue: "RM10,000",
     problemCostLines: [
       { label: "产品成本", value: "−RM5,000" },
@@ -252,29 +229,15 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { label: "包装费", value: "−RM300" },
       { label: "其他支出", value: "−RM450" },
     ],
-    problemProfitLabel: "实际利润",
+    problemProfitLabel: "你真正赚到的",
     problemProfitValue: "RM2,850",
 
-    showcaseProfit: {
-      eyebrow: "真实利润",
-      title: "看清你真正赚到的钱。",
-      desc: "扣除产品成本、平台费用和其他支出后的真实利润——不只是 TikTok Shop 显示的数字。",
-    },
-    showcaseInventory: {
-      eyebrow: "库存管理",
-      title: "知道哪里需要注意。",
-      desc: "在库存不足或亏本商品影响生意之前就收到提醒——不用再靠猜测补货。",
-    },
-    showcaseOrders: {
-      eyebrow: "订单管理",
-      title: "几秒钟完成订单输入。",
-      desc: "快速添加订单,一键通过 WhatsApp 跟客户确认订单——不用在不同 App 之间切换。",
-    },
-    showcaseReports: {
-      eyebrow: "报表",
-      title: "7 份报表,随时可用。",
-      desc: "随时导出真实的商业文件——方便发送、存档,或交给你的会计。",
-    },
+    featuresTitle: "经营生意需要的一切,全都在这里。",
+    featuresSub: "在同一个地方管理你的销售、利润、库存和报表。",
+    showcaseProfit: { title: "真实利润", desc: "看清扣除真实成本后的利润。" },
+    showcaseInventory: { title: "库存管理", desc: "追踪库存水平并接收提醒。" },
+    showcaseReports: { title: "业务报表", desc: "生成 7 份专业 PDF 报表。" },
+    showcaseOrders: { title: "订单管理", desc: "快速记录和管理订单,支持 WhatsApp 确认。" },
     reports: [
       "销售报表",
       "利润报表",
@@ -286,18 +249,11 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     ],
 
     tiktokEyebrow: "数据整合",
-    tiktokTitle: "把你的 TikTok Shop 数据整合到一个地方。",
-    tiktokSub: "连接你的商店,让 Bossify 自动整理订单、产品和利润。",
-    tiktokComingSoon: "自动订单同步——即将推出",
-    tiktokDestinations: ["订单", "产品", "库存", "利润", "报表"],
-
-    stepsTitle: "从订单到真实利润。",
-    stepsSub: "三个步骤,不需要会计背景。",
-    steps: [
-      { num: "01", title: "添加你的订单", desc: "几秒钟手动输入订单,TikTok Shop 同步上线后也可以自动同步。" },
-      { num: "02", title: "Bossify 自动计算数字", desc: "自动扣除产品成本、平台费用和支出——不用再写电子表格公式。" },
-      { num: "03", title: "查看你的真实利润", desc: "追踪业绩、接收提醒,随时导出报表。" },
-    ],
+    tiktokTitle: "从 TikTok Shop 到你的真实利润。",
+    tiktokSub: "连接你的商店,导入订单和产品,然后在 Bossify 查看利润、库存和报表。",
+    tiktokComingSoon: "自动 TikTok Shop 订单同步——即将推出",
+    tiktokOutcomes: ["利润分析", "库存管理", "业务报表"],
+    reportsGridTitle: "7 份专业报表",
 
     compareTitle: "电子表格 vs. Bossify",
     compareSub: "换了之后会有什么不同。",
@@ -325,33 +281,31 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     finalTitle2: "开始真正了解。",
     finalSub: "用 Bossify 看清你的生意真正赚到了多少。",
     finalCtaPrimary: "免费开始",
-    finalCtaSecondary: "观看演示",
+    finalCtaSecondary: "观看演示(2 分钟)",
 
     footerTag: "像老板一样管理你的生意",
   },
   ms: {
     navFeatures: "Ciri-ciri",
-    navHowItWorks: "Cara ia berfungsi",
     navReports: "Laporan",
     navPricing: "Harga",
     signIn: "Log Masuk",
     startFree: "Mula Percuma",
 
-    eyebrow: "DIBINA UNTUK PENJUAL TIKTOK SHOP",
+    eyebrow: "UNTUK PENJUAL TIKTOK SHOP DI MALAYSIA",
     headline1: "Ketahui apa yang",
     headlineEmphasis: "anda benar-benar untung.",
     subhead: "Jejak keuntungan sebenar, inventori, pesanan dan prestasi perniagaan — tanpa perakaunan yang rumit.",
     ctaPrimary: "Mula Percuma",
-    ctaSecondary: "Tonton Demo 2 Minit",
-    trustBullets: ["Tidak perlu kad kredit", "Sedia dalam beberapa minit", "Dibina untuk penjual kecil"],
+    ctaSecondary: "Tonton Demo (2 min)",
+    trustBullets: ["Sedia dalam beberapa minit", "Tidak perlu kad kredit", "Mudah alih & Web"],
+    capabilityStrip: ["Penjejakan Keuntungan Sebenar", "Pengurusan Inventori", "7 Laporan Perniagaan", "Pengurusan Pesanan"],
 
-    demoBadge: "DEMO PRODUK",
-    demoTitle: "Lihat perniagaan anda dengan jelas.",
-    demoSub: "Dari setiap pesanan, kepada keuntungan sebenar anda.",
-
-    problemEyebrow: "MASALAHNYA",
-    problemTitle: "Jualan tidak menunjukkan keseluruhan cerita.",
-    problemSalesLabel: "Jualan",
+    problemTitle: "Jualan tidak menunjukkan",
+    problemTitleEmphasis: "keseluruhan cerita.",
+    problemDesc:
+      "Anda mungkin nampak jualan yang baik di TikTok Shop, tetapi selepas kos produk, yuran platform, penghantaran dan perbelanjaan lain, keuntungan sebenar anda mungkin jauh lebih rendah.",
+    problemSalesLabel: "Jualan (GMV)",
     problemSalesValue: "RM10,000",
     problemCostLines: [
       { label: "Kos Produk", value: "−RM5,000" },
@@ -360,29 +314,15 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
       { label: "Pembungkusan", value: "−RM300" },
       { label: "Perbelanjaan Lain", value: "−RM450" },
     ],
-    problemProfitLabel: "Keuntungan Sebenar",
+    problemProfitLabel: "Apa yang anda benar-benar untung",
     problemProfitValue: "RM2,850",
 
-    showcaseProfit: {
-      eyebrow: "KEUNTUNGAN SEBENAR",
-      title: "Lihat apa yang anda benar-benar untung.",
-      desc: "Ketahui keuntungan selepas kos produk, yuran platform dan perbelanjaan lain — bukan sekadar apa yang ditunjukkan TikTok Shop.",
-    },
-    showcaseInventory: {
-      eyebrow: "INVENTORI",
-      title: "Ketahui apa yang perlu diberi perhatian.",
-      desc: "Dapat makluman stok rendah dan produk rugi sebelum ia menjejaskan perniagaan anda — tidak perlu meneka lagi.",
-    },
-    showcaseOrders: {
-      eyebrow: "PESANAN",
-      title: "Masukkan pesanan dalam beberapa saat.",
-      desc: "Tambah pesanan dengan pantas dan sahkan dengan pelanggan melalui WhatsApp sekali tekan.",
-    },
-    showcaseReports: {
-      eyebrow: "LAPORAN",
-      title: "7 laporan, sedia bila-bila masa.",
-      desc: "Eksport dokumen perniagaan sebenar bila-bila masa — sedia untuk dihantar, difailkan, atau diberikan kepada akauntan anda.",
-    },
+    featuresTitle: "Semua yang anda perlukan untuk menguruskan nombor.",
+    featuresSub: "Uruskan jualan, keuntungan, stok dan laporan anda di satu tempat.",
+    showcaseProfit: { title: "Keuntungan Sebenar", desc: "Lihat keuntungan selepas kos perniagaan sebenar." },
+    showcaseInventory: { title: "Inventori", desc: "Jejak tahap stok dan terima makluman." },
+    showcaseReports: { title: "Laporan Perniagaan", desc: "Jana 7 laporan profesional dalam PDF." },
+    showcaseOrders: { title: "Pesanan", desc: "Rekod dan uruskan pesanan dengan pantas, dengan pengesahan WhatsApp." },
     reports: [
       "Laporan Jualan",
       "Laporan Keuntungan",
@@ -394,18 +334,11 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     ],
 
     tiktokEyebrow: "INTEGRASI",
-    tiktokTitle: "Bawa data TikTok Shop anda ke satu tempat.",
-    tiktokSub: "Sambungkan kedai anda dan biarkan Bossify menyusun pesanan, produk dan keuntungan secara automatik.",
-    tiktokComingSoon: "Penyegerakan pesanan automatik — akan datang",
-    tiktokDestinations: ["Pesanan", "Produk", "Inventori", "Keuntungan", "Laporan"],
-
-    stepsTitle: "Dari pesanan kepada keuntungan sebenar.",
-    stepsSub: "Tiga langkah. Tidak perlu latar belakang perakaunan.",
-    steps: [
-      { num: "01", title: "Tambah pesanan anda", desc: "Masukkan pesanan secara manual dalam beberapa saat, atau segerak secara automatik sebaik sahaja penyegerakan TikTok Shop aktif." },
-      { num: "02", title: "Bossify mengira nombor", desc: "Kos produk, yuran platform dan perbelanjaan ditolak secara automatik — tanpa formula hamparan." },
-      { num: "03", title: "Lihat keuntungan sebenar anda", desc: "Jejak prestasi, terima makluman, dan eksport laporan bila-bila masa." },
-    ],
+    tiktokTitle: "Dari TikTok Shop kepada keuntungan sebenar anda.",
+    tiktokSub: "Sambungkan kedai anda, bawa masuk pesanan dan produk, kemudian lihat keuntungan, stok dan laporan anda di Bossify.",
+    tiktokComingSoon: "Penyegerakan pesanan TikTok Shop automatik — Akan datang",
+    tiktokOutcomes: ["Analisis Keuntungan", "Kawalan Inventori", "Laporan Perniagaan"],
+    reportsGridTitle: "7 Laporan Profesional",
 
     compareTitle: "Hamparan vs. Bossify",
     compareSub: "Apa yang berubah apabila anda bertukar.",
@@ -435,15 +368,19 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
 
     finalTitle1: "Berhenti meneka.",
     finalTitle2: "Mula mengetahui.",
-    finalSub: "Lihat apa yang perniagaan anda benar-benar untung dengan Bossify.",
+    finalSub: "Lihat apa yang perniagaan anda benar-benar peroleh dengan Bossify.",
     finalCtaPrimary: "Mula Percuma",
-    finalCtaSecondary: "Tonton Demo",
+    finalCtaSecondary: "Tonton Demo (2 min)",
 
     footerTag: "Uruskan kedai anda seperti bos",
   },
 };
 
 const REPORT_ICONS = [DollarSign, TrendingUp, Package, FileText, Users, Truck, ClipboardCheck];
+const FEATURE_ICONS = [TrendingUp, Package, FileText, ShoppingBag];
+const COST_ICONS = [Package, Layers, Truck, Archive, MoreHorizontal];
+const CAPABILITY_ICONS = [TrendingUp, Package, FileText, ShoppingBag];
+const TRUST_BULLET_ICONS = [Zap, CreditCard, Smartphone];
 
 // ---------------------------------------------------------------------------
 // Motion: lightweight scroll-reveal + cursor-follow tilt. No animation
@@ -517,12 +454,12 @@ function TiltWrap({ children, max = 6 }: { children: ReactNode; max?: number }) 
       const py = (e.clientY - rect.top) / rect.height - 0.5;
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        el.style.transform = `perspective(1200px) rotateX(${(-py * max).toFixed(2)}deg) rotateY(${(px * max).toFixed(2)}deg)`;
+        el.style.transform = `rotateX(${(-py * max).toFixed(2)}deg) rotateY(${(px * max).toFixed(2)}deg)`;
       });
     };
     const onLeave = () => {
       cancelAnimationFrame(frame);
-      el.style.transform = "perspective(1200px) rotateX(0deg) rotateY(0deg)";
+      el.style.transform = "rotateX(0deg) rotateY(0deg)";
     };
     el.addEventListener("pointermove", onMove);
     el.addEventListener("pointerleave", onLeave);
@@ -534,402 +471,271 @@ function TiltWrap({ children, max = 6 }: { children: ReactNode; max?: number }) 
   }, [max]);
 
   return (
-    <div ref={ref} style={{ transition: "transform 0.2s ease-out", willChange: "transform" }}>
+    <div ref={ref} style={{ transition: "transform 0.25s ease-out", willChange: "transform" }}>
       {children}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Product mockups — hand-built, data-free illustrations of the real Bossify
-// UI (sidebar, stat tiles, profit chart, orders list). No stock photos, no
-// screenshots pretending to be real data — these are clearly illustrative.
+// Hero product mockup -- a tilted "laptop screen" showing the real Bossify
+// dashboard: sidebar, stat tiles, a two-series profit/sales chart with a
+// decorative play button, plus two floating cards for depth. Entirely
+// hand-built illustration -- no real data, no screenshots.
 // ---------------------------------------------------------------------------
-function DashboardMockup({ idPrefix = "hero" }: { idPrefix?: string }) {
-  const points = [22, 30, 26, 38, 34, 46, 40, 52, 48, 60, 56, 68];
-  const w = 460;
+function LaptopMockup() {
+  const salesPts = [30, 42, 38, 52, 46, 60, 54, 68, 62, 76, 70, 84];
+  const profitPts = [10, 16, 13, 20, 17, 24, 20, 28, 24, 32, 28, 36];
+  const w = 520;
   const h = 150;
-  const step = w / (points.length - 1);
-  const max = Math.max(...points);
-  const coords = points.map((p, i) => [i * step, h - (p / max) * (h - 24) - 10]);
-  const linePath = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const areaPath = `${linePath} L${w},${h} L0,${h} Z`;
+  const build = (pts: number[]) => {
+    const step = w / (pts.length - 1);
+    const max = 90;
+    return pts.map((p, i) => [i * step, h - (p / max) * (h - 20) - 8]);
+  };
+  const salesCoords = build(salesPts);
+  const profitCoords = build(profitPts);
+  const toPath = (coords: number[][]) => coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const profitArea = `${toPath(profitCoords)} L${w},${h} L0,${h} Z`;
 
-  const orders = [
-    { code: "#A1042", customer: "Aina R.", amount: "RM128.00", status: "Paid" },
-    { code: "#A1041", customer: "Faris K.", amount: "RM64.50", status: "Paid" },
-    { code: "#A1040", customer: "Mei Ling", amount: "RM212.00", status: "Pending" },
+  const sidebarItems = [
+    { icon: TrendingUp, label: "Dashboard", active: true },
+    { icon: ShoppingBag, label: "Orders", active: false },
+    { icon: Package, label: "Products", active: false },
+    { icon: Archive, label: "Inventory", active: false },
+    { icon: FileText, label: "Profit & Analytics", active: false },
+    { icon: CreditCard, label: "Expenses", active: false },
+    { icon: ClipboardCheck, label: "Reports", active: false },
   ];
 
-  const navItems = [
-    { Icon: LayoutDashboard, active: true },
-    { Icon: ShoppingBag, active: false },
-    { Icon: Package, active: false },
-    { Icon: FileText, active: false },
-    { Icon: Users, active: false },
-  ];
+  const dateLabels = ["1 Oct", "9 Oct", "17 Oct", "25 Oct"];
 
   return (
-    <div
-      className="relative w-full max-w-[680px] rounded-[22px] overflow-hidden border bg-white"
-      style={{ borderColor: LINE, boxShadow: "0 50px 100px -24px rgba(59,30,109,0.3), 0 2px 10px rgba(30,23,48,0.06)" }}
-    >
-      <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: LINE, background: SURFACE }}>
-        <span className="w-2.5 h-2.5 rounded-full" style={{ background: LINE }} />
-        <span className="w-2.5 h-2.5 rounded-full" style={{ background: LINE }} />
-        <span className="w-2.5 h-2.5 rounded-full" style={{ background: LINE }} />
-        <span
-          className="ml-2 text-[10.5px] font-medium px-2.5 py-1 rounded-full bg-white"
-          style={{ color: INK_SOFT, border: `1px solid ${LINE}` }}
-        >
-          app.bossifyapp.com/dashboard
-        </span>
-      </div>
-      <div className="flex">
-        <div className="hidden sm:flex flex-col items-center gap-1.5 px-3 py-4 border-r" style={{ borderColor: LINE }}>
-          {navItems.map(({ Icon, active }, i) => (
-            <div
-              key={i}
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: active ? PRIMARY : "transparent" }}
-            >
-              <Icon className="w-4 h-4" style={{ color: active ? "#FFFFFF" : INK_SOFT }} />
+    <div className="relative w-full max-w-[640px] mx-auto">
+      <div
+        className="relative rounded-[20px] overflow-hidden border"
+        style={{
+          background: CARD,
+          borderColor: BORDER_STRONG,
+          boxShadow: `0 10px 0 0 #08051000, 0 60px 120px -30px rgba(139,92,246,0.35), 0 0 0 1px rgba(139,92,246,0.08)`,
+        }}
+      >
+        <div className="flex">
+          <div className="hidden sm:flex flex-col gap-1 p-3 w-[168px] shrink-0 border-r" style={{ borderColor: BORDER }}>
+            <div className="flex items-center gap-1.5 px-2 py-2 mb-2">
+              <img src={bossifyLogo} alt="" className="w-5 h-5 rounded" />
+              <span className="text-[12px] font-bold" style={{ color: TEXT }}>Bossify</span>
             </div>
-          ))}
-        </div>
-        <div className="flex-1 p-5">
-          <div className="grid grid-cols-3 gap-3 mb-5">
-            <div className="rounded-xl p-3" style={{ background: SURFACE }}>
-              <p className="text-[10px] font-semibold" style={{ color: INK_SOFT }}>NET PROFIT</p>
-              <p className="text-[18px] font-bold" style={{ color: INK }}>RM4,218</p>
-              <p className="text-[10.5px] font-semibold flex items-center gap-0.5" style={{ color: "#16A34A" }}>
-                <TrendingUp className="w-3 h-3" /> +18%
-              </p>
-            </div>
-            <div className="rounded-xl p-3" style={{ background: SURFACE }}>
-              <p className="text-[10px] font-semibold" style={{ color: INK_SOFT }}>SALES</p>
-              <p className="text-[18px] font-bold" style={{ color: INK }}>RM12,480</p>
-              <p className="text-[10.5px]" style={{ color: INK_SOFT }}>128 orders</p>
-            </div>
-            <div className="rounded-xl p-3" style={{ background: "rgba(255,59,92,0.07)" }}>
-              <p className="text-[10px] font-semibold" style={{ color: ACCENT }}>LOW STOCK</p>
-              <p className="text-[18px] font-bold" style={{ color: INK }}>3 items</p>
-              <p className="text-[10.5px]" style={{ color: ACCENT }}>needs attention</p>
-            </div>
+            {sidebarItems.map((it) => (
+              <div
+                key={it.label}
+                className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
+                style={{ background: it.active ? GRADIENT : "transparent" }}
+              >
+                <it.icon className="w-3.5 h-3.5 shrink-0" style={{ color: it.active ? "#FFFFFF" : TEXT_MUTED }} />
+                <span className="text-[10.5px] font-medium truncate" style={{ color: it.active ? "#FFFFFF" : TEXT_MUTED }}>
+                  {it.label}
+                </span>
+              </div>
+            ))}
           </div>
-          <div className="mb-5">
-            <p className="text-[11px] font-semibold mb-2" style={{ color: INK_SOFT }}>NET PROFIT — LAST 30 DAYS</p>
-            <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[90px]" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id={`bf-area-${idPrefix}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={PRIMARY_LIGHT} stopOpacity="0.22" />
-                  <stop offset="100%" stopColor={PRIMARY_LIGHT} stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d={areaPath} fill={`url(#bf-area-${idPrefix})`} />
-              <path d={linePath} fill="none" stroke={PRIMARY} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx={coords[coords.length - 1][0]} cy={coords[coords.length - 1][1]} r="4" fill={PRIMARY} />
-            </svg>
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold mb-2" style={{ color: INK_SOFT }}>RECENT ORDERS</p>
-            <div className="rounded-xl border overflow-hidden" style={{ borderColor: LINE }}>
-              {orders.map((o, i) => (
-                <div
-                  key={o.code}
-                  className="flex items-center justify-between px-3 py-2.5"
-                  style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-[11px] font-mono font-semibold shrink-0" style={{ color: INK_SOFT }}>{o.code}</span>
-                    <span className="text-[12px] truncate" style={{ color: INK }}>{o.customer}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[12px] font-semibold" style={{ color: INK }}>{o.amount}</span>
-                    <span
-                      className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{
-                        color: o.status === "Paid" ? "#16A34A" : "#B45309",
-                        background: o.status === "Paid" ? "rgba(22,163,74,0.1)" : "rgba(180,83,9,0.1)",
-                      }}
-                    >
-                      {o.status}
-                    </span>
-                  </div>
+
+          <div className="flex-1 p-4 sm:p-5 min-w-0">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[14px] font-bold" style={{ color: TEXT }}>Dashboard</span>
+              <span
+                className="flex items-center gap-1 text-[10.5px] font-medium px-2.5 py-1 rounded-full border"
+                style={{ color: TEXT_MUTED, borderColor: BORDER }}
+              >
+                This Month
+                <ChevronDown className="w-3 h-3" />
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+              <div className="rounded-xl p-2.5" style={{ background: CARD_SOFT }}>
+                <p className="text-[9px] font-semibold" style={{ color: TEXT_MUTED }}>SALES (GMV)</p>
+                <p className="text-[14px] font-bold" style={{ color: TEXT }}>RM12,480</p>
+                <p className="text-[9.5px] font-semibold" style={{ color: GREEN }}>+18.4%</p>
+              </div>
+              <div className="rounded-xl p-2.5" style={{ background: CARD_SOFT }}>
+                <p className="text-[9px] font-semibold" style={{ color: TEXT_MUTED }}>NET PROFIT</p>
+                <p className="text-[14px] font-bold" style={{ color: TEXT }}>RM3,842</p>
+                <p className="text-[9.5px] font-semibold" style={{ color: GREEN }}>+20.1%</p>
+              </div>
+              <div className="rounded-xl p-2.5" style={{ background: CARD_SOFT }}>
+                <p className="text-[9px] font-semibold" style={{ color: TEXT_MUTED }}>ORDERS</p>
+                <p className="text-[14px] font-bold" style={{ color: TEXT }}>428</p>
+                <p className="text-[9.5px] font-semibold" style={{ color: GREEN }}>+12.7%</p>
+              </div>
+              <div className="rounded-xl p-2.5" style={{ background: "rgba(248,113,113,0.1)" }}>
+                <p className="text-[9px] font-semibold" style={{ color: RED }}>LOW STOCK</p>
+                <p className="text-[14px] font-bold" style={{ color: TEXT }}>7</p>
+                <p className="text-[9.5px] font-semibold" style={{ color: RED }}>needs action</p>
+              </div>
+            </div>
+
+            <div className="rounded-xl p-3.5" style={{ background: CARD_SOFT }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold" style={{ color: TEXT }}>Sales &amp; Profit Trend</span>
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1 text-[9.5px]" style={{ color: TEXT_MUTED }}>
+                    <span className="w-2 h-2 rounded-full" style={{ background: GRAD_TO }} />
+                    Sales (RM)
+                  </span>
+                  <span className="flex items-center gap-1 text-[9.5px]" style={{ color: TEXT_MUTED }}>
+                    <span className="w-2 h-2 rounded-full" style={{ background: GRAD_FROM }} />
+                    Net Profit (RM)
+                  </span>
                 </div>
-              ))}
+              </div>
+              <div className="relative">
+                <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[110px]" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="bf-profit-area" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={GRAD_FROM} stopOpacity="0.35" />
+                      <stop offset="100%" stopColor={GRAD_FROM} stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path d={profitArea} fill="url(#bf-profit-area)" />
+                  <path d={toPath(salesCoords)} fill="none" stroke={GRAD_TO} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
+                  <path d={toPath(profitCoords)} fill="none" stroke={GRAD_FROM} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span
+                    className="w-11 h-11 rounded-full flex items-center justify-center border"
+                    style={{ background: "rgba(10,6,20,0.55)", borderColor: "rgba(255,255,255,0.3)", backdropFilter: "blur(2px)" }}
+                  >
+                    <Play className="w-4 h-4 ml-0.5" style={{ color: "#FFFFFF" }} fill="#FFFFFF" />
+                  </span>
+                </div>
+              </div>
+              <div className="flex justify-between mt-1.5">
+                {dateLabels.map((d) => (
+                  <span key={d} className="text-[9px]" style={{ color: TEXT_MUTED }}>{d}</span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-function DemoPlayer() {
-  return (
-    <div
-      className="relative mx-auto max-w-4xl rounded-2xl overflow-hidden border"
-      style={{ borderColor: LINE, boxShadow: "0 60px 110px -30px rgba(11,7,18,0.35)" }}
-    >
-      <div className="relative aspect-video overflow-hidden flex items-center justify-center" style={{ background: SURFACE }}>
-        <div className="absolute inset-0 flex items-center justify-center scale-[1.5]">
-          <DashboardMockup idPrefix="demo" />
+      <div
+        className="absolute -top-5 -left-4 sm:-left-8 rounded-2xl border px-3.5 py-3 flex items-center gap-2.5"
+        style={{ background: CARD, borderColor: BORDER_STRONG, boxShadow: "0 20px 50px -15px rgba(0,0,0,0.6)" }}
+      >
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#000000" }}>
+          <ShoppingBag className="w-4 h-4" style={{ color: "#FFFFFF" }} />
         </div>
-        <div
-          aria-hidden="true"
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(180deg, rgba(11,7,18,0.1) 0%, rgba(11,7,18,0.38) 100%)" }}
-        />
-        <button type="button" aria-label="Watch demo" className="absolute inset-0 flex items-center justify-center group">
-          <span className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-white flex items-center justify-center shadow-lg transition-transform group-hover:scale-105">
-            <Play className="w-6 h-6 lg:w-7 lg:h-7 ml-0.5" style={{ color: PRIMARY }} fill={PRIMARY} />
-          </span>
-        </button>
-        <button type="button" aria-label="Fullscreen" className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-black/30 flex items-center justify-center">
-          <Maximize2 className="w-4 h-4 text-white" />
-        </button>
-        <div className="absolute left-5 right-5 bottom-4">
-          <div className="h-1 rounded-full bg-white/30 overflow-hidden">
-            <div className="h-full w-[28%] rounded-full bg-white" />
-          </div>
+        <div>
+          <p className="text-[11px] font-bold" style={{ color: TEXT }}>TikTok Shop</p>
+          <p className="text-[9px]" style={{ color: TEXT_MUTED }}>Synced</p>
         </div>
+      </div>
+
+      <div
+        className="absolute -bottom-6 -right-4 sm:-right-10 rounded-2xl border px-4 py-3.5"
+        style={{ background: CARD, borderColor: BORDER_STRONG, boxShadow: "0 20px 50px -15px rgba(139,92,246,0.4)" }}
+      >
+        <p className="text-[10px] font-semibold" style={{ color: TEXT_MUTED }}>Real Profit</p>
+        <p className="text-[18px] font-bold" style={{ color: TEXT }}>RM3,842</p>
+        <p className="text-[10.5px] font-bold" style={{ color: GREEN }}>↑ +20.1%</p>
       </div>
     </div>
   );
 }
 
-function ProfitPanel() {
-  const points = [20, 34, 28, 46, 38, 56, 50, 64, 58, 72];
-  const w = 380;
-  const h = 140;
-  const step = w / (points.length - 1);
-  const max = Math.max(...points);
-  const coords = points.map((p, i) => [i * step, h - (p / max) * (h - 20) - 8]);
+function MiniProfitPreview() {
+  const pts = [18, 28, 22, 34, 28, 40, 34, 46];
+  const w = 220;
+  const h = 70;
+  const step = w / (pts.length - 1);
+  const max = Math.max(...pts);
+  const coords = pts.map((p, i) => [i * step, h - (p / max) * (h - 12) - 4]);
   const linePath = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   const areaPath = `${linePath} L${w},${h} L0,${h} Z`;
-
   return (
-    <div
-      className="w-full max-w-[420px] rounded-[20px] border bg-white p-6"
-      style={{ borderColor: LINE, boxShadow: "0 30px 70px -20px rgba(59,30,109,0.22)" }}
-    >
-      <p className="text-[11px] font-semibold mb-1" style={{ color: INK_SOFT }}>NET PROFIT</p>
-      <div className="flex items-end gap-3 mb-5">
-        <p className="text-[32px] font-bold leading-none" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>RM4,218.50</p>
-        <span className="text-[12px] font-bold flex items-center gap-0.5 mb-1" style={{ color: "#16A34A" }}>
-          <TrendingUp className="w-3.5 h-3.5" />
-          +18%
-        </span>
+    <div className="rounded-xl p-3" style={{ background: CARD_SOFT }}>
+      <p className="text-[9.5px] font-semibold" style={{ color: TEXT_MUTED }}>Net Profit</p>
+      <div className="flex items-end gap-2 mb-1.5">
+        <p className="text-[15px] font-bold" style={{ color: TEXT }}>RM3,842</p>
+        <span className="text-[10px] font-bold mb-0.5" style={{ color: GREEN }}>+20.4%</span>
       </div>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[100px]" preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[48px]" preserveAspectRatio="none">
         <defs>
-          <linearGradient id="bf-profit-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={PRIMARY_LIGHT} stopOpacity="0.25" />
-            <stop offset="100%" stopColor={PRIMARY_LIGHT} stopOpacity="0" />
+          <linearGradient id="bf-mini-profit" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={GRAD_FROM} stopOpacity="0.35" />
+            <stop offset="100%" stopColor={GRAD_FROM} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <path d={areaPath} fill="url(#bf-profit-area)" />
-        <path d={linePath} fill="none" stroke={PRIMARY} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={areaPath} fill="url(#bf-mini-profit)" />
+        <path d={linePath} fill="none" stroke={GRAD_FROM} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: `1px solid ${LINE}` }}>
-        <div>
-          <p className="text-[10px] font-semibold" style={{ color: INK_SOFT }}>GROSS SALES</p>
-          <p className="text-[14px] font-bold" style={{ color: INK }}>RM12,480</p>
-        </div>
-        <div>
-          <p className="text-[10px] font-semibold" style={{ color: INK_SOFT }}>COSTS &amp; FEES</p>
-          <p className="text-[14px] font-bold" style={{ color: ACCENT }}>−RM8,261</p>
-        </div>
-      </div>
     </div>
   );
 }
 
-function InventoryPanel() {
+function MiniInventoryPreview() {
   const items = [
-    { name: "Matte Lip Tint — Coral", stock: 2, level: "critical" as const },
-    { name: "Phone Case — Clear", stock: 5, level: "low" as const },
-    { name: "Bluetooth Earbuds Pro", stock: 0, level: "critical" as const },
+    { name: "Wireless Mouse", stock: 5 },
+    { name: "Phone Stand", stock: 8 },
   ];
   return (
-    <div
-      className="relative w-full max-w-[420px] rounded-[20px] overflow-hidden border bg-white"
-      style={{ borderColor: LINE, boxShadow: "0 30px 70px -20px rgba(59,30,109,0.22)" }}
-    >
-      <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: LINE }}>
-        <p className="text-[13px] font-bold" style={{ color: INK }}>Low Stock Alerts</p>
-        <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ color: ACCENT, background: "rgba(255,59,92,0.1)" }}>
-          3 need attention
-        </span>
+    <div className="rounded-xl overflow-hidden" style={{ background: CARD_SOFT }}>
+      <div className="flex items-center gap-1.5 px-3 py-2" style={{ background: "rgba(248,113,113,0.12)" }}>
+        <PackageX className="w-3 h-3" style={{ color: RED }} />
+        <span className="text-[9.5px] font-bold" style={{ color: RED }}>Low Stock (7)</span>
       </div>
-      <div>
-        {items.map((it, i) => (
-          <div key={it.name} className="flex items-center justify-between px-5 py-3.5" style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}>
-            <div className="flex items-center gap-3 min-w-0">
-              <div
-                className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: it.level === "critical" ? "rgba(255,59,92,0.1)" : "rgba(212,160,23,0.12)" }}
-              >
-                <PackageX className="w-4 h-4" style={{ color: it.level === "critical" ? ACCENT : GOLD }} />
-              </div>
-              <span className="text-[12.5px] font-medium truncate" style={{ color: INK }}>{it.name}</span>
-            </div>
-            <span className="text-[11px] font-bold shrink-0" style={{ color: it.level === "critical" ? ACCENT : GOLD }}>
-              {it.stock === 0 ? "Out of stock" : `${it.stock} left`}
-            </span>
-          </div>
-        ))}
-      </div>
+      {items.map((it) => (
+        <div key={it.name} className="flex items-center justify-between px-3 py-1.5">
+          <span className="text-[10.5px] truncate" style={{ color: TEXT }}>{it.name}</span>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: RED, background: "rgba(248,113,113,0.12)" }}>{it.stock}</span>
+        </div>
+      ))}
     </div>
   );
 }
 
-function OrdersPanel() {
-  const rows: { code: string; customer: string; product: string; status: "confirmed" | "paid" | "pending" }[] = [
-    { code: "#A1042", customer: "Aina R.", product: "Matte Lip Tint", status: "confirmed" },
-    { code: "#A1041", customer: "Faris K.", product: "Phone Case", status: "paid" },
-    { code: "#A1040", customer: "Mei Ling", product: "Earbuds Pro", status: "pending" },
+function MiniReportsPreview({ reports }: { reports: string[] }) {
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ background: CARD_SOFT }}>
+      {reports.slice(0, 3).map((name, i) => (
+        <div key={name} className="flex items-center justify-between px-3 py-2" style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER}` }}>
+          <span className="flex items-center gap-1.5 text-[10.5px] truncate" style={{ color: TEXT }}>
+            <FileText className="w-3 h-3 shrink-0" style={{ color: GRAD_FROM }} />
+            {name}
+          </span>
+          <span className="text-[8.5px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ color: GRAD_FROM, background: "rgba(139,92,246,0.14)" }}>PDF</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MiniOrdersPreview() {
+  const rows: { code: string; amount: string; status: "Completed" | "Processing" | "Pending" }[] = [
+    { code: "#10482", amount: "RM129.00", status: "Completed" },
+    { code: "#10481", amount: "RM89.00", status: "Processing" },
+    { code: "#10480", amount: "RM159.00", status: "Pending" },
   ];
-  const statusStyle: Record<string, { bg: string; fg: string; label: string }> = {
-    confirmed: { bg: "rgba(59,30,109,0.08)", fg: PRIMARY, label: "Confirmed" },
-    paid: { bg: "rgba(22,163,74,0.1)", fg: "#16A34A", label: "Paid" },
-    pending: { bg: "rgba(180,83,9,0.1)", fg: "#B45309", label: "Pending" },
+  const style: Record<string, { fg: string; bg: string }> = {
+    Completed: { fg: GREEN, bg: "rgba(74,222,128,0.14)" },
+    Processing: { fg: BLUE, bg: "rgba(96,165,250,0.14)" },
+    Pending: { fg: TEXT_MUTED, bg: "rgba(157,147,181,0.14)" },
   };
   return (
-    <div
-      className="relative w-full max-w-[420px] rounded-[20px] overflow-hidden border bg-white"
-      style={{ borderColor: LINE, boxShadow: "0 30px 70px -20px rgba(59,30,109,0.22)" }}
-    >
-      <div className="px-5 py-4 border-b" style={{ borderColor: LINE }}>
-        <p className="text-[13px] font-bold" style={{ color: INK }}>New Order</p>
-      </div>
+    <div className="rounded-xl overflow-hidden" style={{ background: CARD_SOFT }}>
       {rows.map((r, i) => (
-        <div key={r.code} className="px-5 py-3.5 flex items-center justify-between gap-3" style={{ borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}>
-          <div className="min-w-0">
-            <p className="text-[12.5px] font-semibold truncate" style={{ color: INK }}>{r.customer} · {r.product}</p>
-            <p className="text-[11px] font-mono" style={{ color: INK_SOFT }}>{r.code}</p>
+        <div key={r.code} className="flex items-center justify-between px-3 py-2" style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER}` }}>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[9.5px] font-mono shrink-0" style={{ color: TEXT_MUTED }}>{r.code}</span>
+            <span className="text-[10px] font-semibold" style={{ color: TEXT }}>{r.amount}</span>
           </div>
-          <span
-            className="text-[10.5px] font-bold px-2.5 py-1 rounded-full shrink-0"
-            style={{ color: statusStyle[r.status].fg, background: statusStyle[r.status].bg }}
-          >
-            {statusStyle[r.status].label}
+          <span className="text-[8.5px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ color: style[r.status].fg, background: style[r.status].bg }}>
+            {r.status}
           </span>
         </div>
       ))}
-      <div className="px-5 py-3.5 flex items-center gap-2" style={{ borderTop: `1px solid ${LINE}`, background: SURFACE }}>
-        <MessageCircle className="w-4 h-4" style={{ color: "#16A34A" }} />
-        <span className="text-[11.5px] font-semibold" style={{ color: INK }}>Confirm via WhatsApp</span>
-        <ArrowRight className="w-3.5 h-3.5 ml-auto" style={{ color: INK_SOFT }} />
-      </div>
-    </div>
-  );
-}
-
-function ReportsStack({ reports }: { reports: string[] }) {
-  const shown = reports.slice(0, 4);
-  const rest = reports.slice(4);
-  const rotations = [-8, -3, 3, 8];
-  const offsets = [20, 6, 6, 20];
-
-  return (
-    <div className="relative w-full max-w-[460px] mx-auto">
-      <div className="relative h-[230px]">
-        {shown.map((name, i) => {
-          const Icon = REPORT_ICONS[i] ?? FileText;
-          return (
-            <div
-              key={name}
-              className="absolute left-1/2 w-[220px] rounded-xl border bg-white px-4 py-3.5"
-              style={{
-                borderColor: LINE,
-                transform: `translateX(-50%) rotate(${rotations[i]}deg)`,
-                top: offsets[i],
-                boxShadow: "0 20px 40px -15px rgba(59,30,109,0.25)",
-                zIndex: i,
-              }}
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                <Icon className="w-3.5 h-3.5" style={{ color: PRIMARY }} />
-                <span className="text-[10px] font-bold tracking-wide" style={{ color: PRIMARY }}>PDF</span>
-              </div>
-              <p className="text-[12.5px] font-bold" style={{ color: INK, fontFamily: "IBM Plex Mono, ui-monospace, monospace" }}>{name}</p>
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex flex-wrap justify-center gap-2 mt-3">
-        {rest.map((name) => (
-          <span key={name} className="text-[11px] font-semibold px-3 py-1.5 rounded-full border" style={{ color: INK_SOFT, borderColor: LINE }}>
-            {name}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ProblemWaterfall({ c }: { c: LandingCopy }) {
-  return (
-    <div
-      className="relative max-w-md mx-auto rounded-[24px] border overflow-hidden"
-      style={{ borderColor: "rgba(255,255,255,0.1)", background: NEARBLACK_SOFT }}
-    >
-      <div className="px-7 py-8 text-center" style={{ fontFamily: "IBM Plex Mono, ui-monospace, monospace" }}>
-        <p className="text-[11px] font-bold tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.5)" }}>
-          {c.problemSalesLabel.toUpperCase()}
-        </p>
-        <p className="text-[40px] font-bold mb-5" style={{ color: "#FFFFFF" }}>{c.problemSalesValue}</p>
-        <div>
-          {c.problemCostLines.map((line) => (
-            <div key={line.label} className="flex items-center justify-between py-2.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-              <span className="text-[12.5px]" style={{ color: "rgba(255,255,255,0.65)" }}>{line.label}</span>
-              <span className="text-[13px] font-semibold" style={{ color: "#F87171" }}>{line.value}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-5 pt-5" style={{ borderTop: `2px solid ${ACCENT}` }}>
-          <p className="text-[11px] font-bold tracking-widest mb-2" style={{ color: GOLD }}>{c.problemProfitLabel.toUpperCase()}</p>
-          <p className="text-[44px] font-bold" style={{ color: GOLD }}>{c.problemProfitValue}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TikTokFlow({ c }: { c: LandingCopy }) {
-  return (
-    <div className="flex flex-col items-center">
-      <div
-        className="px-6 py-3 rounded-xl border text-[13px] font-bold"
-        style={{ borderColor: LINE, color: INK, background: "#FFFFFF", boxShadow: "0 10px 24px -10px rgba(30,23,48,0.12)" }}
-      >
-        TikTok Shop
-      </div>
-      <div className="w-px h-8" style={{ background: LINE }} />
-      <div
-        className="px-6 py-3 rounded-xl text-[13px] font-bold text-white flex items-center gap-2"
-        style={{ background: PRIMARY, boxShadow: "0 16px 32px -12px rgba(59,30,109,0.4)" }}
-      >
-        <img src={bossifyLogo} alt="" className="w-4 h-4 rounded" />
-        Bossify
-      </div>
-      <span className="mt-2 text-[10.5px] font-bold px-2.5 py-1 rounded-full" style={{ color: GOLD, background: "rgba(212,160,23,0.12)" }}>
-        {c.tiktokComingSoon}
-      </span>
-      <div className="w-px h-8" style={{ background: LINE }} />
-      <div className="flex flex-wrap justify-center gap-2.5 max-w-sm">
-        {c.tiktokDestinations.map((d) => (
-          <span
-            key={d}
-            className="text-[12px] font-semibold px-3.5 py-2 rounded-full border"
-            style={{ color: INK_SOFT, borderColor: LINE, background: SURFACE }}
-          >
-            {d}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }
@@ -944,50 +750,54 @@ export function LandingPage() {
     navigate({ to: "/auth", search: mode === "register" ? { mode: "reg" } : undefined } as never);
   };
 
+  const trustIcons = TRUST_BULLET_ICONS;
+  const featureCards = [c.showcaseProfit, c.showcaseInventory, c.showcaseReports, c.showcaseOrders];
+  const featureMinis = [<MiniProfitPreview key="p" />, <MiniInventoryPreview key="i" />, <MiniReportsPreview key="r" reports={c.reports} />, <MiniOrdersPreview key="o" />];
+
   return (
-    <div style={{ fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
+    <div style={{ background: BG, fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
       {/* Header */}
-      <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(255,255,255,0.85)", borderColor: LINE }}>
+      <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(10,6,20,0.8)", borderColor: BORDER }}>
         <div className="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={bossifyLogo} alt="Bossify" className="h-8 w-8 rounded-lg object-cover" />
-            <span className="text-lg font-bold tracking-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden" style={{ background: GRADIENT }}>
+              <img src={bossifyLogo} alt="Bossify" className="h-6 w-6 object-cover" />
+            </div>
+            <span className="text-lg font-bold tracking-tight" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
               Bossify
             </span>
           </div>
           <nav className="hidden lg:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navFeatures}</a>
-            <a href="#how-it-works" className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navHowItWorks}</a>
-            <a href="#reports" className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navReports}</a>
-            <a href="#pricing" className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navPricing}</a>
+            <a href="#features" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navFeatures}</a>
+            <a href="#reports" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navReports}</a>
+            <a href="#pricing" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navPricing}</a>
           </nav>
           <div className="hidden lg:flex items-center gap-3">
-            <button onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2 rounded-lg" style={{ color: INK }}>
+            <button onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2 rounded-full border" style={{ color: TEXT, borderColor: BORDER }}>
               {c.signIn}
             </button>
             <button
               onClick={() => goAuth("register")}
-              className="text-sm font-semibold px-5 py-2.5 rounded-lg text-white flex items-center gap-1.5"
-              style={{ background: PRIMARY }}
+              className="text-sm font-semibold px-5 py-2.5 rounded-full text-white flex items-center gap-1.5"
+              style={{ background: GRADIENT }}
             >
               {c.startFree}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-          <button className="lg:hidden p-2 -mr-2" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu" style={{ color: INK }}>
+          <button className="lg:hidden p-2 -mr-2" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu" style={{ color: TEXT }}>
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
         {menuOpen && (
-          <div className="lg:hidden border-t px-5 py-4 flex flex-col gap-3 bg-white" style={{ borderColor: LINE }}>
-            <a href="#features" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navFeatures}</a>
-            <a href="#how-it-works" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navHowItWorks}</a>
-            <a href="#reports" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navReports}</a>
-            <a href="#pricing" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: INK_SOFT }}>{c.navPricing}</a>
-            <button onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2.5 rounded-lg border text-left" style={{ color: INK, borderColor: LINE }}>
+          <div className="lg:hidden border-t px-5 py-4 flex flex-col gap-3" style={{ borderColor: BORDER, background: BG }}>
+            <a href="#features" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navFeatures}</a>
+            <a href="#reports" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navReports}</a>
+            <a href="#pricing" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navPricing}</a>
+            <button onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2.5 rounded-full border text-left" style={{ color: TEXT, borderColor: BORDER }}>
               {c.signIn}
             </button>
-            <button onClick={() => goAuth("register")} className="text-sm font-semibold px-4 py-2.5 rounded-lg text-white text-left" style={{ background: PRIMARY }}>
+            <button onClick={() => goAuth("register")} className="text-sm font-semibold px-4 py-2.5 rounded-full text-white text-left" style={{ background: GRADIENT }}>
               {c.startFree}
             </button>
           </div>
@@ -995,344 +805,357 @@ export function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative px-5 lg:px-8 pt-20 pb-20 lg:pt-28 lg:pb-28 overflow-hidden bg-white">
+      <section className="relative px-5 lg:px-8 pt-16 pb-20 lg:pt-20 lg:pb-28 overflow-hidden">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(ellipse 700px 380px at 50% -5%, rgba(108,74,182,0.08) 0%, transparent 65%)" }}
+          style={{ background: "radial-gradient(ellipse 900px 520px at 50% 0%, rgba(139,92,246,0.22) 0%, transparent 65%)" }}
         />
-        <Reveal mode="mount">
-        <div className="relative max-w-3xl mx-auto text-center">
-          <p className="text-[12px] font-bold tracking-wider mb-5" style={{ color: PRIMARY_LIGHT }}>{c.eyebrow}</p>
-          <h1 className="text-[38px] leading-[1.08] lg:text-[60px] font-bold tracking-tight mb-6" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-            {c.headline1}
-            <br />
-            <span style={{ color: ACCENT }}>{c.headlineEmphasis}</span>
-          </h1>
-          <p className="text-[15px] lg:text-[18px] leading-relaxed mb-9 max-w-xl mx-auto" style={{ color: INK_SOFT }}>{c.subhead}</p>
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-            <button
-              onClick={() => goAuth("register")}
-              className="text-[15px] font-semibold px-7 py-3.5 rounded-xl text-white flex items-center gap-2"
-              style={{ background: PRIMARY }}
-            >
-              {c.ctaPrimary}
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <a href="#demo" className="text-[15px] font-semibold px-7 py-3.5 rounded-xl border flex items-center gap-2" style={{ color: INK, borderColor: LINE }}>
-              <Play className="w-3.5 h-3.5" style={{ color: INK }} fill={INK} />
-              {c.ctaSecondary}
-            </a>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5">
-            {c.trustBullets.map((t) => (
-              <span key={t} className="inline-flex items-center gap-1.5 text-[12.5px] font-medium" style={{ color: INK_SOFT }}>
-                <Check className="w-3.5 h-3.5" style={{ color: PRIMARY_LIGHT }} />
-                {t}
+        <div className="relative max-w-6xl mx-auto grid lg:grid-cols-[0.85fr_1.15fr] gap-12 items-center">
+          <Reveal mode="mount">
+            <div>
+              <span
+                className="inline-block text-[11px] font-bold tracking-wide px-3 py-1.5 rounded-full border mb-5"
+                style={{ color: TEXT_MUTED, borderColor: BORDER, background: CARD }}
+              >
+                {c.eyebrow}
               </span>
-            ))}
-          </div>
-        </div>
-        </Reveal>
-        <Reveal mode="mount" delay={150}>
-        <div className="relative mt-16 lg:mt-20">
-          <div className="flex justify-center">
-            <TiltWrap max={5}>
-              <DashboardMockup />
-            </TiltWrap>
-          </div>
-          <div className="flex justify-center mt-[-28px] relative z-10">
-            <a
-              href="#demo"
-              className="flex items-center gap-3 pl-2 pr-5 py-2 rounded-full bg-white border shadow-lg hover:scale-[1.03] transition-transform"
-              style={{ borderColor: LINE }}
-            >
-              <span className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: PRIMARY }}>
-                <Play className="w-3.5 h-3.5 ml-0.5" fill="#FFFFFF" style={{ color: "#FFFFFF" }} />
-              </span>
-              <span className="text-[13px] font-bold" style={{ color: INK }}>{c.ctaSecondary}</span>
-            </a>
-          </div>
-        </div>
-        </Reveal>
-      </section>
-
-      {/* Product demo */}
-      <section id="demo" className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
-        <Reveal>
-        <div className="max-w-3xl mx-auto text-center mb-10">
-          <span className="inline-block text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-full mb-4" style={{ color: PRIMARY, background: "rgba(59,30,109,0.08)" }}>
-            {c.demoBadge}
-          </span>
-          <h2 className="text-[28px] lg:text-[38px] font-bold tracking-tight mb-3" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-            {c.demoTitle}
-          </h2>
-          <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.demoSub}</p>
-        </div>
-        </Reveal>
-        {/* TODO(John): once the real demo video is ready, replace DemoPlayer's
-            mockup poster with an actual <video> tag or an embed, inside the
-            same rounded, bordered frame. */}
-        <Reveal delay={120}>
-          <DemoPlayer />
-        </Reveal>
-      </section>
-
-      {/* Problem: sales vs profit */}
-      <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
-        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
-          <Reveal>
-          <div>
-            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: ACCENT }}>{c.problemEyebrow}</p>
-            <h2 className="text-[28px] lg:text-[38px] font-bold tracking-tight leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-              {c.problemTitle}
-            </h2>
-          </div>
+              <h1 className="text-[36px] leading-[1.08] lg:text-[48px] font-bold tracking-tight mb-5" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+                {c.headline1}
+                <br />
+                <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+                  {c.headlineEmphasis}
+                </span>
+              </h1>
+              <p className="text-[15px] leading-relaxed mb-7" style={{ color: TEXT_MUTED }}>{c.subhead}</p>
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <button
+                  onClick={() => goAuth("register")}
+                  className="text-[14.5px] font-semibold px-6 py-3 rounded-full text-white flex items-center gap-2"
+                  style={{ background: GRADIENT }}
+                >
+                  {c.ctaPrimary}
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                {/* TODO(John): wire this up to a real video/lightbox once the demo is recorded. */}
+                <button
+                  type="button"
+                  className="text-[14.5px] font-semibold px-6 py-3 rounded-full border flex items-center gap-2"
+                  style={{ color: TEXT, borderColor: BORDER }}
+                >
+                  <Play className="w-3.5 h-3.5" style={{ color: TEXT }} fill={TEXT} />
+                  {c.ctaSecondary}
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                {c.trustBullets.map((t, i) => {
+                  const Icon = trustIcons[i] ?? Check;
+                  return (
+                    <span key={t} className="inline-flex items-center gap-1.5 text-[12.5px] font-medium" style={{ color: TEXT_MUTED }}>
+                      <Icon className="w-3.5 h-3.5" style={{ color: GRAD_FROM }} />
+                      {t}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
           </Reveal>
-          <Reveal delay={150}>
-            <TiltWrap max={4}>
-              <ProblemWaterfall c={c} />
-            </TiltWrap>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Showcase A: Real profit */}
-      <section id="features" className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
-        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
-          <Reveal>
-          <div className="order-2 lg:order-1 flex justify-center">
-            <TiltWrap max={5}>
-              <ProfitPanel />
-            </TiltWrap>
-          </div>
-          </Reveal>
-          <Reveal>
-          <div className="order-1 lg:order-2">
-            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseProfit.eyebrow}</p>
-            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-              {c.showcaseProfit.title}
-            </h2>
-            <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseProfit.desc}</p>
-          </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Showcase B: Inventory */}
-      <section className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
-        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
-          <Reveal>
-          <div>
-            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseInventory.eyebrow}</p>
-            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-              {c.showcaseInventory.title}
-            </h2>
-            <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseInventory.desc}</p>
-          </div>
-          </Reveal>
-          <div className="flex justify-center">
-            <Reveal>
-              <TiltWrap max={5}>
-                <InventoryPanel />
+          <Reveal mode="mount" delay={150}>
+            <div style={{ transform: "perspective(1600px) rotateY(-10deg) rotateX(5deg)", transformStyle: "preserve-3d" }}>
+              <TiltWrap max={4}>
+                <LaptopMockup />
               </TiltWrap>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* Showcase C: Orders */}
-      <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
-        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
-          <Reveal>
-          <div className="order-2 lg:order-1 flex justify-center">
-            <TiltWrap max={5}>
-              <OrdersPanel />
-            </TiltWrap>
-          </div>
-          </Reveal>
-          <Reveal>
-          <div className="order-1 lg:order-2">
-            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseOrders.eyebrow}</p>
-            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-              {c.showcaseOrders.title}
-            </h2>
-            <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseOrders.desc}</p>
-          </div>
+            </div>
           </Reveal>
         </div>
       </section>
 
-      {/* Showcase D: Reports */}
-      <section id="reports" className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
-        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+      {/* Capability strip */}
+      <section className="px-5 lg:px-8 py-6 border-y" style={{ borderColor: BORDER }}>
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+          {c.capabilityStrip.map((label, i) => {
+            const Icon = CAPABILITY_ICONS[i] ?? TrendingUp;
+            return (
+              <span key={label} className="inline-flex items-center gap-2.5 text-[13px] font-semibold" style={{ color: TEXT_MUTED }}>
+                <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: GRADIENT }}>
+                  <Icon className="w-3.5 h-3.5 text-white" />
+                </span>
+                {label}
+              </span>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Problem */}
+      <section className="px-5 lg:px-8 py-20 lg:py-28">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[0.9fr_1fr_0.85fr] gap-8 items-center">
           <Reveal>
-          <div>
-            <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.showcaseReports.eyebrow}</p>
-            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-4 leading-tight" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-              {c.showcaseReports.title}
-            </h2>
-            <p className="text-[15px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseReports.desc}</p>
-          </div>
+            <div>
+              <h2 className="text-[28px] lg:text-[32px] font-bold tracking-tight leading-tight mb-4" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+                {c.problemTitle}
+                <br />
+                <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+                  {c.problemTitleEmphasis}
+                </span>
+              </h2>
+              <p className="text-[14px] leading-relaxed" style={{ color: TEXT_MUTED }}>{c.problemDesc}</p>
+            </div>
           </Reveal>
           <Reveal delay={100}>
-            <ReportsStack reports={c.reports} />
+            <div className="flex items-center gap-3">
+              <div className="flex-1 rounded-2xl p-5 border" style={{ background: CARD, borderColor: BORDER }}>
+                <p className="text-[11px] font-semibold mb-1.5" style={{ color: TEXT_MUTED }}>{c.problemSalesLabel}</p>
+                <p className="text-[24px] font-bold" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>{c.problemSalesValue}</p>
+              </div>
+              <ArrowRight className="w-5 h-5 shrink-0 hidden sm:block" style={{ color: TEXT_MUTED }} />
+              <ArrowDown className="w-5 h-5 shrink-0 sm:hidden" style={{ color: TEXT_MUTED }} />
+              <div className="flex-1 rounded-2xl p-5 border" style={{ background: "rgba(139,92,246,0.1)", borderColor: BORDER_STRONG }}>
+                <p className="text-[11px] font-semibold mb-1.5" style={{ color: TEXT_MUTED }}>{c.problemProfitLabel}</p>
+                <p
+                  className="text-[24px] font-bold"
+                  style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", fontFamily: "Space Grotesk, system-ui, sans-serif" }}
+                >
+                  {c.problemProfitValue}
+                </p>
+              </div>
+            </div>
+          </Reveal>
+          <Reveal delay={200}>
+            <div className="rounded-2xl border overflow-hidden" style={{ background: CARD, borderColor: BORDER }}>
+              {c.problemCostLines.map((line, i) => {
+                const Icon = COST_ICONS[i] ?? Minus;
+                return (
+                  <div key={line.label} className="flex items-center justify-between gap-3 px-4 py-3" style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER}` }}>
+                    <span className="flex items-center gap-2 text-[12px]" style={{ color: TEXT_MUTED }}>
+                      <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: TEXT_MUTED }} />
+                      {line.label}
+                    </span>
+                    <span className="text-[12.5px] font-bold shrink-0" style={{ color: RED }}>{line.value}</span>
+                  </div>
+                );
+              })}
+            </div>
           </Reveal>
         </div>
       </section>
 
-      {/* TikTok Shop integration */}
-      <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
-        <Reveal>
-        <div className="max-w-3xl mx-auto text-center mb-14">
-          <p className="text-[12px] font-bold tracking-wider mb-4" style={{ color: PRIMARY_LIGHT }}>{c.tiktokEyebrow}</p>
-          <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-            {c.tiktokTitle}
-          </h2>
-          <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.tiktokSub}</p>
+      {/* Feature grid */}
+      <section id="features" className="px-5 lg:px-8 py-20 lg:py-28">
+        <div className="max-w-6xl mx-auto">
+          <Reveal>
+            <div className="text-center max-w-xl mx-auto mb-12">
+              <h2 className="text-[26px] lg:text-[32px] font-bold tracking-tight mb-3" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+                {c.featuresTitle}
+              </h2>
+              <p className="text-[14.5px]" style={{ color: TEXT_MUTED }}>{c.featuresSub}</p>
+            </div>
+          </Reveal>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {featureCards.map((f, i) => {
+              const Icon = FEATURE_ICONS[i] ?? TrendingUp;
+              return (
+                <Reveal key={f.title} delay={i * 80}>
+                  <TiltWrap max={3}>
+                    <div className="rounded-2xl p-5 border h-full" style={{ background: CARD, borderColor: BORDER }}>
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3" style={{ background: GRADIENT }}>
+                        <Icon className="w-4 h-4 text-white" />
+                      </div>
+                      <h3 className="text-[14.5px] font-bold mb-1" style={{ color: TEXT }}>{f.title}</h3>
+                      <p className="text-[12.5px] leading-relaxed mb-4" style={{ color: TEXT_MUTED }}>{f.desc}</p>
+                      {featureMinis[i]}
+                    </div>
+                  </TiltWrap>
+                </Reveal>
+              );
+            })}
+          </div>
         </div>
-        </Reveal>
-        <Reveal delay={150}>
-          <TikTokFlow c={c} />
-        </Reveal>
       </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SURFACE }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center max-w-xl mx-auto mb-16">
-            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-              {c.stepsTitle}
-            </h2>
-            <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.stepsSub}</p>
-          </div>
-          <div className="relative grid sm:grid-cols-3 gap-10">
-            <div aria-hidden="true" className="hidden sm:block absolute top-6 left-[16%] right-[16%] h-px" style={{ background: LINE }} />
-            {c.steps.map((s, i) => (
-              <Reveal key={s.num} delay={i * 100}>
-                <div className="relative text-center sm:text-left">
-                  <p
-                    className="text-[52px] font-bold leading-none mb-4"
-                    style={{
-                      color: "transparent",
-                      fontFamily: "Space Grotesk, system-ui, sans-serif",
-                      WebkitTextStroke: `1.5px ${PRIMARY_LIGHT}`,
-                    }}
-                  >
-                    {s.num}
-                  </p>
-                  <h3 className="text-[16px] font-bold mb-2" style={{ color: INK }}>{s.title}</h3>
-                  <p className="text-[13.5px] leading-relaxed" style={{ color: INK_SOFT }}>{s.desc}</p>
+      {/* TikTok integration + reports grid */}
+      <section id="reports" className="px-5 lg:px-8 py-20 lg:py-28">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 items-start">
+          <Reveal>
+            <div className="rounded-2xl border p-7" style={{ background: CARD, borderColor: BORDER }}>
+              <p className="text-[11px] font-bold tracking-wider mb-3" style={{ color: GRAD_FROM }}>{c.tiktokEyebrow}</p>
+              <h2 className="text-[24px] lg:text-[28px] font-bold tracking-tight mb-3 leading-tight" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+                {c.tiktokTitle}
+              </h2>
+              <p className="text-[13.5px] leading-relaxed mb-6" style={{ color: TEXT_MUTED }}>{c.tiktokSub}</p>
+              <div className="flex items-center gap-2.5 flex-wrap mb-4">
+                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border" style={{ background: "#000000", borderColor: BORDER }}>
+                  <ShoppingBag className="w-4 h-4 text-white" />
+                  <span className="text-[12px] font-bold text-white">TikTok Shop</span>
                 </div>
-              </Reveal>
-            ))}
-          </div>
+                <ArrowRight className="w-4 h-4 shrink-0" style={{ color: TEXT_MUTED }} />
+                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl" style={{ background: GRADIENT }}>
+                  <img src={bossifyLogo} alt="" className="w-4 h-4 rounded" />
+                  <span className="text-[12px] font-bold text-white">Bossify</span>
+                </div>
+                <ArrowRight className="w-4 h-4 shrink-0" style={{ color: TEXT_MUTED }} />
+                <div className="flex flex-col gap-1.5">
+                  {c.tiktokOutcomes.map((o) => (
+                    <span key={o} className="flex items-center gap-1.5 text-[11.5px] font-medium" style={{ color: TEXT }}>
+                      <Check className="w-3.5 h-3.5 shrink-0" style={{ color: GREEN }} />
+                      {o}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <span
+                className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
+                style={{ color: "#D4A017", background: "rgba(212,160,23,0.12)" }}
+              >
+                {c.tiktokComingSoon}
+              </span>
+            </div>
+          </Reveal>
+          <Reveal delay={150}>
+            <div className="rounded-2xl border p-7" style={{ background: CARD, borderColor: BORDER }}>
+              <h3 className="text-[15px] font-bold mb-4" style={{ color: TEXT }}>{c.reportsGridTitle}</h3>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {c.reports.map((name, i) => {
+                  const Icon = REPORT_ICONS[i] ?? FileText;
+                  return (
+                    <div key={name} className="rounded-xl p-3 flex flex-col items-center text-center gap-1.5" style={{ background: CARD_SOFT }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(139,92,246,0.15)" }}>
+                        <Icon className="w-3.5 h-3.5" style={{ color: GRAD_FROM }} />
+                      </div>
+                      <span className="text-[9.5px] font-semibold leading-tight" style={{ color: TEXT_MUTED }}>{name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
       {/* Spreadsheet vs Bossify */}
-      <section className="px-5 lg:px-8 py-20 lg:py-28 bg-white">
+      <section className="px-5 lg:px-8 py-20 lg:py-28">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center max-w-xl mx-auto mb-14">
-            <h2 className="text-[26px] lg:text-[34px] font-bold tracking-tight mb-3" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-              {c.compareTitle}
-            </h2>
-            <p className="text-[15px]" style={{ color: INK_SOFT }}>{c.compareSub}</p>
-          </div>
+          <Reveal>
+            <div className="text-center max-w-xl mx-auto mb-14">
+              <h2 className="text-[26px] lg:text-[32px] font-bold tracking-tight mb-3" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+                {c.compareTitle}
+              </h2>
+              <p className="text-[14.5px]" style={{ color: TEXT_MUTED }}>{c.compareSub}</p>
+            </div>
+          </Reveal>
           <div className="grid md:grid-cols-2 gap-6 md:gap-0 items-center">
             <Reveal>
-            <div className="rounded-2xl p-7 md:mr-[-12px]" style={{ background: SURFACE }}>
-              <p className="text-[13px] font-bold uppercase tracking-wide mb-5" style={{ color: INK_SOFT }}>{c.compareSpreadsheetLabel}</p>
-              <ul className="space-y-3.5">
-                {c.compareSpreadsheetItems.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-[13.5px]" style={{ color: INK_SOFT }}>
-                    <Minus className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#9A90B5" }} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <div className="rounded-2xl p-7 md:mr-[-12px] border" style={{ background: CARD, borderColor: BORDER }}>
+                <p className="text-[12.5px] font-bold uppercase tracking-wide mb-5" style={{ color: TEXT_MUTED }}>{c.compareSpreadsheetLabel}</p>
+                <ul className="space-y-3.5">
+                  {c.compareSpreadsheetItems.map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-[13px]" style={{ color: TEXT_MUTED }}>
+                      <Minus className="w-4 h-4 mt-0.5 shrink-0" style={{ color: TEXT_MUTED }} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </Reveal>
             <Reveal delay={120}>
-            <div
-              className="relative rounded-2xl p-7 md:scale-[1.04] bg-white"
-              style={{ boxShadow: "0 30px 70px -20px rgba(59,30,109,0.3)", border: `1px solid ${LINE}` }}
-            >
-              <div className="absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl" style={{ background: PRIMARY }} />
-              <p className="text-[13px] font-bold uppercase tracking-wide mb-5" style={{ color: PRIMARY }}>{c.compareBossifyLabel}</p>
-              <ul className="space-y-3.5">
-                {c.compareBossifyItems.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-[13.5px] font-medium" style={{ color: INK }}>
-                    <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: PRIMARY }} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <div
+                className="relative rounded-2xl p-7 md:scale-[1.04] border"
+                style={{ background: CARD_SOFT, borderColor: BORDER_STRONG, boxShadow: "0 30px 70px -20px rgba(139,92,246,0.3)" }}
+              >
+                <div className="absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl" style={{ background: GRADIENT }} />
+                <p
+                  className="text-[12.5px] font-bold uppercase tracking-wide mb-5"
+                  style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
+                >
+                  {c.compareBossifyLabel}
+                </p>
+                <ul className="space-y-3.5">
+                  {c.compareBossifyItems.map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-[13px] font-medium" style={{ color: TEXT }}>
+                      <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: GRAD_FROM }} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </Reveal>
           </div>
         </div>
       </section>
 
       {/* Trust */}
-      <section className="px-5 lg:px-8 py-16 lg:py-20" style={{ background: SURFACE }}>
+      <section className="px-5 lg:px-8 py-16 lg:py-20">
         <Reveal>
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-[20px] lg:text-[24px] font-bold tracking-tight mb-10" style={{ color: INK, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-            {c.trustSectionTitle}
-          </h2>
-          <div className="grid sm:grid-cols-3 gap-8">
-            {c.trustItems.map((t) => (
-              <div key={t} className="flex flex-col items-center gap-3">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(59,30,109,0.08)" }}>
-                  <Check className="w-4 h-4" style={{ color: PRIMARY }} />
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-[19px] lg:text-[22px] font-bold tracking-tight mb-10" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+              {c.trustSectionTitle}
+            </h2>
+            <div className="grid sm:grid-cols-3 gap-8">
+              {c.trustItems.map((t) => (
+                <div key={t} className="flex flex-col items-center gap-3">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(139,92,246,0.15)" }}>
+                    <Check className="w-4 h-4" style={{ color: GRAD_FROM }} />
+                  </div>
+                  <p className="text-[13px] font-medium max-w-[220px]" style={{ color: TEXT_MUTED }}>{t}</p>
                 </div>
-                <p className="text-[13.5px] font-medium max-w-[220px]" style={{ color: INK_SOFT }}>{t}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
         </Reveal>
       </section>
 
       {/* Final CTA */}
-      <section id="pricing" className="relative overflow-hidden px-5 lg:px-8 py-24 lg:py-32" style={{ background: NEARBLACK }}>
+      <section id="pricing" className="relative overflow-hidden px-5 lg:px-8 pt-24 pb-32 lg:pt-28 lg:pb-40">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(ellipse 800px 400px at 50% 0%, rgba(108,74,182,0.25) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse 800px 420px at 50% 20%, rgba(139,92,246,0.3) 0%, transparent 70%)" }}
         />
+        <svg aria-hidden="true" className="pointer-events-none absolute bottom-0 left-0 w-full h-[220px]" viewBox="0 0 1200 220" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="bf-ridge-1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={GRAD_FROM} stopOpacity="0.28" />
+              <stop offset="100%" stopColor={GRAD_FROM} stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="bf-ridge-2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={GRAD_TO} stopOpacity="0.22" />
+              <stop offset="100%" stopColor={GRAD_TO} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d="M0,160 C250,90 420,190 650,120 C850,60 1000,150 1200,100 L1200,220 L0,220 Z" fill="url(#bf-ridge-1)" />
+          <path d="M0,200 C300,150 500,210 750,160 C950,120 1050,190 1200,150 L1200,220 L0,220 Z" fill="url(#bf-ridge-2)" />
+        </svg>
         <Reveal>
-        <div className="relative max-w-2xl mx-auto text-center">
-          <h2 className="text-[34px] lg:text-[46px] font-bold tracking-tight leading-[1.1] mb-4" style={{ color: "#FFFFFF", fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-            {c.finalTitle1}
-            <br />
-            {c.finalTitle2}
-          </h2>
-          <p className="text-[15px] lg:text-[16px] mb-3" style={{ color: "rgba(255,255,255,0.65)" }}>{c.finalSub}</p>
-          <p className="text-[12.5px] mb-9" style={{ color: "rgba(255,255,255,0.4)" }}>{c.trustBullets.join(" · ")}</p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button onClick={() => goAuth("register")} className="text-[15px] font-semibold px-7 py-3.5 rounded-xl text-white" style={{ background: PRIMARY_LIGHT }}>
-              {c.finalCtaPrimary}
-            </button>
-            <a href="#demo" className="text-[15px] font-semibold px-7 py-3.5 rounded-xl border flex items-center gap-2" style={{ color: "#FFFFFF", borderColor: "rgba(255,255,255,0.25)" }}>
-              <Play className="w-4 h-4" fill="#FFFFFF" style={{ color: "#FFFFFF" }} />
-              {c.finalCtaSecondary}
-            </a>
+          <div className="relative max-w-2xl mx-auto text-center">
+            <h2 className="text-[32px] lg:text-[44px] font-bold tracking-tight leading-[1.1] mb-4" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+              {c.finalTitle1}
+              <br />
+              <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>{c.finalTitle2}</span>
+            </h2>
+            <p className="text-[14.5px] lg:text-[15.5px] mb-9" style={{ color: TEXT_MUTED }}>{c.finalSub}</p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button onClick={() => goAuth("register")} className="text-[15px] font-semibold px-7 py-3.5 rounded-full text-white flex items-center gap-2" style={{ background: GRADIENT }}>
+                {c.finalCtaPrimary}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button type="button" className="text-[15px] font-semibold px-7 py-3.5 rounded-full border flex items-center gap-2" style={{ color: TEXT, borderColor: BORDER }}>
+                <Play className="w-4 h-4" fill={TEXT} style={{ color: TEXT }} />
+                {c.finalCtaSecondary}
+              </button>
+            </div>
           </div>
-        </div>
         </Reveal>
       </section>
 
       {/* Footer */}
-      <footer className="px-5 lg:px-8 py-10 bg-white border-t" style={{ borderColor: LINE }}>
+      <footer className="px-5 lg:px-8 py-10 border-t" style={{ borderColor: BORDER }}>
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <img src={bossifyLogo} alt="Bossify" className="h-6 w-6 rounded object-cover" />
-            <span className="text-sm font-bold" style={{ color: INK }}>Bossify</span>
-            <span className="text-[13px]" style={{ color: INK_SOFT }}>· {c.footerTag}</span>
+            <span className="text-sm font-bold" style={{ color: TEXT }}>Bossify</span>
+            <span className="text-[13px]" style={{ color: TEXT_MUTED }}>· {c.footerTag}</span>
           </div>
-          <p className="text-[12.5px]" style={{ color: INK_SOFT }}>© {new Date().getFullYear()} ZH Studio</p>
+          <p className="text-[12.5px]" style={{ color: TEXT_MUTED }}>© {new Date().getFullYear()} ZH Studio</p>
         </div>
       </footer>
     </div>
