@@ -1128,7 +1128,20 @@ export function LandingPage() {
   const featureMinis = [<MiniProfitPreview key="p" />, <MiniInventoryPreview key="i" />, <MiniReportsPreview key="r" reports={c.reports} />, <MiniOrdersPreview key="o" />];
 
   return (
-    <div className="relative isolate" style={{ background: BG, fontFamily: "IBM Plex Sans, system-ui, sans-serif" }}>
+    <div
+      className="relative isolate"
+      style={{
+        // A faint dot-grid texture under everything — the plain sections
+        // (hero left column, Trust, the tinted bands) were a single flat
+        // fill with nothing happening between the cards, which is most of
+        // what reads as "empty" on a mostly-light page. This is cheap
+        // texture, not a layout change.
+        backgroundColor: BG,
+        backgroundImage: "radial-gradient(circle, rgba(139,92,246,0.14) 1px, transparent 1px)",
+        backgroundSize: "28px 28px",
+        fontFamily: "IBM Plex Sans, system-ui, sans-serif",
+      }}
+    >
       <div className="relative z-10">
       {/* Header */}
       <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(252,251,254,0.85)", borderColor: BORDER }}>
@@ -1140,9 +1153,9 @@ export function LandingPage() {
             </span>
           </div>
           <nav className="hidden lg:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navFeatures}</a>
-            <a href="#reports" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navReports}</a>
-            <a href="#pricing" className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navPricing}</a>
+            <a href="#features" className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navFeatures}</a>
+            <a href="#reports" className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navReports}</a>
+            <a href="#pricing" className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navPricing}</a>
           </nav>
           <div className="hidden lg:flex items-center gap-3">
             <button onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2 rounded-full border" style={{ color: TEXT, borderColor: BORDER }}>
@@ -1163,9 +1176,9 @@ export function LandingPage() {
         </div>
         {menuOpen && (
           <div className="lg:hidden border-t px-5 py-4 flex flex-col gap-3" style={{ borderColor: BORDER, background: BG }}>
-            <a href="#features" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navFeatures}</a>
-            <a href="#reports" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navReports}</a>
-            <a href="#pricing" onClick={() => setMenuOpen(false)} className="text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navPricing}</a>
+            <a href="#features" onClick={() => setMenuOpen(false)} className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navFeatures}</a>
+            <a href="#reports" onClick={() => setMenuOpen(false)} className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navReports}</a>
+            <a href="#pricing" onClick={() => setMenuOpen(false)} className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navPricing}</a>
             <button onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2.5 rounded-full border text-left" style={{ color: TEXT, borderColor: BORDER }}>
               {c.signIn}
             </button>
@@ -1199,7 +1212,7 @@ export function LandingPage() {
               <h1 className="text-[40px] leading-[1.05] lg:text-[58px] font-bold tracking-tight mb-5" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
                 {c.headline1}
                 <br />
-                <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+                <span className="bf-gradient-live" style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
                   {c.headlineEmphasis}
                 </span>
               </h1>
@@ -1298,7 +1311,7 @@ export function LandingPage() {
                   <div className="rounded-2xl p-5 border h-full" style={{ background: CARD, borderColor: BORDER }}>
                     <div className="flex items-baseline gap-2 mb-1">
                       <span className="text-[11px] font-bold tabular-nums" style={{ color: GRAD_FROM }}>0{i + 1}</span>
-                      <h3 className="text-[14.5px] font-bold" style={{ color: TEXT }}>{f.title}</h3>
+                      <h3 className="bf-text-live text-[14.5px] font-bold" style={{ color: TEXT }}>{f.title}</h3>
                     </div>
                     <p className="text-[12.5px] leading-relaxed mb-4" style={{ color: TEXT_MUTED }}>{f.desc}</p>
                     {featureMinis[i]}
@@ -1471,7 +1484,7 @@ export function LandingPage() {
             <h2 className="text-[32px] lg:text-[44px] font-bold tracking-tight leading-[1.1] mb-4" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
               {c.finalTitle1}
               <br />
-              <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>{c.finalTitle2}</span>
+              <span className="bf-gradient-live" style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>{c.finalTitle2}</span>
             </h2>
             <p className="text-[14.5px] lg:text-[15.5px] mb-9" style={{ color: TEXT_MUTED }}>{c.finalSub}</p>
             <div className="flex flex-wrap items-center justify-center gap-3">
