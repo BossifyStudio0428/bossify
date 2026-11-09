@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { pwStrength } from "@/lib/authErrors";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { useI18n } from "@/contexts/I18nContext";
+import { AuthShell } from "@/components/AuthShell";
 
 export const Route = createFileRoute("/forgot-password/reset")({ component: ResetPage });
 
@@ -68,8 +69,8 @@ function ResetPage() {
   }
 
   return (
-    <div className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#FCFBFE", fontFamily: "DM Sans, system-ui, sans-serif" }}>
-      <div className="w-full max-w-[400px] mx-auto space-y-4 flex-1">
+    <AuthShell>
+      <div className="w-full max-w-[400px] mx-auto lg:mx-0 lg:max-w-[420px] space-y-4 flex-1">
         <div className="flex flex-col items-center">
           <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 84, height: 84 }} />
         </div>
@@ -128,6 +129,6 @@ function ResetPage() {
           {error && <p className="text-[12px]" style={{ color: "#DC2626" }}>{error}</p>}
         </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

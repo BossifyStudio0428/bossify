@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isValidEmail } from "@/lib/authErrors";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { useI18n } from "@/contexts/I18nContext";
+import { AuthShell } from "@/components/AuthShell";
 
 export const Route = createFileRoute("/forgot-password")({ component: ForgotPasswordPage });
 
@@ -46,8 +47,8 @@ function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen px-5 pt-10 pb-8 flex flex-col" style={{ background: "#FCFBFE", fontFamily: "DM Sans, system-ui, sans-serif" }}>
-      <div className="w-full max-w-[400px] mx-auto space-y-4 flex-1">
+    <AuthShell>
+      <div className="w-full max-w-[400px] mx-auto lg:mx-0 lg:max-w-[420px] space-y-4 flex-1 lg:bg-[#F7F5FA] lg:rounded-2xl lg:border lg:border-[#D9D0EC] lg:shadow-[0_1px_2px_rgba(139,92,246,0.08),0_12px_32px_rgba(139,92,246,0.12)] lg:px-10 lg:py-10">
         <button onClick={() => navigate({ to: "/auth" })} className="h-10 w-10 rounded-full bg-[#F7F5FA] border border-[#E4DEF0] flex items-center justify-center self-start">
           <ChevronLeft className="h-5 w-5" style={{ color: "#1A1225" }} />
         </button>
@@ -79,6 +80,6 @@ function ForgotPasswordPage() {
           {error && <p className="text-[12px]" style={{ color: "#DC2626" }}>{error}</p>}
         </form>
       </div>
-    </div>
+    </AuthShell>
   );
 }

@@ -9,6 +9,7 @@ import { authErrorText, isValidEmail, pwStrength } from "@/lib/authErrors";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
+import { AuthShell } from "@/components/AuthShell";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -47,16 +48,15 @@ function AuthPage() {
   }, [mode]);
 
   return (
-    <div
-      data-auth-surface
-      className="min-h-screen px-5 pt-10 pb-8 flex flex-col lg:items-center lg:justify-center lg:px-6 lg:py-12"
-      style={{ background: "#FCFBFE", fontFamily: "DM Sans, system-ui, sans-serif" }}
+    <AuthShell
+      footer={
+        <div className="mt-auto lg:mt-8 pt-4 flex items-center justify-center gap-3 text-[11px]" style={{ color: "#5B5270" }}>
+          <Link to="/terms" className="underline hover:text-[#8B5CF6]">{t("terms_conditions")}</Link>
+          <span>·</span>
+          <Link to="/privacy-policy" className="underline hover:text-[#8B5CF6]">{t("privacy_policy")}</Link>
+        </div>
+      }
     >
-      {/* Desktop: the mobile screens below are already self-centering
-          (each sets its own max-w + mx-auto), so this just gives them a
-          card surface instead of floating on a flat background. Mobile
-          layout is untouched — flex flex-col flex-1 w-full matches what
-          this content had as a direct child of the surface div before. */}
       <div className="flex flex-col flex-1 w-full lg:flex-none lg:max-w-[460px] lg:bg-[#F7F5FA] lg:rounded-2xl lg:border lg:border-[#D9D0EC] lg:shadow-[0_1px_2px_rgba(139,92,246,0.08),0_12px_32px_rgba(139,92,246,0.12)] lg:px-10 lg:py-10">
       {mode === "login" && <LoginScreen onGoRegister={() => setMode("reg_email")} tiktokPrefill={tiktokPrefill} />}
       {mode === "reg_email" && (
@@ -86,12 +86,7 @@ function AuthPage() {
         />
       )}
       </div>
-      <div className="mt-auto lg:mt-8 pt-4 flex items-center justify-center gap-3 text-[11px]" style={{ color: "#5B5270" }}>
-        <Link to="/terms" className="underline hover:text-[#8B5CF6]">{t("terms_conditions")}</Link>
-        <span>·</span>
-        <Link to="/privacy-policy" className="underline hover:text-[#8B5CF6]">{t("privacy_policy")}</Link>
-      </div>
-    </div>
+    </AuthShell>
   );
 }
 
@@ -123,15 +118,23 @@ function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   );
 }
 
-function PrimaryButton({ loading, children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean }) {
+function PrimaryButton({
+  loading,
+  loadingLabel,
+  children,
+  ...rest
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; loadingLabel?: string }) {
   return (
     <button
       {...rest}
       disabled={rest.disabled || loading}
-      className="w-full text-white font-bold text-[14px] active:scale-[0.99] transition disabled:opacity-60"
+      className="w-full text-white font-bold text-[14px] active:scale-[0.99] transition disabled:opacity-60 inline-flex items-center justify-center gap-2"
       style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
     >
-      {loading ? "…" : children}
+      {loading && (
+        <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+      )}
+      {loading ? (loadingLabel ?? "…") : children}
     </button>
   );
 }
@@ -189,6 +192,7 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
   const [limitInfo, setLimitInfo] = useState<{ used: number; limit: number; plan: string } | null>(null);
   const [showTikTokCode, setShowTikTokCode] = useState(!!tiktokPrefill);
   const [tiktokStarting, setTiktokStarting] = useState(false);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
 
   const startTikTokLogin = async () => {
     setTiktokStarting(true);
@@ -227,8 +231,11 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
       }
       return;
     }
+    setJustLoggedIn(true);
     router.invalidate();
-    navigate({ to: "/" });
+    // Subtle, brief confirmation before handing off to Home - not a
+    // celebration animation, just enough to feel like something happened.
+    setTimeout(() => navigate({ to: "/" }), 450);
   };
 
   if (limitInfo) {
@@ -295,7 +302,17 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
             </button>
           </div>
 
-          <PrimaryButton type="submit" loading={loading}>{t("login_btn")}</PrimaryButton>
+          {justLoggedIn ? (
+            <div
+              className="w-full flex items-center justify-center gap-2 text-white font-bold text-[14px]"
+              style={{ background: "#10B981", borderRadius: 12, padding: 13 }}
+            >
+              <Check className="h-4 w-4" />
+              {t("welcome_back")}
+            </div>
+          ) : (
+            <PrimaryButton type="submit" loading={loading} loadingLabel={t("logging_in")}>{t("login_btn")}</PrimaryButton>
+          )}
           <ErrorText>{error}</ErrorText>
         </form>
 
