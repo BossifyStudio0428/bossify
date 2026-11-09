@@ -20,6 +20,19 @@ export default defineLovableConfig({
         entryFileNames: "server.js",
       },
     },
+    // Document/HTML responses (and anything not under /assets/**) must
+    // always revalidate with the server. Without this, a browser that
+    // cached the page before a deploy keeps requesting the OLD
+    // content-hashed JS/CSS chunk filenames referenced in that stale
+    // HTML after the new deploy has replaced them with differently-named
+    // files — those requests 404 and the app gets stuck on the prepaint
+    // splash forever (hard refresh is the only fix for that visitor).
+    // /assets/** keeps its own longer, more specific immutable rule, which
+    // Cloudflare applies in preference to this catch-all since it's the
+    // more specific path.
+    routeRules: {
+      "/**": { headers: { "cache-control": "public, max-age=0, must-revalidate" } },
+    },
   } as any,
   tanstackStart: {
     // This app is a client-rendered dashboard. Disable TanStack's production
