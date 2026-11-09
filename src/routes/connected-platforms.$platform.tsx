@@ -239,7 +239,7 @@ function PlatformConnectPage() {
         type="button"
         disabled={busy}
         onClick={connected ? handleDisconnect : handleConnect}
-        className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2"
+        className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 transition-transform"
       >
         {busy && <Loader2 className="h-4 w-4 animate-spin" />}
         {connected ? "Disconnect" : cfg.connectLabel[lang]}
@@ -251,7 +251,7 @@ function PlatformConnectPage() {
             type="button"
             disabled={importingProducts}
             onClick={handleImportProducts}
-            className="w-full py-3.5 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 transition-transform"
           >
             {importingProducts && <Loader2 className="h-4 w-4 animate-spin" />}
             {importingProducts ? "Importing…" : "Import products from TikTok"}
@@ -262,7 +262,7 @@ function PlatformConnectPage() {
             type="button"
             disabled={syncing}
             onClick={handleSync}
-            className="w-full py-3.5 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 transition-transform"
           >
             {syncing && <Loader2 className="h-4 w-4 animate-spin" />}
             {syncing ? "Syncing…" : "Sync pending orders now"}

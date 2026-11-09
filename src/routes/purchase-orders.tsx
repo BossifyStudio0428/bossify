@@ -268,7 +268,7 @@ function PurchaseOrdersPage() {
                     setDateFrom(fromD.toISOString().slice(0, 10));
                     setDateTo(to);
                   }}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted text-foreground active:scale-95"
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted text-foreground active:scale-95 transition-transform"
                 >
                   {p.k === "today"
                     ? (lang === "zh" ? "今天" : lang === "ms" ? "Hari ini" : "Today")
@@ -404,7 +404,7 @@ function PurchaseOrdersPage() {
               await runAiParse("text", txt);
               setAiText("");
             }}
-            className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold active:scale-[0.99]"
+            className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold active:scale-[0.99] transition-transform"
           >
             {t("po_ai_scan")}
           </button>
@@ -812,7 +812,7 @@ export function PurchaseOrderForm({
       <button
         onClick={save}
         disabled={saving}
-        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99]"
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
       >
         {saving ? t("saving") : t("save")}
       </button>

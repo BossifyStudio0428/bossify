@@ -203,7 +203,7 @@ function DevicesPage() {
                     type="button"
                     onClick={() => onRemove(row)}
                     disabled={removingId === row.id}
-                    className="h-9 px-3 rounded-xl bg-red-500/10 text-red-600 text-xs font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                    className="h-9 px-3 rounded-xl bg-red-500/10 text-red-600 text-xs font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-50 transition-transform"
                   >
                     {removingId === row.id ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -227,7 +227,7 @@ function DevicesPage() {
         <button
           type="button"
           onClick={() => navigate({ to: "/" })}
-          className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm active:scale-[0.99]"
+          className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm active:scale-[0.99] transition-transform"
         >
           {t("device_limit_continue")}
         </button>

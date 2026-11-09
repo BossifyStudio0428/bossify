@@ -535,7 +535,7 @@ const BottomNav = memo(function BottomNav() {
               id="tour-new-order"
               to="/new-order"
               aria-label={t(bizKey(type, "new_order"))}
-              className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95"
+              className="-mt-10 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-soft)] ring-4 ring-background active:scale-95 transition-transform"
             >
               <Plus className="h-7 w-7" strokeWidth={2.5} />
             </Link>

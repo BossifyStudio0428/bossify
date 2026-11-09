@@ -205,7 +205,7 @@ function GuidePage() {
   return (
     <div className="px-4 pt-4 pb-24 space-y-5">
       <div className="flex items-center gap-2">
-        <Link to="/more" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+        <Link to="/more" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-lg font-bold text-foreground">{pageTitle}</h1>
@@ -219,7 +219,7 @@ function GuidePage() {
             <div key={s.key} className="rounded-2xl border border-border/60 bg-card shadow-[var(--shadow-card)] overflow-hidden">
               <button
                 onClick={() => setOpen(isOpen ? null : s.key)}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:scale-[0.99]"
+                className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:scale-[0.99] transition-transform"
               >
                 <span className="h-10 w-10 shrink-0 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                   <s.icon className="h-5 w-5" />

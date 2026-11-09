@@ -316,7 +316,7 @@ function ExpenseFormSheet({
       <button
         onClick={save}
         disabled={saving}
-        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99]"
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
       >
         {saving ? c.saving : c.save}
       </button>

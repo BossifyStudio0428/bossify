@@ -112,7 +112,7 @@ function CampaignsListPage() {
   return (
     <div className="px-4 pt-4 pb-28 space-y-4 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
-        <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+        <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-lg font-bold text-foreground">{title}</h1>
@@ -200,7 +200,7 @@ function CampaignsListPage() {
           </p>
           <button
             onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold active:scale-95"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold active:scale-95 transition-transform"
           >
             <Plus className="h-4 w-4" /> {lang === "zh" ? "新增活动" : lang === "ms" ? "Kempen baharu" : "New campaign"}
           </button>
@@ -218,7 +218,7 @@ function CampaignsListPage() {
                 key={c.id}
                 to="/campaigns/$campaignId"
                 params={{ campaignId: c.id }}
-                className="block rounded-2xl bg-card border border-border/60 p-3.5 active:scale-[0.99]"
+                className="block rounded-2xl bg-card border border-border/60 p-3.5 active:scale-[0.99] transition-transform"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">

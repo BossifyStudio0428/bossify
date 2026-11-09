@@ -35,13 +35,13 @@ export function NotifPermissionPrompt({ enabled }: { enabled: boolean }) {
         <div className="flex flex-col gap-2 mt-2">
           <button
             onClick={onAllow}
-            className="h-11 rounded-xl bg-primary text-primary-foreground font-semibold active:scale-[.98]"
+            className="h-11 rounded-xl bg-primary text-primary-foreground font-semibold active:scale-[.98] transition-transform"
           >
             {t("allow_notifications")}
           </button>
           <button
             onClick={onLater}
-            className="h-11 rounded-xl bg-muted text-foreground font-medium active:scale-[.98]"
+            className="h-11 rounded-xl bg-muted text-foreground font-medium active:scale-[.98] transition-transform"
           >
             {t("maybe_later")}
           </button>

@@ -152,7 +152,7 @@ function StockPage() {
   return (
     <div className="px-4 pt-4 pb-24 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
-        <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+        <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-lg font-bold text-foreground">{t("stock_title")}</h1>
@@ -234,7 +234,7 @@ function StockPage() {
                     <button
                       aria-label="decrement"
                       onClick={() => adjust(r, -1)}
-                      className="h-8 w-8 rounded-full border border-border flex items-center justify-center active:scale-95"
+                      className="h-8 w-8 rounded-full border border-border flex items-center justify-center active:scale-95 transition-transform"
                     >
                       <Minus className="h-4 w-4" />
                     </button>
@@ -242,7 +242,7 @@ function StockPage() {
                     <button
                       aria-label="increment"
                       onClick={() => adjust(r, 1)}
-                      className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-95"
+                      className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-95 transition-transform"
                     >
                       <Plus className="h-4 w-4" />
                     </button>

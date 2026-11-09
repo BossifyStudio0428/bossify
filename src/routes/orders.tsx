@@ -706,13 +706,13 @@ function OrdersPage() {
         {refreshing && <span className="text-[10px] text-muted-foreground">↻</span>}
         <button
           onClick={() => navigate({ to: "/import-orders" })}
-          className="ml-auto p-2 rounded-full bg-card border border-border/60 active:scale-95"
+          className="ml-auto p-2 rounded-full bg-card border border-border/60 active:scale-95 transition-transform"
           aria-label="Import"
           title="Import Excel/CSV"
         >
           <Upload className="h-4 w-4" />
         </button>
-        <button onClick={exportPDF} disabled={exportingPdf} className="p-2 rounded-full bg-card border border-border/60 active:scale-95 disabled:opacity-60" aria-label={t("export_pdf")}>
+        <button onClick={exportPDF} disabled={exportingPdf} className="p-2 rounded-full bg-card border border-border/60 active:scale-95 disabled:opacity-60 transition-transform" aria-label={t("export_pdf")}>
           {exportingPdf ? "…" : <Download className="h-4 w-4" />}
         </button>
       </header>
@@ -724,7 +724,7 @@ function OrdersPage() {
               type="button"
               disabled={tiktokSyncing}
               onClick={() => syncTikTokOrders(false)}
-              className="flex-1 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95 disabled:opacity-60"
+              className="flex-1 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95 disabled:opacity-60 transition-transform"
             >
               {tiktokSyncing
                 ? (lang === "zh" ? "同步中…" : lang === "ms" ? "Menyegerak…" : "Syncing…")
@@ -799,7 +799,7 @@ function OrdersPage() {
                     navigator.clipboard?.writeText(`${getPublicOrigin()}/order/${ofCode}`);
                     toast.success(t("pof_link_copied"));
                   }}
-                  className="py-2 px-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold active:scale-95 flex flex-col items-center gap-1"
+                  className="py-2 px-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold active:scale-95 flex flex-col items-center gap-1 transition-transform"
                 >
                   <Copy size={14} />
                   <span className="leading-none">{t("pof_copy_link")}</span>
@@ -808,7 +808,7 @@ function OrdersPage() {
                   href={`https://wa.me/?text=${encodeURIComponent(stripEmoji(t(pofWaShareKey(ofBizType as BizType | null)).replace("{link}", `${getPublicOrigin()}/order/${ofCode}`)))}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="py-2 px-1 rounded-lg bg-emerald-500 text-white text-[10px] font-semibold text-center active:scale-95 flex flex-col items-center gap-1"
+                  className="py-2 px-1 rounded-lg bg-emerald-500 text-white text-[10px] font-semibold text-center active:scale-95 flex flex-col items-center gap-1 transition-transform"
                 >
                   <MessageCircle size={14} />
                   <span className="leading-none">WhatsApp</span>
@@ -816,7 +816,7 @@ function OrdersPage() {
                 <button
                   type="button"
                   onClick={() => setOfQrOpen(true)}
-                  className="py-2 px-1 rounded-lg bg-card border border-border/60 text-[10px] font-semibold active:scale-95 flex flex-col items-center gap-1"
+                  className="py-2 px-1 rounded-lg bg-card border border-border/60 text-[10px] font-semibold active:scale-95 flex flex-col items-center gap-1 transition-transform"
                 >
                   <QrCode size={14} />
                   <span className="leading-none">{t("pof_qr_code")}</span>
@@ -825,7 +825,7 @@ function OrdersPage() {
                   href={`${getPublicOrigin()}/order/${ofCode}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="py-2 px-1 rounded-lg bg-card border border-border/60 text-[10px] font-semibold text-center active:scale-95 flex flex-col items-center gap-1"
+                  className="py-2 px-1 rounded-lg bg-card border border-border/60 text-[10px] font-semibold text-center active:scale-95 flex flex-col items-center gap-1 transition-transform"
                 >
                   <Eye size={14} />
                   <span className="leading-none">{t("pof_view_form")}</span>
@@ -849,7 +849,7 @@ function OrdersPage() {
 
       {active === "Unpaid" && unpaidCount > 0 && (
         <button onClick={hasFullAccess ? remindAllUnpaid : () => showUpgrade(t("remind_all_unpaid"))} disabled={!!bulkProgress}
-          className="w-full py-3 rounded-2xl bg-orange-500 text-white font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60">
+          className="w-full py-3 rounded-2xl bg-orange-500 text-white font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60 transition-transform">
           {bulkProgress
             ? t("sending_progress").replace("{i}", String(bulkProgress.i)).replace("{n}", String(bulkProgress.n))
             : (
@@ -1008,7 +1008,7 @@ function OrdersPage() {
                     setDateFrom(fromD.toISOString().slice(0, 10));
                     setDateTo(to);
                   }}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted text-foreground active:scale-95"
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted text-foreground active:scale-95 transition-transform"
                 >
                   {p.k === "today"
                     ? (lang === "zh" ? "今天" : lang === "ms" ? "Hari ini" : "Today")
@@ -1101,7 +1101,7 @@ function OrdersPage() {
                         <button
                           onClick={(e) => e.stopPropagation()}
                           aria-label={t("order_options")}
-                          className="h-6 w-6 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-500 hover:bg-muted/30 active:scale-95"
+                          className="h-6 w-6 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-500 hover:bg-muted/30 active:scale-95 transition-transform"
                         >
                           <MoreVertical className="h-4 w-4" />
                         </button>
@@ -1236,7 +1236,7 @@ function OrdersPage() {
                               onClick={() => viewReceipt(o)}
                               aria-label={t("view_receipt")}
                               title={t("view_receipt")}
-                              className="h-8 w-8 rounded-lg text-indigo-500 hover:bg-indigo-500/10 flex items-center justify-center active:scale-95"
+                              className="h-8 w-8 rounded-lg text-indigo-500 hover:bg-indigo-500/10 flex items-center justify-center active:scale-95 transition-transform"
                             >
                               <Paperclip className="h-4 w-4" />
                             </button>
@@ -1244,7 +1244,7 @@ function OrdersPage() {
                               onClick={() => removeReceipt(o)}
                               aria-label={t("receipt_remove")}
                               title={t("receipt_remove")}
-                              className="h-8 w-8 rounded-lg text-rose-600 hover:bg-rose-500/10 flex items-center justify-center active:scale-95"
+                              className="h-8 w-8 rounded-lg text-rose-600 hover:bg-rose-500/10 flex items-center justify-center active:scale-95 transition-transform"
                             >
                               <X className="h-4 w-4" />
                             </button>
@@ -1360,7 +1360,7 @@ function OrdersPage() {
                   lang === "zh" ? "订单信息已复制" : lang === "ms" ? "Maklumat pesanan disalin" : "Order info copied",
                 );
               }}
-              className="w-full py-3 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98]"
+              className="w-full py-3 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             >
               <Copy size={16} />
               {lang === "zh" ? "复制订单信息" : lang === "ms" ? "Salin maklumat pesanan" : "Copy order info"}
@@ -1473,7 +1473,7 @@ function OrdersPage() {
           the pill style now used on Products' "add product" button. */}
       <Link
         to="/new-order"
-        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] lg:hidden"
+        className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] lg:hidden transition-transform"
       >
         <Plus className="h-5 w-5" strokeWidth={2.5} />
         {t("ro_new_sale")}

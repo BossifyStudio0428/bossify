@@ -527,7 +527,7 @@ function CampaignDetailPage() {
     return (
       <div className="px-4 pt-4 pb-24 space-y-4">
         <div className="flex items-center gap-2">
-          <Link to="/campaigns" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+          <Link to="/campaigns" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
             <ChevronLeft className="h-5 w-5" />
           </Link>
           <h1 className="text-lg font-bold text-foreground">
@@ -544,7 +544,7 @@ function CampaignDetailPage() {
   return (
     <div className="px-4 pt-4 pb-24 space-y-5">
       <div className="flex items-center gap-2">
-        <Link to="/campaigns" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+        <Link to="/campaigns" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-lg font-bold text-foreground truncate">{campaign?.name || "…"}</h1>
@@ -586,10 +586,10 @@ function CampaignDetailPage() {
           </div>
           {!editingCampaign && campaign && (
             <div className="flex items-center gap-1">
-              <button onClick={() => setEditingCampaign(true)} aria-label={lang === "zh" ? "编辑" : lang === "ms" ? "Edit" : "Edit"} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+              <button onClick={() => setEditingCampaign(true)} aria-label={lang === "zh" ? "编辑" : lang === "ms" ? "Edit" : "Edit"} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
                 <Pencil className="h-3.5 w-3.5" />
               </button>
-              <button disabled={deleting} onClick={removeCampaign} aria-label={lang === "zh" ? "删除" : lang === "ms" ? "Padam" : "Delete"} className="h-7 w-7 rounded-full flex items-center justify-center text-red-600 active:scale-95 disabled:opacity-60">
+              <button disabled={deleting} onClick={removeCampaign} aria-label={lang === "zh" ? "删除" : lang === "ms" ? "Padam" : "Delete"} className="h-7 w-7 rounded-full flex items-center justify-center text-red-600 active:scale-95 disabled:opacity-60 transition-transform">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -764,7 +764,7 @@ function CampaignDetailPage() {
                   {lang === "zh" ? "活动特价" : lang === "ms" ? "Harga promosi" : "Promo prices"}
                 </h2>
               </div>
-              <button onClick={() => setShowAddPromo((s) => !s)} className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center active:scale-95">
+              <button onClick={() => setShowAddPromo((s) => !s)} className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center active:scale-95 transition-transform">
                 <Plus className="h-4 w-4" />
               </button>
             </div>
@@ -815,7 +815,7 @@ function CampaignDetailPage() {
                       <button onClick={() => togglePromo(p)} className={`text-[11px] font-bold px-2 py-1 rounded-full shrink-0 ${p.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
                         {p.active ? (lang === "zh" ? "生效中" : lang === "ms" ? "Aktif" : "Active") : (lang === "zh" ? "已停用" : lang === "ms" ? "Tidak aktif" : "Off")}
                       </button>
-                      <button onClick={() => deletePromo(p)} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground shrink-0 active:scale-95">
+                      <button onClick={() => deletePromo(p)} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground shrink-0 active:scale-95 transition-transform">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>

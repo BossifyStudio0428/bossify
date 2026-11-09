@@ -383,7 +383,7 @@ function QuestionScreen({
         <button
           onClick={onBack}
           aria-label={t("back_arrow")}
-          className="h-12 w-12 rounded-xl border border-border flex items-center justify-center text-muted-foreground active:scale-95"
+          className="h-12 w-12 rounded-xl border border-border flex items-center justify-center text-muted-foreground active:scale-95 transition-transform"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>

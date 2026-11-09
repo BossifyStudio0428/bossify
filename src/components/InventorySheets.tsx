@@ -63,7 +63,7 @@ export function QtySheet({
           if (max !== undefined && q > max) { toast.error(t("cant_remove_more")); return; }
           onConfirm(q);
         }}
-        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold active:scale-[0.99]"
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold active:scale-[0.99] transition-transform"
       >
         {t("confirm")}
       </button>

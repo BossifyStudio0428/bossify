@@ -76,7 +76,7 @@ export function NotificationBellIcon() {
     <Link
       to="/notifications"
       aria-label="Notifications"
-      className="relative ml-auto h-9 w-9 rounded-full flex items-center justify-center text-foreground active:scale-95"
+      className="relative ml-auto h-9 w-9 rounded-full flex items-center justify-center text-foreground active:scale-95 transition-transform"
     >
       <Bell className="h-5 w-5" />
       {unread > 0 && (

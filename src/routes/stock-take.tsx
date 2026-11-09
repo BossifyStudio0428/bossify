@@ -397,7 +397,7 @@ function StockTakePage() {
             <div className="mx-auto max-w-[360px]">
               <button
                 onClick={() => setConfirmDone(true)}
-                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-[var(--shadow-soft)] active:scale-[0.99]"
+                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-[var(--shadow-soft)] active:scale-[0.99] transition-transform"
               >
                 {t("complete_stock_take")}
               </button>
@@ -433,7 +433,7 @@ function StockTakePage() {
 
       <button
         onClick={startNew}
-        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.99]"
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.99] transition-transform"
       >
         <Plus className="h-4 w-4" /> {t("start_stock_take")}
       </button>

@@ -62,7 +62,7 @@ export function CampaignBanner() {
     <Link
       to="/campaigns/$campaignId"
       params={{ campaignId: campaign.id }}
-      className="mt-4 flex items-center gap-3 rounded-2xl bg-primary/10 border border-primary/20 p-3.5 active:scale-[0.98]"
+      className="mt-4 flex items-center gap-3 rounded-2xl bg-primary/10 border border-primary/20 p-3.5 active:scale-[0.98] transition-transform"
     >
       <span className="h-9 w-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
         <Flame className="h-4.5 w-4.5" />

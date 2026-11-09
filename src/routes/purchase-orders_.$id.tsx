@@ -447,14 +447,14 @@ function PurchaseOrderDetailPage() {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={exportPdf}
-          className="py-3 rounded-2xl bg-card border border-border/60 text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.99]"
+          className="py-3 rounded-2xl bg-card border border-border/60 text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.99] transition-transform"
         >
           {canExport ? <FileDown className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
           {t("po_export_pdf")}
         </button>
         <button
           onClick={() => setConfirmDelete(true)}
-          className="py-3 rounded-2xl bg-red-500/10 text-red-600 text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.99]"
+          className="py-3 rounded-2xl bg-red-500/10 text-red-600 text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.99] transition-transform"
         >
           <Trash2 className="h-4 w-4" /> {t("delete")}
         </button>

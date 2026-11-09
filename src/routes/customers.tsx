@@ -455,19 +455,19 @@ function CustomersPage() {
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
           <Link
             to="/pipeline-overview"
-            className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary/10 text-primary active:scale-95"
+            className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary/10 text-primary active:scale-95 transition-transform"
           >
             <BarChart3 className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("pipeline_overview")}
           </Link>
           <Link
             to="/services-summary"
-            className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary/10 text-primary active:scale-95"
+            className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary/10 text-primary active:scale-95 transition-transform"
           >
             <GraduationCap className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("services_summary")}
           </Link>
           <Link
             to="/clients-compare"
-            className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary text-primary-foreground active:scale-95"
+            className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-2xl bg-primary text-primary-foreground active:scale-95 transition-transform"
           >
             <Scale className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("edu_compare")}
           </Link>
@@ -581,20 +581,20 @@ function CustomersPage() {
           </div>
           <div className="flex gap-1.5 flex-wrap">
             <button onClick={() => { setDateFrom(todayStr()); setDateTo(todayStr()); }}
-              className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95">
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95 transition-transform">
               {lang.startsWith("zh") ? "今天" : lang.startsWith("ms") ? "Hari ini" : "Today"}
             </button>
             <button onClick={() => { setDateFrom(daysAgoStr(6)); setDateTo(todayStr()); }}
-              className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95">
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95 transition-transform">
               {lang.startsWith("zh") ? "近7天" : lang.startsWith("ms") ? "7 hari" : "Last 7 days"}
             </button>
             <button onClick={() => { setDateFrom(daysAgoStr(29)); setDateTo(todayStr()); }}
-              className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95">
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95 transition-transform">
               {lang.startsWith("zh") ? "近30天" : lang.startsWith("ms") ? "30 hari" : "Last 30 days"}
             </button>
             {dateFilterActive && (
               <button onClick={() => { setDateFrom(""); setDateTo(""); }}
-                className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95 ml-auto">
+                className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-muted text-muted-foreground active:scale-95 ml-auto transition-transform">
                 {lang.startsWith("zh") ? "清除" : lang.startsWith("ms") ? "Padam" : "Clear"}
               </button>
             )}
@@ -721,7 +721,7 @@ function CustomersPage() {
                     params={{ customerId: c.id }}
                     hash="pipeline"
                     aria-label={t("open_pipeline")}
-                    className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary active:scale-95"
+                    className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary active:scale-95 transition-transform"
                   >
                     <Phone className="h-3 w-3" />
                   </Link>
@@ -730,7 +730,7 @@ function CustomersPage() {
                     params={{ customerId: c.id }}
                     hash="services"
                     aria-label={t("open_services")}
-                    className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary active:scale-95"
+                    className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary active:scale-95 transition-transform"
                   >
                     <GraduationCap className="h-3 w-3" />
                   </Link>

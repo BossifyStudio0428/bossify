@@ -422,7 +422,7 @@ function NotifSettingsPage() {
           <p className="text-xs text-amber-700 mt-1">{t("notif_perm_off_desc")}</p>
           <button
             onClick={openSysSettings}
-            className="mt-3 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[.98]"
+            className="mt-3 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[.98] transition-transform"
           >
             {t("allow_notifications")}
           </button>
@@ -574,7 +574,7 @@ function NotifSettingsPage() {
 
       <button
         onClick={openSysSettings}
-        className="w-full h-12 rounded-2xl border border-border/60 bg-card flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99]"
+        className="w-full h-12 rounded-2xl border border-border/60 bg-card flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99] transition-transform"
       >
         <Settings className="h-4 w-4" /> {t("open_system_settings")}
       </button>
@@ -582,7 +582,7 @@ function NotifSettingsPage() {
       <button
         onClick={sendTest}
         disabled={sending}
-        className="w-full h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99] disabled:opacity-60"
+        className="w-full h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center gap-2 text-sm font-semibold active:scale-[.99] disabled:opacity-60 transition-transform"
       >
         <Bell className="h-4 w-4" /> {sending ? t("notif_test_sending") : t("notif_test_push")}
       </button>

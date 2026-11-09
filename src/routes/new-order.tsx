@@ -606,7 +606,7 @@ function NewOrderPage() {
                   <button
                     type="button"
                     onClick={() => navigate({ to: isRetailish ? "/inventory" : "/services" } as any)}
-                    className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold active:scale-95"
+                    className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold active:scale-95 transition-transform"
                   >
                     {isRetailish
                       ? (lang === "ms" ? "Pergi ke Inventori" : lang === "zh" ? "前往库存" : "Go to Inventory")

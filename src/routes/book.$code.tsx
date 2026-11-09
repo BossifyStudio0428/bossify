@@ -236,7 +236,7 @@ function PublicBookingPage() {
         type="button"
         onClick={submit}
         disabled={saving || !time}
-        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg disabled:opacity-60 active:scale-[0.99]"
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg disabled:opacity-60 active:scale-[0.99] transition-transform"
       >
         {saving ? t("saving") : t("book_now")}
       </button>

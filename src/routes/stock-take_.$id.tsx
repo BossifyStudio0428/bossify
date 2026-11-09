@@ -280,7 +280,7 @@ function StockTakeReportPage() {
           <button
             onClick={exportPdf}
             disabled={exporting}
-            className="w-full py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.99]"
+            className="w-full py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.99] transition-transform"
           >
             {hasFullAccess ? <Download className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
             {exporting ? "…" : t("export_pdf")}

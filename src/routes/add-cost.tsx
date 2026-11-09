@@ -120,7 +120,7 @@ function AddCostPage() {
   return (
     <div className="px-4 pt-4 pb-24 space-y-4">
       <div className="flex items-center gap-2">
-        <button onClick={() => (mode === "pick" ? navigate({ to: "/" }) : setMode("pick"))} className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+        <button onClick={() => (mode === "pick" ? navigate({ to: "/" }) : setMode("pick"))} className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
           <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-lg font-bold text-foreground">{title}</h1>
@@ -133,14 +133,14 @@ function AddCostPage() {
 
       {mode === "pick" && (
         <div className="space-y-2">
-          <button onClick={() => setMode("product")} className="w-full flex items-center gap-3 rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.98]">
+          <button onClick={() => setMode("product")} className="w-full flex items-center gap-3 rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.98] transition-transform">
             <Package className="h-5 w-5 text-primary" />
             <div className="text-left">
               <p className="text-sm font-semibold">{lang === "zh" ? "商品进货成本" : lang === "ms" ? "Kos produk" : "Product purchase cost"}</p>
               <p className="text-xs text-muted-foreground">{lang === "zh" ? "收货,更新库存跟加权平均成本" : "Receive stock, updates weighted-average cost"}</p>
             </div>
           </button>
-          <button onClick={() => setMode("expense")} className="w-full flex items-center gap-3 rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.98]">
+          <button onClick={() => setMode("expense")} className="w-full flex items-center gap-3 rounded-2xl bg-card border border-border/60 p-4 active:scale-[0.98] transition-transform">
             <Receipt className="h-5 w-5 text-primary" />
             <div className="text-left">
               <p className="text-sm font-semibold">{lang === "zh" ? "营业费用" : lang === "ms" ? "Perbelanjaan operasi" : "Operating expense"}</p>

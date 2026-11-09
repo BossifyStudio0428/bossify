@@ -165,7 +165,7 @@ function BusinessTypePage() {
           <button
             onClick={onContinue}
             disabled={!selected || saving || (selected === "fnb" && !selectedSub)}
-            className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 active:scale-[0.98]"
+            className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 active:scale-[0.98] transition-transform"
           >
             {saving ? t("saving") : t("continue")}
           </button>

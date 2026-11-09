@@ -92,7 +92,7 @@ export function WizardSheet({ title, steps, saving, saveLabel, onClose, onSave }
             <button
               type="button"
               onClick={() => go(idx - 1)}
-              className="px-4 py-3 rounded-2xl bg-muted text-foreground text-sm font-semibold flex items-center gap-1 active:scale-[0.99]"
+              className="px-4 py-3 rounded-2xl bg-muted text-foreground text-sm font-semibold flex items-center gap-1 active:scale-[0.99] transition-transform"
             >
               <ChevronLeft className="h-4 w-4" />
               {t("back")}

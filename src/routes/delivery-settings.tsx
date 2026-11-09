@@ -92,7 +92,7 @@ function DeliverySettingsPage() {
         <button
           type="button"
           onClick={() => navigate({ to: "/profile" })}
-          className="h-9 w-9 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95"
+          className="h-9 w-9 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform"
           aria-label="Back"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -204,7 +204,7 @@ function DeliverySettingsPage() {
             type="button"
             onClick={save}
             disabled={saving}
-            className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg disabled:opacity-60 active:scale-[0.99]"
+            className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg disabled:opacity-60 active:scale-[0.99] transition-transform"
           >
             {saving ? t("saving") : t("save")}
           </button>

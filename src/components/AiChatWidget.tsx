@@ -178,7 +178,7 @@ export function AiChatWidget() {
         onClick={() => setOpen(true)}
         aria-label={title}
         title={title}
-        className="fixed right-4 z-40 h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center active:scale-95"
+        className="fixed right-4 z-40 h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center active:scale-95 transition-transform"
         style={{ bottom: "calc(88px + env(safe-area-inset-bottom))" }}
       >
         <Sparkles className="h-5 w-5" />
@@ -197,10 +197,10 @@ export function AiChatWidget() {
                 <h2 className="text-sm font-bold">{title}</h2>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={clearChat} aria-label={lang === "zh" ? "清空对话" : lang === "ms" ? "Kosongkan chat" : "Clear chat"} className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+                <button onClick={clearChat} aria-label={lang === "zh" ? "清空对话" : lang === "ms" ? "Kosongkan chat" : "Clear chat"} className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
                   <Trash2 className="h-4 w-4" />
                 </button>
-                <button onClick={() => setOpen(false)} aria-label={lang === "zh" ? "关闭" : lang === "ms" ? "Tutup" : "Close"} className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+                <button onClick={() => setOpen(false)} aria-label={lang === "zh" ? "关闭" : lang === "ms" ? "Tutup" : "Close"} className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -220,7 +220,7 @@ export function AiChatWidget() {
                           key={q}
                           onClick={() => sendText(q)}
                           disabled={sending}
-                          className="text-left text-sm rounded-2xl px-3.5 py-2.5 bg-card border border-border/60 active:scale-[0.98] disabled:opacity-50"
+                          className="text-left text-sm rounded-2xl px-3.5 py-2.5 bg-card border border-border/60 active:scale-[0.98] disabled:opacity-50 transition-transform"
                         >
                           {q}
                         </button>
@@ -268,7 +268,7 @@ export function AiChatWidget() {
                 onClick={send}
                 disabled={sending || !input.trim()}
                 aria-label={lang === "zh" ? "发送" : lang === "ms" ? "Hantar" : "Send"}
-                className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-50 active:scale-95"
+                className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-50 active:scale-95 transition-transform"
               >
                 <Send className="h-4 w-4" />
               </button>

@@ -277,33 +277,33 @@ function InventoryDetail() {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => setSheet({ kind: "remove" })}
-              className="py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold active:scale-[0.98]"
+              className="py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold active:scale-[0.98] transition-transform"
             >
               <Minus className="inline h-3.5 w-3.5 mr-1" />{t("remove")}
             </button>
             <button
               onClick={() => setSheet({ kind: "restock" })}
-              className="py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold active:scale-[0.98]"
+              className="py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold active:scale-[0.98] transition-transform"
             >
               <Plus className="inline h-3.5 w-3.5 mr-1" />{t("restock")}
             </button>
           </div>
           <button
             onClick={() => setSheet({ kind: "receive" })}
-            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.98] flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.98] flex items-center justify-center gap-1.5 transition-transform"
           >
             <Package className="h-4 w-4" /> {lang === "zh" ? "收货（更新成本）" : lang === "ms" ? "Terima stok (kemas kini kos)" : "Receive stock (updates cost)"}
           </button>
           <button
             onClick={() => setSheet({ kind: "supplier_refund" })}
-            className="w-full py-2.5 rounded-xl bg-card border border-border/60 text-amber-700 text-sm font-semibold active:scale-[0.98] flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 rounded-xl bg-card border border-border/60 text-amber-700 text-sm font-semibold active:scale-[0.98] flex items-center justify-center gap-1.5 transition-transform"
           >
             <Undo2 className="h-4 w-4" /> {lang === "zh" ? "退货给供应商" : lang === "ms" ? "Pulangkan kepada pembekal" : "Return to supplier"}
           </button>
           <Link
             to="/inventory-history"
             search={{ id: item.id }}
-            className="w-full py-2.5 rounded-xl bg-card border border-border/60 text-muted-foreground text-xs font-semibold active:scale-[0.98] flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 rounded-xl bg-card border border-border/60 text-muted-foreground text-xs font-semibold active:scale-[0.98] flex items-center justify-center gap-1.5 transition-transform"
           >
             <History className="h-3.5 w-3.5" /> {lang === "zh" ? "查看变更记录" : lang === "ms" ? "Lihat sejarah perubahan" : "View change history"}
           </Link>

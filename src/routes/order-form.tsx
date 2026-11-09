@@ -67,7 +67,7 @@ function OrderFormPage() {
         <button
           type="button"
           onClick={() => navigate({ to: "/profile" })}
-          className="h-9 w-9 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95"
+          className="h-9 w-9 rounded-full bg-card border border-border/60 flex items-center justify-center active:scale-95 transition-transform"
           aria-label="Back"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -189,7 +189,7 @@ function OrderFormPage() {
                 navigator.clipboard?.writeText(link);
                 toast.success(t("pof_link_copied"));
               }}
-              className="py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold active:scale-95"
+              className="py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold active:scale-95 transition-transform"
             >
               <Copy className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />{t("pof_copy_link")}
             </button>
@@ -197,14 +197,14 @@ function OrderFormPage() {
               href={`https://wa.me/?text=${encodeURIComponent(stripEmoji(t(pofWaShareKey(businessType as BizType | null)).replace("{link}", link)))}`}
               target="_blank"
               rel="noreferrer"
-              className="py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-semibold text-center active:scale-95"
+              className="py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-semibold text-center active:scale-95 transition-transform"
             >
               <MessageCircle className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />{t("pof_share_wa")}
             </a>
             <button
               type="button"
               onClick={() => setQrOpen(true)}
-              className="py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95"
+              className="py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95 transition-transform"
             >
               <QrCode className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />{t("pof_qr_code")}
             </button>
@@ -212,7 +212,7 @@ function OrderFormPage() {
               href={link}
               target="_blank"
               rel="noreferrer"
-              className="py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold text-center active:scale-95"
+              className="py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold text-center active:scale-95 transition-transform"
             >
               <Eye className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />{t("pof_view_form")}
             </a>

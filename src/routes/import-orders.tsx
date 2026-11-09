@@ -200,7 +200,7 @@ function ImportOrdersPage() {
   return (
     <div className="px-5 pt-10 pb-8 space-y-5 min-h-screen">
       <header className="flex items-center gap-3">
-        <button onClick={() => navigate({ to: "/orders" })} className="p-2 -ml-2 rounded-full active:scale-95" aria-label="Back">
+        <button onClick={() => navigate({ to: "/orders" })} className="p-2 -ml-2 rounded-full active:scale-95 transition-transform" aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -337,7 +337,7 @@ function ImportOrdersPage() {
           <div className="flex gap-2 pt-2">
             <button
               onClick={() => { setParsed(null); setStep("upload"); }}
-              className="flex-1 py-3 rounded-2xl bg-muted text-foreground font-semibold text-sm active:scale-[0.99]"
+              className="flex-1 py-3 rounded-2xl bg-muted text-foreground font-semibold text-sm active:scale-[0.99] transition-transform"
               disabled={importing}
             >
               {t("cancel")}
@@ -345,7 +345,7 @@ function ImportOrdersPage() {
             <button
               onClick={runImport}
               disabled={importing || validCount === 0}
-              className="flex-[2] py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60"
+              className="flex-[2] py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-sm active:scale-[0.99] disabled:opacity-60 transition-transform"
             >
               {importing
                 ? t("import_importing")
@@ -380,7 +380,7 @@ function ImportOrdersPage() {
           )}
           <button
             onClick={() => navigate({ to: "/orders" })}
-            className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-sm active:scale-[0.99]"
+            className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-sm active:scale-[0.99] transition-transform"
           >
             {t("import_back_orders")}
           </button>

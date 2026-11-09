@@ -608,7 +608,7 @@ export function RetailOverview() {
         <div className="relative shrink-0">
           <button
             onClick={() => setRangePickerOpen((v) => !v)}
-            className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-card border border-border/60 text-foreground shadow-[var(--shadow-card)] active:scale-95"
+            className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-card border border-border/60 text-foreground shadow-[var(--shadow-card)] active:scale-95 transition-transform"
           >
             {rangeLabel}
             <ChevronDown className="h-3.5 w-3.5" />
@@ -899,7 +899,7 @@ export function RetailOverview() {
                       remind(o);
                     }}
                     aria-label={t("remind")}
-                    className="ml-1 h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-100 active:scale-95 shrink-0"
+                    className="ml-1 h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-100 active:scale-95 shrink-0 transition-transform"
                   >
                     <MessageCircle className="h-4 w-4" />
                   </button>

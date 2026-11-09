@@ -373,7 +373,7 @@ function InventoryPage() {
               type="button"
               disabled={tiktokImporting}
               onClick={() => importFromTikTok(false)}
-              className="flex-1 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95 disabled:opacity-60"
+              className="flex-1 py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold active:scale-95 disabled:opacity-60 transition-transform"
             >
               {tiktokImporting ? (
                 lang === "zh" ? "同步中…" : lang === "ms" ? "Menyegerak…" : "Syncing…"

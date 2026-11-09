@@ -676,7 +676,7 @@ function ReportsHub() {
 
       <button
         onClick={handleCSVExport}
-        className="w-full py-3 rounded-2xl bg-card border border-border/60 text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98]"
+        className="w-full py-3 rounded-2xl bg-card border border-border/60 text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
       >
         <FileDown className="h-4 w-4" /> {lang === "zh" ? "导出原始订单 CSV（给会计师/报税用）" : lang === "ms" ? "Eksport CSV pesanan mentah" : "Export raw orders CSV (for your accountant/tax)"}
       </button>
@@ -707,7 +707,7 @@ function ReportsHub() {
                 {c.linkTo && (
                   <Link
                     to={c.linkTo}
-                    className="px-3 py-2.5 rounded-xl bg-muted text-foreground text-xs font-semibold flex items-center gap-1 active:scale-[0.98]"
+                    className="px-3 py-2.5 rounded-xl bg-muted text-foreground text-xs font-semibold flex items-center gap-1 active:scale-[0.98] transition-transform"
                   >
                     {t("reports_view_details")} <ChevronRight className="h-3.5 w-3.5" />
                   </Link>

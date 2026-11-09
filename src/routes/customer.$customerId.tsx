@@ -256,7 +256,7 @@ function CustomerDetail() {
             <button
               onClick={saveRemarks}
               disabled={savingRemarks}
-              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60 active:scale-[0.99]"
+              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60 active:scale-[0.99] transition-transform"
             >
               {savingRemarks ? t("saving") : t("save")}
             </button>
@@ -295,7 +295,7 @@ function CustomerDetail() {
           </p>
           <button
             onClick={() => setShowFollowUp(true)}
-            className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95"
+            className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95 transition-transform"
           >
             <CalendarIcon className="h-3.5 w-3.5" /> {t("set_followup")}
           </button>
@@ -318,7 +318,7 @@ function CustomerDetail() {
                   </p>
                   {f.note && <p className="text-xs text-muted-foreground truncate">{f.note}</p>}
                 </div>
-                <button onClick={() => markFollowUpDone(f)} aria-label="done" className="p-2 rounded-full bg-emerald-500/10 text-emerald-600 active:scale-95">
+                <button onClick={() => markFollowUpDone(f)} aria-label="done" className="p-2 rounded-full bg-emerald-500/10 text-emerald-600 active:scale-95 transition-transform">
                   <Check className="h-4 w-4" />
                 </button>
               </div>
@@ -364,19 +364,19 @@ function CustomerDetail() {
             if (!customer.phone) { toast.error(t("no_phone_for_wa")); return; }
             window.open(buildWA(customer.phone, t("thank_customer_msg" as TKey).replace("{name}", customer.name)), "_blank");
           }}
-          className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white font-semibold active:scale-[0.99]"
+          className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white font-semibold active:scale-[0.99] transition-transform"
         >
           <MessageCircle className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("send_whatsapp")}
         </button>
         <button
           onClick={() => setEditing(true)}
-          className="w-full py-3.5 rounded-2xl bg-primary/10 text-primary font-semibold active:scale-[0.99]"
+          className="w-full py-3.5 rounded-2xl bg-primary/10 text-primary font-semibold active:scale-[0.99] transition-transform"
         >
           <Pencil className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("edit_customer")}
         </button>
         <button
           onClick={() => setConfirmDelete(true)}
-          className="w-full py-3.5 rounded-2xl bg-red-500/10 text-red-600 font-semibold active:scale-[0.99]"
+          className="w-full py-3.5 rounded-2xl bg-red-500/10 text-red-600 font-semibold active:scale-[0.99] transition-transform"
         >
           <Trash2 className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
         </button>
@@ -486,7 +486,7 @@ function CustomerRequirements({ customerId }: { customerId: string }) {
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
           {t("requirements_title")}
         </p>
-        <a href={newHref} className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95">
+        <a href={newHref} className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95 transition-transform">
           <Plus className="h-3.5 w-3.5" /> {t("new_requirement")}
         </a>
       </div>
@@ -659,7 +659,7 @@ function PackageSection({ customer, onChange }: { customer: CustomerRow; onChang
         </div>
         <button
           onClick={onChange}
-          className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary active:scale-95"
+          className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary active:scale-95 transition-transform"
         >
           {t("change_package")}
         </button>
@@ -778,7 +778,7 @@ function CustomerViewings({ customerId, customerName }: { customerId: string; cu
         <p className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
           {t("viewings_title")}
         </p>
-        <a href={newHref} className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95">
+        <a href={newHref} className="text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95 transition-transform">
           <Plus className="h-3.5 w-3.5" /> {t("new_viewing")}
         </a>
       </div>

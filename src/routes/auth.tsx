@@ -309,7 +309,7 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
           type="button"
           disabled={tiktokStarting}
           onClick={startTikTokLogin}
-          className="w-full flex items-center gap-3 rounded-xl border border-[#E4DEF0] bg-[#F7F5FA] text-[13px] font-semibold text-[#1A1225] px-3 py-2.5 active:scale-[0.99] disabled:opacity-60"
+          className="w-full flex items-center gap-3 rounded-xl border border-[#E4DEF0] bg-[#F7F5FA] text-[13px] font-semibold text-[#1A1225] px-3 py-2.5 active:scale-[0.99] disabled:opacity-60 transition-transform"
         >
           <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" className="shrink-0">
             <path
@@ -480,7 +480,7 @@ function DeviceLimitBlock({
         <button
           type="button"
           onClick={onManage}
-          className="w-full text-white font-bold text-[14px] active:scale-[0.99]"
+          className="w-full text-white font-bold text-[14px] active:scale-[0.99] transition-transform"
           style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
         >
           {t("device_limit_manage")}

@@ -67,7 +67,7 @@ function HistoryPage() {
   return (
     <div className="px-4 pt-4 pb-24 space-y-3">
       <div className="flex items-center gap-2">
-        <button onClick={() => navigate({ to: "/inventory" })} className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+        <button onClick={() => navigate({ to: "/inventory" })} className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
           <ChevronLeft className="h-5 w-5" />
         </button>
         <div>

@@ -68,7 +68,7 @@ function TopBuyersPage() {
   return (
     <div className="px-4 pt-4 pb-24 space-y-4">
       <div className="flex items-center gap-2">
-        <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+        <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-lg font-bold text-foreground">{title}</h1>

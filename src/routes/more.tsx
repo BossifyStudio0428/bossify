@@ -104,7 +104,7 @@ function MorePage() {
   return (
     <div className="px-4 pt-4 pb-24 space-y-6 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
-        <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
+        <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-lg font-bold text-foreground">{t("more_title")}</h1>
@@ -118,7 +118,7 @@ function MorePage() {
               <Link
                 key={it.to}
                 to={it.to}
-                className="flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)] active:scale-[0.98]"
+                className="flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)] active:scale-[0.98] transition-transform"
               >
                 <span className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                   <it.icon className="h-5 w-5" />
