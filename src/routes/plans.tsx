@@ -69,9 +69,9 @@ const TEAM_PLANS: TeamPlanDef[] = [
     monthly: "RM 129",
     yearly: "RM 1,099",
     saveLabel: { zh: "节省 29%", ms: "Jimat 29%", en: "Save 29%" },
-    gradient: "from-indigo-400 via-violet-400 to-purple-500",
+    gradient: "bg-violet-400",
     accent: "text-indigo-600",
-    btnGradient: "from-indigo-500 to-violet-500",
+    btnGradient: "bg-violet-500",
     features: [
       { zh: "包含所有专业版功能", ms: "Semua ciri Pro", en: "All Pro features" },
       { zh: "角色管理（拥有者/管理员/员工）", ms: "Pengurusan peranan (Pemilik/Admin/Staf)", en: "Role management (Owner/Admin/Staff)" },
@@ -86,9 +86,9 @@ const TEAM_PLANS: TeamPlanDef[] = [
     yearly: "RM 2,099",
     saveLabel: { zh: "节省 30%", ms: "Jimat 30%", en: "Save 30%" },
     badge: { zh: "最受欢迎", ms: "Paling Popular", en: "Most Popular" },
-    gradient: "from-primary via-primary/70 to-primary/40",
+    gradient: "bg-primary",
     accent: "text-primary",
-    btnGradient: "from-primary to-primary/80",
+    btnGradient: "bg-primary",
     features: [
       { zh: "包含所有团队入门版功能", ms: "Semua ciri Team Starter", en: "All Team Starter features" },
       { zh: "活动记录", ms: "Log aktiviti", en: "Activity log" },
@@ -103,9 +103,9 @@ const TEAM_PLANS: TeamPlanDef[] = [
     yearly: "RM 4,799",
     saveLabel: { zh: "节省 33%", ms: "Jimat 33%", en: "Save 33%" },
     badge: { zh: "最佳价值", ms: "Nilai Terbaik", en: "Best Value" },
-    gradient: "from-amber-400 via-amber-300 to-yellow-500",
+    gradient: "bg-amber-400",
     accent: "text-amber-600",
-    btnGradient: "from-amber-500 to-yellow-500",
+    btnGradient: "bg-amber-500",
     features: [
       { zh: "包含所有团队专业版功能", ms: "Semua ciri Team Pro", en: "All Team Pro features" },
       { zh: "专属支持", ms: "Sokongan khas", en: "Dedicated support" },
@@ -147,10 +147,10 @@ function TeamPlansSection({
         const isCurrent = currentTier === p.key && currentBilling === billing;
         const isSubmitting = submittingTier === p.key;
         return (
-          <section key={p.key} className={`relative rounded-3xl p-[2px] bg-gradient-to-br ${p.gradient}`}>
+          <section key={p.key} className={`relative rounded-3xl p-[2px] ${p.gradient}`}>
             <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
               {p.badge && (
-                <span className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r ${p.btnGradient} text-white shadow`}>
+                <span className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full ${p.btnGradient} text-white shadow`}>
                   {p.badge[lang]}
                 </span>
               )}
@@ -180,7 +180,7 @@ function TeamPlansSection({
                 <button
                   onClick={() => onPurchase(p.key)}
                   disabled={submittingTier !== null}
-                  className={`mt-5 w-full py-3 rounded-2xl bg-gradient-to-r ${p.btnGradient} text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60`}
+                  className={`mt-5 w-full py-3 rounded-2xl ${p.btnGradient} text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60`}
                 >
                   {isSubmitting ? "..." : `${subscribeLabel} — ${price}`}
                 </button>
@@ -207,7 +207,7 @@ function ComingSoonPlanCard({
 }) {
   const { t } = useI18n();
   return (
-    <section className={`relative rounded-3xl p-[2px] bg-gradient-to-br ${gradient} opacity-70`}>
+    <section className={`relative rounded-3xl p-[2px] ${gradient} opacity-70`}>
       <div className="rounded-[calc(1.5rem-2px)] bg-card p-5 flex items-center justify-between gap-2">
         <h2 className="text-lg font-bold flex items-center gap-1.5 text-muted-foreground">
           {icon}
@@ -674,7 +674,7 @@ function PlansPage() {
       </header>
 
       {/* Current plan banner */}
-      <div className={`rounded-2xl p-4 border ${isLifetime ? "bg-gradient-to-br from-amber-200/40 to-yellow-100/30 border-amber-400/60" : isPro ? "bg-gradient-to-br from-primary/15 to-primary/5 border-primary/40" : "bg-card border-border/60"}`}>
+      <div className={`rounded-2xl p-4 border ${isLifetime ? "bg-amber-100/50 border-amber-400/60" : isPro ? "bg-primary/10 border-primary/40" : "bg-card border-border/60"}`}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] uppercase font-semibold text-muted-foreground">{t("current_plan")}</p>
@@ -772,9 +772,9 @@ function PlansPage() {
 
       {/* Pro card */}
       {proShowFull ? (
-      <section className="relative rounded-3xl p-[2px] bg-gradient-to-br from-primary via-primary/70 to-primary/40">
+      <section className="relative rounded-3xl p-[2px] bg-primary">
         <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
-          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow">
+          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary text-primary-foreground shadow">
             {t("most_popular")}
           </span>
           <div className="flex items-baseline justify-between">
@@ -808,7 +808,7 @@ function PlansPage() {
             <button
               onClick={handleGooglePlayPurchase}
               disabled={submittingPlan !== null}
-              className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
+              className="mt-5 w-full py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
               {submittingPlan === "pro" ? "..." : `${t("upgrade_to_pro")} — ${price}`}
             </button>
@@ -817,7 +817,7 @@ function PlansPage() {
       </section>
       ) : (
         <ComingSoonPlanCard
-          gradient="from-primary via-primary/70 to-primary/40"
+          gradient="bg-primary"
           icon={<Sparkles className="h-4 w-4 text-primary" />}
           title={t("pro_plan")}
         />
@@ -825,9 +825,9 @@ function PlansPage() {
 
       {/* Business card — 5 devices vs Pro's 3. */}
       {businessShowFull ? (
-      <section className="relative rounded-3xl p-[2px] bg-gradient-to-br from-amber-400 via-amber-300 to-yellow-500">
+      <section className="relative rounded-3xl p-[2px] bg-amber-400">
         <div className="rounded-[calc(1.5rem-2px)] bg-card p-5">
-          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow">
+          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500 text-white shadow">
             {t("best_value")}
           </span>
           <div className="flex items-baseline justify-between">
@@ -862,7 +862,7 @@ function PlansPage() {
             <button
               onClick={handleBusinessPurchase}
               disabled={submittingPlan !== null}
-              className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
+              className="mt-5 w-full py-3 rounded-2xl bg-amber-500 text-white font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition disabled:opacity-60"
             >
               {submittingPlan === "business" ? "..." : `${upgradeToBusinessLabel} — ${businessPrice}`}
             </button>
@@ -871,7 +871,7 @@ function PlansPage() {
       </section>
       ) : (
         <ComingSoonPlanCard
-          gradient="from-amber-400 via-amber-300 to-yellow-500"
+          gradient="bg-amber-400"
           icon={<Crown className="h-4 w-4 text-amber-500" />}
           title={businessName}
         />
@@ -1073,7 +1073,7 @@ function PlansPage() {
                   setLifetimeConfirmOpen(false);
                   handleLifetimePurchase();
                 }}
-                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm shadow-[var(--shadow-soft)]"
+                className="flex-1 py-3 rounded-2xl bg-amber-500 text-white font-bold text-sm shadow-[var(--shadow-soft)]"
               >
                 {t("i_agree_purchase")}
               </button>
