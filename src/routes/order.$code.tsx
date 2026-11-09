@@ -494,7 +494,7 @@ function PublicOrderFormPage() {
         className="pof-scope min-h-screen flex flex-col px-5 pt-8 pb-10"
         style={{
           background:
-            "radial-gradient(120% 60% at 50% 0%, hsl(var(--primary) / 0.18) 0%, transparent 60%), linear-gradient(180deg, #faf9ff 0%, #f4f3f8 100%)",
+            "radial-gradient(120% 60% at 50% 0%, hsl(var(--primary) / 0.18) 0%, transparent 60%), linear-gradient(180deg, #0A0614 0%, #0D0919 100%)",
         }}
       >
         <PofStyles />
@@ -536,19 +536,19 @@ function PublicOrderFormPage() {
                 key={opt.code}
                 type="button"
                 onClick={() => pickLang(opt.code)}
-                className="group w-full px-4 py-3.5 rounded-2xl bg-white border border-[#ECE8F7] text-left flex items-center gap-3 transition-all active:scale-[0.99] hover:border-primary/40 hover:shadow-[0_8px_24px_-12px_rgba(124,58,237,0.35)]"
+                className="group w-full px-4 py-3.5 rounded-2xl bg-[#140D22] border border-[#352553] text-left flex items-center gap-3 transition-all active:scale-[0.99] hover:border-primary/40 hover:shadow-[0_8px_24px_-12px_rgba(124,58,237,0.35)]"
                 style={{ animation: `fade-in 0.4s ease ${i * 60}ms both` }}
               >
                 <span
                   className="h-11 w-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg, #F3F0FF 0%, #EDE6FF 100%)" }}
+                  style={{ background: "linear-gradient(135deg, #241B3D 0%, #241B3D 100%)" }}
                 >
                   {opt.flag}
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="flex items-center gap-2">
-                    <span className="text-[15px] font-bold text-[#1E1333] truncate">{opt.label}</span>
-                    <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-[#F3F0FF] text-primary">
+                    <span className="text-[15px] font-bold text-[#F5F3FA] truncate">{opt.label}</span>
+                    <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-[#241B3D] text-primary">
                       {opt.tag}
                     </span>
                   </span>
@@ -556,7 +556,7 @@ function PublicOrderFormPage() {
                 </span>
                 <span
                   className="h-8 w-8 rounded-full flex items-center justify-center text-primary text-base transition-all group-hover:bg-primary group-hover:text-white"
-                  style={{ background: "#F5F2FF" }}
+                  style={{ background: "#241B3D" }}
                 >
                   →
                 </span>
@@ -577,7 +577,7 @@ function PublicOrderFormPage() {
       <div className="pof-scope min-h-screen flex flex-col items-center justify-center px-6">
         <PofStyles />
         <div className="text-center max-w-sm">
-          <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-emerald-100 flex items-center justify-center animate-scale-in">
+          <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-emerald-500/15 flex items-center justify-center animate-scale-in">
             <svg
               className="h-14 w-14 text-emerald-500"
               viewBox="0 0 24 24"
@@ -936,7 +936,7 @@ function PublicOrderFormPage() {
                         </button>
                         <div className="p-3 space-y-1.5">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-500/15 text-blue-300" : "bg-emerald-500/15 text-emerald-300"}`}>
                               {typeLabel}
                             </span>
                             {prop?.property_type && (
@@ -1287,10 +1287,10 @@ function PublicOrderFormPage() {
                     </div>
                   )}
                   {deliveryQuote.status === "unavailable" && (
-                    <span className="text-rose-600">{L("Outside delivery area", "Di luar kawasan penghantaran", "超出送货范围")}</span>
+                    <span className="text-rose-400">{L("Outside delivery area", "Di luar kawasan penghantaran", "超出送货范围")}</span>
                   )}
                   {deliveryQuote.status === "error" && (
-                    <span className="text-rose-600">{L("Could not calculate fee. Try again.", "Tidak dapat mengira caj. Cuba lagi.", "无法计算运费，请重试。")}</span>
+                    <span className="text-rose-400">{L("Could not calculate fee. Try again.", "Tidak dapat mengira caj. Cuba lagi.", "无法计算运费，请重试。")}</span>
                   )}
                 </div>
               )}
@@ -1451,9 +1451,9 @@ function CategoryChip({ label, active, onClick }: { label: string; active: boole
               transform: "scale(1.03)",
             }
           : {
-              background: "#ffffff",
-              color: "#6B7280",
-              borderColor: "#E5E7EB",
+              background: "#140D22",
+              color: "#9D93B5",
+              borderColor: "#352553",
             }
       }
     >
@@ -1494,7 +1494,7 @@ function LangSwitcher({
             className="fixed inset-0 z-40"
             onClick={onToggle}
           />
-          <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-2xl bg-white border border-gray-200 shadow-xl overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-2xl bg-[#140D22] border border-border shadow-xl overflow-hidden">
             {([
               { code: "en" as Lang, label: "English" },
               { code: "ms" as Lang, label: "Bahasa Malaysia" },
@@ -1506,8 +1506,8 @@ function LangSwitcher({
                 onClick={() => onPick(opt.code)}
                 className={`w-full px-4 py-3 text-left text-sm flex items-center justify-between transition-colors ${
                   lang === opt.code
-                    ? "bg-[#f3f0ff] text-[#7C3AED] font-semibold"
-                    : "text-[#1a1a1a] hover:bg-gray-50"
+                    ? "bg-[#241B3D] text-[#8B5CF6] font-semibold"
+                    : "text-[#F5F3FA] hover:bg-muted/30"
                 }`}
               >
                 <span>{opt.label}</span>
@@ -1915,7 +1915,7 @@ function ProductSlide({
       <div className="px-5 pt-5 space-y-3.5">
         {isProperty ? (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isRent ? "bg-blue-500/15 text-blue-300" : "bg-emerald-500/15 text-emerald-300"}`}>
               {propStatusLabel}
             </span>
             {prop?.property_type && (
@@ -1943,15 +1943,15 @@ function ProductSlide({
         {isRetailish && stock !== null && (showStock || isOutOfStock) && (
           <div>
             {isOutOfStock ? (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-[11px] font-semibold">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500/15 text-red-300 text-[11px] font-semibold">
                 {outOfStockLabel}
               </span>
             ) : stock < 5 ? (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[11px] font-semibold">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 text-[11px] font-semibold">
                 {lowStockLabel(stock)}
               </span>
             ) : (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-semibold">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-[11px] font-semibold">
                 {inStockLabel} · {leftLabel(stock)}
               </span>
             )}
@@ -2023,7 +2023,7 @@ function ProductSlide({
           </div>
         )}
         {product.requirements && (
-          <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">
+          <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-300">
             <p className="font-semibold mb-1">📋 {lang === "ms" ? "Syarat" : lang === "zh" ? "入学要求" : "Requirements"}</p>
             <p className="whitespace-pre-wrap">{product.requirements}</p>
           </div>
@@ -2130,20 +2130,20 @@ function PofStyles() {
   return (
     <style>{`
       .pof-scope {
-        --background: 0 0% 100%;
-        --foreground: 222 47% 11%;
-        --card: 0 0% 100%;
-        --card-foreground: 222 47% 11%;
-        --muted: 240 6% 96%;
-        --muted-foreground: 215 16% 47%;
-        --border: 240 6% 92%;
-        --primary: 262 83% 58%;
+        --background: 257 54% 5%;
+        --foreground: 257 41% 97%;
+        --card: 260 45% 9%;
+        --card-foreground: 257 41% 97%;
+        --muted: 255 41% 13%;
+        --muted-foreground: 258 19% 64%;
+        --border: 260 38% 18%;
+        --primary: 258 90% 66%;
         --primary-foreground: 0 0% 100%;
         background: hsl(var(--background));
         color: hsl(var(--foreground));
       }
       .pof-hero {
-        background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+        background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
       }
       .pof-card {
         border: 1px solid hsl(var(--border));
