@@ -14,11 +14,11 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search, Plus, Globe, Calendar, Send, Lock, Download, Link2, Clock, Store, Car, Utensils, ShoppingBag } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search, Plus, Globe, Calendar, Send, Lock, Download, Link2, Clock, Store, Car, Utensils, ShoppingBag, CheckCircle2, AlertCircle } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
-import { orderCost, orderGrossProfit } from "@/lib/orderMath";
+import { orderCost, orderGrossProfit, orderContributionProfit } from "@/lib/orderMath";
 import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -715,6 +715,13 @@ function OrdersPage() {
     return overADay && (o.status === "Unpaid" || stillPending);
   });
 
+  // Desktop KPI row — real counts/amounts only, no fabricated deltas.
+  const paidCount = orders.filter((o) => o.status === "Paid").length;
+  const pendingCount = orders.filter((o) => o.status === "Pending").length;
+  const paidRevenue = orders.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount ?? 0), 0);
+  const unpaidRevenue = orders.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount ?? 0), 0);
+  const totalRevenue = orders.reduce((s, o) => s + Number(o.amount ?? 0), 0);
+
   return (
     <div className="px-5 pt-10 pb-4 space-y-5 lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
       <header className="flex items-center gap-3">
@@ -741,6 +748,37 @@ function OrdersPage() {
           {exportingPdf ? "…" : <Download className="h-4 w-4" />}
         </button>
       </header>
+
+      {/* Desktop-only KPI row */}
+      <div className="hidden lg:grid lg:grid-cols-4 lg:gap-4">
+        <OrderKpiCard
+          icon={ShoppingBag}
+          label={lang === "zh" ? "总订单" : lang === "ms" ? "Jumlah Pesanan" : "Total Orders"}
+          value={String(orders.length)}
+          sub={`RM ${totalRevenue.toFixed(2)} ${lang === "zh" ? "总销售额" : lang === "ms" ? "jumlah jualan" : "total sales"}`}
+        />
+        <OrderKpiCard
+          icon={CheckCircle2}
+          label={t("paid")}
+          value={String(paidCount)}
+          sub={`RM ${paidRevenue.toFixed(2)} ${lang === "zh" ? "已收款" : lang === "ms" ? "dikumpul" : "collected"}`}
+          tone="emerald"
+        />
+        <OrderKpiCard
+          icon={AlertCircle}
+          label={t("unpaid")}
+          value={String(unpaidCount)}
+          sub={`RM ${unpaidRevenue.toFixed(2)} ${lang === "zh" ? "待收款" : lang === "ms" ? "tertunggak" : "outstanding"}`}
+          tone="red"
+        />
+        <OrderKpiCard
+          icon={Clock}
+          label={t("pending")}
+          value={String(pendingCount)}
+          sub={lang === "zh" ? "待确认" : lang === "ms" ? "menunggu pengesahan" : "awaiting confirmation"}
+          tone="amber"
+        />
+      </div>
 
       {tiktokConnected && (
         <div className="space-y-1">
@@ -887,7 +925,7 @@ function OrdersPage() {
       )}
 
       {!loading && salesTrend.length > 1 && (
-        <div className="rounded-2xl bg-card border border-border/60 p-4">
+        <div className="lg:hidden rounded-2xl bg-card border border-border/60 p-4">
           <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
             {lang === "zh" ? "\u9500\u552e\u8d8b\u52bf" : lang === "ms" ? "Trend Jualan" : "Sales trend"}
           </p>
@@ -904,7 +942,7 @@ function OrdersPage() {
       )}
 
       {!loading && statusBar.length > 0 && (
-        <div className="rounded-2xl bg-card border border-border/60 p-4">
+        <div className="lg:hidden rounded-2xl bg-card border border-border/60 p-4">
           <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
             {lang === "zh" ? "\u8ba2\u5355\u72b6\u6001" : lang === "ms" ? "Status Pesanan" : "Order status"}
           </p>
@@ -1084,8 +1122,8 @@ function OrdersPage() {
         )}
       </div>
 
-      <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4 xl:grid-cols-3 lg:items-start">
-        {loading && <p className="text-center text-sm text-muted-foreground py-10 lg:col-span-full">{t("loading")}</p>}
+      <div className="lg:hidden space-y-3">
+        {loading && <p className="text-center text-sm text-muted-foreground py-10">{t("loading")}</p>}
 
         {!loading && visibleByCategory.map((o) => {
           const statusLabel = o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending");
@@ -1347,7 +1385,106 @@ function OrdersPage() {
         })}
 
         {!loading && visibleByCategory.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10 lg:col-span-full">
+          <p className="text-center text-sm text-muted-foreground py-10">
+            {orders.length === 0 ? t("no_orders_create") : t("no_orders_here")}
+          </p>
+        )}
+      </div>
+
+      {/* Desktop: orders table */}
+      <div className="hidden lg:block rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border/60 bg-muted/30 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <th className="px-4 py-3">{lang === "zh" ? "订单" : lang === "ms" ? "Pesanan" : "Order"}</th>
+              <th className="px-4 py-3">{lang === "zh" ? "商品" : lang === "ms" ? "Item" : "Items"}</th>
+              <th className="px-4 py-3 text-right">{lang === "zh" ? "销售额" : lang === "ms" ? "Jualan" : "Sales"}</th>
+              <th className="px-4 py-3 text-right">{lang === "zh" ? "成本" : lang === "ms" ? "Kos" : "Costs"}</th>
+              <th className="px-4 py-3 text-right">{lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}</th>
+              <th className="px-4 py-3">{t("payment_status")}</th>
+              <th className="px-4 py-3">{t("date_label")}</th>
+              <th className="px-4 py-3 text-right">{lang === "zh" ? "操作" : lang === "ms" ? "Tindakan" : "Action"}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!loading && visibleByCategory.map((o) => {
+              const statusLabel = o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending");
+              const cost = orderCost({ amount: o.amount, cost: o.cost, gross_profit: o.gross_profit });
+              const realProfit = orderContributionProfit({
+                amount: o.amount,
+                cost: o.cost,
+                gross_profit: o.gross_profit,
+                platform_fee_amount: (o as any).platform_fee_amount,
+                shipping_cost: (o as any).shipping_cost,
+                affiliate_commission: (o as any).affiliate_commission,
+                financial_status: (o as any).financial_status,
+              });
+              return (
+                <tr
+                  key={o.id}
+                  onClick={() => navigate({ to: "/orders/$orderId", params: { orderId: o.id }, search: {} as never })}
+                  className="border-b border-border/40 last:border-0 cursor-pointer hover:bg-muted/20 transition-colors"
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="h-8 w-8 rounded-full bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
+                        {o.customer_name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground truncate">{o.customer_name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{o.code}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 max-w-[220px]">
+                    <p className="truncate text-foreground">{o.product}</p>
+                    <p className="text-[11px] text-muted-foreground">× {o.quantity}</p>
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold text-foreground">RM {Number(o.amount).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right text-muted-foreground">RM {cost.toFixed(2)}</td>
+                  <td className={`px-4 py-3 text-right font-bold ${realProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                    RM {realProfit.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyles[o.status]}`}>{statusLabel}</span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
+                    {hydrated ? formatTime(o.created_at) : ""}
+                  </td>
+                  <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1">
+                      {o.status === "Unpaid" && (
+                        <button
+                          onClick={() => remind(o)}
+                          title={t("remind")}
+                          className="h-8 w-8 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-500/10 transition-colors"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => openEdit(o)}
+                        title={t("edit") || "Edit"}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted/40 transition-colors"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setPendingDelete(o)}
+                        title={t("delete_order") || "Delete"}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-500/10 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {!loading && visibleByCategory.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground py-10">
             {orders.length === 0 ? t("no_orders_create") : t("no_orders_here")}
           </p>
         )}
@@ -1540,6 +1677,39 @@ function OrdersPage() {
         <Plus className="h-5 w-5" strokeWidth={2.5} />
         {t("ro_new_sale")}
       </Link>
+    </div>
+  );
+}
+
+function OrderKpiCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  tone = "default",
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: "default" | "emerald" | "red" | "amber";
+}) {
+  const toneClasses: Record<string, string> = {
+    default: "bg-primary/10 text-primary",
+    emerald: "bg-emerald-500/10 text-emerald-600",
+    red: "bg-red-500/10 text-red-600",
+    amber: "bg-amber-500/10 text-amber-700",
+  };
+  return (
+    <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</span>
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${toneClasses[tone]}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-foreground">{value}</p>
+      {sub && <p className="text-[11px] text-muted-foreground truncate">{sub}</p>}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, Calendar, AlertTriangle } from "lucide-react";
+import { ChevronLeft, Calendar, AlertTriangle, TrendingUp, TrendingDown, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +38,9 @@ function CostBreakdownPage() {
   const [expensesByCategory, setExpensesByCategory] = useState<Record<string, number>>({});
   const [estimateCount, setEstimateCount] = useState(0);
   const [trend, setTrend] = useState<Array<{ day: string; profit: number }>>([]);
+  const [desktopTrend, setDesktopTrend] = useState<Array<{ day: string; revenue: number; cost: number; profit: number }>>([]);
+  const [trendRangeDays, setTrendRangeDays] = useState<number>(30);
+  const [productProfit, setProductProfit] = useState<Array<{ name: string; revenue: number; cost: number; profit: number }>>([]);
   const [activeCategory, setActiveCategory] = useState<string>("__all");
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState<string>("");
@@ -86,7 +89,7 @@ function CostBreakdownPage() {
       if (orderIds.length > 0) {
         const { data: allItems } = await supabase
           .from("order_items" as any)
-          .select("order_id,product_id,unit_cost_at_sale,packaging_cost_at_sale,quantity")
+          .select("order_id,product_id,product_name,unit_cost_at_sale,packaging_cost_at_sale,quantity,unit_price_at_sale")
           .in("order_id", orderIds);
         const itemRows = (allItems ?? []) as any[];
         const productIds = Array.from(new Set(itemRows.map((i) => i.product_id).filter(Boolean)));
@@ -107,9 +110,30 @@ function CostBreakdownPage() {
         const relevantItems = activeCategory === "__all" ? itemRows : itemRows.filter((i) => categoryProductIds!.has(i.product_id));
         setProductCost(relevantItems.reduce((s, r) => s + Number(r.unit_cost_at_sale ?? 0) * Number(r.quantity ?? 0), 0));
         setPackagingCost(relevantItems.reduce((s, r) => s + Number(r.packaging_cost_at_sale ?? 0) * Number(r.quantity ?? 0), 0));
+
+        // Desktop "Profit by Product" — revenue/cost aggregated per product
+        // name from the same already-fetched line items (no extra query).
+        const prodMap = new Map<string, { revenue: number; cost: number }>();
+        for (const r of relevantItems) {
+          const name = r.product_name || "—";
+          const qty = Number(r.quantity ?? 0);
+          const rev = Number(r.unit_price_at_sale ?? 0) * qty;
+          const cst = (Number(r.unit_cost_at_sale ?? 0) + Number(r.packaging_cost_at_sale ?? 0)) * qty;
+          const ex = prodMap.get(name) ?? { revenue: 0, cost: 0 };
+          ex.revenue += rev;
+          ex.cost += cst;
+          prodMap.set(name, ex);
+        }
+        setProductProfit(
+          Array.from(prodMap.entries())
+            .map(([name, v]) => ({ name, revenue: v.revenue, cost: v.cost, profit: v.revenue - v.cost }))
+            .sort((a, b) => b.profit - a.profit)
+            .slice(0, 8),
+        );
       } else {
         setProductCost(0);
         setPackagingCost(0);
+        setProductProfit([]);
       }
 
       setRevenue(orderRows.reduce((s, o) => s + Number(o.amount ?? 0), 0));
@@ -142,7 +166,7 @@ function CostBreakdownPage() {
       }
       setExpensesByCategory(byCategory);
 
-      // 14-day trend — a fixed trailing window, separate from the
+      // 14-day trend (mobile) — a fixed trailing window, separate from the
       // week/month/all selector above, purely for the line chart.
       const trendFrom = new Date(now);
       trendFrom.setDate(trendFrom.getDate() - 13);
@@ -166,9 +190,43 @@ function CostBreakdownPage() {
       }
       setTrend(Object.entries(byDay).map(([day, profit]) => ({ day: day.slice(5), profit: Math.round(profit * 100) / 100 })));
 
+      // Desktop trend — Revenue / Total Costs / Real Profit over a
+      // selectable window (7D/30D/3M/6M/1Y), independent of the 14-day
+      // mobile chart above.
+      const dTrendFrom = new Date(now);
+      dTrendFrom.setDate(dTrendFrom.getDate() - (trendRangeDays - 1));
+      dTrendFrom.setHours(0, 0, 0, 0);
+      const { data: dTrendOrders } = await supabase
+        .from("orders" as any)
+        .select("amount,cost,platform_fee_amount,shipping_cost,created_at")
+        .eq("user_id", user.id)
+        .eq("status", "Paid")
+        .neq("financial_status", "pending")
+        .gte("created_at", dTrendFrom.toISOString());
+      const byDayD: Record<string, { revenue: number; cost: number }> = {};
+      for (let i = 0; i < trendRangeDays; i++) {
+        const d = new Date(dTrendFrom);
+        d.setDate(d.getDate() + i);
+        byDayD[d.toISOString().slice(0, 10)] = { revenue: 0, cost: 0 };
+      }
+      for (const o of ((dTrendOrders ?? []) as any[])) {
+        const key = new Date(o.created_at).toISOString().slice(0, 10);
+        if (!(key in byDayD)) continue;
+        byDayD[key].revenue += Number(o.amount ?? 0);
+        byDayD[key].cost += Number(o.cost ?? 0) + Number(o.platform_fee_amount ?? 0) + Number(o.shipping_cost ?? 0);
+      }
+      setDesktopTrend(
+        Object.entries(byDayD).map(([day, v]) => ({
+          day: day.slice(5),
+          revenue: Math.round(v.revenue * 100) / 100,
+          cost: Math.round(v.cost * 100) / 100,
+          profit: Math.round((v.revenue - v.cost) * 100) / 100,
+        })),
+      );
+
       setLoading(false);
     })();
-  }, [user?.id, range, activeCategory, dateFrom, dateTo]);
+  }, [user?.id, range, activeCategory, dateFrom, dateTo, trendRangeDays]);
 
   const netRevenue = revenue - refundRevenue;
   const netProductCost = productCost - refundCost;
@@ -319,6 +377,24 @@ function CostBreakdownPage() {
         <p className="text-sm text-muted-foreground text-center py-10">…</p>
       ) : (
         <>
+          {/* Desktop-only Real Profit hero KPI */}
+          <div className="hidden lg:block rounded-2xl bg-primary/5 border border-primary/20 p-5">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+              {lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}
+            </p>
+            <div className="flex items-baseline gap-3">
+              <span className={`text-4xl font-bold ${netProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                {netProfit < 0 ? "−" : ""}RM {Math.abs(netProfit).toFixed(2)}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {revenue > 0 ? `${((netProfit / revenue) * 100).toFixed(1)}% ${lang === "zh" ? "利润率" : lang === "ms" ? "margin" : "margin"}` : ""}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {lang === "zh" ? "销售额" : lang === "ms" ? "Jualan" : "Revenue"} RM {revenue.toFixed(2)} · {lang === "zh" ? "总成本" : lang === "ms" ? "Jumlah Kos" : "Total Costs"} RM {(revenue - netProfit).toFixed(2)}
+            </p>
+          </div>
+
           {estimateCount > 0 && (
             <p className="text-[11px] text-muted-foreground rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5 flex items-start gap-1.5">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600" />
@@ -377,7 +453,7 @@ function CostBreakdownPage() {
             );
           })()}
 
-          <div className="rounded-2xl bg-card border border-border/60 p-4">
+          <div className="lg:hidden rounded-2xl bg-card border border-border/60 p-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
               {lang === "zh" ? "净利润走势（近14天）" : lang === "ms" ? "Trend Untung (14 hari)" : "Net Profit Trend (14 days)"}
             </p>
@@ -391,6 +467,75 @@ function CostBreakdownPage() {
               </LineChart>
             </ResponsiveContainer>
           </div>
+
+          {/* Desktop-only Profit Trend — Revenue / Total Costs / Real Profit */}
+          <div className="hidden lg:block rounded-2xl bg-card border border-border/60 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase">
+                {lang === "zh" ? "利润走势" : lang === "ms" ? "Trend Untung" : "Profit Trend"}
+              </p>
+              <div className="flex gap-1">
+                {([
+                  { k: 7, label: "7D" },
+                  { k: 30, label: "30D" },
+                  { k: 90, label: "3M" },
+                  { k: 180, label: "6M" },
+                  { k: 365, label: "1Y" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.k}
+                    onClick={() => setTrendRangeDays(opt.k)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${trendRangeDays === opt.k ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-4 mb-2 text-[11px]">
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-[#60A5FA]" /> {lang === "zh" ? "销售额" : lang === "ms" ? "Jualan" : "Revenue"}</span>
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-[#F87171]" /> {lang === "zh" ? "总成本" : lang === "ms" ? "Jumlah Kos" : "Total Costs"}</span>
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-[#10B981]" /> {lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}</span>
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={desktopTrend}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis dataKey="day" tick={{ fontSize: 10 }} interval={Math.max(0, Math.ceil(trendRangeDays / 10) - 1)} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+                <Line type="monotone" dataKey="revenue" stroke="#60A5FA" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="cost" stroke="#F87171" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="profit" stroke="#10B981" strokeWidth={2.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Desktop-only Profit by Product */}
+          {productProfit.length > 0 && (
+            <div className="hidden lg:block rounded-2xl bg-card border border-border/60 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase">
+                  {lang === "zh" ? "各商品利润" : lang === "ms" ? "Untung Mengikut Produk" : "Profit by Product"}
+                </p>
+                <Link to="/product-profit" className="text-[11px] font-semibold text-primary hover:underline">
+                  {lang === "zh" ? "查看全部" : lang === "ms" ? "Lihat semua" : "View all"}
+                </Link>
+              </div>
+              <div className="divide-y divide-border/40">
+                {productProfit.map((p, i) => (
+                  <div key={p.name + i} className="flex items-center gap-3 py-2">
+                    {i === 0 ? <Trophy className="h-4 w-4 text-amber-500 shrink-0" /> : <span className="w-4 text-center text-xs text-muted-foreground shrink-0">{i + 1}</span>}
+                    <span className="flex-1 min-w-0 truncate text-sm text-foreground">{p.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">RM {p.revenue.toFixed(2)}</span>
+                    <span className={`inline-flex items-center gap-1 text-sm font-bold shrink-0 w-28 justify-end ${p.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                      {p.profit >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                      RM {p.profit.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="rounded-2xl bg-card border border-border/60 p-4 divide-y divide-border/40">
             <Row label={lang === "zh" ? "销售总额" : lang === "ms" ? "Jumlah Jualan" : "Gross Sales"} value={revenue} />

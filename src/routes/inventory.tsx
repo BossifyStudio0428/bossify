@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, Trash2, Pencil, ImageIcon, RefreshCw, Package, AlertTriangle, Search, Lock } from "lucide-react";
+import { Plus, Trash2, Pencil, ImageIcon, RefreshCw, Package, AlertTriangle, Search, Lock, XCircle, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { InvRow } from "@/lib/inventoryTypes";
@@ -104,6 +104,35 @@ function ProfitRow({
   );
 }
 
+function InvKpiCard({
+  icon: Icon,
+  label,
+  value,
+  tone = "default",
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  tone?: "default" | "amber" | "red";
+}) {
+  const toneClasses: Record<string, string> = {
+    default: "bg-primary/10 text-primary",
+    amber: "bg-amber-500/10 text-amber-700",
+    red: "bg-red-500/10 text-red-600",
+  };
+  return (
+    <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</span>
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${toneClasses[tone]}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-foreground">{value}</p>
+    </div>
+  );
+}
+
 type Sheet =
   | { kind: "none" }
   | { kind: "form"; item?: InvRow }
@@ -118,6 +147,7 @@ function InventoryPage() {
   const { hasFullAccess, showUpgrade, productsUsed, productsLimit } = useSubscription();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("__all");
+  const [healthFilter, setHealthFilter] = useState<"all" | "profitable" | "low_profit" | "loss_making" | "low_stock" | "out_of_stock">("all");
   const [items, setItems] = useState<InvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
@@ -339,6 +369,37 @@ function InventoryPage() {
     return out;
   }, [visible]);
 
+  // Desktop KPI row + health filter — profit margin is per-unit (price vs
+  // cost_price), not tied to actual sales (this file has no order data).
+  const marginOf = (it: InvRow): number | null => {
+    const price = Number(it.price ?? 0);
+    const cost = Number((it as any).cost_price ?? 0);
+    if (price <= 0) return null;
+    return ((price - cost) / price) * 100;
+  };
+  const totalProducts = items.length;
+  const outOfStockCount = items.filter((i) => i.stock <= 0).length;
+  const lowStockOnlyCount = items.filter((i) => i.stock > 0 && i.stock <= lowThreshold).length;
+  const lossMakingCount = items.filter((i) => {
+    const m = marginOf(i);
+    return m !== null && m <= 0;
+  }).length;
+
+  const matchesHealth = (it: InvRow) => {
+    if (healthFilter === "all") return true;
+    if (healthFilter === "low_stock") return it.stock > 0 && it.stock <= lowThreshold;
+    if (healthFilter === "out_of_stock") return it.stock <= 0;
+    const m = marginOf(it);
+    if (healthFilter === "loss_making") return m !== null && m <= 0;
+    if (healthFilter === "low_profit") return m !== null && m > 0 && m <= 20;
+    if (healthFilter === "profitable") return m !== null && m > 20;
+    return true;
+  };
+  // Desktop table shows one flat row per SKU (no variant grouping) filtered
+  // by the same search + category state as mobile, plus the desktop-only
+  // health filter.
+  const desktopVisible = visible.filter(matchesHealth);
+
   return (
     <div className="px-5 pt-10 pb-4 space-y-5 relative lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8">
       <header className="flex items-center gap-3">
@@ -365,6 +426,33 @@ function InventoryPage() {
           {t("add_product")}
         </button>
       </header>
+
+      {/* Desktop-only KPI row */}
+      <div className="hidden lg:grid lg:grid-cols-4 lg:gap-4">
+        <InvKpiCard
+          icon={Package}
+          label={lang === "zh" ? "总商品数" : lang === "ms" ? "Jumlah Produk" : "Total Products"}
+          value={String(totalProducts)}
+        />
+        <InvKpiCard
+          icon={AlertTriangle}
+          label={lang === "zh" ? "库存低" : lang === "ms" ? "Stok Rendah" : "Low Stock"}
+          value={String(lowStockOnlyCount)}
+          tone="amber"
+        />
+        <InvKpiCard
+          icon={XCircle}
+          label={lang === "zh" ? "断货" : lang === "ms" ? "Kehabisan Stok" : "Out of Stock"}
+          value={String(outOfStockCount)}
+          tone="red"
+        />
+        <InvKpiCard
+          icon={TrendingDown}
+          label={lang === "zh" ? "亏本商品" : lang === "ms" ? "Produk Rugi" : "Loss-Making"}
+          value={String(lossMakingCount)}
+          tone="red"
+        />
+      </div>
 
       {tiktokConnected && (
         <div className="space-y-1">
@@ -436,7 +524,7 @@ function InventoryPage() {
           { key: "out", count: outCount, color: "bg-red-500", label: lang === "zh" ? "\u65ad\u8d27" : lang === "ms" ? "Kehabisan" : "Out of stock" },
         ].filter((s) => s.count > 0);
         return (
-          <div className="rounded-2xl bg-card border border-border/60 p-4">
+          <div className="lg:hidden rounded-2xl bg-card border border-border/60 p-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
               {lang === "zh" ? "\u5e93\u5b58\u5065\u5eb7\u5ea6" : lang === "ms" ? "Kesihatan Inventori" : "Inventory health"}
             </p>
@@ -460,7 +548,7 @@ function InventoryPage() {
       {lowItems.length > 0 && (
         <button
           onClick={() => firstLowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
-          className="w-full text-left rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 flex items-start gap-2 active:scale-[0.99] transition-transform"
+          className="lg:hidden w-full text-left rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 flex items-start gap-2 active:scale-[0.99] transition-transform"
         >
           <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-xs text-amber-700 leading-snug">
@@ -509,14 +597,41 @@ function InventoryPage() {
         </div>
       )}
 
-      <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4 xl:grid-cols-3 lg:items-start">
+      {/* Desktop-only health/profit filter chips */}
+      <div className="hidden lg:flex lg:gap-2 lg:flex-wrap">
+        {(
+          [
+            { k: "all", label: lang === "zh" ? "全部" : lang === "ms" ? "Semua" : "All" },
+            { k: "profitable", label: lang === "zh" ? "盈利良好" : lang === "ms" ? "Menguntungkan" : "Profitable" },
+            { k: "low_profit", label: lang === "zh" ? "低利润" : lang === "ms" ? "Untung Rendah" : "Low Profit" },
+            { k: "loss_making", label: lang === "zh" ? "亏本" : lang === "ms" ? "Rugi" : "Loss-Making" },
+            { k: "low_stock", label: lang === "zh" ? "库存低" : lang === "ms" ? "Stok Rendah" : "Low Stock" },
+            { k: "out_of_stock", label: lang === "zh" ? "断货" : lang === "ms" ? "Kehabisan" : "Out of Stock" },
+          ] as const
+        ).map((f) => (
+          <button
+            key={f.k}
+            type="button"
+            onClick={() => setHealthFilter(f.k)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+              healthFilter === f.k
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-foreground border-border"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="lg:hidden space-y-3">
         {loading && (
-          <div className="flex justify-center py-10 lg:col-span-full">
+          <div className="flex justify-center py-10">
             <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
           </div>
         )}
         {!loading && items.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10 px-4 lg:col-span-full">{t("no_products_create")}</p>
+          <p className="text-center text-sm text-muted-foreground py-10 px-4">{t("no_products_create")}</p>
         )}
         {!loading && items.length > 0 && grouped.map((entry, idx) => {
           if (entry.kind === "group") {
@@ -729,6 +844,115 @@ function InventoryPage() {
         })}
         {!loading && items.length > 0 && visible.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-10">{t("no_products")}</p>
+        )}
+      </div>
+
+      {/* Desktop: products table */}
+      <div className="hidden lg:block rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border/60 bg-muted/30 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <th className="px-4 py-3">{lang === "zh" ? "商品" : lang === "ms" ? "Produk" : "Product"}</th>
+              <th className="px-4 py-3">{lang === "zh" ? "分类" : lang === "ms" ? "Kategori" : "Category"}</th>
+              <th className="px-4 py-3 text-right">{t("inv_price_label")}</th>
+              <th className="px-4 py-3 text-right">{t("inv_cost_label")}</th>
+              <th className="px-4 py-3 text-right">{t("inv_profit_label")}</th>
+              <th className="px-4 py-3 text-right">{lang === "zh" ? "毛利率" : lang === "ms" ? "Margin" : "Margin"}</th>
+              <th className="px-4 py-3 text-right">{lang === "zh" ? "库存" : lang === "ms" ? "Stok" : "Stock"}</th>
+              <th className="px-4 py-3">{lang === "zh" ? "状态" : lang === "ms" ? "Status" : "Status"}</th>
+              <th className="px-4 py-3 text-right">{lang === "zh" ? "操作" : lang === "ms" ? "Tindakan" : "Action"}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!loading && desktopVisible.map((it) => {
+              const price = Number(it.price ?? 0);
+              const cost = Number((it as any).cost_price ?? 0);
+              const hasCost = (it as any).cost_price != null && cost > 0;
+              const profit = price - cost;
+              const margin = marginOf(it);
+              const low = it.stock > 0 && it.stock <= lowThreshold;
+              const out = it.stock <= 0;
+              const statusLabel = out
+                ? (lang === "zh" ? "断货" : lang === "ms" ? "Kehabisan" : "Out of stock")
+                : low
+                  ? (lang === "zh" ? "库存低" : lang === "ms" ? "Rendah" : "Low stock")
+                  : (lang === "zh" ? "健康" : lang === "ms" ? "Sihat" : "Healthy");
+              const statusCls = out
+                ? "bg-red-500/15 text-red-600"
+                : low
+                  ? "bg-amber-500/15 text-amber-700"
+                  : "bg-emerald-500/15 text-emerald-700";
+              return (
+                <tr key={it.id} className="border-b border-border/40 last:border-0 hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3">
+                    <Link to="/inventory/$itemId" params={{ itemId: it.id }} className="flex items-center gap-2.5 min-w-0">
+                      <div className="h-8 w-8 shrink-0 rounded-lg bg-muted/50 border border-border/60 overflow-hidden flex items-center justify-center">
+                        {it.image_url ? (
+                          <img src={it.image_url} alt={it.name} loading="lazy" className="h-full w-full object-cover" />
+                        ) : (
+                          <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <span className="font-semibold text-foreground truncate">{it.name}</span>
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{it.category ? formatCategory(it.category, t) : "—"}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-foreground">RM {price.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right text-muted-foreground">{hasCost ? `RM ${cost.toFixed(2)}` : "—"}</td>
+                  <td className={`px-4 py-3 text-right font-bold ${!hasCost ? "text-muted-foreground" : profit < 0 ? "text-red-600" : "text-emerald-600"}`}>
+                    {hasCost ? `RM ${profit.toFixed(2)}` : "—"}
+                  </td>
+                  <td className={`px-4 py-3 text-right font-semibold ${margin === null ? "text-muted-foreground" : margin <= 0 ? "text-red-600" : margin <= 20 ? "text-amber-700" : "text-emerald-600"}`}>
+                    {margin === null ? "—" : `${margin.toFixed(0)}%`}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className={low || out ? "font-bold text-red-500" : "font-semibold text-foreground"}>{it.stock}</span>
+                    <span className="text-muted-foreground"> {formatUnit(it.unit, t)}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusCls}`}>{statusLabel}</span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => setSheet({ kind: "remove", item: it })}
+                        title={t("remove")}
+                        className="h-8 px-2.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        – {t("remove")}
+                      </button>
+                      <button
+                        onClick={() => setSheet({ kind: "restock", item: it })}
+                        title={t("restock")}
+                        className="h-8 px-2.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        + {t("restock")}
+                      </button>
+                      <button
+                        onClick={() => setSheet({ kind: "form", item: it })}
+                        title={t("edit")}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted/40 transition-colors"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setSheet({ kind: "delete", item: it })}
+                        title={t("delete")}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-500/10 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {!loading && (items.length === 0 || desktopVisible.length === 0) && (
+          <p className="text-center text-sm text-muted-foreground py-10">
+            {items.length === 0 ? t("no_products_create") : t("no_products")}
+          </p>
         )}
       </div>
 
