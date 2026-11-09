@@ -160,7 +160,7 @@ function DevicesPage() {
           />
         </div>
         {used >= limit && (
-          <p className="mt-2 text-[11px] text-amber-700 font-medium">
+          <p className="mt-2 text-[11px] text-amber-300 font-medium">
             {t("device_limit_warning")}
           </p>
         )}
@@ -203,7 +203,7 @@ function DevicesPage() {
                     type="button"
                     onClick={() => onRemove(row)}
                     disabled={removingId === row.id}
-                    className="h-9 px-3 rounded-xl bg-red-50 text-red-600 text-xs font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                    className="h-9 px-3 rounded-xl bg-red-500/10 text-red-400 text-xs font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-50"
                   >
                     {removingId === row.id ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />

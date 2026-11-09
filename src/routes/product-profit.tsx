@@ -279,9 +279,9 @@ function ProductProfitPage() {
                       </span>
                     </div>
                     {profit >= 0 ? (
-                      <TrendingUp className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <TrendingUp className="h-4 w-4 text-emerald-400 shrink-0" />
                     ) : (
-                      <TrendingDown className="h-4 w-4 text-red-600 shrink-0" />
+                      <TrendingDown className="h-4 w-4 text-red-400 shrink-0" />
                     )}
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -289,7 +289,7 @@ function ProductProfitPage() {
                     <span>{lang === "zh" ? "营收" : lang === "ms" ? "Hasil" : "Revenue"}: RM {revenue.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className={`text-base font-bold ${profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                    <span className={`text-base font-bold ${profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                       RM {profit.toFixed(2)}
                     </span>
                     <span className="text-[11px] text-muted-foreground">{margin.toFixed(1)}% {lang === "zh" ? "利润率" : "margin"}</span>
@@ -309,7 +309,7 @@ function ProductProfitPage() {
                         <span className="text-[11px] text-muted-foreground shrink-0">
                           {lang === "zh" ? `${v.qty} 件` : lang === "ms" ? `${v.qty} unit` : `${v.qty} sold`}
                         </span>
-                        <span className={`text-xs font-semibold shrink-0 ${v.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        <span className={`text-xs font-semibold shrink-0 ${v.profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                           RM {v.profit.toFixed(2)}
                         </span>
                       </div>
@@ -325,9 +325,9 @@ function ProductProfitPage() {
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold flex-1 min-w-0 truncate">{s.name}</p>
                   {s.profit >= 0 ? (
-                    <TrendingUp className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <TrendingUp className="h-4 w-4 text-emerald-400 shrink-0" />
                   ) : (
-                    <TrendingDown className="h-4 w-4 text-red-600 shrink-0" />
+                    <TrendingDown className="h-4 w-4 text-red-400 shrink-0" />
                   )}
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -335,7 +335,7 @@ function ProductProfitPage() {
                   <span>{lang === "zh" ? "营收" : lang === "ms" ? "Hasil" : "Revenue"}: RM {s.revenue.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-base font-bold ${s.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                  <span className={`text-base font-bold ${s.profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                     RM {s.profit.toFixed(2)}
                   </span>
                   <span className="text-[11px] text-muted-foreground">{s.margin.toFixed(1)}% {lang === "zh" ? "利润率" : lang === "ms" ? "margin" : "margin"}</span>

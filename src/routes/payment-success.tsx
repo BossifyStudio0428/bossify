@@ -116,11 +116,11 @@ function PaymentSuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="text-center max-w-sm">
-        <div className="mx-auto h-20 w-20 rounded-full bg-emerald-100 flex items-center justify-center">
+        <div className="mx-auto h-20 w-20 rounded-full bg-emerald-500/15 flex items-center justify-center">
           {confirmedPlan ? (
-            <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+            <CheckCircle2 className="h-10 w-10 text-emerald-400" />
           ) : (
-            <Loader2 className="h-10 w-10 text-emerald-600 animate-spin" />
+            <Loader2 className="h-10 w-10 text-emerald-400 animate-spin" />
           )}
         </div>
         <h1 className="mt-5 text-2xl font-bold">

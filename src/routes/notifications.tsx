@@ -108,7 +108,7 @@ function NotificationsPage() {
                 key={n.id}
                 className={`relative w-full p-4 pr-12 rounded-2xl border transition ${
                   isDeleted
-                    ? "bg-red-50 border-red-200"
+                    ? "bg-red-500/10 border-red-500/30"
                     : n.is_read
                     ? "bg-card border-border/60"
                     : "bg-primary/5 border-primary/20"
@@ -116,7 +116,7 @@ function NotificationsPage() {
               >
                 <button onClick={() => tap(n)} className="w-full text-left">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className={`text-sm font-semibold ${isDeleted ? "text-red-600" : "text-foreground"}`}>
+                    <p className={`text-sm font-semibold ${isDeleted ? "text-red-400" : "text-foreground"}`}>
                       {n.title}
                     </p>
                     {isTikTok && (

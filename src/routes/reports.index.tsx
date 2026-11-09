@@ -575,12 +575,12 @@ function ReportsHub() {
     tint: string;
   }> = [
     { key: "sales", icon: BarChart3, title: t("reports_sales_title"), desc: t("reports_sales_desc"), onExport: handleSales, linkTo: "/reports/sales", tint: "bg-primary/10 text-primary" },
-    { key: "profit", icon: TrendingUp, title: t("reports_profit_title"), desc: t("reports_profit_desc"), onExport: handleProfit, tint: "bg-emerald-50 text-emerald-600" },
-    { key: "stock", icon: Package, title: t("reports_stock_title"), desc: t("reports_stock_desc"), onExport: handleStock, tint: "bg-amber-50 text-amber-600" },
-    { key: "financial", icon: FileText, title: t("reports_financial_title"), desc: t("reports_financial_desc"), onExport: handleFinancial, tint: "bg-sky-50 text-sky-600" },
-    { key: "customer", icon: Users, title: t("reports_customer_title"), desc: t("reports_customer_desc"), onExport: openCustomerPicker, tint: "bg-fuchsia-50 text-fuchsia-600" },
-    { key: "supplier", icon: Truck, title: t("reports_supplier_title"), desc: t("reports_supplier_desc"), onExport: handleSupplier, tint: "bg-orange-50 text-orange-600" },
-    { key: "recon", icon: ClipboardCheck, title: t("reports_recon_title"), desc: t("reports_recon_desc"), onExport: handleRecon, tint: "bg-teal-50 text-teal-600" },
+    { key: "profit", icon: TrendingUp, title: t("reports_profit_title"), desc: t("reports_profit_desc"), onExport: handleProfit, tint: "bg-emerald-500/10 text-emerald-400" },
+    { key: "stock", icon: Package, title: t("reports_stock_title"), desc: t("reports_stock_desc"), onExport: handleStock, tint: "bg-amber-500/10 text-amber-400" },
+    { key: "financial", icon: FileText, title: t("reports_financial_title"), desc: t("reports_financial_desc"), onExport: handleFinancial, tint: "bg-sky-500/10 text-sky-400" },
+    { key: "customer", icon: Users, title: t("reports_customer_title"), desc: t("reports_customer_desc"), onExport: openCustomerPicker, tint: "bg-fuchsia-500/10 text-fuchsia-400" },
+    { key: "supplier", icon: Truck, title: t("reports_supplier_title"), desc: t("reports_supplier_desc"), onExport: handleSupplier, tint: "bg-orange-500/10 text-orange-400" },
+    { key: "recon", icon: ClipboardCheck, title: t("reports_recon_title"), desc: t("reports_recon_desc"), onExport: handleRecon, tint: "bg-teal-500/10 text-teal-400" },
   ];
 
   return (

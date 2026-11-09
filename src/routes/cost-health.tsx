@@ -101,7 +101,7 @@ function CostHealthPage() {
   }) => (
     <section className="space-y-2">
       <div className="flex items-center gap-2">
-        <Icon className={`h-4 w-4 ${tone === "danger" ? "text-red-600" : "text-amber-600"}`} />
+        <Icon className={`h-4 w-4 ${tone === "danger" ? "text-red-400" : "text-amber-400"}`} />
         <h2 className="text-sm font-bold">{secTitle} ({items.length})</h2>
       </div>
       <p className="text-xs text-muted-foreground -mt-1">{desc}</p>
@@ -163,7 +163,7 @@ function CostHealthPage() {
             render={(it: InvRow) => (
               <Link key={it.id} to="/inventory/$itemId" params={{ itemId: it.id }} className="flex items-center gap-3 p-3 active:bg-muted/40">
                 <p className="text-sm font-semibold flex-1 min-w-0 truncate">{it.name}</p>
-                <span className="text-[11px] font-bold text-red-600 shrink-0">
+                <span className="text-[11px] font-bold text-red-400 shrink-0">
                   {lang === "zh" ? "点击填写" : lang === "ms" ? "Tekan untuk isi" : "Tap to fill"}
                 </span>
               </Link>
@@ -180,7 +180,7 @@ function CostHealthPage() {
             render={(it: InvRow) => (
               <Link key={it.id} to="/inventory/$itemId" params={{ itemId: it.id }} className="flex items-center gap-3 p-3 active:bg-muted/40">
                 <p className="text-sm font-semibold flex-1 min-w-0 truncate">{it.name}</p>
-                <span className="text-[11px] font-bold text-amber-600 shrink-0">
+                <span className="text-[11px] font-bold text-amber-400 shrink-0">
                   {lang === "zh" ? "点击设定" : lang === "ms" ? "Tekan untuk tetapkan" : "Tap to set"}
                 </span>
               </Link>

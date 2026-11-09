@@ -400,22 +400,22 @@ function NotifSettingsPage() {
       </header>
 
       {!isNativeApp && webPermission === "granted" && (
-        <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 flex items-center gap-2">
-          <span className="text-emerald-600 text-lg">✓</span>
+        <div className="rounded-2xl border border-emerald-300 bg-emerald-500/10 p-4 flex items-center gap-2">
+          <span className="text-emerald-400 text-lg">✓</span>
           <p className="text-sm font-semibold text-emerald-900">{t("notif_web_enabled" as any)}</p>
         </div>
       )}
 
       {!isNativeApp && webPermission === "denied" && (
-        <div className="rounded-2xl border border-red-300 bg-red-50 p-4">
+        <div className="rounded-2xl border border-red-300 bg-red-500/10 p-4">
           <p className="text-sm font-semibold text-red-900">{t("notif_web_blocked" as any)}</p>
         </div>
       )}
 
       {(isNativeApp || webPermission === "unsupported") && !granted && (
-        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+        <div className="rounded-2xl border border-amber-300 bg-amber-500/10 p-4">
           <p className="text-sm font-semibold text-amber-900">{t("notif_perm_off_title")}</p>
-          <p className="text-xs text-amber-800 mt-1">{t("notif_perm_off_desc")}</p>
+          <p className="text-xs text-amber-300 mt-1">{t("notif_perm_off_desc")}</p>
           <button
             onClick={openSysSettings}
             className="mt-3 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[.98]"

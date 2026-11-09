@@ -70,7 +70,7 @@ const TEAM_PLANS: TeamPlanDef[] = [
     yearly: "RM 1,099",
     saveLabel: { zh: "节省 29%", ms: "Jimat 29%", en: "Save 29%" },
     gradient: "from-indigo-400 via-violet-400 to-purple-500",
-    accent: "text-indigo-600",
+    accent: "text-indigo-400",
     btnGradient: "from-indigo-500 to-violet-500",
     features: [
       { zh: "包含所有专业版功能", ms: "Semua ciri Pro", en: "All Pro features" },
@@ -104,7 +104,7 @@ const TEAM_PLANS: TeamPlanDef[] = [
     saveLabel: { zh: "节省 33%", ms: "Jimat 33%", en: "Save 33%" },
     badge: { zh: "最佳价值", ms: "Nilai Terbaik", en: "Best Value" },
     gradient: "from-amber-400 via-amber-300 to-yellow-500",
-    accent: "text-amber-600",
+    accent: "text-amber-400",
     btnGradient: "from-amber-500 to-yellow-500",
     features: [
       { zh: "包含所有团队专业版功能", ms: "Semua ciri Team Pro", en: "All Team Pro features" },
@@ -162,7 +162,7 @@ function TeamPlansSection({
                 </p>
               </div>
               {billing === "annual" && (
-                <p className="mt-1 text-[11px] font-semibold text-emerald-600">{p.saveLabel[lang]}</p>
+                <p className="mt-1 text-[11px] font-semibold text-emerald-400">{p.saveLabel[lang]}</p>
               )}
               <ul className="mt-4 space-y-2">
                 {p.features.map((f, i) => (
@@ -173,7 +173,7 @@ function TeamPlansSection({
                 ))}
               </ul>
               {isCurrent ? (
-                <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-100 text-emerald-700 font-semibold text-sm">
+                <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-500/15 text-emerald-300 font-semibold text-sm">
                   {currentLabel}
                 </button>
               ) : (
@@ -686,11 +686,11 @@ function PlansPage() {
             </p>
           </div>
           {isLifetime ? (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">{t("active_badge")}</span>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300">{t("active_badge")}</span>
           ) : isPro ? (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">{t("active_badge")}</span>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300">{t("active_badge")}</span>
           ) : isStarter ? (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-700">{t("active_badge")}</span>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-500/15 text-sky-300">{t("active_badge")}</span>
           ) : (
             <div className="text-right">
               <p className="text-sm font-bold text-foreground">{ordersUsed} / {FREE_LIMITS.ordersPerMonth}</p>
@@ -699,7 +699,7 @@ function PlansPage() {
           )}
         </div>
         {sub?.status === "pending" && (
-          <p className="mt-3 text-[11px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1.5">{t("payment_pending")}</p>
+          <p className="mt-3 text-[11px] text-amber-300 bg-amber-500/10 rounded-lg px-2 py-1.5">{t("payment_pending")}</p>
         )}
       </div>
 
@@ -797,11 +797,11 @@ function PlansPage() {
             ))}
           </ul>
           {isLifetime ? (
-            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-100 text-amber-700 font-semibold text-sm">
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-500/15 text-amber-300 font-semibold text-sm">
               {t("plan_badge_lifetime")} ✓
             </button>
           ) : isPro && activeBillingPlan === billing ? (
-            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-100 text-emerald-700 font-semibold text-sm">
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-500/15 text-emerald-300 font-semibold text-sm">
               {t("current_plan")} ✓
             </button>
           ) : (
@@ -832,8 +832,8 @@ function PlansPage() {
           </span>
           <div className="flex items-baseline justify-between">
             <h2 className="text-lg font-bold flex items-center gap-1">{businessName} <Crown className="h-4 w-4 text-amber-500" /></h2>
-            <p className="text-xl font-bold text-amber-600">
-              <span className="text-amber-600">{businessPrice}</span>
+            <p className="text-xl font-bold text-amber-400">
+              <span className="text-amber-400">{businessPrice}</span>
               <span className="text-xs text-muted-foreground font-normal"> {period}</span>
             </p>
           </div>
@@ -851,11 +851,11 @@ function PlansPage() {
             ))}
           </ul>
           {isLifetime ? (
-            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-100 text-amber-700 font-semibold text-sm">
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-amber-500/15 text-amber-300 font-semibold text-sm">
               {t("plan_badge_lifetime")} ✓
             </button>
           ) : isBusiness && activeBillingPlan === billing ? (
-            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-100 text-emerald-700 font-semibold text-sm">
+            <button disabled className="mt-5 w-full py-3 rounded-2xl bg-emerald-500/15 text-emerald-300 font-semibold text-sm">
               {t("current_plan")} ✓
             </button>
           ) : (

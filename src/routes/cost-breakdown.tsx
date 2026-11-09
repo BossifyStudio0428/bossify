@@ -15,7 +15,7 @@ function Row({ label, value, bold, tint }: { label: string; value: number; bold?
   return (
     <div className="flex items-center justify-between py-2">
       <span className={`text-sm ${bold ? "font-bold" : "text-muted-foreground"}`}>{label}</span>
-      <span className={`text-sm ${bold ? "font-bold" : ""} ${tint === "neg" ? "text-red-600" : tint === "pos" ? "text-emerald-600" : ""}`}>
+      <span className={`text-sm ${bold ? "font-bold" : ""} ${tint === "neg" ? "text-red-400" : tint === "pos" ? "text-emerald-400" : ""}`}>
         {value < 0 ? "−" : ""}RM {Math.abs(value).toFixed(2)}
       </span>
     </div>
@@ -319,7 +319,7 @@ function CostBreakdownPage() {
       ) : (
         <>
           {estimateCount > 0 && (
-            <p className="text-[11px] text-muted-foreground rounded-xl bg-amber-50 border border-amber-200 p-2.5">
+            <p className="text-[11px] text-muted-foreground rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5">
               {lang === "zh"
                 ? `⚠️ ${estimateCount} 笔订单的平台抽成还是估算值，TikTok 结算后会自动更新`
                 : lang === "ms"
@@ -330,10 +330,10 @@ function CostBreakdownPage() {
 
           {(() => {
             const chartData = [
-              { name: lang === "zh" ? "商品成本" : lang === "ms" ? "Produk" : "Product", value: productCost, color: "#EF4444" },
-              { name: lang === "zh" ? "包装" : lang === "ms" ? "Bungkus" : "Packaging", value: packagingCost, color: "#F59E0B" },
+              { name: lang === "zh" ? "商品成本" : lang === "ms" ? "Produk" : "Product", value: productCost, color: "#F87171" },
+              { name: lang === "zh" ? "包装" : lang === "ms" ? "Bungkus" : "Packaging", value: packagingCost, color: "#FBBF24" },
               { name: lang === "zh" ? "平台费" : lang === "ms" ? "Yuran" : "Platform Fee", value: platformFee, color: "#8B5CF6" },
-              { name: lang === "zh" ? "运费" : lang === "ms" ? "Hantar" : "Shipping", value: shippingCost, color: "#3B82F6" },
+              { name: lang === "zh" ? "运费" : lang === "ms" ? "Hantar" : "Shipping", value: shippingCost, color: "#60A5FA" },
               { name: lang === "zh" ? "营业费用" : lang === "ms" ? "Operasi" : "Opex", value: totalOperatingExpenses, color: "#EC4899" },
             ].filter((d) => d.value > 0);
             return (
@@ -385,7 +385,7 @@ function CostBreakdownPage() {
                 <XAxis dataKey="day" tick={{ fontSize: 9 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-                <Line type="monotone" dataKey="profit" stroke="#7C3AED" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="profit" stroke="#8B5CF6" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

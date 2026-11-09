@@ -159,8 +159,8 @@ function DocumentEditor() {
     s === "pending" ? "received" : s === "received" ? "verified" : "pending";
 
   const statusCls = (s: DocStatus) =>
-    s === "verified" ? "bg-emerald-100 text-emerald-700"
-      : s === "received" ? "bg-amber-100 text-amber-700"
+    s === "verified" ? "bg-emerald-500/15 text-emerald-300"
+      : s === "received" ? "bg-amber-500/15 text-amber-300"
       : "bg-muted text-foreground";
 
   return (
@@ -175,7 +175,7 @@ function DocumentEditor() {
             <button onClick={onExport} className="p-2 rounded-full text-primary active:bg-primary/10" aria-label={t("export_pdf")}>
               <Download className="h-5 w-5" />
             </button>
-            <button onClick={remove} className="p-2 rounded-full text-red-500 active:bg-red-50" aria-label={t("delete")}>
+            <button onClick={remove} className="p-2 rounded-full text-red-500 active:bg-red-500/10" aria-label={t("delete")}>
               <Trash2 className="h-5 w-5" />
             </button>
           </div>
