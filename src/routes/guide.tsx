@@ -35,6 +35,7 @@ type Section = {
 function GuidePage() {
   const { lang } = useI18n();
   const [open, setOpen] = useState<string | null>("orders");
+  const [activeSection, setActiveSection] = useState<string>("orders");
 
   const pageTitle = tr(lang, "使用教学", "Panduan Penggunaan", "Guide");
   const pageSubtitle = tr(
@@ -202,8 +203,66 @@ function GuidePage() {
     },
   ];
 
+  const active = sections.find((s) => s.key === activeSection) ?? sections[0];
+
   return (
-    <div className="px-4 pt-4 pb-24 space-y-5">
+    <div className="px-4 pt-4 pb-24 space-y-5 lg:max-w-6xl lg:mx-auto lg:px-8 lg:pt-8 lg:pb-10">
+      {/* Desktop: a proper help-center layout — topic list on the left,
+          the selected topic's full steps always shown on the right (no
+          accordion), so it reads like a knowledge-base article instead
+          of a stack of mobile cards. */}
+      <div className="hidden lg:block space-y-1 mb-2">
+        <h1 className="text-2xl font-bold text-foreground">{pageTitle}</h1>
+        <p className="text-sm text-muted-foreground">{pageSubtitle}</p>
+      </div>
+      <div className="hidden lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
+        <nav className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-2 space-y-1">
+          {sections.map((s) => {
+            const isActive = activeSection === s.key;
+            return (
+              <button
+                key={s.key}
+                onClick={() => setActiveSection(s.key)}
+                className={`w-full flex items-start gap-3 px-3 py-3 rounded-xl text-left transition ${
+                  isActive ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+                }`}
+              >
+                <span className={`h-9 w-9 shrink-0 rounded-lg flex items-center justify-center ${isActive ? "bg-white/15" : "bg-primary/10 text-primary"}`}>
+                  <s.icon className="h-4.5 w-4.5" />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-bold">{s.title}</span>
+                  <span className={`block text-xs mt-0.5 truncate ${isActive ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{s.summary}</span>
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <span className="h-11 w-11 shrink-0 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <active.icon className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">{active.title}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{active.summary}</p>
+            </div>
+          </div>
+          <ol className="space-y-4">
+            {active.steps.map((step, i) => (
+              <li key={i} className="flex gap-3 text-sm text-foreground leading-relaxed">
+                <span className="shrink-0 h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+                  {i + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+
+      <div className="lg:hidden space-y-5">
       <div className="flex items-center gap-2">
         <Link to="/more" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
           <ChevronLeft className="h-5 w-5" />
@@ -248,6 +307,7 @@ function GuidePage() {
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
