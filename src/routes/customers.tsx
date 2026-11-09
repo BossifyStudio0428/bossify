@@ -20,10 +20,10 @@ export const Route = createFileRoute("/customers")({ component: CustomersPage })
 
 const CUSTOMER_STATUS_ORDER: CustomerStatus[] = ["enquiry", "in_progress", "completed", "rejected"];
 const CUSTOMER_STATUS_STYLES: Record<CustomerStatus, string> = {
-  enquiry: "bg-blue-100 text-blue-700",
-  in_progress: "bg-amber-100 text-amber-700",
-  completed: "bg-emerald-100 text-emerald-700",
-  rejected: "bg-red-100 text-red-600",
+  enquiry: "bg-blue-500/15 text-blue-300",
+  in_progress: "bg-amber-500/15 text-amber-300",
+  completed: "bg-emerald-500/15 text-emerald-300",
+  rejected: "bg-red-500/15 text-red-400",
 };
 const CUSTOMER_STATUS_DOT: Record<CustomerStatus, string> = {
   enquiry: "🔵", in_progress: "🟡", completed: "🟢", rejected: "🔴",
@@ -359,10 +359,10 @@ function CustomersPage() {
     if (bizType !== "retail") return null;
     const spent = Number(c.total_spent ?? 0);
     if (spent > 0 && spent >= topSpenderThreshold) {
-      return { label: t("customer_top_spender"), cls: "bg-amber-100 text-amber-700" };
+      return { label: t("customer_top_spender"), cls: "bg-amber-500/15 text-amber-300" };
     }
     if ((c.total_orders ?? 0) >= 2) return { label: t("customer_repeat"), cls: "bg-primary/10 text-primary" };
-    if ((c.total_orders ?? 0) === 1) return { label: t("customer_new"), cls: "bg-emerald-100 text-emerald-700" };
+    if ((c.total_orders ?? 0) === 1) return { label: t("customer_new"), cls: "bg-emerald-500/15 text-emerald-300" };
     return null;
   };
   const dateLabel = lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date";
@@ -656,7 +656,7 @@ function CustomersPage() {
                   <p className="text-[11px] text-primary font-medium mt-0.5 truncate">📱 {c.phone}</p>
                 )}
                 {followUpByCustomerId[c.id] && (
-                  <p className="text-[11px] text-amber-600 font-medium mt-0.5 truncate">
+                  <p className="text-[11px] text-amber-400 font-medium mt-0.5 truncate">
                     📅 {new Date(followUpByCustomerId[c.id] + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
                   </p>
                 )}

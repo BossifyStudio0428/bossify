@@ -36,9 +36,9 @@ type Ingredient = { id: string; name: string; unit: string; cost_per_unit: numbe
 type Counts = Record<string, { items: number; supplier: string | null }>;
 
 function statusColor(s: POStatus) {
-  if (s === "received") return "bg-emerald-100 text-emerald-700";
-  if (s === "cancelled") return "bg-red-100 text-red-700";
-  return "bg-amber-100 text-amber-700";
+  if (s === "received") return "bg-emerald-500/15 text-emerald-300";
+  if (s === "cancelled") return "bg-red-500/15 text-red-300";
+  return "bg-amber-500/15 text-amber-300";
 }
 
 function PurchaseOrdersPage() {
@@ -739,7 +739,7 @@ export function PurchaseOrderForm({
                 <button
                   type="button"
                   onClick={() => removeLine(l.key)}
-                  className="p-2 rounded-lg text-red-500 hover:bg-red-50"
+                  className="p-2 rounded-lg text-red-500 hover:bg-red-500/10"
                   aria-label="remove"
                 >
                   <Trash2 className="h-4 w-4" />

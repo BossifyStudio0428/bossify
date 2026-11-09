@@ -282,11 +282,11 @@ function ImportOrdersPage() {
               {t("import_preview")}
             </h2>
             <div className="flex gap-2 text-xs">
-              <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+              <span className="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-300 font-medium">
                 ✓ {validCount} {t("import_ready")}
               </span>
               {invalidCount > 0 && (
-                <span className="px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">
+                <span className="px-2 py-1 rounded-full bg-red-500/15 text-red-300 font-medium">
                   ⚠ {invalidCount} {t("import_will_skip")}
                 </span>
               )}
@@ -315,11 +315,11 @@ function ImportOrdersPage() {
                       <td className="py-1.5 pr-3">{r.status}</td>
                       <td className="py-1.5 pr-3">
                         {r._errors.length ? (
-                          <span className="text-red-600" title={r._errors.join(", ")}>
+                          <span className="text-red-400" title={r._errors.join(", ")}>
                             <AlertTriangle className="h-3.5 w-3.5 inline" />
                           </span>
                         ) : (
-                          <CheckCircle2 className="h-3.5 w-3.5 inline text-emerald-600" />
+                          <CheckCircle2 className="h-3.5 w-3.5 inline text-emerald-400" />
                         )}
                       </td>
                     </tr>
@@ -369,11 +369,11 @@ function ImportOrdersPage() {
             </div>
           </div>
           {result.errors.length > 0 && (
-            <div className="rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 p-4 space-y-2">
-              <p className="text-xs font-semibold text-red-700 dark:text-red-400">
+            <div className="rounded-2xl bg-red-500/10 dark:bg-red-950/20 border border-red-500/30 dark:border-red-900 p-4 space-y-2">
+              <p className="text-xs font-semibold text-red-300 dark:text-red-400">
                 {t("import_some_errors")}
               </p>
-              <ul className="text-xs text-red-700 dark:text-red-400 space-y-1">
+              <ul className="text-xs text-red-300 dark:text-red-400 space-y-1">
                 {result.errors.map((e, i) => <li key={i}>• {e}</li>)}
               </ul>
             </div>

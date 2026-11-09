@@ -126,7 +126,7 @@ function SuppliersPage() {
                 <button onClick={() => setSheet({ kind: "form", item: it })} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground" aria-label={t("edit")}>
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
-                <button onClick={() => setSheet({ kind: "delete", item: it })} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" aria-label={t("delete")}>
+                <button onClick={() => setSheet({ kind: "delete", item: it })} className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-500" aria-label={t("delete")}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>

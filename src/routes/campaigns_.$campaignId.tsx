@@ -589,7 +589,7 @@ function CampaignDetailPage() {
               <button onClick={() => setEditingCampaign(true)} className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground active:scale-95">
                 <Pencil className="h-3.5 w-3.5" />
               </button>
-              <button disabled={deleting} onClick={removeCampaign} className="h-7 w-7 rounded-full flex items-center justify-center text-red-600 active:scale-95 disabled:opacity-60">
+              <button disabled={deleting} onClick={removeCampaign} className="h-7 w-7 rounded-full flex items-center justify-center text-red-400 active:scale-95 disabled:opacity-60">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -698,7 +698,7 @@ function CampaignDetailPage() {
           {/* Stock section */}
           <section className="space-y-2">
             <div className="flex items-center gap-2">
-              <PackageX className="h-4 w-4 text-amber-600" />
+              <PackageX className="h-4 w-4 text-amber-400" />
               <h2 className="text-sm font-bold">
                 {lang === "zh" ? "库存不足，赶紧补货" : lang === "ms" ? "Stok rendah — segera bekalkan semula" : "Low stock — restock soon"}
               </h2>
@@ -713,7 +713,7 @@ function CampaignDetailPage() {
                   const suggest = suggestQty(it);
                   return (
                     <div key={it.id} className="flex items-center gap-3 p-3">
-                      <div className="h-9 w-9 rounded-lg bg-red-50 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="h-9 w-9 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0 overflow-hidden">
                         {it.image_url ? <img src={it.image_url} className="h-full w-full object-cover" /> : <PackageX className="h-4 w-4 text-red-500" />}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -724,7 +724,7 @@ function CampaignDetailPage() {
                           </p>
                         )}
                       </div>
-                      <span className="text-[11px] font-bold text-red-600 shrink-0">
+                      <span className="text-[11px] font-bold text-red-400 shrink-0">
                         {lang === "zh" ? "缺货" : lang === "ms" ? "Kehabisan stok" : "Out of stock"}
                       </span>
                     </div>
@@ -734,7 +734,7 @@ function CampaignDetailPage() {
                   const suggest = suggestQty(it);
                   return (
                     <div key={it.id} className="flex items-center gap-3 p-3">
-                      <div className="h-9 w-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 overflow-hidden">
                         {it.image_url ? <img src={it.image_url} className="h-full w-full object-cover" /> : <PackageX className="h-4 w-4 text-amber-500" />}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -745,7 +745,7 @@ function CampaignDetailPage() {
                           </p>
                         )}
                       </div>
-                      <span className="text-[11px] font-bold text-amber-600 shrink-0">
+                      <span className="text-[11px] font-bold text-amber-400 shrink-0">
                         {lang === "zh" ? `剩 ${it.stock}` : lang === "ms" ? `Baki ${it.stock}` : `${it.stock} left`}
                       </span>
                     </div>
@@ -807,7 +807,7 @@ function CampaignDetailPage() {
                           <span className="line-through">{money(p.original_price)}</span>{" → "}
                           <span className="font-semibold text-primary">{money(p.promo_price)}</span>
                           {" · "}
-                          <span className={margin >= 0 ? "text-emerald-600" : "text-red-600"}>
+                          <span className={margin >= 0 ? "text-emerald-400" : "text-red-400"}>
                             {lang === "zh" ? "毛利" : lang === "ms" ? "margin" : "margin"} {money(margin)}
                           </span>
                         </p>
@@ -911,7 +911,7 @@ function CampaignDetailPage() {
                         <p className="text-sm font-semibold truncate">{o.customer_name}</p>
                         <p className="text-xs text-muted-foreground truncate">{o.product ?? o.code}</p>
                       </div>
-                      <span className="text-[11px] font-bold text-red-600 shrink-0">
+                      <span className="text-[11px] font-bold text-red-400 shrink-0">
                         {lang === "zh" ? `${hrs} 小时前` : lang === "ms" ? `${hrs} jam lalu` : `${hrs}h ago`}
                       </span>
                     </Link>
@@ -950,7 +950,7 @@ function CampaignDetailPage() {
                           {fmt(row.cur)} ({lang === "zh" ? "平常" : lang === "ms" ? "biasa" : "usual"} {fmt(row.base)})
                         </p>
                       </div>
-                      <span className={`flex items-center gap-1 text-xs font-bold shrink-0 ${up ? "text-emerald-600" : "text-red-600"}`}>
+                      <span className={`flex items-center gap-1 text-xs font-bold shrink-0 ${up ? "text-emerald-400" : "text-red-400"}`}>
                         {up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                         {up ? "+" : ""}{pct.toFixed(0)}%
                       </span>

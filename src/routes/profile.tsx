@@ -451,15 +451,15 @@ function ProfilePage() {
         id="tour-payment-card"
         className={`w-full rounded-2xl border p-4 flex items-center gap-3 text-left active:scale-[0.99] transition ${
           paySummary?.hasMethod
-            ? "bg-gradient-to-br from-emerald-50 to-emerald-50/40 border-emerald-200"
-            : "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200"
+            ? "bg-gradient-to-br from-emerald-50 to-emerald-50/40 border-emerald-500/30"
+            : "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-500/30"
         }`}
       >
         <div
           className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
             paySummary?.hasMethod
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-amber-100 text-amber-700"
+              ? "bg-emerald-500/15 text-emerald-300"
+              : "bg-amber-500/15 text-amber-300"
           }`}
         >
           {paySummary?.hasMethod ? (
@@ -470,20 +470,20 @@ function ProfilePage() {
         </div>
         <div className="min-w-0 flex-1">
           <p
-            className={`text-sm font-bold ${paySummary?.hasMethod ? "text-emerald-800" : "text-amber-900"}`}
+            className={`text-sm font-bold ${paySummary?.hasMethod ? "text-emerald-300" : "text-amber-900"}`}
           >
             {paySummary?.hasMethod ? `✓ ${t("payment_active")}` : `⚠️ ${t("payment_not_setup")}`}
           </p>
           {paySummary?.hasMethod ? (
-            <p className="text-xs text-emerald-700/80 mt-0.5 truncate">
+            <p className="text-xs text-emerald-300/80 mt-0.5 truncate">
               {paySummary.type ?? "—"} {paySummary.number ? `· ${paySummary.number}` : ""}
             </p>
           ) : (
-            <p className="text-[11px] text-amber-700 font-semibold mt-0.5">{t("set_up_now")} →</p>
+            <p className="text-[11px] text-amber-300 font-semibold mt-0.5">{t("set_up_now")} →</p>
           )}
         </div>
         <ChevronRightIcon
-          className={`h-4 w-4 ${paySummary?.hasMethod ? "text-emerald-700" : "text-amber-700"}`}
+          className={`h-4 w-4 ${paySummary?.hasMethod ? "text-emerald-300" : "text-amber-300"}`}
         />
       </button>
 
@@ -550,7 +550,7 @@ function ProfilePage() {
                       <span
                         className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
                           isConn
-                            ? "bg-emerald-100 text-emerald-700"
+                            ? "bg-emerald-500/15 text-emerald-300"
                             : "bg-muted text-muted-foreground"
                         }`}
                       >

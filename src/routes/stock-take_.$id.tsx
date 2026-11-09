@@ -235,7 +235,7 @@ function StockTakeReportPage() {
             <p className="text-xs text-muted-foreground">
               {new Date(take.started_at).toLocaleString()}
             </p>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-500/15 text-green-300">
               {t("status_completed")}
             </span>
           </div>
@@ -262,7 +262,7 @@ function StockTakeReportPage() {
                 {t("items_with_discrepancies")}
               </p>
               <p
-                className={`text-2xl font-bold ${discrepancies > 0 ? "text-amber-600" : "text-green-600"}`}
+                className={`text-2xl font-bold ${discrepancies > 0 ? "text-amber-400" : "text-green-400"}`}
               >
                 {discrepancies}
               </p>
@@ -273,7 +273,7 @@ function StockTakeReportPage() {
             </div>
             <div className="rounded-2xl bg-card border border-border/60 p-4">
               <p className="text-[10px] uppercase text-muted-foreground">{t("total_surplus")}</p>
-              <p className="text-2xl font-bold text-green-600">+{totalSurplus}</p>
+              <p className="text-2xl font-bold text-green-400">+{totalSurplus}</p>
             </div>
           </div>
 
@@ -290,7 +290,7 @@ function StockTakeReportPage() {
             {(diffItems.length > 0 ? diffItems : items).map((it) => (
               <div
                 key={it.id}
-                className={`rounded-2xl bg-card border p-3 ${it.difference !== 0 ? "border-amber-300 bg-amber-50/40" : "border-border/60"}`}
+                className={`rounded-2xl bg-card border p-3 ${it.difference !== 0 ? "border-amber-300 bg-amber-500/10" : "border-border/60"}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-foreground truncate">
@@ -314,7 +314,7 @@ function StockTakeReportPage() {
                   <div>
                     <p className="text-[10px] uppercase text-muted-foreground">{t("difference")}</p>
                     <p
-                      className={`font-bold ${it.difference < 0 ? "text-red-500" : it.difference > 0 ? "text-green-600" : "text-muted-foreground"}`}
+                      className={`font-bold ${it.difference < 0 ? "text-red-500" : it.difference > 0 ? "text-green-400" : "text-muted-foreground"}`}
                     >
                       {it.difference > 0 ? "+" : ""}
                       {it.difference}
