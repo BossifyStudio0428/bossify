@@ -10,7 +10,6 @@ import { useI18n, type Lang } from "@/contexts/I18nContext";
 import { toast } from "sonner";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Sparkles, Sun, Moon } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
 import {
   CreditCard,
   AlertTriangle,
@@ -57,7 +56,6 @@ function ProfilePage() {
   const navigate = useNavigate();
   const { isPro, isStarter, isLifetime, isTeam, teamTier, hasFullAccess, ordersUsed, ordersLimit, showUpgrade } =
     useSubscription();
-  const { theme, toggle: toggleTheme } = useTheme();
   const { type: bizType, subType: bizSubType } = useBusinessType();
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
@@ -224,13 +222,6 @@ function ProfilePage() {
           label: t("language"),
           value: `${LANG_INFO[lang].flag} ${LANG_INFO[lang].label}`,
           onClick: () => setLangOpen(true),
-        },
-        {
-          icon: theme === "dark" ? "🌙" : "☀️",
-          key: "theme",
-          label: t("appearance"),
-          value: theme === "dark" ? t("dark") : t("light"),
-          onClick: toggleTheme,
         },
         {
           icon: "📱",

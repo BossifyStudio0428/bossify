@@ -61,89 +61,95 @@
 }
 
 :root {
+  /* Bossify is dark-theme only (no light mode) — these are the single
+     source of truth and are duplicated into .dark below so the look is
+     identical whether or not JS has added the "dark" class yet (SSR). */
   --radius: 1rem;
-  /* #F4F3F8 */
-  --background: oklch(0.964 0.008 290);
-  /* #1E1333 */
-  --foreground: oklch(0.215 0.062 295);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.215 0.062 295);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.215 0.062 295);
-  /* #7C3AED */
-  --primary: oklch(0.553 0.245 295);
+  /* #0A0614 */
+  --background: oklch(0.138 0.032 296.563);
+  /* #F5F3FA */
+  --foreground: oklch(0.968 0.01 299.241);
+  /* #140D22 */
+  --card: oklch(0.181 0.043 297.34);
+  --card-foreground: oklch(0.968 0.01 299.241);
+  /* #1B1430 */
+  --popover: oklch(0.216 0.054 292.876);
+  --popover-foreground: oklch(0.968 0.01 299.241);
+  /* #8B5CF6 */
+  --primary: oklch(0.606 0.219 292.717);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.964 0.008 290);
-  --secondary-foreground: oklch(0.215 0.062 295);
-  --muted: oklch(0.964 0.008 290);
-  /* #6B7280 */
-  --muted-foreground: oklch(0.551 0.022 264);
-  --accent: oklch(0.95 0.03 295);
-  --accent-foreground: oklch(0.553 0.245 295);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.92 0.012 290);
-  --input: oklch(0.92 0.012 290);
-  --ring: oklch(0.553 0.245 295);
-  --shadow-soft: 0 8px 24px -8px color-mix(in oklab, var(--primary) 25%, transparent);
-  --shadow-card: 0 4px 16px -6px color-mix(in oklab, var(--primary) 15%, transparent);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  /* #1B1430 */
+  --secondary: oklch(0.216 0.054 292.876);
+  --secondary-foreground: oklch(0.968 0.01 299.241);
+  --muted: oklch(0.216 0.054 292.876);
+  /* #9D93B5 */
+  --muted-foreground: oklch(0.683 0.051 298.513);
+  /* #241B3D */
+  --accent: oklch(0.252 0.063 293.591);
+  --accent-foreground: oklch(0.968 0.01 299.241);
+  /* #F87171 */
+  --destructive: oklch(0.711 0.166 22.216);
+  --destructive-foreground: oklch(0.968 0.01 299.241);
+  /* border base #A87CFF */
+  --border: oklch(0.688 0.188 296.648 / 14%);
+  --input: oklch(0.688 0.188 296.648 / 22%);
+  --ring: oklch(0.606 0.219 292.717);
+  --shadow-soft: 0 8px 24px -8px color-mix(in oklab, var(--primary) 40%, transparent);
+  --shadow-card: 0 4px 16px -6px color-mix(in oklab, black 60%, transparent);
+  /* violet / magenta / green / blue / red */
+  --chart-1: oklch(0.606 0.219 292.717);
+  --chart-2: oklch(0.667 0.259 322.15);
+  --chart-3: oklch(0.8 0.182 151.711);
+  --chart-4: oklch(0.714 0.143 254.624);
+  --chart-5: oklch(0.711 0.166 22.216);
+  /* #140D22 */
+  --sidebar: oklch(0.181 0.043 297.34);
+  --sidebar-foreground: oklch(0.968 0.01 299.241);
+  --sidebar-primary: oklch(0.606 0.219 292.717);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.216 0.054 292.876);
+  --sidebar-accent-foreground: oklch(0.968 0.01 299.241);
+  --sidebar-border: oklch(0.688 0.188 296.648 / 14%);
+  --sidebar-ring: oklch(0.606 0.219 292.717);
 }
 
 .dark {
-  /* Bossify dark theme — purple-black */
-  /* #0F0D1A */
-  --background: oklch(0.155 0.025 295);
-  /* #F8F5FF */
-  --foreground: oklch(0.972 0.012 295);
-  /* #1A1628 */
-  --card: oklch(0.205 0.028 295);
-  --card-foreground: oklch(0.972 0.012 295);
-  --popover: oklch(0.205 0.028 295);
-  --popover-foreground: oklch(0.972 0.012 295);
-  /* #7C3AED keep primary */
-  --primary: oklch(0.553 0.245 295);
+  /* Same values as :root — kept so `.dark`-scoped selectors (e.g. chart.tsx's
+     per-theme color configs) keep working if that class is ever toggled. */
+  --background: oklch(0.138 0.032 296.563);
+  --foreground: oklch(0.968 0.01 299.241);
+  --card: oklch(0.181 0.043 297.34);
+  --card-foreground: oklch(0.968 0.01 299.241);
+  --popover: oklch(0.216 0.054 292.876);
+  --popover-foreground: oklch(0.968 0.01 299.241);
+  --primary: oklch(0.606 0.219 292.717);
   --primary-foreground: oklch(1 0 0);
-  /* #231D35 */
-  --secondary: oklch(0.245 0.034 295);
-  --secondary-foreground: oklch(0.972 0.012 295);
-  --muted: oklch(0.245 0.034 295);
-  /* #9B8EC4 */
-  --muted-foreground: oklch(0.66 0.055 295);
-  --accent: oklch(0.245 0.034 295);
-  --accent-foreground: oklch(0.972 0.012 295);
-  --destructive: oklch(0.65 0.21 22);
-  --destructive-foreground: oklch(0.985 0.003 247);
-  --border: oklch(0.66 0.055 295 / 18%);
-  --input: oklch(0.66 0.055 295 / 22%);
-  --ring: oklch(0.553 0.245 295);
+  --secondary: oklch(0.216 0.054 292.876);
+  --secondary-foreground: oklch(0.968 0.01 299.241);
+  --muted: oklch(0.216 0.054 292.876);
+  --muted-foreground: oklch(0.683 0.051 298.513);
+  --accent: oklch(0.252 0.063 293.591);
+  --accent-foreground: oklch(0.968 0.01 299.241);
+  --destructive: oklch(0.711 0.166 22.216);
+  --destructive-foreground: oklch(0.968 0.01 299.241);
+  --border: oklch(0.688 0.188 296.648 / 14%);
+  --input: oklch(0.688 0.188 296.648 / 22%);
+  --ring: oklch(0.606 0.219 292.717);
   --shadow-soft: 0 8px 24px -8px color-mix(in oklab, var(--primary) 40%, transparent);
   --shadow-card: 0 4px 16px -6px color-mix(in oklab, black 60%, transparent);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --chart-1: oklch(0.606 0.219 292.717);
+  --chart-2: oklch(0.667 0.259 322.15);
+  --chart-3: oklch(0.8 0.182 151.711);
+  --chart-4: oklch(0.714 0.143 254.624);
+  --chart-5: oklch(0.711 0.166 22.216);
+  --sidebar: oklch(0.181 0.043 297.34);
+  --sidebar-foreground: oklch(0.968 0.01 299.241);
+  --sidebar-primary: oklch(0.606 0.219 292.717);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.216 0.054 292.876);
+  --sidebar-accent-foreground: oklch(0.968 0.01 299.241);
+  --sidebar-border: oklch(0.688 0.188 296.648 / 14%);
+  --sidebar-ring: oklch(0.606 0.219 292.717);
 }
 
 @layer base {
@@ -164,16 +170,7 @@
   }
 
   html {
-    background-color: #F4F3F8;
-  }
-
-  /* Auth / onboarding flow always uses the light brand surface so logging out
-     from dark mode never leaves a black flash behind the form. */
-  html:has(body [data-auth-surface]) {
-    background-color: #F4F3F8 !important;
-  }
-  body:has([data-auth-surface]) {
-    background-color: #F4F3F8 !important;
+    background-color: #0A0614;
   }
 }
 

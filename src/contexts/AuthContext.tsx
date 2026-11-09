@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { safeLocalStorage } from "@/lib/safeStorage";
 import { registerDeviceSession } from "@/lib/deviceSession";
 
 const DEVICE_LIMIT_BLOCK_KEY = "bossify_device_limit_block";
@@ -120,18 +119,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     setDeviceLimitBlock(false);
-    // Reset theme to light so the auth screen never flashes a dark background
-    if (typeof window !== "undefined") {
-      try {
-        safeLocalStorage.setItem("bossify_theme", "light");
-        const root = document.documentElement;
-        root.classList.remove("dark");
-        root.classList.add("light");
-        root.style.colorScheme = "light";
-      } catch {
-        // Ignore theme reset errors.
-      }
-    }
     await supabase.auth.signOut();
   };
 
