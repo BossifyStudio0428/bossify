@@ -425,6 +425,38 @@ function InventoryPage() {
         </div>
       )}
 
+      {!loading && items.length > 0 && (() => {
+        const outCount = items.filter((i) => i.stock <= 0).length;
+        const lowCount = items.filter((i) => i.stock > 0 && i.stock <= lowThreshold).length;
+        const healthyCount = items.filter((i) => i.stock > lowThreshold).length;
+        const total = Math.max(1, outCount + lowCount + healthyCount);
+        const segs = [
+          { key: "healthy", count: healthyCount, color: "bg-emerald-500", label: lang === "zh" ? "\u5e93\u5b58\u5145\u8db3" : lang === "ms" ? "Sihat" : "Healthy" },
+          { key: "low", count: lowCount, color: "bg-amber-500", label: lang === "zh" ? "\u5e93\u5b58\u4f4e" : lang === "ms" ? "Rendah" : "Low" },
+          { key: "out", count: outCount, color: "bg-red-500", label: lang === "zh" ? "\u65ad\u8d27" : lang === "ms" ? "Kehabisan" : "Out of stock" },
+        ].filter((s) => s.count > 0);
+        return (
+          <div className="rounded-2xl bg-card border border-border/60 p-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
+              {lang === "zh" ? "\u5e93\u5b58\u5065\u5eb7\u5ea6" : lang === "ms" ? "Kesihatan Inventori" : "Inventory health"}
+            </p>
+            <div className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted">
+              {segs.map((s) => (
+                <div key={s.key} className={s.color} style={{ width: `${(s.count / total) * 100}%` }} />
+              ))}
+            </div>
+            <div className="mt-2 flex items-center gap-3 flex-wrap">
+              {segs.map((s) => (
+                <span key={s.key} className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <span className={`h-2 w-2 rounded-full ${s.color}`} />
+                  {s.label} ({s.count})
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {lowItems.length > 0 && (
         <button
           onClick={() => firstLowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
@@ -576,6 +608,12 @@ function InventoryPage() {
                               RM {Number(v.price).toFixed(2)}
                             </span>
                           ) : null}
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${vLow ? "bg-red-500" : "bg-primary"}`}
+                            style={{ width: `${Math.min(100, Math.round((v.stock / Math.max(1, v.max_stock)) * 100))}%` }}
+                          />
                         </div>
                         <ProfitRow price={v.price} cost={(v as any).cost_price} t={t} />
                         <div className="grid grid-cols-2 gap-2">
