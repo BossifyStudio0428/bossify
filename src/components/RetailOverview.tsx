@@ -772,7 +772,7 @@ export function RetailOverview() {
         <p className="mt-1 text-xl font-bold text-foreground font-mono">
           {loading ? "…" : money(stats.contribution)}
         </p>
-        {dailyChart.length > 1 ? (
+        {dailyChart.length > 0 ? (
           <div className="mt-2 -mx-1">
             <ResponsiveContainer width="100%" height={120}>
               <LineChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
@@ -1122,7 +1122,7 @@ export function RetailOverview() {
               </span>
             </div>
           </div>
-          {dailyChart.length > 1 ? (
+          {dailyChart.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />

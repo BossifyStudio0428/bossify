@@ -92,28 +92,22 @@ export const Route = createFileRoute("/api/public/stripe/checkout")({
           });
           return json(200, { url: session.url, sessionId: session.id });
         } catch (e: any) {
-          // TEMP DEBUG (2026-11): the generic message + CF log serialization
-          // of the raw Error object were giving zero usable detail (CF logs
-          // only showed e.stack, never e.message/type/code, and Stripe's own
-          // Dashboard Logs showed nothing matching). Surface the real Stripe
-          // error fields directly in the response body so the on-screen
-          // "Checkout failed (500): ..." toast shows the actual cause.
-          // REVERT this to the generic message once the bug is found.
+          // 2026-11: root cause of the 500 that used to happen here was a
+          // misconfigured STRIPE_SECRET_KEY (an API key ID had been pasted
+          // into Cloudflare instead of the actual secret value) — fixed by
+          // regenerating the key in Stripe and re-pasting the full secret.
+          // Log the real error fields server-side for any future debugging,
+          // but never expose Stripe's internal error details to the client.
           console.error(
             "[stripe/checkout]",
             e?.message,
             "| type:", e?.type,
             "| code:", e?.code,
             "| statusCode:", e?.statusCode,
-            "| raw:", e?.raw?.message,
           );
-          return json(500, {
-            error: e?.message || "An unexpected error occurred. Please try again.",
-            type: e?.type,
-            code: e?.code,
-          });
+          return json(500, { error: "An unexpected error occurred. Please try again." });
         }
       },
     },
   },
-})
+});
