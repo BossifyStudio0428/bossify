@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Menu,
   X,
@@ -1113,7 +1113,7 @@ function DemoVideoModal({ open, onClose, copy }: { open: boolean; onClose: () =>
 }
 
 export function LandingPage() {
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
@@ -1503,13 +1503,30 @@ export function LandingPage() {
 
       {/* Footer */}
       <footer className="px-5 lg:px-8 py-10 border-t" style={{ borderColor: BORDER }}>
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src={bossifyLogo} alt="Bossify" className="h-6 w-6 rounded object-cover" />
-            <span className="text-sm font-bold" style={{ color: TEXT }}>Bossify</span>
-            <span className="text-[13px]" style={{ color: TEXT_MUTED }}>· {c.footerTag}</span>
+        <div className="max-w-6xl mx-auto space-y-5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <img src={bossifyLogo} alt="Bossify" className="h-6 w-6 rounded object-cover" />
+              <span className="text-sm font-bold" style={{ color: TEXT }}>Bossify</span>
+              <span className="text-[13px]" style={{ color: TEXT_MUTED }}>· {c.footerTag}</span>
+            </div>
+            <nav className="flex items-center gap-4 text-[12.5px]" style={{ color: TEXT_MUTED }}>
+              <a href="mailto:zhstudioapp@gmail.com" className="hover:underline">
+                {lang === "zh" ? "联系我们" : lang === "ms" ? "Hubungi Kami" : "Contact"}
+              </a>
+              <Link to="/privacy-policy" className="hover:underline">{t("privacy_policy")}</Link>
+              <Link to="/terms" className="hover:underline">{t("terms_conditions")}</Link>
+            </nav>
           </div>
-          <p className="text-[12.5px]" style={{ color: TEXT_MUTED }}>© {new Date().getFullYear()} ZH Studio</p>
+          <div className="pt-4 border-t text-center sm:text-left" style={{ borderColor: BORDER }}>
+            <p className="text-[12.5px]" style={{ color: TEXT_MUTED }}>
+              {lang === "zh"
+                ? `由 ZH Studio 打造 · © ${new Date().getFullYear()}`
+                : lang === "ms"
+                  ? `Dikuasakan oleh ZH Studio · © ${new Date().getFullYear()}`
+                  : `Powered by ZH Studio · © ${new Date().getFullYear()}`}
+            </p>
+          </div>
         </div>
       </footer>
       </div>

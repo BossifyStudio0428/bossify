@@ -462,6 +462,7 @@ function ShellInner() {
               <div key={location.pathname} className="bf-page-transition">
                 <Outlet />
               </div>
+              <AppFooter />
             </div>
           </main>
 
@@ -473,6 +474,31 @@ function ShellInner() {
     </div>
   );
 }
+
+// Small, non-sticky footer shown at the bottom of every in-app page's
+// scrollable content (both mobile and desktop) — Powered by ZH Studio +
+// contact email + Privacy Policy / Terms links, per John's request
+// (2026-11). Deliberately not sticky/fixed so it never covers content or
+// fights with BottomNav on mobile.
+const AppFooter = memo(function AppFooter() {
+  const { t, lang } = useI18n();
+  return (
+    <footer className="mt-8 pb-2 px-2 text-center">
+      <p className="text-[11px] text-muted-foreground">
+        {lang === "zh" ? "由 ZH Studio 打造" : lang === "ms" ? "Dikuasakan oleh ZH Studio" : "Powered by ZH Studio"}
+      </p>
+      <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+        <a href="mailto:zhstudioapp@gmail.com" className="hover:underline">
+          {lang === "zh" ? "联系我们" : lang === "ms" ? "Hubungi Kami" : "Contact"}
+        </a>
+        <span className="opacity-50">·</span>
+        <Link to="/privacy-policy" className="hover:underline">{t("privacy_policy")}</Link>
+        <span className="opacity-50">·</span>
+        <Link to="/terms" className="hover:underline">{t("terms_conditions")}</Link>
+      </div>
+    </footer>
+  );
+});
 
 const BottomNav = memo(function BottomNav() {
   const { t } = useI18n();
