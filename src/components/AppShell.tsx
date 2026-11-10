@@ -484,7 +484,8 @@ const AppFooter = memo(function AppFooter() {
   const { t, lang } = useI18n();
   return (
     <footer className="mt-8 pb-2 px-2 text-center">
-      <p className="text-[11px] text-muted-foreground">
+      <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+        <img src={bossifyLogo} alt="Bossify" className="h-4 w-4 rounded object-cover" />
         {lang === "zh" ? "由 ZH Studio 打造" : lang === "ms" ? "Dikuasakan oleh ZH Studio" : "Powered by ZH Studio"}
       </p>
       <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">

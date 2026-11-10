@@ -1518,7 +1518,8 @@ export function LandingPage() {
               <Link to="/terms" className="hover:underline">{t("terms_conditions")}</Link>
             </nav>
           </div>
-          <div className="pt-4 border-t text-center sm:text-left" style={{ borderColor: BORDER }}>
+          <div className="pt-4 border-t flex items-center justify-center sm:justify-start gap-1.5" style={{ borderColor: BORDER }}>
+            <img src={bossifyLogo} alt="Bossify" className="h-4 w-4 rounded object-cover" />
             <p className="text-[12.5px]" style={{ color: TEXT_MUTED }}>
               {lang === "zh"
                 ? `由 ZH Studio 打造 · © ${new Date().getFullYear()}`
