@@ -33,16 +33,20 @@ type ProductSyncResult = {
  * reliable, since order line items can then match by product_id instead
  * of only by name.
  *
- * Deletion reconciliation: TikTok's product list simply stops returning a
- * product once it's deleted/deactivated in Seller Center — there's no
- * explicit "deleted" event. So after refreshing everything we can still
- * see, we also check for Bossify inventory rows that are linked
- * (tiktok_product_id set) but whose ID did NOT show up in this sync's
- * catalog at all, and flag them with tiktok_delisted_at. We deliberately
- * never delete or hide the row itself — historical orders/reports may
- * reference it, and the seller decides what to do with it from here. If
- * a flagged product reappears later (re-listed on TikTok), the flag is
- * cleared automatically the next time it's seen.
+ * Deletion reconciliation: there's no explicit "deleted" event from TikTok
+ * — and, confirmed the hard way (2026-11-10), the product search endpoint
+ * does NOT simply stop returning a product once it's deleted/deactivated in
+ * Seller Center the way the original version of this function assumed;
+ * the id can still come back. What actually changes is the per-product
+ * detail's `status` field. So "seen this sync" is decided per-product
+ * below (search for NON_LIVE_STATUSES), not just by which ids the search
+ * endpoint happened to return. After that, we check for Bossify inventory
+ * rows that are linked (tiktok_product_id set) but weren't counted as seen
+ * this sync, and flag them with tiktok_delisted_at. We deliberately never
+ * delete or hide the row itself — historical orders/reports may reference
+ * it, and the seller decides what to do with it from here. If a flagged
+ * product reappears later (re-listed on TikTok), the flag is cleared
+ * automatically the next time it's seen.
  */
 export async function syncTikTokProducts(userId: string): Promise<ProductSyncResult> {
   const { data: conn, error: connErr } = await supabaseAdmin
@@ -97,13 +101,30 @@ export async function syncTikTokProducts(userId: string): Promise<ProductSyncRes
     if (it.tiktok_product_id) invByTikTokId.set(it.tiktok_product_id, { id: it.id, delisted: !!it.tiktok_delisted_at });
   }
 
+  // Statuses that mean a product is no longer actually sellable on TikTok —
+  // deleted, or deactivated by the seller/TikTok, or frozen. TikTok's
+  // product search still returns the id of a DELETED product (there's no
+  // separate "deleted" event to react to instead), so without this check
+  // every productId coming back from searchTikTokProducts was being treated
+  // as "seen", a deleted product's detail got re-fetched and its stale
+  // price/stock written right back over the Bossify row as if nothing had
+  // changed, and the delisted-reconciliation below — whose whole job is to
+  // catch exactly this — never got the chance to run for it. DRAFT/PENDING/
+  // FAILED are deliberately left out: those are products that were never
+  // live to begin with, not previously-live ones that disappeared, so
+  // calling them "delisted" would be misleading.
+  const NON_LIVE_STATUSES = new Set(["DELETED", "SELLER_DEACTIVATED", "PLATFORM_DEACTIVATED", "FREEZE"]);
+
   const imported: string[] = [];
   let linked = 0;
   let refreshed = 0;
   let relisted = 0;
-  // productIds this sync actually saw in TikTok's catalog — used below to
-  // find linked inventory rows that dropped OUT of the catalog entirely.
-  const seenTiktokIds = new Set(productIds);
+  // Built incrementally below, one productId at a time, ONLY once that
+  // product's detail confirms it's still genuinely live — not simply
+  // copied from the raw search result ids (see NON_LIVE_STATUSES above for
+  // why that was wrong). Used below to find linked inventory rows that
+  // dropped OUT of the catalog entirely.
+  const seenTiktokIds = new Set<string>();
 
   // IMPORTANT: every productId is re-fetched and re-written on every sync
   // run, including ones already linked (tiktok_product_id already set).
@@ -122,6 +143,14 @@ export async function syncTikTokProducts(userId: string): Promise<ProductSyncRes
     } catch {
       continue; // skip products we can't fetch detail for; retried next sync
     }
+    if (detail.status && NON_LIVE_STATUSES.has(detail.status.toUpperCase())) {
+      // Not currently sellable (most commonly: deleted on TikTok). Leave it
+      // OUT of seenTiktokIds so the delisted-reconciliation below flags any
+      // Bossify row still linked to it, and don't touch that row's
+      // price/stock here — it's stale the moment the product is gone.
+      continue;
+    }
+    seenTiktokIds.add(productId);
     // A product can have multiple SKUs (variants); Bossify inventory is
     // per-item, so each SKU becomes its own inventory row, named
     // "<product title> (<seller_sku>)" when there's more than one SKU.

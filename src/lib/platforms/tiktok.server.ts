@@ -313,6 +313,17 @@ export type TikTokProductDetail = {
   // Confirmed real field name/shape (2026-09-12): array of image objects,
   // each with thumb_urls (small) and urls (full-size).
   main_images?: Array<{ urls?: string[]; thumb_urls?: string[] }>;
+  // Listing status — TikTok's documented enum is one of: DRAFT, PENDING,
+  // FAILED, ACTIVATE, SELLER_DEACTIVATED, PLATFORM_DEACTIVATED, FREEZE,
+  // DELETED. NOT yet independently verified against a real payload for
+  // THIS field name (unlike title/skus/main_images above) — confirmed only
+  // that Search Products can still return the id of a product the seller
+  // has deleted on TikTok (there's no separate "deleted" event), so
+  // tiktok-products-sync.server.ts relies on this field to tell a genuinely
+  // live product apart from one that's gone. Check this against a real
+  // response the first time a deleted product goes through a sync, and
+  // adjust the status set there if the real field name/values differ.
+  status?: string;
 };
 
 /**
