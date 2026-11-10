@@ -10,13 +10,24 @@
 // modern setup). Create these in Play Console → Monetize → Subscriptions:
 //
 //   Subscription product ID:  bossify_pro
-//     Base plan #1 ID:        monthly   (RM 49 / month, auto-renewing)
-//     Base plan #2 ID:        annual    (RM 399 / year, auto-renewing)
+//     Base plan #1 ID:        monthly   (RM 19.90 / month, auto-renewing)
+//     Base plan #2 ID:        annual    (RM 199 / year, auto-renewing)
 //
-// Google Play will automatically convert RM 49 / RM 399 to each user's local
-// currency at checkout (USD, IDR, PHP, INR, etc.). The store-localized price
-// strings are fetched at runtime via queryProductDetails() and shown in the
-// Plans UI, so the in-app price always matches what the user will be charged.
+// Google Play will automatically convert RM 19.90 / RM 199 to each user's
+// local currency at checkout (USD, IDR, PHP, INR, etc.). The store-localized
+// price strings are fetched at runtime via queryProductDetails() and shown
+// in the Plans UI, so the in-app price always matches what the user will be
+// charged.
+//
+// 2026-11 pricing update: these fallbacks were RM99/RM799 (the pre-pivot
+// pricing, matching the old Stripe prices archived the same day — see
+// stripe.server.ts). The actual Play Console base-plan prices still need to
+// be updated by hand (Play Console → Monetize with Play → Products →
+// Subscriptions → bossify_pro → monthly base plan → edit price; then add a
+// new `annual` base plan at RM199 — it doesn't exist yet). Until that's
+// done, Android users on a fresh store-price fetch will see Google's old
+// RM99 price, not RM19.90 — these fallbacks are what shows before that
+// fetch resolves, so they're correct for the new pricing already.
 export const SUBSCRIPTION_ID = "bossify_pro";
 export const BASE_PLAN_IDS = {
   monthly: "monthly",
@@ -30,8 +41,8 @@ export const FALLBACK_PRICES: Record<BillingPlan, string> = {
   // Default MYR prices shown immediately while Google Play returns the
   // user's locally-formatted price. Once the store responds these are
   // replaced with the real formattedPrice (USD / INR / IDR / etc.).
-  monthly: "RM 99",
-  annual: "RM 799",
+  monthly: "RM 19.90",
+  annual: "RM 199",
 };
 
 /**
@@ -40,13 +51,14 @@ export const FALLBACK_PRICES: Record<BillingPlan, string> = {
  *
  * Play Console setup:
  *   Subscription product ID:  bossify_business
- *     Base plan #1 ID:        monthly
- *     Base plan #2 ID:        annual
+ *     Base plan #1 ID:        monthly   (RM 49.90 / month)
+ *     Base plan #2 ID:        annual    (RM 499 / year — needs to be added,
+ *                                        see note above)
  */
 export const BUSINESS_SUBSCRIPTION_ID = "bossify_business";
 export const BUSINESS_FALLBACK_PRICES: Record<BillingPlan, string> = {
-  monthly: "RM 129",
-  annual: "RM 1,099",
+  monthly: "RM 49.90",
+  annual: "RM 499",
 };
 
 /** One-time, non-consumable Lifetime product. */

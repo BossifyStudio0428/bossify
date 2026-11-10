@@ -3,15 +3,24 @@ import "@tanstack/react-start/server-only";
 import Stripe from "stripe";
 
 export const PRICE_IDS: Record<string, string> = {
-  // Monthly — live RM pricing
-  "starter:monthly":  "price_1Tu5bfHkpW03osRDlMowy6FF", // RM 59
-  "pro:monthly":      "price_1Tu5e1HkpW03osRDit8EY7sM", // RM 99
-  "business:monthly": "price_1Tu5aYHkpW03osRDrHiSRvL9", // RM 129
-  // Yearly — UI shows "Coming soon"; placeholders, not used
-  "starter:yearly":   "price_PLACEHOLDER_starter_yearly",
-  "pro:yearly":       "price_PLACEHOLDER_pro_yearly",
-  "business:yearly":  "price_PLACEHOLDER_business_yearly",
-  // Lifetime
+  // Monthly/yearly — live RM pricing (2026-11 pitch-deck pricing: Free RM0 /
+  // Pro RM19.90 / Business RM49.90, annual = 10x monthly). The old RM59/
+  // RM99/RM129 Starter/Pro/Business prices (and their Products) were
+  // archived in Stripe the same day these were created — confirmed no real
+  // subscribers were ever on them, so this was a clean swap, not a
+  // migration. Starter itself is no longer part of the pricing structure at
+  // all (see plans.tsx — its card doesn't render) and isn't replaced here.
+  "pro:monthly":      "price_1UaCGyHkpW03osRDpPykZxSF", // RM 19.90
+  "pro:yearly":       "price_1UaCGzHkpW03osRDR4Y3eLhi", // RM 199
+  "business:monthly": "price_1UaCGzHkpW03osRD5xNvXQk1", // RM 49.90
+  "business:yearly":  "price_1UaCH0HkpW03osRDEZ1ZNTuS", // RM 499
+  // Lifetime / Team — dormant (HIDE_TEAM_PLAN / Lifetime card both hidden
+  // in plans.tsx). Their underlying Stripe prices were archived in the
+  // same cleanup as Starter/old Pro/old Business above; left here only so
+  // a pre-existing Lifetime/Team subscriber's stored price id still
+  // resolves via priceToPlan() below — these are not used to start any new
+  // checkout (the UI never surfaces them), so an archived price id here is
+  // harmless. Do not reuse these ids for anything new.
   "lifetime:one":     "price_1TYR1lHkpW03osRD3sRkqZcL",
   "team_starter:monthly": "price_1TamtmHkpW03osRDhcMkc9bH",
   "team_starter:yearly": "price_1TamuIHkpW03osRDENjsHuL0",
@@ -27,9 +36,10 @@ export type PlanInfo = {
 };
 
 export const PRICE_TO_PLAN: Record<string, PlanInfo> = {
-  price_1Tu5bfHkpW03osRDlMowy6FF: { plan: "starter",  cycle: "monthly" },
-  price_1Tu5e1HkpW03osRDit8EY7sM: { plan: "pro",      cycle: "monthly" },
-  price_1Tu5aYHkpW03osRDrHiSRvL9: { plan: "business", cycle: "monthly" },
+  price_1UaCGyHkpW03osRDpPykZxSF: { plan: "pro",      cycle: "monthly" },
+  price_1UaCGzHkpW03osRDR4Y3eLhi: { plan: "pro",      cycle: "yearly" },
+  price_1UaCGzHkpW03osRD5xNvXQk1: { plan: "business", cycle: "monthly" },
+  price_1UaCH0HkpW03osRDEZ1ZNTuS: { plan: "business", cycle: "yearly" },
   price_1TYR1lHkpW03osRD3sRkqZcL: { plan: "lifetime", cycle: "one" },
   price_1TamtmHkpW03osRDhcMkc9bH: { plan: "team_starter", cycle: "monthly" },
   price_1TamuIHkpW03osRDENjsHuL0: { plan: "team_starter", cycle: "yearly" },
