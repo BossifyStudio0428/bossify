@@ -171,6 +171,34 @@ function InventoryPage() {
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j?.message || "Import failed");
+      // TEMPORARY diagnostic (2026-11-10) — a deleted-on-TikTok product was
+      // still showing as live in Bossify after the NON_LIVE_STATUSES fix in
+      // tiktok-products-sync.server.ts. window.alert (not console.log) so
+      // this is visible with zero setup even inside the Android app's
+      // WebView, where there's no easy DevTools access. Only on a manual
+      // tap (!silent), never on the auto-sync-on-load. Delete this whole
+      // block once root-caused — remove it together with the `debug` field
+      // on ProductSyncResult in tiktok-products-sync.server.ts.
+      if (!silent && j.debug) {
+        const d = j.debug as {
+          searchedProductIds: string[];
+          linkedRowsBeforeSync: Array<{ name: string; tiktokProductId: string; alreadyDelisted: boolean }>;
+          statusByProductId: Array<{ productId: string; title: string; status: string | undefined }>;
+        };
+        const lines = [
+          `TikTok 搜索返回 ${d.searchedProductIds.length} 个 product id:`,
+          d.searchedProductIds.join(", ") || "(空)",
+          "",
+          `已经链接 tiktok_product_id 的 Bossify 商品 (${d.linkedRowsBeforeSync.length} 个):`,
+          ...d.linkedRowsBeforeSync.map(
+            (r) => `- ${r.name} | id=${r.tiktokProductId} | 已标记下架=${r.alreadyDelisted}`,
+          ),
+          "",
+          `这次拉到 detail 的商品状态 (${d.statusByProductId.length} 个):`,
+          ...d.statusByProductId.map((s) => `- ${s.title} | id=${s.productId} | status=${s.status ?? "(未返回)"}`),
+        ];
+        window.alert(lines.join("\n"));
+      }
       if (user) {
         const { data: refreshed } = await supabase
           .from("platform_connections" as any)
