@@ -91,11 +91,29 @@ export const Route = createFileRoute("/api/public/stripe/checkout")({
             }),
           });
           return json(200, { url: session.url, sessionId: session.id });
-        } catch (e) {
-          console.error("[stripe/checkout]", e);
-          return json(500, { error: "An unexpected error occurred. Please try again." });
+        } catch (e: any) {
+          // TEMP DEBUG (2026-11): the generic message + CF log serialization
+          // of the raw Error object were giving zero usable detail (CF logs
+          // only showed e.stack, never e.message/type/code, and Stripe's own
+          // Dashboard Logs showed nothing matching). Surface the real Stripe
+          // error fields directly in the response body so the on-screen
+          // "Checkout failed (500): ..." toast shows the actual cause.
+          // REVERT this to the generic message once the bug is found.
+          console.error(
+            "[stripe/checkout]",
+            e?.message,
+            "| type:", e?.type,
+            "| code:", e?.code,
+            "| statusCode:", e?.statusCode,
+            "| raw:", e?.raw?.message,
+          );
+          return json(500, {
+            error: e?.message || "An unexpected error occurred. Please try again.",
+            type: e?.type,
+            code: e?.code,
+          });
         }
       },
     },
   },
-});
+})
