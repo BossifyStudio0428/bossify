@@ -1024,7 +1024,17 @@ export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const c = COPY[lang] ?? COPY.en;
 
+  const lastGoAuthRef = useRef(0);
   const goAuth = (mode: "login" | "register") => {
+    // Dedupe: this can now be triggered twice for the same physical click
+    // (React's onClick below, AND the native document-level fallback
+    // listener further down) when React's synthetic event system is
+    // working normally -- harmless either way since both calls navigate
+    // to the same place, but skip the second call so we don't double-fire
+    // navigate()/analytics for everyone whose browser was never broken.
+    const now = Date.now();
+    if (now - lastGoAuthRef.current < 600) return;
+    lastGoAuthRef.current = now;
     const target = mode === "register" ? "/auth?mode=reg" : "/auth";
     // Belt-and-braces navigation: the SPA router's navigate() can go
     // silently nowhere if its lazily-loaded /auth route chunk fails to
@@ -1055,6 +1065,32 @@ export function LandingPage() {
       window.location.href = target;
     }
   };
+
+  // Belt-and-braces #2 -- independent of React entirely this time. We've
+  // confirmed (via a raw addEventListener test run directly in a user's
+  // browser) that a native click handler attached straight to one of
+  // these buttons fires correctly even when NOTHING downstream of
+  // React's own onClick (neither the SPA navigate() above nor its
+  // window.location.href fallback) ever runs -- i.e. the click reaches
+  // the DOM fine, but React's synthetic event system never gets it to
+  // this component's onClick at all for that visitor/browser. Rather
+  // than depend on figuring out why for every possible browser, attach
+  // a second, totally native listener at the document level that finds
+  // any element marked data-cta and calls goAuth directly -- no React
+  // event delegation involved, so it still works even if React's own
+  // click handling is broken for someone. Capture phase so it's not at
+  // the mercy of anything calling stopPropagation() during bubbling.
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest?.("[data-cta]");
+      if (!el) return;
+      const mode = el.getAttribute("data-cta") === "register" ? "register" : "login";
+      goAuth(mode);
+    };
+    document.addEventListener("click", handler, true);
+    return () => document.removeEventListener("click", handler, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const trustIcons = TRUST_BULLET_ICONS;
   const featureCards = [c.showcaseProfit, c.showcaseInventory, c.showcaseReports, c.showcaseOrders];
@@ -1091,10 +1127,11 @@ export function LandingPage() {
             <a href="#pricing" className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navPricing}</a>
           </nav>
           <div className="hidden lg:flex items-center gap-3">
-            <button onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2 rounded-full border" style={{ color: TEXT, borderColor: BORDER }}>
+            <button data-cta="login" onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2 rounded-full border" style={{ color: TEXT, borderColor: BORDER }}>
               {c.signIn}
             </button>
             <button
+              data-cta="register"
               onClick={() => goAuth("register")}
               className="text-sm font-semibold px-5 py-2.5 rounded-full text-white flex items-center gap-1.5"
               style={{ background: GRADIENT }}
@@ -1112,10 +1149,10 @@ export function LandingPage() {
             <a href="#features" onClick={() => setMenuOpen(false)} className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navFeatures}</a>
             <a href="#reports" onClick={() => setMenuOpen(false)} className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navReports}</a>
             <a href="#pricing" onClick={() => setMenuOpen(false)} className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navPricing}</a>
-            <button onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2.5 rounded-full border text-left" style={{ color: TEXT, borderColor: BORDER }}>
+            <button data-cta="login" onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2.5 rounded-full border text-left" style={{ color: TEXT, borderColor: BORDER }}>
               {c.signIn}
             </button>
-            <button onClick={() => goAuth("register")} className="text-sm font-semibold px-4 py-2.5 rounded-full text-white text-left" style={{ background: GRADIENT }}>
+            <button data-cta="register" onClick={() => goAuth("register")} className="text-sm font-semibold px-4 py-2.5 rounded-full text-white text-left" style={{ background: GRADIENT }}>
               {c.startFree}
             </button>
           </div>
@@ -1152,6 +1189,7 @@ export function LandingPage() {
               <p className="text-[15px] leading-relaxed mb-7" style={{ color: TEXT_MUTED }}>{c.subhead}</p>
               <div className="flex flex-wrap items-center gap-3 mb-6">
                 <button
+                  data-cta="register"
                   onClick={() => goAuth("register")}
                   className="group text-[14.5px] font-semibold px-6 py-3 rounded-full text-white flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-8px_rgba(139,92,246,0.6)]"
                   style={{ background: GRADIENT }}
@@ -1429,7 +1467,7 @@ export function LandingPage() {
             </h2>
             <p className="text-[14.5px] lg:text-[15.5px] mb-9" style={{ color: TEXT_MUTED }}>{c.finalSub}</p>
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <button onClick={() => goAuth("register")} className="group text-[15px] font-semibold px-7 py-3.5 rounded-full text-white flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-8px_rgba(139,92,246,0.6)]" style={{ background: GRADIENT }}>
+              <button data-cta="register" onClick={() => goAuth("register")} className="group text-[15px] font-semibold px-7 py-3.5 rounded-full text-white flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-8px_rgba(139,92,246,0.6)]" style={{ background: GRADIENT }}>
                 {c.finalCtaPrimary}
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </button>
