@@ -51,7 +51,8 @@ function variantLabel(name: string): string {
  *  signal the seller gets; they decide whether to delete it themselves. */
 function DelistedBadge({ lang }: { lang: string }) {
   return (
-    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-700 border border-rose-300">
+      <AlertTriangle className="h-3 w-3" />
       {lang === "zh" ? "TikTok 已下架" : lang === "ms" ? "Dinyahsenarai di TikTok" : "Delisted on TikTok"}
     </span>
   );
@@ -147,7 +148,7 @@ function InventoryPage() {
   const { hasFullAccess, showUpgrade, productsUsed, productsLimit } = useSubscription();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("__all");
-  const [healthFilter, setHealthFilter] = useState<"all" | "profitable" | "low_profit" | "loss_making" | "low_stock" | "out_of_stock">("all");
+  const [healthFilter, setHealthFilter] = useState<"all" | "profitable" | "low_profit" | "loss_making" | "low_stock" | "out_of_stock" | "delisted">("all");
   const [items, setItems] = useState<InvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
@@ -384,11 +385,13 @@ function InventoryPage() {
     const m = marginOf(i);
     return m !== null && m <= 0;
   }).length;
+  const delistedCount = items.filter((i) => !!(i as any).tiktok_delisted_at).length;
 
   const matchesHealth = (it: InvRow) => {
     if (healthFilter === "all") return true;
     if (healthFilter === "low_stock") return it.stock > 0 && it.stock <= lowThreshold;
     if (healthFilter === "out_of_stock") return it.stock <= 0;
+    if (healthFilter === "delisted") return !!(it as any).tiktok_delisted_at;
     const m = marginOf(it);
     if (healthFilter === "loss_making") return m !== null && m <= 0;
     if (healthFilter === "low_profit") return m !== null && m > 0 && m <= 20;
@@ -607,6 +610,12 @@ function InventoryPage() {
             { k: "loss_making", label: lang === "zh" ? "亏本" : lang === "ms" ? "Rugi" : "Loss-Making" },
             { k: "low_stock", label: lang === "zh" ? "库存低" : lang === "ms" ? "Stok Rendah" : "Low Stock" },
             { k: "out_of_stock", label: lang === "zh" ? "断货" : lang === "ms" ? "Kehabisan" : "Out of Stock" },
+            {
+              k: "delisted",
+              label: `${lang === "zh" ? "TikTok 已下架" : lang === "ms" ? "Dinyahsenarai di TikTok" : "Delisted on TikTok"}${
+                delistedCount > 0 ? ` (${delistedCount})` : ""
+              }`,
+            },
           ] as const
         ).map((f) => (
           <button
@@ -615,8 +624,12 @@ function InventoryPage() {
             onClick={() => setHealthFilter(f.k)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
               healthFilter === f.k
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-foreground border-border"
+                ? f.k === "delisted"
+                  ? "bg-rose-600 text-white border-rose-600"
+                  : "bg-primary text-primary-foreground border-primary"
+                : f.k === "delisted" && delistedCount > 0
+                  ? "bg-rose-500/10 text-rose-700 border-rose-300"
+                  : "bg-card text-foreground border-border"
             }`}
           >
             {f.label}
