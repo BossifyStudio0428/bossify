@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useRef, useEffect, cloneElement, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Menu,
@@ -1192,23 +1192,39 @@ export function LandingPage() {
               <p className="text-[14.5px]" style={{ color: TEXT_MUTED }}>{c.featuresSub}</p>
             </div>
           </Reveal>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {featureCards.map((f, i) => (
-              <Reveal key={f.title} delay={i * 80}>
-                <TiltWrap max={3}>
-                  <div className="rounded-2xl p-5 border h-full" style={{ background: CARD, borderColor: BORDER }}>
+        </div>
+
+        {/* Continuous left-scrolling marquee -- the card list is rendered
+            twice back-to-back and the track slides exactly -50% (see
+            .bf-marquee-track in styles.css) so the loop seams invisibly.
+            Pauses on hover/focus so a seller can stop and actually read a
+            card; frozen entirely under prefers-reduced-motion. */}
+        <Reveal>
+          <div
+            className="bf-marquee-wrap overflow-hidden"
+            style={{
+              maskImage: "linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent)",
+              WebkitMaskImage: "linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent)",
+            }}
+          >
+            <div className="bf-marquee-track flex gap-5 w-max">
+              {[...featureCards, ...featureCards].map((f, i) => (
+                <TiltWrap key={`${f.title}-${i}`} max={3}>
+                  <div className="rounded-2xl p-5 border h-full w-[280px] shrink-0" style={{ background: CARD, borderColor: BORDER }}>
                     <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-[11px] font-bold tabular-nums" style={{ color: GRAD_FROM }}>0{i + 1}</span>
+                      <span className="text-[11px] font-bold tabular-nums" style={{ color: GRAD_FROM }}>
+                        0{(i % featureCards.length) + 1}
+                      </span>
                       <h3 className="bf-text-live text-[14.5px] font-bold" style={{ color: TEXT }}>{f.title}</h3>
                     </div>
                     <p className="text-[12.5px] leading-relaxed mb-4" style={{ color: TEXT_MUTED }}>{f.desc}</p>
-                    {featureMinis[i]}
+                    {cloneElement(featureMinis[i % featureMinis.length], { key: `mini-${i}` })}
                   </div>
                 </TiltWrap>
-              </Reveal>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* TikTok integration + reports grid */}

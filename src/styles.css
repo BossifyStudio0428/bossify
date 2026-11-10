@@ -382,17 +382,25 @@ textarea,
    MouseGlow.tsx). Pure decoration: sits low in the stacking order, under
    all real content, and never intercepts clicks. */
 .bf-mouse-glow {
+  /* z-index:40 is deliberate, not decorative busywork: every page here
+     paints a fully opaque background over its whole viewport (the
+     authenticated shell's bg-background, LandingPage's own `background:
+     BG` on its isolated root, AuthShell's #FCFBFE), so a glow sitting
+     BEHIND that content (z-index: 0) is completely invisible — it was,
+     until this fix. Sitting above everything except the sticky header
+     (z-30, so it never washes out the nav) and modals/dialogs (z-50) is
+     what actually makes it visible as a soft light near the cursor. */
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: 40;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.5s ease;
   background: radial-gradient(
-    480px circle at var(--mx, 50%) var(--my, 30%),
-    color-mix(in oklab, var(--primary) 14%, transparent),
-    color-mix(in oklab, white 8%, transparent) 42%,
-    transparent 72%
+    520px circle at var(--mx, 50%) var(--my, 30%),
+    color-mix(in oklab, var(--primary) 20%, transparent),
+    color-mix(in oklab, var(--primary) 8%, transparent) 45%,
+    transparent 75%
   );
 }
 @media (prefers-reduced-motion: reduce), not (hover: hover), not (pointer: fine) {
@@ -441,6 +449,36 @@ textarea,
   animation: bossify-card-float 6s ease-in-out infinite;
 }
 
+/* Gradient-text shimmer — opt-in (`.bf-gradient-live`), for the landing
+   page's brand-gradient headline spans (background-clip: text) so the
+   purple->pink text visibly drifts instead of sitting static. Needs
+   `background-size: 200% auto` on the SAME element that already has the
+   gradient background + background-clip: text set inline. */
+.bf-gradient-live {
+  background-size: 200% auto;
+  animation: bossify-gradient-shift 6s ease-in-out infinite;
+}
+@keyframes bossify-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* Text that visibly responds when the cursor touches it — opt-in
+     (`.bf-text-live`), used on the landing page's nav links, headline and
+     feature-card titles. Scoped to this class rather than a global
+     `a`/`h1-h3` rule so the dashboard app's page titles and table links
+     stay exactly as they are. */
+  .bf-text-live {
+    display: inline-block;
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+  .bf-text-live:hover {
+    transform: translateY(-2px);
+    color: var(--primary) !important;
+  }
+}
+
 /* Page transition — short fade + rise, replayed on every route change by
    giving the wrapper a `key={pathname}` so React remounts it. */
 @keyframes bossify-page-enter {
@@ -449,6 +487,24 @@ textarea,
 }
 .bf-page-transition {
   animation: bossify-page-enter 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Feature-card marquee — continuous left-scrolling strip (landing page
+   feature showcase). The card list is rendered twice back-to-back and the
+   track slides exactly -50%, so the loop seams invisibly. Pauses on
+   hover/focus so a visitor can stop and read a card; frozen to a single
+   frame by the prefers-reduced-motion block above. */
+@keyframes bossify-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.bf-marquee-track {
+  animation: bossify-marquee 28s linear infinite;
+  will-change: transform;
+}
+.bf-marquee-wrap:hover .bf-marquee-track,
+.bf-marquee-wrap:focus-within .bf-marquee-track {
+  animation-play-state: paused;
 }
 
 /* Safe-area helpers for notch / gesture bar on Android + iOS.
