@@ -554,16 +554,48 @@ function polylineLength(coords: number[][]) {
 }
 
 // ---------------------------------------------------------------------------
-// Hero product mockup -- cycles through REAL Bossify screenshots
-// (HERO_SCREENSHOTS, src/assets/hero-*.jpg) inside a clean device-style
-// frame, auto-advancing with a crossfade every ~3.2s, plus dot indicators,
-// a floating "TikTok Shop Synced" badge, and a play button overlay to open
-// the demo modal. No fabricated numbers, no hand-drawn fake UI -- every
-// slide is the product exactly as sellers see it.
+// Phone-bezel frame around one real screenshot -- rounded dark bezel + a
+// small top notch so each slide reads as an actual phone, not a bare
+// rectangle crop.
+// ---------------------------------------------------------------------------
+function PhoneFrame({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div
+      className="relative w-full rounded-[26px] overflow-hidden border-[7px]"
+      style={{
+        borderColor: "#0B0714",
+        background: "#0B0714",
+        aspectRatio: "663 / 1460",
+        boxShadow: "0 30px 60px -20px rgba(0,0,0,0.45)",
+      }}
+    >
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 z-10 rounded-b-xl"
+        style={{ width: "38%", height: "4.5%", background: "#0B0714" }}
+      />
+      <img
+        key={src}
+        src={src}
+        alt={alt}
+        className="bf-coverflow-pop absolute inset-0 w-full h-full object-cover object-top"
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hero product mockup -- a 3-up "coverflow" of REAL Bossify screenshots
+// (HERO_SCREENSHOTS, src/assets/hero-*.jpg): the current screen up front
+// and large, the previous/next screens peeking in smaller and dimmed
+// behind it on each side, auto-advancing through all 8 on a loop. Plus dot
+// indicators, a floating "TikTok Shop Synced" badge, and a play button
+// overlay to open the demo modal. No fabricated numbers, no hand-drawn
+// fake UI -- every slide is the product exactly as sellers see it.
 // ---------------------------------------------------------------------------
 function LaptopMockup({ onPlay }: { onPlay: () => void }) {
   const [started, setStarted] = useState(false);
   const [index, setIndex] = useState(0);
+  const n = HERO_SCREENSHOTS.length;
 
   useEffect(() => {
     const t = setTimeout(() => setStarted(true), 300);
@@ -572,83 +604,79 @@ function LaptopMockup({ onPlay }: { onPlay: () => void }) {
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % HERO_SCREENSHOTS.length);
-    }, 3200);
+    const id = window.setInterval(() => setIndex((i) => (i + 1) % n), 3000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [n]);
+
+  const prevShot = HERO_SCREENSHOTS[(index - 1 + n) % n];
+  const currShot = HERO_SCREENSHOTS[index];
+  const nextShot = HERO_SCREENSHOTS[(index + 1) % n];
 
   return (
-    <div className="relative w-full max-w-[380px] mx-auto">
-      <div
-        className="bf-shine bossify-animate-float-sm relative rounded-[24px] overflow-hidden border"
-        style={{
-          background: CARD,
-          borderColor: BORDER_STRONG,
-          boxShadow: `0 60px 120px -30px rgba(139,92,246,0.35), 0 0 0 1px rgba(139,92,246,0.08)`,
-          aspectRatio: "663 / 1460",
-        }}
-      >
-        {HERO_SCREENSHOTS.map((shot, i) => (
-          <img
-            key={shot.src}
-            src={shot.src}
-            alt={shot.alt}
-            className="absolute inset-0 w-full h-full object-cover object-top"
-            style={{ opacity: i === index ? 1 : 0, transition: "opacity 0.6s ease-in-out" }}
-          />
-        ))}
+    <div className="relative w-full max-w-[440px] mx-auto">
+      <div className="relative h-[380px] sm:h-[400px] flex items-center justify-center">
+        <div
+          className="absolute w-[116px] sm:w-[128px]"
+          style={{ transform: "translateX(-94px) scale(0.74)", opacity: 0.5, zIndex: 1 }}
+        >
+          <PhoneFrame src={prevShot.src} alt={prevShot.alt} />
+        </div>
 
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div
+          className="absolute w-[116px] sm:w-[128px]"
+          style={{ transform: "translateX(94px) scale(0.74)", opacity: 0.5, zIndex: 1 }}
+        >
+          <PhoneFrame src={nextShot.src} alt={nextShot.alt} />
+        </div>
+
+        <div className="relative w-[172px] sm:w-[188px]" style={{ zIndex: 3 }}>
+          <PhoneFrame src={currShot.src} alt={currShot.alt} />
           <button
             type="button"
             onClick={onPlay}
             aria-label="Watch demo"
-            className="w-14 h-14 rounded-full flex items-center justify-center border transition-transform hover:scale-110"
+            className="absolute inset-0 m-auto w-12 h-12 rounded-full flex items-center justify-center border transition-transform hover:scale-110"
             style={{ background: "rgba(10,6,20,0.55)", borderColor: "rgba(255,255,255,0.3)", backdropFilter: "blur(2px)" }}
           >
-            <Play className="w-5 h-5 ml-0.5" style={{ color: "#FFFFFF" }} fill="#FFFFFF" />
+            <Play className="w-4 h-4 ml-0.5" style={{ color: "#FFFFFF" }} fill="#FFFFFF" />
           </button>
         </div>
 
-        <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-1.5">
-          {HERO_SCREENSHOTS.map((_, i) => (
-            <span
-              key={i}
-              className="h-1.5 rounded-full transition-all duration-300"
-              style={{
-                width: i === index ? 16 : 6,
-                background: i === index ? "#FFFFFF" : "rgba(255,255,255,0.55)",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.35)",
-              }}
-            />
-          ))}
+        <div
+          className="absolute -top-2 left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0"
+          style={{
+            opacity: started ? 1 : 0,
+            transform: started ? "translateY(0)" : "translateY(-10px)",
+            transition: "opacity 0.6s ease-out 0.7s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.7s",
+            zIndex: 4,
+          }}
+        >
+          <div
+            className="rounded-2xl border px-3.5 py-3 flex items-center gap-2.5"
+            style={{ background: CARD, borderColor: BORDER_STRONG, boxShadow: "0 20px 50px -15px rgba(0,0,0,0.6)" }}
+          >
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#000000" }}>
+              <ShoppingBag className="w-4 h-4" style={{ color: "#FFFFFF" }} />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: TEXT }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 bossify-animate-status-dot" />
+                TikTok Shop
+              </p>
+              <p className="text-[9px]" style={{ color: TEXT_MUTED }}>Synced</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div
-        className="absolute -top-5 -left-4 sm:-left-8"
-        style={{
-          opacity: started ? 1 : 0,
-          transform: started ? "translate(0,0)" : "translate(-14px,-10px)",
-          transition: "opacity 0.6s ease-out 0.7s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.7s",
-        }}
-      >
-        <div
-          className="rounded-2xl border px-3.5 py-3 flex items-center gap-2.5"
-          style={{ background: CARD, borderColor: BORDER_STRONG, boxShadow: "0 20px 50px -15px rgba(0,0,0,0.6)" }}
-        >
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#000000" }}>
-            <ShoppingBag className="w-4 h-4" style={{ color: "#FFFFFF" }} />
-          </div>
-          <div>
-            <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: TEXT }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 bossify-animate-status-dot" />
-              TikTok Shop
-            </p>
-            <p className="text-[9px]" style={{ color: TEXT_MUTED }}>Synced</p>
-          </div>
-        </div>
+      <div className="flex items-center justify-center gap-1.5 mt-3">
+        {HERO_SCREENSHOTS.map((_, i) => (
+          <span
+            key={i}
+            className="h-1.5 rounded-full transition-all duration-300"
+            style={{ width: i === index ? 16 : 6, background: i === index ? GRAD_FROM : BORDER_STRONG }}
+          />
+        ))}
       </div>
     </div>
   );
