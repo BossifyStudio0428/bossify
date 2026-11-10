@@ -1025,7 +1025,35 @@ export function LandingPage() {
   const c = COPY[lang] ?? COPY.en;
 
   const goAuth = (mode: "login" | "register") => {
-    navigate({ to: "/auth", search: mode === "register" ? { mode: "reg" } : undefined } as never);
+    const target = mode === "register" ? "/auth?mode=reg" : "/auth";
+    // Belt-and-braces navigation: the SPA router's navigate() can go
+    // silently nowhere if its lazily-loaded /auth route chunk fails to
+    // fetch (stale CDN cache pointing at a filename that no longer
+    // exists after a deploy, a flaky connection, etc.) — the click just
+    // looks like it did nothing, with no visible error anywhere. If
+    // we're still on this same page shortly after trying, force a real
+    // browser navigation instead, which re-fetches a fresh HTML document
+    // and current asset filenames rather than relying on already-loaded
+    // JS. Cleared the moment the SPA navigation actually lands.
+    const startPath = window.location.pathname + window.location.search;
+    const fallback = window.setTimeout(() => {
+      const nowPath = window.location.pathname + window.location.search;
+      if (nowPath === startPath) {
+        window.location.href = target;
+      }
+    }, 800);
+    try {
+      const result = navigate({ to: "/auth", search: mode === "register" ? { mode: "reg" } : undefined } as never);
+      Promise.resolve(result)
+        .then(() => window.clearTimeout(fallback))
+        .catch(() => {
+          window.clearTimeout(fallback);
+          window.location.href = target;
+        });
+    } catch {
+      window.clearTimeout(fallback);
+      window.location.href = target;
+    }
   };
 
   const trustIcons = TRUST_BULLET_ICONS;
