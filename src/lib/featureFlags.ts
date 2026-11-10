@@ -141,10 +141,14 @@ export const REPORTS_HUB_MODE = true;
  * to start a NEW purchase is disabled.
  *
  * Underlying purchase code (startStripeCheckout, purchasePlan,
- * handleGooglePlayPurchase, etc.) is untouched; flip to `false` once
- * pricing is locked in to re-enable purchasing.
+ * handleGooglePlayPurchase, etc.) is untouched. Flipped to `false` 2026-11
+ * once pricing was locked in (Pro RM19.90/RM199, Business RM49.90/RM499)
+ * and both Stripe (new Products/Prices created, old ones archived) and
+ * Google Play Console (bossify_pro / bossify_business base plans updated,
+ * old Starter/Team SKUs deactivated) were confirmed finished — purchasing
+ * is live.
  */
-export const HIDE_PAID_PLANS = true;
+export const HIDE_PAID_PLANS = false;
 
 /**
  * Hide the floating AI chat widget (bottom-right bubble, Gemini-backed)
