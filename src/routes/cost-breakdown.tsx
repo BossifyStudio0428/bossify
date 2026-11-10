@@ -251,6 +251,7 @@ function CostBreakdownPage() {
       advertising: { zh: "广告费", ms: "Pengiklanan", en: "Advertising" },
       affiliate_influencer: { zh: "网红/推广费", ms: "Influencer", en: "Affiliate/Influencer" },
       subscriptions: { zh: "订阅费", ms: "Langganan", en: "Subscriptions" },
+      ai_software: { zh: "AI / 软件费", ms: "AI / Perisian", en: "AI / Software" },
       other: { zh: "其他（含损耗/供应商退款）", ms: "Lain-lain", en: "Other (incl. shrinkage/supplier refunds)" },
     };
     return map[cat]?.[lang] ?? map[cat]?.en ?? cat;

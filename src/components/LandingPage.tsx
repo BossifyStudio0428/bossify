@@ -39,17 +39,19 @@ import heroInventoryScreenshot from "@/assets/hero-inventory-screenshot.jpg";
 import heroTikTokScreenshot from "@/assets/hero-tiktok-screenshot.jpg";
 
 // Real app screenshots cycled through in the hero mockup -- no fabricated
-// UI, every slide is an actual screen from the live app.
+// UI, every slide is an actual screen from the live app. Kept to the 4
+// most important screens (profit overview, orders, real cost breakdown,
+// reports) so the hero loop stays tight and fast rather than cycling
+// through everything the app does.
 const HERO_SCREENSHOTS: { src: string; alt: string }[] = [
   { src: heroOverviewScreenshot, alt: "Bossify dashboard showing real profit, revenue, costs and profit breakdown for this month" },
   { src: heroOrdersScreenshot, alt: "Bossify Orders page with TikTok Shop sync and 1-tap Send Receipt" },
   { src: heroCostBreakdownScreenshot, alt: "Bossify Cost Breakdown page with cost comparison and cost share charts" },
-  { src: heroCustomerScreenshot, alt: "Bossify Customer Detail page with order history and Top Spender badge" },
   { src: heroReportsScreenshot, alt: "Bossify Reports page listing 7 exportable PDF business reports" },
-  { src: heroInventoryScreenshot, alt: "Bossify Inventory page showing stock, price, cost and profit per product" },
-  { src: heroTikTokScreenshot, alt: "Bossify TikTok Shop integration, connected and syncing automatically" },
-  { src: heroPricingScreenshot, alt: "Bossify pricing plans — Free, Pro and Business" },
 ];
+// heroCustomerScreenshot / heroInventoryScreenshot / heroTikTokScreenshot /
+// heroPricingScreenshot are imported above but not used in the hero loop
+// right now -- kept as-is in case other marketing material wants them.
 
 // ---------------------------------------------------------------------------
 // Design tokens -- premium dark canvas. One consistent near-black-purple
@@ -199,7 +201,7 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     tiktokEyebrow: "INTEGRATION",
     tiktokTitle: "From TikTok Shop to your real profit.",
     tiktokSub: "Connect your store, bring in orders and products, then see your profit, stock and reports in Bossify.",
-    tiktokComingSoon: "Automatic TikTok Shop order sync — Coming soon",
+    tiktokComingSoon: "Automatic TikTok Shop order sync — Live",
     tiktokOutcomes: ["Profit Analysis", "Inventory Control", "Business Reports"],
     reportsGridTitle: "7 Professional Reports",
 
@@ -287,7 +289,7 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     tiktokEyebrow: "数据整合",
     tiktokTitle: "从 TikTok Shop 到你的真实利润。",
     tiktokSub: "连接你的商店,导入订单和产品,然后在 Bossify 查看利润、库存和报表。",
-    tiktokComingSoon: "自动 TikTok Shop 订单同步——即将推出",
+    tiktokComingSoon: "自动 TikTok Shop 订单同步——已上线",
     tiktokOutcomes: ["利润分析", "库存管理", "业务报表"],
     reportsGridTitle: "7 份专业报表",
 
@@ -372,7 +374,7 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     tiktokEyebrow: "INTEGRASI",
     tiktokTitle: "Dari TikTok Shop kepada keuntungan sebenar anda.",
     tiktokSub: "Sambungkan kedai anda, bawa masuk pesanan dan produk, kemudian lihat keuntungan, stok dan laporan anda di Bossify.",
-    tiktokComingSoon: "Penyegerakan pesanan TikTok Shop automatik — Akan datang",
+    tiktokComingSoon: "Penyegerakan pesanan TikTok Shop automatik — Sudah tersedia",
     tiktokOutcomes: ["Analisis Keuntungan", "Kawalan Inventori", "Laporan Perniagaan"],
     reportsGridTitle: "7 Laporan Profesional",
 
@@ -585,16 +587,23 @@ function PhoneFrame({ src, alt }: { src: string; alt: string }) {
 
 // ---------------------------------------------------------------------------
 // Hero product mockup -- a 3-up "coverflow" of REAL Bossify screenshots
-// (HERO_SCREENSHOTS, src/assets/hero-*.jpg): the current screen up front
-// and large, the previous/next screens peeking in smaller and dimmed
-// behind it on each side, auto-advancing through all 8 on a loop. Plus dot
-// indicators, a floating "TikTok Shop Synced" badge, and a play button
-// overlay to open the demo modal. No fabricated numbers, no hand-drawn
-// fake UI -- every slide is the product exactly as sellers see it.
+// (HERO_SCREENSHOTS, src/assets/hero-*.jpg). Every screenshot gets its own
+// persistent phone element (keyed by src, not by slot), positioned purely
+// via `transform: translateX(...) scale(...)` based on its signed distance
+// from the current center index. When the index advances, each phone's
+// target transform changes and the CSS transition animates it, so phones
+// physically slide -- a side phone glides into the front/center position
+// while the center one glides out to the side -- rather than the picture
+// inside a fixed frame just crossfading. Starts on index 1 (Orders
+// centered, Overview + Cost Breakdown as the two side phones) so the three
+// most important screens are what a visitor sees immediately, before any
+// auto-advance happens. Plus dot indicators and a floating "TikTok Shop
+// Synced" badge. No fabricated numbers, no hand-drawn fake UI -- every
+// slide is the product exactly as sellers see it.
 // ---------------------------------------------------------------------------
-function LaptopMockup({ onPlay }: { onPlay: () => void }) {
+function LaptopMockup() {
   const [started, setStarted] = useState(false);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(1);
   const n = HERO_SCREENSHOTS.length;
 
   useEffect(() => {
@@ -608,47 +617,49 @@ function LaptopMockup({ onPlay }: { onPlay: () => void }) {
     return () => window.clearInterval(id);
   }, [n]);
 
-  const prevShot = HERO_SCREENSHOTS[(index - 1 + n) % n];
-  const currShot = HERO_SCREENSHOTS[index];
-  const nextShot = HERO_SCREENSHOTS[(index + 1) % n];
+  // Signed "slots away from center" for screenshot i, shortest path around
+  // the loop (e.g. for n=4: -1, 0, 1, 2 relative to the current index).
+  function offsetFor(i: number) {
+    let d = i - index;
+    if (d > n / 2) d -= n;
+    if (d < -n / 2) d += n;
+    return d;
+  }
 
   return (
-    <div className="relative w-full max-w-[440px] mx-auto">
-      <div className="relative h-[380px] sm:h-[400px] flex items-center justify-center">
-        <div
-          className="absolute w-[116px] sm:w-[128px]"
-          style={{ transform: "translateX(-94px) scale(0.74)", opacity: 0.5, zIndex: 1 }}
-        >
-          <PhoneFrame src={prevShot.src} alt={prevShot.alt} />
-        </div>
+    <div className="relative w-full max-w-[520px] mx-auto">
+      <div className="relative h-[460px] sm:h-[500px]">
+        {HERO_SCREENSHOTS.map((shot, i) => {
+          const offset = offsetFor(i);
+          const abs = Math.abs(offset);
+          const sign = Math.sign(offset);
+          const x = abs === 0 ? 0 : abs === 1 ? sign * 150 : sign * 260;
+          const scale = abs === 0 ? 1 : abs === 1 ? 0.68 : 0.5;
+          const opacity = abs === 0 ? 1 : abs === 1 ? 0.55 : 0;
+          return (
+            <div
+              key={shot.src}
+              className="absolute left-1/2 top-1/2 w-[230px] sm:w-[252px]"
+              style={{
+                transform: `translate(-50%, -50%) translateX(${x}px) scale(${scale})`,
+                opacity,
+                zIndex: 10 - abs,
+                pointerEvents: abs === 0 ? "auto" : "none",
+                transition: "transform 0.8s cubic-bezier(0.16,1,0.3,1), opacity 0.8s ease-out",
+              }}
+            >
+              <PhoneFrame src={shot.src} alt={shot.alt} />
+            </div>
+          );
+        })}
 
         <div
-          className="absolute w-[116px] sm:w-[128px]"
-          style={{ transform: "translateX(94px) scale(0.74)", opacity: 0.5, zIndex: 1 }}
-        >
-          <PhoneFrame src={nextShot.src} alt={nextShot.alt} />
-        </div>
-
-        <div className="relative w-[172px] sm:w-[188px]" style={{ zIndex: 3 }}>
-          <PhoneFrame src={currShot.src} alt={currShot.alt} />
-          <button
-            type="button"
-            onClick={onPlay}
-            aria-label="Watch demo"
-            className="absolute inset-0 m-auto w-12 h-12 rounded-full flex items-center justify-center border transition-transform hover:scale-110"
-            style={{ background: "rgba(10,6,20,0.55)", borderColor: "rgba(255,255,255,0.3)", backdropFilter: "blur(2px)" }}
-          >
-            <Play className="w-4 h-4 ml-0.5" style={{ color: "#FFFFFF" }} fill="#FFFFFF" />
-          </button>
-        </div>
-
-        <div
-          className="absolute -top-2 left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0"
+          className="absolute -top-2 left-1/2 -translate-x-1/2 sm:left-2 sm:translate-x-0"
           style={{
             opacity: started ? 1 : 0,
             transform: started ? "translateY(0)" : "translateY(-10px)",
             transition: "opacity 0.6s ease-out 0.7s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.7s",
-            zIndex: 4,
+            zIndex: 20,
           }}
         >
           <div
@@ -1168,7 +1179,7 @@ export function LandingPage() {
           <Reveal mode="mount" delay={150}>
             <div style={{ transform: "perspective(1600px) rotateY(-10deg) rotateX(5deg)", transformStyle: "preserve-3d" }}>
               <TiltWrap max={4}>
-                <LaptopMockup onPlay={() => setDemoOpen(true)} />
+                <LaptopMockup />
               </TiltWrap>
             </div>
           </Reveal>
@@ -1286,8 +1297,9 @@ export function LandingPage() {
               </div>
               <span
                 className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
-                style={{ color: "#D4A017", background: "rgba(212,160,23,0.12)" }}
+                style={{ color: GREEN, background: "rgba(22,163,74,0.12)" }}
               >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 bossify-animate-status-dot" />
                 {c.tiktokComingSoon}
               </span>
             </div>
