@@ -57,10 +57,19 @@ function DevicesPage() {
     // Read plan from subscriptions to compute the limit locally (mirrors
     // device_limit_for_plan) so the UI shows the correct number even if
     // the RPC is rejected.
+    //
+    // Bug fix (2026-11): "business" was missing from this map (same bug as
+    // the SQL function it mirrors — see 20261110100000_fix_business_device_
+    // limit.sql). The RPC result normally overrides this once it succeeds,
+    // but when it's rejected (e.g. the user is already AT their limit,
+    // which is exactly when they land on this screen) this fallback value
+    // was the only thing shown — so a Business user hitting their real
+    // 5-device cap would have seen "1" here instead of "5".
     const planLimits: Record<string, number> = {
       free: 1,
       starter: 2,
       pro: 3,
+      business: 5,
       lifetime: 5,
       team_starter: 3,
       team_pro: 3,

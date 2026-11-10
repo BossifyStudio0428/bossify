@@ -386,6 +386,21 @@ function PlansPage() {
     property:  ["pp_unlimited_clients", "pp_unlimited_listings", "pp_full_lead_reports", "pp_followup_analytics", "export_pdf", "priority_support_feat"],
     freelance: ["pp_unlimited_projects", "pp_unlimited_services", "pp_full_project_reports", "pp_client_analytics", "export_pdf", "wa_template", "priority_support_feat"],
   };
+  // Business tier (2026-11): the real differentiator vs Pro is report
+  // access (all 7 PDF reports incl. Financial P&L/Customer/Supplier/Order
+  // Reconciliation, gated business-only in reports.index.tsx) and unlimited
+  // history (vs Pro's 3-month cap, see cost-breakdown.tsx/product-profit.tsx
+  // /reports.index.tsx). Only retail/fnb (Bossify's own verticals) have that
+  // gating built — other verticals reuse PRO's rows since no Business-tier
+  // distinction exists for them yet.
+  const BUSINESS: Record<typeof eff, TKey[]> = {
+    retail:    ["unlimited_orders_feat", "pp_unlimited_products", "all_7_reports_feat", "unlimited_history_feat", "export_pdf", "wa_template", "remind_all_unpaid", "priority_support_feat"],
+    fnb:       ["unlimited_orders_feat", "pp_unlimited_products", "all_7_reports_feat", "unlimited_history_feat", "export_pdf", "wa_template", "remind_all_unpaid", "priority_support_feat"],
+    education: PRO.education,
+    beauty:    PRO.beauty,
+    property:  PRO.property,
+    freelance: PRO.freelance,
+  };
 
   const freePositive: TKey[] = FREE[eff];
   const freeDeviceLabel = lang === "zh" ? "1 台设备" : lang === "ms" ? "1 Peranti" : "1 Device";
@@ -400,6 +415,7 @@ function PlansPage() {
   ];
   const starterRows = [starterDeviceLabel, ...STARTER[eff].map((k) => t(k))];
   const proRows = PRO[eff].map((k) => t(k));
+  const businessRows = BUSINESS[eff].map((k) => t(k));
 
   const businessDeviceLabel = lang === "zh" ? "5 台设备" : lang === "ms" ? "5 Peranti" : "5 Devices";
   const businessPrice = billing === "monthly" ? storePrices.business_monthly : storePrices.business_annual;
@@ -411,10 +427,11 @@ function PlansPage() {
   // While HIDE_PAID_PLANS is on, a plan card only shows its full price +
   // feature list when the user actually has that status to show (so an
   // existing subscriber's own card still displays normally). Everyone else
-  // sees a collapsed "Coming soon" teaser with no price or feature list —
-  // same as the Annual tab, which can't be opened to peek at its content
-  // either. Flip HIDE_PAID_PLANS off and every card goes back to always
-  // showing full content.
+  // sees a collapsed "Coming soon" teaser with no price or feature list.
+  // HIDE_PAID_PLANS is off (2026-11) so every card shows full content now.
+  // (The Annual billing tab above used to be hard-disabled independently of
+  // this flag — that was only wired to annual pricing actually existing in
+  // Stripe/Play Console, which it now does, so the tab is clickable again.)
   const starterShowFull = !HIDE_PAID_PLANS || isLifetime || isPro || (isStarter && activeBillingPlan === billing);
   const proShowFull = !HIDE_PAID_PLANS || isLifetime || (isPro && activeBillingPlan === billing);
   const businessShowFull = !HIDE_PAID_PLANS || isLifetime || (isBusiness && activeBillingPlan === billing);
@@ -733,15 +750,10 @@ function PlansPage() {
           {t("monthly")}
         </button>
         <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          className="flex-1 py-2 rounded-xl text-sm font-semibold text-muted-foreground/60 cursor-not-allowed flex items-center justify-center gap-1.5"
+          onClick={() => setBilling("annual")}
+          className={`flex-1 py-2 rounded-xl text-sm font-semibold transition ${billing === "annual" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}
         >
           {t("annual")}
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-muted-foreground/10 text-muted-foreground">
-            {t("coming_soon")}
-          </span>
         </button>
       </div>
 
@@ -843,7 +855,7 @@ function PlansPage() {
               <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
               <span className="text-foreground font-semibold">{bestForDevicesLabel}</span>
             </li>
-            {proRows.map((r, i) => (
+            {businessRows.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
                 <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                 <span className="text-foreground">{r}</span>

@@ -45,8 +45,13 @@ async function fetchCurrentPlan() {
   return data?.plan as Plan | undefined;
 }
 
+// Bug fix (2026-11): "business" was missing here, so a Business buyer
+// paying via Stripe never resolved as a paid plan — the confirmPayment
+// poll loop in confirmPayment() below never found a match, leaving the
+// page stuck on "Activating your plan…" forever even though the backend
+// had already written plan: "business" to their subscription row.
 function isPaidPlan(plan: Plan | undefined) {
-  return plan === "starter" || plan === "pro" || plan === "lifetime";
+  return plan === "starter" || plan === "pro" || plan === "business" || plan === "lifetime";
 }
 
 function PaymentSuccessPage() {
@@ -107,11 +112,13 @@ function PaymentSuccessPage() {
   const planName =
     confirmedPlan === "pro"
       ? "Pro"
-      : confirmedPlan === "lifetime"
-        ? "Lifetime"
-        : confirmedPlan === "starter"
-          ? "Starter"
-          : "";
+      : confirmedPlan === "business"
+        ? "Business"
+        : confirmedPlan === "lifetime"
+          ? "Lifetime"
+          : confirmedPlan === "starter"
+            ? "Starter"
+            : "";
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
