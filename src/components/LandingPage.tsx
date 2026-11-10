@@ -602,14 +602,8 @@ function PhoneFrame({ src, alt }: { src: string; alt: string }) {
 // slide is the product exactly as sellers see it.
 // ---------------------------------------------------------------------------
 function LaptopMockup() {
-  const [started, setStarted] = useState(false);
   const [index, setIndex] = useState(1);
   const n = HERO_SCREENSHOTS.length;
-
-  useEffect(() => {
-    const t = setTimeout(() => setStarted(true), 300);
-    return () => clearTimeout(t);
-  }, []);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -652,32 +646,6 @@ function LaptopMockup() {
             </div>
           );
         })}
-
-        <div
-          className="absolute -top-2 left-1/2 -translate-x-1/2 sm:left-2 sm:translate-x-0"
-          style={{
-            opacity: started ? 1 : 0,
-            transform: started ? "translateY(0)" : "translateY(-10px)",
-            transition: "opacity 0.6s ease-out 0.7s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.7s",
-            zIndex: 20,
-          }}
-        >
-          <div
-            className="rounded-2xl border px-3.5 py-3 flex items-center gap-2.5"
-            style={{ background: CARD, borderColor: BORDER_STRONG, boxShadow: "0 20px 50px -15px rgba(0,0,0,0.6)" }}
-          >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#000000" }}>
-              <ShoppingBag className="w-4 h-4" style={{ color: "#FFFFFF" }} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: TEXT }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 bossify-animate-status-dot" />
-                TikTok Shop
-              </p>
-              <p className="text-[9px]" style={{ color: TEXT_MUTED }}>Synced</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="flex items-center justify-center gap-1.5 mt-3">
@@ -1043,7 +1011,6 @@ export function LandingPage() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [demoOpen, setDemoOpen] = useState(false);
   const c = COPY[lang] ?? COPY.en;
 
   const goAuth = (mode: "login" | "register") => {
@@ -1152,15 +1119,6 @@ export function LandingPage() {
                 >
                   {c.ctaPrimary}
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDemoOpen(true)}
-                  className="text-[14.5px] font-semibold px-6 py-3 rounded-full border flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:border-[rgba(168,124,255,0.5)]"
-                  style={{ color: TEXT, borderColor: BORDER }}
-                >
-                  <Play className="w-3.5 h-3.5" style={{ color: TEXT }} fill={TEXT} />
-                  {c.ctaSecondary}
                 </button>
               </div>
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -1436,10 +1394,6 @@ export function LandingPage() {
                 {c.finalCtaPrimary}
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </button>
-              <button type="button" onClick={() => setDemoOpen(true)} className="text-[15px] font-semibold px-7 py-3.5 rounded-full border flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:border-[rgba(168,124,255,0.5)]" style={{ color: TEXT, borderColor: BORDER }}>
-                <Play className="w-4 h-4" fill={TEXT} style={{ color: TEXT }} />
-                {c.finalCtaSecondary}
-              </button>
             </div>
           </div>
         </Reveal>
@@ -1475,7 +1429,6 @@ export function LandingPage() {
         </div>
       </footer>
       </div>
-      <DemoVideoModal open={demoOpen} onClose={() => setDemoOpen(false)} copy={c} />
     </div>
   );
 }
