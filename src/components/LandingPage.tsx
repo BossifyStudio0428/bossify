@@ -566,7 +566,11 @@ function PhoneFrame({ src, alt }: { src: string; alt: string }) {
       className="relative w-full rounded-[26px] overflow-hidden border-[7px]"
       style={{
         borderColor: "#0B0714",
-        background: "#0B0714",
+        // App's own light background (matches capacitor.config.ts /
+        // in-app canvas), not pure black -- since the fit below is
+        // "contain" (no cropping), any thin top/bottom letterbox strip
+        // reads as the screen's own background rather than a black bar.
+        background: "#F4F3F8",
         aspectRatio: "663 / 1460",
         boxShadow: "0 30px 60px -20px rgba(0,0,0,0.45)",
       }}
@@ -575,11 +579,18 @@ function PhoneFrame({ src, alt }: { src: string; alt: string }) {
         className="absolute top-0 left-1/2 -translate-x-1/2 z-10 rounded-b-xl"
         style={{ width: "38%", height: "4.5%", background: "#0B0714" }}
       />
+      {/* object-contain, not cover: source screenshots come from
+          different pages/crops with slightly different aspect ratios,
+          and "cover" was center-cropping equal slices off the LEFT and
+          RIGHT edges to force-fill this narrow phone ratio -- which cut
+          into real UI text/tabs living close to those edges (e.g. "This
+          week" / "Pick a report..." losing their first word). "contain"
+          never crops; worst case is a few px of letterbox top/bottom. */}
       <img
         key={src}
         src={src}
         alt={alt}
-        className="bf-coverflow-pop absolute inset-0 w-full h-full object-cover object-top"
+        className="bf-coverflow-pop absolute inset-0 w-full h-full object-contain object-top"
       />
     </div>
   );
