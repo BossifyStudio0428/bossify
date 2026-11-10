@@ -29,6 +29,27 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import bossifyLogo from "@/assets/bossify-logo.png";
+import heroOverviewScreenshot from "@/assets/hero-dashboard-screenshot.jpg";
+import heroOrdersScreenshot from "@/assets/hero-orders-screenshot.jpg";
+import heroCostBreakdownScreenshot from "@/assets/hero-cost-breakdown-screenshot.jpg";
+import heroCustomerScreenshot from "@/assets/hero-customer-screenshot.jpg";
+import heroPricingScreenshot from "@/assets/hero-pricing-screenshot.jpg";
+import heroReportsScreenshot from "@/assets/hero-reports-screenshot.jpg";
+import heroInventoryScreenshot from "@/assets/hero-inventory-screenshot.jpg";
+import heroTikTokScreenshot from "@/assets/hero-tiktok-screenshot.jpg";
+
+// Real app screenshots cycled through in the hero mockup -- no fabricated
+// UI, every slide is an actual screen from the live app.
+const HERO_SCREENSHOTS: { src: string; alt: string }[] = [
+  { src: heroOverviewScreenshot, alt: "Bossify dashboard showing real profit, revenue, costs and profit breakdown for this month" },
+  { src: heroOrdersScreenshot, alt: "Bossify Orders page with TikTok Shop sync and 1-tap Send Receipt" },
+  { src: heroCostBreakdownScreenshot, alt: "Bossify Cost Breakdown page with cost comparison and cost share charts" },
+  { src: heroCustomerScreenshot, alt: "Bossify Customer Detail page with order history and Top Spender badge" },
+  { src: heroReportsScreenshot, alt: "Bossify Reports page listing 7 exportable PDF business reports" },
+  { src: heroInventoryScreenshot, alt: "Bossify Inventory page showing stock, price, cost and profit per product" },
+  { src: heroTikTokScreenshot, alt: "Bossify TikTok Shop integration, connected and syncing automatically" },
+  { src: heroPricingScreenshot, alt: "Bossify pricing plans — Free, Pro and Business" },
+];
 
 // ---------------------------------------------------------------------------
 // Design tokens -- premium dark canvas. One consistent near-black-purple
@@ -533,190 +554,75 @@ function polylineLength(coords: number[][]) {
 }
 
 // ---------------------------------------------------------------------------
-// Hero product mockup -- a tilted "laptop screen" showing the real Bossify
-// dashboard: sidebar, stat tiles, a two-series profit/sales chart with a
-// decorative play button, plus two floating cards for depth. Entirely
-// hand-built illustration -- no real data, no screenshots. Runs as a live
-// "product is working" showcase: the chart draws itself in, the KPI
-// numbers count up, the low-stock badge pulses occasionally, and the two
-// floating cards slide in with a stagger once the hero mounts.
+// Hero product mockup -- cycles through REAL Bossify screenshots
+// (HERO_SCREENSHOTS, src/assets/hero-*.jpg) inside a clean device-style
+// frame, auto-advancing with a crossfade every ~3.2s, plus dot indicators,
+// a floating "TikTok Shop Synced" badge, and a play button overlay to open
+// the demo modal. No fabricated numbers, no hand-drawn fake UI -- every
+// slide is the product exactly as sellers see it.
 // ---------------------------------------------------------------------------
 function LaptopMockup({ onPlay }: { onPlay: () => void }) {
   const [started, setStarted] = useState(false);
+  const [index, setIndex] = useState(0);
+
   useEffect(() => {
     const t = setTimeout(() => setStarted(true), 300);
     return () => clearTimeout(t);
   }, []);
-  const sales = useCountUp(12480, started);
-  const profit = useCountUp(3842, started);
-  const orders = useCountUp(428, started);
-  const salesPts = [30, 42, 38, 52, 46, 60, 54, 68, 62, 76, 70, 84];
-  const profitPts = [10, 16, 13, 20, 17, 24, 20, 28, 24, 32, 28, 36];
-  const w = 520;
-  const h = 150;
-  const build = (pts: number[]) => {
-    const step = w / (pts.length - 1);
-    const max = 90;
-    return pts.map((p, i) => [i * step, h - (p / max) * (h - 20) - 8]);
-  };
-  const salesCoords = build(salesPts);
-  const profitCoords = build(profitPts);
-  const toPath = (coords: number[][]) => coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const profitArea = `${toPath(profitCoords)} L${w},${h} L0,${h} Z`;
-  const salesLen = polylineLength(salesCoords);
-  const profitLen = polylineLength(profitCoords);
 
-  const sidebarItems = [
-    { icon: TrendingUp, label: "Dashboard", active: true },
-    { icon: ShoppingBag, label: "Orders", active: false },
-    { icon: Package, label: "Products", active: false },
-    { icon: Archive, label: "Inventory", active: false },
-    { icon: FileText, label: "Profit & Analytics", active: false },
-    { icon: CreditCard, label: "Expenses", active: false },
-    { icon: ClipboardCheck, label: "Reports", active: false },
-  ];
-
-  const dateLabels = ["1 Oct", "9 Oct", "17 Oct", "25 Oct"];
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % HERO_SCREENSHOTS.length);
+    }, 3200);
+    return () => window.clearInterval(id);
+  }, []);
 
   return (
-    <div className="relative w-full max-w-[640px] mx-auto">
+    <div className="relative w-full max-w-[380px] mx-auto">
       <div
-        className="bf-shine bossify-animate-float-sm relative rounded-[20px] overflow-hidden border"
+        className="bf-shine bossify-animate-float-sm relative rounded-[24px] overflow-hidden border"
         style={{
           background: CARD,
           borderColor: BORDER_STRONG,
-          boxShadow: `0 10px 0 0 #08051000, 0 60px 120px -30px rgba(139,92,246,0.35), 0 0 0 1px rgba(139,92,246,0.08)`,
+          boxShadow: `0 60px 120px -30px rgba(139,92,246,0.35), 0 0 0 1px rgba(139,92,246,0.08)`,
+          aspectRatio: "663 / 1460",
         }}
       >
-        <div className="flex">
-          <div className="hidden sm:flex flex-col gap-1 p-3 w-[168px] shrink-0 border-r" style={{ borderColor: BORDER }}>
-            <div className="flex items-center gap-1.5 px-2 py-2 mb-2">
-              <img src={bossifyLogo} alt="" className="w-5 h-5 rounded" />
-              <span className="text-[12px] font-bold" style={{ color: TEXT }}>Bossify</span>
-            </div>
-            {sidebarItems.map((it) => (
-              <div
-                key={it.label}
-                className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
-                style={{ background: it.active ? GRADIENT : "transparent" }}
-              >
-                <it.icon className="w-3.5 h-3.5 shrink-0" style={{ color: it.active ? "#FFFFFF" : TEXT_MUTED }} />
-                <span className="text-[10.5px] font-medium truncate" style={{ color: it.active ? "#FFFFFF" : TEXT_MUTED }}>
-                  {it.label}
-                </span>
-              </div>
-            ))}
-          </div>
+        {HERO_SCREENSHOTS.map((shot, i) => (
+          <img
+            key={shot.src}
+            src={shot.src}
+            alt={shot.alt}
+            className="absolute inset-0 w-full h-full object-cover object-top"
+            style={{ opacity: i === index ? 1 : 0, transition: "opacity 0.6s ease-in-out" }}
+          />
+        ))}
 
-          <div className="flex-1 p-4 sm:p-5 min-w-0">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[14px] font-bold" style={{ color: TEXT }}>Dashboard</span>
-              <span
-                className="flex items-center gap-1 text-[10.5px] font-medium px-2.5 py-1 rounded-full border"
-                style={{ color: TEXT_MUTED, borderColor: BORDER }}
-              >
-                This Month
-                <ChevronDown className="w-3 h-3" />
-              </span>
-            </div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={onPlay}
+            aria-label="Watch demo"
+            className="w-14 h-14 rounded-full flex items-center justify-center border transition-transform hover:scale-110"
+            style={{ background: "rgba(10,6,20,0.55)", borderColor: "rgba(255,255,255,0.3)", backdropFilter: "blur(2px)" }}
+          >
+            <Play className="w-5 h-5 ml-0.5" style={{ color: "#FFFFFF" }} fill="#FFFFFF" />
+          </button>
+        </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-              <div className="rounded-xl p-2.5" style={{ background: CARD_SOFT }}>
-                <p className="text-[9px] font-semibold" style={{ color: TEXT_MUTED }}>SALES (GMV)</p>
-                <p className="text-[14px] font-bold tabular-nums" style={{ color: TEXT }}>{fmtRM(sales)}</p>
-                <p className="text-[9.5px] font-semibold" style={{ color: GREEN }}>+18.4%</p>
-              </div>
-              <div className="rounded-xl p-2.5" style={{ background: CARD_SOFT }}>
-                <p className="text-[9px] font-semibold" style={{ color: TEXT_MUTED }}>NET PROFIT</p>
-                <p className="text-[14px] font-bold tabular-nums" style={{ color: TEXT }}>{fmtRM(profit)}</p>
-                <p className="text-[9.5px] font-semibold" style={{ color: GREEN }}>+20.1%</p>
-              </div>
-              <div className="rounded-xl p-2.5" style={{ background: CARD_SOFT }}>
-                <p className="text-[9px] font-semibold" style={{ color: TEXT_MUTED }}>ORDERS</p>
-                <p className="text-[14px] font-bold tabular-nums" style={{ color: TEXT }}>{fmtInt(orders)}</p>
-                <p className="text-[9.5px] font-semibold" style={{ color: GREEN }}>+12.7%</p>
-              </div>
-              <div className="rounded-xl p-2.5" style={{ background: "rgba(248,113,113,0.1)" }}>
-                <p className="text-[9px] font-semibold" style={{ color: RED }}>LOW STOCK</p>
-                <p className="text-[14px] font-bold" style={{ color: TEXT }}>7</p>
-                <p className="text-[9.5px] font-semibold" style={{ color: RED }}>needs action</p>
-              </div>
-            </div>
-
-            <div className="rounded-xl p-3.5" style={{ background: CARD_SOFT }}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold" style={{ color: TEXT }}>Sales &amp; Profit Trend</span>
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1 text-[9.5px]" style={{ color: TEXT_MUTED }}>
-                    <span className="w-2 h-2 rounded-full" style={{ background: GRAD_TO }} />
-                    Sales (RM)
-                  </span>
-                  <span className="flex items-center gap-1 text-[9.5px]" style={{ color: TEXT_MUTED }}>
-                    <span className="w-2 h-2 rounded-full" style={{ background: GRAD_FROM }} />
-                    Net Profit (RM)
-                  </span>
-                </div>
-              </div>
-              <div className="relative">
-                <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[110px]" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="bf-profit-area" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={GRAD_FROM} stopOpacity="0.35" />
-                      <stop offset="100%" stopColor={GRAD_FROM} stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d={profitArea}
-                    fill="url(#bf-profit-area)"
-                    style={{ opacity: started ? 1 : 0, transition: "opacity 0.9s ease-out 1.1s" }}
-                  />
-                  <path
-                    d={toPath(salesCoords)}
-                    fill="none"
-                    stroke={GRAD_TO}
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    opacity="0.85"
-                    style={{
-                      strokeDasharray: salesLen,
-                      strokeDashoffset: started ? 0 : salesLen,
-                      transition: "stroke-dashoffset 1.3s cubic-bezier(0.16,1,0.3,1) 0.25s",
-                    }}
-                  />
-                  <path
-                    d={toPath(profitCoords)}
-                    fill="none"
-                    stroke={GRAD_FROM}
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{
-                      strokeDasharray: profitLen,
-                      strokeDashoffset: started ? 0 : profitLen,
-                      transition: "stroke-dashoffset 1.3s cubic-bezier(0.16,1,0.3,1) 0.45s",
-                    }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={onPlay}
-                    aria-label="Watch demo"
-                    className="w-11 h-11 rounded-full flex items-center justify-center border transition-transform hover:scale-110"
-                    style={{ background: "rgba(10,6,20,0.55)", borderColor: "rgba(255,255,255,0.3)", backdropFilter: "blur(2px)" }}
-                  >
-                    <Play className="w-4 h-4 ml-0.5" style={{ color: "#FFFFFF" }} fill="#FFFFFF" />
-                  </button>
-                </div>
-              </div>
-              <div className="flex justify-between mt-1.5">
-                {dateLabels.map((d) => (
-                  <span key={d} className="text-[9px]" style={{ color: TEXT_MUTED }}>{d}</span>
-                ))}
-              </div>
-            </div>
-          </div>
+        <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-1.5">
+          {HERO_SCREENSHOTS.map((_, i) => (
+            <span
+              key={i}
+              className="h-1.5 rounded-full transition-all duration-300"
+              style={{
+                width: i === index ? 16 : 6,
+                background: i === index ? "#FFFFFF" : "rgba(255,255,255,0.55)",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.35)",
+              }}
+            />
+          ))}
         </div>
       </div>
 
@@ -742,24 +648,6 @@ function LaptopMockup({ onPlay }: { onPlay: () => void }) {
             </p>
             <p className="text-[9px]" style={{ color: TEXT_MUTED }}>Synced</p>
           </div>
-        </div>
-      </div>
-
-      <div
-        className="absolute -bottom-6 -right-4 sm:-right-10 rounded-2xl"
-        style={{
-          opacity: started ? 1 : 0,
-          transform: started ? "translate(0,0)" : "translate(14px,10px)",
-          transition: "opacity 0.6s ease-out 0.9s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.9s",
-        }}
-      >
-        <div
-          className="rounded-2xl border px-4 py-3.5"
-          style={{ background: CARD, borderColor: BORDER_STRONG }}
-        >
-          <p className="text-[10px] font-semibold" style={{ color: TEXT_MUTED }}>Real Profit</p>
-          <p className="text-[18px] font-bold tabular-nums" style={{ color: TEXT }}>{fmtRM(profit)}</p>
-          <p className="text-[10.5px] font-bold flex items-center gap-0.5" style={{ color: GREEN }}><TrendingUp className="h-3 w-3" /> +20.1%</p>
         </div>
       </div>
     </div>
