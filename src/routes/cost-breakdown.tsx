@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
 
 type Range = "week" | "month" | "all";
@@ -25,6 +26,7 @@ function Row({ label, value, bold, tint }: { label: string; value: number; bold?
 function CostBreakdownPage() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
+  const { isBusiness } = useSubscription();
   const [range, setRange] = useState<Range>("month");
   const [loading, setLoading] = useState(true);
 
@@ -64,6 +66,15 @@ function CostBreakdownPage() {
       } else {
         if (range === "week") { from = new Date(now); from.setDate(from.getDate() - 7); }
         if (range === "month") { from = new Date(now.getFullYear(), now.getMonth(), 1); }
+      }
+      // History cap (2026-11): Pro can see up to 3 months back; Business is
+      // unlimited. Clamps both the "All time" preset (from = epoch above)
+      // and a manually-typed custom "From" date that reaches further back
+      // — the preset alone isn't enough since the custom picker has no
+      // floor of its own.
+      if (!isBusiness) {
+        const proFloor = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+        if (from < proFloor) from = proFloor;
       }
       const fromISO = from.toISOString();
       const toISO = to ? to.toISOString() : null;
@@ -226,7 +237,7 @@ function CostBreakdownPage() {
 
       setLoading(false);
     })();
-  }, [user?.id, range, activeCategory, dateFrom, dateTo, trendRangeDays]);
+  }, [user?.id, range, activeCategory, dateFrom, dateTo, trendRangeDays, isBusiness]);
 
   const netRevenue = revenue - refundRevenue;
   const netProductCost = productCost - refundCost;
@@ -267,6 +278,12 @@ function CostBreakdownPage() {
           </button>
         ))}
       </div>
+
+      {!isBusiness && (range === "all" || dateFilterActive) && (
+        <p className="text-[11px] text-amber-700 bg-amber-500/10 rounded-lg px-2.5 py-1.5">
+          {t("history_limited_pro")}
+        </p>
+      )}
 
       <div className="space-y-2">
         <div className="flex items-center gap-2">

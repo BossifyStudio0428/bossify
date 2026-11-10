@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 type ItemRow = {
   product_id: string | null;
@@ -70,6 +71,7 @@ type StatsEntry =
 function ProductProfitPage() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
+  const { isBusiness } = useSubscription();
   const [range, setRange] = useState<Range>("month");
   const [items, setItems] = useState<ItemRow[]>([]);
   const [adjItems, setAdjItems] = useState<AdjItemRow[]>([]);
@@ -86,6 +88,13 @@ function ProductProfitPage() {
       let from = new Date(0);
       if (range === "week") { from = new Date(now); from.setDate(from.getDate() - 7); }
       if (range === "month") { from = new Date(now.getFullYear(), now.getMonth(), 1); }
+      // History cap (2026-11): Pro sees up to 3 months back, Business is
+      // unlimited — same rule as Cost Breakdown. Only "all" is affected;
+      // week/month are already well inside 3 months.
+      if (!isBusiness) {
+        const proFloor = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+        if (from < proFloor) from = proFloor;
+      }
 
       const { data: orders, error: ordErr } = await supabase
         .from("orders" as any)
@@ -139,7 +148,7 @@ function ProductProfitPage() {
 
       setLoading(false);
     })();
-  }, [user?.id, range]);
+  }, [user?.id, range, isBusiness]);
 
   const stats = useMemo<StatsEntry[]>(() => {
     const map = new Map<string, VariantStat>();
@@ -256,6 +265,12 @@ function ProductProfitPage() {
           </button>
         ))}
       </div>
+
+      {!isBusiness && range === "all" && (
+        <p className="text-[11px] text-amber-700 bg-amber-500/10 rounded-lg px-2.5 py-1.5">
+          {t("history_limited_pro")}
+        </p>
+      )}
 
       {Object.values(categoryByProduct).length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1">

@@ -3,7 +3,7 @@ import { Lock } from "lucide-react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useEffect, useState } from "react";
-import { isNativeBillingAvailable, queryProductDetailsSafe, FALLBACK_PRICES } from "@/lib/billing";
+import { isNativeBillingAvailable, queryProductDetailsSafe, FALLBACK_PRICES, BUSINESS_FALLBACK_PRICES } from "@/lib/billing";
 import { fetchStripePrices } from "@/lib/stripePrices.functions";
 
 export function UpgradeModal() {
@@ -11,6 +11,7 @@ export function UpgradeModal() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [proMonthlyPrice, setProMonthlyPrice] = useState<string>(FALLBACK_PRICES.monthly);
+  const [businessMonthlyPrice, setBusinessMonthlyPrice] = useState<string>(BUSINESS_FALLBACK_PRICES.monthly);
 
   useEffect(() => {
     if (!upgradeOpen) return;
@@ -21,6 +22,8 @@ export function UpgradeModal() {
           if (cancelled) return;
           const monthly = result.prices.find((p) => p.plan === "monthly");
           if (monthly?.formattedPrice && monthly.formattedPrice !== "—") setProMonthlyPrice(monthly.formattedPrice);
+          const businessMonthly = result.prices.find((p) => p.plan === "business_monthly");
+          if (businessMonthly?.formattedPrice && businessMonthly.formattedPrice !== "—") setBusinessMonthlyPrice(businessMonthly.formattedPrice);
         })
         .catch(() => {});
     } else {
@@ -29,6 +32,8 @@ export function UpgradeModal() {
           if (cancelled) return;
           const monthly = res?.prices?.monthly;
           if (monthly) setProMonthlyPrice(monthly);
+          const businessMonthly = res?.prices?.business_monthly;
+          if (businessMonthly) setBusinessMonthlyPrice(businessMonthly);
         })
         .catch(() => {});
     }
@@ -38,10 +43,16 @@ export function UpgradeModal() {
   if (!upgradeOpen) return null;
 
   // When the modal is opened because the user hit the monthly free order
-  // limit, swap to the limit-specific title and copy.
+  // limit, swap to the limit-specific title and copy. When it's opened
+  // because of a Business-only feature (a report in the Business-only set,
+  // or the Pro history-range cap), swap to the Business-specific title,
+  // copy and CTA instead — reason is one of the exact upgrade_desc_business /
+  // history_limited_pro strings passed by the caller (reports.index.tsx,
+  // cost-breakdown.tsx, product-profit.tsx).
   const isLimitReached = upgradeReason === t("upgrade_message");
-  const title = isLimitReached ? t("limit_reached") : t("upgrade_title");
-  const description = isLimitReached ? t("upgrade_message") : t("upgrade_desc");
+  const isBusinessRequired = !isLimitReached && (upgradeReason === t("upgrade_desc_business") || upgradeReason === t("history_limited_pro"));
+  const title = isLimitReached ? t("limit_reached") : isBusinessRequired ? t("upgrade_title_business") : t("upgrade_title");
+  const description = isLimitReached ? t("upgrade_message") : isBusinessRequired ? (upgradeReason || t("upgrade_desc_business")) : t("upgrade_desc");
 
   return (
     <div
@@ -63,7 +74,7 @@ export function UpgradeModal() {
           onClick={() => { hideUpgrade(); navigate({ to: "/plans" }); }}
           className="mt-5 w-full py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-[var(--shadow-soft)] active:scale-[0.99] transition"
         >
-          {t("upgrade_to_pro")} → {proMonthlyPrice}/{t("per_month").replace(/^\s*\/\s*/, "")}
+          {isBusinessRequired ? t("upgrade_to_business") : t("upgrade_to_pro")} → {isBusinessRequired ? businessMonthlyPrice : proMonthlyPrice}/{t("per_month").replace(/^\s*\/\s*/, "")}
         </button>
         <button
           onClick={hideUpgrade}

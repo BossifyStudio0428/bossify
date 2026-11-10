@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { getCachedPrefs, loadPrefs } from "@/lib/notifPrefs";
+import { HIDE_CAMPAIGN_AI } from "@/lib/featureFlags";
 import type { CampaignAiSuggestions } from "@/routes/api/public/campaign-ai/suggest";
 import {
   type Campaign,
@@ -826,8 +827,11 @@ function CampaignDetailPage() {
           </section>
 
           {/* AI suggestions — only once a campaign period is set, since the
-              suggestions are built around that window's target/progress. */}
-          {campaign?.start && campaign?.end && (
+              suggestions are built around that window's target/progress.
+              Also gated behind HIDE_CAMPAIGN_AI (see featureFlags.ts) —
+              AI features deferred for now, this was the one live/uncapped
+              AI surface left. */}
+          {!HIDE_CAMPAIGN_AI && campaign?.start && campaign?.end && (
             <section className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

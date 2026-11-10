@@ -49,7 +49,14 @@ export type SubscriptionRow = {
 
 export const FREE_LIMITS = {
   ordersPerMonth: 20,
-  inventory: 10,
+  // Raised from 10 → 30 (2026-11, John's call): a typical TikTok Shop
+  // seller's SKU count (base products + bundles + variations) crosses 10
+  // almost immediately, which was effectively throttling the free TikTok
+  // sync itself — against the standing principle that sync must stay
+  // usable on Free (it's the main acquisition hook). 30 lets a seller
+  // actually experience real-profit tracking across their catalog before
+  // hitting a wall.
+  inventory: 30,
   customers: 50,
   listings: 10,
 } as const;

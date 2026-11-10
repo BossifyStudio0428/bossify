@@ -54,7 +54,7 @@ function ReportsHub() {
 
   const { user } = useAuth();
   const { t, lang } = useI18n();
-  const { hasFullAccess, showUpgrade } = useSubscription();
+  const { hasFullAccess, isBusiness, showUpgrade } = useSubscription();
   const { type: bizType } = useBusinessType();
   const eff = (bizType ?? "retail") as
     | "retail" | "fnb" | "education" | "beauty" | "property" | "freelance";
@@ -137,8 +137,17 @@ function ReportsHub() {
       const f = new Date(now.getFullYear(), now.getMonth(), 1);
       return { fromDate: f, toDate: endOfDay(now), label: t("this_month") };
     }
-    return { fromDate: startOfDay(new Date(from)), toDate: endOfDay(new Date(to)), label: `${from} → ${to}` };
-  }, [range, from, to, t]);
+    // Custom range: clamp the start for Pro (3-month history cap, see
+    // featureFlags discussion 2026-11) — Business stays unlimited. Only
+    // the custom picker needs this; today/week/month never reach back
+    // that far.
+    let customFrom = startOfDay(new Date(from));
+    if (!isBusiness) {
+      const proFloor = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+      if (customFrom < proFloor) customFrom = proFloor;
+    }
+    return { fromDate: customFrom, toDate: endOfDay(new Date(to)), label: `${from} → ${to}` };
+  }, [range, from, to, t, isBusiness]);
 
   const inRange = useMemo(
     () => orders.filter((o) => {
@@ -167,7 +176,12 @@ function ReportsHub() {
     return name && name.trim().length > 0 ? name : (email?.split("@")[0] ?? "My Store");
   }
 
-  const gate = () => {
+  // Report tiering (2026-11): Sales/Profit/Stock + the CSV export stay
+  // Pro-level (hasFullAccess); Financial P&L/Customer Statement/Supplier/
+  // Order Reconciliation — the 4 reports meant for an accountant/bank, not
+  // day-to-day use — are Business-only. Pass businessOnly=true for those.
+  const gate = (businessOnly = false) => {
+    if (businessOnly && !isBusiness) { showUpgrade(t("upgrade_desc_business")); return false; }
     if (!hasFullAccess) { showUpgrade(t("export_pdf")); return false; }
     return true;
   };
@@ -363,7 +377,7 @@ function ReportsHub() {
   };
 
   const handleFinancial = async () => {
-    if (!gate() || busy) return;
+    if (!gate(true) || busy) return;
     setBusy("financial");
     await new Promise((r) => setTimeout(r, 30));
     try {
@@ -412,7 +426,7 @@ function ReportsHub() {
   };
 
   const openCustomerPicker = async () => {
-    if (!gate() || busy) return;
+    if (!gate(true) || busy) return;
     setPickCustomer(true);
     if (customerList.length === 0 && user?.id) {
       const { data } = await supabase
@@ -459,7 +473,7 @@ function ReportsHub() {
   };
 
   const handleSupplier = async () => {
-    if (!gate() || busy || !user?.id) return;
+    if (!gate(true) || busy || !user?.id) return;
     setBusy("supplier");
     await new Promise((r) => setTimeout(r, 30));
     try {
@@ -524,7 +538,7 @@ function ReportsHub() {
   };
 
   const handleRecon = async () => {
-    if (!gate() || busy) return;
+    if (!gate(true) || busy) return;
     setBusy("recon");
     await new Promise((r) => setTimeout(r, 30));
     try {
@@ -573,14 +587,15 @@ function ReportsHub() {
     onExport: () => void;
     linkTo?: "/reports/sales";
     tint: string;
+    businessOnly?: boolean;
   }> = [
     { key: "sales", icon: BarChart3, title: t("reports_sales_title"), desc: t("reports_sales_desc"), onExport: handleSales, linkTo: "/reports/sales", tint: "bg-primary/10 text-primary" },
     { key: "profit", icon: TrendingUp, title: t("reports_profit_title"), desc: t("reports_profit_desc"), onExport: handleProfit, tint: "bg-emerald-500/10 text-emerald-600" },
     { key: "stock", icon: Package, title: t("reports_stock_title"), desc: t("reports_stock_desc"), onExport: handleStock, tint: "bg-amber-500/10 text-amber-600" },
-    { key: "financial", icon: FileText, title: t("reports_financial_title"), desc: t("reports_financial_desc"), onExport: handleFinancial, tint: "bg-sky-500/10 text-sky-600" },
-    { key: "customer", icon: Users, title: t("reports_customer_title"), desc: t("reports_customer_desc"), onExport: openCustomerPicker, tint: "bg-fuchsia-500/10 text-fuchsia-600" },
-    { key: "supplier", icon: Truck, title: t("reports_supplier_title"), desc: t("reports_supplier_desc"), onExport: handleSupplier, tint: "bg-orange-500/10 text-orange-600" },
-    { key: "recon", icon: ClipboardCheck, title: t("reports_recon_title"), desc: t("reports_recon_desc"), onExport: handleRecon, tint: "bg-teal-500/10 text-teal-600" },
+    { key: "financial", icon: FileText, title: t("reports_financial_title"), desc: t("reports_financial_desc"), onExport: handleFinancial, tint: "bg-sky-500/10 text-sky-600", businessOnly: true },
+    { key: "customer", icon: Users, title: t("reports_customer_title"), desc: t("reports_customer_desc"), onExport: openCustomerPicker, tint: "bg-fuchsia-500/10 text-fuchsia-600", businessOnly: true },
+    { key: "supplier", icon: Truck, title: t("reports_supplier_title"), desc: t("reports_supplier_desc"), onExport: handleSupplier, tint: "bg-orange-500/10 text-orange-600", businessOnly: true },
+    { key: "recon", icon: ClipboardCheck, title: t("reports_recon_title"), desc: t("reports_recon_desc"), onExport: handleRecon, tint: "bg-teal-500/10 text-teal-600", businessOnly: true },
   ];
 
   return (
@@ -618,6 +633,12 @@ function ReportsHub() {
           <label className="text-xs">{t("from_date")}<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 w-full rounded-xl bg-card border border-border/60 px-3 py-2 text-sm" /></label>
           <label className="text-xs">{t("to_date")}<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 w-full rounded-xl bg-card border border-border/60 px-3 py-2 text-sm" /></label>
         </div>
+      )}
+
+      {range === "custom" && !isBusiness && (
+        <p className="text-[11px] text-amber-700 bg-amber-500/10 rounded-lg px-2.5 py-1.5">
+          {t("history_limited_pro")}
+        </p>
       )}
 
       <p className="text-[11px] text-muted-foreground -mt-2">
@@ -692,7 +713,15 @@ function ReportsHub() {
                   <Icon className="h-5 w-5 lg:h-6 lg:w-6" />
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm lg:text-base font-bold text-foreground">{c.title}</p>
+                  <p className="text-sm lg:text-base font-bold text-foreground flex items-center gap-1.5 flex-wrap">
+                    {c.title}
+                    {c.businessOnly && !isBusiness && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700">
+                        <Lock className="h-2.5 w-2.5" />
+                        Business
+                      </span>
+                    )}
+                  </p>
                   <p className="text-[11px] lg:text-xs text-muted-foreground mt-0.5">{c.desc}</p>
                 </div>
               </div>

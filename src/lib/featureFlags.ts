@@ -154,3 +154,20 @@ export const HIDE_PAID_PLANS = true;
  * from being mounted. Flip to `false` to bring it back.
  */
 export const HIDE_AI_CHAT_WIDGET = true;
+
+/**
+ * Hide the "AI suggestions" section on the Campaign detail page
+ * (`/campaigns/$campaignId`) — the button that calls the AI Gateway
+ * (`/api/public/campaign-ai`) to generate own-data + market-reference
+ * suggestions. John's call (2026-11): AI-powered features are being
+ * deferred as a whole until the business is bigger — this was the one AI
+ * surface that was still live (the chat widget above is already hidden)
+ * and had zero usage cap, so it stayed a real, uncapped cost exposure
+ * (every click spends Lovable AI Gateway credits). Hiding it here is the
+ * simplest way to close that gap without building a quota/tier system.
+ * The suggestion-generation code (`ai-campaign-suggestions.functions.ts`,
+ * `generateAiSuggestions`) and the `/api/public/campaign-ai` route are
+ * untouched — this only stops the section from rendering. Flip to `false`
+ * to bring it back (ideally paired with a usage quota at that point).
+ */
+export const HIDE_CAMPAIGN_AI = true;
