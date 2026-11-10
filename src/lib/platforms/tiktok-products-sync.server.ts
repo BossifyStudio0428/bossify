@@ -17,30 +17,6 @@ type ProductSyncResult = {
   delisted: number; // previously-linked items whose tiktok_product_id no longer appears on TikTok this sync — flagged, not removed
   relisted: number; // previously-flagged items that reappeared in TikTok's catalog this sync
   total: number;
-  // TEMPORARY diagnostic — added 2026-11-10 to debug a report that a product
-  // deleted on TikTok still shows as live in Bossify after a fresh sync even
-  // with the NON_LIVE_STATUSES fix in place. Safe to delete this field (and
-  // the two blocks that populate it below) once that's root-caused; it costs
-  // nothing when unused.
-  debug?: {
-    // Raw product ids TikTok's search endpoint returned THIS sync. If a
-    // deleted product's id is simply absent here, the search endpoint
-    // itself already excludes it and the bug is NOT in the status check
-    // below — it's that the Bossify row in question was never actually
-    // linked to a tiktok_product_id in the first place (see next field).
-    searchedProductIds: string[];
-    // Every Bossify inventory row that ALREADY has a tiktok_product_id set,
-    // as of BEFORE this sync's reconciliation ran. If the product you
-    // expect to see flagged isn't in this list at all, the reconciliation
-    // loop never considers it — it was never linked to TikTok (manually
-    // added, or linked by name once and since renamed/unlinked), which
-    // means no sync fix can ever flag it; it has to be removed by hand.
-    linkedRowsBeforeSync: Array<{ name: string; tiktokProductId: string; alreadyDelisted: boolean }>;
-    // Per-product raw status as TikTok's Get Product actually returned it,
-    // for every id this sync fetched detail for. Confirms (or disproves)
-    // the assumed field name/enum from NON_LIVE_STATUSES.
-    statusByProductId: Array<{ productId: string; title: string; status: string | undefined }>;
-  };
 };
 
 /**
@@ -120,17 +96,9 @@ export async function syncTikTokProducts(userId: string): Promise<ProductSyncRes
     .eq("user_id", userId);
   const invByName = new Map<string, { id: string }>();
   const invByTikTokId = new Map<string, { id: string; delisted: boolean }>();
-  const debugLinkedRowsBeforeSync: Array<{ name: string; tiktokProductId: string; alreadyDelisted: boolean }> = [];
   for (const it of (existingInv ?? []) as any[]) {
     if (it.name) invByName.set(String(it.name).trim().toLowerCase(), { id: it.id });
-    if (it.tiktok_product_id) {
-      invByTikTokId.set(it.tiktok_product_id, { id: it.id, delisted: !!it.tiktok_delisted_at });
-      debugLinkedRowsBeforeSync.push({
-        name: String(it.name ?? ""),
-        tiktokProductId: it.tiktok_product_id,
-        alreadyDelisted: !!it.tiktok_delisted_at,
-      });
-    }
+    if (it.tiktok_product_id) invByTikTokId.set(it.tiktok_product_id, { id: it.id, delisted: !!it.tiktok_delisted_at });
   }
 
   // Statuses that mean a product is no longer actually sellable on TikTok —
@@ -157,7 +125,6 @@ export async function syncTikTokProducts(userId: string): Promise<ProductSyncRes
   // why that was wrong). Used below to find linked inventory rows that
   // dropped OUT of the catalog entirely.
   const seenTiktokIds = new Set<string>();
-  const debugStatusByProductId: Array<{ productId: string; title: string; status: string | undefined }> = [];
 
   // IMPORTANT: every productId is re-fetched and re-written on every sync
   // run, including ones already linked (tiktok_product_id already set).
@@ -176,7 +143,6 @@ export async function syncTikTokProducts(userId: string): Promise<ProductSyncRes
     } catch {
       continue; // skip products we can't fetch detail for; retried next sync
     }
-    debugStatusByProductId.push({ productId, title: detail.title, status: detail.status });
     if (detail.status && NON_LIVE_STATUSES.has(detail.status.toUpperCase())) {
       // Not currently sellable (most commonly: deleted on TikTok). Leave it
       // OUT of seenTiktokIds so the delisted-reconciliation below flags any
@@ -250,17 +216,5 @@ export async function syncTikTokProducts(userId: string): Promise<ProductSyncRes
     delisted++;
   }
 
-  return {
-    imported,
-    linked,
-    refreshed,
-    delisted,
-    relisted,
-    total: productIds.length,
-    debug: {
-      searchedProductIds: productIds,
-      linkedRowsBeforeSync: debugLinkedRowsBeforeSync,
-      statusByProductId: debugStatusByProductId,
-    },
-  };
+  return { imported, linked, refreshed, delisted, relisted, total: productIds.length };
 }
