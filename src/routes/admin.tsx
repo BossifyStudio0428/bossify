@@ -17,11 +17,11 @@ import {
 
 // IMPORTANT: this must be the real deployed backend, NOT getPublicOrigin().
 // getPublicOrigin() is for customer-facing SHARE links (order/booking/team
-// links) and deliberately falls back to the old bossify-malaysia.lovable.app
-// domain on native so those links are shareable outside the app. That domain
-// is not the live API anymore since the migration to Cloudflare Workers, so
-// using it for an actual fetch() here returns the app's own HTML shell
-// instead of JSON — that's what showed up as raw "<!DOCTYPE html>..." text
+// links) and deliberately falls back to the production Cloudflare Workers
+// origin on native so those links are shareable outside the app. Using
+// getPublicOrigin() for an actual fetch() here previously returned the
+// app's own HTML shell instead of JSON when it fell back to a stale
+// non-API domain — that's what showed up as raw "<!DOCTYPE html>..." text
 // in the admin page's error toast on the native Android build.
 const API_ORIGIN = "https://tanstack-start-app.bossifystudio.workers.dev";
 

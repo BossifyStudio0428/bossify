@@ -263,27 +263,6 @@ function ShellInner() {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    // TEMP DIAGNOSTIC -- remove once the /auth bounce-to-/welcome bug is
-    // found. Logs every flag this guard reads, right before it decides
-    // whether to redirect, so we can see in prod console exactly which
-    // branch fires for a visitor who keeps getting bounced off /auth.
-    // eslint-disable-next-line no-console
-    console.log("[bf-diag] guard effect run", {
-      pathname: locationPathname,
-      isNative: Capacitor.isNativePlatform(),
-      hasSession: !!session,
-      isWelcomeRoute,
-      isAuthFlowRoute,
-      isOrderFormRoute,
-      isDineRoute,
-      isTrackRoute,
-      isPrivacyPolicyRoute,
-      isTermsRoute,
-      isLanguageRoute,
-      hasPickedLanguageEver: hasPickedLanguageEver(),
-      hasShownSplashThisSession: typeof window !== "undefined" ? hasShownSplashThisSession() : null,
-      loading,
-    });
     // Web (non-native) entry point: a logged-out visitor hitting any
     // non-exempt route gets sent to the public /welcome landing page
     // first, ahead of the language gate and the splash screen. The
@@ -301,18 +280,21 @@ function ShellInner() {
       !isPrivacyPolicyRoute &&
       !isTermsRoute
     ) {
-      // eslint-disable-next-line no-console
-      console.log("[bf-diag] BRANCH 1 -> /welcome (not native, no session, not an exempt route)");
       setShowInlineSplash(false);
       navigate({ to: "/welcome", replace: true });
       return;
     }
     // Language gate runs FIRST and applies to every route except /language
     // itself. Even on /splash we redirect immediately if the user has not
-    // tapped Continue on the language page yet.
-    if (!isLanguageRoute && !isOrderFormRoute && !isDineRoute && !isPrivacyPolicyRoute && !isTermsRoute && !isWelcomeRoute && !hasPickedLanguageEver()) {
-      // eslint-disable-next-line no-console
-      console.log("[bf-diag] BRANCH 2 -> /language (language never picked)");
+    // tapped Continue on the language page yet. /auth and the rest of the
+    // auth flow (reset-password, forgot-password, order tracking links) are
+    // also exempt: a visitor clicking "Start Free"/"Sign In" from the public
+    // landing page, or opening a password-reset link, has never had a
+    // chance to pick a language yet (fresh browser => hasPickedLanguageEver
+    // is false), and must NOT be bounced into the language picker (and from
+    // there into /welcome, since /language itself isn't exempt from the
+    // branch above) instead of reaching the page they asked for.
+    if (!isLanguageRoute && !isAuthFlowRoute && !isOrderFormRoute && !isDineRoute && !isPrivacyPolicyRoute && !isTermsRoute && !isWelcomeRoute && !hasPickedLanguageEver()) {
       setShowInlineSplash(false);
       navigate({ to: "/language", replace: true });
       return;
@@ -321,8 +303,6 @@ function ShellInner() {
     // bookmark or clicking the logo) is sent straight into the app
     // instead of seeing the marketing page again.
     if (isWelcomeRoute && session) {
-      // eslint-disable-next-line no-console
-      console.log("[bf-diag] BRANCH 3 -> / (on welcome but has session)");
       setShowInlineSplash(false);
       navigate({ to: "/", replace: true });
       return;
@@ -345,8 +325,6 @@ function ShellInner() {
     setShowInlineSplash(false);
     if (loading) return;
     if (!session && !isAuthFlowRoute) {
-      // eslint-disable-next-line no-console
-      console.log("[bf-diag] BRANCH 4 -> /auth (no session, not already on an auth-flow route)");
       navigate({ to: "/auth" });
       return;
     }

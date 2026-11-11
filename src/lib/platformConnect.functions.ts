@@ -8,11 +8,11 @@ import { buildTikTokAuthUrl } from "@/lib/platforms/tiktok.server";
 const SUPPORTED = ["tiktok", "shopee", "lazada", "facebook", "instagram"] as const;
 
 function getAppOrigin(): string {
-  // Prefer explicit env, otherwise fall back to the stable preview/prod URL.
+  // Prefer explicit env, otherwise fall back to the real production URL.
   return (
     process.env.APP_PUBLIC_URL ||
     process.env.VITE_APP_PUBLIC_URL ||
-    "https://bossify-malaysia.lovable.app"
+    "https://tanstack-start-app.bossifystudio.workers.dev"
   );
 }
 

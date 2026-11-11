@@ -72,7 +72,7 @@ function buildDeliveryStatusMessage(
 
 function trackingUrlFor(code: string): string {
   const origin =
-    typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app";
+    typeof window !== "undefined" ? window.location.origin : "https://tanstack-start-app.bossifystudio.workers.dev";
   return `${origin}/track/${code}`;
 }
 

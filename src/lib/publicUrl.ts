@@ -1,4 +1,4 @@
-const PRODUCTION_ORIGIN = "https://bossify-malaysia.lovable.app";
+const PRODUCTION_ORIGIN = "https://tanstack-start-app.bossifystudio.workers.dev";
 
 export function isNativeWebView(): boolean {
   if (typeof window === "undefined") return false;
@@ -24,9 +24,9 @@ export function isNativeWebView(): boolean {
 
 /**
  * Returns the public-facing origin for share links.
- * Capacitor apps run on localhost/capacitor:// internally, and preview/lovable
- * subdomains aren't shareable, so we always use the production origin except
- * when running on the actual production or a custom domain in a real browser.
+ * Capacitor apps run on localhost/capacitor:// internally, which isn't
+ * shareable, so we always use the production origin except when running on
+ * the actual production domain (or a future custom domain) in a real browser.
  */
 export function getPublicOrigin(): string {
   if (typeof window === "undefined") return PRODUCTION_ORIGIN;
@@ -35,10 +35,6 @@ export function getPublicOrigin(): string {
   if (isNativeWebView()) return PRODUCTION_ORIGIN;
   // Localhost (Capacitor Android serves over http://localhost)
   if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local")) {
-    return PRODUCTION_ORIGIN;
-  }
-  // Lovable preview/sandbox URLs aren't meant for end-customer sharing
-  if (hostname.includes("lovable.dev") || hostname.includes("lovableproject.com")) {
     return PRODUCTION_ORIGIN;
   }
   return origin;

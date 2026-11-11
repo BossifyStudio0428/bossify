@@ -115,7 +115,7 @@ function pageShell(title: string, subtitle: string, businessName: string, lang: 
   </div>
   <div class="meta"><span>${esc(l.generated)}: ${esc(generatedAt)}</span><span></span></div>
   ${bodyHtml}
-  <div class="footer">Powered by Bossify — bossify-malaysia.lovable.app</div>
+  <div class="footer">Powered by Bossify</div>
 </div>
 </body></html>`;
 }

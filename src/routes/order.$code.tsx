@@ -476,7 +476,7 @@ function PublicOrderFormPage() {
             {state.reason === "disabled" ? t("pof_form_disabled_sub") : t("pof_not_found_sub")}
           </p>
           <a
-            href="https://bossify-malaysia.lovable.app"
+            href="/"
             className="inline-block mt-6 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
           >
             Bossify
@@ -590,7 +590,7 @@ function PublicOrderFormPage() {
             <p className="text-xs text-muted-foreground mt-2">— {done.business}</p>
           </div>
           {(() => {
-            const origin = typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app";
+            const origin = typeof window !== "undefined" ? window.location.origin : "https://tanstack-start-app.bossifystudio.workers.dev";
             const trackUrl = `${origin}/track/${done.code}`;
             return (
               <a
@@ -645,7 +645,7 @@ function PublicOrderFormPage() {
           )}
           {done.paymentMethod === "bank_transfer" && done.whatsapp && (() => {
             const amountStr = done.amount.toFixed(2);
-            const origin = typeof window !== "undefined" ? window.location.origin : "https://bossify-malaysia.lovable.app";
+            const origin = typeof window !== "undefined" ? window.location.origin : "https://tanstack-start-app.bossifystudio.workers.dev";
             const trackUrl = `${origin}/track/${done.code}`;
             const msg =
               lang === "zh"

@@ -72,13 +72,12 @@ export const Route = createFileRoute("/api/public/stripe/checkout")({
         try {
           const stripe = getStripe();
           const ALLOWED_ORIGINS = new Set([
-            "https://bossify-malaysia.lovable.app",
-            "https://id-preview--db91ee30-ba9c-4741-9a03-2d8ed9ec2d81.lovable.app",
+            "https://tanstack-start-app.bossifystudio.workers.dev",
           ]);
           const reqOrigin = request.headers.get("origin") ?? "";
           const origin = ALLOWED_ORIGINS.has(reqOrigin)
             ? reqOrigin
-            : "https://bossify-malaysia.lovable.app";
+            : "https://tanstack-start-app.bossifystudio.workers.dev";
           const session = await stripe.checkout.sessions.create({
             mode: planType === "lifetime" ? "payment" : "subscription",
             line_items: [{ price: priceId, quantity: 1 }],
