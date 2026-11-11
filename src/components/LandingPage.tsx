@@ -1,31 +1,14 @@
-import { useState, useRef, useEffect, cloneElement, type ReactNode } from "react";
+import { useState, useRef, useEffect, type ReactNode, type RefObject } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Menu,
   X,
   ArrowRight,
   ArrowDown,
-  Play,
-  TrendingUp,
-  DollarSign,
-  Package,
-  PackageX,
-  FileText,
-  Truck,
-  Users,
-  ClipboardCheck,
-  MessageCircle,
   Check,
-  Minus,
-  ChevronDown,
-  Layers,
-  Archive,
-  MoreHorizontal,
-  ShoppingBag,
   Zap,
   CreditCard,
   Smartphone,
-  RotateCcw,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import bossifyLogo from "@/assets/bossify-logo.png";
@@ -54,37 +37,31 @@ const HERO_SCREENSHOTS: { src: string; alt: string }[] = [
 // right now -- kept as-is in case other marketing material wants them.
 
 // ---------------------------------------------------------------------------
-// Design tokens -- premium dark canvas. One consistent near-black-purple
-// background for the whole page; depth comes from elevated card surfaces,
-// hairline borders and a purple->pink gradient accent, not section banding.
+// Design tokens -- "ledger" look. White paper canvas, deep ink-purple for
+// headlines / buttons / the dark bands, and ONE loud accent (coral) kept
+// for the thing the product is about: the money you actually keep. No
+// purple->pink gradients, no lavender-on-lavender cards -- contrast comes
+// from white cards on a pale surface and from two full dark bands (the
+// Problem section and the final CTA) that break up the page rhythm.
+// Financial figures are always set in monospace, like a printed receipt.
 // ---------------------------------------------------------------------------
-// Light mode. Background/text/surface tokens flipped from the previous
-// dark-only palette; the purple/pink brand accent (GRAD_FROM/GRAD_TO) is
-// unchanged on purpose so the landing page still reads as the same product
-// as the dark, logged-in app -- only the canvas flips from dark to light.
-const BG = "#FCFBFE";
-// Deepened from the original #F7F5FA/#EFEAFA/0.16/0.32 — those sat within
-// ~1-2% lightness of BG and each other, so cards barely separated from the
-// page and from one another ("too white/empty" feedback). Same hue, more
-// contrast, still a light theme.
-const CARD = "#F3EEFC";
-const CARD_SOFT = "#EAE1FA";
-const BORDER = "rgba(139,92,246,0.22)";
-const BORDER_STRONG = "rgba(139,92,246,0.42)";
-// A soft lavender wash used as a section-level background band (not a
-// card), so a handful of otherwise-plain text sections visually separate
-// from the page canvas instead of all sitting on identical flat BG.
-const SECTION_TINT = "linear-gradient(180deg, #F6F1FD 0%, #FBF9FE 100%)";
-const TEXT = "#1A1225";
-const TEXT_MUTED = "#5B5270";
-const GRAD_FROM = "#8B5CF6";
-const GRAD_TO = "#D946EF";
-const GRADIENT = `linear-gradient(135deg, ${GRAD_FROM} 0%, ${GRAD_TO} 100%)`;
-// Status colors darkened a step from the dark-mode values for legible
-// contrast on a light background (same hues, ~600-weight instead of ~400).
+const BG = "#FFFFFF";
+const SURFACE = "#F7F5FA";
+const LINE = "#E1DCEC";
+const DASH = "#CDC5DE";
+const INK = "#1E1730";
+const INK_SOFT = "#5B5270";
+const PRIMARY = "#3B1E6D";
+const PRIMARY_LIGHT = "#6C4AB6";
+const NIGHT = "#1C0F38";
+const LAVENDER = "#C9B8F3";
+const ACCENT = "#FF3B5C";
 const GREEN = "#16A34A";
-const RED = "#DC2626";
-const BLUE = "#2563EB";
+const RED = "#D92D4A";
+
+const DISPLAY = '"Space Grotesk", system-ui, sans-serif';
+const BODY = '"IBM Plex Sans", system-ui, sans-serif';
+const MONO = '"IBM Plex Mono", ui-monospace, Consolas, monospace';
 
 type ShowcaseItem = { title: string; desc: string };
 type CostLine = { label: string; value: string };
@@ -414,61 +391,37 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
   },
 };
 
-const REPORT_ICONS = [DollarSign, TrendingUp, Package, FileText, Users, Truck, ClipboardCheck];
-const FEATURE_ICONS = [TrendingUp, Package, FileText, ShoppingBag];
-const COST_ICONS = [Package, Layers, Truck, Archive, MoreHorizontal];
-const CAPABILITY_ICONS = [TrendingUp, Package, FileText, ShoppingBag];
 const TRUST_BULLET_ICONS = [Zap, CreditCard, Smartphone];
 
 // ---------------------------------------------------------------------------
-// Motion: lightweight scroll-reveal + cursor-follow tilt. No animation
-// libraries -- just IntersectionObserver and pointermove, both skipped
-// entirely under prefers-reduced-motion.
+// Motion: lightweight scroll-reveal. No animation libraries -- just
+// IntersectionObserver, skipped entirely under prefers-reduced-motion.
 // ---------------------------------------------------------------------------
 function Reveal({
   children,
   delay = 0,
-  mode = "scroll",
+  y = 22,
+  className,
 }: {
   children: ReactNode;
   delay?: number;
-  mode?: "scroll" | "mount";
+  y?: number;
+  className?: string;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) {
-      setVisible(true);
-      return;
-    }
-    if (mode === "mount") {
-      const t = setTimeout(() => setVisible(true), 60);
-      return () => clearTimeout(t);
-    }
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [mode]);
-
+  const [ref, visible] = useInView<HTMLDivElement>();
   return (
     <div
       ref={ref}
+      className={className}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(26px)",
-        transition: `opacity 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+        transform: visible ? "translateY(0)" : `translateY(${y}px)`,
+        // No transition on the way OUT: the element is already off screen
+        // when it resets, so it snaps back to its start pose and is ready to
+        // play again the next time it scrolls in.
+        transition: visible
+          ? `opacity 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms`
+          : "none",
       }}
     >
       {children}
@@ -476,51 +429,144 @@ function Reveal({
   );
 }
 
-function TiltWrap({ children, max = 6 }: { children: ReactNode; max?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
+// ---------------------------------------------------------------------------
+// The "receipt" -- Bossify's signature motif. White paper, monospace type,
+// dashed dividers and a torn zig-zag bottom edge (a CSS mask, so the shadow
+// has to come from a drop-shadow filter on the wrapper rather than a
+// box-shadow, which the mask would clip).
+// ---------------------------------------------------------------------------
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+
+// Drives the "Sales don't tell the whole story" receipt.
+// - Desktop (wide + tall enough viewport): the section is pinned and its
+//   progress is tied directly to scroll position, so the visitor scrubs the
+//   costs off the balance themselves -- forwards and backwards.
+// - Phones / short windows: no pinning; the same sequence just plays once
+//   on a timer when the receipt scrolls into view.
+function useStoryProgress(sectionRef: RefObject<HTMLElement | null>, triggerRef: RefObject<HTMLElement | null>) {
+  const [scrub, setScrub] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (!window.matchMedia("(pointer: fine)").matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const section = sectionRef.current;
+    const trigger = triggerRef.current;
+    if (!section || !trigger) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setProgress(1);
+      return;
+    }
+    const mq = window.matchMedia("(min-width: 1024px) and (min-height: 640px)");
+    let raf = 0;
+    let cleanup = () => {};
 
-    let frame = 0;
-    const onMove = (e: PointerEvent) => {
-      const rect = el.getBoundingClientRect();
-      const px = (e.clientX - rect.left) / rect.width - 0.5;
-      const py = (e.clientY - rect.top) / rect.height - 0.5;
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        el.style.transform = `rotateX(${(-py * max).toFixed(2)}deg) rotateY(${(px * max).toFixed(2)}deg)`;
-      });
+    const setup = () => {
+      cleanup();
+      if (mq.matches) {
+        setScrub(true);
+        const measure = () => {
+          const r = section.getBoundingClientRect();
+          const span = r.height - window.innerHeight;
+          const p = span > 0 ? clamp01(-r.top / span) : 0;
+          setProgress((prev) => (Math.abs(prev - p) > 0.001 ? p : prev));
+        };
+        const onScroll = () => {
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(measure);
+        };
+        onScroll();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+        cleanup = () => {
+          window.removeEventListener("scroll", onScroll);
+          window.removeEventListener("resize", onScroll);
+          cancelAnimationFrame(raf);
+        };
+      } else {
+        setScrub(false);
+        setProgress(0);
+        let playing = false;
+        const observer = new IntersectionObserver(
+          ([entry]) => {
+            if (!entry.isIntersecting) {
+              // fully off screen: rewind so it plays again next time
+              cancelAnimationFrame(raf);
+              playing = false;
+              setProgress(0);
+              return;
+            }
+            if (playing || entry.intersectionRatio < 0.4) return;
+            playing = true;
+            const t0 = performance.now();
+            const tick = (now: number) => {
+              const p = Math.min(1, (now - t0) / 3600);
+              setProgress(p);
+              if (p < 1) raf = requestAnimationFrame(tick);
+            };
+            raf = requestAnimationFrame(tick);
+          },
+          { threshold: [0, 0.4] },
+        );
+        observer.observe(trigger);
+        cleanup = () => {
+          observer.disconnect();
+          cancelAnimationFrame(raf);
+        };
+      }
     };
-    const onLeave = () => {
-      cancelAnimationFrame(frame);
-      el.style.transform = "rotateX(0deg) rotateY(0deg)";
-    };
-    el.addEventListener("pointermove", onMove);
-    el.addEventListener("pointerleave", onLeave);
+    setup();
+    mq.addEventListener("change", setup);
     return () => {
-      el.removeEventListener("pointermove", onMove);
-      el.removeEventListener("pointerleave", onLeave);
-      cancelAnimationFrame(frame);
+      mq.removeEventListener("change", setup);
+      cleanup();
     };
-  }, [max]);
+  }, [sectionRef, triggerRef]);
 
-  return (
-    <div ref={ref} style={{ transition: "transform 0.25s ease-out", willChange: "transform" }}>
-      {children}
-    </div>
-  );
+  return { scrub, progress };
 }
 
-// ---------------------------------------------------------------------------
-// Count-up number animation -- animates 0 -> target once `start` flips true
-// (mount, or IntersectionObserver visibility), using an eased RAF loop.
-// Jumps straight to the final value under prefers-reduced-motion.
-// ---------------------------------------------------------------------------
-function useCountUp(target: number, start: boolean, durationMs = 1400) {
+// Scroll-linked touches, written straight to element styles (no re-render):
+// - [data-pan] screenshots: once a frame is fully on screen, the real
+//   screenshot inside it pans downward as you keep scrolling.
+// - [data-parallax="k"]: hero layers drift at slightly different speeds.
+function useScrollFx(rootRef: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const update = () => {
+      const vh = window.innerHeight;
+      root.querySelectorAll<HTMLElement>("[data-pan]").forEach((img) => {
+        const r = img.getBoundingClientRect();
+        if (r.bottom < -80 || r.top > vh + 80) return;
+        const q = clamp01(((vh - r.bottom) / vh) * 1.4);
+        img.style.objectPosition = `50% ${(q * 100).toFixed(1)}%`;
+      });
+      const y = window.scrollY;
+      if (y < vh * 1.6) {
+        root.querySelectorAll<HTMLElement>("[data-parallax]").forEach((el) => {
+          el.style.transform = `translate3d(0, ${(y * Number(el.dataset.parallax)).toFixed(1)}px, 0)`;
+        });
+      }
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [rootRef]);
+}
+
+// Eased 0 -> target count-up once `start` flips true. Jumps straight to the
+// final value under prefers-reduced-motion.
+function useCountUp(target: number, start: boolean, durationMs = 1100) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     if (!start) return;
@@ -530,10 +576,9 @@ function useCountUp(target: number, start: boolean, durationMs = 1400) {
     }
     let raf = 0;
     const t0 = performance.now();
-    const ease = (x: number) => 1 - Math.pow(1 - x, 3);
     const tick = (now: number) => {
       const p = Math.min(1, (now - t0) / durationMs);
-      setValue(Math.round(target * ease(p)));
+      setValue(target * (1 - Math.pow(1 - p, 3)));
       if (p < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -542,129 +587,196 @@ function useCountUp(target: number, start: boolean, durationMs = 1400) {
   return value;
 }
 
-const fmtRM = (n: number) => `RM${n.toLocaleString("en-US")}`;
-const fmtInt = (n: number) => n.toLocaleString("en-US");
-
-function polylineLength(coords: number[][]) {
-  let len = 0;
-  for (let i = 1; i < coords.length; i++) {
-    const [x1, y1] = coords[i - 1];
-    const [x2, y2] = coords[i];
-    len += Math.hypot(x2 - x1, y2 - y1);
-  }
-  return len;
+// True while the element is on screen; flips back to false only once it has
+// left the viewport completely, so anything keyed off it replays on every
+// visit without flickering at the edge. Always true under reduced motion.
+function useInView<T extends Element>() {
+  const ref = useRef<T>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setInView(true);
+      return;
+    }
+    const show = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setInView(true);
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
+    );
+    const hide = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) setInView(false);
+    });
+    show.observe(el);
+    hide.observe(el);
+    return () => {
+      show.disconnect();
+      hide.disconnect();
+    };
+  }, []);
+  return [ref, inView] as const;
 }
 
-// ---------------------------------------------------------------------------
-// Phone-bezel frame around one real screenshot -- rounded dark bezel + a
-// small top notch so each slide reads as an actual phone, not a bare
-// rectangle crop.
-// ---------------------------------------------------------------------------
-function PhoneFrame({ src, alt }: { src: string; alt: string }) {
+// Counter that bumps each time `inView` turns true -- used as a React key
+// to restart CSS keyframe animations (and remount count-ups) on every visit.
+function useReplayKey(inView: boolean) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (inView) setN((v) => v + 1);
+  }, [inView]);
+  return n;
+}
+
+const ZIGZAG_MASK =
+  "conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%";
+
+function ReceiptPaper({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div
-      className="relative w-full rounded-[26px] overflow-hidden border-[7px]"
-      style={{
-        borderColor: "#0B0714",
-        // App's own light background (matches capacitor.config.ts /
-        // in-app canvas), not pure black -- since the fit below is
-        // "contain" (no cropping), any thin top/bottom letterbox strip
-        // reads as the screen's own background rather than a black bar.
-        background: "#F4F3F8",
-        aspectRatio: "663 / 1460",
-        boxShadow: "0 30px 60px -20px rgba(0,0,0,0.45)",
-      }}
-    >
+    <div className={className} style={{ filter: "drop-shadow(0 22px 34px rgba(20,8,48,0.3))" }}>
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 z-10 rounded-b-xl"
-        style={{ width: "38%", height: "4.5%", background: "#0B0714" }}
-      />
-      {/* object-contain, not cover: source screenshots come from
-          different pages/crops with slightly different aspect ratios,
-          and "cover" was center-cropping equal slices off the LEFT and
-          RIGHT edges to force-fill this narrow phone ratio -- which cut
-          into real UI text/tabs living close to those edges (e.g. "This
-          week" / "Pick a report..." losing their first word). "contain"
-          never crops; worst case is a few px of letterbox top/bottom. */}
-      <img
-        key={src}
-        src={src}
-        alt={alt}
-        className="bf-coverflow-pop absolute inset-0 w-full h-full object-contain object-top"
-      />
+        style={{
+          background: "#FFFFFF",
+          color: INK,
+          fontFamily: MONO,
+          borderRadius: "8px 8px 0 0",
+          paddingBottom: 14,
+          WebkitMask: ZIGZAG_MASK,
+          mask: ZIGZAG_MASK,
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
 
+function Dash() {
+  return <div className="my-2.5" style={{ borderTop: `1.5px dashed ${DASH}` }} />;
+}
+
+// Small single-order slip that overlaps the hero phone. Labels reuse the
+// Problem-section copy so it is translated in all three languages.
+function HeroSlip({ copy }: { copy: LandingCopy }) {
+  // Net figure counts up just as the slip finishes "printing" (see .bf-slip-print).
+  const [go, setGo] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setGo(true), 1300);
+    return () => window.clearTimeout(t);
+  }, []);
+  const net = useCountUp(57.5, go, 900);
+  const rows = [
+    { label: copy.problemSalesLabel, value: "RM 250.00", neg: false },
+    { label: copy.problemCostLines[0]?.label ?? "", value: "− RM 180.00", neg: true },
+    { label: copy.problemCostLines[1]?.label ?? "", value: "− RM 12.50", neg: true },
+  ];
+  return (
+    <ReceiptPaper>
+      <div className="px-3.5 sm:px-4 pt-3.5 sm:pt-4 pb-2 text-[10px] sm:text-[11.5px]">
+        <p style={{ color: INK_SOFT }}>ORDER #A1042</p>
+        <p className="font-semibold">Bossify · Real Profit Slip</p>
+        <Dash />
+        <div className="space-y-1">
+          {rows.map((r) => (
+            <div key={r.label} className="flex items-baseline justify-between gap-2">
+              <span className="truncate" style={{ color: INK_SOFT }}>{r.label}</span>
+              <span className="shrink-0 tabular-nums" style={{ color: r.neg ? RED : INK }}>{r.value}</span>
+            </div>
+          ))}
+        </div>
+        <Dash />
+        <p className="text-[9px] sm:text-[10px] uppercase tracking-wider" style={{ color: INK_SOFT }}>
+          {copy.problemProfitLabel}
+        </p>
+        <p className="text-[20px] sm:text-[26px] font-semibold tabular-nums leading-tight" style={{ color: ACCENT }}>
+          RM {net.toFixed(2)}
+        </p>
+      </div>
+    </ReceiptPaper>
+  );
+}
+
 // ---------------------------------------------------------------------------
-// Hero product mockup -- a 3-up "coverflow" of REAL Bossify screenshots
-// (HERO_SCREENSHOTS, src/assets/hero-*.jpg). Every screenshot gets its own
-// persistent phone element (keyed by src, not by slot), positioned purely
-// via `transform: translateX(...) scale(...)` based on its signed distance
-// from the current center index. When the index advances, each phone's
-// target transform changes and the CSS transition animates it, so phones
-// physically slide -- a side phone glides into the front/center position
-// while the center one glides out to the side -- rather than the picture
-// inside a fixed frame just crossfading. Starts on index 1 (Orders
-// centered, Overview + Cost Breakdown as the two side phones) so the three
-// most important screens are what a visitor sees immediately, before any
-// auto-advance happens. Plus dot indicators and a floating "TikTok Shop
-// Synced" badge. No fabricated numbers, no hand-drawn fake UI -- every
-// slide is the product exactly as sellers see it.
+// Hero visual -- ONE solid phone showing real app screenshots (crossfading,
+// never cropped: object-contain), sitting on a deep-purple panel, with the
+// receipt slip overlapping its lower-left corner. Every slide is an actual
+// screen from the live app.
 // ---------------------------------------------------------------------------
-function LaptopMockup() {
-  const [index, setIndex] = useState(1);
+function HeroVisual({ copy }: { copy: LandingCopy }) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [visRef, visIn] = useInView<HTMLDivElement>();
+  const run = useReplayKey(visIn);
   const n = HERO_SCREENSHOTS.length;
 
   useEffect(() => {
+    if (paused) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(() => setIndex((i) => (i + 1) % n), 3000);
+    const id = window.setInterval(() => setIndex((i) => (i + 1) % n), 3600);
     return () => window.clearInterval(id);
-  }, [n]);
-
-  // Signed "slots away from center" for screenshot i, shortest path around
-  // the loop (e.g. for n=4: -1, 0, 1, 2 relative to the current index).
-  function offsetFor(i: number) {
-    let d = i - index;
-    if (d > n / 2) d -= n;
-    if (d < -n / 2) d += n;
-    return d;
-  }
+  }, [n, paused]);
 
   return (
-    <div className="relative w-full max-w-[520px] mx-auto">
-      <div className="relative h-[460px] sm:h-[500px]">
-        {HERO_SCREENSHOTS.map((shot, i) => {
-          const offset = offsetFor(i);
-          const abs = Math.abs(offset);
-          const sign = Math.sign(offset);
-          const x = abs === 0 ? 0 : abs === 1 ? sign * 150 : sign * 260;
-          const scale = abs === 0 ? 1 : abs === 1 ? 0.68 : 0.5;
-          const opacity = abs === 0 ? 1 : abs === 1 ? 0.55 : 0;
-          return (
-            <div
-              key={shot.src}
-              className="absolute left-1/2 top-1/2 w-[230px] sm:w-[252px]"
-              style={{
-                transform: `translate(-50%, -50%) translateX(${x}px) scale(${scale})`,
-                opacity,
-                zIndex: 10 - abs,
-                pointerEvents: abs === 0 ? "auto" : "none",
-                transition: "transform 0.8s cubic-bezier(0.16,1,0.3,1), opacity 0.8s ease-out",
-              }}
-            >
-              <PhoneFrame src={shot.src} alt={shot.alt} />
-            </div>
-          );
-        })}
+    <div ref={visRef} className="relative mx-auto w-full max-w-[540px]">
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 sm:left-[14%] top-[5%] bottom-[11%] rounded-[32px] sm:rounded-[40px] overflow-hidden"
+        style={{ background: `linear-gradient(155deg, ${PRIMARY} 0%, ${PRIMARY_LIGHT} 110%)` }}
+      >
+        {/* faint ledger rules on the panel */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: "repeating-linear-gradient(0deg, rgba(255,255,255,0.07) 0 1px, transparent 1px 34px)",
+          }}
+        />
       </div>
 
-      <div className="flex items-center justify-center gap-1.5 mt-3">
-        {HERO_SCREENSHOTS.map((_, i) => (
-          <span
-            key={i}
-            className="h-1.5 rounded-full transition-all duration-300"
-            style={{ width: i === index ? 16 : 6, background: i === index ? GRAD_FROM : BORDER_STRONG }}
+      <div className="relative ml-auto mr-3 sm:mr-14 w-[206px] sm:w-[268px]">
+        <div
+          className="rounded-[32px] sm:rounded-[38px] p-[7px] sm:p-[9px]"
+          style={{ background: "#120A24", boxShadow: "0 40px 70px -28px rgba(18,10,36,0.75)" }}
+        >
+          <div
+            className="relative rounded-[25px] sm:rounded-[29px] overflow-hidden"
+            style={{ aspectRatio: "663 / 1460", background: "#F4F3F8" }}
+          >
+            {HERO_SCREENSHOTS.map((shot, i) => (
+              <img
+                key={shot.src}
+                src={shot.src}
+                alt={shot.alt}
+                aria-hidden={i !== index}
+                className="absolute inset-0 w-full h-full object-contain object-top"
+                style={{ opacity: i === index ? 1 : 0, transition: "opacity 0.7s ease" }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div data-parallax="-0.13" className="absolute left-0 sm:left-[4%] bottom-[17%] w-[192px] sm:w-[228px]">
+        <div className="bf-slip-float" style={{ transform: "rotate(-4deg)" }}>
+          <div key={run} className="bf-slip-print">
+            <HeroSlip copy={copy} />
+          </div>
+        </div>
+      </div>
+
+      <div className="relative flex items-center justify-center gap-2 mt-6 sm:pl-[14%]">
+        {HERO_SCREENSHOTS.map((shot, i) => (
+          <button
+            key={shot.src}
+            type="button"
+            aria-label={`Screenshot ${i + 1}`}
+            aria-current={i === index}
+            onClick={() => {
+              setIndex(i);
+              setPaused(true);
+            }}
+            className="h-2 rounded-full transition-all duration-300"
+            style={{ width: i === index ? 22 : 8, background: i === index ? PRIMARY : LINE }}
           />
         ))}
       </div>
@@ -672,351 +784,99 @@ function LaptopMockup() {
   );
 }
 
-function MiniProfitPreview() {
-  const pts = [18, 28, 22, 34, 28, 40, 34, 46];
-  const w = 220;
-  const h = 70;
-  const step = w / (pts.length - 1);
-  const max = Math.max(...pts);
-  const coords = pts.map((p, i) => [i * step, h - (p / max) * (h - 12) - 4]);
-  const linePath = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const areaPath = `${linePath} L${w},${h} L0,${h} Z`;
-  return (
-    <div className="rounded-xl p-3" style={{ background: CARD_SOFT }}>
-      <p className="text-[9.5px] font-semibold" style={{ color: TEXT_MUTED }}>Net Profit</p>
-      <div className="flex items-end gap-2 mb-1.5">
-        <p className="text-[15px] font-bold" style={{ color: TEXT }}>RM3,842</p>
-        <span className="text-[10px] font-bold mb-0.5" style={{ color: GREEN }}>+20.4%</span>
-      </div>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[48px]" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="bf-mini-profit" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={GRAD_FROM} stopOpacity="0.35" />
-            <stop offset="100%" stopColor={GRAD_FROM} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={areaPath} fill="url(#bf-mini-profit)" />
-        <path d={linePath} fill="none" stroke={GRAD_FROM} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-  );
-}
-
-function MiniInventoryPreview() {
-  const items = [
-    { name: "Wireless Mouse", stock: 5 },
-    { name: "Phone Stand", stock: 8 },
-  ];
-  return (
-    <div className="rounded-xl overflow-hidden" style={{ background: CARD_SOFT }}>
-      <div className="flex items-center gap-1.5 px-3 py-2" style={{ background: "rgba(248,113,113,0.12)" }}>
-        <PackageX className="w-3 h-3" style={{ color: RED }} />
-        <span className="text-[9.5px] font-bold" style={{ color: RED }}>Low Stock (7)</span>
-      </div>
-      {items.map((it) => (
-        <div key={it.name} className="flex items-center justify-between px-3 py-1.5">
-          <span className="text-[10.5px] truncate" style={{ color: TEXT }}>{it.name}</span>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: RED, background: "rgba(248,113,113,0.12)" }}>{it.stock}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MiniReportsPreview({ reports }: { reports: string[] }) {
-  return (
-    <div className="rounded-xl overflow-hidden" style={{ background: CARD_SOFT }}>
-      {reports.slice(0, 3).map((name, i) => (
-        <div key={name} className="flex items-center justify-between px-3 py-2" style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER}` }}>
-          <span className="flex items-center gap-1.5 text-[10.5px] truncate" style={{ color: TEXT }}>
-            <FileText className="w-3 h-3 shrink-0" style={{ color: GRAD_FROM }} />
-            {name}
-          </span>
-          <span className="text-[8.5px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ color: GRAD_FROM, background: "rgba(139,92,246,0.14)" }}>PDF</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MiniOrdersPreview() {
-  const rows: { code: string; amount: string; status: "Completed" | "Processing" | "Pending" }[] = [
-    { code: "#10482", amount: "RM129.00", status: "Completed" },
-    { code: "#10481", amount: "RM89.00", status: "Processing" },
-    { code: "#10480", amount: "RM159.00", status: "Pending" },
-  ];
-  const style: Record<string, { fg: string; bg: string }> = {
-    Completed: { fg: GREEN, bg: "rgba(74,222,128,0.14)" },
-    Processing: { fg: BLUE, bg: "rgba(96,165,250,0.14)" },
-    Pending: { fg: TEXT_MUTED, bg: "rgba(157,147,181,0.14)" },
-  };
-  return (
-    <div className="rounded-xl overflow-hidden" style={{ background: CARD_SOFT }}>
-      {rows.map((r, i) => (
-        <div key={r.code} className="flex items-center justify-between px-3 py-2" style={{ borderTop: i === 0 ? "none" : `1px solid ${BORDER}` }}>
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[9.5px] font-mono shrink-0" style={{ color: TEXT_MUTED }}>{r.code}</span>
-            <span className="text-[10px] font-semibold" style={{ color: TEXT }}>{r.amount}</span>
-          </div>
-          <span className="text-[8.5px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ color: style[r.status].fg, background: style[r.status].bg }}>
-            {r.status}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
-// Scroll-driven profit waterfall -- "Sales don't tell the whole story" made
-// visual: Sales appears, then each real cost slides in one at a time as
-// the section scrolls into view, ending on an emphasized Real Profit
-// reveal. Triggers once via IntersectionObserver (not continuously
-// scroll-scrubbed) so it stays smooth on mobile and doesn't fight the
-// user's scroll direction.
+// Scroll-triggered profit statement -- "Sales don't tell the whole story"
+// printed as a receipt: Sales appears, then each real cost prints in one
+// line at a time as the section scrolls into view, ending on the number
+// you actually keep. Triggers once via IntersectionObserver (not
+// continuously scroll-scrubbed) so it stays smooth on mobile.
 // ---------------------------------------------------------------------------
-function ProfitWaterfall({ copy }: { copy: LandingCopy }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [step, setStep] = useState(0);
-  const totalSteps = copy.problemCostLines.length + 1;
+function ProfitStatement({ copy, progress, stamp }: { copy: LandingCopy; progress: number; stamp: string }) {
+  const costs = copy.problemCostLines;
+  const n = costs.length;
+  const parse = (v: string) => Number(v.replace(/[^0-9.]/g, "")) || 0;
+  const sales = parse(copy.problemSalesValue);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) {
-      setStep(totalSteps);
-      return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        observer.disconnect();
-        const timers: number[] = [];
-        for (let i = 1; i <= totalSteps; i++) {
-          timers.push(window.setTimeout(() => setStep(i), i * 420));
-        }
-      },
-      { threshold: 0.35 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [totalSteps]);
-
-  const finalReached = step > copy.problemCostLines.length;
-
-  return (
-    <div ref={ref} className="rounded-2xl border overflow-hidden" style={{ background: CARD, borderColor: BORDER }}>
-      <div
-        className="px-5 py-4 flex items-center justify-between"
-        style={{
-          opacity: step > 0 ? 1 : 0,
-          transform: step > 0 ? "translateY(0)" : "translateY(10px)",
-          transition: "opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.16,1,0.3,1)",
-        }}
-      >
-        <span className="text-[11px] font-semibold" style={{ color: TEXT_MUTED }}>{copy.problemSalesLabel}</span>
-        <span className="text-[20px] font-bold tabular-nums" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-          {copy.problemSalesValue}
-        </span>
-      </div>
-      {copy.problemCostLines.map((line, i) => {
-        const Icon = COST_ICONS[i] ?? Minus;
-        const revealed = step > i + 1;
-        return (
-          <div
-            key={line.label}
-            className="flex items-center justify-between gap-3 px-5 py-3 border-t"
-            style={{
-              borderColor: BORDER,
-              opacity: revealed ? 1 : 0,
-              transform: revealed ? "translateX(0)" : "translateX(-16px)",
-              transition: "opacity 0.45s ease-out, transform 0.45s cubic-bezier(0.16,1,0.3,1)",
-            }}
-          >
-            <span className="flex items-center gap-2 text-[12.5px]" style={{ color: TEXT_MUTED }}>
-              <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: TEXT_MUTED }} />
-              {line.label}
-            </span>
-            <span className="text-[13px] font-bold shrink-0 tabular-nums" style={{ color: RED }}>{line.value}</span>
-          </div>
-        );
-      })}
-      <div
-        className="mx-4 my-4 rounded-xl px-5 py-4 flex items-center justify-between"
-        style={{
-          background: finalReached ? GRADIENT : "rgba(139,92,246,0.1)",
-          transition: "background 0.6s ease-out, transform 0.5s cubic-bezier(0.16,1,0.3,1)",
-          transform: finalReached ? "scale(1.02)" : "scale(1)",
-          boxShadow: finalReached ? "0 20px 50px -15px rgba(139,92,246,0.5)" : "none",
-        }}
-      >
-        <span
-          className="text-[11px] font-bold uppercase tracking-wide"
-          style={{ color: finalReached ? "rgba(255,255,255,0.85)" : TEXT_MUTED }}
-        >
-          {copy.problemProfitLabel}
-        </span>
-        <span
-          className="text-[22px] font-bold tabular-nums"
-          style={{
-            color: finalReached ? "#FFFFFF" : TEXT,
-            fontFamily: "Space Grotesk, system-ui, sans-serif",
-            textShadow: finalReached ? "0 0 20px rgba(255,255,255,0.4)" : "none",
-          }}
-        >
-          {copy.problemProfitValue}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Demo video modal -- since there's no recorded demo video yet, this is a
-// simulated product walkthrough built from the same copy as the Problem
-// section: Sales appears, each real cost is subtracted one at a time with
-// a running total, and the sequence lands on Real Profit with emphasis.
-// Auto-plays on open, replayable, closes on Escape/backdrop/X.
-// ---------------------------------------------------------------------------
-function DemoVideoModal({ open, onClose, copy }: { open: boolean; onClose: () => void; copy: LandingCopy }) {
-  const [step, setStep] = useState(0);
-  const [replayKey, setReplayKey] = useState(0);
-  const totalSteps = copy.problemCostLines.length + 1; // + final profit reveal
-
-  useEffect(() => {
-    if (!open) return;
-    setStep(0);
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) {
-      setStep(totalSteps);
-      return;
-    }
-    const timers: number[] = [];
-    for (let i = 1; i <= totalSteps; i++) {
-      timers.push(window.setTimeout(() => setStep(i), 500 + i * 650));
-    }
-    return () => timers.forEach(clearTimeout);
-  }, [open, totalSteps, replayKey]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  const parseRM = (s: string) => Number(s.replace(/[^0-9.-]/g, ""));
-  const salesN = parseRM(copy.problemSalesValue);
-  let runningTotal = salesN;
-  const linesWithRunning = copy.problemCostLines.map((line) => {
-    runningTotal += parseRM(line.value); // values are already negative, e.g. "-RM5,000"
-    return { ...line, runningAfter: runningTotal };
+  // progress 0..1 is spread over one "unit" per cost line plus a hold at the
+  // end. Each cost prints at the start of its unit and is deducted from the
+  // running balance over the first ~2/3 of it.
+  const u = progress * (n + 1.2);
+  let running = sales;
+  costs.forEach((l, i) => {
+    running -= parse(l.value) * clamp01((u - (i + 0.2)) / 0.65);
   });
-  const finalReached = step > copy.problemCostLines.length;
+  const finalReached = u >= n + 0.35;
+  if (finalReached) running = parse(copy.problemProfitValue);
+  const runningText = copy.problemProfitValue.replace(/[0-9][0-9,.]*/, Math.round(running).toLocaleString("en-US"));
+
+  const line = (shown: boolean) => ({
+    opacity: shown ? 1 : 0,
+    transform: shown ? "translateY(0)" : "translateY(8px)",
+    transition: "opacity 0.35s ease-out, transform 0.35s cubic-bezier(0.16,1,0.3,1)",
+  });
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Bossify profit demo"
-      className="fixed inset-0 z-[100] flex items-center justify-center px-4"
-      style={{ background: "rgba(5,3,10,0.82)", backdropFilter: "blur(4px)" }}
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-md rounded-[24px] border overflow-hidden"
-        style={{ background: CARD, borderColor: BORDER_STRONG, boxShadow: "0 40px 100px -20px rgba(139,92,246,0.5)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close demo"
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center border transition-transform hover:scale-110"
-          style={{ background: "rgba(10,6,20,0.6)", borderColor: BORDER, color: TEXT }}
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        <div className="px-6 pt-8 pb-3 text-center">
-          <p className="text-[11px] font-bold tracking-wide uppercase mb-1" style={{ color: TEXT_MUTED }}>
-            {copy.problemSalesLabel}
-          </p>
-          <p
-            className="text-[34px] font-bold tabular-nums tracking-tight"
-            style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}
-          >
-            {copy.problemSalesValue}
-          </p>
+    <ReceiptPaper>
+      <div className="relative px-6 sm:px-8 pt-7 pb-5">
+        <div className="flex items-baseline justify-between gap-3 text-[12px]" style={{ color: INK_SOFT }}>
+          <span>Bossify · Real Profit Slip</span>
+          <span>TikTok Shop</span>
         </div>
-
-        <div className="px-6 pb-2">
-          {linesWithRunning.map((line, i) => {
-            const revealed = step > i;
-            return (
-              <div
-                key={line.label}
-                className="flex items-center justify-between gap-3 py-2.5 border-t"
-                style={{
-                  borderColor: BORDER,
-                  opacity: revealed ? 1 : 0,
-                  transform: revealed ? "translateX(0)" : "translateX(-10px)",
-                  transition: "opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.16,1,0.3,1)",
-                }}
-              >
-                <span className="text-[13px]" style={{ color: TEXT_MUTED }}>{line.label}</span>
-                <span className="text-[13.5px] font-bold tabular-nums shrink-0" style={{ color: RED }}>{line.value}</span>
-              </div>
-            );
-          })}
+        <Dash />
+        <div className="flex items-baseline justify-between gap-3 py-1">
+          <span className="text-[14px]" style={{ color: INK }}>{copy.problemSalesLabel}</span>
+          <span className="text-[22px] sm:text-[24px] font-semibold tabular-nums" style={{ color: INK }}>{copy.problemSalesValue}</span>
         </div>
-
-        <div
-          className="mx-6 my-4 rounded-2xl p-5 text-center"
-          style={{
-            background: finalReached ? GRADIENT : "rgba(139,92,246,0.1)",
-            transition: "background 0.6s ease-out",
-            transform: finalReached ? "scale(1.03)" : "scale(1)",
-            boxShadow: finalReached ? "0 20px 50px -15px rgba(139,92,246,0.55)" : "none",
-          }}
-        >
+        <Dash />
+        <div className="space-y-2.5 py-1">
+          {costs.map((l, i) => (
+            <div key={l.label} className="flex items-baseline justify-between gap-3" style={line(u > i + 0.2)}>
+              <span className="text-[14px]" style={{ color: INK_SOFT }}>{l.label}</span>
+              <span className="text-[14.5px] font-medium tabular-nums shrink-0" style={{ color: RED }}>{l.value}</span>
+            </div>
+          ))}
+        </div>
+        <Dash />
+        <div className="pt-1">
           <p
-            className="text-[11px] font-bold tracking-wide uppercase mb-1"
-            style={{ color: finalReached ? "rgba(255,255,255,0.85)" : TEXT_MUTED }}
+            className="text-[11.5px] uppercase tracking-wider mb-1"
+            style={{ color: INK_SOFT, opacity: finalReached ? 1 : 0, transition: "opacity 0.4s ease-out" }}
           >
             {copy.problemProfitLabel}
           </p>
           <p
-            className="text-[30px] font-bold tabular-nums tracking-tight"
-            style={{
-              color: finalReached ? "#FFFFFF" : TEXT,
-              fontFamily: "Space Grotesk, system-ui, sans-serif",
-              textShadow: finalReached ? "0 0 24px rgba(255,255,255,0.4)" : "none",
-            }}
+            className="text-[40px] sm:text-[48px] font-semibold tabular-nums leading-none"
+            style={{ color: finalReached ? ACCENT : INK, transition: "color 0.35s ease-out" }}
           >
-            {copy.problemProfitValue}
+            {runningText}
           </p>
         </div>
-
-        <div className="px-6 pb-6 flex items-center justify-center">
-          <button
-            type="button"
-            onClick={() => setReplayKey((k) => k + 1)}
-            className="text-[12.5px] font-semibold px-4 py-2 rounded-full border transition-colors hover:border-[rgba(168,124,255,0.5)]"
-            style={{ color: TEXT_MUTED, borderColor: BORDER }}
-          >
-            <RotateCcw className="inline h-3 w-3 mr-1 -mt-0.5" />Replay
-          </button>
+        {/* Rubber stamp that thumps down once the real number is reached */}
+        <div
+          aria-hidden="true"
+          className={`bf-stamp ${finalReached ? "bf-stamp-on" : ""} absolute right-5 sm:right-7 bottom-6 max-w-[132px] px-2.5 py-1.5 text-center text-[12px] font-semibold uppercase tracking-[0.12em] leading-tight rounded-md`}
+          style={{ color: ACCENT, border: `3px solid ${ACCENT}` }}
+        >
+          {stamp}
         </div>
       </div>
-    </div>
+    </ReceiptPaper>
   );
 }
+
+function Eyebrow({ children, onDark = false }: { children: ReactNode; onDark?: boolean }) {
+  return (
+    <p
+      className="inline-flex items-center gap-2 text-[12px] font-medium tracking-[0.14em] uppercase mb-4"
+      style={{ color: onDark ? LAVENDER : PRIMARY_LIGHT, fontFamily: MONO }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: ACCENT }} />
+      {children}
+    </p>
+  );
+}
+
+const H2_CLASS = "text-[30px] sm:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[1.08]";
 
 export function LandingPage() {
   const { t, lang } = useI18n();
@@ -1092,410 +952,319 @@ export function LandingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const trustIcons = TRUST_BULLET_ICONS;
-  const featureCards = [c.showcaseProfit, c.showcaseInventory, c.showcaseReports, c.showcaseOrders];
-  const featureMinis = [<MiniProfitPreview key="p" />, <MiniInventoryPreview key="i" />, <MiniReportsPreview key="r" reports={c.reports} />, <MiniOrdersPreview key="o" />];
+  const features = [
+    { ...c.showcaseProfit, src: heroOverviewScreenshot },
+    { ...c.showcaseInventory, src: heroInventoryScreenshot },
+    { ...c.showcaseReports, src: heroReportsScreenshot },
+    { ...c.showcaseOrders, src: heroOrdersScreenshot },
+  ];
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  const storyRef = useRef<HTMLElement>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const { scrub, progress } = useStoryProgress(storyRef, receiptRef);
+  useScrollFx(rootRef);
+  const [finalRef, finalIn] = useInView<HTMLHeadingElement>();
+  const [h1Ref, h1In] = useInView<HTMLHeadingElement>();
+  const h1Run = useReplayKey(h1In);
+
+  // Comparison table: rows fade up one after another once the table scrolls in.
+  const [tableRef, tableIn] = useInView<HTMLTableElement>();
+  const rowStyle = (i: number) => ({
+    opacity: tableIn ? 1 : 0,
+    transform: tableIn ? "translateY(0)" : "translateY(12px)",
+    transition: `opacity 0.5s ease-out ${i * 90}ms, transform 0.5s cubic-bezier(0.16,1,0.3,1) ${i * 90}ms`,
+  });
+
+  const primaryBtn =
+    "group inline-flex items-center justify-center gap-2 font-semibold rounded-full text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-10px_rgba(59,30,109,0.65)]";
 
   return (
-    <div
-      className="relative isolate"
-      style={{
-        // A faint dot-grid texture under everything — the plain sections
-        // (hero left column, Trust, the tinted bands) were a single flat
-        // fill with nothing happening between the cards, which is most of
-        // what reads as "empty" on a mostly-light page. This is cheap
-        // texture, not a layout change.
-        backgroundColor: BG,
-        backgroundImage: "radial-gradient(circle, rgba(139,92,246,0.14) 1px, transparent 1px)",
-        backgroundSize: "28px 28px",
-        fontFamily: "IBM Plex Sans, system-ui, sans-serif",
-      }}
-    >
-      <div className="relative z-10">
+    <div ref={rootRef} className="relative isolate" style={{ backgroundColor: BG, color: INK, fontFamily: BODY }}>
       {/* Header */}
-      <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(252,251,254,0.85)", borderColor: BORDER }}>
+      <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(255,255,255,0.88)", borderColor: LINE }}>
         <div className="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <img src={bossifyLogo} alt="Bossify" className="h-9 w-9 rounded-lg object-contain" />
-            <span className="text-lg font-bold tracking-tight" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
+            <span className="text-[19px] font-bold tracking-tight" style={{ color: INK, fontFamily: DISPLAY }}>
               Bossify
             </span>
           </div>
-          <nav className="hidden lg:flex items-center gap-8">
-            <a href="#features" className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navFeatures}</a>
-            <a href="#reports" className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navReports}</a>
-            <a href="#pricing" className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navPricing}</a>
+          <nav className="hidden lg:flex items-center gap-9">
+            <a href="#features" className="bf-text-live text-[15px] font-medium" style={{ color: INK_SOFT }}>{c.navFeatures}</a>
+            <a href="#reports" className="bf-text-live text-[15px] font-medium" style={{ color: INK_SOFT }}>{c.navReports}</a>
+            <a href="#pricing" className="bf-text-live text-[15px] font-medium" style={{ color: INK_SOFT }}>{c.navPricing}</a>
           </nav>
-          <div className="hidden lg:flex items-center gap-3">
-            <button data-cta="login" onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2 rounded-full border" style={{ color: TEXT, borderColor: BORDER }}>
+          <div className="hidden lg:flex items-center gap-2">
+            <button data-cta="login" onClick={() => goAuth("login")} className="text-[15px] font-semibold px-4 py-2 rounded-full transition-colors hover:bg-[#F7F5FA]" style={{ color: INK }}>
               {c.signIn}
             </button>
-            <button
-              data-cta="register"
-              onClick={() => goAuth("register")}
-              className="text-sm font-semibold px-5 py-2.5 rounded-full text-white flex items-center gap-1.5"
-              style={{ background: GRADIENT }}
-            >
+            <button data-cta="register" onClick={() => goAuth("register")} className={`${primaryBtn} text-[15px] px-5 py-2.5`} style={{ background: PRIMARY }}>
               {c.startFree}
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
-          <button className="lg:hidden p-2 -mr-2" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu" style={{ color: TEXT }}>
-            {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <button className="lg:hidden p-2 -mr-2" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu" style={{ color: INK }}>
+            {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
         {menuOpen && (
-          <div className="lg:hidden border-t px-5 py-4 flex flex-col gap-3" style={{ borderColor: BORDER, background: BG }}>
-            <a href="#features" onClick={() => setMenuOpen(false)} className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navFeatures}</a>
-            <a href="#reports" onClick={() => setMenuOpen(false)} className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navReports}</a>
-            <a href="#pricing" onClick={() => setMenuOpen(false)} className="bf-text-live text-sm font-medium" style={{ color: TEXT_MUTED }}>{c.navPricing}</a>
-            <button data-cta="login" onClick={() => goAuth("login")} className="text-sm font-semibold px-4 py-2.5 rounded-full border text-left" style={{ color: TEXT, borderColor: BORDER }}>
-              {c.signIn}
-            </button>
-            <button data-cta="register" onClick={() => goAuth("register")} className="text-sm font-semibold px-4 py-2.5 rounded-full text-white text-left" style={{ background: GRADIENT }}>
-              {c.startFree}
-            </button>
+          <div className="lg:hidden border-t px-5 py-4 flex flex-col gap-1" style={{ borderColor: LINE, background: BG }}>
+            <a href="#features" onClick={() => setMenuOpen(false)} className="text-[16px] font-medium py-2.5" style={{ color: INK }}>{c.navFeatures}</a>
+            <a href="#reports" onClick={() => setMenuOpen(false)} className="text-[16px] font-medium py-2.5" style={{ color: INK }}>{c.navReports}</a>
+            <a href="#pricing" onClick={() => setMenuOpen(false)} className="text-[16px] font-medium py-2.5" style={{ color: INK }}>{c.navPricing}</a>
+            <div className="grid grid-cols-2 gap-3 pt-3">
+              <button data-cta="login" onClick={() => goAuth("login")} className="text-[15px] font-semibold px-4 py-3 rounded-full border" style={{ color: INK, borderColor: LINE }}>
+                {c.signIn}
+              </button>
+              <button data-cta="register" onClick={() => goAuth("register")} className="text-[15px] font-semibold px-4 py-3 rounded-full text-white" style={{ background: PRIMARY }}>
+                {c.startFree}
+              </button>
+            </div>
           </div>
         )}
       </header>
 
       {/* Hero */}
-      <section className="relative px-5 lg:px-8 pt-16 pb-20 lg:pt-20 lg:pb-28 overflow-hidden">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 820px 480px at 18% 15%, rgba(139,92,246,0.16) 0%, transparent 60%), " +
-              "radial-gradient(ellipse 900px 460px at 85% 10%, rgba(217,70,239,0.12) 0%, transparent 65%)",
-          }}
-        />
-        <div className="relative max-w-6xl mx-auto grid lg:grid-cols-[0.85fr_1.15fr] gap-12 items-center">
-          <Reveal mode="mount">
+      <section className="relative px-5 lg:px-8 pt-12 pb-16 lg:pt-20 lg:pb-24 overflow-hidden">
+        <div className="relative max-w-6xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-14 lg:gap-12 items-center">
+          <Reveal>
             <div>
-              <span
-                className="inline-block text-[11px] font-bold tracking-wide px-3 py-1.5 rounded-full border mb-5"
-                style={{ color: TEXT_MUTED, borderColor: BORDER, background: CARD }}
+              <Eyebrow>{c.eyebrow}</Eyebrow>
+              <h1
+                ref={h1Ref}
+                className="text-[44px] leading-[1.02] sm:text-[58px] lg:text-[56px] xl:text-[68px] font-bold tracking-[-0.03em] mb-6"
+                style={{ color: INK, fontFamily: DISPLAY }}
               >
-                {c.eyebrow}
-              </span>
-              <h1 className="text-[40px] leading-[1.05] lg:text-[58px] font-bold tracking-tight mb-5" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
                 {c.headline1}
                 <br />
-                <span className="bf-gradient-live" style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+                <span className="relative inline-block" style={{ color: ACCENT }}>
                   {c.headlineEmphasis}
+                  <svg
+                    key={h1Run}
+                    aria-hidden="true"
+                    className="bf-marker absolute left-0 w-full"
+                    style={{ bottom: "-0.2em", height: "0.2em" }}
+                    viewBox="0 0 300 14"
+                    preserveAspectRatio="none"
+                    fill="none"
+                  >
+                    <path d="M3,9 C45,3 88,12 138,7 S236,3 297,8" stroke={ACCENT} strokeWidth="4" strokeLinecap="round" pathLength={1} />
+                  </svg>
                 </span>
               </h1>
-              <p className="text-[15px] leading-relaxed mb-7" style={{ color: TEXT_MUTED }}>{c.subhead}</p>
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                <button
-                  data-cta="register"
-                  onClick={() => goAuth("register")}
-                  className="group text-[14.5px] font-semibold px-6 py-3 rounded-full text-white flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-8px_rgba(139,92,246,0.6)]"
-                  style={{ background: GRADIENT }}
-                >
+              <p className="text-[17px] lg:text-[19px] leading-relaxed mb-8 max-w-[30rem]" style={{ color: INK_SOFT }}>
+                {c.subhead}
+              </p>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-4 mb-9">
+                <button data-cta="register" onClick={() => goAuth("register")} className={`${primaryBtn} text-[16px] px-8 py-4`} style={{ background: PRIMARY }}>
                   {c.ctaPrimary}
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5" />
                 </button>
+                <a href="#features" className="group inline-flex items-center gap-1.5 text-[16px] font-semibold" style={{ color: PRIMARY }}>
+                  {c.navFeatures}
+                  <ArrowDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
+                </a>
               </div>
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                {c.trustBullets.map((t, i) => {
-                  const Icon = trustIcons[i] ?? Check;
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5">
+                {c.trustBullets.map((label, i) => {
+                  const Icon = TRUST_BULLET_ICONS[i] ?? Check;
                   return (
-                    <span key={t} className="inline-flex items-center gap-1.5 text-[12.5px] font-medium" style={{ color: TEXT_MUTED }}>
-                      <Icon className="w-3.5 h-3.5" style={{ color: GRAD_FROM }} />
-                      {t}
+                    <span key={label} className="inline-flex items-center gap-2 text-[14px] font-medium" style={{ color: INK_SOFT }}>
+                      <Icon className="w-4 h-4" style={{ color: PRIMARY_LIGHT }} />
+                      {label}
                     </span>
                   );
                 })}
               </div>
             </div>
           </Reveal>
-          <Reveal mode="mount" delay={150}>
-            <div style={{ transform: "perspective(1600px) rotateY(-10deg) rotateX(5deg)", transformStyle: "preserve-3d" }}>
-              <TiltWrap max={4}>
-                <LaptopMockup />
-              </TiltWrap>
-            </div>
+          <Reveal delay={150}>
+            <HeroVisual copy={c} />
           </Reveal>
         </div>
       </section>
 
-      {/* Capability strip -- plain typography + a dot separator, not an
-          icon-in-gradient-box for every single item. */}
-      <section className="px-5 lg:px-8 py-5 border-y" style={{ borderColor: BORDER, background: SECTION_TINT }}>
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-8 gap-y-2.5">
-          {c.capabilityStrip.map((label, i) => (
-            <span key={label} className="inline-flex items-center gap-2.5 text-[12.5px] font-semibold" style={{ color: TEXT_MUTED }}>
-              {i > 0 && <span className="hidden sm:inline w-1 h-1 rounded-full -ml-5" style={{ background: BORDER_STRONG }} />}
-              {label}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* Problem -- scroll-driven profit waterfall */}
-      <section className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: SECTION_TINT }}>
-        <div className="max-w-5xl mx-auto grid lg:grid-cols-[0.9fr_1fr] gap-10 lg:gap-14 items-center">
-          <Reveal>
-            <div>
-              <h2 className="text-[28px] lg:text-[32px] font-bold tracking-tight leading-tight mb-4" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-                {c.problemTitle}
-                <br />
-                <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
-                  {c.problemTitleEmphasis}
-                </span>
-              </h2>
-              <p className="text-[14px] leading-relaxed" style={{ color: TEXT_MUTED }}>{c.problemDesc}</p>
-            </div>
-          </Reveal>
-          <Reveal delay={100}>
-            <ProfitWaterfall copy={c} />
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Feature grid */}
-      <section id="features" className="px-5 lg:px-8 py-20 lg:py-28">
-        <div className="max-w-6xl mx-auto">
-          <Reveal>
-            <div className="text-center max-w-xl mx-auto mb-12">
-              <h2 className="text-[26px] lg:text-[32px] font-bold tracking-tight mb-3" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-                {c.featuresTitle}
-              </h2>
-              <p className="text-[14.5px]" style={{ color: TEXT_MUTED }}>{c.featuresSub}</p>
-            </div>
-          </Reveal>
-        </div>
-
-        {/* Continuous left-scrolling marquee -- the card list is rendered
-            twice back-to-back and the track slides exactly -50% (see
-            .bf-marquee-track in styles.css) so the loop seams invisibly.
-            Pauses on hover/focus so a seller can stop and actually read a
-            card; frozen entirely under prefers-reduced-motion. */}
-        <Reveal>
-          <div
-            className="bf-marquee-wrap overflow-hidden"
-            style={{
-              maskImage: "linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent)",
-              WebkitMaskImage: "linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent)",
-            }}
-          >
-            <div className="bf-marquee-track flex gap-5 w-max">
-              {[...featureCards, ...featureCards].map((f, i) => (
-                <TiltWrap key={`${f.title}-${i}`} max={3}>
-                  <div className="rounded-2xl p-5 border h-full w-[280px] shrink-0" style={{ background: CARD, borderColor: BORDER }}>
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-[11px] font-bold tabular-nums" style={{ color: GRAD_FROM }}>
-                        0{(i % featureCards.length) + 1}
-                      </span>
-                      <h3 className="bf-text-live text-[14.5px] font-bold" style={{ color: TEXT }}>{f.title}</h3>
-                    </div>
-                    <p className="text-[12.5px] leading-relaxed mb-4" style={{ color: TEXT_MUTED }}>{f.desc}</p>
-                    {cloneElement(featureMinis[i % featureMinis.length], { key: `mini-${i}` })}
+      {/* Problem -- flat dark band, profit statement receipt */}
+      <section
+        ref={storyRef}
+        className={`px-5 lg:px-8 ${scrub ? "" : "py-20 lg:py-28 overflow-hidden"}`}
+        style={{ background: NIGHT, height: scrub ? "230vh" : undefined }}
+      >
+        <div className={scrub ? "sticky top-16 h-[calc(100vh-4rem)] flex items-center" : ""}>
+          <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <Reveal>
+              <div>
+                <h2 className="text-[34px] sm:text-[42px] lg:text-[52px] font-bold tracking-tight leading-[1.05] mb-6" style={{ color: "#FFFFFF", fontFamily: DISPLAY }}>
+                  {c.problemTitle}
+                  <br />
+                  <span style={{ color: LAVENDER }}>{c.problemTitleEmphasis}</span>
+                </h2>
+                <p className="text-[16.5px] lg:text-[18px] leading-relaxed max-w-[30rem]" style={{ color: "rgba(255,255,255,0.74)" }}>
+                  {c.problemDesc}
+                </p>
+                {scrub && (
+                  <div aria-hidden="true" className="mt-9 h-[3px] w-44 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.16)" }}>
+                    <div className="h-full rounded-full" style={{ width: `${(progress * 100).toFixed(1)}%`, background: progress > 0.86 ? ACCENT : LAVENDER }} />
                   </div>
-                </TiltWrap>
-              ))}
+                )}
+              </div>
+            </Reveal>
+            <div ref={receiptRef} className="w-full max-w-[440px] mx-auto lg:ml-auto lg:mr-0" style={{ transform: "rotate(1.5deg)" }}>
+              <ProfitStatement copy={c} progress={progress} stamp={c.showcaseProfit.title} />
             </div>
           </div>
-        </Reveal>
+        </div>
       </section>
 
-      {/* TikTok integration + reports grid */}
-      <section id="reports" className="px-5 lg:px-8 py-20 lg:py-28">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 items-start">
+      {/* Features -- the real app, not drawings of it. Four actual screens,
+          each with one line under it. Side-scrolls on phones. */}
+      <section id="features" className="px-5 lg:px-8 pt-20 lg:pt-28 pb-16 lg:pb-24 scroll-mt-16">
+        <div className="max-w-6xl mx-auto">
+          <Reveal className="max-w-2xl mb-10 lg:mb-14">
+            <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{c.featuresTitle}</h2>
+            <p className="text-[17px] lg:text-[18px]" style={{ color: INK_SOFT }}>{c.featuresSub}</p>
+          </Reveal>
+          <div
+            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-5 -mx-5 px-5 pb-2 lg:grid lg:grid-cols-4 lg:gap-7 lg:overflow-visible lg:mx-0 lg:px-0 lg:pb-0"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {features.map((f, i) => (
+              <Reveal key={f.title} delay={i * 90} className="shrink-0 w-[66%] sm:w-[38%] lg:w-auto snap-start">
+                <div className="bf-shot rounded-[20px] overflow-hidden border mb-5" style={{ borderColor: LINE, background: "#F4F3F8", aspectRatio: "51 / 100" }}>
+                  <img data-pan="" src={f.src} alt={f.title} loading="lazy" className="w-full h-full object-cover object-top" />
+                </div>
+                <h3 className="text-[19px] font-bold tracking-tight mb-1" style={{ color: INK, fontFamily: DISPLAY }}>{f.title}</h3>
+                <p className="text-[15.5px] leading-relaxed" style={{ color: INK_SOFT }}>{f.desc}</p>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Reports -- a plain ruled list, like a ledger page */}
+      <section id="reports" className="px-5 lg:px-8 py-16 lg:py-24 scroll-mt-16">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[0.8fr_1.2fr] gap-8 lg:gap-16 items-start">
           <Reveal>
-            <div className="rounded-2xl border p-7" style={{ background: CARD, borderColor: BORDER }}>
-              <p className="text-[11px] font-bold tracking-wider mb-3" style={{ color: GRAD_FROM }}>{c.tiktokEyebrow}</p>
-              <h2 className="text-[24px] lg:text-[28px] font-bold tracking-tight mb-3 leading-tight" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-                {c.tiktokTitle}
-              </h2>
-              <p className="text-[13.5px] leading-relaxed mb-6" style={{ color: TEXT_MUTED }}>{c.tiktokSub}</p>
-              <div className="flex items-center gap-2.5 flex-wrap mb-4">
-                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border" style={{ background: "#000000", borderColor: BORDER }}>
-                  <ShoppingBag className="w-4 h-4 text-white" />
-                  <span className="text-[12px] font-bold text-white">TikTok Shop</span>
-                </div>
-                <ArrowRight className="w-4 h-4 shrink-0" style={{ color: TEXT_MUTED }} />
-                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl" style={{ background: GRADIENT }}>
-                  <img src={bossifyLogo} alt="" className="w-4 h-4 rounded" />
-                  <span className="text-[12px] font-bold text-white">Bossify</span>
-                </div>
-                <ArrowRight className="w-4 h-4 shrink-0" style={{ color: TEXT_MUTED }} />
-                <div className="flex flex-col gap-1.5">
-                  {c.tiktokOutcomes.map((o) => (
-                    <span key={o} className="text-[11.5px] font-medium" style={{ color: TEXT }}>
-                      {o}
-                    </span>
-                  ))}
-                </div>
+            <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{c.reportsGridTitle}</h2>
+            <p className="text-[17px] lg:text-[18px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseReports.desc}</p>
+          </Reveal>
+          <div className="border-t-2" style={{ borderColor: INK }}>
+            {c.reports.map((name, i) => (
+              <Reveal key={name} delay={i * 70} y={12}>
+              <div className="flex items-baseline gap-5 py-4 border-b" style={{ borderColor: LINE }}>
+                <span className="text-[14px] w-6 shrink-0" style={{ color: INK_SOFT, fontFamily: MONO }}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="text-[17px] sm:text-[18px] font-semibold flex-1" style={{ color: INK }}>{name}</span>
+                <span className="text-[13px]" style={{ color: INK_SOFT, fontFamily: MONO }}>PDF</span>
               </div>
-              <span
-                className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
-                style={{ color: GREEN, background: "rgba(22,163,74,0.12)" }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 bossify-animate-status-dot" />
-                {c.tiktokComingSoon}
-              </span>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TikTok integration -- the real connect screen */}
+      <section className="px-5 lg:px-8 pt-16 lg:pt-24 border-y overflow-hidden" style={{ background: SURFACE, borderColor: LINE }}>
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-center">
+          <Reveal className="pb-4 lg:pb-24">
+            <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{c.tiktokTitle}</h2>
+            <p className="text-[17px] lg:text-[18px] leading-relaxed mb-6 max-w-[34rem]" style={{ color: INK_SOFT }}>{c.tiktokSub}</p>
+            <p className="inline-flex items-center gap-2 text-[15px] font-semibold" style={{ color: GREEN }}>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 bossify-animate-status-dot" />
+              {c.tiktokComingSoon}
+            </p>
+          </Reveal>
+          <Reveal y={80} delay={100} className="w-full max-w-[340px] mx-auto lg:ml-auto lg:mr-6 self-end">
+            <div
+              className="rounded-t-[26px] overflow-hidden border border-b-0"
+              style={{ borderColor: LINE, background: "#FCFBFE", aspectRatio: "4 / 5", boxShadow: "0 -10px 50px -20px rgba(59,30,109,0.35)" }}
+            >
+              <img data-pan="" src={heroTikTokScreenshot} alt="Bossify TikTok Shop connection screen" loading="lazy" className="w-full h-full object-cover object-top" />
             </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Spreadsheet vs Bossify -- an actual table */}
+      <section className="px-5 lg:px-8 py-20 lg:py-28">
+        <div className="max-w-4xl mx-auto">
+          <Reveal className="mb-10">
+            <h2 className={`${H2_CLASS} mb-3`} style={{ color: INK, fontFamily: DISPLAY }}>{c.compareTitle}</h2>
+            <p className="text-[17px] lg:text-[18px]" style={{ color: INK_SOFT }}>{c.compareSub}</p>
+          </Reveal>
+          <table ref={tableRef} className="w-full border-collapse text-left">
+            <thead>
+              <tr>
+                <th className="w-1/2 py-3.5 pr-4 text-[14px] font-semibold border-b-2" style={{ color: INK_SOFT, borderColor: INK }}>
+                  {c.compareSpreadsheetLabel}
+                </th>
+                <th className="w-1/2 py-3.5 px-4 sm:px-6 text-[14px] font-bold border-b-2" style={{ color: PRIMARY, borderColor: INK, background: "rgba(108,74,182,0.09)" }}>
+                  {c.compareBossifyLabel}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {c.compareSpreadsheetItems.map((item, i) => (
+                <tr key={item} style={rowStyle(i)}>
+                  <td className="py-4 pr-4 align-top text-[15.5px] sm:text-[16.5px] border-b" style={{ color: INK_SOFT, borderColor: LINE }}>
+                    {item}
+                  </td>
+                  <td className="py-4 px-4 sm:px-6 align-top text-[15.5px] sm:text-[16.5px] font-semibold border-b" style={{ color: INK, borderColor: LINE, background: "rgba(108,74,182,0.09)" }}>
+                    {c.compareBossifyItems[i] ?? ""}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Final CTA -- flat dark band; the three trust lines sit beside it
+          as plain sentences rather than a separate icon row. */}
+      <section id="pricing" className="px-5 lg:px-8 py-20 lg:py-28 scroll-mt-16" style={{ background: NIGHT }}>
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.15fr_0.85fr] gap-12 lg:gap-16 items-end">
+          <Reveal>
+            <h2 ref={finalRef} className="text-[40px] sm:text-[52px] lg:text-[68px] font-bold tracking-[-0.03em] leading-[1.02] mb-5" style={{ color: "#FFFFFF", fontFamily: DISPLAY }}>
+              <span className={`bf-strike ${finalIn ? "bf-on" : ""}`}>{c.finalTitle1}</span>
+              <br />
+              <span className={`bf-after-strike ${finalIn ? "bf-on" : ""}`}>{c.finalTitle2}</span>
+            </h2>
+            <p className="text-[17px] lg:text-[19px] mb-8" style={{ color: "rgba(255,255,255,0.74)" }}>{c.finalSub}</p>
+            <button
+              data-cta="register"
+              onClick={() => goAuth("register")}
+              className="group inline-flex items-center gap-2 text-[16px] font-semibold px-9 py-4 rounded-full transition-transform hover:-translate-y-0.5"
+              style={{ background: "#FFFFFF", color: PRIMARY }}
+            >
+              {c.finalCtaPrimary}
+              <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5" />
+            </button>
           </Reveal>
           <Reveal delay={150}>
-            <div className="rounded-2xl border p-7" style={{ background: CARD, borderColor: BORDER }}>
-              <h3 className="text-[15px] font-bold mb-3" style={{ color: TEXT }}>{c.reportsGridTitle}</h3>
-              <div className="flex flex-col">
-                {c.reports.map((name, i) => (
-                  <div
-                    key={name}
-                    className="flex items-center gap-3 py-2.5"
-                    style={{ borderTop: i > 0 ? `1px solid ${BORDER}` : "none" }}
-                  >
-                    <span className="text-[11px] font-bold tabular-nums w-5" style={{ color: TEXT_MUTED, opacity: 0.6 }}>
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="text-[13px] font-medium flex-1" style={{ color: TEXT }}>{name}</span>
-                    <span
-                      className="text-[9.5px] font-bold px-2 py-0.5 rounded-full tracking-wide"
-                      style={{ color: GRAD_FROM, background: "rgba(139,92,246,0.12)" }}
-                    >
-                      PDF
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Spreadsheet vs Bossify */}
-      <section className="px-5 lg:px-8 py-20 lg:py-28">
-        <div className="max-w-5xl mx-auto">
-          <Reveal>
-            <div className="text-center max-w-xl mx-auto mb-14">
-              <h2 className="text-[26px] lg:text-[32px] font-bold tracking-tight mb-3" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-                {c.compareTitle}
-              </h2>
-              <p className="text-[14.5px]" style={{ color: TEXT_MUTED }}>{c.compareSub}</p>
-            </div>
-          </Reveal>
-          <div className="grid md:grid-cols-2 gap-6 md:gap-0 items-center">
-            <Reveal>
-              <div className="rounded-2xl p-7 md:mr-[-12px] border" style={{ background: CARD, borderColor: BORDER }}>
-                <p className="text-[12.5px] font-bold uppercase tracking-wide mb-5" style={{ color: TEXT_MUTED }}>{c.compareSpreadsheetLabel}</p>
-                <ul className="space-y-3.5">
-                  {c.compareSpreadsheetItems.map((item) => (
-                    <li key={item} className="flex items-start gap-2.5 text-[13px]" style={{ color: TEXT_MUTED }}>
-                      <Minus className="w-4 h-4 mt-0.5 shrink-0" style={{ color: TEXT_MUTED }} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Reveal>
-            <Reveal delay={120}>
-              <div
-                className="relative rounded-2xl p-7 md:scale-[1.04] border"
-                style={{ background: CARD_SOFT, borderColor: BORDER_STRONG, boxShadow: "0 30px 70px -20px rgba(139,92,246,0.3)" }}
-              >
-                <div className="absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl" style={{ background: GRADIENT }} />
-                <p
-                  className="text-[12.5px] font-bold uppercase tracking-wide mb-5"
-                  style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
-                >
-                  {c.compareBossifyLabel}
-                </p>
-                <ul className="space-y-3.5">
-                  {c.compareBossifyItems.map((item) => (
-                    <li key={item} className="flex items-start gap-2.5 text-[13px] font-medium" style={{ color: TEXT }}>
-                      <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: GRAD_FROM }} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust */}
-      <section className="px-5 lg:px-8 py-16 lg:py-20" style={{ background: SECTION_TINT }}>
-        <Reveal>
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-[19px] lg:text-[22px] font-bold tracking-tight mb-10" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-              {c.trustSectionTitle}
-            </h2>
-            <div className="grid sm:grid-cols-3 gap-8 sm:divide-x" style={{ borderColor: BORDER }}>
-              {c.trustItems.map((t) => (
-                <div key={t} className="flex flex-col items-center gap-2 sm:px-6">
-                  <span className="w-5 h-px" style={{ background: GRAD_FROM }} />
-                  <p className="text-[13px] font-medium max-w-[220px]" style={{ color: TEXT_MUTED }}>{t}</p>
-                </div>
+            <p className="text-[14px] font-semibold mb-3" style={{ color: LAVENDER }}>{c.trustSectionTitle}</p>
+            <ul className="border-t" style={{ borderColor: "rgba(255,255,255,0.18)" }}>
+              {c.trustItems.map((item) => (
+                <li key={item} className="py-3.5 text-[16.5px] border-b" style={{ color: "rgba(255,255,255,0.9)", borderColor: "rgba(255,255,255,0.18)" }}>
+                  {item}
+                </li>
               ))}
-            </div>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* Final CTA */}
-      <section id="pricing" className="relative overflow-hidden px-5 lg:px-8 pt-24 pb-32 lg:pt-28 lg:pb-40">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(ellipse 800px 380px at 50% 20%, rgba(139,92,246,0.22) 0%, transparent 70%)" }}
-        />
-        <svg aria-hidden="true" className="pointer-events-none absolute bottom-0 left-0 w-full h-[220px]" viewBox="0 0 1200 220" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="bf-ridge-1" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={GRAD_FROM} stopOpacity="0.28" />
-              <stop offset="100%" stopColor={GRAD_FROM} stopOpacity="0" />
-            </linearGradient>
-            <linearGradient id="bf-ridge-2" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={GRAD_TO} stopOpacity="0.22" />
-              <stop offset="100%" stopColor={GRAD_TO} stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d="M0,160 C250,90 420,190 650,120 C850,60 1000,150 1200,100 L1200,220 L0,220 Z" fill="url(#bf-ridge-1)" />
-          <path d="M0,200 C300,150 500,210 750,160 C950,120 1050,190 1200,150 L1200,220 L0,220 Z" fill="url(#bf-ridge-2)" />
-        </svg>
-        <Reveal>
-          <div className="relative max-w-2xl mx-auto text-center">
-            <h2 className="text-[32px] lg:text-[44px] font-bold tracking-tight leading-[1.1] mb-4" style={{ color: TEXT, fontFamily: "Space Grotesk, system-ui, sans-serif" }}>
-              {c.finalTitle1}
-              <br />
-              <span className="bf-gradient-live" style={{ background: GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>{c.finalTitle2}</span>
-            </h2>
-            <p className="text-[14.5px] lg:text-[15.5px] mb-9" style={{ color: TEXT_MUTED }}>{c.finalSub}</p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <button data-cta="register" onClick={() => goAuth("register")} className="group text-[15px] font-semibold px-7 py-3.5 rounded-full text-white flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-8px_rgba(139,92,246,0.6)]" style={{ background: GRADIENT }}>
-                {c.finalCtaPrimary}
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
-            </div>
-          </div>
-        </Reveal>
+            </ul>
+          </Reveal>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="px-5 lg:px-8 py-10 border-t" style={{ borderColor: BORDER }}>
-        <div className="max-w-6xl mx-auto space-y-5">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="px-5 lg:px-8 py-10 border-t" style={{ borderColor: LINE }}>
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5">
+          <div className="flex flex-col items-center sm:items-start gap-1.5">
             <div className="flex items-center gap-2">
-              <img src={bossifyLogo} alt="Bossify" className="h-6 w-6 rounded object-cover" />
-              <span className="text-sm font-bold" style={{ color: TEXT }}>Bossify</span>
-              <span className="text-[13px]" style={{ color: TEXT_MUTED }}>· {c.footerTag}</span>
+              <img src={bossifyLogo} alt="Bossify" className="h-7 w-7 rounded-md object-cover" />
+              <span className="text-[16px] font-bold" style={{ color: INK, fontFamily: DISPLAY }}>Bossify</span>
+              <span className="text-[14px]" style={{ color: INK_SOFT }}>· {c.footerTag}</span>
             </div>
-            <nav className="flex items-center gap-4 text-[12.5px]" style={{ color: TEXT_MUTED }}>
-              <a href="mailto:zhstudioapp@gmail.com" className="hover:underline">
-                {lang === "zh" ? "联系我们" : lang === "ms" ? "Hubungi Kami" : "Contact"}
-              </a>
-              <Link to="/privacy-policy" className="hover:underline">{t("privacy_policy")}</Link>
-              <Link to="/terms" className="hover:underline">{t("terms_conditions")}</Link>
-            </nav>
-          </div>
-          <div className="pt-4 border-t flex items-center justify-center sm:justify-start gap-1.5" style={{ borderColor: BORDER }}>
-            <img src={bossifyLogo} alt="Bossify" className="h-4 w-4 rounded object-cover" />
-            <p className="text-[12.5px]" style={{ color: TEXT_MUTED }}>
+            <p className="text-[13.5px]" style={{ color: INK_SOFT }}>
               {lang === "zh"
                 ? `由 ZH Studio 打造 · © ${new Date().getFullYear()}`
                 : lang === "ms"
@@ -1503,9 +1272,15 @@ export function LandingPage() {
                   : `Powered by ZH Studio · © ${new Date().getFullYear()}`}
             </p>
           </div>
+          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[14px]" style={{ color: INK_SOFT }}>
+            <a href="mailto:zhstudioapp@gmail.com" className="hover:underline">
+              {lang === "zh" ? "联系我们" : lang === "ms" ? "Hubungi Kami" : "Contact"}
+            </a>
+            <Link to="/privacy-policy" className="hover:underline">{t("privacy_policy")}</Link>
+            <Link to="/terms" className="hover:underline">{t("terms_conditions")}</Link>
+          </nav>
         </div>
       </footer>
-      </div>
     </div>
   );
 }

@@ -426,7 +426,12 @@ function ShellInner() {
       <div
         style={{
           position: "relative",
-          overflowX: "hidden",
+          // "clip" (not "hidden") on the landing page: "hidden" turns this
+          // wrapper into a scroll container, which silently disables every
+          // position:sticky inside it (the landing header and its pinned
+          // scroll section). "clip" clips sideways overflow the same way
+          // without that side effect.
+          overflowX: isWelcomeRoute ? "clip" : "hidden",
           width: "100%",
           minHeight: "100vh",
           paddingTop: "env(safe-area-inset-top)",
