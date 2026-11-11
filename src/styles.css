@@ -377,36 +377,6 @@ textarea,
   }
 }
 
-/* Mouse-follow ambient glow — one instance mounted near the app root,
-   position tracked via --mx/--my custom properties updated in JS (see
-   MouseGlow.tsx). Pure decoration: sits low in the stacking order, under
-   all real content, and never intercepts clicks. */
-.bf-mouse-glow {
-  /* z-index:40 is deliberate, not decorative busywork: every page here
-     paints a fully opaque background over its whole viewport (the
-     authenticated shell's bg-background, LandingPage's own `background:
-     BG` on its isolated root, AuthShell's #FCFBFE), so a glow sitting
-     BEHIND that content (z-index: 0) is completely invisible — it was,
-     until this fix. Sitting above everything except the sticky header
-     (z-30, so it never washes out the nav) and modals/dialogs (z-50) is
-     what actually makes it visible as a soft light near the cursor. */
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  background: radial-gradient(
-    520px circle at var(--mx, 50%) var(--my, 30%),
-    color-mix(in oklab, var(--primary) 20%, transparent),
-    color-mix(in oklab, var(--primary) 8%, transparent) 45%,
-    transparent 75%
-  );
-}
-@media (prefers-reduced-motion: reduce), not (hover: hover), not (pointer: fine) {
-  .bf-mouse-glow { display: none; }
-}
-
 /* Shine sweep — a very faint diagonal highlight that crosses the card once
    every ~7s, most of which is spent invisible at rest so it reads as
    "occasional", not a constant animation. Opt-in: add `.bf-shine` to a

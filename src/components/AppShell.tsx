@@ -26,7 +26,6 @@ import { RETAIL_ONLY_MODE, isArchivedRoute, HIDE_AI_CHAT_WIDGET } from "@/lib/fe
 import { RetailPivotNotice } from "@/components/RetailPivotNotice";
 import { AiChatWidget } from "@/components/AiChatWidget";
 import { NotificationBellIcon } from "@/components/NotificationBellIcon";
-import { MouseGlow } from "@/components/MotionFx";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -434,7 +433,6 @@ function ShellInner() {
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
-        <MouseGlow />
         <Outlet />
       </div>
     );
@@ -442,7 +440,6 @@ function ShellInner() {
 
   return (
     <div className="min-h-screen w-full bg-background flex flex-col">
-      <MouseGlow />
       {!isSetupFlowRoute && <DesktopTopNav />}
 
       <div className="flex w-full flex-1 justify-center lg:block lg:min-w-0">
