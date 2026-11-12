@@ -305,7 +305,7 @@ function ProductProfitPage() {
               <XAxis type="number" tick={{ fontSize: 10 }} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={110} />
               <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-              <Bar dataKey="profit" radius={[0, 6, 6, 0]} fill="#8B5CF6" />
+              <Bar dataKey="profit" radius={[0, 6, 6, 0]} fill="#6C4AB6" />
             </BarChart>
           </ResponsiveContainer>
         </div>

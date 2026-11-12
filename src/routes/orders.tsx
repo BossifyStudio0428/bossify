@@ -945,7 +945,7 @@ function OrdersPage() {
               <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10 }} width={44} />
               <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-              <Line type="monotone" dataKey="amount" stroke="#8B5CF6" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="amount" stroke="#6C4AB6" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

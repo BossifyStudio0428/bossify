@@ -784,10 +784,10 @@ export function RetailOverview() {
                 <Line
                   type="monotone"
                   dataKey="profit"
-                  stroke="#8B5CF6"
+                  stroke="#6C4AB6"
                   strokeWidth={2}
                   dot={(props: any) => (
-                    <circle key={props.index} cx={props.cx} cy={props.cy} r={2.5} fill={props.payload.profit < 0 ? "#DC2626" : "#8B5CF6"} stroke="none" />
+                    <circle key={props.index} cx={props.cx} cy={props.cy} r={2.5} fill={props.payload.profit < 0 ? "#DC2626" : "#6C4AB6"} stroke="none" />
                   )}
                 />
               </LineChart>
@@ -1119,7 +1119,7 @@ export function RetailOverview() {
                 {lang === "zh" ? "销售额" : lang === "ms" ? "Jualan" : "Sales"}
               </span>
               <span className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-[#8B5CF6]" />
+                <span className="h-2 w-2 rounded-full bg-[#6C4AB6]" />
                 {lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}
               </span>
             </div>
@@ -1135,10 +1135,10 @@ export function RetailOverview() {
                 <Line
                   type="monotone"
                   dataKey="profit"
-                  stroke="#8B5CF6"
+                  stroke="#6C4AB6"
                   strokeWidth={2}
                   dot={(props: any) => (
-                    <circle key={props.index} cx={props.cx} cy={props.cy} r={3} fill={props.payload.profit < 0 ? "#DC2626" : "#8B5CF6"} stroke="none" />
+                    <circle key={props.index} cx={props.cx} cy={props.cy} r={3} fill={props.payload.profit < 0 ? "#DC2626" : "#6C4AB6"} stroke="none" />
                   )}
                 />
               </LineChart>
@@ -1604,7 +1604,7 @@ function ProfitBreakdownCard({
   lang: string;
 }) {
   const slices = [
-    { key: "cogs", label: lang === "zh" ? "产品成本" : lang === "ms" ? "Kos produk" : "Product cost", value: Math.max(cogs, 0), color: "#8B5CF6" },
+    { key: "cogs", label: lang === "zh" ? "产品成本" : lang === "ms" ? "Kos produk" : "Product cost", value: Math.max(cogs, 0), color: "#6C4AB6" },
     { key: "selling", label: lang === "zh" ? "平台/运费" : lang === "ms" ? "Yuran platform/penghantaran" : "Platform & shipping fees", value: Math.max(sellingCosts, 0), color: "#D946EF" },
     { key: "opex", label: lang === "zh" ? "营业费用" : lang === "ms" ? "Perbelanjaan operasi" : "Operating expenses", value: Math.max(operatingExpenses, 0), color: "#60A5FA" },
     { key: "net", label: lang === "zh" ? "净利润" : lang === "ms" ? "Untung bersih" : "Net profit", value: Math.max(netProfit, 0), color: "#4ADE80" },

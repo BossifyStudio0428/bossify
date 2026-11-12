@@ -23,7 +23,7 @@ function htmlResponse(title: string, body: string, status = 200, backHref = "/pr
       `<style>body{font-family:system-ui;padding:40px 24px;max-width:480px;margin:auto;text-align:center;font-size:19px;line-height:1.5;background:#FCFBFE;color:#1A1225}` +
       `h1{font-size:26px;margin-bottom:16px}` +
       `p{margin:16px 0}` +
-      `a{display:inline-block;margin-top:20px;font-size:20px;font-weight:700;color:#8B5CF6;text-decoration:none}</style>` +
+      `a{display:inline-block;margin-top:20px;font-size:20px;font-weight:700;color:#6C4AB6;text-decoration:none}</style>` +
       `<h1>${safeTitle}</h1><p>${safeBody}</p>` +
       `<p><a href="${escHtml(backHref)}">Back to Bossify</a></p>`,
     { status, headers: { "Content-Type": "text/html; charset=utf-8" } }

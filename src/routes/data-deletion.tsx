@@ -21,7 +21,7 @@ function DataDeletionPage() {
             <ChevronLeft className="h-5 w-5" style={{ color: "#1A1225" }} />
           </Link>
           <div className="flex items-center gap-2">
-            <Trash2 className="h-6 w-6" style={{ color: "#8B5CF6" }} />
+            <Trash2 className="h-6 w-6" style={{ color: "#6C4AB6" }} />
             <h1 className="text-xl font-bold" style={{ color: "#1A1225" }}>Data Deletion Request</h1>
           </div>
         </header>
@@ -40,7 +40,7 @@ function DataDeletionPage() {
         {/* How to Request */}
         <section className="bg-[#F7F5FA] rounded-2xl p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] mb-5">
           <div className="flex items-center gap-2 mb-4">
-            <Mail className="h-5 w-5" style={{ color: "#8B5CF6" }} />
+            <Mail className="h-5 w-5" style={{ color: "#6C4AB6" }} />
             <h3 className="text-sm font-bold" style={{ color: "#1A1225" }}>How to Request Deletion</h3>
           </div>
           <p className="text-sm leading-relaxed mb-4" style={{ color: "#5B5270" }}>
@@ -50,7 +50,7 @@ function DataDeletionPage() {
           <a
             href="mailto:zhstudioapp@gmail.com?subject=Bossify%20Data%20Deletion%20Request"
             className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-semibold text-sm text-white transition-colors hover:opacity-90"
-            style={{ background: "#8B5CF6" }}
+            style={{ background: "#6C4AB6" }}
           >
             <Mail className="h-4 w-4" />
             zhstudioapp@gmail.com
@@ -60,7 +60,7 @@ function DataDeletionPage() {
         {/* Required Info */}
         <section className="bg-[#F7F5FA] rounded-2xl p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] mb-5">
           <div className="flex items-center gap-2 mb-4">
-            <AlertCircle className="h-5 w-5" style={{ color: "#8B5CF6" }} />
+            <AlertCircle className="h-5 w-5" style={{ color: "#6C4AB6" }} />
             <h3 className="text-sm font-bold" style={{ color: "#1A1225" }}>Please Include</h3>
           </div>
           <ul className="space-y-3">
@@ -70,7 +70,7 @@ function DataDeletionPage() {
               "Reason for deletion (optional)",
             ].map((item, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="mt-0.5 h-5 w-5 rounded-full bg-[#EFEAFA] flex items-center justify-center shrink-0 text-xs font-bold" style={{ color: "#8B5CF6" }}>
+                <span className="mt-0.5 h-5 w-5 rounded-full bg-[#EFEAFA] flex items-center justify-center shrink-0 text-xs font-bold" style={{ color: "#6C4AB6" }}>
                   {i + 1}
                 </span>
                 <span className="text-sm" style={{ color: "#5B5270" }}>{item}</span>
@@ -82,7 +82,7 @@ function DataDeletionPage() {
         {/* Timeline */}
         <section className="bg-[#F7F5FA] rounded-2xl p-6 shadow-[0_4px_20px_rgba(124,58,237,0.06)] mb-5">
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="h-5 w-5" style={{ color: "#8B5CF6" }} />
+            <Clock className="h-5 w-5" style={{ color: "#6C4AB6" }} />
             <h3 className="text-sm font-bold" style={{ color: "#1A1225" }}>Processing Timeline</h3>
           </div>
           <p className="text-sm leading-relaxed" style={{ color: "#5B5270" }}>
@@ -101,7 +101,7 @@ function DataDeletionPage() {
           <a
             href="mailto:zhstudioapp@gmail.com"
             className="text-sm font-medium underline"
-            style={{ color: "#8B5CF6" }}
+            style={{ color: "#6C4AB6" }}
           >
             zhstudioapp@gmail.com
           </a>
@@ -115,9 +115,9 @@ function DataDeletionPage() {
           </div>
           <p className="text-[11px]" style={{ color: "#5B5270" }}>© 2026 ZH Studio, Malaysia</p>
           <div className="flex items-center justify-center gap-3 mt-2">
-            <Link to="/terms" className="text-[11px] underline" style={{ color: "#8B5CF6" }}>Terms &amp; Conditions</Link>
+            <Link to="/terms" className="text-[11px] underline" style={{ color: "#6C4AB6" }}>Terms &amp; Conditions</Link>
             <span style={{ color: "#D9D0EC" }}>|</span>
-            <Link to="/privacy-policy" className="text-[11px] underline" style={{ color: "#8B5CF6" }}>Privacy Policy</Link>
+            <Link to="/privacy-policy" className="text-[11px] underline" style={{ color: "#6C4AB6" }}>Privacy Policy</Link>
           </div>
         </footer>
       </div>

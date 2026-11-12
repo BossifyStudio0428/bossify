@@ -86,7 +86,7 @@ function ResetPage() {
               type={showA ? "text" : "password"} autoComplete="new-password"
               value={pw} onChange={(e) => setPw(e.target.value)}
               placeholder={t("fp_min_8_ph")}
-              className="w-full bg-[#F7F5FA] border border-[#E4DEF0] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#8B5CF6] focus:ring-4 focus:ring-[#8B5CF6]/15"
+              className="w-full bg-[#F7F5FA] border border-[#E4DEF0] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#6C4AB6] focus:ring-4 focus:ring-[#6C4AB6]/15"
               style={{ color: "#1A1225" }}
             />
             <button type="button" onClick={() => setShowA((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5B5270]">
@@ -105,7 +105,7 @@ function ResetPage() {
               type={showB ? "text" : "password"} autoComplete="new-password"
               value={confirm} onChange={(e) => setConfirm(e.target.value)}
               placeholder={t("fp_reenter_ph")}
-              className="w-full bg-[#F7F5FA] border border-[#E4DEF0] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#8B5CF6] focus:ring-4 focus:ring-[#8B5CF6]/15"
+              className="w-full bg-[#F7F5FA] border border-[#E4DEF0] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#6C4AB6] focus:ring-4 focus:ring-[#6C4AB6]/15"
               style={{ color: "#1A1225" }}
             />
             <button type="button" onClick={() => setShowB((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5B5270]">
@@ -122,7 +122,7 @@ function ResetPage() {
           <button
             onClick={submit} disabled={!allOk || loading}
             className="w-full text-white font-bold text-[14px] disabled:opacity-60"
-            style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
+            style={{ background: "#6C4AB6", borderRadius: 12, padding: 13 }}
           >
             {loading ? "…" : t("update_password")}
           </button>

@@ -55,7 +55,7 @@ function ForgotPasswordPage() {
 
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="h-14 w-14 rounded-full flex items-center justify-center" style={{ background: "#EFEAFA" }}>
-            <Lock className="h-7 w-7" style={{ color: "#8B5CF6" }} />
+            <Lock className="h-7 w-7" style={{ color: "#6C4AB6" }} />
           </div>
           <h1 className="text-[20px] font-bold" style={{ color: "#1A1225" }}>{t("forgot_password")}</h1>
           <p className="text-[13px]" style={{ color: "#5B5270" }}>{t("forgot_pw_sub")}</p>
@@ -67,13 +67,13 @@ function ForgotPasswordPage() {
             type="email" required name="email" autoComplete="email" autoCapitalize="none"
             value={email} onChange={(e) => { setEmail(e.target.value); setError(null); }}
             placeholder={t("enter_email_ph")}
-            className="w-full bg-[#F7F5FA] border border-[#E4DEF0] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#8B5CF6] focus:ring-4 focus:ring-[#8B5CF6]/15"
+            className="w-full bg-[#F7F5FA] border border-[#E4DEF0] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#6C4AB6] focus:ring-4 focus:ring-[#6C4AB6]/15"
             style={{ color: "#1A1225" }}
           />
           <button
             type="submit" disabled={loading}
             className="w-full text-white font-bold text-[14px] disabled:opacity-60"
-            style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
+            style={{ background: "#6C4AB6", borderRadius: 12, padding: 13 }}
           >
             {loading ? "…" : t("fp_send_code")}
           </button>

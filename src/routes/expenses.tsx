@@ -142,7 +142,7 @@ function ExpensesPage() {
   }, [items]);
 
   const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
-    advertising: "#8B5CF6",
+    advertising: "#6C4AB6",
     affiliate_influencer: "#FBBF24",
     subscriptions: "#60A5FA",
     ai_software: "#F472B6",

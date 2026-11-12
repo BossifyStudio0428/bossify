@@ -321,7 +321,7 @@ function QuestionScreen({
               height: 4,
               background:
                 i < qIndex
-                  ? "#8B5CF6"
+                  ? "#6C4AB6"
                   : i === qIndex
                     ? "#A855F7"
                     : "#E4DEF0",
@@ -357,7 +357,7 @@ function QuestionScreen({
               style={{
                 padding: "11px 14px",
                 borderRadius: 12,
-                border: selected ? "1.5px solid #8B5CF6" : "0.5px solid #E4DEF0",
+                border: selected ? "1.5px solid #6C4AB6" : "0.5px solid #E4DEF0",
                 background: selected ? "#EFEAFA" : "#F7F5FA",
                 color: selected ? "#1A1225" : "#5B5270",
               }}

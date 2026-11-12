@@ -1495,7 +1495,7 @@ function LangSwitcher({
                 onClick={() => onPick(opt.code)}
                 className={`w-full px-4 py-3 text-left text-sm flex items-center justify-between transition-colors ${
                   lang === opt.code
-                    ? "bg-[#EFEAFA] text-[#8B5CF6] font-semibold"
+                    ? "bg-[#EFEAFA] text-[#6C4AB6] font-semibold"
                     : "text-[#1A1225] hover:bg-muted/30"
                 }`}
               >

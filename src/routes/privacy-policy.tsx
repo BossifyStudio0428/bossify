@@ -38,7 +38,7 @@ function PrivacyPolicyPage() {
             <ChevronLeft className="h-5 w-5" style={{ color: "#1A1225" }} />
           </Link>
           <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6" style={{ color: "#8B5CF6" }} />
+            <Shield className="h-6 w-6" style={{ color: "#6C4AB6" }} />
             <h1 className="text-xl font-bold" style={{ color: "#1A1225" }}>{t("pp_title")}</h1>
           </div>
         </header>
@@ -66,9 +66,9 @@ function PrivacyPolicyPage() {
           </div>
           <p className="text-[11px]" style={{ color: "#5B5270" }}>© 2026 ZH Studio, Malaysia</p>
           <div className="flex items-center justify-center gap-3 mt-2">
-            <Link to="/terms" className="text-[11px] underline" style={{ color: "#8B5CF6" }}>{t("terms_conditions")}</Link>
+            <Link to="/terms" className="text-[11px] underline" style={{ color: "#6C4AB6" }}>{t("terms_conditions")}</Link>
             <span style={{ color: "#D9D0EC" }}>|</span>
-            <Link to="/privacy-policy" className="text-[11px] underline" style={{ color: "#8B5CF6" }}>{t("privacy_policy")}</Link>
+            <Link to="/privacy-policy" className="text-[11px] underline" style={{ color: "#6C4AB6" }}>{t("privacy_policy")}</Link>
           </div>
         </footer>
       </div>

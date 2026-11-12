@@ -129,7 +129,7 @@ function ProfitPage() {
     }
     return [
       { name: lang === "zh" ? "\u5546\u54c1\u6210\u672c" : lang === "ms" ? "Kos Produk" : "Product cost", value: Math.round(productCost * 100) / 100, color: "#F87171" },
-      { name: lang === "zh" ? "\u5e73\u53f0\u8d39" : lang === "ms" ? "Yuran Platform" : "Platform fee", value: Math.round(platformFee * 100) / 100, color: "#8B5CF6" },
+      { name: lang === "zh" ? "\u5e73\u53f0\u8d39" : lang === "ms" ? "Yuran Platform" : "Platform fee", value: Math.round(platformFee * 100) / 100, color: "#6C4AB6" },
       { name: lang === "zh" ? "\u8fd0\u8d39" : lang === "ms" ? "Penghantaran" : "Shipping", value: Math.round(shipping * 100) / 100, color: "#60A5FA" },
       { name: lang === "zh" ? "\u8054\u76df\u4f63\u91d1" : lang === "ms" ? "Komisen Afiliasi" : "Affiliate commission", value: Math.round(affiliate * 100) / 100, color: "#FBBF24" },
     ].filter((d) => d.value > 0);
@@ -215,7 +215,7 @@ function ProfitPage() {
               <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10 }} width={44} />
               <Tooltip formatter={(v: number) => money(v)} />
-              <Line type="monotone" dataKey="profit" stroke="#8B5CF6" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="profit" stroke="#6C4AB6" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -239,7 +239,7 @@ function ProfitPage() {
               <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={56} />
               <Tooltip formatter={(v: number) => money(v)} />
               <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                <Cell fill="#8B5CF6" />
+                <Cell fill="#6C4AB6" />
                 <Cell fill="#F87171" />
               </Bar>
             </BarChart>

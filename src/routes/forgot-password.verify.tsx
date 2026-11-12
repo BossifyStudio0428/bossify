@@ -89,7 +89,7 @@ function VerifyPage() {
 
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="h-14 w-14 rounded-full flex items-center justify-center" style={{ background: "#EFEAFA" }}>
-            <Mail className="h-7 w-7" style={{ color: "#8B5CF6" }} />
+            <Mail className="h-7 w-7" style={{ color: "#6C4AB6" }} />
           </div>
           <h1 className="text-[20px] font-bold" style={{ color: "#1A1225" }}>{t("verify")}</h1>
           <p className="text-[13px]" style={{ color: "#5B5270" }}>
@@ -113,7 +113,7 @@ function VerifyPage() {
               className="bg-[#F7F5FA] text-center text-[20px] font-bold outline-none transition"
               style={{
                 width: 48, height: 56, borderRadius: 12,
-                border: d ? "1.5px solid #8B5CF6" : "1.5px solid #E4DEF0",
+                border: d ? "1.5px solid #6C4AB6" : "1.5px solid #E4DEF0",
                 boxShadow: d ? "0 0 0 4px rgba(124,58,237,0.15)" : "none",
                 color: "#1A1225",
               }}
@@ -125,14 +125,14 @@ function VerifyPage() {
           {seconds > 0 ? (
             <span>{t("fp_resend_in")} 0:{seconds.toString().padStart(2, "0")}</span>
           ) : (
-            <button onClick={resend} className="font-bold" style={{ color: "#8B5CF6" }}>{t("fp_resend_code")}</button>
+            <button onClick={resend} className="font-bold" style={{ color: "#6C4AB6" }}>{t("fp_resend_code")}</button>
           )}
         </div>
 
         <button
           onClick={verify} disabled={!allFilled || loading}
           className="w-full text-white font-bold text-[14px] disabled:opacity-60"
-          style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
+          style={{ background: "#6C4AB6", borderRadius: 12, padding: 13 }}
         >
           {loading ? "…" : t("verify")}
         </button>

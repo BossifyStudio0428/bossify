@@ -429,7 +429,7 @@ function CostBreakdownPage() {
             const chartData = [
               { name: lang === "zh" ? "商品成本" : lang === "ms" ? "Produk" : "Product", value: productCost, color: "#F87171" },
               { name: lang === "zh" ? "包装" : lang === "ms" ? "Bungkus" : "Packaging", value: packagingCost, color: "#FBBF24" },
-              { name: lang === "zh" ? "平台费" : lang === "ms" ? "Yuran" : "Platform Fee", value: platformFee, color: "#8B5CF6" },
+              { name: lang === "zh" ? "平台费" : lang === "ms" ? "Yuran" : "Platform Fee", value: platformFee, color: "#6C4AB6" },
               { name: lang === "zh" ? "运费" : lang === "ms" ? "Hantar" : "Shipping", value: shippingCost, color: "#60A5FA" },
               { name: lang === "zh" ? "营业费用" : lang === "ms" ? "Operasi" : "Opex", value: totalOperatingExpenses, color: "#EC4899" },
             ].filter((d) => d.value > 0);
@@ -482,7 +482,7 @@ function CostBreakdownPage() {
                 <XAxis dataKey="day" tick={{ fontSize: 9 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-                <Line type="monotone" dataKey="profit" stroke="#8B5CF6" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="profit" stroke="#6C4AB6" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
