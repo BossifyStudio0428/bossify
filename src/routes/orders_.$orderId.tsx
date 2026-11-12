@@ -10,6 +10,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { PhoneInput } from "@/components/PhoneInput";
 import { orderCost, orderContributionProfit, calculateOrderFinancials, calculateAdjustment, type AdjustmentType, isPaidStatus } from "@/lib/orderMath";
 import { logInventoryChange } from "@/lib/inventoryAudit";
+import { adjustStockAtomic } from "@/lib/inventoryStock";
 
 export const Route = createFileRoute("/orders_/$orderId")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -456,11 +457,9 @@ function OrderDetailPage() {
       if (restocked) {
         for (const b of itemBreakdown) {
           if (!b.product_id || !b.restocked) continue;
-          const { data: invRow } = await supabase.from("inventory").select("stock").eq("id", b.product_id).maybeSingle();
-          if (invRow) {
-            const newStock = Number(invRow.stock ?? 0) + b.quantity;
-            await supabase.from("inventory").update({ stock: newStock }).eq("id", b.product_id);
-            logInventoryChange({ userId: user.id, productId: b.product_id, productName: b.product_name, fieldName: "stock", oldValue: invRow.stock, newValue: newStock, source: "refund_restock" });
+          const back = await adjustStockAtomic(b.product_id, b.quantity);
+          if (back.stock !== null) {
+            logInventoryChange({ userId: user.id, productId: b.product_id, productName: b.product_name, fieldName: "stock", oldValue: back.stock - b.quantity, newValue: back.stock, source: "refund_restock" });
           }
         }
       }

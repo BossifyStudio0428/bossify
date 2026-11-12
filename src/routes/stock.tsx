@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { getCachedPrefs, loadPrefs } from "@/lib/notifPrefs";
 import { logInventoryChange } from "@/lib/inventoryAudit";
+import { adjustStockAtomic } from "@/lib/inventoryStock";
 
 type Row = {
   id: string;
@@ -154,12 +155,16 @@ function StockPage() {
     const next = Math.max(0, Number(r.stock ?? 0) + delta);
     const prev = rows;
     setRows((p) => p.map((x) => (x.id === r.id ? { ...x, stock: next } : x)));
-    const { error } = await supabase.from("inventory").update({ stock: next }).eq("id", r.id);
-    if (error) {
+    // Send the CHANGE, not the new total, so a simultaneous edit from
+    // another device isn't overwritten.
+    const res = await adjustStockAtomic(r.id, delta);
+    if (res.error || res.stock === null) {
       setRows(prev);
-      toast.error(error.message);
-    } else if (user) {
-      logInventoryChange({ userId: user.id, productId: r.id, productName: r.name, fieldName: "stock", oldValue: r.stock, newValue: next, source: "stock_tab_adjust" });
+      toast.error(res.error ?? "Failed");
+    } else {
+      const saved = res.stock;
+      if (saved !== next) setRows((p) => p.map((x) => (x.id === r.id ? { ...x, stock: saved } : x)));
+      if (user) logInventoryChange({ userId: user.id, productId: r.id, productName: r.name, fieldName: "stock", oldValue: r.stock, newValue: saved, source: "stock_tab_adjust" });
     }
   };
 

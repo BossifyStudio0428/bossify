@@ -10,6 +10,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { bizKey } from "@/lib/businessType";
 import { getCachedPrefs, loadPrefs } from "@/lib/notifPrefs";
 import { logInventoryChange } from "@/lib/inventoryAudit";
+import { adjustStockAtomic } from "@/lib/inventoryStock";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { notifySituation } from "@/lib/autoNotify";
 import { getNotifMessage } from "@/lib/notifMessages";
@@ -284,13 +285,17 @@ function InventoryPage() {
   const adjust = async (it: InvRow, next: number) => {
     const prev = items;
     setItems((p) => p.map((x) => (x.id === it.id ? { ...x, stock: next } : x)));
-    const { error } = await supabase.from("inventory").update({ stock: next }).eq("id", it.id);
-    if (error) {
+    // Send the CHANGE, not the new total, so a simultaneous edit from
+    // another device isn't overwritten.
+    const res = await adjustStockAtomic(it.id, next - Number(it.stock ?? 0));
+    if (res.error || res.stock === null) {
       setItems(prev);
-      toast.error(error.message);
+      toast.error(res.error ?? "Failed");
     } else {
+      const saved = res.stock;
+      if (saved !== next) setItems((p) => p.map((x) => (x.id === it.id ? { ...x, stock: saved } : x)));
       toast.success(t("stock_updated"));
-      if (user) logInventoryChange({ userId: user.id, productId: it.id, productName: it.name, fieldName: "stock", oldValue: it.stock, newValue: next, source: "products_tab_adjust" });
+      if (user) logInventoryChange({ userId: user.id, productId: it.id, productName: it.name, fieldName: "stock", oldValue: it.stock, newValue: saved, source: "products_tab_adjust" });
       if (next <= 5 && next < it.stock) {
         const m = getNotifMessage("low_stock", bizType, lang, {
           product: it.name,

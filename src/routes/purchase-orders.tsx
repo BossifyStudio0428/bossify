@@ -14,6 +14,7 @@ import { PurchaseOrderAiReview } from "@/components/PurchaseOrderAiReview";
 import { mergeCategories } from "@/lib/ingredientCategories";
 import { calculateWeightedAverageCost } from "@/lib/orderMath";
 import { logInventoryChange } from "@/lib/inventoryAudit";
+import { adjustStockAtomic } from "@/lib/inventoryStock";
 
 export const Route = createFileRoute("/purchase-orders")({ component: PurchaseOrdersPage });
 
@@ -878,8 +879,10 @@ export async function applyReceivedStockInventory(
           unitLandedCost,
         })
       : existing.cost_price; // no price data on this PO line — leave cost as-is, only stock moves
-    const newStock = Math.round(existing.stock + g.qty);
-    await supabase.from("inventory").update({ stock: newStock, cost_price: newCost } as any).eq("id", id);
+    // Stock goes up by the received quantity in one database step, so a
+    // simultaneous edit elsewhere isn't overwritten.
+    const recv = await adjustStockAtomic(id, Math.round(g.qty), newCost);
+    const newStock = recv.stock ?? Math.round(existing.stock + g.qty);
     if (userId) {
       const { data: nameRow } = await supabase.from("inventory").select("name").eq("id", id).maybeSingle();
       const productName = (nameRow as any)?.name ?? "";

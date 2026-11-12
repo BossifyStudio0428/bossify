@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { calculateWeightedAverageCost, calculateUnitLandedCost } from "@/lib/orderMath";
 import { logInventoryChange } from "@/lib/inventoryAudit";
+import { adjustStockAtomic } from "@/lib/inventoryStock";
 
 export const Route = createFileRoute("/add-cost")({ component: AddCostPage });
 
@@ -69,7 +70,7 @@ function AddCostPage() {
     try {
       const unitLandedCost = calculateUnitLandedCost(amt, Number(landedExtra) || 0, q);
       const newCost = calculateWeightedAverageCost({ existingStock: item.stock, existingCostPrice: item.cost_price, quantityReceived: q, unitLandedCost });
-      const newStock = item.stock + q;
+      let newStock = item.stock + q;
 
       const { error: e1 } = await supabase.from("stock_receipts" as any).insert({
         user_id: user.id, product_id: item.id, quantity_received: q, purchase_amount: amt,
@@ -78,8 +79,10 @@ function AddCostPage() {
       });
       if (e1) throw new Error(e1.message);
 
-      const { error: e2 } = await supabase.from("inventory").update({ stock: newStock, cost_price: newCost } as any).eq("id", item.id);
-      if (e2) throw new Error(e2.message);
+      // Stock goes up by the received quantity in one database step.
+      const recv = await adjustStockAtomic(item.id, q, newCost);
+      if (recv.error || recv.stock === null) throw new Error(recv.error ?? "Failed");
+      newStock = recv.stock;
 
       logInventoryChange({ userId: user.id, productId: item.id, productName: item.name, fieldName: "stock", oldValue: item.stock, newValue: newStock, source: "add_cost_page" });
       logInventoryChange({ userId: user.id, productId: item.id, productName: item.name, fieldName: "cost_price", oldValue: item.cost_price, newValue: newCost, source: "add_cost_page" });

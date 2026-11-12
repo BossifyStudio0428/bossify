@@ -27,7 +27,7 @@ type ProductSyncResult = {
  * to Bossify's own count (tracked per SKU via tiktok_sku_id /
  * tiktok_stock_synced), so manual adjustments for sales made through
  * other channels survive. Needs supabase/manual-migrations/
- * tiktok-stock-delta.sql applied first. Cost price is
+ * stock-audit-fixes.sql applied first. Cost price is
  * deliberately NOT guessed — new items are created with cost_price = 0
  * and returned in `imported` so the UI can prompt the seller to fill in
  * the real cost before relying on their profit numbers.
@@ -101,10 +101,10 @@ export async function syncTikTokProducts(userId: string): Promise<ProductSyncRes
     .eq("user_id", userId);
   // Fail closed: if this read fails (most likely the tiktok_sku_id /
   // tiktok_stock_synced columns from supabase/manual-migrations/
-  // tiktok-stock-delta.sql aren't there yet), stop here. Carrying on with
+  // stock-audit-fixes.sql aren't there yet), stop here. Carrying on with
   // an empty list would treat every product as new and insert duplicates.
   if (invErr) {
-    throw new Error(`Could not read inventory for TikTok sync (has tiktok-stock-delta.sql been run?): ${invErr.message}`);
+    throw new Error(`Could not read inventory for TikTok sync (has stock-audit-fixes.sql been run?): ${invErr.message}`);
   }
   type InvRow = {
     id: string;

@@ -13,6 +13,7 @@ import { ProductFormSheet, QtySheet, ConfirmSheet } from "@/components/Inventory
 import { formatUnit } from "@/lib/labels";
 import { calculateWeightedAverageCost, calculateUnitLandedCost } from "@/lib/orderMath";
 import { logInventoryChange } from "@/lib/inventoryAudit";
+import { adjustStockAtomic } from "@/lib/inventoryStock";
 
 export const Route = createFileRoute("/inventory_/$itemId")({ component: InventoryDetail });
 
@@ -53,13 +54,17 @@ function InventoryDetail() {
     if (!item || !user) return;
     const prev = item;
     setItem({ ...item, stock: next });
-    const { error } = await supabase.from("inventory").update({ stock: next }).eq("id", item.id);
-    if (error) {
+    // Send the CHANGE, not the new total, so a simultaneous edit from
+    // another device isn't overwritten.
+    const res = await adjustStockAtomic(item.id, next - Number(prev.stock ?? 0));
+    if (res.error || res.stock === null) {
       setItem(prev);
-      toast.error(error.message);
+      toast.error(res.error ?? "Failed");
     } else {
+      const saved = res.stock;
+      if (saved !== next) setItem({ ...prev, stock: saved });
       toast.success(t("stock_updated"));
-      logInventoryChange({ userId: user.id, productId: item.id, productName: item.name, fieldName: "stock", oldValue: prev.stock, newValue: next, source: "quick_adjust" });
+      logInventoryChange({ userId: user.id, productId: item.id, productName: item.name, fieldName: "stock", oldValue: prev.stock, newValue: saved, source: "quick_adjust" });
     }
   };
 
@@ -87,7 +92,7 @@ function InventoryDetail() {
         quantityReceived: qty,
         unitLandedCost,
       });
-      const newStock = Number(item.stock ?? 0) + qty;
+      let newStock = Number(item.stock ?? 0) + qty;
 
       const { error: receiptErr } = await supabase.from("stock_receipts" as any).insert({
         user_id: user.id,
@@ -102,11 +107,10 @@ function InventoryDetail() {
       });
       if (receiptErr) throw new Error(receiptErr.message);
 
-      const { error: invErr } = await supabase
-        .from("inventory")
-        .update({ stock: newStock, cost_price: newCost } as any)
-        .eq("id", item.id);
-      if (invErr) throw new Error(invErr.message);
+      // Stock goes up by the received quantity in one database step.
+      const recv = await adjustStockAtomic(item.id, qty, newCost);
+      if (recv.error || recv.stock === null) throw new Error(recv.error ?? "Failed");
+      newStock = recv.stock;
 
       logInventoryChange({ userId: user.id, productId: item.id, productName: item.name, fieldName: "stock", oldValue: item.stock, newValue: newStock, source: "receive_stock" });
       logInventoryChange({ userId: user.id, productId: item.id, productName: item.name, fieldName: "cost_price", oldValue: (item as any).cost_price ?? 0, newValue: newCost, source: "receive_stock" });
@@ -143,9 +147,9 @@ function InventoryDetail() {
     }
     setSupRefundSaving(true);
     try {
-      const newStock = Math.max(0, Number(item.stock ?? 0) - qty);
-      const { error: invErr } = await supabase.from("inventory").update({ stock: newStock } as any).eq("id", item.id);
-      if (invErr) throw new Error(invErr.message);
+      const ret = await adjustStockAtomic(item.id, -qty);
+      if (ret.error || ret.stock === null) throw new Error(ret.error ?? "Failed");
+      const newStock = ret.stock;
       logInventoryChange({ userId: user.id, productId: item.id, productName: item.name, fieldName: "stock", oldValue: item.stock, newValue: newStock, source: "supplier_refund" });
 
       // Deliberately does NOT touch cost_price / weighted-average cost —
