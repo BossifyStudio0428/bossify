@@ -193,9 +193,12 @@ function ReportsHub() {
     try {
       const { businessName, logoDataUrl } = await getProfile();
       const paid = inRange.filter((o) => isPaidStatus(o.status));
-      const totalRevenue = paid.reduce((s, o) => s + Number(o.amount), 0);
-      const totalCost = paid.reduce((s, o) => s + orderCost(o), 0);
-      const grossProfit = paid.reduce((s, o) => s + orderGrossProfit(o), 0);
+      // Refunds/returns dated within this period are netted out, same as
+      // the Financial P&L below and the on-screen Sales report.
+      const adjustments = await fetchPeriodAdjustments(user?.id ?? "", fromDate.toISOString(), toDate.toISOString());
+      const totalRevenue = paid.reduce((s, o) => s + Number(o.amount), 0) - adjustments.revenueReversed;
+      const totalCost = paid.reduce((s, o) => s + orderCost(o), 0) - adjustments.cogsReversed;
+      const grossProfit = paid.reduce((s, o) => s + orderGrossProfit(o), 0) - (adjustments.revenueReversed - adjustments.cogsReversed);
       const profitMargin = orderProfitMargin(totalRevenue, grossProfit);
       const totalOrders = inRange.length;
       const paidOrders = paid.length;
@@ -286,9 +289,12 @@ function ReportsHub() {
     try {
       const { businessName, logoDataUrl } = await getProfile();
       const paid = inRange.filter((o) => isPaidStatus(o.status));
-      const revenue = paid.reduce((s, o) => s + Number(o.amount), 0);
-      const cost = paid.reduce((s, o) => s + orderCost(o), 0);
-      const grossProfit = paid.reduce((s, o) => s + orderGrossProfit(o), 0);
+      // Refunds/returns dated within this period are netted out of the
+      // headline totals, same as the Financial P&L below.
+      const adjustments = await fetchPeriodAdjustments(user?.id ?? "", fromDate.toISOString(), toDate.toISOString());
+      const revenue = paid.reduce((s, o) => s + Number(o.amount), 0) - adjustments.revenueReversed;
+      const cost = paid.reduce((s, o) => s + orderCost(o), 0) - adjustments.cogsReversed;
+      const grossProfit = paid.reduce((s, o) => s + orderGrossProfit(o), 0) - (adjustments.revenueReversed - adjustments.cogsReversed);
       const margin = orderProfitMargin(revenue, grossProfit);
       const orderCount = paid.length;
       const avgPerOrder = orderCount > 0 ? grossProfit / orderCount : 0;
@@ -453,7 +459,18 @@ function ReportsHub() {
         return (o.customer_name ?? "").trim().toLowerCase() === c.name.trim().toLowerCase();
       });
       const unpaidBalance = rows.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount), 0);
-      const totalSpent = rows.filter((o) => isPaidStatus(o.status)).reduce((s, o) => s + Number(o.amount), 0);
+      // Net out refunds tied to the orders listed on this statement, so
+      // "total spent" is what the customer actually ended up paying.
+      const paidRows = rows.filter((o) => isPaidStatus(o.status));
+      let refunded = 0;
+      if (paidRows.length > 0) {
+        const { data: adjRows } = await supabase
+          .from("order_adjustments" as any)
+          .select("revenue_reversed")
+          .in("order_id", paidRows.map((o) => o.id));
+        refunded = ((adjRows ?? []) as any[]).reduce((s, r) => s + Number(r.revenue_reversed ?? 0), 0);
+      }
+      const totalSpent = Math.max(0, paidRows.reduce((s, o) => s + Number(o.amount), 0) - refunded);
       await exportCustomerStatementPDF({
         lang, businessName, logoDataUrl, rangeLabel: label,
         customerName: c.name,
