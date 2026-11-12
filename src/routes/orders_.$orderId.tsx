@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Pencil, Phone, MessageCircle, Trash2, RotateCcw, Truck } from "lucide-react";
 import { toast } from "sonner";
@@ -76,6 +76,48 @@ function trackingUrlFor(code: string): string {
   return `${origin}/track/${code}`;
 }
 
+/**
+ * What is still refundable on an order, read fresh from the database:
+ * each line item's original quantity minus the quantity already covered by
+ * earlier refund/return records, plus the total amount already reversed.
+ * Without this the same item could be refunded (and restocked) repeatedly.
+ */
+async function fetchRefundable(
+  orderId: string,
+  lineItems: Array<{ product_id: string | null; product_name: string; quantity: number }>,
+): Promise<{ qtyByIdx: number[]; refundedAmount: number }> {
+  const itemKey = (r: { product_id: string | null; product_name: string }) => r.product_id ?? `name:${r.product_name}`;
+  const { data: adjs, error: adjErr } = await supabase
+    .from("order_adjustments" as any)
+    .select("id,revenue_reversed")
+    .eq("order_id", orderId);
+  if (adjErr) throw new Error(adjErr.message);
+  const adjRows = (adjs ?? []) as any[];
+  const refundedAmount = adjRows.reduce((sum, a) => sum + Number(a.revenue_reversed ?? 0), 0);
+  const refundedQty = new Map<string, number>();
+  if (adjRows.length > 0) {
+    const { data: items, error: itemsErr } = await supabase
+      .from("order_adjustment_items" as any)
+      .select("product_id,product_name,quantity")
+      .in("adjustment_id", adjRows.map((a) => a.id));
+    if (itemsErr) throw new Error(itemsErr.message);
+    for (const r of (items ?? []) as any[]) {
+      const k = itemKey(r);
+      refundedQty.set(k, (refundedQty.get(k) ?? 0) + Number(r.quantity ?? 0));
+    }
+  }
+  // Spread already-refunded quantity across line items in order, so two
+  // lines of the same product in one order are each capped correctly.
+  const qtyByIdx = lineItems.map((it) => {
+    const k = itemKey(it);
+    const original = Number(it.quantity ?? 0);
+    const used = Math.min(original, refundedQty.get(k) ?? 0);
+    refundedQty.set(k, (refundedQty.get(k) ?? 0) - used);
+    return original - used;
+  });
+  return { qtyByIdx, refundedAmount };
+}
+
 function OrderDetailPage() {
   const { orderId } = Route.useParams();
   const { edit } = Route.useSearch();
@@ -101,6 +143,11 @@ function OrderDetailPage() {
   const [buyerOrderCount, setBuyerOrderCount] = useState<number | null>(null);
   const [orderLineItems, setOrderLineItems] = useState<Array<{ product_id: string | null; product_name: string; quantity: number; unit_price_at_sale: number; unit_cost_at_sale: number; packaging_cost_at_sale: number }>>([]);
   const [refundQtyByItem, setRefundQtyByItem] = useState<Record<number, number>>({});
+  // Quantity still refundable per line item (null = not loaded yet).
+  const [refundableQty, setRefundableQty] = useState<number[] | null>(null);
+  // Blocks a second submit while one is in flight (state alone updates too
+  // late to stop a fast double-tap).
+  const refundInFlight = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -114,6 +161,9 @@ function OrderDetailPage() {
       ]);
       setAdjustments((adj ?? []) as any);
       setOrderLineItems(((lineItems ?? []) as any) as any);
+      fetchRefundable(orderId, ((lineItems ?? []) as any[]))
+        .then((r) => setRefundableQty(r.qtyByIdx))
+        .catch(() => {});
       setOrder(data as OrderRow | null);
       const buyerId = (data as any)?.platform_buyer_id;
       if (buyerId && user) {
@@ -307,8 +357,14 @@ function OrderDetailPage() {
 
   const submitRefund = async () => {
     if (!order || !user) return;
+    if (refundInFlight.current) return;
+    refundInFlight.current = true;
     setRefundSaving(true);
     try {
+      // Re-read what has already been refunded right before saving, so a
+      // reopened sheet or a second device cannot refund the same thing twice.
+      const refundable = await fetchRefundable(order.id, orderLineItems);
+      setRefundableQty(refundable.qtyByIdx);
       let revenueReversed = 0;
       let cogsReversed = 0;
       let restocked = false;
@@ -321,20 +377,30 @@ function OrderDetailPage() {
         revenueReversed = Number(refundCustomAmount) || 0;
         if (revenueReversed <= 0) {
           toast.error(lang === "zh" ? "请输入退款金额" : lang === "ms" ? "Sila masukkan jumlah bayaran balik" : "Enter a refund amount");
-          setRefundSaving(false);
+          return;
+        }
+        const remainingAmount = Math.max(0, Number(order.amount ?? 0) - refundable.refundedAmount);
+        if (revenueReversed > remainingAmount + 0.005) {
+          toast.error(
+            lang === "zh"
+              ? `最多还能退 RM ${remainingAmount.toFixed(2)}（这笔订单之前已退过款）`
+              : lang === "ms"
+                ? `Maksimum yang boleh dipulangkan: RM ${remainingAmount.toFixed(2)}`
+                : `You can refund at most RM ${remainingAmount.toFixed(2)} on this order`,
+          );
           return;
         }
       } else {
         const selectedIdx = Object.keys(refundQtyByItem).map(Number).filter((i) => (refundQtyByItem[i] ?? 0) > 0);
         if (selectedIdx.length === 0) {
           toast.error(lang === "zh" ? "请勾选要退的商品" : lang === "ms" ? "Sila pilih produk untuk dipulangkan" : "Select at least one item");
-          setRefundSaving(false);
           return;
         }
         const ruleForFullItem = calculateAdjustment(refundType, { amount: 1, cost: 1 }); // just to read which sides reverse for this type
         for (const idx of selectedIdx) {
           const it = orderLineItems[idx];
-          const qty = Math.min(refundQtyByItem[idx] ?? 0, Number(it.quantity ?? 0));
+          // Capped at what is still refundable, not the original quantity.
+          const qty = Math.min(refundQtyByItem[idx] ?? 0, refundable.qtyByIdx[idx] ?? 0);
           if (qty <= 0) continue;
           const itemRevenue = Number(it.unit_price_at_sale ?? 0) * qty;
           const itemCost = (Number(it.unit_cost_at_sale ?? 0) + Number(it.packaging_cost_at_sale ?? 0)) * qty;
@@ -351,6 +417,10 @@ function OrderDetailPage() {
             cogsReversed: itemCogsReversed,
             restocked: ruleForFullItem.restocked,
           });
+        }
+        if (itemBreakdown.length === 0) {
+          toast.error(lang === "zh" ? "所选商品已经全部退过了" : lang === "ms" ? "Produk dipilih sudah dipulangkan sepenuhnya" : "The selected items have already been fully refunded");
+          return;
         }
       }
 
@@ -403,6 +473,7 @@ function OrderDetailPage() {
 
       const { data: adj } = await supabase.from("order_adjustments" as any).select("*").eq("order_id", order.id).order("created_at", { ascending: false });
       setAdjustments((adj ?? []) as any);
+      fetchRefundable(order.id, orderLineItems).then((r) => setRefundableQty(r.qtyByIdx)).catch(() => {});
 
       toast.success(lang === "zh" ? "已记录退款" : lang === "ms" ? "Bayaran balik direkodkan" : "Refund recorded");
       setRefundModal(false);
@@ -412,6 +483,7 @@ function OrderDetailPage() {
     } catch (e: any) {
       toast.error(e?.message || "Failed");
     } finally {
+      refundInFlight.current = false;
       setRefundSaving(false);
     }
   };
@@ -766,16 +838,24 @@ function OrderDetailPage() {
                 </p>
               ) : (
                 orderLineItems.map((it, idx) => {
-                  const selectedQty = refundQtyByItem[idx] ?? 0;
+                  // Still refundable = original quantity minus earlier refunds.
+                  const maxQty = refundableQty ? (refundableQty[idx] ?? 0) : Number(it.quantity ?? 1);
+                  const selectedQty = Math.min(refundQtyByItem[idx] ?? 0, maxQty);
                   return (
                     <div key={idx} className="flex items-center gap-2 p-2.5 rounded-xl border border-border/60 bg-background">
                       <input
                         type="checkbox"
                         checked={selectedQty > 0}
-                        onChange={(e) => setRefundQtyByItem((p) => ({ ...p, [idx]: e.target.checked ? Number(it.quantity ?? 1) : 0 }))}
+                        disabled={maxQty <= 0}
+                        onChange={(e) => setRefundQtyByItem((p) => ({ ...p, [idx]: e.target.checked ? maxQty : 0 }))}
                         className="h-4 w-4"
                       />
                       <p className="text-xs font-medium flex-1 min-w-0 truncate">{it.product_name}</p>
+                      {maxQty <= 0 && (
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {lang === "zh" ? "已全部退过" : lang === "ms" ? "Sudah dipulangkan" : "Fully refunded"}
+                        </span>
+                      )}
                       {selectedQty > 0 && (
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button
@@ -786,10 +866,10 @@ function OrderDetailPage() {
                           <span className="text-xs font-semibold w-6 text-center">{selectedQty}</span>
                           <button
                             type="button"
-                            onClick={() => setRefundQtyByItem((p) => ({ ...p, [idx]: Math.min(Number(it.quantity ?? 1), (p[idx] ?? 1) + 1) }))}
+                            onClick={() => setRefundQtyByItem((p) => ({ ...p, [idx]: Math.min(maxQty, (p[idx] ?? 1) + 1) }))}
                             className="h-6 w-6 rounded-full bg-muted text-xs font-bold"
                           >+</button>
-                          <span className="text-[10px] text-muted-foreground">/ {it.quantity}</span>
+                          <span className="text-[10px] text-muted-foreground">/ {maxQty}</span>
                         </div>
                       )}
                     </div>
