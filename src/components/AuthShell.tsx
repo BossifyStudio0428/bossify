@@ -1,55 +1,123 @@
-import { Check } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
-import { TiltCard } from "@/components/MotionFx";
+
+// Same "ledger" tokens as the landing page (LandingPage.tsx) so signing in
+// feels like the next page of the same site, not a different product.
+const NIGHT = "#1C0F38";
+const PRIMARY = "#3B1E6D";
+const PRIMARY_LIGHT = "#6C4AB6";
+const LAVENDER = "#C9B8F3";
+const ACCENT = "#FF3B5C";
+const INK = "#1E1730";
+const INK_SOFT = "#5B5270";
+const RED = "#D92D4A";
+const DISPLAY = '"Space Grotesk", system-ui, sans-serif';
+const BODY = '"IBM Plex Sans", system-ui, sans-serif';
+const MONO = '"IBM Plex Mono", ui-monospace, Consolas, monospace';
+
+const ZIGZAG_MASK =
+  "conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%";
 
 /**
- * Shared left-side brand panel for the auth experience (Login, Sign Up,
- * Forgot Password). Desktop only - hidden below the `lg` breakpoint so
- * mobile keeps its existing single-column layout untouched.
- *
- * Colors/typography are the exact tokens already used throughout
- * auth.tsx (#8B5CF6 primary, #1A1225 ink, #5B5270 soft text, #F7F5FA
- * surface, #E4DEF0 border, DM Sans) so this reads as part of the same
- * product, not a bolted-on marketing panel.
+ * Left-side brand panel for the auth pages (Login, Sign Up, Forgot
+ * Password). Desktop only -- hidden below `lg`, so phones and the Android
+ * app keep a single-column form. A deep-purple page with the Bossify
+ * "real profit slip" receipt, matching the landing page hero.
  */
 export function AuthBrandPanel() {
   const { lang } = useI18n();
 
-  const headline =
-    lang === "zh" ? "\u6e05\u695a\u77e5\u9053\uff0c\u4f60\u771f\u6b63\u8d5a\u4e86\u591a\u5c11\u3002" : lang === "ms" ? "Tahu apa yang anda benar-benar untung." : "Know what you actually keep.";
-  const sub =
+  const copy =
     lang === "zh"
-      ? "\u8ffd\u8e2a\u771f\u5b9e\u5229\u6da6\u3001\u7ba1\u7406\u5e93\u5b58\uff0c\u4e00\u4e2a\u5730\u65b9\u770b\u61c2\u4f60\u7684\u751f\u610f\u3002"
+      ? {
+          h1: "知道你",
+          h2: "真正赚了多少。",
+          sub: "追踪真实利润、管理库存,在一个地方看懂你的生意。",
+          rows: ["销售额", "产品成本", "平台费用"],
+          keep: "你真正赚到的",
+          points: ["几分钟即可上手", "无需信用卡", "手机和网页都能用"],
+        }
       : lang === "ms"
-        ? "Jejak untung sebenar, urus stok, dan fahami perniagaan anda di satu tempat."
-        : "Track real profit, manage stock, and understand your business in one place.";
-
-  const bullets =
-    lang === "zh"
-      ? ["\u771f\u5b9e\u5229\u6da6\u8ffd\u8e2a", "\u5e93\u5b58\u7ba1\u7406", "\u8425\u4e1a\u62a5\u8868", "TikTok Shop \u6574\u5408"]
-      : lang === "ms"
-        ? ["Jejak untung sebenar", "Pengurusan inventori", "Laporan perniagaan", "Integrasi TikTok Shop"]
-        : ["Real profit tracking", "Inventory management", "Business reports", "TikTok Shop integration"];
+        ? {
+            h1: "Ketahui apa yang",
+            h2: "anda benar-benar untung.",
+            sub: "Jejak untung sebenar, urus stok, dan fahami perniagaan anda di satu tempat.",
+            rows: ["Jualan", "Kos produk", "Yuran platform"],
+            keep: "Apa yang anda simpan",
+            points: ["Sedia dalam beberapa minit", "Tidak perlu kad kredit", "Mudah alih & Web"],
+          }
+        : {
+            h1: "Know what you",
+            h2: "actually keep.",
+            sub: "Track real profit, manage stock, and understand your business in one place.",
+            rows: ["Sales", "Product cost", "Platform fee"],
+            keep: "What you actually keep",
+            points: ["Set up in minutes", "No credit card", "Mobile & Web"],
+          };
+  const values = ["RM 250.00", "− RM 180.00", "− RM 12.50"];
 
   return (
-    <div className="hidden lg:flex lg:flex-col lg:justify-center lg:w-[420px] lg:pr-10 shrink-0">
-      <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 44, height: 44, objectFit: "contain" }} />
-      <h2 className="mt-6 text-[28px] font-bold leading-tight" style={{ color: "#1A1225" }}>
-        {headline}
-      </h2>
-      <p className="mt-3 text-[14px] leading-relaxed" style={{ color: "#5B5270" }}>
-        {sub}
-      </p>
+    <div
+      className="hidden lg:flex lg:flex-col lg:justify-between relative lg:w-[46%] lg:max-w-[640px] shrink-0 overflow-hidden px-12 xl:px-16 py-12"
+      style={{ background: `linear-gradient(160deg, ${NIGHT} 0%, ${PRIMARY} 120%)`, color: "#FFFFFF" }}
+    >
+      <div
+        aria-hidden="true"
+        className="absolute inset-0"
+        style={{ backgroundImage: "repeating-linear-gradient(0deg, rgba(255,255,255,0.055) 0 1px, transparent 1px 34px)" }}
+      />
 
-      <DashboardPreview />
+      <a href="/welcome" className="relative inline-flex items-center gap-2.5 self-start">
+        <img src="/assets/bossify-logo.png" alt="" className="h-9 w-9 rounded-lg object-contain bg-white" />
+        <span className="text-[19px] font-bold tracking-tight" style={{ fontFamily: DISPLAY }}>Bossify</span>
+      </a>
 
-      <ul className="mt-6 space-y-2.5">
-        {bullets.map((b) => (
-          <li key={b} className="flex items-center gap-2 text-[13px] font-medium" style={{ color: "#1A1225" }}>
-            <span className="h-5 w-5 rounded-full flex items-center justify-center shrink-0" style={{ background: "#EFEAFA" }}>
-              <Check className="h-3 w-3" style={{ color: "#8B5CF6" }} />
-            </span>
-            {b}
+      <div className="relative">
+        <h2 className="text-[40px] xl:text-[48px] font-bold tracking-[-0.03em] leading-[1.04]" style={{ fontFamily: DISPLAY }}>
+          {copy.h1}
+          <br />
+          <span style={{ color: ACCENT }}>{copy.h2}</span>
+        </h2>
+        <p className="mt-4 text-[16px] leading-relaxed max-w-[26rem]" style={{ color: "rgba(255,255,255,0.76)" }}>
+          {copy.sub}
+        </p>
+
+        {/* The signature receipt */}
+        <div className="mt-9 w-[270px]" style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 22px 34px rgba(8,3,24,0.5))" }}>
+          <div
+            style={{
+              background: "#FFFFFF",
+              color: INK,
+              fontFamily: MONO,
+              borderRadius: "8px 8px 0 0",
+              paddingBottom: 14,
+              WebkitMask: ZIGZAG_MASK,
+              mask: ZIGZAG_MASK,
+            }}
+          >
+            <div className="px-5 pt-5 pb-2 text-[12px]">
+              <p style={{ color: INK_SOFT }}>ORDER #A1042</p>
+              <p className="font-semibold">Bossify · Real Profit Slip</p>
+              <div className="my-2.5" style={{ borderTop: "1.5px dashed #CDC5DE" }} />
+              <div className="space-y-1">
+                {copy.rows.map((label, i) => (
+                  <div key={label} className="flex items-baseline justify-between gap-2">
+                    <span style={{ color: INK_SOFT }}>{label}</span>
+                    <span className="tabular-nums" style={{ color: i === 0 ? INK : RED }}>{values[i]}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="my-2.5" style={{ borderTop: "1.5px dashed #CDC5DE" }} />
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: INK_SOFT }}>{copy.keep}</p>
+              <p className="text-[28px] font-semibold tabular-nums leading-tight" style={{ color: ACCENT }}>RM 57.50</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ul className="relative border-t" style={{ borderColor: "rgba(255,255,255,0.18)" }}>
+        {copy.points.map((p) => (
+          <li key={p} className="py-3 text-[15px] border-b" style={{ borderColor: "rgba(255,255,255,0.18)", color: LAVENDER }}>
+            {p}
           </li>
         ))}
       </ul>
@@ -57,76 +125,20 @@ export function AuthBrandPanel() {
   );
 }
 
-/** Small, static preview of what the real Profit page looks like once
- *  logged in - illustrative numbers (this screen exists before anyone
- *  signs in, so there is no real data yet), not a live chart. */
-function DashboardPreview() {
-  const { lang } = useI18n();
-  const labels =
-    lang === "zh"
-      ? { profit: "\u771f\u5b9e\u5229\u6da6", revenue: "\u6536\u5165", costs: "\u6210\u672c" }
-      : lang === "ms"
-        ? { profit: "Untung Sebenar", revenue: "Hasil", costs: "Kos" }
-        : { profit: "Real Profit", revenue: "Revenue", costs: "Costs" };
-
-  return (
-    <TiltCard max={4}>
-    <div
-      className="bf-shine bossify-animate-float-sm mt-7 rounded-2xl p-4"
-      style={{ background: "#FFFFFF", border: "1px solid #E4DEF0", boxShadow: "0 12px 32px rgba(139,92,246,0.12)" }}
-    >
-      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#5B5270" }}>
-        {labels.profit}
-      </p>
-      <p className="mt-0.5 text-[26px] font-bold font-mono" style={{ color: "#1A1225" }}>
-        RM 6,170
-      </p>
-
-      <svg viewBox="0 0 200 48" className="mt-2 w-full h-12" preserveAspectRatio="none" aria-hidden="true">
-        <polyline
-          points="0,36 25,32 50,34 75,24 100,26 125,16 150,18 175,8 200,10"
-          fill="none"
-          stroke="#8B5CF6"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <div className="rounded-xl px-3 py-2" style={{ background: "#F7F5FA" }}>
-          <p className="text-[10px]" style={{ color: "#5B5270" }}>{labels.revenue}</p>
-          <p className="text-[13px] font-bold" style={{ color: "#1A1225" }}>RM 18,450</p>
-        </div>
-        <div className="rounded-xl px-3 py-2" style={{ background: "#F7F5FA" }}>
-          <p className="text-[10px]" style={{ color: "#5B5270" }}>{labels.costs}</p>
-          <p className="text-[13px] font-bold" style={{ color: "#1A1225" }}>RM 12,280</p>
-        </div>
-      </div>
-    </div>
-    </TiltCard>
-  );
-}
-
 /**
- * Outer auth-page shell: brand panel + content side by side on desktop
- * (two columns), stacked on mobile (brand panel hidden there - mobile
- * keeps its existing single-column flow untouched). `footer` renders
- * full-width below everything, same spot the Terms/Privacy links held
- * before this shell existed.
+ * Outer auth-page shell: dark brand panel on the left and the form on a
+ * white page on the right (desktop); a single white column on phones.
+ * `footer` renders under the form.
  */
 export function AuthShell({ children, footer }: { children: React.ReactNode; footer?: React.ReactNode }) {
   return (
-    <div
-      data-auth-surface
-      className="min-h-screen px-5 pt-10 pb-8 flex flex-col lg:px-10 lg:py-12"
-      style={{ background: "#FCFBFE", fontFamily: "DM Sans, system-ui, sans-serif" }}
-    >
-      <div className="flex-1 flex flex-col lg:flex-row lg:items-center lg:justify-center lg:gap-10">
-        <AuthBrandPanel />
-        {children}
+    <div data-auth-surface className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#FFFFFF", fontFamily: BODY, color: INK }}>
+      <AuthBrandPanel />
+      <div className="flex-1 flex flex-col px-5 pt-10 pb-8 lg:px-12 lg:py-12">
+        <div className="flex-1 flex flex-col lg:items-center lg:justify-center">{children}</div>
+        {footer}
       </div>
-      {footer}
     </div>
   );
 }
+

@@ -13,8 +13,17 @@ import { AuthShell } from "@/components/AuthShell";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
-  validateSearch: (search: Record<string, unknown>): { mode?: string } => ({
+  // tiktok_email / tiktok_code are passed through as well: the TikTok
+  // authorisation page sends the seller back here with them, and dropping
+  // them from the validated search would lose the one-time login code.
+  validateSearch: (search: Record<string, unknown>): { mode?: string; tiktok_email?: string; tiktok_code?: string } => ({
     mode: typeof search.mode === "string" ? search.mode : undefined,
+    tiktok_email: typeof search.tiktok_email === "string" ? search.tiktok_email : undefined,
+    // A 6-digit code arrives as a number once the router parses the URL.
+    tiktok_code:
+      typeof search.tiktok_code === "string" || typeof search.tiktok_code === "number"
+        ? String(search.tiktok_code)
+        : undefined,
   }),
 });
 
@@ -22,23 +31,33 @@ type Mode = "login" | "reg_email" | "reg_otp" | "reg_pw";
 
 function AuthPage() {
   const routeSearch = Route.useSearch();
-  const [mode, setMode] = useState<Mode>(routeSearch.mode === "reg" ? "reg_email" : "login");
+  // A TikTok login code in the URL always means "log in", whatever mode says.
+  const [mode, setMode] = useState<Mode>(
+    routeSearch.mode === "reg" && !(routeSearch.tiktok_email && routeSearch.tiktok_code) ? "reg_email" : "login",
+  );
   const [email, setEmail] = useState("");
   const [businessName, setBusinessName] = useState("");
   const { t } = useI18n();
-  const [tiktokPrefill, setTiktokPrefill] = useState<{ email: string; code: string } | null>(null);
+  // Coming back from TikTok authorisation: the email + one-time code are in
+  // the URL. They are read straight away (not in an effect), so the very
+  // first render already shows the "logging you in" code screen instead of
+  // the plain login form.
+  const [tiktokPrefill] = useState<{ email: string; code: string } | null>(() => {
+    let tEmail = routeSearch.tiktok_email ?? null;
+    let tCode = routeSearch.tiktok_code ?? null;
+    if ((!tEmail || !tCode) && typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      tEmail = tEmail ?? params.get("tiktok_email");
+      tCode = tCode ?? params.get("tiktok_code");
+    }
+    return tEmail && tCode ? { email: tEmail, code: tCode } : null;
+  });
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const tEmail = params.get("tiktok_email");
-    const tCode = params.get("tiktok_code");
-    if (tEmail && tCode) {
-      setTiktokPrefill({ email: tEmail, code: tCode });
-      // Clean the sensitive params out of the visible URL/history right away.
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, []);
+    if (typeof window === "undefined" || !tiktokPrefill) return;
+    // Clean the sensitive params out of the visible URL/history right away.
+    window.history.replaceState({}, "", window.location.pathname);
+  }, [tiktokPrefill]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -51,14 +70,15 @@ function AuthPage() {
     <AuthShell
       footer={
         <div className="mt-auto lg:mt-8 pt-4 flex items-center justify-center gap-3 text-[11px]" style={{ color: "#5B5270" }}>
-          <Link to="/terms" className="underline hover:text-[#8B5CF6]">{t("terms_conditions")}</Link>
+          <Link to="/terms" className="underline hover:text-[#6C4AB6]">{t("terms_conditions")}</Link>
           <span>·</span>
-          <Link to="/privacy-policy" className="underline hover:text-[#8B5CF6]">{t("privacy_policy")}</Link>
+          <Link to="/privacy-policy" className="underline hover:text-[#6C4AB6]">{t("privacy_policy")}</Link>
         </div>
       }
     >
-      <div className="flex flex-col flex-1 w-full lg:flex-none lg:max-w-[460px] lg:bg-[#F7F5FA] lg:rounded-2xl lg:border lg:border-[#D9D0EC] lg:shadow-[0_1px_2px_rgba(139,92,246,0.08),0_12px_32px_rgba(139,92,246,0.12)] lg:px-10 lg:py-10">
-      {mode === "login" && <LoginScreen onGoRegister={() => setMode("reg_email")} tiktokPrefill={tiktokPrefill} />}
+      <div className="flex flex-col flex-1 w-full lg:flex-none lg:max-w-[460px]">
+      {(mode === "login" || mode === "reg_email") && <AuthTabs mode={mode} onChange={setMode} />}
+      {mode === "login" &&<LoginScreen onGoRegister={() => setMode("reg_email")} tiktokPrefill={tiktokPrefill} />}
       {mode === "reg_email" && (
         <RegEmailScreen
           email={email}
@@ -92,9 +112,34 @@ function AuthPage() {
 
 /* ---------- Shared UI ---------- */
 
+// "Sign In | Start Free" switch at the top of the page -- the same two
+// words as the landing page buttons, so it is obvious which one you are on
+// and you can flip between them without hunting for a small link.
+function AuthTabs({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
+  const { lang } = useI18n();
+  const labels =
+    lang === "zh" ? ["登录", "免费开始"] : lang === "ms" ? ["Log Masuk", "Mula Percuma"] : ["Sign In", "Start Free"];
+  return (
+    <div className="w-full max-w-[400px] mx-auto mb-6 grid grid-cols-2 p-1 rounded-full border border-[#E1DCEC] bg-[#F7F5FA]">
+      {(["login", "reg_email"] as const).map((m, i) => (
+        <button
+          key={m}
+          type="button"
+          aria-pressed={mode === m}
+          onClick={() => onChange(m)}
+          className="py-2.5 rounded-full text-[14px] font-semibold transition-colors"
+          style={{ background: mode === m ? "#3B1E6D" : "transparent", color: mode === m ? "#FFFFFF" : "#5B5270" }}
+        >
+          {labels[i]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Logo({ size = 110 }: { size?: number }) {
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center lg:hidden">
       <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: size, height: size, objectFit: "contain" }} />
       <p className="mt-2 text-[24px] font-bold" style={{ color: "#1A1225" }}>Bossify</p>
     </div>
@@ -110,7 +155,7 @@ function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={
-        "w-full bg-[#F7F5FA] border border-[#E4DEF0] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#8B5CF6] focus:ring-4 focus:ring-[#8B5CF6]/15 transition " +
+        "w-full bg-white border border-[#E1DCEC] rounded-xl px-4 py-3 text-[14px] outline-none focus:border-[#6C4AB6] focus:ring-4 focus:ring-[#6C4AB6]/15 transition " +
         (props.className || "")
       }
       style={{ color: "#1A1225" }}
@@ -129,7 +174,7 @@ function PrimaryButton({
       {...rest}
       disabled={rest.disabled || loading}
       className="w-full text-white font-bold text-[14px] active:scale-[0.99] transition disabled:opacity-60 inline-flex items-center justify-center gap-2"
-      style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
+      style={{ background: "#3B1E6D", borderRadius: 999, padding: 13 }}
     >
       {loading && (
         <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
@@ -148,7 +193,7 @@ function ProgressDots({ step, total = 3 }: { step: number; total?: number }) {
   return (
     <div className="flex gap-1.5 justify-center mt-3">
       {Array.from({ length: total }).map((_, i) => (
-        <span key={i} style={{ width: 8, height: 8, borderRadius: 999, background: i < step ? "#8B5CF6" : "#E4DEF0" }} />
+        <span key={i} style={{ width: 8, height: 8, borderRadius: 999, background: i < step ? "#6C4AB6" : "#E4DEF0" }} />
       ))}
     </div>
   );
@@ -256,12 +301,12 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
   return (
     <div className="w-full max-w-[400px] mx-auto space-y-5 flex-1 flex flex-col">
       <Logo />
-      <p className="text-[12px] italic text-center" style={{ color: "#5B5270" }}>{t("slogan")}</p>
-      <p className="text-[12px] text-center leading-relaxed -mt-2 px-2" style={{ color: "#5B5270" }}>
+      <p className="text-[12px] italic text-center lg:hidden" style={{ color: "#5B5270" }}>{t("slogan")}</p>
+      <p className="text-[12px] text-center leading-relaxed -mt-2 px-2 lg:hidden" style={{ color: "#5B5270" }}>
         {t("auth_subheadline")}
       </p>
 
-      <div className="bg-[#F7F5FA] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(17,12,33,0.06)] space-y-4">
+      <div className="bg-white rounded-[16px] p-6 border border-[#E1DCEC] space-y-4">
         <div>
           <h1 className="text-[18px] font-bold" style={{ color: "#1A1225" }}>{t("welcome_back")}</h1>
           <p className="text-[13px]" style={{ color: "#5B5270" }}>{t("login_subtitle")}</p>
@@ -296,7 +341,7 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
               type="button"
               onClick={() => navigate({ to: "/forgot-password" })}
               className="text-[12px] font-semibold"
-              style={{ color: "#8B5CF6" }}
+              style={{ color: "#6C4AB6" }}
             >
               {t("forgot_password")}
             </button>
@@ -342,13 +387,13 @@ function LoginScreen({ onGoRegister, tiktokPrefill }: { onGoRegister: () => void
           type="button"
           onClick={() => setShowTikTokCode(true)}
           className="text-[11px] text-center w-full"
-          style={{ color: "#8B5CF6" }}
+          style={{ color: "#6C4AB6" }}
         >
           Already have a TikTok Shop login code?
         </button>
         <p className="text-[13px] text-center" style={{ color: "#5B5270" }}>
           {t("no_account")}{" "}
-          <button onClick={onGoRegister} className="font-bold" style={{ color: "#8B5CF6" }}>{t("register")}</button>
+          <button onClick={onGoRegister} className="font-bold" style={{ color: "#6C4AB6" }}>{t("register")}</button>
         </p>
       </div>
     </div>
@@ -387,7 +432,7 @@ function ComingSoonSocialButton({ provider }: { provider: "tiktok" | "google" })
       <span className="min-w-0 flex-1 truncate text-left">{label}</span>
       <span
         className="shrink-0 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full"
-        style={{ background: "#EFEAFA", color: "#8B5CF6", letterSpacing: "0.5px" }}
+        style={{ background: "#EFEAFA", color: "#6C4AB6", letterSpacing: "0.5px" }}
       >
         {t("auth_coming_soon")}
       </span>
@@ -437,7 +482,7 @@ function TikTokLoginCodeScreen({ onBack, prefill }: { onBack: () => void; prefil
   return (
     <div className="w-full max-w-[400px] mx-auto space-y-4 flex-1">
       <BackArrow onClick={onBack} />
-      <div className="flex flex-col items-center gap-1">
+      <div className="flex flex-col items-center gap-1 lg:hidden">
         <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 64, height: 64 }} />
         <p className="text-[16px] font-bold" style={{ color: "#1A1225" }}>Bossify</p>
       </div>
@@ -447,7 +492,7 @@ function TikTokLoginCodeScreen({ onBack, prefill }: { onBack: () => void; prefil
           Enter the email and code shown on the TikTok authorization page.
         </p>
       </div>
-      <form onSubmit={verify} className="bg-[#F7F5FA] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(17,12,33,0.06)] space-y-3">
+      <form onSubmit={verify} className="bg-white rounded-[16px] p-6 border border-[#E1DCEC] space-y-3">
         <div className="space-y-1.5">
           <FieldLabel>Email shown on that page</FieldLabel>
           <TextInput
@@ -480,7 +525,7 @@ function DeviceLimitBlock({
   return (
     <div className="w-full max-w-[400px] mx-auto space-y-5 flex-1 flex flex-col">
       <Logo />
-      <div className="bg-[#F7F5FA] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(17,12,33,0.06)] space-y-4 text-center">
+      <div className="bg-white rounded-[16px] p-6 border border-[#E1DCEC] space-y-4 text-center">
         <div className="mx-auto h-14 w-14 rounded-2xl bg-amber-500/15 text-amber-600 flex items-center justify-center"><Smartphone className="h-7 w-7" /></div>
         <h1 className="text-[18px] font-bold" style={{ color: "#1A1225" }}>{t("device_limit_title")}</h1>
         <p className="text-[13px]" style={{ color: "#5B5270" }}>
@@ -498,11 +543,183 @@ function DeviceLimitBlock({
           type="button"
           onClick={onManage}
           className="w-full text-white font-bold text-[14px] active:scale-[0.99] transition-transform"
-          style={{ background: "#8B5CF6", borderRadius: 12, padding: 13 }}
+          style={{ background: "#3B1E6D", borderRadius: 999, padding: 13 }}
         >
           {t("device_limit_manage")}
         </button>
       </div>
+    </div>
+  );
+}
+
+/* ---------- 2a. Start Free: connect TikTok Shop first ---------- */
+
+// What "Start Free" opens. Bossify exists to turn a TikTok Shop's orders
+// into real profit, so the first thing a new seller is asked to do is
+// connect that shop -- the TikTok authorisation itself creates the Bossify
+// account (see api/public/oauth/tiktok/callback.ts). Signing up with an
+// email is the secondary route underneath.
+function ConnectTikTokScreen({ onUseEmail }: { onUseEmail: () => void }) {
+  const { lang } = useI18n();
+  const [starting, setStarting] = useState(false);
+
+  const copy =
+    lang === "zh"
+      ? {
+          title: "连接你的 TikTok Shop",
+          sub: "Bossify 会把你的订单和产品带进来,算出你真正赚了多少。",
+          steps: ["在 TikTok Shop 授权 Bossify", "订单和产品自动同步进来", "马上看到真实利润、库存和报表"],
+          cta: "连接 TikTok Shop · 免费",
+          note: "授权后会自动为你开好 Bossify 账号,不用另外填表。",
+          or: "不是 TikTok Shop 卖家?",
+          ownTitle: "自己的店也可以用",
+          ownBody: "不需要 TikTok Shop,这些照样能用:",
+          ownPoints: [
+            "自己记录订单,管理产品和库存",
+            "库存盘点和供应商采购单",
+            "一键用 WhatsApp 发收据给顾客",
+            "WhatsApp 信息模板,一键提醒未付款的顾客",
+          ],
+          email: "用邮箱开始",
+          agree: "继续即表示你同意服务条款和隐私政策。",
+        }
+      : lang === "ms"
+        ? {
+            title: "Sambungkan TikTok Shop anda",
+            sub: "Bossify bawa masuk pesanan dan produk anda, kemudian kira berapa untung sebenar anda.",
+            steps: [
+              "Benarkan Bossify di TikTok Shop",
+              "Pesanan dan produk disegerakkan automatik",
+              "Terus lihat untung sebenar, stok dan laporan",
+            ],
+            cta: "Sambung TikTok Shop · Percuma",
+            note: "Akaun Bossify anda dibuka secara automatik selepas kebenaran, tanpa borang lain.",
+            or: "Bukan penjual TikTok Shop?",
+            ownTitle: "Kedai sendiri pun boleh",
+            ownBody: "Tak perlu TikTok Shop. Semua ini tetap boleh digunakan:",
+            ownPoints: [
+              "Rekod pesanan sendiri, urus produk dan stok",
+              "Kiraan stok dan pesanan belian pembekal",
+              "Hantar resit kepada pelanggan melalui WhatsApp dengan 1 ketik",
+              "Templat mesej WhatsApp untuk ingatkan pelanggan belum bayar dengan 1 ketik",
+            ],
+            email: "Mula dengan e-mel",
+            agree: "Dengan meneruskan, anda bersetuju dengan Terma Perkhidmatan dan Dasar Privasi.",
+          }
+        : {
+            title: "Connect your TikTok Shop",
+            sub: "Bossify brings in your orders and products, then works out what you actually keep.",
+            steps: [
+              "Authorise Bossify on TikTok Shop",
+              "Your orders and products sync in automatically",
+              "See real profit, stock and reports right away",
+            ],
+            cta: "Connect TikTok Shop · Free",
+            note: "Authorising opens your Bossify account automatically — no other form to fill in.",
+            or: "Not on TikTok Shop?",
+            ownTitle: "Run your own shop",
+            ownBody: "You don't need TikTok Shop. All of this still works:",
+            ownPoints: [
+              "Record orders yourself, manage products and stock",
+              "Stock checks and supplier purchase orders",
+              "Send a customer their receipt on WhatsApp in 1 tap",
+              "WhatsApp message templates to remind unpaid customers in 1 tap",
+            ],
+            email: "Start with email",
+            agree: "By continuing you agree to the Terms of Service and Privacy Policy.",
+          };
+
+  const start = async () => {
+    setStarting(true);
+    try {
+      const res = await fetch("https://tanstack-start-app.bossifystudio.workers.dev/api/public/oauth/tiktok/login-start", {
+        method: "POST",
+      });
+      const j = await res.json();
+      if (!res.ok || !j?.authUrl) throw new Error(j?.message || "Could not start TikTok login");
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({ url: j.authUrl });
+        setStarting(false);
+      } else {
+        window.location.href = j.authUrl;
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Could not start TikTok login");
+      setStarting(false);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-[400px] mx-auto space-y-5 flex-1">
+      <div>
+        <h1 className="text-[26px] font-bold leading-tight" style={{ color: "#1A1225" }}>{copy.title}</h1>
+        <p className="mt-2 text-[14.5px] leading-relaxed" style={{ color: "#5B5270" }}>{copy.sub}</p>
+      </div>
+
+      <div className="bg-white rounded-[16px] border border-[#E1DCEC] overflow-hidden">
+        <ol>
+          {copy.steps.map((s, i) => (
+            <li key={s} className="flex items-baseline gap-4 px-5 py-3.5 border-b border-[#E1DCEC]">
+              <span className="text-[13px] shrink-0" style={{ color: "#FF3B5C", fontFamily: '"IBM Plex Mono", ui-monospace, monospace' }}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className="text-[14.5px] font-medium" style={{ color: "#1A1225" }}>{s}</span>
+            </li>
+          ))}
+        </ol>
+        <div className="p-5 space-y-3">
+          <button
+            type="button"
+            disabled={starting}
+            onClick={start}
+            className="w-full inline-flex items-center justify-center gap-2.5 text-white font-bold text-[15px] active:scale-[0.99] transition disabled:opacity-60"
+            style={{ background: "#1E1730", borderRadius: 999, padding: 14 }}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" className="shrink-0">
+              <path
+                fill="#FFFFFF"
+                d="M16.5 3.2c.1 1.3.6 2.5 1.5 3.4.9.9 2.1 1.4 3.3 1.5v3c-1.7-.1-3.3-.6-4.8-1.5v6.6c0 3.6-2.9 6.5-6.5 6.5S3.5 19.8 3.5 16.2s2.9-6.5 6.5-6.5c.3 0 .7 0 1 .1v3.1c-.3-.1-.6-.1-1-.1-1.9 0-3.5 1.6-3.5 3.5s1.6 3.5 3.5 3.5 3.5-1.6 3.5-3.5V3.2h3z"
+              />
+            </svg>
+            {starting ? "…" : copy.cta}
+          </button>
+          <p className="text-[12.5px] leading-relaxed text-center" style={{ color: "#5B5270" }}>{copy.note}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-[#E1DCEC]" />
+        <span className="text-[12.5px]" style={{ color: "#5B5270" }}>{copy.or}</span>
+        <div className="flex-1 h-px bg-[#E1DCEC]" />
+      </div>
+
+      {/* Not a TikTok seller: Bossify still works as a plain shop ledger. */}
+      <div className="bg-[#F7F5FA] rounded-[16px] border border-[#E1DCEC] p-5 space-y-3">
+        <div>
+          <p className="text-[16px] font-bold" style={{ color: "#1A1225", fontFamily: '"Space Grotesk", system-ui, sans-serif' }}>
+            {copy.ownTitle}
+          </p>
+          <p className="mt-1 text-[13.5px] leading-relaxed" style={{ color: "#5B5270" }}>{copy.ownBody}</p>
+          <ul className="mt-2.5 border-t border-[#E1DCEC]">
+            {copy.ownPoints.map((p) => (
+              <li key={p} className="flex items-start gap-2.5 py-2 border-b border-[#E1DCEC] text-[13.5px] font-medium" style={{ color: "#1A1225" }}>
+                <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#FF3B5C" }} />
+                {p}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <button
+          type="button"
+          onClick={onUseEmail}
+          className="w-full inline-flex items-center justify-center gap-2 font-semibold text-[14.5px] border border-[#3B1E6D] bg-white transition-colors hover:bg-[#EFE8FB]"
+          style={{ color: "#3B1E6D", borderRadius: 999, padding: 12 }}
+        >
+          <Mail className="h-4 w-4" />
+          {copy.email}
+        </button>
+      </div>
+      <p className="text-[11.5px] text-center" style={{ color: "#5B5270" }}>{copy.agree}</p>
     </div>
   );
 }
@@ -518,6 +735,9 @@ function RegEmailScreen({
 }) {
   const { t } = useI18n();
   const [agree, setAgree] = useState(false);
+  // Start Free leads with "Connect TikTok Shop" -- that is what Bossify is
+  // for. The email form is the fallback for sellers without a shop yet.
+  const [useEmail, setUseEmail] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -537,10 +757,12 @@ function RegEmailScreen({
     onNext();
   };
 
+  if (!useEmail) return <ConnectTikTokScreen onUseEmail={() => setUseEmail(true)} />;
+
   return (
     <div className="w-full max-w-[400px] mx-auto space-y-4 flex-1">
-      <BackArrow onClick={onBack} />
-      <div className="flex flex-col items-center gap-1">
+      <BackArrow onClick={() => setUseEmail(false)} />
+      <div className="flex flex-col items-center gap-1 lg:hidden">
         <img src="/assets/bossify-logo.png" alt="Bossify" style={{ width: 64, height: 64 }} />
         <p className="text-[16px] font-bold" style={{ color: "#1A1225" }}>Bossify</p>
       </div>
@@ -550,7 +772,7 @@ function RegEmailScreen({
         <p className="text-[13px]" style={{ color: "#5B5270" }}>{t("enter_email_started")}</p>
       </div>
 
-      <form onSubmit={submit} className="bg-[#F7F5FA] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(17,12,33,0.06)] space-y-3" autoComplete="on" action="#" method="post">
+      <form onSubmit={submit} className="bg-white rounded-[16px] p-6 border border-[#E1DCEC] space-y-3" autoComplete="on" action="#" method="post">
         <div className="space-y-1.5">
           <FieldLabel>{t("business_name")}</FieldLabel>
           <TextInput
@@ -568,7 +790,7 @@ function RegEmailScreen({
           />
         </div>
         <label className="flex items-start gap-2 text-[12px]" style={{ color: "#1A1225" }}>
-          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 accent-[#8B5CF6]" />
+          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 accent-[#6C4AB6]" />
           <span>{t("agree_terms")}</span>
         </label>
         <PrimaryButton type="submit" loading={loading}>{t("send_otp")}</PrimaryButton>
@@ -647,7 +869,7 @@ function RegOtpScreen({ email, onBack, onNext }: { email: string; onBack: () => 
       <ProgressDots step={2} />
       <div className="flex flex-col items-center gap-3 text-center">
         <div className="h-14 w-14 rounded-full flex items-center justify-center" style={{ background: "#EFEAFA" }}>
-          <Mail className="h-7 w-7" style={{ color: "#8B5CF6" }} />
+          <Mail className="h-7 w-7" style={{ color: "#6C4AB6" }} />
         </div>
         <h1 className="text-[20px] font-bold" style={{ color: "#1A1225" }}>{t("check_email")}</h1>
         <p className="text-[13px]" style={{ color: "#5B5270" }}>
@@ -672,7 +894,7 @@ function RegOtpScreen({ email, onBack, onNext }: { email: string; onBack: () => 
             className="bg-[#F7F5FA] text-center text-[20px] font-bold outline-none transition"
             style={{
               width: 48, height: 56, borderRadius: 12,
-              border: d ? "1.5px solid #8B5CF6" : "1.5px solid #E4DEF0",
+              border: d ? "1.5px solid #6C4AB6" : "1.5px solid #E4DEF0",
               boxShadow: d ? "0 0 0 4px rgba(139,92,246,0.25)" : "none",
               color: "#1A1225",
             }}
@@ -684,7 +906,7 @@ function RegOtpScreen({ email, onBack, onNext }: { email: string; onBack: () => 
         {seconds > 0 ? (
           <span>{t("resend_in")} 0:{seconds.toString().padStart(2, "0")}</span>
         ) : (
-          <button onClick={resend} className="font-bold" style={{ color: "#8B5CF6" }}>{t("resend_code")}</button>
+          <button onClick={resend} className="font-bold" style={{ color: "#6C4AB6" }}>{t("resend_code")}</button>
         )}
       </div>
 
@@ -769,7 +991,7 @@ function RegPasswordScreen({ businessName, onDone }: { businessName: string; onD
         autoComplete="on"
         action="#"
         method="post"
-        className="bg-[#F7F5FA] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(17,12,33,0.06)] space-y-3"
+        className="bg-white rounded-[16px] p-6 border border-[#E1DCEC] space-y-3"
       >
         {/* Hidden username field helps Google Password Manager associate the
             new password with the account being created. */}

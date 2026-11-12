@@ -475,6 +475,13 @@ textarea,
 .bf-slip-print {
   animation: bossify-slip-print 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.55s both;
 }
+/* Auth pages (AuthShell.tsx): headings in the same display face as the
+   landing page. */
+[data-auth-surface] h1 {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
 /* Sample report sheet / price figure swapping in. */
 @keyframes bossify-paper-in {
   from { opacity: 0; transform: translateY(10px); }
