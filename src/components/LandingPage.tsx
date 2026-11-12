@@ -416,6 +416,9 @@ type ExtraCopy = {
   playSmall: string;
   featureRows: FeatureRow[];
   reportsSub: string;
+  ownTitle: string;
+  ownBody: string;
+  ownPoints: string[];
   pricingTitle: string;
   pricingSub: string;
   monthly: string;
@@ -474,6 +477,14 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
       },
     ],
     reportsSub: "Tap a report to see a sample of what you get.",
+    ownTitle: "Not on TikTok Shop? It works for your own shop too.",
+    ownBody: "Selling on WhatsApp, Instagram or from a physical shop? You do not need TikTok Shop to use Bossify.",
+    ownPoints: [
+      "Record orders yourself, manage products and stock",
+      "Stock checks and supplier purchase orders",
+      "Send a customer their receipt on WhatsApp in 1 tap",
+      "WhatsApp message templates to remind unpaid customers in 1 tap",
+    ],
     pricingTitle: "Simple pricing. Start free.",
     pricingSub: "Every account starts on Free. Upgrade inside the app only when your shop needs it.",
     monthly: "Monthly",
@@ -553,6 +564,14 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
       },
     ],
     reportsSub: "点一份报表,看看你会拿到什么样的内容。",
+    ownTitle: "不是 TikTok Shop 卖家?自己的店也可以用。",
+    ownBody: "在 WhatsApp、Instagram 或实体店卖东西?不需要 TikTok Shop 也能用 Bossify。",
+    ownPoints: [
+      "自己记录订单,管理产品和库存",
+      "库存盘点和供应商采购单",
+      "一键用 WhatsApp 发收据给顾客",
+      "WhatsApp 信息模板,一键提醒未付款的顾客",
+    ],
     pricingTitle: "价格简单,免费开始。",
     pricingSub: "每个账号都从免费版开始。等生意需要了,再在 App 里升级。",
     monthly: "月付",
@@ -648,6 +667,14 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
       },
     ],
     reportsSub: "Ketik satu laporan untuk lihat contoh yang anda akan dapat.",
+    ownTitle: "Bukan penjual TikTok Shop? Kedai sendiri pun boleh.",
+    ownBody: "Menjual di WhatsApp, Instagram atau kedai fizikal? Anda tidak perlukan TikTok Shop untuk guna Bossify.",
+    ownPoints: [
+      "Rekod pesanan sendiri, urus produk dan stok",
+      "Kiraan stok dan pesanan belian pembekal",
+      "Hantar resit kepada pelanggan melalui WhatsApp dengan 1 ketik",
+      "Templat mesej WhatsApp untuk ingatkan pelanggan belum bayar dengan 1 ketik",
+    ],
     pricingTitle: "Harga mudah. Mula percuma.",
     pricingSub: "Setiap akaun bermula dengan Percuma. Naik taraf dalam app hanya apabila kedai anda perlukannya.",
     monthly: "Bulanan",
@@ -797,7 +824,10 @@ function Reveal({
       className={className}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : `translateY(${y}px)`,
+        // "none" (not translateY(0)) once shown: a leftover transform keeps
+        // the content on its own GPU layer, which resamples images and
+        // makes the screenshots inside look soft.
+        transform: visible ? "none" : `translateY(${y}px)`,
         // No transition on the way OUT: the element is already off screen
         // when it resets, so it snaps back to its start pose and is ready to
         // play again the next time it scrolls in.
@@ -1132,7 +1162,7 @@ function HeroVisual({ copy }: { copy: LandingCopy }) {
         />
       </div>
 
-      <div className="relative ml-auto mr-3 sm:mr-14 w-[206px] sm:w-[268px]">
+      <div className="relative ml-auto mr-3 sm:mr-10 w-[224px] sm:w-[304px]">
         <div
           className="rounded-[32px] sm:rounded-[38px] p-[7px] sm:p-[9px]"
           style={{ background: "#120A24", boxShadow: "0 40px 70px -28px rgba(18,10,36,0.75)" }}
@@ -1834,6 +1864,30 @@ export function LandingPage() {
               <img data-pan="" src={heroTikTokScreenshot} alt="Bossify TikTok Shop connection screen" loading="lazy" className="w-full h-full object-cover object-top" />
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      {/* Not a TikTok seller -- Bossify also works as a plain shop ledger */}
+      <section className="px-5 lg:px-8 py-16 lg:py-24 border-b" style={{ background: SURFACE, borderColor: LINE }}>
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+          <Reveal>
+            <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{x.ownTitle}</h2>
+            <p className="text-[17px] lg:text-[18px] leading-relaxed mb-7 max-w-[32rem]" style={{ color: INK_SOFT }}>{x.ownBody}</p>
+            <button data-cta="register" onClick={() => goAuth("register")} className={`${primaryBtn} text-[16px] px-8 py-4`} style={{ background: PRIMARY }}>
+              {c.startFree}
+              <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5" />
+            </button>
+          </Reveal>
+          <ul className="border-t-2" style={{ borderColor: INK }}>
+            {x.ownPoints.map((p, i) => (
+              <Reveal key={p} delay={i * 80} y={12}>
+                <li className="flex items-start gap-3 py-4 border-b text-[16.5px] sm:text-[17.5px] font-semibold list-none" style={{ borderColor: LINE, color: INK }}>
+                  <Check className="w-5 h-5 mt-0.5 shrink-0" style={{ color: ACCENT }} />
+                  {p}
+                </li>
+              </Reveal>
+            ))}
+          </ul>
         </div>
       </section>
 
