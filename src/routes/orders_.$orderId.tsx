@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Pencil, Phone, MessageCircle, Trash2, RotateCcw, Truck } from "lucide-react";
 import { toast } from "sonner";
+import { OrderSourceBadge } from "@/components/OrderSourceBadge";
 import { supabase, type OrderRow, type OrderStatus } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -503,6 +504,7 @@ function OrderDetailPage() {
           <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-base font-bold flex-1 truncate">{order.code}</h1>
+        <OrderSourceBadge order={order} lang={lang} />
         {!editing && (
           <button onClick={() => setEditing(true)} className="h-10 w-10 rounded-full bg-card border border-border/60 flex items-center justify-center">
             <Pencil className="h-4 w-4" />

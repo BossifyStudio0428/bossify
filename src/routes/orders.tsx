@@ -19,6 +19,7 @@ import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { orderCost, orderGrossProfit, orderContributionProfit, isPaidStatus } from "@/lib/orderMath";
+import { OrderSourceBadge, orderSourceKey, orderSourceLabel } from "@/components/OrderSourceBadge";
 import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -93,6 +94,8 @@ function OrdersPage() {
   const [ofEnabled, setOfEnabled] = useState<boolean>(true);
   const [ofBizType, setOfBizType] = useState<string | null>(null);
   const [tiktokConnected, setTiktokConnected] = useState(false);
+  // Show orders from one source only (TikTok sync, added by hand, order form...).
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [tiktokLastSynced, setTiktokLastSynced] = useState<string | null>(null);
   const [tiktokSyncing, setTiktokSyncing] = useState(false);
   const [tiktokMsg, setTiktokMsg] = useState<string | null>(null);
@@ -660,7 +663,14 @@ function OrdersPage() {
     return true;
   };
   const byStatus = active === "All" ? orders : orders.filter((o) => o.status === active);
-  const byDate = byStatus.filter((o) => inDateRange(o.created_at));
+  const bySource = sourceFilter === "all" ? byStatus : byStatus.filter((o) => orderSourceKey(o) === sourceFilter);
+  const byDate = bySource.filter((o) => inDateRange(o.created_at));
+  // Sources that actually occur, with counts, for the filter chips.
+  const sourceCounts = new Map<string, number>();
+  for (const o of orders) {
+    const k = orderSourceKey(o);
+    sourceCounts.set(k, (sourceCounts.get(k) ?? 0) + 1);
+  }
   const q = searchQuery.trim().toLowerCase();
   const visible = q
     ? byDate.filter((o) => {
@@ -1010,6 +1020,36 @@ function OrdersPage() {
         </div>
       </div>
 
+      {/* Source filter — only when there is more than one source to tell apart */}
+      {sourceCounts.size > 1 && (
+        <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
+          <div className="flex gap-2 w-max">
+            {["all", ...Array.from(sourceCounts.keys()).sort((a, b) => (sourceCounts.get(b) ?? 0) - (sourceCounts.get(a) ?? 0))].map((k) => {
+              const isActive = sourceFilter === k;
+              const label = k === "all"
+                ? `${lang === "zh" ? "全部来源" : lang === "ms" ? "Semua sumber" : "All sources"} (${orders.length})`
+                : `${orderSourceLabel(k, lang)} (${sourceCounts.get(k) ?? 0})`;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setSourceFilter(k)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-colors ${
+                    isActive
+                      ? k === "tiktok"
+                        ? "bg-black text-white border-black"
+                        : "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-foreground border-border"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {(() => {
         const allCats = Array.from(new Set(Object.values(orderCategories).flatMap((s) => Array.from(s))));
         if (allCats.length === 0) return null;
@@ -1148,16 +1188,7 @@ function OrdersPage() {
                     <div className="flex flex-col gap-0.5 min-w-0">
                       <div className="flex items-center gap-2 min-w-0 flex-wrap">
                         <span className="font-bold text-slate-900 text-base leading-tight truncate">{o.customer_name}</span>
-                        {(o as any).order_source === "online_form" && (
-                          <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/10 text-indigo-600 text-[10px] font-medium rounded-full border border-indigo-500/20">
-                            <Globe className="h-2.5 w-2.5" /> {t("pof_source_online")}
-                          </span>
-                        )}
-                        {(o as any).order_source === "tiktok" && (
-                          <span className="shrink-0 px-2 py-0.5 bg-black text-white text-[10px] font-medium rounded-full">
-                            TikTok
-                          </span>
-                        )}
+                        <OrderSourceBadge order={o} lang={lang} />
                       </div>
                       {o.phone ? (
                         <button
@@ -1432,7 +1463,10 @@ function OrdersPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-foreground truncate">{o.customer_name}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">{o.code}</p>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <p className="text-[11px] text-muted-foreground truncate">{o.code}</p>
+                          <OrderSourceBadge order={o} lang={lang} />
+                        </div>
                       </div>
                     </div>
                   </td>
