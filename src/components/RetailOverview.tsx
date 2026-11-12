@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { orderGrossProfit, orderContributionProfit } from "@/lib/orderMath";
+import { orderGrossProfit, orderContributionProfit, isLossMakingProduct } from "@/lib/orderMath";
 import { SetupChecklist } from "@/components/SetupChecklist";
 import { TiltCard } from "@/components/MotionFx";
 import { CampaignBanner } from "@/components/CampaignBanner";
@@ -29,6 +29,7 @@ type InvRow = {
   name: string;
   price: number | null;
   cost_price: number | null;
+  packaging_cost?: number | null;
   stock: number | null;
 };
 
@@ -128,6 +129,9 @@ export function RetailOverview() {
   const [inv, setInv] = useState<InvRow[]>([]);
   const [range, setRange] = useState<Range>("month");
   const [lowThreshold, setLowThreshold] = useState<number>(getCachedPrefs().low_stock_threshold);
+  // Seller's platform fee % — needed so the loss-making check here matches
+  // the push alert (price - cost - packaging - platform fee).
+  const [platformFeePercent, setPlatformFeePercent] = useState<number>(0);
 
   useEffect(() => {
     if (!user) return;
@@ -218,7 +222,7 @@ export function RetailOverview() {
       const [invRes, curRes, prevRes, recentRes, weekRes, opexRes, curAdj, prevAdj] = await Promise.all([
         supabase
           .from("inventory")
-          .select("id,name,price,cost_price,stock")
+          .select("id,name,price,cost_price,packaging_cost,stock")
           .eq("user_id", user.id),
         supabase
           .from("orders")
@@ -252,8 +256,10 @@ export function RetailOverview() {
         fetchPeriodAdjustments(user.id, curStart.toISOString(), curEnd.toISOString()),
         fetchPeriodAdjustments(user.id, prevStart.toISOString(), prevEnd.toISOString()),
       ]);
+      const { data: feeRow } = await supabase.from("profiles").select("platform_fee_percent").eq("id", user.id).maybeSingle();
       if (cancelled) return;
-      setInv((invRes.data ?? []) as InvRow[]);
+      setPlatformFeePercent(Number((feeRow as any)?.platform_fee_percent ?? 0));
+      setInv((invRes.data ?? []) as unknown as InvRow[]);
       setCurOrders((curRes.data ?? []) as OrderRow[]);
       setPrevOrders((prevRes.data ?? []) as OrderRow[]);
       setRecentOrders((recentRes.data ?? []) as OrderRow[]);
@@ -403,10 +409,8 @@ export function RetailOverview() {
     let losing = 0;
     for (const it of inv) {
       const stock = Number(it.stock ?? 0);
-      const price = Number(it.price ?? 0);
-      const cost = Number(it.cost_price ?? 0);
       if (stock <= lowThreshold) lowStockItems++;
-      if (price > 0 && cost > price) losing++;
+      if (isLossMakingProduct(it, platformFeePercent)) losing++;
     }
     const unpaidOrders = curOrders.filter((o: any) => o.status === "Unpaid");
     const unpaidTotal = unpaidOrders.reduce((s, o: any) => s + Number(o.amount ?? 0), 0);
@@ -428,7 +432,7 @@ export function RetailOverview() {
       unpaidTotal,
       unpaidCount,
     };
-  }, [inv, curOrders, prevOrders, operatingExpenses, lowThreshold, curAdjustments, prevAdjustments]);
+  }, [inv, curOrders, prevOrders, operatingExpenses, lowThreshold, platformFeePercent, curAdjustments, prevAdjustments]);
 
   // Daily net-profit trend for the currently selected range — reuses
   // curOrders (no extra query). Loss days render in red so a glance at
@@ -469,9 +473,7 @@ export function RetailOverview() {
     if (loading) return { suggestion: null, businessInsights: [] as { key: string; text: string }[] };
 
     // Priority 1: loss-making SKUs (money leaking every sale)
-    const losing = inv.filter(
-      (i) => Number(i.price ?? 0) > 0 && Number(i.cost_price ?? 0) > Number(i.price ?? 0),
-    );
+    const losing = inv.filter((i) => isLossMakingProduct(i, platformFeePercent));
     // Priority 2: out of stock (can't sell)
     const out = inv.filter((i) => Number(i.stock ?? 0) <= 0);
     // Priority 3: low stock
@@ -539,7 +541,7 @@ export function RetailOverview() {
       return { suggestion: ok, businessInsights: [ok] };
     }
     return { suggestion: pool[tick % pool.length], businessInsights: pool.slice(0, 3) };
-  }, [inv, weekItems, tiktokIdByProduct, loading, t, tick, lowThreshold]);
+  }, [inv, weekItems, tiktokIdByProduct, loading, t, tick, lowThreshold, platformFeePercent]);
 
   const rangeLabel =
     range === "today"

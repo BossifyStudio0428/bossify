@@ -168,6 +168,31 @@ export function isPaidStatus(status: string | null | undefined): boolean {
   return status != null && PAID_STATUSES.includes(status);
 }
 
+/**
+ * Per-unit Contribution Profit of a product at its CURRENT price/costs:
+ * price minus product cost, packaging cost and the seller's platform fee %.
+ * Deliberately excludes period operating expenses (company-wide, not per-SKU).
+ */
+export function productUnitContribution(
+  product: { price?: MoneyLike; cost_price?: MoneyLike; packaging_cost?: MoneyLike },
+  platformFeePercent: MoneyLike,
+): number {
+  const price = money(product.price);
+  const platformFee = price * (money(platformFeePercent) / 100);
+  return round2(price - money(product.cost_price) - money(product.packaging_cost) - platformFee);
+}
+
+/** Single definition of a "loss-making product", shared by the push alert
+ * and the dashboard widget so the two can never disagree. Products with no
+ * price set are skipped (nothing to judge yet). */
+export function isLossMakingProduct(
+  product: { price?: MoneyLike; cost_price?: MoneyLike; packaging_cost?: MoneyLike },
+  platformFeePercent: MoneyLike,
+): boolean {
+  if (money(product.price) <= 0) return false;
+  return productUnitContribution(product, platformFeePercent) <= 0;
+}
+
 /** True if this order should be counted in P&L / reports at all.
  * TikTok placeholder orders (financial_status = "pending") are excluded
  * until real order detail data arrives — never show them as RM0 in reports. */

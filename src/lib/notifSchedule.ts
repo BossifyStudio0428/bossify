@@ -1,4 +1,4 @@
-import { isPaidStatus } from "@/lib/orderMath";
+import { isPaidStatus, isLossMakingProduct } from "@/lib/orderMath";
 import { supabase } from "@/integrations/supabase/client";
 import { isPrefEnabled, getCachedPrefs } from "@/lib/notifPrefs";
 import { notifySituation } from "@/lib/autoNotify";
@@ -166,15 +166,7 @@ export async function runLosingMoneyScanNow(userId: string) {
       .maybeSingle(),
   ]);
   const platformFeePercent = Number((profileData as any)?.platform_fee_percent ?? 0);
-  const losing = (invData ?? []).filter((r: any) => {
-    const price = Number(r.price ?? 0);
-    if (price <= 0) return false;
-    const cost = Number(r.cost_price ?? 0);
-    const packaging = Number((r as any).packaging_cost ?? 0);
-    const platformFee = price * (platformFeePercent / 100);
-    const contributionPerUnit = price - cost - packaging - platformFee;
-    return contributionPerUnit <= 0;
-  });
+  const losing = (invData ?? []).filter((r: any) => isLossMakingProduct(r, platformFeePercent));
   if (losing.length === 0) return;
   const first = losing[0] as any;
   const extra = losing.length - 1;
