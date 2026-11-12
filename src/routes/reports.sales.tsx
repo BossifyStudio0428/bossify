@@ -9,7 +9,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { exportSalesReportPDF } from "@/lib/pdf";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { orderCost, orderGrossProfit, orderProfitMargin } from "@/lib/orderMath";
+import { orderCost, orderGrossProfit, orderProfitMargin, isPaidStatus } from "@/lib/orderMath";
 import { fetchPeriodAdjustments, type PeriodAdjustments } from "@/lib/refundAdjustments";
 
 export const Route = createFileRoute("/reports/sales")({ component: ReportsPage });
@@ -165,12 +165,12 @@ function ReportsPage() {
     return orderCategories[o.id]?.has(activeCategoryFilter) ?? false;
   });
 
-  const totalRevenue = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0) - adjustments.revenueReversed;
-  const totalCost = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + orderCost(o), 0) - adjustments.cogsReversed;
-  const totalGrossProfit = inRange.filter((o) => o.status === "Paid").reduce((s, o) => s + orderGrossProfit(o), 0) - (adjustments.revenueReversed - adjustments.cogsReversed);
+  const totalRevenue = inRange.filter((o) => isPaidStatus(o.status)).reduce((s, o) => s + Number(o.amount), 0) - adjustments.revenueReversed;
+  const totalCost = inRange.filter((o) => isPaidStatus(o.status)).reduce((s, o) => s + orderCost(o), 0) - adjustments.cogsReversed;
+  const totalGrossProfit = inRange.filter((o) => isPaidStatus(o.status)).reduce((s, o) => s + orderGrossProfit(o), 0) - (adjustments.revenueReversed - adjustments.cogsReversed);
   const profitMargin = orderProfitMargin(totalRevenue, totalGrossProfit);
   const totalOrders = inRange.length;
-  const paidOrders = inRange.filter((o) => o.status === "Paid").length;
+  const paidOrders = inRange.filter((o) => isPaidStatus(o.status)).length;
   const unpaidAmount = inRange.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount), 0);
   const pendingCount = inRange.filter((o) => o.status === "Pending").length;
   const unpaidCount = inRange.filter((o) => o.status === "Unpaid").length;
@@ -185,7 +185,7 @@ function ReportsPage() {
       const key = `${d.getMonth() + 1}/${d.getDate()}`;
       buckets.set(key, 0);
     }
-    inRange.filter((o) => o.status === "Paid").forEach((o) => {
+    inRange.filter((o) => isPaidStatus(o.status)).forEach((o) => {
       const d = new Date(o.created_at);
       const key = `${d.getMonth() + 1}/${d.getDate()}`;
       if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + Number(o.amount));
@@ -212,7 +212,7 @@ function ReportsPage() {
       const key = it.product_name || "—";
       const cur = variantMap.get(key) ?? { name: key, qty: 0, revenue: 0, productId: it.product_id ?? null };
       cur.qty += Number(it.quantity ?? 0);
-      if (o?.status === "Paid") cur.revenue += Number(it.unit_price_at_sale ?? 0) * Number(it.quantity ?? 0);
+      if (isPaidStatus(o?.status)) cur.revenue += Number(it.unit_price_at_sale ?? 0) * Number(it.quantity ?? 0);
       if (!cur.productId && it.product_id) cur.productId = it.product_id;
       variantMap.set(key, cur);
     });
@@ -251,7 +251,7 @@ function ReportsPage() {
 
   // Status breakdown
   const statusData = [
-    { name: t("paid"), value: inRange.filter((o) => o.status === "Paid").length, color: "#10b981" },
+    { name: t("paid"), value: inRange.filter((o) => isPaidStatus(o.status)).length, color: "#10b981" },
     { name: t("unpaid"), value: inRange.filter((o) => o.status === "Unpaid").length, color: "#ef4444" },
     { name: t("pending"), value: inRange.filter((o) => o.status === "Pending").length, color: "#f59e0b" },
   ].filter((s) => s.value > 0);
@@ -262,7 +262,7 @@ function ReportsPage() {
     inRange.forEach((o) => {
       const cur = m.get(o.customer_name) ?? { orders: 0, spent: 0 };
       cur.orders += 1;
-      if (o.status === "Paid") cur.spent += Number(o.amount);
+      if (isPaidStatus(o.status)) cur.spent += Number(o.amount);
       m.set(o.customer_name, cur);
     });
     return Array.from(m.entries())

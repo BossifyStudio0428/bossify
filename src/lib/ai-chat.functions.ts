@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireExternalSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
-import { orderContributionProfit } from "@/lib/orderMath";
+import { orderContributionProfit, PAID_STATUSES } from "@/lib/orderMath";
 
 // Global "Ask AI" chat widget (AppShell-level, every page). Unlike
 // ai-campaign-suggestions.functions.ts this one DOES ground its answers in
@@ -33,7 +33,7 @@ async function buildDataSnapshot(supabase: any, userId: string) {
       .from("orders")
       .select("amount,cost,gross_profit,status,created_at,platform_fee_amount,shipping_cost,affiliate_commission,financial_status")
       .eq("user_id", userId)
-      .eq("status", "Paid")
+      .in("status", PAID_STATUSES)
       .gte("created_at", startOfThisMonthUTC()),
   ]);
 

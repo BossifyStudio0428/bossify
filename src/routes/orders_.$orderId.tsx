@@ -8,7 +8,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { renderTemplate, buildWhatsAppLink, getOrderTemplate, fetchWAProfile } from "@/lib/wa";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { PhoneInput } from "@/components/PhoneInput";
-import { orderCost, orderContributionProfit, calculateOrderFinancials, calculateAdjustment, type AdjustmentType } from "@/lib/orderMath";
+import { orderCost, orderContributionProfit, calculateOrderFinancials, calculateAdjustment, type AdjustmentType, isPaidStatus } from "@/lib/orderMath";
 import { logInventoryChange } from "@/lib/inventoryAudit";
 
 export const Route = createFileRoute("/orders_/$orderId")({
@@ -140,7 +140,7 @@ function OrderDetailPage() {
     if (!order?.phone) { alert(t("no_phone_for_wa")); return; }
     if (!user) return;
     const { paymentDetails: rawPay, businessName } = await fetchWAProfile(user.id, lang);
-    const paymentDetails = order.status !== "Paid" ? rawPay : "";
+    const paymentDetails = !isPaidStatus(order.status) ? rawPay : "";
     const msg = renderTemplate(getOrderTemplate(lang, bizType, customOrderTpl), {
       customer_name: order.customer_name, business_name: businessName,
       code: order.code, product: order.product,

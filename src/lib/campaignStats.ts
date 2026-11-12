@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { orderContributionProfit } from "@/lib/orderMath";
+import { orderContributionProfit, PAID_STATUSES } from "@/lib/orderMath";
 import { fetchPeriodAdjustments } from "@/lib/refundAdjustments";
 
 // Shared by /campaigns, /campaigns/$campaignId, and the home-page campaign
@@ -156,7 +156,7 @@ export async function fetchPeriodStats(userId: string, fromISO: string, toISO: s
       .from("orders")
       .select("amount,cost,gross_profit,status,created_at,platform_fee_amount,shipping_cost,affiliate_commission,financial_status")
       .eq("user_id", userId)
-      .eq("status", "Paid")
+      .in("status", PAID_STATUSES)
       .gte("created_at", fromISO)
       .lt("created_at", toISO),
     fetchPeriodAdjustments(userId, fromISO, toISO),

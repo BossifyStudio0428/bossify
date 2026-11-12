@@ -1,3 +1,4 @@
+import { PAID_STATUSES } from "@/lib/orderMath";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Minus, Plus, Search, Package, AlertTriangle, XCircle, TrendingUp, Wallet } from "lucide-react";
@@ -90,7 +91,7 @@ function StockPage() {
         .from("orders")
         .select("id,status,created_at")
         .eq("user_id", user.id)
-        .eq("status", "Paid")
+        .in("status", PAID_STATUSES)
         .gte("created_at", startOfDaysAgoISO(VELOCITY_WINDOW_DAYS)),
     ]);
     if (invRes.error) toast.error(invRes.error.message);

@@ -1,3 +1,4 @@
+import { PAID_STATUSES } from "@/lib/orderMath";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, AlertCircle, Clock, PackageSearch, Gauge, Boxes, RefreshCw, Coins } from "lucide-react";
@@ -86,7 +87,7 @@ function CostHealthPage() {
           .from("orders" as any)
           .select("product,amount")
           .eq("user_id", user.id)
-          .eq("status", "Paid")
+          .in("status", PAID_STATUSES)
           .order("created_at", { ascending: false })
           .limit(500),
       ]);

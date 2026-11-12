@@ -31,7 +31,7 @@ import { SetupChecklist } from "@/components/SetupChecklist";
 import { TeamBanner } from "@/components/TeamBanner";
 import { SuspendedTeamBanner } from "@/components/SuspendedTeamBanner";
 import { PendingInviteBanner } from "@/components/PendingInviteBanner";
-import { orderGrossProfit } from "@/lib/orderMath";
+import { orderGrossProfit, isPaidStatus } from "@/lib/orderMath";
 import { RETAIL_ONLY_MODE, HIDE_TEAM_PLAN } from "@/lib/featureFlags";
 import { RetailOverview } from "@/components/RetailOverview";
 
@@ -437,17 +437,17 @@ function Index() {
   const financiallyCompleteOrders = orders.filter((o: any) => o.financial_status !== "pending");
   const todayOrders = financiallyCompleteOrders.filter((o) => isToday(o.created_at));
   const todayRevenue = todayOrders
-    .filter((o) => o.status === "Paid")
+    .filter((o) => isPaidStatus(o.status))
     .reduce((s, o) => s + Number(o.amount), 0);
   const todayGrossProfit = todayOrders
-    .filter((o) => o.status === "Paid")
+    .filter((o) => isPaidStatus(o.status))
     .reduce((s, o) => s + orderGrossProfit(o), 0);
   const unpaidCount = orders.filter((o) => o.status === "Unpaid").length;
   const activeProjects = orders.filter((o) => o.status !== "Paid").length;
   const nowD = new Date();
   const monthStart = new Date(nowD.getFullYear(), nowD.getMonth(), 1);
   const monthRevenue = financiallyCompleteOrders
-    .filter((o) => o.status === "Paid" && new Date(o.created_at) >= monthStart)
+    .filter((o) => isPaidStatus(o.status) && new Date(o.created_at) >= monthStart)
     .reduce((s, o) => s + Number(o.amount), 0);
 
   // Comparison vs yesterday
@@ -455,7 +455,7 @@ function Index() {
   yest.setDate(yest.getDate() - 1);
   const isYesterday = (iso: string) => new Date(iso).toDateString() === yest.toDateString();
   const yesterdayRevenue = orders
-    .filter((o) => o.status === "Paid" && isYesterday(o.created_at))
+    .filter((o) => isPaidStatus(o.status) && isYesterday(o.created_at))
     .reduce((s, o) => s + Number(o.amount), 0);
   const revDelta =
     yesterdayRevenue > 0
@@ -527,7 +527,7 @@ function Index() {
             .reduce((s, l) => s + Number(l.price), 0)
         : orders
             .filter(
-              (o) => o.status === "Paid" && new Date(o.created_at).toDateString() === d.toDateString(),
+              (o) => isPaidStatus(o.status) && new Date(o.created_at).toDateString() === d.toDateString(),
             )
             .reduce((s, o) => s + Number(o.amount), 0);
       weekly.push({ day: t(dowKeys[d.getDay()]), value: total });

@@ -1,3 +1,4 @@
+import { isPaidStatus } from "@/lib/orderMath";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -332,7 +333,7 @@ function ProfilePage() {
       if (cancelled) return;
       const orders = (o ?? []) as OrderSummary[];
       const revenue = orders
-        .filter((x) => x.status === "Paid")
+        .filter((x) => isPaidStatus(x.status))
         .reduce((s, x) => s + Number(x.amount), 0);
       setStats({ orders: orders.length, revenue, customers: cust ?? 0 });
       const loadedProfile = p as ProfileSummary | null;

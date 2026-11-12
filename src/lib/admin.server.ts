@@ -1,3 +1,4 @@
+import { isPaidStatus } from "@/lib/orderMath";
 import { externalSupabaseAdmin as supabaseAdmin } from "@/integrations/supabase/external-admin.server";
 
 export type AiUsageStats = {
@@ -87,7 +88,7 @@ export async function loadAdminOverviewForUser(userId: string) {
       order_count: sub?.order_count ?? 0,
       total_orders: Math.max(userOrders.length, Number(sub?.order_count ?? 0)),
       total_revenue: userOrders.reduce(
-        (sum, order) => sum + (order.status === "Paid" ? Number(order.amount ?? 0) : 0),
+        (sum, order) => sum + (isPaidStatus(order.status) ? Number(order.amount ?? 0) : 0),
         0,
       ),
     };

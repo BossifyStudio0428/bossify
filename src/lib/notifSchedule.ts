@@ -1,3 +1,4 @@
+import { isPaidStatus } from "@/lib/orderMath";
 import { supabase } from "@/integrations/supabase/client";
 import { isPrefEnabled, getCachedPrefs } from "@/lib/notifPrefs";
 import { notifySituation } from "@/lib/autoNotify";
@@ -48,7 +49,7 @@ async function scheduleMorning(userId: string) {
     .from("orders").select("amount,status,created_at").eq("user_id", userId)
     .gte("created_at", start.toISOString()).lt("created_at", end.toISOString());
   const orders = data ?? [];
-  const revenue = orders.filter((o: any) => o.status === "Paid").reduce((s: number, o: any) => s + Number(o.amount || 0), 0);
+  const revenue = orders.filter((o: any) => isPaidStatus(o.status)).reduce((s: number, o: any) => s + Number(o.amount || 0), 0);
   const { count: unpaid } = await supabase
     .from("orders").select("*", { count: "exact", head: true })
     .eq("user_id", userId).eq("status", "Unpaid");
@@ -73,7 +74,7 @@ async function scheduleEvening(userId: string) {
     .from("orders").select("amount,status,gross_profit,created_at").eq("user_id", userId)
     .gte("created_at", start.toISOString());
   const orders = data ?? [];
-  const revenue = orders.filter((o: any) => o.status === "Paid").reduce((s: number, o: any) => s + Number(o.amount || 0), 0);
+  const revenue = orders.filter((o: any) => isPaidStatus(o.status)).reduce((s: number, o: any) => s + Number(o.amount || 0), 0);
   const profit = orders.reduce((s: number, o: any) => s + Number(o.gross_profit || 0), 0);
   const body = `Today: ${orders.length} orders · RM ${revenue.toFixed(2)} · profit RM ${profit.toFixed(2)} 🎉`;
   await plugin.schedule({

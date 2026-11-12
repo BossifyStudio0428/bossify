@@ -1,3 +1,4 @@
+import { PAID_STATUSES } from "@/lib/orderMath";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Calendar, AlertTriangle, TrendingUp, TrendingDown, Trophy } from "lucide-react";
@@ -83,7 +84,7 @@ function CostBreakdownPage() {
         .from("orders" as any)
         .select("id,amount,platform_fee_amount,shipping_cost,platform_metadata")
         .eq("user_id", user.id)
-        .eq("status", "Paid")
+        .in("status", PAID_STATUSES)
         .neq("financial_status", "pending")
         .gte("created_at", fromISO);
       if (toISO) ordersQuery = ordersQuery.lte("created_at", toISO);
@@ -186,7 +187,7 @@ function CostBreakdownPage() {
         .from("orders" as any)
         .select("amount,cost,created_at")
         .eq("user_id", user.id)
-        .eq("status", "Paid")
+        .in("status", PAID_STATUSES)
         .neq("financial_status", "pending")
         .gte("created_at", trendFrom.toISOString());
       const byDay: Record<string, number> = {};
@@ -211,7 +212,7 @@ function CostBreakdownPage() {
         .from("orders" as any)
         .select("amount,cost,platform_fee_amount,shipping_cost,created_at")
         .eq("user_id", user.id)
-        .eq("status", "Paid")
+        .in("status", PAID_STATUSES)
         .neq("financial_status", "pending")
         .gte("created_at", dTrendFrom.toISOString());
       const byDayD: Record<string, { revenue: number; cost: number }> = {};

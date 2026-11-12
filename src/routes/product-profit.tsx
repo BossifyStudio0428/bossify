@@ -1,3 +1,4 @@
+import { PAID_STATUSES } from "@/lib/orderMath";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, TrendingUp, TrendingDown, Trophy } from "lucide-react";
@@ -100,7 +101,7 @@ function ProductProfitPage() {
         .from("orders" as any)
         .select("id")
         .eq("user_id", user.id)
-        .eq("status", "Paid")
+        .in("status", PAID_STATUSES)
         .neq("financial_status", "pending")
         .gte("created_at", from.toISOString());
       if (ordErr) toast.error(ordErr.message);

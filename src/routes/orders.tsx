@@ -18,7 +18,7 @@ import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, 
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
-import { orderCost, orderGrossProfit, orderContributionProfit } from "@/lib/orderMath";
+import { orderCost, orderGrossProfit, orderContributionProfit, isPaidStatus } from "@/lib/orderMath";
 import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -681,7 +681,7 @@ function OrdersPage() {
 
   const salesTrendByDay = new Map<string, number>();
   for (const o of byDate) {
-    if (o.status !== "Paid") continue;
+    if (!isPaidStatus(o.status)) continue;
     const day = String(o.created_at ?? "").slice(0, 10);
     if (!day) continue;
     salesTrendByDay.set(day, (salesTrendByDay.get(day) ?? 0) + Number(o.amount ?? 0));
@@ -698,7 +698,7 @@ function OrdersPage() {
     }));
 
   const statusBar = [
-    { name: t("paid"), value: byDate.filter((o) => o.status === "Paid").length, color: "#10B981" },
+    { name: t("paid"), value: byDate.filter((o) => isPaidStatus(o.status)).length, color: "#10B981" },
     { name: t("unpaid"), value: byDate.filter((o) => o.status === "Unpaid").length, color: "#DC2626" },
     { name: t("pending"), value: byDate.filter((o) => o.status === "Pending").length, color: "#F59E0B" },
   ].filter((d) => d.value > 0);
@@ -716,9 +716,9 @@ function OrdersPage() {
   });
 
   // Desktop KPI row — real counts/amounts only, no fabricated deltas.
-  const paidCount = orders.filter((o) => o.status === "Paid").length;
+  const paidCount = orders.filter((o) => isPaidStatus(o.status)).length;
   const pendingCount = orders.filter((o) => o.status === "Pending").length;
-  const paidRevenue = orders.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount ?? 0), 0);
+  const paidRevenue = orders.filter((o) => isPaidStatus(o.status)).reduce((s, o) => s + Number(o.amount ?? 0), 0);
   const unpaidRevenue = orders.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount ?? 0), 0);
   const totalRevenue = orders.reduce((s, o) => s + Number(o.amount ?? 0), 0);
 

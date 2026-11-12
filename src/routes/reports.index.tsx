@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
-import { orderCost, orderGrossProfit, orderProfitMargin } from "@/lib/orderMath";
+import { orderCost, orderGrossProfit, orderProfitMargin, isPaidStatus } from "@/lib/orderMath";
 import { downloadCSV } from "@/lib/csvExport";
 import { loadPrefs } from "@/lib/notifPrefs";
 import { fetchPeriodAdjustments } from "@/lib/refundAdjustments";
@@ -192,7 +192,7 @@ function ReportsHub() {
     await new Promise((r) => setTimeout(r, 30));
     try {
       const { businessName, logoDataUrl } = await getProfile();
-      const paid = inRange.filter((o) => o.status === "Paid");
+      const paid = inRange.filter((o) => isPaidStatus(o.status));
       const totalRevenue = paid.reduce((s, o) => s + Number(o.amount), 0);
       const totalCost = paid.reduce((s, o) => s + orderCost(o), 0);
       const grossProfit = paid.reduce((s, o) => s + orderGrossProfit(o), 0);
@@ -218,7 +218,7 @@ function ReportsHub() {
         const key = it.product_name || "—";
         const cur = variantMap.get(key) ?? { name: key, qty: 0, revenue: 0, productId: it.product_id ?? null };
         cur.qty += Number(it.quantity ?? 0);
-        if (o?.status === "Paid") cur.revenue += Number(it.unit_price_at_sale ?? 0) * Number(it.quantity ?? 0);
+        if (isPaidStatus(o?.status)) cur.revenue += Number(it.unit_price_at_sale ?? 0) * Number(it.quantity ?? 0);
         if (!cur.productId && it.product_id) cur.productId = it.product_id;
         variantMap.set(key, cur);
       });
@@ -254,7 +254,7 @@ function ReportsHub() {
       inRange.forEach((o) => {
         const cur = custMap.get(o.customer_name) ?? { orders: 0, spent: 0 };
         cur.orders += 1;
-        if (o.status === "Paid") cur.spent += Number(o.amount);
+        if (isPaidStatus(o.status)) cur.spent += Number(o.amount);
         custMap.set(o.customer_name, cur);
       });
       const topCustomers = [...custMap.entries()]
@@ -285,7 +285,7 @@ function ReportsHub() {
     await new Promise((r) => setTimeout(r, 30));
     try {
       const { businessName, logoDataUrl } = await getProfile();
-      const paid = inRange.filter((o) => o.status === "Paid");
+      const paid = inRange.filter((o) => isPaidStatus(o.status));
       const revenue = paid.reduce((s, o) => s + Number(o.amount), 0);
       const cost = paid.reduce((s, o) => s + orderCost(o), 0);
       const grossProfit = paid.reduce((s, o) => s + orderGrossProfit(o), 0);
@@ -383,7 +383,7 @@ function ReportsHub() {
     try {
       const { businessName, logoDataUrl } = await getProfile();
       const basisOrders = reportBasis === "paid_orders"
-        ? inRange.filter((o) => o.status === "Paid")
+        ? inRange.filter((o) => isPaidStatus(o.status))
         : inRange;
       // TikTok placeholder orders (financial_status = "pending") are excluded
       // from every figure below — they have no real amount/cost yet.
@@ -453,7 +453,7 @@ function ReportsHub() {
         return (o.customer_name ?? "").trim().toLowerCase() === c.name.trim().toLowerCase();
       });
       const unpaidBalance = rows.filter((o) => o.status === "Unpaid").reduce((s, o) => s + Number(o.amount), 0);
-      const totalSpent = rows.filter((o) => o.status === "Paid").reduce((s, o) => s + Number(o.amount), 0);
+      const totalSpent = rows.filter((o) => isPaidStatus(o.status)).reduce((s, o) => s + Number(o.amount), 0);
       await exportCustomerStatementPDF({
         lang, businessName, logoDataUrl, rangeLabel: label,
         customerName: c.name,

@@ -15,7 +15,7 @@ import { bizKey } from "@/lib/businessType";
 import { CasesKanban, type EduStageInfo } from "@/components/CasesKanban";
 import { PhoneInput } from "@/components/PhoneInput";
 import { stripEmoji } from "@/lib/wa";
-import { orderContributionProfit } from "@/lib/orderMath";
+import { orderContributionProfit, PAID_STATUSES } from "@/lib/orderMath";
 
 function buildWA(phone: string, message: string) {
   const cleaned = phone.replace(/[^0-9]/g, "");
@@ -186,7 +186,7 @@ function CustomersPage() {
       .select("platform_buyer_id,amount")
       .eq("user_id", user.id)
       .eq("order_source", "tiktok")
-      .eq("status", "Paid")
+      .in("status", PAID_STATUSES)
       .not("platform_buyer_id", "is", null);
     const map = new Map<string, { buyerId: string; orders: number; totalSpent: number }>();
     for (const o of ((tkOrders ?? []) as any[])) {

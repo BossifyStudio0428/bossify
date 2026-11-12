@@ -1,3 +1,4 @@
+import { PAID_STATUSES } from "@/lib/orderMath";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -220,7 +221,7 @@ function CampaignDetailPage() {
           .from("orders" as any)
           .select("id,code,customer_name,product,amount,status,created_at")
           .eq("user_id", user.id)
-          .eq("status", "Paid")
+          .in("status", PAID_STATUSES)
           .order("created_at", { ascending: true })
           .limit(100),
         loadPrefs(user.id),
@@ -280,7 +281,7 @@ function CampaignDetailPage() {
         .from("orders")
         .select("id,product,quantity,status,created_at")
         .eq("user_id", user.id)
-        .eq("status", "Paid")
+        .in("status", PAID_STATUSES)
         .gte("created_at", startOfDaysAgoISO(VELOCITY_WINDOW_DAYS));
       const orderIds = ((data ?? []) as VelocityOrderRow[]).map((o) => o.id).filter(Boolean);
       const perDay = new Map<string, number>();

@@ -1,3 +1,4 @@
+import { PAID_STATUSES } from "@/lib/orderMath";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Trophy } from "lucide-react";
@@ -36,7 +37,7 @@ function TopBuyersPage() {
         .select("id,platform_buyer_id,amount,created_at")
         .eq("user_id", user.id)
         .eq("order_source", "tiktok")
-        .eq("status", "Paid")
+        .in("status", PAID_STATUSES)
         .not("platform_buyer_id", "is", null)
         .order("created_at", { ascending: false });
       if (error) toast.error(error.message);

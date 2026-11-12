@@ -1,3 +1,4 @@
+import { isPaidStatus } from "@/lib/orderMath";
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, BarChart3 } from "lucide-react";
@@ -125,7 +126,7 @@ function AnalyticsPage() {
   })();
 
   const filtered = orders.filter((o) => new Date(o.created_at) >= cutoff);
-  const paid = filtered.filter((o) => o.status === "Paid");
+  const paid = filtered.filter((o) => isPaidStatus(o.status));
   const totalRev = paid.reduce((s, o) => s + Number(o.amount), 0);
 
   // Daily trend
@@ -153,7 +154,7 @@ function AnalyticsPage() {
     const key = it.product_name || "—";
     const cur = variantMap.get(key) ?? { name: key, qty: 0, rev: 0, productId: it.product_id ?? null };
     cur.qty += Number(it.quantity ?? 0);
-    if (o?.status === "Paid") cur.rev += Number(it.unit_price_at_sale ?? 0) * Number(it.quantity ?? 0);
+    if (isPaidStatus(o?.status)) cur.rev += Number(it.unit_price_at_sale ?? 0) * Number(it.quantity ?? 0);
     if (!cur.productId && it.product_id) cur.productId = it.product_id;
     variantMap.set(key, cur);
   });
@@ -215,7 +216,7 @@ function AnalyticsPage() {
 
   // Status breakdown
   const statusData = [
-    { name: t("paid"), value: filtered.filter((o)=>o.status==="Paid").length, color: "#10B981" },
+    { name: t("paid"), value: filtered.filter((o)=>isPaidStatus(o.status)).length, color: "#10B981" },
     { name: t("unpaid"), value: filtered.filter((o)=>o.status==="Unpaid").length, color: "#EF4444" },
     { name: t("pending"), value: filtered.filter((o)=>o.status==="Pending").length, color: "#F59E0B" },
   ];

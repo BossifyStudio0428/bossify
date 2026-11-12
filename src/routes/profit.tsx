@@ -6,7 +6,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tool
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { orderContributionProfit } from "@/lib/orderMath";
+import { orderContributionProfit, PAID_STATUSES } from "@/lib/orderMath";
 import { fetchPeriodAdjustments, type PeriodAdjustments } from "@/lib/refundAdjustments";
 
 export const Route = createFileRoute("/profit")({ component: ProfitPage });
@@ -60,7 +60,7 @@ function ProfitPage() {
           .from("orders")
           .select("amount,cost,gross_profit,status,created_at,platform_fee_amount,shipping_cost,affiliate_commission,financial_status")
           .eq("user_id", user.id)
-          .eq("status", "Paid")
+          .in("status", PAID_STATUSES)
           .gte("created_at", from),
         fetchPeriodAdjustments(user.id, from, to),
       ]);

@@ -153,6 +153,21 @@ export function orderContributionProfit(order: StoredOrderFinancials): number {
   );
 }
 
+/** Order statuses that count as a completed sale for revenue / profit.
+ * `status` is NOT a pure payment flag: TikTok orders move on from "Paid"
+ * to "Shipped" and then "Delivered" as they progress (see mapTikTokStatus),
+ * and those orders are still paid sales. Comparing against "Paid" alone
+ * silently drops every shipped/delivered order out of the numbers.
+ * "Unpaid", "Pending", "Cancelled" and "Refunded" are deliberately excluded.
+ * Use with Supabase as `.in("status", PAID_STATUSES)`. */
+export const PAID_STATUSES: string[] = ["Paid", "Shipped", "Delivered"];
+
+/** True if an order with this status counts as a completed (paid) sale.
+ * Always use this instead of `status === "Paid"` when summing money. */
+export function isPaidStatus(status: string | null | undefined): boolean {
+  return status != null && PAID_STATUSES.includes(status);
+}
+
 /** True if this order should be counted in P&L / reports at all.
  * TikTok placeholder orders (financial_status = "pending") are excluded
  * until real order detail data arrives — never show them as RM0 in reports. */

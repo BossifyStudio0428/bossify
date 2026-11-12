@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { orderContributionProfit } from "@/lib/orderMath";
+import { orderContributionProfit, PAID_STATUSES } from "@/lib/orderMath";
 import { logAiUsage } from "@/lib/ai-usage.server";
 import { fetchHistory, type ChatMessage } from "./history";
 
@@ -65,7 +65,7 @@ async function buildDataSnapshot(supabase: any, userId: string) {
       .from("orders")
       .select("amount,cost,gross_profit,status,created_at,platform_fee_amount,shipping_cost,affiliate_commission,financial_status")
       .eq("user_id", userId)
-      .eq("status", "Paid")
+      .in("status", PAID_STATUSES)
       .gte("created_at", startOfThisMonthUTC()),
   ]);
 
