@@ -4,13 +4,14 @@ import {
   Menu,
   X,
   ArrowRight,
-  ArrowDown,
   Check,
   Zap,
   CreditCard,
   Smartphone,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
+import { FREE_LIMITS } from "@/contexts/SubscriptionContext";
+import { FALLBACK_PRICES, BUSINESS_FALLBACK_PRICES } from "@/lib/billing";
 import bossifyLogo from "@/assets/bossify-logo.png";
 import heroOverviewScreenshot from "@/assets/hero-dashboard-screenshot.jpg";
 import heroOrdersScreenshot from "@/assets/hero-orders-screenshot.jpg";
@@ -393,6 +394,391 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
 
 const TRUST_BULLET_ICONS = [Zap, CreditCard, Smartphone];
 
+// Google Play listing for the Android app (appId from capacitor.config.ts).
+const PLAY_URL = "https://play.google.com/store/apps/details?id=com.zhstudio.bossify";
+
+// ---------------------------------------------------------------------------
+// Second copy block: the longer "why" behind each feature, the pricing
+// table and the labels used inside the sample reports. Plan limits and
+// prices are read from the same constants the app itself uses
+// (FREE_LIMITS / billing fallbacks) so this page cannot drift from /plans.
+// ---------------------------------------------------------------------------
+type FeatureRow = { quote: string; title: string; body: string; points: string[] };
+type PlanCopy = { name: string; tagline: string; features: string[] };
+type SampleLabels = Record<
+  | "range" | "sample" | "revenue" | "orders" | "unpaid" | "product" | "qty" | "cost" | "profit" | "margin"
+  | "items" | "lowStock" | "stockValue" | "item" | "stock" | "status" | "ok" | "low" | "out"
+  | "cogs" | "gross" | "fees" | "shipping" | "opex" | "net" | "customer" | "spent" | "date" | "order"
+  | "amount" | "paid" | "supplier" | "pos" | "spend" | "total" | "source" | "payment" | "transfer",
+  string
+>;
+type ExtraCopy = {
+  playSmall: string;
+  featureRows: FeatureRow[];
+  reportsSub: string;
+  pricingTitle: string;
+  pricingSub: string;
+  monthly: string;
+  annual: string;
+  annualSave: string;
+  perMonth: string;
+  perYear: string;
+  popular: string;
+  plans: [PlanCopy, PlanCopy, PlanCopy];
+  pricingNote: string;
+  labels: SampleLabels;
+};
+
+const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
+  en: {
+    playSmall: "Get it on",
+    featureRows: [
+      {
+        quote: "“Sales look good. So where did the money go?”",
+        title: "Real profit on every order",
+        body: "Bossify takes each order and subtracts what it really cost you — product, packaging, platform fee, shipping and affiliate commission. The number left is the money you keep.",
+        points: [
+          "Profit and margin for every product",
+          "Loss-making products get flagged",
+          "Cost breakdown shows where the money goes",
+        ],
+      },
+      {
+        quote: "“Sold out again — and I found out from a customer.”",
+        title: "Stock that warns you first",
+        body: "See every product's stock in one list. Set your own low-stock level and Bossify tells you before you run out, not after.",
+        points: [
+          "Low-stock and out-of-stock alerts",
+          "Stock take to match what is on the shelf",
+          "Supplier purchase orders in the same place",
+        ],
+      },
+      {
+        quote: "“My accountant asked for a report. I had a spreadsheet.”",
+        title: "7 reports, one tap each",
+        body: "Pick a date range, tap once, and get a clean PDF with your shop name on it — ready for your accountant, your bank, or just for you.",
+        points: [
+          "Today, this week, this month or any custom range",
+          "From daily sales to a full Profit & Loss",
+          "Raw orders CSV export for tax time",
+        ],
+      },
+      {
+        quote: "“I was still typing orders into a notebook at midnight.”",
+        title: "Orders in seconds",
+        body: "Add an order in a few taps, or let TikTok Shop sync bring them in for you. Then send the customer a WhatsApp confirmation with one tap.",
+        points: [
+          "TikTok Shop orders sync in automatically",
+          "1-tap WhatsApp receipt and confirmation",
+          "Remind every unpaid customer at once",
+        ],
+      },
+    ],
+    reportsSub: "Tap a report to see a sample of what you get.",
+    pricingTitle: "Simple pricing. Start free.",
+    pricingSub: "Every account starts on Free. Upgrade inside the app only when your shop needs it.",
+    monthly: "Monthly",
+    annual: "Annual",
+    annualSave: "2 months free",
+    perMonth: "/ month",
+    perYear: "/ year",
+    popular: "Most popular",
+    plans: [
+      {
+        name: "Free",
+        tagline: "Try it with your real orders.",
+        features: [
+          `${FREE_LIMITS.ordersPerMonth} orders a month`,
+          `${FREE_LIMITS.inventory} products`,
+          "1 device",
+          "Basic dashboard",
+          "WhatsApp order confirmation",
+        ],
+      },
+      {
+        name: "Pro",
+        tagline: "For sellers who sell every day.",
+        features: [
+          "Unlimited orders and products",
+          "3 devices",
+          "Sales, Profit and Stock reports in PDF",
+          "3 months of history",
+          "WhatsApp templates and remind-all-unpaid",
+          "Priority support",
+        ],
+      },
+      {
+        name: "Business",
+        tagline: "For shops with staff or an accountant.",
+        features: ["Everything in Pro", "5 devices", "All 7 PDF reports", "Unlimited history"],
+      },
+    ],
+    pricingNote: "Prices in Malaysian Ringgit (MYR).",
+    labels: {
+      range: "1–30 Nov 2026", sample: "Sample", revenue: "Revenue", orders: "Orders", unpaid: "Unpaid",
+      product: "Product", qty: "Qty", cost: "Cost", profit: "Profit", margin: "Margin",
+      items: "Items", lowStock: "Low stock", stockValue: "Stock value", item: "Item", stock: "Stock",
+      status: "Status", ok: "OK", low: "Low", out: "Out",
+      cogs: "Cost of goods", gross: "Gross profit", fees: "Platform fees", shipping: "Shipping",
+      opex: "Operating expenses", net: "Net profit", customer: "Customer", spent: "Total spent",
+      date: "Date", order: "Order", amount: "Amount", paid: "Paid", supplier: "Supplier",
+      pos: "Purchase orders", spend: "Total spend", total: "Total", source: "Source", payment: "Payment",
+      transfer: "Bank transfer",
+    },
+  },
+  zh: {
+    playSmall: "立即下载",
+    featureRows: [
+      {
+        quote: "“销售额看起来很好,钱到底去哪了?”",
+        title: "每一张订单的真实利润",
+        body: "Bossify 会把每张订单的真实成本一项一项扣掉——产品、包装、平台费、运费和联盟佣金。剩下的数字,才是你真正赚到的钱。",
+        points: ["每个产品的利润和利润率", "亏钱的产品会被标出来", "成本明细告诉你钱花在哪里"],
+      },
+      {
+        quote: "“又卖断货了——还是顾客告诉我的。”",
+        title: "库存快没了,先提醒你",
+        body: "所有产品的库存都在同一个列表里。自己设定低库存数量,快卖完之前 Bossify 就会提醒你,而不是卖完之后。",
+        points: ["低库存和缺货提醒", "库存盘点,对上货架上的实际数量", "供应商采购单也在同一个地方"],
+      },
+      {
+        quote: "“会计跟我要报表,我只有一份 Excel。”",
+        title: "7 份报表,各按一下",
+        body: "选好日期范围,按一下,就得到一份印有你店名的整洁 PDF——可以交给会计、银行,或者自己留着看。",
+        points: ["今天、本周、本月或任何自订日期", "从每日销售到完整的损益表", "可导出原始订单 CSV,报税时用"],
+      },
+      {
+        quote: "“半夜还在把订单抄进笔记本。”",
+        title: "几秒钟记好一张订单",
+        body: "点几下就能新增订单,也可以让 TikTok Shop 自动同步进来。再按一下,就把 WhatsApp 确认信息发给顾客。",
+        points: ["TikTok Shop 订单自动同步", "一键发送 WhatsApp 收据和确认", "一次提醒所有未付款的顾客"],
+      },
+    ],
+    reportsSub: "点一份报表,看看你会拿到什么样的内容。",
+    pricingTitle: "价格简单,免费开始。",
+    pricingSub: "每个账号都从免费版开始。等生意需要了,再在 App 里升级。",
+    monthly: "月付",
+    annual: "年付",
+    annualSave: "省 2 个月",
+    perMonth: "/ 月",
+    perYear: "/ 年",
+    popular: "最受欢迎",
+    plans: [
+      {
+        name: "免费版",
+        tagline: "先用真实订单试试看。",
+        features: [
+          `每月 ${FREE_LIMITS.ordersPerMonth} 张订单`,
+          `${FREE_LIMITS.inventory} 个产品`,
+          "1 台设备",
+          "基本仪表板",
+          "WhatsApp 订单确认",
+        ],
+      },
+      {
+        name: "专业版 Pro",
+        tagline: "适合每天都在出单的卖家。",
+        features: [
+          "订单和产品数量无限",
+          "3 台设备",
+          "销售、利润、库存 PDF 报表",
+          "3 个月历史数据",
+          "WhatsApp 模板和一键催款",
+          "优先支持",
+        ],
+      },
+      {
+        name: "商业版 Business",
+        tagline: "适合有员工或有会计的店。",
+        features: ["包含专业版全部功能", "5 台设备", "全部 7 份 PDF 报表", "历史数据无限"],
+      },
+    ],
+    pricingNote: "价格以马币 (MYR) 计算。",
+    labels: {
+      range: "2026 年 11 月 1–30 日", sample: "样本", revenue: "营收", orders: "订单", unpaid: "未付款",
+      product: "产品", qty: "数量", cost: "成本", profit: "利润", margin: "利润率",
+      items: "产品数", lowStock: "低库存", stockValue: "库存价值", item: "产品", stock: "库存",
+      status: "状态", ok: "正常", low: "偏低", out: "缺货",
+      cogs: "货品成本", gross: "毛利", fees: "平台费用", shipping: "运费",
+      opex: "营运支出", net: "净利润", customer: "客户", spent: "总消费",
+      date: "日期", order: "订单", amount: "金额", paid: "已付款", supplier: "供应商",
+      pos: "采购单", spend: "总支出", total: "合计", source: "来源", payment: "付款方式",
+      transfer: "银行转账",
+    },
+  },
+  ms: {
+    playSmall: "Dapatkan di",
+    featureRows: [
+      {
+        quote: "“Jualan nampak bagus. Jadi ke mana perginya duit?”",
+        title: "Untung sebenar setiap pesanan",
+        body: "Bossify ambil setiap pesanan dan tolak kos sebenarnya — produk, pembungkusan, yuran platform, penghantaran dan komisen affiliate. Baki itulah duit yang anda simpan.",
+        points: [
+          "Untung dan margin setiap produk",
+          "Produk yang rugi akan ditanda",
+          "Pecahan kos tunjuk ke mana duit pergi",
+        ],
+      },
+      {
+        quote: "“Habis stok lagi — dan pelanggan yang beritahu saya.”",
+        title: "Stok yang beri amaran dahulu",
+        body: "Lihat stok semua produk dalam satu senarai. Tetapkan paras stok rendah anda sendiri dan Bossify beritahu sebelum habis, bukan selepas.",
+        points: [
+          "Makluman stok rendah dan habis stok",
+          "Kiraan stok untuk padankan dengan rak",
+          "Pesanan belian pembekal di tempat yang sama",
+        ],
+      },
+      {
+        quote: "“Akauntan minta laporan. Saya cuma ada hamparan.”",
+        title: "7 laporan, satu ketik setiap satu",
+        body: "Pilih julat tarikh, ketik sekali, dan dapat PDF kemas dengan nama kedai anda — sedia untuk akauntan, bank, atau untuk anda sendiri.",
+        points: [
+          "Hari ini, minggu ini, bulan ini atau julat pilihan",
+          "Dari jualan harian hingga Untung & Rugi penuh",
+          "Eksport CSV pesanan mentah untuk musim cukai",
+        ],
+      },
+      {
+        quote: "“Tengah malam pun masih salin pesanan dalam buku.”",
+        title: "Pesanan dalam beberapa saat",
+        body: "Tambah pesanan dengan beberapa ketikan, atau biar TikTok Shop segerakkan untuk anda. Kemudian hantar pengesahan WhatsApp kepada pelanggan dengan satu ketik.",
+        points: [
+          "Pesanan TikTok Shop disegerakkan automatik",
+          "Resit dan pengesahan WhatsApp 1 ketik",
+          "Ingatkan semua pelanggan belum bayar sekali gus",
+        ],
+      },
+    ],
+    reportsSub: "Ketik satu laporan untuk lihat contoh yang anda akan dapat.",
+    pricingTitle: "Harga mudah. Mula percuma.",
+    pricingSub: "Setiap akaun bermula dengan Percuma. Naik taraf dalam app hanya apabila kedai anda perlukannya.",
+    monthly: "Bulanan",
+    annual: "Tahunan",
+    annualSave: "Percuma 2 bulan",
+    perMonth: "/ bulan",
+    perYear: "/ tahun",
+    popular: "Paling popular",
+    plans: [
+      {
+        name: "Percuma",
+        tagline: "Cuba dengan pesanan sebenar anda.",
+        features: [
+          `${FREE_LIMITS.ordersPerMonth} pesanan sebulan`,
+          `${FREE_LIMITS.inventory} produk`,
+          "1 peranti",
+          "Papan pemuka asas",
+          "Pengesahan pesanan WhatsApp",
+        ],
+      },
+      {
+        name: "Pro",
+        tagline: "Untuk penjual yang menjual setiap hari.",
+        features: [
+          "Pesanan dan produk tanpa had",
+          "3 peranti",
+          "Laporan Jualan, Untung dan Stok dalam PDF",
+          "Sejarah 3 bulan",
+          "Templat WhatsApp dan ingatkan semua belum bayar",
+          "Sokongan keutamaan",
+        ],
+      },
+      {
+        name: "Business",
+        tagline: "Untuk kedai yang ada staf atau akauntan.",
+        features: ["Semua dalam Pro", "5 peranti", "Semua 7 laporan PDF", "Sejarah tanpa had"],
+      },
+    ],
+    pricingNote: "Harga dalam Ringgit Malaysia (MYR).",
+    labels: {
+      range: "1–30 Nov 2026", sample: "Contoh", revenue: "Hasil", orders: "Pesanan", unpaid: "Belum bayar",
+      product: "Produk", qty: "Kuantiti", cost: "Kos", profit: "Untung", margin: "Margin",
+      items: "Item", lowStock: "Stok rendah", stockValue: "Nilai stok", item: "Item", stock: "Stok",
+      status: "Status", ok: "OK", low: "Rendah", out: "Habis",
+      cogs: "Kos barang", gross: "Untung kasar", fees: "Yuran platform", shipping: "Penghantaran",
+      opex: "Perbelanjaan operasi", net: "Untung bersih", customer: "Pelanggan", spent: "Jumlah belanja",
+      date: "Tarikh", order: "Pesanan", amount: "Jumlah", paid: "Dibayar", supplier: "Pembekal",
+      pos: "Pesanan belian", spend: "Jumlah belanja", total: "Jumlah", source: "Sumber", payment: "Bayaran",
+      transfer: "Pindahan bank",
+    },
+  },
+};
+
+// Sample data shown inside each report preview. Numbers line up with the
+// "RM10,000 in sales -> RM2,850 kept" story told higher up the page.
+// Cell prefixes: "!" = red (a cost / a problem), "^" = the coral bottom line.
+type ReportSampleData = {
+  meta?: string;
+  stats: [string, string][];
+  head: string[];
+  rows: string[][];
+};
+
+function buildSamples(L: SampleLabels): ReportSampleData[] {
+  const P = ["Tudung Bawal Premium", "Serum Vitamin C", "Baju Kurung Moden", "Lip Tint Set"];
+  return [
+    {
+      stats: [[L.revenue, "RM 10,000"], [L.orders, "128"], [L.unpaid, "!RM 420"]],
+      head: [L.product, L.qty, L.revenue],
+      rows: [[P[0], "46", "RM 3,220"], [P[1], "31", "RM 2,759"], [P[2], "18", "RM 2,322"], [P[3], "33", "RM 1,699"]],
+    },
+    {
+      stats: [[L.revenue, "RM 10,000"], [L.cost, "!RM 7,150"], [L.profit, "^RM 2,850"]],
+      head: [L.product, L.profit, L.margin],
+      rows: [[P[0], "RM 1,288", "40%"], [P[1], "RM 965", "35%"], [P[2], "RM 697", "30%"], [P[3], "!− RM 100", "!−6%"]],
+    },
+    {
+      stats: [[L.items, "42"], [L.lowStock, "!3"], [L.stockValue, "RM 6,480"]],
+      head: [L.item, L.stock, L.status],
+      rows: [[P[0], "64", L.ok], [P[1], "4", `!${L.low}`], [P[2], "12", L.ok], [P[3], "0", `!${L.out}`]],
+    },
+    {
+      stats: [],
+      head: ["", "RM"],
+      rows: [
+        [L.revenue, "10,000"],
+        [L.cogs, "!− 5,300"],
+        [L.gross, "4,700"],
+        [L.fees, "!− 800"],
+        [L.shipping, "!− 600"],
+        [L.opex, "!− 450"],
+        [L.net, "^2,850"],
+      ],
+    },
+    {
+      meta: `${L.customer}: Nur Aisyah`,
+      stats: [[L.orders, "4"], [L.spent, "RM 742"], [L.unpaid, "!RM 89"]],
+      head: [L.date, L.order, L.amount, L.status],
+      rows: [
+        ["03 Nov", "#A1042", "RM 129", L.paid],
+        ["11 Nov", "#A1077", "RM 250", L.paid],
+        ["19 Nov", "#A1103", "RM 89", `!${L.unpaid}`],
+        ["27 Nov", "#A1131", "RM 363", L.paid],
+      ],
+    },
+    {
+      meta: `${L.supplier}: Kain Maju Enterprise`,
+      stats: [[L.pos, "3"], [L.spend, "RM 3,240"]],
+      head: [L.date, L.item, L.qty, L.total],
+      rows: [
+        ["02 Nov", "Kain Bawal", "200", "RM 1,400"],
+        ["12 Nov", "Bubble Mailer", "500", "RM 440"],
+        ["21 Nov", "Kain Bawal", "200", "RM 1,400"],
+      ],
+    },
+    {
+      stats: [[L.orders, "128"], [L.paid, "121"], [L.unpaid, "!7"]],
+      head: [L.order, L.source, L.payment, L.status],
+      rows: [
+        ["#A1131", "TikTok Shop", "TikTok", L.paid],
+        ["#A1130", "WhatsApp", "DuitNow", L.paid],
+        ["#A1129", "WhatsApp", L.transfer, `!${L.unpaid}`],
+        ["#A1128", "TikTok Shop", "TikTok", L.paid],
+      ],
+    },
+  ];
+}
+
 // ---------------------------------------------------------------------------
 // Motion: lightweight scroll-reveal. No animation libraries -- just
 // IntersectionObserver, skipped entirely under prefers-reduced-motion.
@@ -541,6 +927,18 @@ function useScrollFx(rootRef: RefObject<HTMLElement | null>) {
         if (r.bottom < -80 || r.top > vh + 80) return;
         const q = clamp01(((vh - r.bottom) / vh) * 1.4);
         img.style.objectPosition = `50% ${(q * 100).toFixed(1)}%`;
+      });
+      // Dark bands dissolve in from the white page as they scroll up into
+      // view, and ("both") dissolve back to white as they leave -- so the
+      // page slides from dark to light instead of cutting at a hard edge.
+      // --nk drives the background mix, --no the opacity of the content.
+      root.querySelectorAll<HTMLElement>("[data-night]").forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.bottom < -vh || r.top > vh * 2) return;
+        const enter = clamp01((vh * 0.9 - r.top) / (vh * 0.45));
+        const exit = el.dataset.night === "both" ? 1 - clamp01((vh * 0.7 - r.bottom) / (vh * 0.5)) : 1;
+        el.style.setProperty("--nk", (enter * exit).toFixed(3));
+        el.style.setProperty("--no", (enter * exit).toFixed(3));
       });
       const y = window.scrollY;
       if (y < vh * 1.6) {
@@ -864,6 +1262,108 @@ function ProfitStatement({ copy, progress, stamp }: { copy: LandingCopy; progres
   );
 }
 
+const nightBg = `color-mix(in srgb, ${NIGHT} calc(var(--nk, 1) * 100%), #FFFFFF)`;
+
+// "Get it on Google Play" -- a real link to the store listing, opens in a
+// new tab. Deliberately NOT marked data-cta, so the sign-up click fallback
+// leaves it alone.
+function PlayButton({ small, onDark = false }: { small: string; onDark?: boolean }) {
+  return (
+    <a
+      href={PLAY_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${small} Google Play`}
+      className="inline-flex items-center gap-3 rounded-full pl-5 pr-6 py-2.5 transition-transform hover:-translate-y-0.5"
+      style={{
+        background: onDark ? "rgba(255,255,255,0.08)" : INK,
+        color: "#FFFFFF",
+        border: `1px solid ${onDark ? "rgba(255,255,255,0.32)" : INK}`,
+      }}
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="currentColor">
+        <path d="M4 2.6v18.8a1 1 0 0 0 1.5.86l16-9.4a1 1 0 0 0 0-1.72l-16-9.4A1 1 0 0 0 4 2.6z" />
+      </svg>
+      <span className="text-left leading-tight">
+        <span className="block text-[10px] uppercase tracking-[0.12em] opacity-75" style={{ fontFamily: MONO }}>{small}</span>
+        <span className="block text-[16px] font-semibold" style={{ fontFamily: DISPLAY }}>Google Play</span>
+      </span>
+    </a>
+  );
+}
+
+function Cell({ v }: { v: string }) {
+  const tone = v[0] === "!" ? RED : v[0] === "^" ? ACCENT : undefined;
+  return <span style={{ color: tone, fontWeight: v[0] === "^" ? 600 : undefined }}>{tone ? v.slice(1) : v}</span>;
+}
+
+// One sample report, drawn as a sheet of paper. Sample data only -- the
+// "Sample" tag in the corner says so.
+function ReportSample({ title, data, L }: { title: string; data: ReportSampleData; L: SampleLabels }) {
+  return (
+    <div
+      className="bf-paper-in rounded-lg border p-5 sm:p-6"
+      style={{ background: "#FFFFFF", borderColor: LINE, fontFamily: MONO, color: INK, boxShadow: "0 24px 50px -30px rgba(59,30,109,0.45)" }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px]" style={{ color: INK_SOFT }}>Kedai Aina · {L.range}</p>
+          <p className="text-[17px] font-bold mt-0.5" style={{ fontFamily: DISPLAY }}>{title}</p>
+          {data.meta && <p className="text-[12px] mt-1" style={{ color: INK_SOFT }}>{data.meta}</p>}
+        </div>
+        <span className="shrink-0 text-[10px] uppercase tracking-[0.14em] px-2 py-1 rounded border" style={{ color: ACCENT, borderColor: ACCENT }}>
+          {L.sample}
+        </span>
+      </div>
+      {data.stats.length > 0 && (
+        <div
+          className="grid gap-3 mt-4 pt-4"
+          style={{ gridTemplateColumns: `repeat(${data.stats.length}, minmax(0, 1fr))`, borderTop: `1.5px dashed ${DASH}` }}
+        >
+          {data.stats.map(([label, value]) => (
+            <div key={label} className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wider truncate" style={{ color: INK_SOFT }}>{label}</p>
+              <p className="text-[14.5px] sm:text-[17px] font-semibold tabular-nums"><Cell v={value} /></p>
+            </div>
+          ))}
+        </div>
+      )}
+      <table className="w-full mt-4 text-[12px] sm:text-[13px] border-collapse">
+        <thead>
+          <tr>
+            {data.head.map((h, i) => (
+              <th key={i} className={`py-2 font-medium border-b ${i === 0 ? "text-left" : "text-right"}`} style={{ color: INK_SOFT, borderColor: INK }}>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.rows.map((row, ri) => (
+            <tr key={ri}>
+              {row.map((v, i) => (
+                <td key={i} className={`py-2 border-b tabular-nums ${i === 0 ? "text-left pr-2" : "text-right pl-2"}`} style={{ borderColor: LINE }}>
+                  <Cell v={v} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const REPORT_DESC_KEYS = [
+  "reports_sales_desc",
+  "reports_profit_desc",
+  "reports_stock_desc",
+  "reports_financial_desc",
+  "reports_customer_desc",
+  "reports_supplier_desc",
+  "reports_recon_desc",
+] as const;
+
 function Eyebrow({ children, onDark = false }: { children: ReactNode; onDark?: boolean }) {
   return (
     <p
@@ -952,12 +1452,27 @@ export function LandingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const features = [
-    { ...c.showcaseProfit, src: heroOverviewScreenshot },
-    { ...c.showcaseInventory, src: heroInventoryScreenshot },
-    { ...c.showcaseReports, src: heroReportsScreenshot },
-    { ...c.showcaseOrders, src: heroOrdersScreenshot },
-  ];
+  const x = EXTRA[lang] ?? EXTRA.en;
+  const featureShots = [heroOverviewScreenshot, heroInventoryScreenshot, heroReportsScreenshot, heroOrdersScreenshot];
+  const features = x.featureRows.map((f, i) => ({ ...f, src: featureShots[i] }));
+
+  // Reports: the selected report's sample sheet. On desktop it steps through
+  // the seven on its own until the visitor picks one.
+  const samples = buildSamples(x.labels);
+  const [rep, setRep] = useState(0);
+  const [repTouched, setRepTouched] = useState(false);
+  const [repRef, repIn] = useInView<HTMLDivElement>();
+  useEffect(() => {
+    if (!repIn || repTouched) return;
+    if (!window.matchMedia("(min-width: 1024px)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => setRep((v) => (v + 1) % 7), 3200);
+    return () => window.clearInterval(id);
+  }, [repIn, repTouched]);
+
+  // Pricing
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const planPrices = ["RM 0", FALLBACK_PRICES[billing], BUSINESS_FALLBACK_PRICES[billing]];
 
   const rootRef = useRef<HTMLDivElement>(null);
   const storyRef = useRef<HTMLElement>(null);
@@ -1061,10 +1576,7 @@ export function LandingPage() {
                   {c.ctaPrimary}
                   <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <a href="#features" className="group inline-flex items-center gap-1.5 text-[16px] font-semibold" style={{ color: PRIMARY }}>
-                  {c.navFeatures}
-                  <ArrowDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
-                </a>
+                <PlayButton small={x.playSmall} />
               </div>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5">
                 {c.trustBullets.map((label, i) => {
@@ -1088,10 +1600,11 @@ export function LandingPage() {
       {/* Problem -- flat dark band, profit statement receipt */}
       <section
         ref={storyRef}
+        data-night="both"
         className={`px-5 lg:px-8 ${scrub ? "" : "py-20 lg:py-28 overflow-hidden"}`}
-        style={{ background: NIGHT, height: scrub ? "230vh" : undefined }}
+        style={{ background: nightBg, height: scrub ? "230vh" : undefined }}
       >
-        <div className={scrub ? "sticky top-16 h-[calc(100vh-4rem)] flex items-center" : ""}>
+        <div className={scrub ? "sticky top-16 h-[calc(100vh-4rem)] flex items-center" : ""} style={{ opacity: "var(--no, 1)" }}>
           <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <Reveal>
               <div>
@@ -1125,42 +1638,78 @@ export function LandingPage() {
             <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{c.featuresTitle}</h2>
             <p className="text-[17px] lg:text-[18px]" style={{ color: INK_SOFT }}>{c.featuresSub}</p>
           </Reveal>
-          <div
-            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-5 -mx-5 px-5 pb-2 lg:grid lg:grid-cols-4 lg:gap-7 lg:overflow-visible lg:mx-0 lg:px-0 lg:pb-0"
-            style={{ scrollbarWidth: "none" }}
-          >
-            {features.map((f, i) => (
-              <Reveal key={f.title} delay={i * 90} className="shrink-0 w-[66%] sm:w-[38%] lg:w-auto snap-start">
-                <div className="bf-shot rounded-[20px] overflow-hidden border mb-5" style={{ borderColor: LINE, background: "#F4F3F8", aspectRatio: "51 / 100" }}>
+          {features.map((f, i) => (
+            <div key={f.title} className={`grid lg:grid-cols-2 gap-8 lg:gap-20 items-center ${i > 0 ? "mt-16 lg:mt-28" : ""}`}>
+              <Reveal className={i % 2 === 1 ? "lg:order-2" : ""}>
+                <div
+                  className="bf-shot mx-auto w-full max-w-[400px] lg:max-w-[280px] aspect-[4/5] lg:aspect-[51/100] rounded-[22px] overflow-hidden border"
+                  style={{ borderColor: LINE, background: "#F4F3F8" }}
+                >
                   <img data-pan="" src={f.src} alt={f.title} loading="lazy" className="w-full h-full object-cover object-top" />
                 </div>
-                <h3 className="text-[19px] font-bold tracking-tight mb-1" style={{ color: INK, fontFamily: DISPLAY }}>{f.title}</h3>
-                <p className="text-[15.5px] leading-relaxed" style={{ color: INK_SOFT }}>{f.desc}</p>
               </Reveal>
-            ))}
-          </div>
+              <Reveal delay={120}>
+                <p className="text-[14px] sm:text-[15px] mb-3" style={{ color: PRIMARY_LIGHT, fontFamily: MONO }}>{f.quote}</p>
+                <h3 className="text-[26px] sm:text-[32px] font-bold tracking-tight leading-[1.1] mb-4" style={{ color: INK, fontFamily: DISPLAY }}>{f.title}</h3>
+                <p className="text-[16.5px] lg:text-[17.5px] leading-relaxed mb-6 max-w-[32rem]" style={{ color: INK_SOFT }}>{f.body}</p>
+                <ul className="border-t max-w-[32rem]" style={{ borderColor: LINE }}>
+                  {f.points.map((p) => (
+                    <li key={p} className="flex items-start gap-3 py-3 border-b text-[15.5px] sm:text-[16px] font-medium" style={{ borderColor: LINE, color: INK }}>
+                      <Check className="w-[18px] h-[18px] mt-0.5 shrink-0" style={{ color: ACCENT }} />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Reports -- a plain ruled list, like a ledger page */}
       <section id="reports" className="px-5 lg:px-8 py-16 lg:py-24 scroll-mt-16">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-[0.8fr_1.2fr] gap-8 lg:gap-16 items-start">
-          <Reveal>
+        <div className="max-w-6xl mx-auto">
+          <Reveal className="max-w-2xl mb-8 lg:mb-12">
             <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{c.reportsGridTitle}</h2>
-            <p className="text-[17px] lg:text-[18px] leading-relaxed" style={{ color: INK_SOFT }}>{c.showcaseReports.desc}</p>
+            <p className="text-[17px] lg:text-[18px] leading-relaxed" style={{ color: INK_SOFT }}>{x.reportsSub}</p>
           </Reveal>
-          <div className="border-t-2" style={{ borderColor: INK }}>
-            {c.reports.map((name, i) => (
-              <Reveal key={name} delay={i * 70} y={12}>
-              <div className="flex items-baseline gap-5 py-4 border-b" style={{ borderColor: LINE }}>
-                <span className="text-[14px] w-6 shrink-0" style={{ color: INK_SOFT, fontFamily: MONO }}>
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className="text-[17px] sm:text-[18px] font-semibold flex-1" style={{ color: INK }}>{name}</span>
-                <span className="text-[13px]" style={{ color: INK_SOFT, fontFamily: MONO }}>PDF</span>
-              </div>
-              </Reveal>
-            ))}
+          <div ref={repRef} className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+            <div className="border-t-2" style={{ borderColor: INK }}>
+              {c.reports.map((name, i) => {
+                const active = i === rep;
+                return (
+                  <Reveal key={name} delay={i * 70} y={12}>
+                    <button
+                      type="button"
+                      aria-expanded={active}
+                      onClick={() => {
+                        setRep(i);
+                        setRepTouched(true);
+                      }}
+                      className="w-full text-left flex items-baseline gap-4 sm:gap-5 py-4 px-3 -mx-3 border-b transition-colors"
+                      style={{ borderColor: LINE, background: active ? "rgba(108,74,182,0.09)" : "transparent", width: "calc(100% + 1.5rem)" }}
+                    >
+                      <span className="text-[14px] w-6 shrink-0" style={{ color: active ? ACCENT : INK_SOFT, fontFamily: MONO }}>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-[17px] sm:text-[18px] font-semibold" style={{ color: active ? PRIMARY : INK }}>{name}</span>
+                        <span className="block text-[14.5px] mt-0.5" style={{ color: INK_SOFT }}>{t(REPORT_DESC_KEYS[i])}</span>
+                      </span>
+                      <span className="text-[13px]" style={{ color: INK_SOFT, fontFamily: MONO }}>PDF</span>
+                    </button>
+                    {active && (
+                      <div className="lg:hidden py-5">
+                        <ReportSample key={i} title={name} data={samples[i]} L={x.labels} />
+                      </div>
+                    )}
+                  </Reveal>
+                );
+              })}
+            </div>
+            <div className="hidden lg:block sticky top-24" style={{ transform: "rotate(0.6deg)" }}>
+              <ReportSample key={rep} title={c.reports[rep]} data={samples[rep]} L={x.labels} />
+            </div>
           </div>
         </div>
       </section>
@@ -1221,10 +1770,90 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing -- three columns ruled like a ledger page. Prices come from
+          the same constants as the in-app /plans screen. */}
+      <section id="pricing" className="px-5 lg:px-8 py-20 lg:py-28 border-t scroll-mt-16" style={{ background: SURFACE, borderColor: LINE }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
+            <Reveal className="max-w-2xl">
+              <h2 className={`${H2_CLASS} mb-3`} style={{ color: INK, fontFamily: DISPLAY }}>{x.pricingTitle}</h2>
+              <p className="text-[17px] lg:text-[18px]" style={{ color: INK_SOFT }}>{x.pricingSub}</p>
+            </Reveal>
+            <div className="inline-flex self-start lg:self-auto p-1 rounded-full border" style={{ borderColor: LINE, background: BG }}>
+              {(["monthly", "annual"] as const).map((b) => (
+                <button
+                  key={b}
+                  type="button"
+                  aria-pressed={billing === b}
+                  onClick={() => setBilling(b)}
+                  className="px-5 py-2 rounded-full text-[14.5px] font-semibold transition-colors"
+                  style={{ background: billing === b ? PRIMARY : "transparent", color: billing === b ? "#FFFFFF" : INK_SOFT }}
+                >
+                  {b === "monthly" ? x.monthly : `${x.annual} · ${x.annualSave}`}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid lg:grid-cols-3 border-t-2" style={{ borderColor: INK, background: BG }}>
+            {x.plans.map((p, i) => {
+              const featured = i === 1;
+              return (
+                <Reveal key={p.name} delay={i * 110} className="h-full">
+                  <div
+                    className={`h-full flex flex-col p-6 sm:p-8 border-b border-x ${i > 0 ? "lg:border-l-0" : ""}`}
+                    style={{ borderColor: LINE, background: featured ? "rgba(108,74,182,0.09)" : "transparent" }}
+                  >
+                    <div className="flex items-center justify-between gap-3 mb-1">
+                      <h3 className="text-[21px] font-bold tracking-tight" style={{ color: featured ? PRIMARY : INK, fontFamily: DISPLAY }}>{p.name}</h3>
+                      {featured && (
+                        <span className="text-[10.5px] uppercase tracking-[0.12em] px-2 py-1 rounded" style={{ background: PRIMARY, color: "#FFFFFF", fontFamily: MONO }}>
+                          {x.popular}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[15px] mb-6" style={{ color: INK_SOFT }}>{p.tagline}</p>
+                    <p className="mb-6" style={{ fontFamily: MONO }}>
+                      <span key={billing} className="bf-paper-in inline-block text-[38px] sm:text-[42px] font-semibold tabular-nums leading-none" style={{ color: INK }}>
+                        {planPrices[i]}
+                      </span>
+                      <span className="text-[14px] ml-2" style={{ color: INK_SOFT }}>
+                        {i === 0 || billing === "monthly" ? x.perMonth : x.perYear}
+                      </span>
+                    </p>
+                    <ul className="border-t mb-8 flex-1" style={{ borderColor: LINE }}>
+                      {p.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2.5 py-2.5 border-b text-[15px]" style={{ borderColor: LINE, color: INK }}>
+                          <Check className="w-4 h-4 mt-1 shrink-0" style={{ color: featured ? ACCENT : PRIMARY_LIGHT }} />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      data-cta="register"
+                      onClick={() => goAuth("register")}
+                      className="w-full inline-flex items-center justify-center gap-2 text-[15.5px] font-semibold px-6 py-3.5 rounded-full border transition-transform hover:-translate-y-0.5"
+                      style={{
+                        background: featured ? PRIMARY : "transparent",
+                        color: featured ? "#FFFFFF" : PRIMARY,
+                        borderColor: PRIMARY,
+                      }}
+                    >
+                      {c.startFree}
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+          <p className="text-[13.5px] mt-4" style={{ color: INK_SOFT, fontFamily: MONO }}>{x.pricingNote}</p>
+        </div>
+      </section>
+
       {/* Final CTA -- flat dark band; the three trust lines sit beside it
           as plain sentences rather than a separate icon row. */}
-      <section id="pricing" className="px-5 lg:px-8 py-20 lg:py-28 scroll-mt-16" style={{ background: NIGHT }}>
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.15fr_0.85fr] gap-12 lg:gap-16 items-end">
+      <section data-night="in" className="px-5 lg:px-8 py-20 lg:py-28" style={{ background: nightBg }}>
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.15fr_0.85fr] gap-12 lg:gap-16 items-end" style={{ opacity: "var(--no, 1)" }}>
           <Reveal>
             <h2 ref={finalRef} className="text-[40px] sm:text-[52px] lg:text-[68px] font-bold tracking-[-0.03em] leading-[1.02] mb-5" style={{ color: "#FFFFFF", fontFamily: DISPLAY }}>
               <span className={`bf-strike ${finalIn ? "bf-on" : ""}`}>{c.finalTitle1}</span>
@@ -1232,15 +1861,18 @@ export function LandingPage() {
               <span className={`bf-after-strike ${finalIn ? "bf-on" : ""}`}>{c.finalTitle2}</span>
             </h2>
             <p className="text-[17px] lg:text-[19px] mb-8" style={{ color: "rgba(255,255,255,0.74)" }}>{c.finalSub}</p>
-            <button
-              data-cta="register"
-              onClick={() => goAuth("register")}
-              className="group inline-flex items-center gap-2 text-[16px] font-semibold px-9 py-4 rounded-full transition-transform hover:-translate-y-0.5"
-              style={{ background: "#FFFFFF", color: PRIMARY }}
-            >
-              {c.finalCtaPrimary}
-              <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5" />
-            </button>
+            <div className="flex flex-wrap items-center gap-4">
+              <button
+                data-cta="register"
+                onClick={() => goAuth("register")}
+                className="group inline-flex items-center gap-2 text-[16px] font-semibold px-9 py-4 rounded-full transition-transform hover:-translate-y-0.5"
+                style={{ background: "#FFFFFF", color: PRIMARY }}
+              >
+                {c.finalCtaPrimary}
+                <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5" />
+              </button>
+              <PlayButton small={x.playSmall} onDark />
+            </div>
           </Reveal>
           <Reveal delay={150}>
             <p className="text-[14px] font-semibold mb-3" style={{ color: LAVENDER }}>{c.trustSectionTitle}</p>
