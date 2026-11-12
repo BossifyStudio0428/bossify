@@ -59,6 +59,22 @@ function DelistedBadge({ lang }: { lang: string }) {
   );
 }
 
+/** Where a product row came from: pulled in by the TikTok product sync
+ *  (tiktok_product_id is set) or added by the seller by hand. Shown on every
+ *  product so it's obvious whose stock the TikTok sync will touch. */
+function SourceBadge({ item, lang }: { item: unknown; lang: string }) {
+  const fromTikTok = !!(item as any)?.tiktok_product_id;
+  return fromTikTok ? (
+    <span className="shrink-0 inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-black text-white">
+      TikTok
+    </span>
+  ) : (
+    <span className="shrink-0 inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
+      {lang === "zh" ? "手动添加" : lang === "ms" ? "Tambah manual" : "Manual"}
+    </span>
+  );
+}
+
 function ProfitRow({
   price,
   cost,
@@ -156,6 +172,8 @@ function InventoryPage() {
   const [showStock, setShowStock] = useState<boolean>(true);
   const [lowThreshold, setLowThreshold] = useState<number>(getCachedPrefs().low_stock_threshold);
   const [tiktokConnected, setTiktokConnected] = useState(false);
+  // Show only TikTok-synced products, only manually added ones, or both.
+  const [sourceFilter, setSourceFilter] = useState<"all" | "tiktok" | "manual">("all");
   const [tiktokLastSynced, setTiktokLastSynced] = useState<string | null>(null);
   const [tiktokImporting, setTiktokImporting] = useState(false);
   const [tiktokMsg, setTiktokMsg] = useState<string | null>(null);
@@ -335,8 +353,11 @@ function InventoryPage() {
   const visible = items.filter((i) => {
     const matchesSearch = i.name.toLowerCase().includes(query.toLowerCase());
     const matchesCategory = activeCategory === "__all" || (i.category ?? "") === activeCategory;
-    return matchesSearch && matchesCategory;
+    const fromTikTok = !!(i as any).tiktok_product_id;
+    const matchesSource = sourceFilter === "all" || (sourceFilter === "tiktok" ? fromTikTok : !fromTikTok);
+    return matchesSearch && matchesCategory && matchesSource;
   });
+  const tiktokItemCount = items.filter((i) => !!(i as any).tiktok_product_id).length;
   const lowItems = items.filter((i) => i.stock <= lowThreshold);
   const atLimit = !hasFullAccess && productsUsed >= productsLimit;
 
@@ -575,6 +596,34 @@ function InventoryPage() {
         />
       </div>
 
+      {/* Source filter — only worth showing once there is a mix to tell apart */}
+      {tiktokItemCount > 0 && (
+        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
+          {(
+            [
+              { k: "all", label: `${lang === "zh" ? "全部来源" : lang === "ms" ? "Semua sumber" : "All sources"} (${items.length})` },
+              { k: "tiktok", label: `TikTok (${tiktokItemCount})` },
+              { k: "manual", label: `${lang === "zh" ? "手动添加" : lang === "ms" ? "Tambah manual" : "Manual"} (${items.length - tiktokItemCount})` },
+            ] as const
+          ).map((f) => (
+            <button
+              key={f.k}
+              type="button"
+              onClick={() => setSourceFilter(f.k)}
+              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                sourceFilter === f.k
+                  ? f.k === "tiktok"
+                    ? "bg-black text-white border-black"
+                    : "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-foreground border-border"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {categories.length > 0 && (
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
           <button
@@ -678,6 +727,7 @@ function InventoryPage() {
                     <div className="flex-1 min-w-0 space-y-1">
                       <p className="text-sm font-semibold text-foreground truncate">{title}</p>
                       <div className="flex items-center gap-1.5 flex-wrap">
+                        <SourceBadge item={groupItems[0]} lang={lang} />
                         <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                           {groupItems.length} {lang === "zh" ? "个规格" : lang === "ms" ? "varian" : "variants"}
                         </span>
@@ -797,11 +847,14 @@ function InventoryPage() {
                   </div>
                   <div className="flex-1 min-w-0 space-y-1">
                     <p className="text-sm font-semibold text-foreground truncate">{it.name}</p>
-                    {it.category && (
-                      <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                        {formatCategory(it.category, t)}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <SourceBadge item={it} lang={lang} />
+                      {it.category && (
+                        <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                          {formatCategory(it.category, t)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Link>
                 <div className="flex items-center gap-1.5">
@@ -912,6 +965,7 @@ function InventoryPage() {
                         )}
                       </div>
                       <span className="font-semibold text-foreground truncate">{it.name}</span>
+                      <SourceBadge item={it} lang={lang} />
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{it.category ? formatCategory(it.category, t) : "—"}</td>

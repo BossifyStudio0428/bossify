@@ -264,6 +264,27 @@ function InventoryDetail() {
             </span>
           )}
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{item.name}</h1>
+          {(item as any).tiktok_product_id ? (
+            <p className="text-[11px] text-muted-foreground">
+              <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-black text-white mr-1.5">TikTok</span>
+              {lang === "zh"
+                ? "从 TikTok 同步的商品，价格和库存变化会跟着 TikTok 更新"
+                : lang === "ms"
+                  ? "Disegerak dari TikTok — harga dan perubahan stok mengikut TikTok"
+                  : "Synced from TikTok — price and stock changes follow TikTok"}
+            </p>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">
+              <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60 mr-1.5">
+                {lang === "zh" ? "手动添加" : lang === "ms" ? "Tambah manual" : "Manual"}
+              </span>
+              {lang === "zh"
+                ? "你自己添加的商品，TikTok 同步不会改它"
+                : lang === "ms"
+                  ? "Ditambah sendiri — tidak diubah oleh segerakan TikTok"
+                  : "Added by you — not changed by TikTok sync"}
+            </p>
+          )}
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-bold text-primary">RM {Number(item.price).toFixed(2)}</span>
             <span className="text-xs text-muted-foreground">/ {formatUnit(item.unit, t)}</span>
