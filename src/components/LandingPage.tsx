@@ -420,7 +420,6 @@ type ExtraCopy = {
   pricingSub: string;
   monthly: string;
   annual: string;
-  annualSave: string;
   perMonth: string;
   perYear: string;
   popular: string;
@@ -479,7 +478,6 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
     pricingSub: "Every account starts on Free. Upgrade inside the app only when your shop needs it.",
     monthly: "Monthly",
     annual: "Annual",
-    annualSave: "2 months free",
     perMonth: "/ month",
     perYear: "/ year",
     popular: "Most popular",
@@ -559,7 +557,6 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
     pricingSub: "每个账号都从免费版开始。等生意需要了,再在 App 里升级。",
     monthly: "月付",
     annual: "年付",
-    annualSave: "省 2 个月",
     perMonth: "/ 月",
     perYear: "/ 年",
     popular: "最受欢迎",
@@ -655,7 +652,6 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
     pricingSub: "Setiap akaun bermula dengan Percuma. Naik taraf dalam app hanya apabila kedai anda perlukannya.",
     monthly: "Bulanan",
     annual: "Tahunan",
-    annualSave: "Percuma 2 bulan",
     perMonth: "/ bulan",
     perYear: "/ tahun",
     popular: "Paling popular",
@@ -934,11 +930,16 @@ function useScrollFx(rootRef: RefObject<HTMLElement | null>) {
       // --nk drives the background mix, --no the opacity of the content.
       root.querySelectorAll<HTMLElement>("[data-night]").forEach((el) => {
         const r = el.getBoundingClientRect();
-        if (r.bottom < -vh || r.top > vh * 2) return;
-        const enter = clamp01((vh * 0.9 - r.top) / (vh * 0.45));
-        const exit = el.dataset.night === "both" ? 1 - clamp01((vh * 0.7 - r.bottom) / (vh * 0.5)) : 1;
-        el.style.setProperty("--nk", (enter * exit).toFixed(3));
-        el.style.setProperty("--no", (enter * exit).toFixed(3));
+        const both = el.dataset.night === "both";
+        const enter = clamp01((vh * 0.95 - r.top) / (vh * 0.55));
+        const exit = both ? 1 - clamp01((vh * 0.75 - r.bottom) / (vh * 0.55)) : 1;
+        const k = (enter * exit).toFixed(3);
+        el.style.setProperty("--nk", k);
+        el.style.setProperty("--no", k);
+        // The "both" band also drives the whole page: --pk darkens the page
+        // background and fades out the light sections either side of it
+        // ([data-day]), so the entire screen goes dark and then light again.
+        if (both) root.style.setProperty("--pk", k);
       });
       const y = window.scrollY;
       if (y < vh * 1.6) {
@@ -1262,7 +1263,66 @@ function ProfitStatement({ copy, progress, stamp }: { copy: LandingCopy; progres
   );
 }
 
-const nightBg = `color-mix(in srgb, ${NIGHT} calc(var(--nk, 1) * 100%), #FFFFFF)`;
+// A purple line that follows the mouse and fades out behind it, like a pen
+// stroke across the page. Mouse only (never on touch), off under reduced
+// motion, drawn on a fixed canvas that ignores clicks.
+function CursorTrail() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const LIFE = 900; // ms a point stays visible
+    let pts: { x: number; y: number; t: number }[] = [];
+    let raf = 0;
+    const resize = () => {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    const draw = () => {
+      raf = 0;
+      const now = performance.now();
+      pts = pts.filter((p) => now - p.t < LIFE);
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1];
+        const b = pts[i];
+        if (b.t - a.t > 140) continue; // the mouse paused: start a new stroke
+        const age = 1 - (now - b.t) / LIFE;
+        ctx.strokeStyle = `rgba(150, 122, 232, ${(age * 0.5).toFixed(3)})`;
+        ctx.lineWidth = 0.6 + age * 1.2;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      if (pts.length) raf = requestAnimationFrame(draw);
+    };
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType && e.pointerType !== "mouse") return;
+      pts.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+      if (!raf) raf = requestAnimationFrame(draw);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("pointermove", onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  return <canvas ref={ref} aria-hidden="true" className="fixed inset-0 w-full h-full pointer-events-none z-20" />;
+}
+
+const nightBg =`color-mix(in srgb, ${NIGHT} calc(var(--nk, 1) * 100%), #FFFFFF)`;
 
 // "Get it on Google Play" -- a real link to the store listing, opens in a
 // new tab. Deliberately NOT marked data-cta, so the sign-up click fallback
@@ -1495,7 +1555,12 @@ export function LandingPage() {
     "group inline-flex items-center justify-center gap-2 font-semibold rounded-full text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-10px_rgba(59,30,109,0.65)]";
 
   return (
-    <div ref={rootRef} className="relative isolate" style={{ backgroundColor: BG, color: INK, fontFamily: BODY }}>
+    <div
+      ref={rootRef}
+      className="relative isolate"
+      style={{ background: `color-mix(in srgb, ${NIGHT} calc(var(--pk, 0) * 100%), ${BG})`, color: INK, fontFamily: BODY }}
+    >
+      <CursorTrail />
       {/* Header */}
       <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(255,255,255,0.88)", borderColor: LINE }}>
         <div className="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
@@ -1541,7 +1606,7 @@ export function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative px-5 lg:px-8 pt-12 pb-16 lg:pt-20 lg:pb-24 overflow-hidden">
+      <section data-day="" className="relative px-5 lg:px-8 pt-12 pb-16 lg:pt-20 lg:pb-24 overflow-hidden" style={{ opacity: "calc(1 - var(--pk, 0))" }}>
         <div className="relative max-w-6xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-14 lg:gap-12 items-center">
           <Reveal>
             <div>
@@ -1632,7 +1697,7 @@ export function LandingPage() {
 
       {/* Features -- the real app, not drawings of it. Four actual screens,
           each with one line under it. Side-scrolls on phones. */}
-      <section id="features" className="px-5 lg:px-8 pt-20 lg:pt-28 pb-16 lg:pb-24 scroll-mt-16">
+      <section id="features" data-day="" className="px-5 lg:px-8 pt-20 lg:pt-28 pb-16 lg:pb-24 scroll-mt-16" style={{ opacity: "calc(1 - var(--pk, 0))" }}>
         <div className="max-w-6xl mx-auto">
           <Reveal className="max-w-2xl mb-10 lg:mb-14">
             <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{c.featuresTitle}</h2>
@@ -1641,11 +1706,31 @@ export function LandingPage() {
           {features.map((f, i) => (
             <div key={f.title} className={`grid lg:grid-cols-2 gap-8 lg:gap-20 items-center ${i > 0 ? "mt-16 lg:mt-28" : ""}`}>
               <Reveal className={i % 2 === 1 ? "lg:order-2" : ""}>
+                {/* Coloured panel behind each screenshot (deep purple / lavender
+                    alternating) with faint ledger rules, so the lower page
+                    is not a wall of white. */}
                 <div
-                  className="bf-shot mx-auto w-full max-w-[400px] lg:max-w-[280px] aspect-[4/5] lg:aspect-[51/100] rounded-[22px] overflow-hidden border"
-                  style={{ borderColor: LINE, background: "#F4F3F8" }}
+                  className="relative mx-auto w-full max-w-[460px] rounded-[30px] overflow-hidden px-8 pt-9 sm:px-12 lg:px-16 lg:pt-12"
+                  style={{
+                    background:
+                      i % 2 === 0
+                        ? `linear-gradient(155deg, ${PRIMARY} 0%, ${PRIMARY_LIGHT} 115%)`
+                        : `linear-gradient(155deg, #E7DDFB 0%, ${LAVENDER} 115%)`,
+                  }}
                 >
-                  <img data-pan="" src={f.src} alt={f.title} loading="lazy" className="w-full h-full object-cover object-top" />
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage: `repeating-linear-gradient(0deg, ${i % 2 === 0 ? "rgba(255,255,255,0.08)" : "rgba(59,30,109,0.08)"} 0 1px, transparent 1px 34px)`,
+                    }}
+                  />
+                  <div
+                    className="bf-shot relative aspect-[4/5] lg:aspect-[51/88] rounded-t-[22px] overflow-hidden"
+                    style={{ background: "#F4F3F8", boxShadow: "0 -6px 40px -12px rgba(18,10,36,0.45)" }}
+                  >
+                    <img data-pan="" src={f.src} alt={f.title} loading="lazy" className="w-full h-full object-cover object-top" />
+                  </div>
                 </div>
               </Reveal>
               <Reveal delay={120}>
@@ -1667,7 +1752,15 @@ export function LandingPage() {
       </section>
 
       {/* Reports -- a plain ruled list, like a ledger page */}
-      <section id="reports" className="px-5 lg:px-8 py-16 lg:py-24 scroll-mt-16">
+      <section
+        id="reports"
+        className="px-5 lg:px-8 py-16 lg:py-24 scroll-mt-16 border-y"
+        style={{
+          borderColor: LINE,
+          backgroundColor: "#EFE8FB",
+          backgroundImage: "repeating-linear-gradient(0deg, rgba(108,74,182,0.09) 0 1px, transparent 1px 34px)",
+        }}
+      >
         <div className="max-w-6xl mx-auto">
           <Reveal className="max-w-2xl mb-8 lg:mb-12">
             <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{c.reportsGridTitle}</h2>
@@ -1687,7 +1780,7 @@ export function LandingPage() {
                         setRepTouched(true);
                       }}
                       className="w-full text-left flex items-baseline gap-4 sm:gap-5 py-4 px-3 -mx-3 border-b transition-colors"
-                      style={{ borderColor: LINE, background: active ? "rgba(108,74,182,0.09)" : "transparent", width: "calc(100% + 1.5rem)" }}
+                      style={{ borderColor: "rgba(59,30,109,0.18)", background: active ? "#FFFFFF" : "transparent", width: "calc(100% + 1.5rem)" }}
                     >
                       <span className="text-[14px] w-6 shrink-0" style={{ color: active ? ACCENT : INK_SOFT, fontFamily: MONO }}>
                         {String(i + 1).padStart(2, "0")}
@@ -1715,12 +1808,20 @@ export function LandingPage() {
       </section>
 
       {/* TikTok integration -- the real connect screen */}
-      <section className="px-5 lg:px-8 pt-16 lg:pt-24 border-y overflow-hidden" style={{ background: SURFACE, borderColor: LINE }}>
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-center">
+      <section
+        className="relative px-5 lg:px-8 pt-16 lg:pt-24 overflow-hidden"
+        style={{ background: `linear-gradient(155deg, ${PRIMARY} 0%, ${PRIMARY_LIGHT} 130%)` }}
+      >
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{ backgroundImage: "repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 34px)" }}
+        />
+        <div className="relative max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-center">
           <Reveal className="pb-4 lg:pb-24">
-            <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{c.tiktokTitle}</h2>
-            <p className="text-[17px] lg:text-[18px] leading-relaxed mb-6 max-w-[34rem]" style={{ color: INK_SOFT }}>{c.tiktokSub}</p>
-            <p className="inline-flex items-center gap-2 text-[15px] font-semibold" style={{ color: GREEN }}>
+            <h2 className={`${H2_CLASS} mb-4`} style={{ color: "#FFFFFF", fontFamily: DISPLAY }}>{c.tiktokTitle}</h2>
+            <p className="text-[17px] lg:text-[18px] leading-relaxed mb-6 max-w-[34rem]" style={{ color: "rgba(255,255,255,0.8)" }}>{c.tiktokSub}</p>
+            <p className="inline-flex items-center gap-2 text-[15px] font-semibold" style={{ color: "#86EFAC" }}>
               <span className="w-2 h-2 rounded-full bg-emerald-500 bossify-animate-status-dot" />
               {c.tiktokComingSoon}
             </p>
@@ -1728,7 +1829,7 @@ export function LandingPage() {
           <Reveal y={80} delay={100} className="w-full max-w-[340px] mx-auto lg:ml-auto lg:mr-6 self-end">
             <div
               className="rounded-t-[26px] overflow-hidden border border-b-0"
-              style={{ borderColor: LINE, background: "#FCFBFE", aspectRatio: "4 / 5", boxShadow: "0 -10px 50px -20px rgba(59,30,109,0.35)" }}
+              style={{ borderColor: "rgba(255,255,255,0.25)", background: "#FCFBFE", aspectRatio: "4 / 5", boxShadow: "0 -10px 50px -16px rgba(18,10,36,0.6)" }}
             >
               <img data-pan="" src={heroTikTokScreenshot} alt="Bossify TikTok Shop connection screen" loading="lazy" className="w-full h-full object-cover object-top" />
             </div>
@@ -1789,7 +1890,7 @@ export function LandingPage() {
                   className="px-5 py-2 rounded-full text-[14.5px] font-semibold transition-colors"
                   style={{ background: billing === b ? PRIMARY : "transparent", color: billing === b ? "#FFFFFF" : INK_SOFT }}
                 >
-                  {b === "monthly" ? x.monthly : `${x.annual} · ${x.annualSave}`}
+                  {b === "monthly" ? x.monthly : x.annual}
                 </button>
               ))}
             </div>
