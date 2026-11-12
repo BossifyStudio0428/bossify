@@ -13,8 +13,17 @@ import { AuthShell } from "@/components/AuthShell";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
-  validateSearch: (search: Record<string, unknown>): { mode?: string } => ({
+  // tiktok_email / tiktok_code are passed through as well: the TikTok
+  // authorisation page sends the seller back here with them, and dropping
+  // them from the validated search would lose the one-time login code.
+  validateSearch: (search: Record<string, unknown>): { mode?: string; tiktok_email?: string; tiktok_code?: string } => ({
     mode: typeof search.mode === "string" ? search.mode : undefined,
+    tiktok_email: typeof search.tiktok_email === "string" ? search.tiktok_email : undefined,
+    // A 6-digit code arrives as a number once the router parses the URL.
+    tiktok_code:
+      typeof search.tiktok_code === "string" || typeof search.tiktok_code === "number"
+        ? String(search.tiktok_code)
+        : undefined,
   }),
 });
 
@@ -22,23 +31,33 @@ type Mode = "login" | "reg_email" | "reg_otp" | "reg_pw";
 
 function AuthPage() {
   const routeSearch = Route.useSearch();
-  const [mode, setMode] = useState<Mode>(routeSearch.mode === "reg" ? "reg_email" : "login");
+  // A TikTok login code in the URL always means "log in", whatever mode says.
+  const [mode, setMode] = useState<Mode>(
+    routeSearch.mode === "reg" && !(routeSearch.tiktok_email && routeSearch.tiktok_code) ? "reg_email" : "login",
+  );
   const [email, setEmail] = useState("");
   const [businessName, setBusinessName] = useState("");
   const { t } = useI18n();
-  const [tiktokPrefill, setTiktokPrefill] = useState<{ email: string; code: string } | null>(null);
+  // Coming back from TikTok authorisation: the email + one-time code are in
+  // the URL. They are read straight away (not in an effect), so the very
+  // first render already shows the "logging you in" code screen instead of
+  // the plain login form.
+  const [tiktokPrefill] = useState<{ email: string; code: string } | null>(() => {
+    let tEmail = routeSearch.tiktok_email ?? null;
+    let tCode = routeSearch.tiktok_code ?? null;
+    if ((!tEmail || !tCode) && typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      tEmail = tEmail ?? params.get("tiktok_email");
+      tCode = tCode ?? params.get("tiktok_code");
+    }
+    return tEmail && tCode ? { email: tEmail, code: tCode } : null;
+  });
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const tEmail = params.get("tiktok_email");
-    const tCode = params.get("tiktok_code");
-    if (tEmail && tCode) {
-      setTiktokPrefill({ email: tEmail, code: tCode });
-      // Clean the sensitive params out of the visible URL/history right away.
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, []);
+    if (typeof window === "undefined" || !tiktokPrefill) return;
+    // Clean the sensitive params out of the visible URL/history right away.
+    window.history.replaceState({}, "", window.location.pathname);
+  }, [tiktokPrefill]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
