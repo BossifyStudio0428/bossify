@@ -70,6 +70,7 @@ function ReportsHub() {
   type OrderExt = OrderRow & {
     payment_method?: string | null;
     order_source?: string | null;
+    platform_buyer_id?: string | null;
     platform_fee_amount?: number | null;
     shipping_cost?: number | null;
     affiliate_commission?: number | null;
@@ -78,7 +79,7 @@ function ReportsHub() {
   const [orders, setOrders] = useState<OrderExt[]>([]);
   const [busy, setBusy] = useState<null | "sales" | "profit" | "stock" | "financial" | "customer" | "supplier" | "recon">(null);
   const [pickCustomer, setPickCustomer] = useState(false);
-  const [customerList, setCustomerList] = useState<Array<{ id: string; name: string; phone: string | null; total_orders: number; total_spent: number; last_order_at: string | null }>>([]);
+  const [customerList, setCustomerList] = useState<Array<{ id: string; name: string; phone: string | null; total_orders: number; total_spent: number; last_order_at: string | null; platform_buyer_id?: string | null }>>([]);
   const [customerQuery, setCustomerQuery] = useState("");
   const [orderCategories, setOrderCategories] = useState<Record<string, Set<string>>>({});
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("__all");
@@ -91,7 +92,7 @@ function ReportsHub() {
     (async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,code,customer_name,phone,product,quantity,amount,cost,gross_profit,status,created_at,payment_method,order_source,platform_fee_amount,shipping_cost,affiliate_commission,financial_status")
+        .select("id,code,customer_name,phone,product,quantity,amount,cost,gross_profit,status,created_at,payment_method,order_source,platform_buyer_id,platform_fee_amount,shipping_cost,affiliate_commission,financial_status")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (!cancelled) setOrders((data ?? []) as OrderExt[]);
@@ -437,14 +438,14 @@ function ReportsHub() {
     if (customerList.length === 0 && user?.id) {
       const { data } = await supabase
         .from("customers")
-        .select("id,name,phone,total_orders,total_spent,last_order_at")
+        .select("*")
         .eq("user_id", user.id)
         .order("name", { ascending: true });
       setCustomerList((data ?? []) as typeof customerList);
     }
   };
 
-  const handleCustomerStatement = async (c: { id: string; name: string; phone: string | null; total_orders: number; total_spent: number; last_order_at: string | null }) => {
+  const handleCustomerStatement = async (c: { id: string; name: string; phone: string | null; total_orders: number; total_spent: number; last_order_at: string | null; platform_buyer_id?: string | null }) => {
     if (busy) return;
     setBusy("customer");
     setPickCustomer(false);
@@ -454,6 +455,8 @@ function ReportsHub() {
       // Match orders by phone OR customer_name (mirrors Customer Detail logic).
       const nphone = (c.phone ?? "").replace(/\D/g, "");
       const rows = inRange.filter((o) => {
+        // TikTok customer: match by TikTok buyer id only.
+        if (c.platform_buyer_id) return o.platform_buyer_id === c.platform_buyer_id;
         const op = (o.phone ?? "").replace(/\D/g, "");
         if (nphone && op && op === nphone) return true;
         return (o.customer_name ?? "").trim().toLowerCase() === c.name.trim().toLowerCase();

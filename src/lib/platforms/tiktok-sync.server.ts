@@ -302,6 +302,42 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
       })),
     );
 
+    // Make sure this TikTok buyer has a row in the customer list. TikTok
+    // gives no name/phone, so the row is keyed by the buyer id and named
+    // "TikTok #<last 6>"; an existing row is never renamed (the seller may
+    // have given it a real name). Totals are recalculated from orders by
+    // the customers page, so only last_order_at is kept fresh here.
+    // Never blocks the order sync (e.g. if tiktok-customers.sql hasn't run).
+    if (detail.user_id) {
+      try {
+        const buyerId = String(detail.user_id);
+        const { data: existingCust, error: custReadErr } = await supabaseAdmin
+          .from("customers" as any)
+          .select("id")
+          .eq("user_id", userId)
+          .eq("platform_buyer_id", buyerId)
+          .maybeSingle();
+        if (!custReadErr) {
+          const now = new Date().toISOString();
+          if (existingCust) {
+            await supabaseAdmin.from("customers" as any).update({ last_order_at: now } as any).eq("id", (existingCust as any).id);
+          } else {
+            await supabaseAdmin.from("customers" as any).insert({
+              user_id: userId,
+              name: `TikTok #${buyerId.slice(-6)}`,
+              source: "tiktok",
+              platform_buyer_id: buyerId,
+              total_orders: 0,
+              total_spent: 0,
+              last_order_at: now,
+            } as any);
+          }
+        }
+      } catch {
+        // non-fatal
+      }
+    }
+
     result.completed++;
   }
 

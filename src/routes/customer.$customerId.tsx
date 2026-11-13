@@ -68,7 +68,11 @@ function CustomerDetail() {
     const cust = c as CustomerRow;
     const phoneDigits = (cust.phone || "").replace(/\D/g, "");
     let q = supabase.from("orders").select("*").eq("user_id", cust.user_id);
-    if (phoneDigits) {
+    if (cust.platform_buyer_id) {
+      // TikTok customer: TikTok gives no name/phone, every TikTok order is
+      // named "TikTok customer" — the buyer id is the only real link.
+      q = q.eq("platform_buyer_id", cust.platform_buyer_id);
+    } else if (phoneDigits) {
       q = q.or(`phone.eq.${phoneDigits},customer_name.eq.${cust.name}`);
     } else {
       q = q.eq("customer_name", cust.name);
@@ -96,6 +100,8 @@ function CustomerDetail() {
 
   const handleDelete = async () => {
     if (!customer) return;
+    // Never for TikTok customers: this also deletes the customer's orders.
+    if (customer.platform_buyer_id) { setConfirmDelete(false); return; }
     const phoneDigits = (customer.phone || "").replace(/\D/g, "");
     if (phoneDigits) {
       const { error: phoneOrdersError } = await supabase
@@ -236,6 +242,16 @@ function CustomerDetail() {
               {customer.name.charAt(0).toUpperCase()}
             </div>
             <h2 className="text-xl font-bold">{customer.name}</h2>
+            {customer.platform_buyer_id && (
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-black text-white">TikTok</span>
+                {lang === "zh"
+                  ? "TikTok 买家，TikTok 不提供姓名和电话；可以自己改名"
+                  : lang === "ms"
+                    ? "Pembeli TikTok — TikTok tidak beri nama/telefon; anda boleh namakan semula"
+                    : "TikTok buyer — TikTok shares no name or phone; you can rename"}
+              </p>
+            )}
             {customer.phone ? (
               <a href={`tel:${customer.phone}`} className="text-sm text-primary">{customer.phone}</a>
             ) : (
@@ -280,12 +296,14 @@ function CustomerDetail() {
             >
               <Pencil className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("edit_customer")}
             </button>
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-600 text-sm font-semibold active:scale-[0.99] transition-transform"
-            >
-              <Trash2 className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
-            </button>
+            {!customer.platform_buyer_id && (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-600 text-sm font-semibold active:scale-[0.99] transition-transform"
+              >
+                <Trash2 className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
+              </button>
+            )}
           </section>
 
           <section className="space-y-2">
@@ -446,6 +464,16 @@ function CustomerDetail() {
           {customer.name.charAt(0).toUpperCase()}
         </div>
         <h2 className="text-xl font-bold">{customer.name}</h2>
+        {customer.platform_buyer_id && (
+          <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+            <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-black text-white">TikTok</span>
+            {lang === "zh"
+              ? "TikTok 买家，TikTok 不提供姓名和电话；可以自己改名"
+              : lang === "ms"
+                ? "Pembeli TikTok — TikTok tidak beri nama/telefon; anda boleh namakan semula"
+                : "TikTok buyer — TikTok shares no name or phone; you can rename"}
+          </p>
+        )}
         {customer.phone ? (
           <a href={`tel:${customer.phone}`} className="text-sm text-primary">{customer.phone}</a>
         ) : (
@@ -613,12 +641,14 @@ function CustomerDetail() {
         >
           <Pencil className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("edit_customer")}
         </button>
-        <button
-          onClick={() => setConfirmDelete(true)}
-          className="w-full py-3.5 rounded-2xl bg-red-500/10 text-red-600 font-semibold active:scale-[0.99] transition-transform"
-        >
-          <Trash2 className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
-        </button>
+        {!customer.platform_buyer_id && (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="w-full py-3.5 rounded-2xl bg-red-500/10 text-red-600 font-semibold active:scale-[0.99] transition-transform"
+          >
+            <Trash2 className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
+          </button>
+        )}
       </section>
       </div>
 

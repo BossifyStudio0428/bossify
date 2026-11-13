@@ -72,6 +72,18 @@ function relTime(iso: string | null, t: (k: any) => string) {
 }
 
 
+/** "TikTok" for customers created from TikTok buyers, otherwise the
+ *  seller's own customer (added by hand, from a manual order or the order form). */
+function CustomerSourceBadge({ customer, lang }: { customer: CustomerRow; lang: string }) {
+  return customer.platform_buyer_id ? (
+    <span className="shrink-0 inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-black text-white">TikTok</span>
+  ) : (
+    <span className="shrink-0 inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
+      {lang === "zh" ? "自己的客户" : lang === "ms" ? "Sendiri" : "Own"}
+    </span>
+  );
+}
+
 function CustomersPage() {
   const { t, lang } = useI18n();
   const { type: bizType } = useBusinessType();
@@ -79,7 +91,8 @@ function CustomersPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
-  const [tiktokBuyers, setTiktokBuyers] = useState<Array<{ buyerId: string; orders: number; totalSpent: number }>>([]);
+  // Show TikTok buyers only, the seller's own customers only, or both.
+  const [sourceFilter, setSourceFilter] = useState<"all" | "tiktok" | "own">("all");
   const [loading, setLoading] = useState(true);
   const [menuFor, setMenuFor] = useState<CustomerRow | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<CustomerRow | null>(null);
@@ -123,6 +136,9 @@ function CustomersPage() {
   const doDelete = async () => {
     if (!confirmDelete || !user) return;
     const c = confirmDelete;
+    // TikTok customers can't be deleted: the normal delete also removes the
+    // customer's orders, and the next sync would create the row again.
+    if (c.platform_buyer_id) { setConfirmDelete(null); return; }
     setRemovingId(c.id);
     setConfirmDelete(null);
     setTimeout(async () => {
@@ -178,24 +194,32 @@ function CustomersPage() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
-    const rows = (data ?? []) as CustomerRow[];
-    setCustomers(rows);
+    const rawRows = (data ?? []) as CustomerRow[];
 
+    // TikTok customers: their totals come straight from their orders
+    // (matched by TikTok buyer id), so they're always current even though
+    // the sync never edits those numbers. Paid / shipped / delivered only.
     const { data: tkOrders } = await supabase
       .from("orders" as any)
-      .select("platform_buyer_id,amount")
+      .select("platform_buyer_id,amount,created_at")
       .eq("user_id", user.id)
       .eq("order_source", "tiktok")
       .in("status", PAID_STATUSES)
       .not("platform_buyer_id", "is", null);
-    const map = new Map<string, { buyerId: string; orders: number; totalSpent: number }>();
+    const tkTotals = new Map<string, { orders: number; spent: number; last: string | null }>();
     for (const o of ((tkOrders ?? []) as any[])) {
-      const existing = map.get(o.platform_buyer_id) ?? { buyerId: o.platform_buyer_id, orders: 0, totalSpent: 0 };
-      existing.orders += 1;
-      existing.totalSpent += Number(o.amount ?? 0);
-      map.set(o.platform_buyer_id, existing);
+      const cur = tkTotals.get(o.platform_buyer_id) ?? { orders: 0, spent: 0, last: null };
+      cur.orders += 1;
+      cur.spent += Number(o.amount ?? 0);
+      if (!cur.last || o.created_at > cur.last) cur.last = o.created_at;
+      tkTotals.set(o.platform_buyer_id, cur);
     }
-    setTiktokBuyers(Array.from(map.values()).filter((b) => b.orders > 1).sort((a, b) => b.totalSpent - a.totalSpent));
+    const rows = rawRows.map((c) => {
+      if (!c.platform_buyer_id) return c;
+      const tot = tkTotals.get(c.platform_buyer_id);
+      return { ...c, total_orders: tot?.orders ?? 0, total_spent: tot?.spent ?? 0, last_order_at: tot?.last ?? c.last_order_at };
+    });
+    setCustomers(rows);
 
     // Desktop KPI/table data: Outstanding and Total Profit aren't stored on
     // the customers row, so derive them by matching each customer's orders
@@ -203,11 +227,16 @@ function CustomersPage() {
     // back to customer_name only for orders with no phone on file.
     const { data: ordersForAgg } = await supabase
       .from("orders" as any)
-      .select("phone,customer_name,amount,status,cost,gross_profit,platform_fee_amount,shipping_cost,affiliate_commission,financial_status")
+      .select("phone,customer_name,amount,status,cost,gross_profit,platform_fee_amount,shipping_cost,affiliate_commission,financial_status,platform_buyer_id")
       .eq("user_id", user.id);
     const byPhone = new Map<string, any[]>();
     const byName = new Map<string, any[]>();
+    const byBuyer = new Map<string, any[]>();
     for (const o of ((ordersForAgg ?? []) as any[])) {
+      if (o.platform_buyer_id) {
+        if (!byBuyer.has(o.platform_buyer_id)) byBuyer.set(o.platform_buyer_id, []);
+        byBuyer.get(o.platform_buyer_id)!.push(o);
+      }
       const pd = (o.phone ?? "").replace(/\D/g, "");
       if (pd) {
         if (!byPhone.has(pd)) byPhone.set(pd, []);
@@ -222,7 +251,9 @@ function CustomersPage() {
     const agg: Record<string, { orders: number; sales: number; profit: number; outstanding: number }> = {};
     for (const c of rows) {
       const pd = (c.phone ?? "").replace(/\D/g, "");
-      const list = pd ? (byPhone.get(pd) ?? []) : (byName.get(c.name.trim().toLowerCase()) ?? []);
+      const list = c.platform_buyer_id
+        ? (byBuyer.get(c.platform_buyer_id) ?? [])
+        : pd ? (byPhone.get(pd) ?? []) : (byName.get(c.name.trim().toLowerCase()) ?? []);
       let sales = 0, profit = 0, outstanding = 0;
       for (const o of list) {
         const amt = Number(o.amount ?? 0);
@@ -391,6 +422,8 @@ function CustomersPage() {
   const filtered = customers.filter((c) => {
     const q = query.toLowerCase();
     if (statusFilter !== "all" && (c.customer_status ?? "enquiry") !== statusFilter) return false;
+    if (sourceFilter === "tiktok" && !c.platform_buyer_id) return false;
+    if (sourceFilter === "own" && c.platform_buyer_id) return false;
     if (bizType === "property" && packageFilter !== "all") {
       if (packageFilter === "__none__") {
         if (c.package_id) return false;
@@ -416,6 +449,7 @@ function CustomersPage() {
     return 0;
   });
   const dateFilterActive = !!(dateFrom || dateTo);
+  const tiktokCustomerCount = customers.filter((c) => !!c.platform_buyer_id).length;
   // Top 20% spend threshold across the currently visible retail list (spent > 0 only).
   const topSpenderThreshold = (() => {
     if (bizType !== "retail") return Number.POSITIVE_INFINITY;
@@ -542,36 +576,6 @@ function CustomersPage() {
         />
       </div>
 
-      {tiktokBuyers.length > 0 && (
-        <div className="space-y-2 lg:hidden">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5">
-              <Repeat className="h-3.5 w-3.5" />
-              {lang === "zh" ? "TikTok 回购客户" : lang === "ms" ? "Pelanggan Berulang TikTok" : "TikTok Repeat Buyers"}
-            </p>
-            {tiktokBuyers.length > 5 && (
-              <Link to="/top-buyers" className="text-[11px] font-semibold text-primary shrink-0">
-                {t("ro_view_all")}
-              </Link>
-            )}
-          </div>
-          <p className="text-[10px] text-muted-foreground -mt-1">
-            {lang === "zh" ? "无法显示真实姓名（TikTok 平台限制）" : lang === "ms" ? "Nama sebenar tidak tersedia (had platform)" : "Real names unavailable (platform limitation)"}
-          </p>
-          <div className="rounded-2xl bg-card border border-border/60 divide-y divide-border/40">
-            {tiktokBuyers.slice(0, 5).map((b, idx) => (
-              <div key={b.buyerId} className="flex items-center gap-3 p-3">
-                <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">#{idx + 1}</div>
-                <p className="text-sm font-semibold flex-1">
-                  {lang === "zh" ? `买家 #${idx + 1}` : lang === "ms" ? `Pembeli #${idx + 1}` : `Buyer #${idx + 1}`}
-                </p>
-                <p className="text-xs text-muted-foreground">{b.orders} {lang === "zh" ? "笔" : "orders"}</p>
-                <p className="text-sm font-bold text-primary">RM {b.totalSpent.toFixed(2)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {bizType === "education" && (
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
@@ -620,6 +624,33 @@ function CustomersPage() {
           className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
         />
       </div>
+
+      {tiktokCustomerCount > 0 && (
+        <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide lg:order-last lg:basis-full">
+          {(
+            [
+              { k: "all", label: `${lang === "zh" ? "全部来源" : lang === "ms" ? "Semua sumber" : "All sources"} (${customers.length})` },
+              { k: "tiktok", label: `TikTok (${tiktokCustomerCount})` },
+              { k: "own", label: `${lang === "zh" ? "自己的客户" : lang === "ms" ? "Pelanggan sendiri" : "Own customers"} (${customers.length - tiktokCustomerCount})` },
+            ] as const
+          ).map((f) => (
+            <button
+              key={f.k}
+              type="button"
+              onClick={() => setSourceFilter(f.k)}
+              className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${
+                sourceFilter === f.k
+                  ? f.k === "tiktok"
+                    ? "bg-black text-white"
+                    : "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {bizType !== "retail" && (
         <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide lg:order-last lg:basis-full">
@@ -780,6 +811,7 @@ function CustomersPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                  <CustomerSourceBadge customer={c} lang={lang} />
                 </div>
                 {c.phone && (
                   <p className="text-[11px] text-primary font-medium mt-0.5 truncate flex items-center gap-1"><Smartphone className="h-3 w-3 shrink-0" /> {c.phone}</p>
@@ -913,7 +945,10 @@ function CustomersPage() {
                             {c.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-foreground truncate">{c.name}</p>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <p className="font-semibold text-foreground truncate">{c.name}</p>
+                              <CustomerSourceBadge customer={c} lang={lang} />
+                            </div>
                             {c.phone && <p className="text-[11px] text-muted-foreground truncate">{c.phone}</p>}
                           </div>
                         </Link>
@@ -958,13 +993,15 @@ function CustomersPage() {
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
-                          <button
-                            onClick={() => setConfirmDelete(c)}
-                            aria-label="Delete"
-                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {!c.platform_buyer_id && (
+                            <button
+                              onClick={() => setConfirmDelete(c)}
+                              aria-label="Delete"
+                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1025,36 +1062,6 @@ function CustomersPage() {
               </div>
             )}
 
-            {tiktokBuyers.length > 0 && (
-              <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                    <Repeat className="h-3.5 w-3.5" />
-                    {lang === "zh" ? "TikTok 回购客户" : lang === "ms" ? "Pelanggan Berulang TikTok" : "TikTok Repeat Buyers"}
-                  </p>
-                  {tiktokBuyers.length > 5 && (
-                    <Link to="/top-buyers" className="text-[11px] font-semibold text-primary shrink-0">
-                      {t("ro_view_all")}
-                    </Link>
-                  )}
-                </div>
-                <div className="divide-y divide-border/40">
-                  {tiktokBuyers.slice(0, 5).map((b, idx) => (
-                    <div key={b.buyerId} className="flex items-center gap-3 py-2">
-                      <span className="w-6 text-xs font-bold text-primary shrink-0">#{idx + 1}</span>
-                      <span className="text-sm font-semibold flex-1 truncate">
-                        {lang === "zh" ? `买家 #${idx + 1}` : lang === "ms" ? `Pembeli #${idx + 1}` : `Buyer #${idx + 1}`}
-                      </span>
-                      <span className="text-xs text-muted-foreground shrink-0">{b.orders} {lang === "zh" ? "笔" : "orders"}</span>
-                      <span className="text-sm font-bold text-primary font-mono shrink-0">RM {b.totalSpent.toFixed(2)}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  {lang === "zh" ? "无法显示真实姓名（TikTok 平台限制）" : lang === "ms" ? "Nama sebenar tidak tersedia (had platform)" : "Real names unavailable (platform limitation)"}
-                </p>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -1126,12 +1133,14 @@ function CustomersPage() {
             >
               <Pencil className="h-3.5 w-3.5 inline-block mr-1.5 -mt-0.5" />{t("edit_customer")}
             </button>
-            <button
-              onClick={() => { setConfirmDelete(menuFor); setMenuFor(null); }}
-              className="w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold text-red-500 hover:bg-red-500/10"
-            >
-              <Trash2 className="h-3.5 w-3.5 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
-            </button>
+            {!menuFor.platform_buyer_id && (
+              <button
+                onClick={() => { setConfirmDelete(menuFor); setMenuFor(null); }}
+                className="w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold text-red-500 hover:bg-red-500/10"
+              >
+                <Trash2 className="h-3.5 w-3.5 inline-block mr-1.5 -mt-0.5" />{t("delete_customer")}
+              </button>
+            )}
             <button onClick={() => setMenuFor(null)} className="w-full px-4 py-3 rounded-2xl text-sm text-muted-foreground">
               {t("cancel")}
             </button>
