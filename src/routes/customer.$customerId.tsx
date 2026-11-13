@@ -15,7 +15,7 @@ import { FollowupPipeline } from "@/components/FollowupPipeline";
 import { AdditionalServices } from "@/components/AdditionalServices";
 import { reqStatusKey } from "@/routes/requirements";
 import { stripEmoji } from "@/lib/wa";
-import { orderContributionProfit } from "@/lib/orderMath";
+import { orderContributionProfit, isPaidStatus } from "@/lib/orderMath";
 
 export const Route = createFileRoute("/customer/$customerId")({ component: CustomerDetail });
 
@@ -199,10 +199,13 @@ function CustomerDetail() {
   // are denormalized and drift when orders are added/removed outside the
   // customer-update paths, or when the customer row is recreated.
   const derivedOrderCount = orders.length;
-  const derivedTotalSpent = orders.reduce((s, o) => s + Number(o.amount ?? 0), 0);
+  // Money totals count paid / shipped / delivered orders only — unpaid,
+  // cancelled and refunded orders were never money in.
+  const paidOrders = orders.filter((o) => isPaidStatus(o.status));
+  const derivedTotalSpent = paidOrders.reduce((s, o) => s + Number(o.amount ?? 0), 0);
   // These two aren't stored on the customer row — derive from the already-
   // loaded order history, the same way the desktop customers list does.
-  const derivedTotalProfit = orders.reduce((s, o) => {
+  const derivedTotalProfit = paidOrders.reduce((s, o) => {
     if ((o as any).financial_status === "pending") return s;
     return s + orderContributionProfit(o as any);
   }, 0);
@@ -211,7 +214,7 @@ function CustomerDetail() {
   // Sales & Profit Trend: group this customer's orders by month (oldest → newest).
   const trendByMonth = (() => {
     const map = new Map<string, { revenue: number; profit: number }>();
-    [...orders].reverse().forEach((o) => {
+    [...paidOrders].reverse().forEach((o) => {
       const d = new Date(o.created_at);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const entry = map.get(key) ?? { revenue: 0, profit: 0 };

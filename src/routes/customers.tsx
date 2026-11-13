@@ -15,7 +15,7 @@ import { bizKey } from "@/lib/businessType";
 import { CasesKanban, type EduStageInfo } from "@/components/CasesKanban";
 import { PhoneInput } from "@/components/PhoneInput";
 import { stripEmoji } from "@/lib/wa";
-import { orderContributionProfit, PAID_STATUSES } from "@/lib/orderMath";
+import { orderContributionProfit, PAID_STATUSES, isPaidStatus } from "@/lib/orderMath";
 
 function buildWA(phone: string, message: string) {
   const cleaned = phone.replace(/[^0-9]/g, "");
@@ -257,8 +257,12 @@ function CustomersPage() {
       let sales = 0, profit = 0, outstanding = 0;
       for (const o of list) {
         const amt = Number(o.amount ?? 0);
-        sales += amt;
-        if (o.financial_status !== "pending") profit += orderContributionProfit(o);
+        // Sales / profit = paid, shipped or delivered orders only;
+        // unpaid money shows separately as "outstanding".
+        if (isPaidStatus(o.status)) {
+          sales += amt;
+          if (o.financial_status !== "pending") profit += orderContributionProfit(o);
+        }
         if (o.status === "Unpaid") outstanding += amt;
       }
       agg[c.id] = { orders: list.length, sales, profit, outstanding };
