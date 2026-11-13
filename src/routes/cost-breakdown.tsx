@@ -30,6 +30,7 @@ function CostBreakdownPage() {
   const { isBusiness } = useSubscription();
   const [range, setRange] = useState<Range>("month");
   const [loading, setLoading] = useState(true);
+  const [chartsOpen, setChartsOpen] = useState(false);
 
   const [revenue, setRevenue] = useState(0);
   const [productCost, setProductCost] = useState(0);
@@ -425,6 +426,89 @@ function CostBreakdownPage() {
             </p>
           )}
 
+          {/* Desktop-only Profit by Product */}
+          {productProfit.length > 0 && (
+            <div className="hidden lg:block rounded-2xl bg-card border border-border/60 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase">
+                  {lang === "zh" ? "各商品利润" : lang === "ms" ? "Untung Mengikut Produk" : "Profit by Product"}
+                </p>
+                <Link to="/product-profit" className="text-[11px] font-semibold text-primary hover:underline">
+                  {lang === "zh" ? "查看全部" : lang === "ms" ? "Lihat semua" : "View all"}
+                </Link>
+              </div>
+              <div className="divide-y divide-border/40">
+                {productProfit.map((p, i) => (
+                  <div key={p.name + i} className="flex items-center gap-3 py-2">
+                    {i === 0 ? <Trophy className="h-4 w-4 text-amber-500 shrink-0" /> : <span className="w-4 text-center text-xs text-muted-foreground shrink-0">{i + 1}</span>}
+                    <span className="flex-1 min-w-0 truncate text-sm text-foreground">{p.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">RM {p.revenue.toFixed(2)}</span>
+                    <span className={`inline-flex items-center gap-1 text-sm font-bold shrink-0 w-28 justify-end ${p.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                      {p.profit >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                      RM {p.profit.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-2xl bg-card border border-border/60 p-4 divide-y divide-border/40">
+            <Row label={lang === "zh" ? "销售总额" : lang === "ms" ? "Jumlah Jualan" : "Gross Sales"} value={revenue} />
+            {refundRevenue > 0 && <Row label={lang === "zh" ? "退款（收入）" : lang === "ms" ? "Bayaran balik" : "Refunds (revenue)"} value={-refundRevenue} tint="neg" />}
+            <Row label={lang === "zh" ? "净收入" : lang === "ms" ? "Hasil Bersih" : "Net Revenue"} value={netRevenue} bold />
+
+            <div className="pt-2" />
+            <Row label={lang === "zh" ? "商品成本" : lang === "ms" ? "Kos Produk" : "Product Cost"} value={-productCost} tint="neg" />
+            {refundCost > 0 && <Row label={lang === "zh" ? "退款（成本冲回）" : lang === "ms" ? "Kos dipulangkan" : "Refunds (cost reversed)"} value={refundCost} tint="pos" />}
+            <Row label={lang === "zh" ? "包装成本" : lang === "ms" ? "Kos Pembungkusan" : "Packaging Cost"} value={-packagingCost} tint="neg" />
+            <Row label={lang === "zh" ? "毛利" : lang === "ms" ? "Untung Kasar" : "Gross Profit"} value={grossProfit} bold />
+
+            <div className="pt-2" />
+            <Row label={lang === "zh" ? "平台抽成" : lang === "ms" ? "Yuran Platform" : "Platform Fee"} value={-platformFee} tint="neg" />
+            <Row label={lang === "zh" ? "运费" : lang === "ms" ? "Kos Penghantaran" : "Shipping Cost"} value={-shippingCost} tint="neg" />
+            <Row label={lang === "zh" ? "贡献利润" : lang === "ms" ? "Untung Sumbangan" : "Contribution Profit"} value={contributionProfit} bold />
+          </div>
+
+          <div className="rounded-2xl bg-card border border-border/60 p-4 space-y-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+              {lang === "zh" ? "营业费用" : lang === "ms" ? "Perbelanjaan Operasi" : "Operating Expenses"}
+            </p>
+            {Object.keys(expensesByCategory).length === 0 ? (
+              <p className="text-xs text-muted-foreground">{lang === "zh" ? "这段期间没有记录" : "None this period"}</p>
+            ) : (
+              Object.entries(expensesByCategory).map(([cat, amt]) => (
+                <Row key={cat} label={categoryLabel(cat)} value={-amt} tint={amt >= 0 ? "neg" : "pos"} />
+              ))
+            )}
+          </div>
+
+          <div className="rounded-2xl bg-primary/5 border border-primary/20 p-4">
+            <Row
+              label={lang === "zh" ? "净利润" : lang === "ms" ? "Untung Bersih" : "Net Profit"}
+              value={netProfit}
+              bold
+              tint={netProfit >= 0 ? "pos" : "neg"}
+            />
+          </div>
+
+          {/* Charts are tucked away: the figures above already say
+              everything, so the graphs only open when asked for. */}
+          <button
+            type="button"
+            onClick={() => setChartsOpen((v) => !v)}
+            aria-expanded={chartsOpen}
+            className="w-full flex items-center justify-between gap-3 rounded-2xl bg-card border border-border/60 px-4 py-3.5 text-sm font-semibold text-foreground shadow-[var(--shadow-card)]"
+          >
+            <span>
+              {chartsOpen
+                ? (lang === "zh" ? "收起图表" : lang === "ms" ? "Sembunyi carta" : "Hide charts")
+                : (lang === "zh" ? "显示图表" : lang === "ms" ? "Tunjuk carta" : "Show charts")}
+            </span>
+            <ChevronLeft className={`h-4 w-4 text-muted-foreground transition-transform ${chartsOpen ? "rotate-90" : "-rotate-90"}`} />
+          </button>
+          {chartsOpen && (
+            <>
           {(() => {
             const chartData = [
               { name: lang === "zh" ? "商品成本" : lang === "ms" ? "Produk" : "Product", value: productCost, color: "#F87171" },
@@ -528,72 +612,8 @@ function CostBreakdownPage() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Desktop-only Profit by Product */}
-          {productProfit.length > 0 && (
-            <div className="hidden lg:block rounded-2xl bg-card border border-border/60 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">
-                  {lang === "zh" ? "各商品利润" : lang === "ms" ? "Untung Mengikut Produk" : "Profit by Product"}
-                </p>
-                <Link to="/product-profit" className="text-[11px] font-semibold text-primary hover:underline">
-                  {lang === "zh" ? "查看全部" : lang === "ms" ? "Lihat semua" : "View all"}
-                </Link>
-              </div>
-              <div className="divide-y divide-border/40">
-                {productProfit.map((p, i) => (
-                  <div key={p.name + i} className="flex items-center gap-3 py-2">
-                    {i === 0 ? <Trophy className="h-4 w-4 text-amber-500 shrink-0" /> : <span className="w-4 text-center text-xs text-muted-foreground shrink-0">{i + 1}</span>}
-                    <span className="flex-1 min-w-0 truncate text-sm text-foreground">{p.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">RM {p.revenue.toFixed(2)}</span>
-                    <span className={`inline-flex items-center gap-1 text-sm font-bold shrink-0 w-28 justify-end ${p.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                      {p.profit >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                      RM {p.profit.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            </>
           )}
-
-          <div className="rounded-2xl bg-card border border-border/60 p-4 divide-y divide-border/40">
-            <Row label={lang === "zh" ? "销售总额" : lang === "ms" ? "Jumlah Jualan" : "Gross Sales"} value={revenue} />
-            {refundRevenue > 0 && <Row label={lang === "zh" ? "退款（收入）" : lang === "ms" ? "Bayaran balik" : "Refunds (revenue)"} value={-refundRevenue} tint="neg" />}
-            <Row label={lang === "zh" ? "净收入" : lang === "ms" ? "Hasil Bersih" : "Net Revenue"} value={netRevenue} bold />
-
-            <div className="pt-2" />
-            <Row label={lang === "zh" ? "商品成本" : lang === "ms" ? "Kos Produk" : "Product Cost"} value={-productCost} tint="neg" />
-            {refundCost > 0 && <Row label={lang === "zh" ? "退款（成本冲回）" : lang === "ms" ? "Kos dipulangkan" : "Refunds (cost reversed)"} value={refundCost} tint="pos" />}
-            <Row label={lang === "zh" ? "包装成本" : lang === "ms" ? "Kos Pembungkusan" : "Packaging Cost"} value={-packagingCost} tint="neg" />
-            <Row label={lang === "zh" ? "毛利" : lang === "ms" ? "Untung Kasar" : "Gross Profit"} value={grossProfit} bold />
-
-            <div className="pt-2" />
-            <Row label={lang === "zh" ? "平台抽成" : lang === "ms" ? "Yuran Platform" : "Platform Fee"} value={-platformFee} tint="neg" />
-            <Row label={lang === "zh" ? "运费" : lang === "ms" ? "Kos Penghantaran" : "Shipping Cost"} value={-shippingCost} tint="neg" />
-            <Row label={lang === "zh" ? "贡献利润" : lang === "ms" ? "Untung Sumbangan" : "Contribution Profit"} value={contributionProfit} bold />
-          </div>
-
-          <div className="rounded-2xl bg-card border border-border/60 p-4 space-y-1">
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
-              {lang === "zh" ? "营业费用" : lang === "ms" ? "Perbelanjaan Operasi" : "Operating Expenses"}
-            </p>
-            {Object.keys(expensesByCategory).length === 0 ? (
-              <p className="text-xs text-muted-foreground">{lang === "zh" ? "这段期间没有记录" : "None this period"}</p>
-            ) : (
-              Object.entries(expensesByCategory).map(([cat, amt]) => (
-                <Row key={cat} label={categoryLabel(cat)} value={-amt} tint={amt >= 0 ? "neg" : "pos"} />
-              ))
-            )}
-          </div>
-
-          <div className="rounded-2xl bg-primary/5 border border-primary/20 p-4">
-            <Row
-              label={lang === "zh" ? "净利润" : lang === "ms" ? "Untung Bersih" : "Net Profit"}
-              value={netProfit}
-              bold
-              tint={netProfit >= 0 ? "pos" : "neg"}
-            />
-          </div>
         </>
       )}
     </div>

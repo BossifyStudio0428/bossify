@@ -543,7 +543,7 @@ function CustomersPage() {
       </div>
 
       {tiktokBuyers.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-2 lg:hidden">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5">
               <Repeat className="h-3.5 w-3.5" />
@@ -610,7 +610,8 @@ function CustomersPage() {
         </div>
       )}
 
-      <div className="relative">
+      <div className="space-y-5 lg:space-y-0 lg:flex lg:flex-wrap lg:items-center lg:gap-4">
+      <div className="relative lg:flex-1 lg:min-w-[280px]">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
           value={query}
@@ -621,7 +622,7 @@ function CustomersPage() {
       </div>
 
       {bizType !== "retail" && (
-        <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
+        <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide lg:order-last lg:basis-full">
           <button
             onClick={() => setStatusFilter("all")}
             className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
@@ -640,7 +641,7 @@ function CustomersPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 scrollbar-hide">
+      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 scrollbar-hide lg:shrink-0 lg:mx-0 lg:px-0">
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground pr-1">
           {t("sort_by")}
         </span>
@@ -664,7 +665,7 @@ function CustomersPage() {
         ))}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 lg:shrink-0">
         <button
           type="button"
           onClick={() => setDateOpen((v) => !v)}
@@ -691,6 +692,7 @@ function CustomersPage() {
             {visible.length} {lang === "zh" ? "条结果" : lang === "ms" ? "hasil" : "results"}
           </span>
         )}
+      </div>
       </div>
 
       {dateOpen && (
@@ -884,7 +886,7 @@ function CustomersPage() {
       </div>
 
       {!loading && customers.length > 0 && (
-        <div className="hidden lg:grid lg:grid-cols-[1fr_300px] lg:gap-6 lg:items-start">
+        <div className="hidden lg:block lg:space-y-5">
           <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
             <table className="w-full text-sm">
               <thead>
@@ -975,7 +977,7 @@ function CustomersPage() {
             </table>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-5 items-start">
             <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {lang === "zh" ? "客户洞察" : lang === "ms" ? "Wawasan Pelanggan" : "Customer Insights"}
@@ -1020,6 +1022,37 @@ function CustomersPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {tiktokBuyers.length > 0 && (
+              <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                    <Repeat className="h-3.5 w-3.5" />
+                    {lang === "zh" ? "TikTok 回购客户" : lang === "ms" ? "Pelanggan Berulang TikTok" : "TikTok Repeat Buyers"}
+                  </p>
+                  {tiktokBuyers.length > 5 && (
+                    <Link to="/top-buyers" className="text-[11px] font-semibold text-primary shrink-0">
+                      {t("ro_view_all")}
+                    </Link>
+                  )}
+                </div>
+                <div className="divide-y divide-border/40">
+                  {tiktokBuyers.slice(0, 5).map((b, idx) => (
+                    <div key={b.buyerId} className="flex items-center gap-3 py-2">
+                      <span className="w-6 text-xs font-bold text-primary shrink-0">#{idx + 1}</span>
+                      <span className="text-sm font-semibold flex-1 truncate">
+                        {lang === "zh" ? `买家 #${idx + 1}` : lang === "ms" ? `Pembeli #${idx + 1}` : `Buyer #${idx + 1}`}
+                      </span>
+                      <span className="text-xs text-muted-foreground shrink-0">{b.orders} {lang === "zh" ? "笔" : "orders"}</span>
+                      <span className="text-sm font-bold text-primary font-mono shrink-0">RM {b.totalSpent.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {lang === "zh" ? "无法显示真实姓名（TikTok 平台限制）" : lang === "ms" ? "Nama sebenar tidak tersedia (had platform)" : "Real names unavailable (platform limitation)"}
+                </p>
               </div>
             )}
           </div>

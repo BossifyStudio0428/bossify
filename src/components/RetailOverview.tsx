@@ -614,6 +614,9 @@ export function RetailOverview() {
           <p className="text-xs text-muted-foreground mt-0.5">
             {todayDateLabel} · {greetingSubtitle}
           </p>
+          <div className="mt-2">
+            <TikTokStatusPill connected={tiktokConnected} lang={lang} />
+          </div>
         </div>
         <div className="relative shrink-0">
           <button
@@ -675,15 +678,6 @@ export function RetailOverview() {
         </div>
       )}
 
-      {/* First-run guidance for brand-new users; auto-hides when all 5 steps done. */}
-      <div className="mt-4">
-        <SetupChecklist />
-      </div>
-
-      {/* 11.11 campaign teaser — only renders once a campaign date range is
-          saved on /campaign, and hides itself once the campaign has ended. */}
-      <CampaignBanner />
-
       {/* Main Business Summary: Revenue -> Costs -> Real Profit -> Margin.
           Real Profit carries the strongest visual weight on purpose --
           it's Bossify's core value proposition, not just another number
@@ -728,13 +722,13 @@ export function RetailOverview() {
         </div>
         <div className="mt-3 pt-3 border-t border-border/60 flex items-center gap-4 text-[11px] text-muted-foreground">
           <span>
-            {lang === "zh" ? "边际利润" : lang === "ms" ? "Untung sumbangan" : "Contribution profit"}{" "}
-            <span className="font-semibold text-foreground font-mono">{loading ? "…" : money(stats.contribution)}</span>
-          </span>
-          <span>
             {t("ro_orders_count")}{" "}
             <span className="font-semibold text-foreground font-mono">{loading ? "…" : String(stats.count)}</span>
           </span>
+          <Link to="/cost-breakdown" className="ml-auto inline-flex items-center gap-0.5 font-semibold text-primary">
+            {lang === "zh" ? "查看明细" : lang === "ms" ? "Lihat butiran" : "See breakdown"}
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
         {stats.operatingExpenses > 0 && (
           <p className="mt-1.5 text-[10px] text-muted-foreground">
@@ -754,63 +748,6 @@ export function RetailOverview() {
           </p>
         </div>
       )}
-
-      <div className="mt-2.5">
-        <TikTokStatusPill connected={tiktokConnected} lang={lang} />
-      </div>
-
-      {/* Profit Trend — Contribution Profit per day for the selected
-          period. Operating expenses aren't dated per-day in the schema,
-          so they're deliberately left out of this chart rather than
-          faked; the Business Summary above already nets them into Real
-          Profit, which is the number that matters most. */}
-      <div className="mt-4 rounded-2xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)]">
-        <div className="flex items-baseline justify-between">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {lang === "zh" ? "利润趋势" : lang === "ms" ? "Trend Untung" : "Profit Trend"}
-          </p>
-          <TrendPill delta={loading ? null : stats.profitDelta} />
-        </div>
-        <p className="mt-1 text-xl font-bold text-foreground font-mono">
-          {loading ? "…" : money(stats.contribution)}
-        </p>
-        {dailyChart.length > 0 ? (
-          <div className="mt-2 -mx-1">
-            <ResponsiveContainer width="100%" height={120}>
-              <LineChart data={dailyChart} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
-                <YAxis hide />
-                <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-                <Line
-                  type="monotone"
-                  dataKey="profit"
-                  stroke="#6C4AB6"
-                  strokeWidth={2}
-                  dot={(props: any) => (
-                    <circle key={props.index} cx={props.cx} cy={props.cy} r={2.5} fill={props.payload.profit < 0 ? "#DC2626" : "#6C4AB6"} stroke="none" />
-                  )}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          !loading && (
-            <p className="mt-3 text-xs text-muted-foreground text-center py-4">
-              {lang === "zh" ? "这段时间还没有订单数据" : lang === "ms" ? "Tiada data pesanan untuk tempoh ini" : "No order data for this period yet"}
-            </p>
-          )
-        )}
-      </div>
-
-      <div className="mt-2.5">
-        <ProfitBreakdownCard
-          cogs={stats.cogs}
-          sellingCosts={stats.sellingCosts}
-          operatingExpenses={stats.operatingExpenses}
-          netProfit={stats.netProfit}
-          lang={lang}
-        />
-      </div>
 
       {/* Needs Attention — a real action list instead of the old single
           rotating tip; each row links straight to where it gets fixed. */}
@@ -867,6 +804,52 @@ export function RetailOverview() {
           )}
         </div>
       </div>
+
+      {/* Quick Actions — the most common things a seller does from Home. */}
+      <div className="mt-4">
+        <p className="text-sm font-semibold text-foreground mb-2">
+          {lang === "zh" ? "快捷操作" : lang === "ms" ? "Tindakan Pantas" : "Quick Actions"}
+        </p>
+        <div className="grid grid-cols-4 gap-2">
+          <Link
+            to="/new-order"
+            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
+          >
+            <Plus className="h-4 w-4 text-primary" />
+            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("new_order")}</span>
+          </Link>
+          <Link
+            to="/inventory"
+            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
+          >
+            <Package className="h-4 w-4 text-primary" />
+            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("add_product")}</span>
+          </Link>
+          <Link
+            to="/add-cost"
+            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
+          >
+            <Wallet className="h-4 w-4 text-primary" />
+            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("more_add_cost")}</span>
+          </Link>
+          <Link
+            to="/reports"
+            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
+          >
+            <FileText className="h-4 w-4 text-primary" />
+            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("more_reports")}</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* First-run guidance for brand-new users; auto-hides when all 5 steps done. */}
+      <div className="mt-4">
+        <SetupChecklist />
+      </div>
+
+      {/* 11.11 campaign teaser — only renders once a campaign date range is
+          saved on /campaign, and hides itself once the campaign has ended. */}
+      <CampaignBanner />
 
       {/* Recent Orders */}
       <div className="mt-4 rounded-2xl border border-border/60 bg-card p-3.5 shadow-[var(--shadow-card)]">
@@ -926,43 +909,6 @@ export function RetailOverview() {
 
       <div className="mt-4">
         <TopProductsCard products={topProducts} lang={lang} t={t} />
-      </div>
-
-      {/* Quick Actions — the most common things a seller does from Home. */}
-      <div className="mt-4">
-        <p className="text-sm font-semibold text-foreground mb-2">
-          {lang === "zh" ? "快捷操作" : lang === "ms" ? "Tindakan Pantas" : "Quick Actions"}
-        </p>
-        <div className="grid grid-cols-4 gap-2">
-          <Link
-            to="/new-order"
-            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
-          >
-            <Plus className="h-4 w-4 text-primary" />
-            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("new_order")}</span>
-          </Link>
-          <Link
-            to="/inventory"
-            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
-          >
-            <Package className="h-4 w-4 text-primary" />
-            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("add_product")}</span>
-          </Link>
-          <Link
-            to="/add-cost"
-            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
-          >
-            <Wallet className="h-4 w-4 text-primary" />
-            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("more_add_cost")}</span>
-          </Link>
-          <Link
-            to="/reports"
-            className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 active:bg-muted/50"
-          >
-            <FileText className="h-4 w-4 text-primary" />
-            <span className="text-[10px] font-medium text-foreground text-center leading-tight">{t("more_reports")}</span>
-          </Link>
-        </div>
       </div>
 
       {!hasFullAccess && (
