@@ -13,29 +13,19 @@ import { useI18n } from "@/contexts/I18nContext";
 import { FREE_LIMITS } from "@/contexts/SubscriptionContext";
 import { FALLBACK_PRICES, BUSINESS_FALLBACK_PRICES } from "@/lib/billing";
 import bossifyLogo from "@/assets/bossify-logo.png";
-import heroOverviewScreenshot from "@/assets/hero-dashboard-screenshot.jpg";
-import heroOrdersScreenshot from "@/assets/hero-orders-screenshot.jpg";
-import heroCostBreakdownScreenshot from "@/assets/hero-cost-breakdown-screenshot.jpg";
-import heroCustomerScreenshot from "@/assets/hero-customer-screenshot.jpg";
-import heroPricingScreenshot from "@/assets/hero-pricing-screenshot.jpg";
-import heroReportsScreenshot from "@/assets/hero-reports-screenshot.jpg";
-import heroInventoryScreenshot from "@/assets/hero-inventory-screenshot.jpg";
 import heroTikTokScreenshot from "@/assets/hero-tiktok-screenshot.jpg";
+import { OverviewScreen, OrdersScreen, ProductsScreen, ProfitScreen, ReportsScreen } from "@/components/LandingScreens";
 
-// Real app screenshots cycled through in the hero mockup -- no fabricated
-// UI, every slide is an actual screen from the live app. Kept to the 4
-// most important screens (profit overview, orders, real cost breakdown,
-// reports) so the hero loop stays tight and fast rather than cycling
-// through everything the app does.
-const HERO_SCREENSHOTS: { src: string; alt: string }[] = [
-  { src: heroOverviewScreenshot, alt: "Bossify dashboard showing real profit, revenue, costs and profit breakdown for this month" },
-  { src: heroOrdersScreenshot, alt: "Bossify Orders page with TikTok Shop sync and 1-tap Send Receipt" },
-  { src: heroCostBreakdownScreenshot, alt: "Bossify Cost Breakdown page with cost comparison and cost share charts" },
-  { src: heroReportsScreenshot, alt: "Bossify Reports page listing 7 exportable PDF business reports" },
+// The screens cycled through in the hero phone. They are drawn live (see
+// LandingScreens.tsx) in the app's current look, with sample figures, so
+// they stay sharp at any size. Kept to the 4 most important screens so the
+// loop stays tight.
+const HERO_SCREENS: { alt: string; Screen: () => ReactNode }[] = [
+  { alt: "Bossify overview showing revenue, costs and real profit for this month", Screen: OverviewScreen },
+  { alt: "Bossify Orders page with TikTok Shop sync and 1-tap Send Receipt", Screen: OrdersScreen },
+  { alt: "Bossify Cost Breakdown page listing gross sales, each cost, gross profit and net profit", Screen: ProfitScreen },
+  { alt: "Bossify Reports page listing 7 exportable PDF business reports", Screen: ReportsScreen },
 ];
-// heroCustomerScreenshot / heroInventoryScreenshot / heroTikTokScreenshot /
-// heroPricingScreenshot are imported above but not used in the hero loop
-// right now -- kept as-is in case other marketing material wants them.
 
 // ---------------------------------------------------------------------------
 // Design tokens -- "ledger" look. White paper canvas, deep ink-purple for
@@ -1137,7 +1127,7 @@ function HeroVisual({ copy }: { copy: LandingCopy }) {
   const [paused, setPaused] = useState(false);
   const [visRef, visIn] = useInView<HTMLDivElement>();
   const run = useReplayKey(visIn);
-  const n = HERO_SCREENSHOTS.length;
+  const n = HERO_SCREENS.length;
 
   useEffect(() => {
     if (paused) return;
@@ -1171,15 +1161,17 @@ function HeroVisual({ copy }: { copy: LandingCopy }) {
             className="relative rounded-[25px] sm:rounded-[29px] overflow-hidden"
             style={{ aspectRatio: "663 / 1460", background: "#F4F3F8" }}
           >
-            {HERO_SCREENSHOTS.map((shot, i) => (
-              <img
-                key={shot.src}
-                src={shot.src}
-                alt={shot.alt}
+            {HERO_SCREENS.map(({ alt, Screen }, i) => (
+              <div
+                key={alt}
+                role="img"
+                aria-label={alt}
                 aria-hidden={i !== index}
-                className="absolute inset-0 w-full h-full object-contain object-top"
+                className="absolute inset-0"
                 style={{ opacity: i === index ? 1 : 0, transition: "opacity 0.7s ease" }}
-              />
+              >
+                <Screen />
+              </div>
             ))}
           </div>
         </div>
@@ -1194,9 +1186,9 @@ function HeroVisual({ copy }: { copy: LandingCopy }) {
       </div>
 
       <div className="relative flex items-center justify-center gap-2 mt-6 sm:pl-[14%]">
-        {HERO_SCREENSHOTS.map((shot, i) => (
+        {HERO_SCREENS.map((shot, i) => (
           <button
-            key={shot.src}
+            key={shot.alt}
             type="button"
             aria-label={`Screenshot ${i + 1}`}
             aria-current={i === index}
@@ -1543,8 +1535,8 @@ export function LandingPage() {
   }, []);
 
   const x = EXTRA[lang] ?? EXTRA.en;
-  const featureShots = [heroOverviewScreenshot, heroInventoryScreenshot, heroReportsScreenshot, heroOrdersScreenshot];
-  const features = x.featureRows.map((f, i) => ({ ...f, src: featureShots[i] }));
+  const featureScreens = [ProfitScreen, ProductsScreen, ReportsScreen, OrdersScreen];
+  const features = x.featureRows.map((f, i) => ({ ...f, Screen: featureScreens[i] }));
 
   // Reports: the selected report's sample sheet. On desktop it steps through
   // the seven on its own until the visitor picks one.
@@ -1759,7 +1751,7 @@ export function LandingPage() {
                     className="bf-shot relative aspect-[4/5] lg:aspect-[51/88] rounded-t-[22px] overflow-hidden"
                     style={{ background: "#F4F3F8", boxShadow: "0 -6px 40px -12px rgba(18,10,36,0.45)" }}
                   >
-                    <img data-pan="" src={f.src} alt={f.title} loading="lazy" className="w-full h-full object-cover object-top" />
+                    <f.Screen />
                   </div>
                 </div>
               </Reveal>
