@@ -132,7 +132,7 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     subhead:
       "Track real profit, inventory, orders and business performance — without complicated accounting.",
     ctaPrimary: "Start Free",
-    ctaSecondary: "Watch Demo (2 min)",
+    ctaSecondary: "Watch the demo",
     trustBullets: ["Set up in minutes", "No credit card", "Mobile & Web"],
     capabilityStrip: ["Real Profit Tracking", "Inventory Management", "7 Business Reports", "Order Management"],
 
@@ -221,7 +221,7 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     headlineEmphasis: "真正赚了多少。",
     subhead: "追踪真实利润、库存、订单和业绩表现——不需要会计知识。",
     ctaPrimary: "免费开始",
-    ctaSecondary: "观看演示(2 分钟)",
+    ctaSecondary: "观看演示视频",
     trustBullets: ["几分钟即可上手", "无需信用卡", "手机 & 网页皆可用"],
     capabilityStrip: ["真实利润追踪", "库存管理", "7 份业务报表", "订单管理"],
 
@@ -305,7 +305,7 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     headlineEmphasis: "anda benar-benar untung.",
     subhead: "Jejak keuntungan sebenar, inventori, pesanan dan prestasi perniagaan — tanpa perakaunan yang rumit.",
     ctaPrimary: "Mula Percuma",
-    ctaSecondary: "Tonton Demo (2 min)",
+    ctaSecondary: "Tonton demo",
     trustBullets: ["Sedia dalam beberapa minit", "Tidak perlu kad kredit", "Mudah alih & Web"],
     capabilityStrip: ["Penjejakan Keuntungan Sebenar", "Pengurusan Inventori", "7 Laporan Perniagaan", "Pengurusan Pesanan"],
 
@@ -412,6 +412,8 @@ type ExtraCopy = {
   playSmall: string;
   featureRows: FeatureRow[];
   reportsSub: string;
+  demoTitle: string;
+  demoSub: string;
   compareCols: [string, string, string];
   compareLegend: [string, string, string];
   compareRows: CompareRow[];
@@ -476,6 +478,8 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
       },
     ],
     reportsSub: "Tap a report to see a sample of what you get.",
+    demoTitle: "See Bossify in action.",
+    demoSub: "A walkthrough of the real app — from an order coming in to the profit you actually keep.",
     compareCols: ["Spreadsheet", "TikTok Seller Center", "Bossify"],
     compareLegend: ["Yes", "Partly", "No"],
     compareRows: [
@@ -579,6 +583,8 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
       },
     ],
     reportsSub: "点一份报表,看看你会拿到什么样的内容。",
+    demoTitle: "看看 Bossify 怎么用。",
+    demoSub: "真实 App 的操作演示——从订单进来,到你真正赚到的钱。",
     compareCols: ["电子表格", "TikTok 卖家中心", "Bossify"],
     compareLegend: ["有", "部分", "没有"],
     compareRows: [
@@ -698,6 +704,8 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
       },
     ],
     reportsSub: "Ketik satu laporan untuk lihat contoh yang anda akan dapat.",
+    demoTitle: "Lihat Bossify beraksi.",
+    demoSub: "Demo aplikasi sebenar — dari pesanan masuk hingga untung yang anda benar-benar simpan.",
     compareCols: ["Hamparan", "TikTok Seller Center", "Bossify"],
     compareLegend: ["Ya", "Sebahagian", "Tidak"],
     compareRows: [
@@ -1519,6 +1527,53 @@ const REPORT_DESC_KEYS = [
   "reports_recon_desc",
 ] as const;
 
+const DEMO_YOUTUBE_ID = "F5rSEN9R0mg";
+
+function DemoVideo({ title }: { title: string }) {
+  const [playing, setPlaying] = useState(false);
+  const [thumb, setThumb] = useState(`https://i.ytimg.com/vi/${DEMO_YOUTUBE_ID}/maxresdefault.jpg`);
+  return (
+    <div
+      className="relative w-full overflow-hidden rounded-[22px] border"
+      style={{ aspectRatio: "16 / 9", borderColor: LINE, background: NIGHT, boxShadow: "0 30px 60px -30px rgba(28,15,56,0.55)" }}
+    >
+      {playing ? (
+        <iframe
+          className="absolute inset-0 h-full w-full"
+          src={`https://www.youtube-nocookie.com/embed/${DEMO_YOUTUBE_ID}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+          title={title}
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setPlaying(true)}
+          aria-label={title}
+          className="group absolute inset-0 h-full w-full"
+        >
+          <img
+            src={thumb}
+            alt=""
+            loading="lazy"
+            onError={() => setThumb(`https://i.ytimg.com/vi/${DEMO_YOUTUBE_ID}/hqdefault.jpg`)}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <span className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(28,15,56,0.05) 40%, rgba(28,15,56,0.45))" }} />
+          <span
+            className="absolute left-1/2 top-1/2 flex h-16 w-16 sm:h-20 sm:w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-transform group-hover:scale-105"
+            style={{ background: ACCENT, boxShadow: "0 14px 34px -8px rgba(255,59,92,0.7)" }}
+          >
+            <svg viewBox="0 0 24 24" className="ml-1 h-7 w-7 sm:h-8 sm:w-8" fill="#FFFFFF" aria-hidden="true">
+              <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z" />
+            </svg>
+          </span>
+        </button>
+      )}
+    </div>
+  );
+}
+
 function MarkIcon({ m, small = false }: { m: Mark; small?: boolean }) {
   const look = {
     y: { bg: GREEN, Icon: Check },
@@ -1763,6 +1818,14 @@ export function LandingPage() {
                   <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <PlayButton small={x.playSmall} />
+                <a href="#demo" className="group inline-flex items-center gap-2 text-[16px] font-semibold" style={{ color: PRIMARY }}>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: "rgba(255,59,92,0.12)" }}>
+                    <svg viewBox="0 0 24 24" className="ml-0.5 h-3.5 w-3.5" fill={ACCENT} aria-hidden="true">
+                      <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z" />
+                    </svg>
+                  </span>
+                  {c.ctaSecondary}
+                </a>
               </div>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5">
                 {c.trustBullets.map((label, i) => {
@@ -1813,6 +1876,21 @@ export function LandingPage() {
               <ProfitStatement copy={c} progress={progress} stamp={c.showcaseProfit.title} />
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Demo video -- straight after the "sales don't tell the whole story"
+          band, so the visitor sees the real app working right after the
+          problem is set up. */}
+      <section id="demo" className="px-5 lg:px-8 pt-20 lg:pt-28 scroll-mt-16">
+        <div className="max-w-5xl mx-auto">
+          <Reveal className="max-w-2xl mb-8 lg:mb-10">
+            <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{x.demoTitle}</h2>
+            <p className="text-[17px] lg:text-[18px] leading-relaxed" style={{ color: INK_SOFT }}>{x.demoSub}</p>
+          </Reveal>
+          <Reveal delay={100}>
+            <DemoVideo title={x.demoTitle} />
+          </Reveal>
         </div>
       </section>
 
