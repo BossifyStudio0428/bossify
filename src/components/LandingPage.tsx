@@ -858,13 +858,15 @@ function Reveal({
   delay = 0,
   y = 22,
   className,
+  keep = false,
 }: {
+  keep?: boolean;
   children: ReactNode;
   delay?: number;
   y?: number;
   className?: string;
 }) {
-  const [ref, visible] = useInView<HTMLDivElement>();
+  const [ref, visible] = useInView<HTMLDivElement>(keep);
   return (
     <div
       ref={ref}
@@ -900,6 +902,7 @@ function Reveal({
 // screen whose SHORTER side is under 600px, so it stays "phone" in landscape
 // too, while every iPad (744px+ on its short side) does not. Same treatment
 // as prefers-reduced-motion.
+const isReduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const isLite = () => {
   if (typeof window === "undefined") return false;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
@@ -1055,11 +1058,11 @@ function useScrollFx(rootRef: RefObject<HTMLElement | null>) {
 
 // Eased 0 -> target count-up once `start` flips true. Jumps straight to the
 // final value under prefers-reduced-motion.
-function useCountUp(target: number, start: boolean, durationMs = 1100) {
+function useCountUp(target: number, start: boolean, durationMs = 1100, keep = false) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     if (!start) return;
-    if (isLite()) {
+    if (keep ? isReduced() : isLite()) {
       setValue(target);
       return;
     }
@@ -1079,13 +1082,13 @@ function useCountUp(target: number, start: boolean, durationMs = 1100) {
 // True while the element is on screen; flips back to false only once it has
 // left the viewport completely, so anything keyed off it replays on every
 // visit without flickering at the edge. Always true under reduced motion.
-function useInView<T extends Element>() {
+function useInView<T extends Element>(keep = false) {
   const ref = useRef<T>(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (isLite()) {
+    if (keep ? isReduced() : isLite()) {
       setInView(true);
       return;
     }
@@ -1154,7 +1157,7 @@ function HeroSlip({ copy }: { copy: LandingCopy }) {
     const t = window.setTimeout(() => setGo(true), 1300);
     return () => window.clearTimeout(t);
   }, []);
-  const net = useCountUp(57.5, go, 900);
+  const net = useCountUp(57.5, go, 900, true);
   const rows = [
     { label: copy.problemSalesLabel, value: "RM 250.00", neg: false },
     { label: copy.problemCostLines[0]?.label ?? "", value: "− RM 180.00", neg: true },
@@ -1195,19 +1198,19 @@ function HeroSlip({ copy }: { copy: LandingCopy }) {
 function HeroVisual({ copy }: { copy: LandingCopy }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [visRef, visIn] = useInView<HTMLDivElement>();
+  const [visRef, visIn] = useInView<HTMLDivElement>(true);
   const run = useReplayKey(visIn);
   const n = HERO_SCREENS.length;
 
   useEffect(() => {
     if (paused) return;
-    if (isLite()) return;
+    if (isReduced()) return;
     const id = window.setInterval(() => setIndex((i) => (i + 1) % n), 3600);
     return () => window.clearInterval(id);
   }, [n, paused]);
 
   return (
-    <div ref={visRef} className="relative mx-auto w-full max-w-[540px]">
+    <div ref={visRef} className="bf-keep-motion relative mx-auto w-full max-w-[540px]">
       <div
         aria-hidden="true"
         className="absolute inset-x-0 sm:left-[14%] top-[5%] bottom-[11%] rounded-[32px] sm:rounded-[40px] overflow-hidden"
@@ -1654,7 +1657,7 @@ export function LandingPage() {
   const { scrub, progress } = useStoryProgress(storyRef, receiptRef);
   useScrollFx(rootRef);
   const [finalRef, finalIn] = useInView<HTMLHeadingElement>();
-  const [h1Ref, h1In] = useInView<HTMLHeadingElement>();
+  const [h1Ref, h1In] = useInView<HTMLHeadingElement>(true);
   const h1Run = useReplayKey(h1In);
 
   // Comparison table: rows fade up one after another once the table scrolls in.
@@ -1724,9 +1727,9 @@ export function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section data-day="" className="relative px-5 lg:px-8 pt-12 pb-16 lg:pt-20 lg:pb-24 overflow-hidden" style={{ opacity: "calc(1 - var(--pk, 0))" }}>
+      <section data-day="" className="bf-keep-motion relative px-5 lg:px-8 pt-12 pb-16 lg:pt-20 lg:pb-24 overflow-hidden" style={{ opacity: "calc(1 - var(--pk, 0))" }}>
         <div className="relative max-w-6xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-14 lg:gap-12 items-center">
-          <Reveal>
+          <Reveal keep>
             <div>
               <Eyebrow>{c.eyebrow}</Eyebrow>
               <h1
@@ -1774,7 +1777,7 @@ export function LandingPage() {
               </div>
             </div>
           </Reveal>
-          <Reveal delay={150}>
+          <Reveal keep delay={150}>
             <HeroVisual copy={c} />
           </Reveal>
         </div>
@@ -1872,7 +1875,7 @@ export function LandingPage() {
       {/* Reports -- a plain ruled list, like a ledger page */}
       <section
         id="reports"
-        className="px-5 lg:px-8 py-16 lg:py-24 scroll-mt-16 border-y"
+        className="bf-keep-motion px-5 lg:px-8 py-16 lg:py-24 scroll-mt-16 border-y"
         style={{
           borderColor: LINE,
           backgroundColor: "#EFE8FB",
@@ -1880,7 +1883,7 @@ export function LandingPage() {
         }}
       >
         <div className="max-w-6xl mx-auto">
-          <Reveal className="max-w-2xl mb-8 lg:mb-12">
+          <Reveal keep className="max-w-2xl mb-8 lg:mb-12">
             <h2 className={`${H2_CLASS} mb-4`} style={{ color: INK, fontFamily: DISPLAY }}>{c.reportsGridTitle}</h2>
             <p className="text-[17px] lg:text-[18px] leading-relaxed" style={{ color: INK_SOFT }}>{x.reportsSub}</p>
           </Reveal>
@@ -1889,7 +1892,7 @@ export function LandingPage() {
               {c.reports.map((name, i) => {
                 const active = i === rep;
                 return (
-                  <Reveal key={name} delay={i * 70} y={12}>
+                  <Reveal keep key={name} delay={i * 70} y={12}>
                     <button
                       type="button"
                       aria-expanded={active}

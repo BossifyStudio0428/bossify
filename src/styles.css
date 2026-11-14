@@ -630,9 +630,10 @@ textarea,
    Every animation / transition finishes instantly in its end state -- same
    trick as the prefers-reduced-motion block -- and the frosted sticky
    header becomes solid, since backdrop blur is costly while scrolling. */
-.bf-lite *,
-.bf-lite *::before,
-.bf-lite *::after {
+/* .bf-keep-motion areas (the hero phone, the reports list) still animate. */
+.bf-lite *:not(.bf-keep-motion):not(.bf-keep-motion *),
+.bf-lite *:not(.bf-keep-motion):not(.bf-keep-motion *)::before,
+.bf-lite *:not(.bf-keep-motion):not(.bf-keep-motion *)::after {
   animation-duration: 0.01ms !important;
   animation-delay: 0s !important;
   animation-iteration-count: 1 !important;
