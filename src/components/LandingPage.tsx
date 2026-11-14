@@ -5,11 +5,13 @@ import {
   X,
   ArrowRight,
   Check,
+  Minus,
   Zap,
   CreditCard,
   Smartphone,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
+import { LangSwitch } from "@/components/LangSwitch";
 import { FREE_LIMITS } from "@/contexts/SubscriptionContext";
 import { FALLBACK_PRICES, BUSINESS_FALLBACK_PRICES } from "@/lib/billing";
 import bossifyLogo from "@/assets/bossify-logo.png";
@@ -173,8 +175,8 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     tiktokOutcomes: ["Profit Analysis", "Inventory Control", "Business Reports"],
     reportsGridTitle: "7 Professional Reports",
 
-    compareTitle: "Spreadsheets vs. Bossify",
-    compareSub: "What changes when you switch.",
+    compareTitle: "Spreadsheet vs. Seller Center vs. Bossify",
+    compareSub: "Everything side by side — including the price.",
     compareSpreadsheetLabel: "Spreadsheet",
     compareBossifyLabel: "Bossify",
     compareSpreadsheetItems: [
@@ -261,8 +263,8 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     tiktokOutcomes: ["利润分析", "库存管理", "业务报表"],
     reportsGridTitle: "7 份专业报表",
 
-    compareTitle: "电子表格 vs. Bossify",
-    compareSub: "换了之后会有什么不同。",
+    compareTitle: "电子表格 vs. 卖家中心 vs. Bossify",
+    compareSub: "每一方面并排比较——包括价钱。",
     compareSpreadsheetLabel: "电子表格",
     compareBossifyLabel: "Bossify",
     compareSpreadsheetItems: [
@@ -346,8 +348,8 @@ const COPY: Record<"en" | "zh" | "ms", LandingCopy> = {
     tiktokOutcomes: ["Analisis Keuntungan", "Kawalan Inventori", "Laporan Perniagaan"],
     reportsGridTitle: "7 Laporan Profesional",
 
-    compareTitle: "Hamparan vs. Bossify",
-    compareSub: "Apa yang berubah apabila anda bertukar.",
+    compareTitle: "Hamparan vs. Seller Center vs. Bossify",
+    compareSub: "Semua perkara sebelah-menyebelah — termasuk harga.",
     compareSpreadsheetLabel: "Hamparan",
     compareBossifyLabel: "Bossify",
     compareSpreadsheetItems: [
@@ -393,6 +395,10 @@ const PLAY_URL = "https://play.google.com/store/apps/details?id=com.zhstudio.bos
 // prices are read from the same constants the app itself uses
 // (FREE_LIMITS / billing fallbacks) so this page cannot drift from /plans.
 // ---------------------------------------------------------------------------
+// Comparison: one mark per tool ("y" yes, "p" partly, "n" no) plus an
+// optional short note under the mark.
+type Mark = "y" | "p" | "n";
+type CompareRow = { label: string; cells: [Mark, string?][] };
 type FeatureRow = { quote: string; title: string; body: string; points: string[] };
 type PlanCopy = { name: string; tagline: string; features: string[] };
 type SampleLabels = Record<
@@ -406,6 +412,9 @@ type ExtraCopy = {
   playSmall: string;
   featureRows: FeatureRow[];
   reportsSub: string;
+  compareCols: [string, string, string];
+  compareLegend: [string, string, string];
+  compareRows: CompareRow[];
   ownTitle: string;
   ownBody: string;
   ownPoints: string[];
@@ -467,6 +476,22 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
       },
     ],
     reportsSub: "Tap a report to see a sample of what you get.",
+    compareCols: ["Spreadsheet", "TikTok Seller Center", "Bossify"],
+    compareLegend: ["Yes", "Partly", "No"],
+    compareRows: [
+      { label: `Price`, cells: [["y", `Free`], ["y", `Free`], ["y", `Free plan · Pro ${FALLBACK_PRICES.monthly}/mo`]] },
+      { label: `Set up`, cells: [["n", `Hours building formulas`], ["y", `Ready`], ["y", `A few minutes`]] },
+      { label: `Sales and orders (GMV)`, cells: [["p", `Typed in by hand`], ["y"], ["y"]] },
+      { label: `Real profit after product cost, packaging, fees, shipping and expenses`, cells: [["p", `Only if you build it`], ["n", `No product cost`], ["y"]] },
+      { label: `TikTok Shop orders come in automatically`, cells: [["n"], ["y"], ["y"]] },
+      { label: `Orders from WhatsApp, Instagram or walk-in`, cells: [["p", `Typed in by hand`], ["n", `TikTok only`], ["y"]] },
+      { label: `Stock for every channel in one list`, cells: [["p", `Updated by hand`], ["p", `TikTok listings only`], ["y"]] },
+      { label: `Low-stock and loss-making product alerts`, cells: [["n"], ["p", `Stock only`], ["y"]] },
+      { label: `Stock take and supplier purchase orders`, cells: [["p", `Separate sheets`], ["n"], ["y"]] },
+      { label: `WhatsApp receipt and unpaid reminder in 1 tap`, cells: [["n"], ["n"], ["y"]] },
+      { label: `Ready-made PDF reports (P&L, customer statement…)`, cells: [["n"], ["p", `TikTok data exports`], ["y", `7 reports`]] },
+      { label: `Easy to use on your phone`, cells: [["p"], ["y"], ["y"]] },
+    ],
     ownTitle: "Not on TikTok Shop? It works for your own shop too.",
     ownBody: "Selling on WhatsApp, Instagram or from a physical shop? You do not need TikTok Shop to use Bossify.",
     ownPoints: [
@@ -554,6 +579,22 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
       },
     ],
     reportsSub: "点一份报表,看看你会拿到什么样的内容。",
+    compareCols: ["电子表格", "TikTok 卖家中心", "Bossify"],
+    compareLegend: ["有", "部分", "没有"],
+    compareRows: [
+      { label: `价格`, cells: [["y", `免费`], ["y", `免费`], ["y", `免费版 · Pro ${FALLBACK_PRICES.monthly}/月`]] },
+      { label: `开始使用`, cells: [["n", `要花几小时做公式`], ["y", `现成`], ["y", `几分钟`]] },
+      { label: `销售额和订单 (GMV)`, cells: [["p", `手动输入`], ["y"], ["y"]] },
+      { label: `扣掉产品成本、包装、平台费、运费和支出后的真实利润`, cells: [["p", `要自己做公式`], ["n", `没有产品成本`], ["y"]] },
+      { label: `TikTok Shop 订单自动进来`, cells: [["n"], ["y"], ["y"]] },
+      { label: `WhatsApp、Instagram 或店面的订单`, cells: [["p", `手动输入`], ["n", `只有 TikTok`], ["y"]] },
+      { label: `所有渠道的库存在同一个列表`, cells: [["p", `手动更新`], ["p", `只有 TikTok 商品`], ["y"]] },
+      { label: `低库存和亏本产品提醒`, cells: [["n"], ["p", `只有库存`], ["y"]] },
+      { label: `库存盘点和供应商采购单`, cells: [["p", `另开表格`], ["n"], ["y"]] },
+      { label: `一键 WhatsApp 发收据、提醒未付款`, cells: [["n"], ["n"], ["y"]] },
+      { label: `现成的 PDF 报表 (损益表、客户对账单…)`, cells: [["n"], ["p", `导出 TikTok 数据`], ["y", `7 份报表`]] },
+      { label: `用手机也方便`, cells: [["p"], ["y"], ["y"]] },
+    ],
     ownTitle: "不是 TikTok Shop 卖家?自己的店也可以用。",
     ownBody: "在 WhatsApp、Instagram 或实体店卖东西?不需要 TikTok Shop 也能用 Bossify。",
     ownPoints: [
@@ -657,6 +698,22 @@ const EXTRA: Record<"en" | "zh" | "ms", ExtraCopy> = {
       },
     ],
     reportsSub: "Ketik satu laporan untuk lihat contoh yang anda akan dapat.",
+    compareCols: ["Hamparan", "TikTok Seller Center", "Bossify"],
+    compareLegend: ["Ya", "Sebahagian", "Tidak"],
+    compareRows: [
+      { label: `Harga`, cells: [["y", `Percuma`], ["y", `Percuma`], ["y", `Pelan percuma · Pro ${FALLBACK_PRICES.monthly}/bln`]] },
+      { label: `Persediaan`, cells: [["n", `Berjam-jam buat formula`], ["y", `Sedia`], ["y", `Beberapa minit`]] },
+      { label: `Jualan dan pesanan (GMV)`, cells: [["p", `Taip sendiri`], ["y"], ["y"]] },
+      { label: `Untung sebenar selepas kos produk, bungkusan, yuran, penghantaran dan perbelanjaan`, cells: [["p", `Jika anda bina sendiri`], ["n", `Tiada kos produk`], ["y"]] },
+      { label: `Pesanan TikTok Shop masuk automatik`, cells: [["n"], ["y"], ["y"]] },
+      { label: `Pesanan WhatsApp, Instagram atau kedai`, cells: [["p", `Taip sendiri`], ["n", `TikTok sahaja`], ["y"]] },
+      { label: `Stok semua saluran dalam satu senarai`, cells: [["p", `Dikemas kini sendiri`], ["p", `Produk TikTok sahaja`], ["y"]] },
+      { label: `Makluman stok rendah dan produk rugi`, cells: [["n"], ["p", `Stok sahaja`], ["y"]] },
+      { label: `Kiraan stok dan pesanan belian pembekal`, cells: [["p", `Helaian berasingan`], ["n"], ["y"]] },
+      { label: `Resit WhatsApp dan peringatan belum bayar 1 ketik`, cells: [["n"], ["n"], ["y"]] },
+      { label: `Laporan PDF siap (P&L, penyata pelanggan…)`, cells: [["n"], ["p", `Eksport data TikTok`], ["y", `7 laporan`]] },
+      { label: `Mudah guna di telefon`, cells: [["p"], ["y"], ["y"]] },
+    ],
     ownTitle: "Bukan penjual TikTok Shop? Kedai sendiri pun boleh.",
     ownBody: "Menjual di WhatsApp, Instagram atau kedai fizikal? Anda tidak perlukan TikTok Shop untuk guna Bossify.",
     ownPoints: [
@@ -1446,6 +1503,24 @@ const REPORT_DESC_KEYS = [
   "reports_recon_desc",
 ] as const;
 
+function MarkIcon({ m, small = false }: { m: Mark; small?: boolean }) {
+  const look = {
+    y: { bg: GREEN, Icon: Check },
+    p: { bg: "#D97706", Icon: Minus },
+    n: { bg: "#C9C2D6", Icon: X },
+  }[m];
+  const size = small ? 18 : 24;
+  return (
+    <span
+      aria-label={m === "y" ? "yes" : m === "p" ? "partly" : "no"}
+      className="inline-flex items-center justify-center rounded-full shrink-0"
+      style={{ width: size, height: size, background: look.bg }}
+    >
+      <look.Icon className={small ? "w-3 h-3" : "w-[15px] h-[15px]"} style={{ color: "#FFFFFF" }} strokeWidth={3} />
+    </span>
+  );
+}
+
 function Eyebrow({ children, onDark = false }: { children: ReactNode; onDark?: boolean }) {
   return (
     <p
@@ -1566,7 +1641,7 @@ export function LandingPage() {
   const h1Run = useReplayKey(h1In);
 
   // Comparison table: rows fade up one after another once the table scrolls in.
-  const [tableRef, tableIn] = useInView<HTMLTableElement>();
+  const [tableRef, tableIn] = useInView<HTMLDivElement>();
   const rowStyle = (i: number) => ({
     opacity: tableIn ? 1 : 0,
     transform: tableIn ? "translateY(0)" : "translateY(12px)",
@@ -1598,6 +1673,7 @@ export function LandingPage() {
             <a href="#pricing" className="bf-text-live text-[15px] font-medium" style={{ color: INK_SOFT }}>{c.navPricing}</a>
           </nav>
           <div className="hidden lg:flex items-center gap-2">
+            <LangSwitch />
             <button data-cta="login" onClick={() => goAuth("login")} className="text-[15px] font-semibold px-4 py-2 rounded-full transition-colors hover:bg-[#F7F5FA]" style={{ color: INK }}>
               {c.signIn}
             </button>
@@ -1606,9 +1682,12 @@ export function LandingPage() {
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
-          <button className="lg:hidden p-2 -mr-2" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu" style={{ color: INK }}>
-            {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="lg:hidden flex items-center gap-1.5">
+            <LangSwitch />
+            <button className="p-2 -mr-2" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu" style={{ color: INK }}>
+              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
         {menuOpen && (
           <div className="lg:hidden border-t px-5 py-4 flex flex-col gap-1" style={{ borderColor: LINE, background: BG }}>
@@ -1883,37 +1962,70 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Spreadsheet vs Bossify -- an actual table */}
+      {/* Spreadsheet vs TikTok Seller Center vs Bossify -- tick / cross grid */}
       <section className="px-5 lg:px-8 py-20 lg:py-28">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <Reveal className="mb-10">
             <h2 className={`${H2_CLASS} mb-3`} style={{ color: INK, fontFamily: DISPLAY }}>{c.compareTitle}</h2>
             <p className="text-[17px] lg:text-[18px]" style={{ color: INK_SOFT }}>{c.compareSub}</p>
           </Reveal>
-          <table ref={tableRef} className="w-full border-collapse text-left">
-            <thead>
-              <tr>
-                <th className="w-1/2 py-3.5 pr-4 text-[14px] font-semibold border-b-2" style={{ color: INK_SOFT, borderColor: INK }}>
-                  {c.compareSpreadsheetLabel}
-                </th>
-                <th className="w-1/2 py-3.5 px-4 sm:px-6 text-[14px] font-bold border-b-2" style={{ color: PRIMARY, borderColor: INK, background: "rgba(108,74,182,0.09)" }}>
-                  {c.compareBossifyLabel}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {c.compareSpreadsheetItems.map((item, i) => (
-                <tr key={item} style={rowStyle(i)}>
-                  <td className="py-4 pr-4 align-top text-[15.5px] sm:text-[16.5px] border-b" style={{ color: INK_SOFT, borderColor: LINE }}>
-                    {item}
-                  </td>
-                  <td className="py-4 px-4 sm:px-6 align-top text-[15.5px] sm:text-[16.5px] font-semibold border-b" style={{ color: INK, borderColor: LINE, background: "rgba(108,74,182,0.09)" }}>
-                    {c.compareBossifyItems[i] ?? ""}
-                  </td>
-                </tr>
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-5 text-[13.5px]" style={{ color: INK_SOFT }}>
+            {(["y", "p", "n"] as Mark[]).map((m, i) => (
+              <span key={m} className="inline-flex items-center gap-2">
+                <MarkIcon m={m} small />
+                {x.compareLegend[i]}
+              </span>
+            ))}
+          </div>
+          <div ref={tableRef} className="rounded-2xl border overflow-hidden" style={{ borderColor: LINE, background: BG }}>
+            {/* Header row. On phones the feature name sits on its own line
+                above the three marks, so the label column is desktop-only. */}
+            <div className="grid grid-cols-3 lg:grid-cols-[1.5fr_1fr_1fr_1fr] border-b-2" style={{ borderColor: INK }}>
+              <div className="hidden lg:block" />
+              {x.compareCols.map((col, ci) => (
+                <div
+                  key={col}
+                  className="px-2 sm:px-4 py-4 text-center text-[13px] sm:text-[15px] font-bold leading-tight"
+                  style={{
+                    color: ci === 2 ? "#FFFFFF" : INK,
+                    background: ci === 2 ? PRIMARY : "transparent",
+                    fontFamily: DISPLAY,
+                  }}
+                >
+                  {col}
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+            {x.compareRows.map((row, i) => (
+              <div
+                key={row.label}
+                className="grid grid-cols-3 lg:grid-cols-[1.5fr_1fr_1fr_1fr] border-b last:border-b-0"
+                style={{ borderColor: LINE, ...rowStyle(i) }}
+              >
+                <div className="col-span-3 lg:col-span-1 px-4 lg:px-5 pt-3.5 lg:py-4 text-[15px] sm:text-[16px] font-semibold" style={{ color: INK }}>
+                  {row.label}
+                </div>
+                {row.cells.map(([m, note], ci) => (
+                  <div
+                    key={ci}
+                    className="flex flex-col items-center justify-center gap-1 px-2 py-3 lg:py-4 text-center"
+                    style={{ background: ci === 2 ? "rgba(108,74,182,0.08)" : "transparent" }}
+                  >
+                    <MarkIcon m={m} />
+                    {note && (
+                      <span
+                        className="text-[11.5px] sm:text-[12.5px] leading-snug"
+                        style={{ color: ci === 2 ? PRIMARY : INK_SOFT, fontWeight: ci === 2 ? 600 : 400 }}
+                      >
+                        {note}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

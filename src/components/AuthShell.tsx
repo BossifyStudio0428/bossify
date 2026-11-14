@@ -1,4 +1,5 @@
 import { useI18n } from "@/contexts/I18nContext";
+import { LangSwitch } from "@/components/LangSwitch";
 
 // Same "ledger" tokens as the landing page (LandingPage.tsx) so signing in
 // feels like the next page of the same site, not a different product.
@@ -134,7 +135,10 @@ export function AuthShell({ children, footer }: { children: React.ReactNode; foo
   return (
     <div data-auth-surface className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#FFFFFF", fontFamily: BODY, color: INK }}>
       <AuthBrandPanel />
-      <div className="flex-1 flex flex-col px-5 pt-10 pb-8 lg:px-12 lg:py-12">
+      <div className="flex-1 flex flex-col px-5 pt-5 pb-8 lg:px-12 lg:pt-8 lg:pb-12">
+        <div className="flex justify-end mb-5">
+          <LangSwitch />
+        </div>
         <div className="flex-1 flex flex-col lg:items-center lg:justify-center">{children}</div>
         {footer}
       </div>
