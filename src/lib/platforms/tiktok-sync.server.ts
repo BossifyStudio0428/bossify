@@ -106,14 +106,19 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
 
   const { data: inventory } = await supabaseAdmin
     .from("inventory" as any)
-    .select("id,name,cost_price,packaging_cost,tiktok_product_id")
+    .select("id,name,cost_price,packaging_cost,tiktok_product_id,tiktok_sku_id")
     .eq("user_id", userId);
   const invByName = new Map<string, { id: string; cost_price: number; packaging_cost: number }>();
   const invByTikTokId = new Map<string, { id: string; cost_price: number; packaging_cost: number }>();
+  // Per-variant (S / M / L ...) match. All variants of one TikTok product
+  // share tiktok_product_id, so matching by product id alone could charge
+  // an order the cost of the wrong variant.
+  const invBySkuId = new Map<string, { id: string; cost_price: number; packaging_cost: number }>();
   for (const it of (inventory ?? []) as any[]) {
     const row = { id: it.id, cost_price: Number(it.cost_price ?? 0), packaging_cost: Number(it.packaging_cost ?? 0) };
     if (it.name) invByName.set(String(it.name).trim().toLowerCase(), row);
     if (it.tiktok_product_id) invByTikTokId.set(it.tiktok_product_id, row);
+    if (it.tiktok_sku_id) invBySkuId.set(String(it.tiktok_sku_id), row);
   }
 
   let detailList: TikTokOrderDetail[] = [];
@@ -197,7 +202,12 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
       // Prefer matching by TikTok product_id (set via "Import products from
       // TikTok" or a prior order) — far more reliable than name-matching,
       // which breaks on the smallest wording difference.
-      const match = invByTikTokId.get(li.product_id) ?? invByName.get(String(li.product_name).trim().toLowerCase());
+      // Exact variant first (tiktok_sku_id, filled in by the product sync),
+      // then the product, then the name.
+      const match =
+        (li.sku_id ? invBySkuId.get(String(li.sku_id)) : undefined) ??
+        invByTikTokId.get(li.product_id) ??
+        invByName.get(String(li.product_name).trim().toLowerCase());
       if (!match) {
         unmatched = li.product_name;
         break;
@@ -301,6 +311,42 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
         packaging_cost_at_sale: it.packagingCostAtSale,
       })),
     );
+
+    // Make sure this TikTok buyer has a row in the customer list. TikTok
+    // gives no name/phone, so the row is keyed by the buyer id and named
+    // "TikTok #<last 6>"; an existing row is never renamed (the seller may
+    // have given it a real name). Totals are recalculated from orders by
+    // the customers page, so only last_order_at is kept fresh here.
+    // Never blocks the order sync (e.g. if tiktok-customers.sql hasn't run).
+    if (detail.user_id) {
+      try {
+        const buyerId = String(detail.user_id);
+        const { data: existingCust, error: custReadErr } = await supabaseAdmin
+          .from("customers" as any)
+          .select("id")
+          .eq("user_id", userId)
+          .eq("platform_buyer_id", buyerId)
+          .maybeSingle();
+        if (!custReadErr) {
+          const now = new Date().toISOString();
+          if (existingCust) {
+            await supabaseAdmin.from("customers" as any).update({ last_order_at: now } as any).eq("id", (existingCust as any).id);
+          } else {
+            await supabaseAdmin.from("customers" as any).insert({
+              user_id: userId,
+              name: `TikTok #${buyerId.slice(-6)}`,
+              source: "tiktok",
+              platform_buyer_id: buyerId,
+              total_orders: 0,
+              total_spent: 0,
+              last_order_at: now,
+            } as any);
+          }
+        }
+      } catch {
+        // non-fatal
+      }
+    }
 
     result.completed++;
   }

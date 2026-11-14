@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { orderGrossProfit, orderContributionProfit, isLossMakingProduct } from "@/lib/orderMath";
+import { orderGrossProfit, orderContributionProfit, isLossMakingProduct, isPaidStatus } from "@/lib/orderMath";
 import { SetupChecklist } from "@/components/SetupChecklist";
 import { TiltCard } from "@/components/MotionFx";
 import { CampaignBanner } from "@/components/CampaignBanner";
@@ -244,7 +244,7 @@ export function RetailOverview() {
           .limit(5),
         supabase
           .from("orders")
-          .select("id,amount,cost,gross_profit,product,created_at,financial_status")
+          .select("id,amount,cost,gross_profit,product,created_at,financial_status,status")
           .eq("user_id", user.id)
           .gte("created_at", weekStart.toISOString()),
         supabase
@@ -274,7 +274,10 @@ export function RetailOverview() {
       // commas — useless for finding a single best-selling product), plus
       // each product's tiktok_product_id so same-product variants (S/M/L)
       // can be merged before picking a "best seller".
-      const weekOrderIds = ((weekRes.data ?? []) as any[]).map((o) => o.id).filter(Boolean);
+      const weekOrderIds = ((weekRes.data ?? []) as any[])
+        .filter((o) => isPaidStatus(o.status))
+        .map((o) => o.id)
+        .filter(Boolean);
       if (weekOrderIds.length > 0) {
         const { data: items } = await supabase
           .from("order_items" as any)
@@ -369,8 +372,10 @@ export function RetailOverview() {
       let profit = 0;
       let contribution = 0;
       // TikTok placeholder orders (financial_status = "pending") have no
-      // real amount/cost yet — never count them.
-      const complete = rows.filter((o: any) => o.financial_status !== "pending");
+      // real amount/cost yet — never count them. Only paid / shipped /
+      // delivered orders are sales: unpaid, pending, cancelled and refunded
+      // orders are not money earned.
+      const complete = rows.filter((o: any) => o.financial_status !== "pending" && isPaidStatus(o.status));
       for (const o of complete) {
         sales += Number(o.amount ?? 0);
         profit += orderGrossProfit({ amount: o.amount, cost: o.cost, gross_profit: o.gross_profit });
@@ -440,7 +445,7 @@ export function RetailOverview() {
   const dailyChart = useMemo(() => {
     const byDay = new Map<string, { sales: number; profit: number }>();
     for (const o of curOrders as any[]) {
-      if (o.financial_status === "pending") continue;
+      if (o.financial_status === "pending" || !isPaidStatus(o.status)) continue;
       const day = String(o.created_at ?? "").slice(0, 10);
       if (!day) continue;
       const p = orderContributionProfit({

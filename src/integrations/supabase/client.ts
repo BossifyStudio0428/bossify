@@ -56,6 +56,10 @@ export type CustomerRow = {
   customer_status?: CustomerStatus | null;
   package_id?: string | null;
   package_name?: string | null;
+  /** 'tiktok' = created from a TikTok buyer; anything else = the seller's own. */
+  source?: string | null;
+  /** TikTok buyer id (same value as orders.platform_buyer_id) for TikTok rows. */
+  platform_buyer_id?: string | null;
 };
 
 export type CustomerStatus = "enquiry" | "in_progress" | "completed" | "rejected";
