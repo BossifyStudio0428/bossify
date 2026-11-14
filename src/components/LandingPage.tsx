@@ -894,11 +894,18 @@ function Reveal({
 // has to come from a drop-shadow filter on the wrapper rather than a
 // box-shadow, which the mask would clip).
 // ---------------------------------------------------------------------------
-// "Lite" mode: phones and tablets (touch, no hover) get a still page --
-// no scroll-linked effects, no entrance animations, no autoplay. Those were
-// making the page stutter on phones. Same treatment as prefers-reduced-motion.
-const LITE_QUERY = "(prefers-reduced-motion: reduce), (pointer: coarse), (hover: none)";
-const isLite = () => typeof window !== "undefined" && window.matchMedia(LITE_QUERY).matches;
+// "Lite" mode: phones get a still page -- no scroll-linked effects, no
+// entrance animations, no autoplay. Those were making the page stutter on
+// phones. Tablets (iPad) keep the full animated page. A phone is a touch
+// screen whose SHORTER side is under 600px, so it stays "phone" in landscape
+// too, while every iPad (744px+ on its short side) does not. Same treatment
+// as prefers-reduced-motion.
+const isLite = () => {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+  const touch = window.matchMedia("(pointer: coarse)").matches;
+  return touch && Math.min(window.screen.width, window.screen.height) < 600;
+};
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
