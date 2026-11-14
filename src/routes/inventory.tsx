@@ -15,6 +15,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { notifySituation } from "@/lib/autoNotify";
 import { getNotifMessage } from "@/lib/notifMessages";
 import { ProductFormSheet, QtySheet, ConfirmSheet } from "@/components/InventorySheets";
+import { QuickCostSheet } from "@/components/QuickCostEditor";
 import { StockTabs } from "@/components/StockTabs";
 import { formatUnit, formatCategory } from "@/lib/labels";
 import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
@@ -79,10 +80,15 @@ function ProfitRow({
   price,
   cost,
   t,
+  lang,
+  onEditCost,
 }: {
   price: number | null | undefined;
   cost: number | null | undefined;
   t: (k: any) => string;
+  lang?: string;
+  /** Tapping the row opens the quick cost editor (no need for the full form). */
+  onEditCost?: () => void;
 }) {
   const p = Number(price ?? 0);
   const c = Number(cost ?? 0);
@@ -90,16 +96,28 @@ function ProfitRow({
   const profit = p - c;
   const positive = profit > 0;
   const negative = profit < 0;
+  const Wrapper = onEditCost ? "button" : "div";
   return (
-    <div className="grid grid-cols-3 gap-2 rounded-xl bg-muted/40 border border-border/50 px-2.5 py-2">
+    <Wrapper
+      {...(onEditCost ? { type: "button" as const, onClick: onEditCost } : {})}
+      className={`w-full text-left grid grid-cols-3 gap-2 rounded-xl border px-2.5 py-2 ${
+        onEditCost && !hasCost
+          ? "bg-amber-500/10 border-amber-300 active:bg-amber-500/20"
+          : "bg-muted/40 border-border/50" + (onEditCost ? " active:bg-muted" : "")
+      }`}
+    >
       <div className="min-w-0">
         <p className="text-[10px] font-medium text-muted-foreground">{t("inv_price_label")}</p>
         <p className="text-xs font-semibold text-foreground truncate">RM {p.toFixed(2)}</p>
       </div>
       <div className="min-w-0">
         <p className="text-[10px] font-medium text-muted-foreground">{t("inv_cost_label")}</p>
-        <p className="text-xs font-semibold text-foreground truncate">
-          {hasCost ? `RM ${c.toFixed(2)}` : "—"}
+        <p className={`text-xs font-semibold truncate ${!hasCost && onEditCost ? "text-amber-700" : "text-foreground"}`}>
+          {hasCost
+            ? <>RM {c.toFixed(2)}{onEditCost && <Pencil className="inline-block h-3 w-3 ml-1 -mt-0.5 text-muted-foreground" />}</>
+            : onEditCost
+              ? (lang === "zh" ? "+ 填成本" : lang === "ms" ? "+ Isi kos" : "+ Add cost")
+              : "—"}
         </p>
       </div>
       <div className="min-w-0">
@@ -118,7 +136,7 @@ function ProfitRow({
           {hasCost ? `RM ${profit.toFixed(2)}` : t("inv_no_cost")}
         </p>
       </div>
-    </div>
+    </Wrapper>
   );
 }
 
@@ -156,7 +174,8 @@ type Sheet =
   | { kind: "form"; item?: InvRow }
   | { kind: "restock"; item: InvRow }
   | { kind: "remove"; item: InvRow }
-  | { kind: "delete"; item: InvRow };
+  | { kind: "delete"; item: InvRow }
+  | { kind: "cost"; item: InvRow };
 
 function InventoryPage() {
   const { t, lang } = useI18n();
@@ -798,7 +817,7 @@ function InventoryPage() {
                             style={{ width: `${Math.min(100, Math.round((v.stock / Math.max(1, v.max_stock)) * 100))}%` }}
                           />
                         </div>
-                        <ProfitRow price={v.price} cost={(v as any).cost_price} t={t} />
+                        <ProfitRow price={v.price} cost={(v as any).cost_price} t={t} lang={lang} onEditCost={() => setSheet({ kind: "cost", item: v })} />
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => setSheet({ kind: "remove", item: v })}
@@ -889,7 +908,7 @@ function InventoryPage() {
                   </span>
                 ) : null}
               </div>
-              <ProfitRow price={it.price} cost={(it as any).cost_price} t={t} />
+              <ProfitRow price={it.price} cost={(it as any).cost_price} t={t} lang={lang} onEditCost={() => setSheet({ kind: "cost", item: it })} />
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
                   className={`h-full rounded-full ${low ? "bg-red-500" : "bg-primary"}`}
@@ -970,7 +989,17 @@ function InventoryPage() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{it.category ? formatCategory(it.category, t) : "—"}</td>
                   <td className="px-4 py-3 text-right font-semibold text-foreground">RM {price.toFixed(2)}</td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">{hasCost ? `RM ${cost.toFixed(2)}` : "—"}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => setSheet({ kind: "cost", item: it })}
+                      title={lang === "zh" ? "修改成本" : lang === "ms" ? "Edit kos" : "Edit cost"}
+                      className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm transition-colors ${hasCost ? "text-muted-foreground hover:bg-muted" : "font-semibold text-amber-700 bg-amber-500/10 hover:bg-amber-500/20"}`}
+                    >
+                      {hasCost ? `RM ${cost.toFixed(2)}` : (lang === "zh" ? "+ 填成本" : lang === "ms" ? "+ Isi kos" : "+ Add cost")}
+                      {hasCost && <Pencil className="h-3 w-3" />}
+                    </button>
+                  </td>
                   <td className={`px-4 py-3 text-right font-bold ${!hasCost ? "text-muted-foreground" : profit < 0 ? "text-red-600" : "text-emerald-600"}`}>
                     {hasCost ? `RM ${profit.toFixed(2)}` : "—"}
                   </td>
@@ -1054,6 +1083,14 @@ function InventoryPage() {
           onClose={() => setSheet({ kind: "none" })}
           onSaved={() => { setSheet({ kind: "none" }); load(); }}
           userId={user?.id ?? ""}
+        />
+      )}
+      {sheet.kind === "cost" && (
+        <QuickCostSheet
+          item={sheet.item as any}
+          userId={user?.id ?? ""}
+          onClose={() => setSheet({ kind: "none" })}
+          onSaved={() => { setSheet({ kind: "none" }); load(); }}
         />
       )}
       {sheet.kind === "restock" && (

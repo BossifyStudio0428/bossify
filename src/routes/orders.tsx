@@ -14,7 +14,7 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search, Plus, Globe, Calendar, Send, Lock, Download, Link2, Clock, Store, Car, Utensils, ShoppingBag, CheckCircle2, AlertCircle } from "lucide-react";
+import { ChevronDown, MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search, Plus, Globe, Calendar, Send, Lock, Download, Link2, Clock, Store, Car, Utensils, ShoppingBag, CheckCircle2, AlertCircle } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
@@ -70,6 +70,8 @@ function OrdersPage() {
   const { hasFullAccess, showUpgrade } = useSubscription();
   const [hydrated, setHydrated] = useState(false);
   const [active, setActive] = useState<Filter>("All");
+  // Phone: sales / status charts are folded away under the list by default.
+  const [chartsOpen, setChartsOpen] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [orderCategories, setOrderCategories] = useState<Record<string, Set<string>>>({});
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("__all");
@@ -934,43 +936,6 @@ function OrdersPage() {
         </button>
       )}
 
-      {!loading && salesTrend.length > 1 && (
-        <div className="lg:hidden rounded-2xl bg-card border border-border/60 p-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
-            {lang === "zh" ? "\u9500\u552e\u8d8b\u52bf" : lang === "ms" ? "Trend Jualan" : "Sales trend"}
-          </p>
-          <ResponsiveContainer width="100%" height={140}>
-            <LineChart data={salesTrend} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 10 }} width={44} />
-              <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-              <Line type="monotone" dataKey="amount" stroke="#6C4AB6" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {!loading && statusBar.length > 0 && (
-        <div className="lg:hidden rounded-2xl bg-card border border-border/60 p-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
-            {lang === "zh" ? "\u8ba2\u5355\u72b6\u6001" : lang === "ms" ? "Status Pesanan" : "Order status"}
-          </p>
-          <ResponsiveContainer width="100%" height={Math.max(90, statusBar.length * 34)}>
-            <BarChart data={statusBar} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
-              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={64} />
-              <Tooltip />
-              <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                {statusBar.map((d, i) => (
-                  <Cell key={i} fill={d.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
         <input
@@ -1421,6 +1386,66 @@ function OrdersPage() {
           </p>
         )}
       </div>
+
+      {/* Phone: charts sit under the order list and stay folded until
+          asked for, same as the Profit page — the list comes first. */}
+      {!loading && (salesTrend.length > 1 || statusBar.length > 0) && (
+        <div className="lg:hidden space-y-3">
+          <button
+            type="button"
+            onClick={() => setChartsOpen((v) => !v)}
+            aria-expanded={chartsOpen}
+            className="w-full flex items-center justify-between gap-3 rounded-2xl bg-card border border-border/60 px-4 py-3.5 text-sm font-semibold text-foreground shadow-[var(--shadow-card)]"
+          >
+            <span>
+              {chartsOpen
+                ? (lang === "zh" ? "收起图表" : lang === "ms" ? "Sembunyi carta" : "Hide charts")
+                : (lang === "zh" ? "显示图表" : lang === "ms" ? "Tunjuk carta" : "Show charts")}
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${chartsOpen ? "rotate-180" : ""}`} />
+          </button>
+          {chartsOpen && (
+            <>
+        {!loading && salesTrend.length > 1 && (
+          <div className="rounded-2xl bg-card border border-border/60 p-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
+              {lang === "zh" ? "\u9500\u552e\u8d8b\u52bf" : lang === "ms" ? "Trend Jualan" : "Sales trend"}
+            </p>
+            <ResponsiveContainer width="100%" height={140}>
+              <LineChart data={salesTrend} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 10 }} width={44} />
+                <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
+                <Line type="monotone" dataKey="amount" stroke="#6C4AB6" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {!loading && statusBar.length > 0 && (
+          <div className="rounded-2xl bg-card border border-border/60 p-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">
+              {lang === "zh" ? "\u8ba2\u5355\u72b6\u6001" : lang === "ms" ? "Status Pesanan" : "Order status"}
+            </p>
+            <ResponsiveContainer width="100%" height={Math.max(90, statusBar.length * 34)}>
+              <BarChart data={statusBar} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={64} />
+                <Tooltip />
+                <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                  {statusBar.map((d, i) => (
+                    <Cell key={i} fill={d.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+            </>
+          )}
+        </div>
+      )}
 
       {/* Desktop: orders table */}
       <div className="hidden lg:block rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">

@@ -8,6 +8,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { calculateWeightedAverageCost, calculateUnitLandedCost } from "@/lib/orderMath";
 import { logInventoryChange } from "@/lib/inventoryAudit";
 import { adjustStockAtomic } from "@/lib/inventoryStock";
+import { QuickCostFields } from "@/components/QuickCostEditor";
 
 export const Route = createFileRoute("/add-cost")({ component: AddCostPage });
 
@@ -35,7 +36,7 @@ function AddCostPage() {
   const [mode, setMode] = useState<Mode>("pick");
 
   // --- Product cost (Receive Stock) fields ---
-  const [items, setItems] = useState<Array<{ id: string; name: string; cost_price: number; stock: number }>>([]);
+  const [items, setItems] = useState<Array<{ id: string; name: string; cost_price: number; stock: number; price: number; packaging_cost: number }>>([]);
   const [productId, setProductId] = useState("");
   const [qty, setQty] = useState("");
   const [purchaseAmount, setPurchaseAmount] = useState("");
@@ -52,8 +53,8 @@ function AddCostPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("inventory").select("id,name,cost_price,stock").eq("user_id", user.id).order("name").then(({ data }) => {
-      setItems(((data ?? []) as any[]).map((i) => ({ id: i.id, name: i.name, cost_price: Number(i.cost_price ?? 0), stock: Number(i.stock ?? 0) })));
+    supabase.from("inventory").select("id,name,cost_price,stock,price,packaging_cost").eq("user_id", user.id).order("name").then(({ data }) => {
+      setItems(((data ?? []) as any[]).map((i) => ({ id: i.id, name: i.name, cost_price: Number(i.cost_price ?? 0), stock: Number(i.stock ?? 0), price: Number(i.price ?? 0), packaging_cost: Number(i.packaging_cost ?? 0) })));
     });
   }, [user?.id]);
 
@@ -133,6 +134,41 @@ function AddCostPage() {
           </Link>
         )}
       </div>
+
+      {mode === "pick" && (() => {
+        // Products still on RM0 cost: their profit is overstated until a
+        // cost is filled in, so they're listed first and editable in place.
+        const missing = items.filter((i) => !(i.cost_price > 0));
+        if (missing.length === 0) return null;
+        return (
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between gap-2 px-1">
+              <p className="text-sm font-semibold text-foreground">
+                {lang === "zh" ? `还没填成本的商品（${missing.length}）` : lang === "ms" ? `Produk tanpa kos (${missing.length})` : `Products with no cost (${missing.length})`}
+              </p>
+              <Link to="/inventory" className="text-xs font-semibold text-primary shrink-0">
+                {lang === "zh" ? "全部商品" : lang === "ms" ? "Semua produk" : "All products"}
+              </Link>
+            </div>
+            <p className="text-xs text-muted-foreground px-1">
+              {lang === "zh" ? "没有成本，利润会算多。直接在这里填，填好按保存。" : lang === "ms" ? "Tanpa kos, untung dikira lebih. Isi di sini dan simpan." : "Without a cost, profit is overstated. Fill it in here and save."}
+            </p>
+            {missing.map((i) => (
+              <div key={i.id} className="rounded-2xl bg-card border border-amber-300/70 p-3 space-y-2">
+                <p className="text-sm font-semibold text-foreground truncate">{i.name}</p>
+                <QuickCostFields
+                  item={i}
+                  userId={user?.id ?? ""}
+                  compact
+                  onSaved={(cost, packaging) =>
+                    setItems((prev) => prev.map((x) => (x.id === i.id ? { ...x, cost_price: cost, packaging_cost: packaging } : x)))
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {mode === "pick" && (
         <div className="space-y-2">
