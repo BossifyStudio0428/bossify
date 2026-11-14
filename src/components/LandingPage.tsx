@@ -894,6 +894,12 @@ function Reveal({
 // has to come from a drop-shadow filter on the wrapper rather than a
 // box-shadow, which the mask would clip).
 // ---------------------------------------------------------------------------
+// "Lite" mode: phones and tablets (touch, no hover) get a still page --
+// no scroll-linked effects, no entrance animations, no autoplay. Those were
+// making the page stutter on phones. Same treatment as prefers-reduced-motion.
+const LITE_QUERY = "(prefers-reduced-motion: reduce), (pointer: coarse), (hover: none)";
+const isLite = () => typeof window !== "undefined" && window.matchMedia(LITE_QUERY).matches;
+
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 // Drives the "Sales don't tell the whole story" receipt.
@@ -910,7 +916,7 @@ function useStoryProgress(sectionRef: RefObject<HTMLElement | null>, triggerRef:
     const section = sectionRef.current;
     const trigger = triggerRef.current;
     if (!section || !trigger) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (isLite()) {
       setProgress(1);
       return;
     }
@@ -991,7 +997,7 @@ function useScrollFx(rootRef: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (isLite()) return;
     let raf = 0;
     const update = () => {
       const vh = window.innerHeight;
@@ -1046,7 +1052,7 @@ function useCountUp(target: number, start: boolean, durationMs = 1100) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     if (!start) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (isLite()) {
       setValue(target);
       return;
     }
@@ -1072,7 +1078,7 @@ function useInView<T extends Element>() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (isLite()) {
       setInView(true);
       return;
     }
@@ -1188,7 +1194,7 @@ function HeroVisual({ copy }: { copy: LandingCopy }) {
 
   useEffect(() => {
     if (paused) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (isLite()) return;
     const id = window.setInterval(() => setIndex((i) => (i + 1) % n), 3600);
     return () => window.clearInterval(id);
   }, [n, paused]);
@@ -1352,7 +1358,7 @@ function CursorTrail() {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (isLite()) return;
 
     const LIFE = 900; // ms a point stays visible
     let pts: { x: number; y: number; t: number }[] = [];
@@ -1622,7 +1628,7 @@ export function LandingPage() {
   useEffect(() => {
     if (!repIn || repTouched) return;
     if (!window.matchMedia("(min-width: 1024px)").matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (isLite()) return;
     const id = window.setInterval(() => setRep((v) => (v + 1) % 7), 3200);
     return () => window.clearInterval(id);
   }, [repIn, repTouched]);
@@ -1632,6 +1638,10 @@ export function LandingPage() {
   const planPrices = ["RM 0", FALLBACK_PRICES[billing], BUSINESS_FALLBACK_PRICES[billing]];
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const [lite, setLite] = useState(false);
+  useEffect(() => {
+    setLite(isLite());
+  }, []);
   const storyRef = useRef<HTMLElement>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const { scrub, progress } = useStoryProgress(storyRef, receiptRef);
@@ -1654,7 +1664,7 @@ export function LandingPage() {
   return (
     <div
       ref={rootRef}
-      className="relative isolate"
+      className={`relative isolate ${lite ? "bf-lite" : ""}`}
       style={{ background: `color-mix(in srgb, ${NIGHT} calc(var(--pk, 0) * 100%), ${BG})`, color: INK, fontFamily: BODY }}
     >
       <CursorTrail />
