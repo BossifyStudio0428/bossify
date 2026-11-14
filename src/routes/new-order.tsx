@@ -107,6 +107,7 @@ function NewOrderPage() {
   const [interestedListingId, setInterestedListingId] = useState<string>("");
   const [existingCustomers, setExistingCustomers] = useState<Array<{ id: string; name: string; phone: string | null }>>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [showCustomerSuggest, setShowCustomerSuggest] = useState(false);
   const [unitPrice, setUnitPrice] = useState<number | null>(null);
   const [customOrderTpl, setCustomOrderTpl] = useState<string | null>(null);
   const [paymentPreviewBlock, setPaymentPreviewBlock] = useState<string>("");
@@ -148,13 +149,21 @@ function NewOrderPage() {
           .eq("status", "available")
           .order("created_at", { ascending: false });
         setListings(((lst ?? []) as any).map((l: any) => ({ id: l.id, title: l.title })));
-        const { data: cs } = await supabase
-          .from("customers")
-          .select("id,name,phone")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-        setExistingCustomers(((cs ?? []) as any).map((c: any) => ({ id: c.id, name: c.name, phone: c.phone })));
       }
+      // Existing customers, for the name suggestions under the customer
+      // field (every business type) and the property dropdown. TikTok
+      // buyers are left out: they have no phone and their orders come
+      // from the TikTok sync, not from this form.
+      const { data: cs } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("last_order_at", { ascending: false, nullsFirst: false });
+      setExistingCustomers(
+        ((cs ?? []) as any[])
+          .filter((c) => !c.platform_buyer_id)
+          .map((c) => ({ id: c.id, name: c.name, phone: c.phone })),
+      );
     })();
   }, [lang, user, isRetailish, eff]);
 
@@ -558,7 +567,69 @@ function NewOrderPage() {
             </select>
           </div>
         )}
-        <Field label={customerLabel} icon={<User className="h-4 w-4" />} placeholder={customerPh} value={form.customer_name} onChange={upd("customer_name")} error={errors.customer_name} />
+        {(() => {
+          // Existing customers matching what's typed (by name, or by phone
+          // digits). Picking one fills in both the name and the phone.
+          const q = form.customer_name.trim().toLowerCase();
+          const qDigits = q.replace(/\D/g, "");
+          const matches = q
+            ? existingCustomers
+                .filter((c) => {
+                  if (c.name.trim().toLowerCase() === q && (c.phone ?? "") === form.phone) return false; // already picked
+                  if (c.name.toLowerCase().includes(q)) return true;
+                  return qDigits.length >= 3 && (c.phone ?? "").replace(/\D/g, "").includes(qDigits);
+                })
+                .slice(0, 6)
+            : [];
+          return (
+            <div className="space-y-1.5 relative">
+              <label className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground px-1">{customerLabel}</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground flex items-center justify-center"><User className="h-4 w-4" /></span>
+                <input
+                  type="text"
+                  autoComplete="off"
+                  placeholder={customerPh}
+                  value={form.customer_name}
+                  onChange={(e) => {
+                    upd("customer_name")(e);
+                    setSelectedCustomerId("");
+                    setShowCustomerSuggest(true);
+                  }}
+                  onFocus={() => setShowCustomerSuggest(true)}
+                  onBlur={() => setTimeout(() => setShowCustomerSuggest(false), 150)}
+                  className={`w-full rounded-2xl bg-card border shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition ${errors.customer_name ? "border-red-400" : "border-border/60"}`}
+                />
+              </div>
+              {showCustomerSuggest && matches.length > 0 && (
+                <div className="absolute left-0 right-0 z-20 mt-1 rounded-2xl bg-card border border-border/60 shadow-lg overflow-hidden">
+                  <p className="px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {lang === "zh" ? "已有客户" : lang === "ms" ? "Pelanggan sedia ada" : "Existing customers"}
+                  </p>
+                  {matches.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      // onMouseDown so the pick lands before the input's blur hides the list
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setForm((p) => ({ ...p, customer_name: c.name, phone: c.phone ?? p.phone }));
+                        setSelectedCustomerId(c.id);
+                        setShowCustomerSuggest(false);
+                        if (errors.customer_name) setErrors((p) => ({ ...p, customer_name: "" }));
+                      }}
+                      className="w-full text-left px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-muted active:bg-muted transition-colors"
+                    >
+                      <span className="text-sm font-semibold text-foreground truncate">{c.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">{c.phone || (lang === "zh" ? "无电话" : lang === "ms" ? "Tiada telefon" : "No phone")}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {errors.customer_name && <p className="text-[11px] text-red-500 px-1">{errors.customer_name}</p>}
+            </div>
+          );
+        })()}
         <PhoneInput
           label={t("phone_number")}
           value={form.phone}
