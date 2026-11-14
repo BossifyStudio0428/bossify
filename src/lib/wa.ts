@@ -714,8 +714,10 @@ export function getOrderTemplate(
   biz: BizType | null | undefined,
   customTpl?: string | null,
 ): string {
-  // Custom template only when actually customised away from English retail default.
-  if (customTpl && customTpl.trim() && customTpl !== DEFAULT_ORDER_TPL) return customTpl;
+  // A saved template counts as custom only if it isn't one of the built-in ones (any
+  // language / business type). Same rule as the WhatsApp Templates page, so a saved
+  // built-in Chinese template no longer overrides an English app.
+  if (customTpl && customTpl.trim() && !isBuiltInOrderTpl(customTpl)) return customTpl;
   const b = resolveBiz(biz);
   return ORDER_TPL[b][lang] ?? ORDER_TPL.retail.en;
 }
@@ -725,7 +727,7 @@ export function getReminderTemplate(
   biz: BizType | null | undefined,
   customTpl?: string | null,
 ): string {
-  if (customTpl && customTpl.trim() && customTpl !== DEFAULT_REMINDER_TPL) return customTpl;
+  if (customTpl && customTpl.trim() && !isBuiltInReminderTpl(customTpl)) return customTpl;
   const b = resolveBiz(biz);
   return REMINDER_TPL[b][lang] ?? REMINDER_TPL.retail.en;
 }
