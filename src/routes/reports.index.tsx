@@ -321,6 +321,36 @@ function ReportsHub() {
         if (!cur.productId && it.product_id) cur.productId = it.product_id;
         variantProfitMap.set(key, cur);
       });
+      // Refunds / returns dated in this period come off the product they were
+      // for, same as the headline totals above. (Partial refunds by amount
+      // have no product, so they only affect the totals.)
+      try {
+        const { data: adjRows } = await supabase
+          .from("order_adjustments" as any)
+          .select("id")
+          .eq("user_id", user?.id ?? "")
+          .gte("created_at", fromDate.toISOString())
+          .lt("created_at", toDate.toISOString());
+        const adjIds = ((adjRows ?? []) as any[]).map((a) => a.id);
+        if (adjIds.length > 0) {
+          const { data: adjItems } = await supabase
+            .from("order_adjustment_items" as any)
+            .select("product_name,quantity,revenue_reversed,cogs_reversed")
+            .in("adjustment_id", adjIds);
+          for (const a of (adjItems ?? []) as any[]) {
+            const cur = variantProfitMap.get(a.product_name || "—");
+            if (!cur) continue;
+            const rev = Number(a.revenue_reversed ?? 0);
+            const cogs = Number(a.cogs_reversed ?? 0);
+            cur.revenue -= rev;
+            cur.cost -= cogs;
+            cur.profit -= rev - cogs;
+            if (rev > 0) cur.qty = Math.max(0, cur.qty - Number(a.quantity ?? 0));
+          }
+        }
+      } catch {
+        // non-fatal: the table just shows gross per-product figures
+      }
       const profitByTiktokId = new Map<string, Array<{ name: string; qty: number; revenue: number; cost: number; profit: number; productId: string | null }>>();
       for (const v of variantProfitMap.values()) {
         const tid = v.productId ? tiktokIdByProduct[v.productId] : undefined;
