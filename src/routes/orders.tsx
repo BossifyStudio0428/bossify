@@ -120,7 +120,7 @@ function OrdersPage() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j?.message || "Sync failed");
+      if (!res.ok) throw new Error(j?.message || (lang === "zh" ? "同步失败" : lang === "ms" ? "Segerak gagal" : "Sync failed"));
       if (user) {
         const { data: refreshed } = await supabase
           .from("platform_connections" as any)
@@ -141,7 +141,7 @@ function OrdersPage() {
       }
     } catch (err: any) {
       if (!silent) {
-        setTiktokMsg(err?.message || "Sync failed");
+        setTiktokMsg(err?.message || (lang === "zh" ? "同步失败" : lang === "ms" ? "Segerak gagal" : "Sync failed"));
         setTimeout(() => setTiktokMsg(null), 4000);
       }
     } finally {
@@ -398,7 +398,7 @@ function OrdersPage() {
 
   const uploadReceipt = async (o: OrderRow, file: File) => {
     if (!user) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error((lang === "zh" ? "文件最大 5MB" : lang === "ms" ? "Maksimum 5MB" : "Max 5MB")); return; }
     setReceiptUploadingId(o.id);
     try {
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
@@ -415,7 +415,7 @@ function OrdersPage() {
       setOrders((p) => p.map((x) => (x.id === o.id ? ({ ...x, receipt_url: path } as any) : x)));
       toast.success(t("receipt_uploaded"));
     } catch (e: any) {
-      toast.error(e?.message || "Upload failed");
+      toast.error(e?.message || (lang === "zh" ? "上传失败" : lang === "ms" ? "Muat naik gagal" : "Upload failed"));
     } finally {
       setReceiptUploadingId(null);
     }
@@ -479,9 +479,9 @@ function OrdersPage() {
         .from("order-receipts")
         .createSignedUrl(autoPath, 60 * 60 * 24 * 30); // 30 days
       receiptUrl = data?.signedUrl ?? "";
-      if (!receiptUrl) throw new Error("Failed to get receipt URL");
+      if (!receiptUrl) throw new Error((lang === "zh" ? "拿不到收据链接" : lang === "ms" ? "Gagal dapatkan pautan resit" : "Failed to get receipt URL"));
     } catch (e: any) {
-      toast.error(e?.message || "Failed to generate receipt");
+      toast.error(e?.message || (lang === "zh" ? "生成收据失败" : lang === "ms" ? "Gagal jana resit" : "Failed to generate receipt"));
       return;
     } finally {
       setReceiptUploadingId(null);
@@ -806,7 +806,7 @@ function OrdersPage() {
           onClick={() => navigate({ to: "/import-orders" })}
           className="ml-auto p-2 rounded-full bg-card border border-border/60 active:scale-95 transition-transform"
           aria-label="Import"
-          title="Import Excel/CSV"
+          title={(lang === "zh" ? "导入 Excel/CSV" : lang === "ms" ? "Import Excel/CSV" : "Import Excel/CSV")}
         >
           <Upload className="h-4 w-4" />
         </button>

@@ -213,7 +213,7 @@ function InventoryPage() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j?.message || "Import failed");
+      if (!res.ok) throw new Error(j?.message || (lang === "zh" ? "导入失败" : lang === "ms" ? "Import gagal" : "Import failed"));
       if (user) {
         const { data: refreshed } = await supabase
           .from("platform_connections" as any)
@@ -256,7 +256,7 @@ function InventoryPage() {
       load();
     } catch (err: any) {
       if (!silent) {
-        setTiktokMsg(err?.message || "Import failed");
+        setTiktokMsg(err?.message || (lang === "zh" ? "导入失败" : lang === "ms" ? "Import gagal" : "Import failed"));
         setTimeout(() => setTiktokMsg(null), 4000);
       }
     } finally {

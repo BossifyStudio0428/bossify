@@ -30,6 +30,13 @@ const SOURCE_LABEL: Record<string, Record<string, string>> = {
   stock_take: { zh: "盘点", ms: "Kiraan stok", en: "Stock take" },
   refund_restock: { zh: "顾客退款补回库存", ms: "Bayaran balik pelanggan", en: "Customer refund restock" },
   purchase_order_received: { zh: "采购单收货", ms: "PO diterima", en: "Purchase order received" },
+  add_cost_page: { zh: "记成本页收货", ms: "Terima stok (Rekod Kos)", en: "Receive stock (Add cost)" },
+  order_sale: { zh: "订单卖出", ms: "Jualan pesanan", en: "Sold (order)" },
+  order_unpaid: { zh: "订单改回未付款，加回库存", ms: "Pesanan dibatalkan bayaran — stok dikembalikan", en: "Order un-paid — stock returned" },
+  order_deleted: { zh: "订单删除，加回库存", ms: "Pesanan dipadam — stok dikembalikan", en: "Order deleted — stock returned" },
+  order_edit: { zh: "修改订单", ms: "Edit pesanan", en: "Order edited" },
+  tiktok_sync: { zh: "TikTok 同步", ms: "Segerak TikTok", en: "TikTok sync" },
+  quick_cost_edit: { zh: "快速改成本", ms: "Edit kos pantas", en: "Quick cost edit" },
 };
 
 const FIELD_LABEL: Record<string, Record<string, string>> = {

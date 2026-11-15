@@ -23,7 +23,7 @@ const FIELDS: ImportField[] = [
 function ImportOrdersPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>("upload");
@@ -296,11 +296,11 @@ function ImportOrdersPage() {
                 <thead>
                   <tr className="text-muted-foreground text-left">
                     <th className="py-1 pr-3">#</th>
-                    <th className="py-1 pr-3">Customer</th>
-                    <th className="py-1 pr-3">Product</th>
-                    <th className="py-1 pr-3">Qty</th>
-                    <th className="py-1 pr-3">Amount</th>
-                    <th className="py-1 pr-3">Status</th>
+                    <th className="py-1 pr-3">{(lang === "zh" ? "客户" : lang === "ms" ? "Pelanggan" : "Customer")}</th>
+                    <th className="py-1 pr-3">{(lang === "zh" ? "产品" : lang === "ms" ? "Produk" : "Product")}</th>
+                    <th className="py-1 pr-3">{(lang === "zh" ? "数量" : lang === "ms" ? "Kuantiti" : "Qty")}</th>
+                    <th className="py-1 pr-3">{(lang === "zh" ? "金额" : lang === "ms" ? "Jumlah" : "Amount")}</th>
+                    <th className="py-1 pr-3">{(lang === "zh" ? "状态" : lang === "ms" ? "Status" : "Status")}</th>
                     <th className="py-1 pr-3"></th>
                   </tr>
                 </thead>

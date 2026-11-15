@@ -20,7 +20,7 @@ const DEFAULT_ZONES: Zone[] = [
 function DeliverySettingsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [enabled, setEnabled] = useState(false);
@@ -54,7 +54,7 @@ function DeliverySettingsPage() {
   const save = async () => {
     if (!user) return;
     if (enabled && (lat == null || lng == null)) {
-      toast.error("Pick your store address from the suggestions so we have map coordinates.");
+      toast.error((lang === "zh" ? "请从下拉建议中选店铺地址，这样才有地图位置。" : lang === "ms" ? "Pilih alamat kedai dari cadangan supaya ada koordinat peta." : "Pick your store address from the suggestions so we have map coordinates."));
       return;
     }
     const cleanZones = zones
@@ -62,7 +62,7 @@ function DeliverySettingsPage() {
       .filter((z) => isFinite(z.max_km) && z.max_km > 0 && isFinite(z.fee) && z.fee >= 0)
       .sort((a, b) => a.max_km - b.max_km);
     if (enabled && cleanZones.length === 0) {
-      toast.error("Add at least one delivery zone.");
+      toast.error((lang === "zh" ? "请至少加一个送货区域。" : lang === "ms" ? "Tambah sekurang-kurangnya satu zon penghantaran." : "Add at least one delivery zone."));
       return;
     }
     setSaving(true);
@@ -78,7 +78,7 @@ function DeliverySettingsPage() {
       .eq("id", user.id);
     setSaving(false);
     if (error) toast.error(error.message);
-    else toast.success("Saved");
+    else toast.success((lang === "zh" ? "已保存" : lang === "ms" ? "Disimpan" : "Saved"));
   };
 
   const updZone = (i: number, key: keyof Zone, val: string) => {

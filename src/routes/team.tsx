@@ -42,7 +42,7 @@ function planLimit(plan: string) {
 
 function TeamPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { plan, teamTier, isTeam } = useSubscription();
   const fetchEmails = useServerFn(getTeamMemberEmails);
   const [team, setTeam] = useState<TeamRow | null>(null);
@@ -215,7 +215,7 @@ function TeamPage() {
         _target_user_id: m.user_id, _target_email: m.invited_email, _metadata: null,
       });
     }
-    toast.success("Removed");
+    toast.success((lang === "zh" ? "已移除" : lang === "ms" ? "Dibuang" : "Removed"));
     load();
   };
 
@@ -378,7 +378,7 @@ function TeamPage() {
           {invites.length > 0 && canInvite && (
             <div className="pt-2 space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase">Pending Invites</h3>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase">{(lang === "zh" ? "待接受的邀请" : lang === "ms" ? "Jemputan Tertunda" : "Pending Invites")}</h3>
                 <Button size="sm" variant="ghost" className="text-destructive h-7 px-2 text-xs" onClick={cancelAllInvites}>
                   <X className="w-3 h-3 mr-1" />{t("team_cancel_all")}
                 </Button>

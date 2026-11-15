@@ -242,6 +242,23 @@ function AdminPage() {
     }
   };
 
+  // AI feature / status names as written to ai_usage_logs, in the app language.
+  const aiFeatureName = (f: string) =>
+    ({
+      chat_assistant: L("AI 助手聊天", "AI assistant chat", "Sembang pembantu AI"),
+      campaign_suggestions: L("活动建议", "Campaign suggestions", "Cadangan kempen"),
+      classify_ingredient: L("原料分类", "Ingredient classification", "Klasifikasi bahan"),
+      parse_po: L("采购单识别", "Purchase order reading", "Bacaan pesanan belian"),
+    } as Record<string, string>)[f] ?? f;
+  const aiStatusName = (st: string) =>
+    ({
+      ok: L("成功", "OK", "OK"),
+      rate_limit: L("请求太频繁", "Rate limited", "Had kadar"),
+      credit_exhausted: L("额度用完", "Credit used up", "Kredit habis"),
+      error: L("出错", "Error", "Ralat"),
+      parse_failed: L("回复看不懂", "Reply couldn't be read", "Balasan tidak dapat dibaca"),
+    } as Record<string, string>)[st] ?? st;
+
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.business_name || u.id.slice(0, 8)])), [users]);
 
   if (checking) return <p className="p-6 text-sm text-muted-foreground">{t("admin_checking")}</p>;
@@ -866,7 +883,7 @@ function AdminPage() {
             </div>
           )}
 
-          {agedLoading && <p className="text-center text-sm text-muted-foreground py-4">Loading…</p>}
+          {agedLoading && <p className="text-center text-sm text-muted-foreground py-4">{L("加载中…", "Loading…", "Memuatkan…")}</p>}
           <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/50 overflow-hidden">
             {filteredOrders.map((o) => (
               <div key={o.id} className={`px-4 py-3 flex items-start gap-3 ${selectedOrders.has(o.id) ? "bg-red-500/5" : ""}`}>
@@ -917,7 +934,7 @@ function AdminPage() {
               <RefreshCw className={`h-3 w-3 ${aiLoading ? "animate-spin" : ""}`} /> {L("刷新", "Refresh")}
             </button>
           </div>
-          {aiLoading && !aiStats && <p className="text-xs text-muted-foreground">Loading…</p>}
+          {aiLoading && !aiStats && <p className="text-xs text-muted-foreground">{L("加载中…", "Loading…", "Memuatkan…")}</p>}
           {aiError && <p className="text-xs text-destructive">{aiError}</p>}
           {aiStats && (
             <>
@@ -939,9 +956,9 @@ function AdminPage() {
                     aiStats.by_feature.map((f) => (
                       <div key={f.feature} className="flex items-center justify-between text-[11px] border-t border-border/40 first:border-t-0 pt-1.5 first:pt-0">
                         <div className="min-w-0">
-                          <p className="font-semibold truncate">{f.feature}</p>
+                          <p className="font-semibold truncate">{aiFeatureName(f.feature)}</p>
                           <p className="text-muted-foreground">
-                            {f.calls} calls · {f.input_tokens.toLocaleString()} in / {f.output_tokens.toLocaleString()} out
+                            {f.calls} {L("次", "calls", "panggilan")} · {L("输入", "in", "masuk")} {f.input_tokens.toLocaleString()} / {L("输出", "out", "keluar")} {f.output_tokens.toLocaleString()} tokens
                           </p>
                         </div>
                         <span className="font-bold">${f.cost_usd.toFixed(4)}</span>
@@ -958,8 +975,8 @@ function AdminPage() {
                     aiStats.recent_failures.map((r) => (
                       <div key={r.id} className="text-[11px] border-t border-border/40 first:border-t-0 pt-1.5 first:pt-0">
                         <div className="flex justify-between">
-                          <span className="font-semibold">{r.feature}</span>
-                          <span className="text-destructive">{r.status}</span>
+                          <span className="font-semibold">{aiFeatureName(r.feature)}</span>
+                          <span className="text-destructive">{aiStatusName(r.status)}</span>
                         </div>
                         <p className="text-muted-foreground truncate">
                           {new Date(r.created_at).toLocaleString()} · {r.model}

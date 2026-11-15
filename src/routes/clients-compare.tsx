@@ -23,7 +23,7 @@ type Stage = { client_id: string; stage_number: number; is_completed: boolean };
 type Svc = { client_id: string; service_type: string; is_needed: boolean; status: string };
 
 function ComparePage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [details, setDetails] = useState<Record<string, EducationDetails | null>>({});
@@ -67,7 +67,7 @@ function ComparePage() {
   const toggle = (id: string) => {
     setSelected((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (prev.length >= 4) { toast.error("Max 4"); return prev; }
+      if (prev.length >= 4) { toast.error((lang === "zh" ? "最多 4 个" : lang === "ms" ? "Maksimum 4" : "Max 4")); return prev; }
       return [...prev, id];
     });
   };
@@ -168,9 +168,9 @@ function ComparePage() {
       } else {
         doc.save(filename);
       }
-      toast.success("PDF ✓");
+      toast.success((lang === "zh" ? "PDF 已生成 ✓" : lang === "ms" ? "PDF ✓" : "PDF ✓"));
     } catch (e: any) {
-      toast.error(e?.message ?? "Export failed");
+      toast.error(e?.message ?? (lang === "zh" ? "导出失败" : lang === "ms" ? "Eksport gagal" : "Export failed"));
     } finally {
       setExporting(false);
     }
@@ -247,7 +247,7 @@ function ComparePage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-muted/40">
-                  <th className="text-left px-3 py-2 font-semibold">Field</th>
+                  <th className="text-left px-3 py-2 font-semibold">{(lang === "zh" ? "项目" : lang === "ms" ? "Medan" : "Field")}</th>
                   {picked.map((c) => (
                     <th key={c.id} className="text-left px-3 py-2 font-semibold">{c.name}</th>
                   ))}

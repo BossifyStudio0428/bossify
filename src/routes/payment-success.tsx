@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription, type Plan } from "@/contexts/SubscriptionContext";
+import { useI18n } from "@/contexts/I18nContext";
 
 export const Route = createFileRoute("/payment-success")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -55,6 +56,7 @@ function isPaidPlan(plan: Plan | undefined) {
 }
 
 function PaymentSuccessPage() {
+  const { lang } = useI18n();
   const navigate = useNavigate();
   const { session_id: sessionId } = Route.useSearch();
   const { plan, refresh } = useSubscription();
@@ -131,14 +133,16 @@ function PaymentSuccessPage() {
           )}
         </div>
         <h1 className="mt-5 text-2xl font-bold">
-          {confirmedPlan ? `Payment successful! Welcome to ${planName}!` : "Activating your plan…"}
+          {confirmedPlan
+            ? (lang === "zh" ? `付款成功！欢迎使用 ${planName}！` : lang === "ms" ? `Bayaran berjaya! Selamat datang ke ${planName}!` : `Payment successful! Welcome to ${planName}!`)
+            : (lang === "zh" ? "正在开通你的方案…" : lang === "ms" ? "Mengaktifkan pelan anda…" : "Activating your plan…")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {confirmedPlan
-            ? "Redirecting you to Home…"
+            ? (lang === "zh" ? "正在带你回首页…" : lang === "ms" ? "Membawa anda ke Laman Utama…" : "Redirecting you to Home…")
             : activationError
-              ? "Still syncing your payment. Please wait here."
-              : "This usually takes a few seconds."}
+              ? (lang === "zh" ? "还在确认你的付款，请在这里稍等。" : lang === "ms" ? "Masih menyegerak bayaran anda. Sila tunggu di sini." : "Still syncing your payment. Please wait here.")
+              : (lang === "zh" ? "通常只要几秒钟。" : lang === "ms" ? "Biasanya mengambil beberapa saat." : "This usually takes a few seconds.")}
         </p>
       </div>
     </div>

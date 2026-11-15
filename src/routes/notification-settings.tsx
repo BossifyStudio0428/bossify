@@ -89,7 +89,7 @@ function NotifSettingsPage() {
   };
 
   const registerCurrentDevice = async () => {
-    if (!user) return { ok: false, native: false, reason: "Not signed in" };
+    if (!user) return { ok: false, native: false, reason: (lang === "zh" ? "还没登录" : lang === "ms" ? "Belum log masuk" : "Not signed in") };
     let isNative = false;
     try {
       const w = window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } };
@@ -108,7 +108,7 @@ function NotifSettingsPage() {
         await loadPrefs(user.id).catch(() => undefined);
         await rescheduleAll(user.id).catch(() => undefined);
       }
-      return { ok, native: true, reason: ok ? "" : "Android push registration failed" };
+      return { ok, native: true, reason: ok ? "" : (lang === "zh" ? "Android 推送注册失败" : lang === "ms" ? "Pendaftaran notifikasi Android gagal" : "Android push registration failed") };
     }
 
     if (!isWebPushSupported()) {
@@ -116,11 +116,11 @@ function NotifSettingsPage() {
       return {
         ok: permissionOnly,
         native: false,
-        reason: permissionOnly ? "" : "Browser does not support push",
+        reason: permissionOnly ? "" : (lang === "zh" ? "这个浏览器不支持推送通知" : lang === "ms" ? "Pelayar tidak menyokong notifikasi" : "Browser does not support push"),
       };
     }
     const result = await registerWebPush(user.id);
-    return { ok: result.ok, native: false, reason: result.ok ? "" : (result.reason ?? "Could not enable web push") };
+    return { ok: result.ok, native: false, reason: result.ok ? "" : (result.reason ?? (lang === "zh" ? "无法开启网页推送" : lang === "ms" ? "Tidak dapat hidupkan notifikasi web" : "Could not enable web push")) };
   };
 
   useEffect(() => {
@@ -265,7 +265,7 @@ function NotifSettingsPage() {
       const res: any = await withTimeout(
         sendPushToSelf({ kind: "custom", title, body }),
         12000,
-        { data: null, error: new Error("Request timed out") },
+        { data: null, error: new Error((lang === "zh" ? "请求超时" : lang === "ms" ? "Permintaan tamat masa" : "Request timed out")) },
       );
       if (res?.error) throw res.error;
       let sent = res?.data?.sent ?? res?.sent ?? null;
@@ -290,7 +290,7 @@ function NotifSettingsPage() {
           const retry: any = await withTimeout(
             sendPushToSelf({ kind: "custom", title, body }),
             12000,
-            { data: null, error: new Error("Request timed out") },
+            { data: null, error: new Error((lang === "zh" ? "请求超时" : lang === "ms" ? "Permintaan tamat masa" : "Request timed out")) },
           );
           sent = retry?.data?.sent ?? retry?.sent ?? 0;
         }

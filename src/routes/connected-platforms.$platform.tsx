@@ -90,7 +90,7 @@ function PlatformConnectPage() {
         });
         const j = await res.json();
         if (!res.ok || !j?.authUrl) {
-          throw new Error(j?.message || "Something went wrong. Please try again.");
+          throw new Error(j?.message || (lang === "zh" ? "出了点问题，请再试一次。" : lang === "ms" ? "Ada masalah. Sila cuba lagi." : "Something went wrong. Please try again."));
         }
         window.location.href = j.authUrl;
       } else {
@@ -98,7 +98,7 @@ function PlatformConnectPage() {
         window.location.href = authUrl;
       }
     } catch (err: any) {
-      setSheetMessage(err?.message || "Something went wrong. Please try again.");
+      setSheetMessage(err?.message || (lang === "zh" ? "出了点问题，请再试一次。" : lang === "ms" ? "Ada masalah. Sila cuba lagi." : "Something went wrong. Please try again."));
       setSheetOpen(true);
     } finally {
       setBusy(false);
@@ -135,14 +135,14 @@ function PlatformConnectPage() {
         headers,
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j?.message || "Sync failed");
+      if (!res.ok) throw new Error(j?.message || (lang === "zh" ? "同步失败" : lang === "ms" ? "Segerak gagal" : "Sync failed"));
       const skippedCount = (j.skipped ?? []).length;
       setSyncMsg(
         `${j.completed ?? 0} order(s) updated with real data` +
           (skippedCount > 0 ? `, ${skippedCount} still pending` : ""),
       );
     } catch (err: any) {
-      setSyncMsg(err?.message || "Sync failed");
+      setSyncMsg(err?.message || (lang === "zh" ? "同步失败" : lang === "ms" ? "Segerak gagal" : "Sync failed"));
     } finally {
       setSyncing(false);
     }
@@ -158,7 +158,7 @@ function PlatformConnectPage() {
         headers,
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j?.message || "Import failed");
+      if (!res.ok) throw new Error(j?.message || (lang === "zh" ? "导入失败" : lang === "ms" ? "Import gagal" : "Import failed"));
       const importedCount = (j.imported ?? []).length;
       const refreshedCount = Number(j.refreshed ?? 0);
       const delistedCount = Number(j.delisted ?? 0);
@@ -178,7 +178,7 @@ function PlatformConnectPage() {
       }
       setImportMsg(parts.join(" "));
     } catch (err: any) {
-      setImportMsg(err?.message || "Import failed");
+      setImportMsg(err?.message || (lang === "zh" ? "导入失败" : lang === "ms" ? "Import gagal" : "Import failed"));
     } finally {
       setImportingProducts(false);
     }
@@ -190,7 +190,7 @@ function PlatformConnectPage() {
         <button onClick={() => navigate({ to: "/profile" })} className="text-sm text-muted-foreground underline inline-flex items-center gap-1">
           <ChevronLeft className="h-3.5 w-3.5" /> {t("back")}
         </button>
-        <p className="mt-6 text-sm">Platform not found.</p>
+        <p className="mt-6 text-sm">{(lang === "zh" ? "找不到这个平台。" : lang === "ms" ? "Platform tidak dijumpai." : "Platform not found.")}</p>
       </div>
     );
   }
@@ -254,7 +254,7 @@ function PlatformConnectPage() {
             className="w-full py-3.5 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 transition-transform"
           >
             {importingProducts && <Loader2 className="h-4 w-4 animate-spin" />}
-            {importingProducts ? "Importing…" : "Import products from TikTok"}
+            {importingProducts ? (lang === "zh" ? "导入中…" : lang === "ms" ? "Mengimport…" : "Importing…") : (lang === "zh" ? "从 TikTok 导入商品" : lang === "ms" ? "Import produk dari TikTok" : "Import products from TikTok")}
           </button>
           {importMsg && <p className="text-xs text-center text-muted-foreground">{importMsg}</p>}
 
@@ -265,7 +265,7 @@ function PlatformConnectPage() {
             className="w-full py-3.5 rounded-2xl bg-card border border-border/60 text-foreground font-semibold text-sm active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 transition-transform"
           >
             {syncing && <Loader2 className="h-4 w-4 animate-spin" />}
-            {syncing ? "Syncing…" : "Sync pending orders now"}
+            {syncing ? (lang === "zh" ? "同步中…" : lang === "ms" ? "Menyegerak…" : "Syncing…") : (lang === "zh" ? "现在同步待处理订单" : lang === "ms" ? "Segerak pesanan tertunda sekarang" : "Sync pending orders now")}
           </button>
           {syncMsg && <p className="text-xs text-center text-muted-foreground">{syncMsg}</p>}
         </div>

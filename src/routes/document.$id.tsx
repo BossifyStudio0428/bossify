@@ -48,7 +48,7 @@ function DocumentEditor() {
 
   const [customerId, setCustomerId] = useState("");
   const [listingId, setListingId] = useState("");
-  const [title, setTitle] = useState("Document Checklist");
+  const [title, setTitle] = useState<string>("");
   const [items, setItems] = useState<DocItem[]>([]);
   const [newDoc, setNewDoc] = useState("");
 
@@ -81,7 +81,7 @@ function DocumentEditor() {
       if (r) {
         setCustomerId(r.customer_id ?? "");
         setListingId(r.listing_id ?? "");
-        setTitle(r.title ?? "Document Checklist");
+        setTitle(r.title ?? "");
         setItems(Array.isArray(r.items) ? r.items : []);
       }
       setLoading(false);
@@ -107,7 +107,7 @@ function DocumentEditor() {
     const payload: any = {
       customer_id: customerId,
       listing_id: listingId || null,
-      title: title.trim() || "Document Checklist",
+      title: title.trim() || (lang === "zh" ? "文件清单" : lang === "ms" ? "Senarai Semak Dokumen" : "Document Checklist"),
       items,
     };
     const res = isNew
@@ -141,7 +141,7 @@ function DocumentEditor() {
         propertyTitle: propTitle,
         items: items.map((it) => ({ name: it.name, status: t(statusKey(it.status)) })),
       });
-    } catch (e: any) { toast.error(e?.message || "Failed to export"); }
+    } catch (e: any) { toast.error(e?.message || (lang === "zh" ? "导出失败" : lang === "ms" ? "Eksport gagal" : "Failed to export")); }
   };
 
   if (loading) {
@@ -184,7 +184,7 @@ function DocumentEditor() {
 
       <div className="space-y-1.5">
         <p className={labelCls}>{t("fld_checklist_title")}</p>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} />
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={lang === "zh" ? "文件清单" : lang === "ms" ? "Senarai Semak Dokumen" : "Document Checklist"} className={inputCls} />
       </div>
 
       <div className="space-y-1.5">

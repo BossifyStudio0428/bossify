@@ -28,7 +28,7 @@ type Item = {
 
 function StockTakeReportPage() {
   const { id } = Route.useParams();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { hasFullAccess, showUpgrade } = useSubscription();
   const [take, setTake] = useState<Take | null>(null);
@@ -211,7 +211,7 @@ function StockTakeReportPage() {
         doc.setTextColor(0);
       }
       await savePdf(doc, `stock-take-${id.slice(0, 8)}.pdf`);
-      toast.success("PDF ready");
+      toast.success((lang === "zh" ? "PDF 已生成" : lang === "ms" ? "PDF sedia" : "PDF ready"));
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : t("pdf_failed"));
     } finally {
