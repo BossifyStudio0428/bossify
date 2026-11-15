@@ -637,7 +637,8 @@ function CustomersPage() {
 
       <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
         {/* Source */}
-        {tiktokCustomerCount > 0 && ([
+        {/* Always shown, even before the first TikTok buyer arrives */}
+        {([
           { k: "own", label: lang === "zh" ? "自己的客户" : lang === "ms" ? "Sendiri" : "Own", n: customers.length - tiktokCustomerCount },
           { k: "tiktok", label: "TikTok", n: tiktokCustomerCount },
         ] as const).map((f) => {

@@ -636,7 +636,8 @@ function InventoryPage() {
       {(tiktokItemCount > 0 || categories.length > 0 || items.length > 0) && (
         <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
           {/* Source */}
-          {tiktokItemCount > 0 && (
+          {/* Always shown, even before the first TikTok product is synced */}
+          {(
             <>
               {([
                 { k: "manual", label: lang === "zh" ? "手动添加" : lang === "ms" ? "Tambah manual" : "Manual", n: items.length - tiktokItemCount },
