@@ -999,35 +999,44 @@ function OrdersPage() {
         </div>
       </div>
 
-      {/* Source filter — only when there is more than one source to tell apart */}
-      {sourceCounts.size > 1 && (
-        <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
-          <div className="flex gap-2 w-max">
-            {["all", ...Array.from(sourceCounts.keys()).sort((a, b) => (sourceCounts.get(b) ?? 0) - (sourceCounts.get(a) ?? 0))].map((k) => {
-              const isActive = sourceFilter === k;
-              const label = k === "all"
-                ? `${lang === "zh" ? "全部来源" : lang === "ms" ? "Semua sumber" : "All sources"} (${orders.length})`
-                : `${orderSourceLabel(k, lang)} (${sourceCounts.get(k) ?? 0})`;
-              return (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setSourceFilter(k)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-colors ${
-                    isActive
-                      ? k === "tiktok"
-                        ? "bg-black text-white border-black"
-                        : "bg-primary text-primary-foreground border-primary"
-                      : "bg-card text-foreground border-border"
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+      {/* Source: always shown, so manual and TikTok orders are one tap apart.
+          Other sources (order form, dine-in...) appear only when they exist. */}
+      {(() => {
+        const extra = Array.from(sourceCounts.keys())
+          .filter((k) => k !== "manual" && k !== "tiktok")
+          .sort((a, b) => (sourceCounts.get(b) ?? 0) - (sourceCounts.get(a) ?? 0));
+        const keys = ["all", "manual", "tiktok", ...extra];
+        return (
+          <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
+            <div className="inline-flex gap-1 p-1 rounded-2xl bg-muted/60 border border-border/50 w-max">
+              {keys.map((k) => {
+                const isActive = sourceFilter === k;
+                const count = k === "all" ? orders.length : (sourceCounts.get(k) ?? 0);
+                const name = k === "all"
+                  ? (lang === "zh" ? "全部" : lang === "ms" ? "Semua" : "All")
+                  : orderSourceLabel(k, lang);
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setSourceFilter(k)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                      isActive
+                        ? k === "tiktok"
+                          ? "bg-black text-white shadow-sm"
+                          : "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {name}
+                    <span className={`text-[10px] font-bold ${isActive && k === "tiktok" ? "text-white/70" : "text-muted-foreground"}`}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {(() => {
         const allCats = Array.from(new Set(Object.values(orderCategories).flatMap((s) => Array.from(s))));
