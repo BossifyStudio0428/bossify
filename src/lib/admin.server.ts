@@ -274,6 +274,37 @@ export async function loadAdminOverviewForUser(userId: string) {
   return { isAdmin: true, users, orders, summary };
 }
 
+/** Orders for the admin Orders tab. With olderThanDays, returns the OLDEST
+ *  orders created before that cutoff (oldest first) so stale records can be
+ *  found and cleaned up; without it, the latest 200. */
+export async function listOrdersForAdmin(adminUserId: string, olderThanDays: number | null) {
+  await assertAdmin(adminUserId);
+  let q = supabaseAdmin
+    .from("orders")
+    .select("id,code,user_id,customer_name,product,amount,status,order_source,created_at");
+  if (olderThanDays && olderThanDays > 0) {
+    const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000).toISOString();
+    q = q.lt("created_at", cutoff).order("created_at", { ascending: true });
+  } else {
+    q = q.order("created_at", { ascending: false });
+  }
+  const { data, error } = await q.limit(200);
+  if (error) throw new Error(`Unable to load orders: ${error.message}`);
+  return { orders: ((data ?? []) as any[]) as AdminRecentOrder[] };
+}
+
+/** Permanently deletes the given orders (any user's). Admin only; the UI
+ *  asks for confirmation first. Stock is handled by the database's delete
+ *  trigger (it only puts stock back for orders that took it out). */
+export async function deleteOrdersForAdmin(adminUserId: string, orderIds: string[]) {
+  await assertAdmin(adminUserId);
+  const ids = Array.from(new Set(orderIds)).slice(0, 200);
+  if (ids.length === 0) return { deleted: 0 };
+  const { data, error } = await supabaseAdmin.from("orders").delete().in("id", ids).select("id");
+  if (error) throw new Error(`Unable to delete orders: ${error.message}`);
+  return { deleted: (data ?? []).length };
+}
+
 export async function getAiUsageStatsForAdmin(userId: string): Promise<AiUsageStats> {
   await assertAdmin(userId);
 

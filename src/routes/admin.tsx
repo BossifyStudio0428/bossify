@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ChevronLeft, Sparkles, FlaskConical, Crown, Bot, CheckCircle2, RefreshCw, Users,
-  Wallet, Store, AlertTriangle, Copy, Search,
+  Wallet, Store, AlertTriangle, Copy, Search, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,8 @@ import { isPaidStatus } from "@/lib/orderMath";
 import {
   getAiUsageStats,
   loadAdminOverview,
+  listAdminOrders,
+  deleteAdminOrders,
   revokeAdminSubscriptionPlan,
   setAdminSubscriptionPlan,
   type AiUsageStats,
@@ -65,6 +67,8 @@ function AdminPage() {
   const setAdminSubscriptionPlanFn = useServerFn(setAdminSubscriptionPlan);
   const revokeAdminSubscriptionPlanFn = useServerFn(revokeAdminSubscriptionPlan);
   const getAiUsageStatsFn = useServerFn(getAiUsageStats);
+  const listAdminOrdersFn = useServerFn(listAdminOrders);
+  const deleteAdminOrdersFn = useServerFn(deleteAdminOrders);
 
   const [tab, setTab] = useState<Tab>("overview");
   const [aiStats, setAiStats] = useState<AiUsageStats | null>(null);
@@ -83,6 +87,13 @@ function AdminPage() {
   const [userFilter, setUserFilter] = useState<UserFilter>("all");
   const [userSearch, setUserSearch] = useState("");
   const [orderSearch, setOrderSearch] = useState("");
+  // Orders tab: 0 = latest 200; otherwise the oldest orders older than N days.
+  const [orderAge, setOrderAge] = useState<0 | 30 | 90 | 180>(0);
+  const [agedOrders, setAgedOrders] = useState<AdminRecentOrder[] | null>(null);
+  const [agedLoading, setAgedLoading] = useState(false);
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [confirmDeleteOrders, setConfirmDeleteOrders] = useState<AdminRecentOrder[] | null>(null);
+  const [deletingOrders, setDeletingOrders] = useState(false);
 
   const callAdminApi = useCallback(
     async (body: Record<string, unknown>) => {
@@ -190,6 +201,47 @@ function AdminPage() {
     if (tab === "ai" && isAdmin && !aiStats && !aiLoading) loadAiStats();
   }, [tab, isAdmin, aiStats, aiLoading, loadAiStats]);
 
+  const loadAgedOrders = useCallback(async (days: number) => {
+    setAgedLoading(true);
+    try {
+      const r = (isNativeWebView()
+        ? await callAdminApi({ action: "list_orders", olderThanDays: days })
+        : await listAdminOrdersFn({ data: { olderThanDays: days } })) as { orders?: AdminRecentOrder[] };
+      setAgedOrders(r.orders ?? []);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to load");
+      setAgedOrders([]);
+    } finally {
+      setAgedLoading(false);
+    }
+  }, [callAdminApi, listAdminOrdersFn]);
+
+  useEffect(() => {
+    setSelectedOrders(new Set());
+    if (!isAdmin) return;
+    if (orderAge === 0) { setAgedOrders(null); return; }
+    loadAgedOrders(orderAge);
+  }, [orderAge, isAdmin, loadAgedOrders]);
+
+  const deleteOrdersNow = async (list: AdminRecentOrder[]) => {
+    setDeletingOrders(true);
+    try {
+      const orderIds = list.map((o) => o.id);
+      const r = (isNativeWebView()
+        ? await callAdminApi({ action: "delete_orders", orderIds })
+        : await deleteAdminOrdersFn({ data: { orderIds } })) as { deleted?: number };
+      toast.success(lang === "zh" ? `已删除 ${r.deleted ?? 0} 张订单` : `Deleted ${r.deleted ?? 0} order(s)`);
+      setConfirmDeleteOrders(null);
+      setSelectedOrders(new Set());
+      await loadAll().catch(() => undefined);
+      if (orderAge !== 0) await loadAgedOrders(orderAge);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("update_failed"));
+    } finally {
+      setDeletingOrders(false);
+    }
+  };
+
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.business_name || u.id.slice(0, 8)])), [users]);
 
   if (checking) return <p className="p-6 text-sm text-muted-foreground">{t("admin_checking")}</p>;
@@ -254,7 +306,8 @@ function AdminPage() {
     .sort((a, b) => (b.tiktok?.last_synced_at ?? "").localeCompare(a.tiktok?.last_synced_at ?? ""));
 
   const orderSearchLc = orderSearch.trim().toLowerCase();
-  const filteredOrders = allOrders.filter((o) => {
+  const ordersSource = orderAge === 0 ? allOrders : (agedOrders ?? []);
+  const filteredOrders = ordersSource.filter((o) => {
     if (orderFilter === "paid" && !isPaidStatus(o.status)) return false;
     if (orderFilter === "unpaid" && o.status !== "Unpaid") return false;
     if (orderFilter === "other" && (isPaidStatus(o.status) || o.status === "Unpaid")) return false;
@@ -761,10 +814,73 @@ function AdminPage() {
               </button>
             ))}
           </div>
-          <p className="text-[11px] text-muted-foreground px-1">{L("显示最近 200 张订单。", "Showing the latest 200 orders.")}</p>
+          {/* How old */}
+          <div className="flex gap-1 p-1 rounded-2xl bg-muted/60 border border-border/50 w-max max-w-full overflow-x-auto scrollbar-none">
+            {([
+              { k: 0, label: L("最新", "Latest") },
+              { k: 30, label: L("超过 30 天", "Over 30 days") },
+              { k: 90, label: L("超过 90 天", "Over 90 days") },
+              { k: 180, label: L("超过 180 天", "Over 180 days") },
+            ] as const).map((f) => (
+              <button
+                key={f.k}
+                onClick={() => setOrderAge(f.k)}
+                className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${orderAge === f.k ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground px-1">
+            {orderAge === 0
+              ? L("显示最近 200 张订单。", "Showing the latest 200 orders.")
+              : L(`显示 ${orderAge} 天前最旧的 200 张订单。`, `Showing the oldest 200 orders from over ${orderAge} days ago.`)}
+          </p>
+
+          {/* Select / delete bar */}
+          {filteredOrders.length > 0 && (
+            <div className="flex items-center gap-3 px-1">
+              <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-primary"
+                  checked={filteredOrders.length > 0 && filteredOrders.every((o) => selectedOrders.has(o.id))}
+                  onChange={(e) => {
+                    const next = new Set(selectedOrders);
+                    for (const o of filteredOrders) {
+                      if (e.target.checked) next.add(o.id); else next.delete(o.id);
+                    }
+                    setSelectedOrders(next);
+                  }}
+                />
+                {L("全选", "Select all")} ({filteredOrders.length})
+              </label>
+              {selectedOrders.size > 0 && (
+                <button
+                  onClick={() => setConfirmDeleteOrders(ordersSource.filter((o) => selectedOrders.has(o.id)))}
+                  className="ml-auto inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-600 text-white text-xs font-semibold active:scale-95 transition-transform"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> {L(`删除所选（${selectedOrders.size}）`, `Delete selected (${selectedOrders.size})`)}
+                </button>
+              )}
+            </div>
+          )}
+
+          {agedLoading && <p className="text-center text-sm text-muted-foreground py-4">Loading…</p>}
           <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] divide-y divide-border/50 overflow-hidden">
             {filteredOrders.map((o) => (
-              <div key={o.id} className="px-4 py-3 flex items-start gap-3">
+              <div key={o.id} className={`px-4 py-3 flex items-start gap-3 ${selectedOrders.has(o.id) ? "bg-red-500/5" : ""}`}>
+                <input
+                  type="checkbox"
+                  aria-label={o.code}
+                  className="mt-1 h-4 w-4 shrink-0 accent-primary"
+                  checked={selectedOrders.has(o.id)}
+                  onChange={(e) => {
+                    const next = new Set(selectedOrders);
+                    if (e.target.checked) next.add(o.id); else next.delete(o.id);
+                    setSelectedOrders(next);
+                  }}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-foreground flex items-center gap-1.5 min-w-0">
                     <span className="truncate">{o.code}</span>
@@ -777,6 +893,14 @@ function AdminPage() {
                   <p className="text-sm font-bold text-foreground">{rm(o.amount)}</p>
                   <p className={`text-[11px] font-semibold ${isPaidStatus(o.status) ? "text-emerald-600" : o.status === "Unpaid" ? "text-red-600" : "text-muted-foreground"}`}>{statusText(o.status)}</p>
                 </div>
+                <button
+                  onClick={() => setConfirmDeleteOrders([o])}
+                  aria-label={L("删除", "Delete")}
+                  title={L("删除这张订单", "Delete this order")}
+                  className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-500/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             ))}
             {filteredOrders.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">{L("没有订单", "No orders")}</p>}
@@ -850,6 +974,48 @@ function AdminPage() {
           )}
         </div>
       )}
+
+      {confirmDeleteOrders && confirmDeleteOrders.length > 0 && (() => {
+        const list = confirmDeleteOrders;
+        const total = list.reduce((sum, o) => sum + Number(o.amount ?? 0), 0);
+        const shops = new Set(list.map((o) => o.user_id)).size;
+        return (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={() => !deletingOrders && setConfirmDeleteOrders(null)}>
+            <div className="w-full max-w-[420px] bg-card rounded-t-3xl sm:rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-base font-bold flex items-center gap-2 text-red-600">
+                <Trash2 className="h-4 w-4" /> {L(`永久删除 ${list.length} 张订单？`, `Permanently delete ${list.length} order(s)?`)}
+              </h3>
+              <div className="rounded-2xl bg-muted/40 border border-border/50 p-3 text-xs space-y-1">
+                {list.slice(0, 5).map((o) => (
+                  <p key={o.id} className="flex justify-between gap-2">
+                    <span className="truncate">{o.code} · {userMap.get(o.user_id) ?? o.user_id.slice(0, 8)}</span>
+                    <span className="shrink-0 font-semibold">{rm(o.amount)}</span>
+                  </p>
+                ))}
+                {list.length > 5 && <p className="text-muted-foreground">… {L(`还有 ${list.length - 5} 张`, `and ${list.length - 5} more`)}</p>}
+                <p className="pt-1 border-t border-border/50 flex justify-between font-semibold">
+                  <span>{L(`共 ${shops} 个店`, `${shops} shop(s)`)}</span>
+                  <span>{rm(total)}</span>
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {L(
+                  "这些是用户自己的生意记录，删了就找不回来，他们的报表和利润也会跟着变。扣过库存的订单会把库存加回去。",
+                  "These are the users' own business records. Deleting them can't be undone and changes their reports and profit. Orders that took stock out give it back.",
+                )}
+              </p>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button disabled={deletingOrders} onClick={() => setConfirmDeleteOrders(null)} className="py-3 rounded-xl bg-muted text-foreground font-semibold text-sm">
+                  {t("cancel")}
+                </button>
+                <button disabled={deletingOrders} onClick={() => deleteOrdersNow(list)} className="py-3 rounded-xl bg-red-600 text-white font-semibold text-sm disabled:opacity-60">
+                  {deletingOrders ? "…" : L("永久删除", "Delete")}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {grantOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={() => setGrantOpen(null)}>

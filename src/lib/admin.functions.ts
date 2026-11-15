@@ -65,3 +65,19 @@ export const getAiUsageStats = createServerFn({ method: "POST" })
     const { getAiUsageStatsForAdmin } = await import("@/lib/admin.server");
     return getAiUsageStatsForAdmin(context.userId);
   });
+
+export const listAdminOrders = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ olderThanDays: z.number().int().min(1).max(3650).nullable() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { listOrdersForAdmin } = await import("@/lib/admin.server");
+    return listOrdersForAdmin(context.userId, data.olderThanDays);
+  });
+
+export const deleteAdminOrders = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orderIds: z.array(z.string().uuid()).min(1).max(200) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { deleteOrdersForAdmin } = await import("@/lib/admin.server");
+    return deleteOrdersForAdmin(context.userId, data.orderIds);
+  });

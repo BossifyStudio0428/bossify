@@ -22,6 +22,8 @@ const Schema = z.discriminatedUnion("action", [
     plan: z.enum(["pro", "team_starter", "team_pro", "team_business"]).optional(),
   }),
   z.object({ action: z.literal("revoke_plan"), userId: z.string().uuid() }),
+  z.object({ action: z.literal("list_orders"), olderThanDays: z.number().int().min(1).max(3650).nullable() }),
+  z.object({ action: z.literal("delete_orders"), orderIds: z.array(z.string().uuid()).min(1).max(200) }),
 ]);
 
 function json(status: number, body: unknown): Response {
@@ -69,6 +71,8 @@ export const Route = createFileRoute("/api/public/admin")({
 
         try {
           const {
+            deleteOrdersForAdmin,
+            listOrdersForAdmin,
             getAiUsageStatsForAdmin,
             loadAdminOverviewForUser,
             revokeAdminSubscriptionPlanForUser,
@@ -91,6 +95,12 @@ export const Route = createFileRoute("/api/public/admin")({
                 parsed.data.plan ?? "pro",
               ),
             );
+          }
+          if (parsed.data.action === "list_orders") {
+            return json(200, await listOrdersForAdmin(userId, parsed.data.olderThanDays));
+          }
+          if (parsed.data.action === "delete_orders") {
+            return json(200, await deleteOrdersForAdmin(userId, parsed.data.orderIds));
           }
           return json(200, await revokeAdminSubscriptionPlanForUser(userId, parsed.data.userId));
         } catch (error) {
