@@ -609,127 +609,97 @@ function InventoryPage() {
         </button>
       )}
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("search_products")}
-          className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
-        />
+      {/* Filters, compact: row 1 = search + layout; row 2 = one scrolling
+          strip with source, category and (desktop) health. */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("search_products")}
+            className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+          />
+        </div>
+        {!loading && items.length > 0 && (
+          <ViewSwitch
+            value={prodView}
+            onChange={setProdView}
+            options={[
+              { key: "list", label: lang === "zh" ? "列表" : lang === "ms" ? "Senarai" : "List", icon: ListIcon },
+              { key: "grid", label: lang === "zh" ? "图片" : lang === "ms" ? "Gambar" : "Pictures", icon: LayoutGrid },
+            ]}
+          />
+        )}
       </div>
 
-      {/* Source filter — only worth showing once there is a mix to tell apart */}
-      {tiktokItemCount > 0 && (
-        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
-          {(
-            [
-              { k: "all", label: `${lang === "zh" ? "全部来源" : lang === "ms" ? "Semua sumber" : "All sources"} (${items.length})` },
-              { k: "tiktok", label: `TikTok (${tiktokItemCount})` },
-              { k: "manual", label: `${lang === "zh" ? "手动添加" : lang === "ms" ? "Tambah manual" : "Manual"} (${items.length - tiktokItemCount})` },
-            ] as const
-          ).map((f) => (
-            <button
-              key={f.k}
-              type="button"
-              onClick={() => setSourceFilter(f.k)}
-              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                sourceFilter === f.k
-                  ? f.k === "tiktok"
-                    ? "bg-black text-white border-black"
-                    : "bg-primary text-primary-foreground border-primary"
-                  : "bg-card text-foreground border-border"
+      {(tiktokItemCount > 0 || categories.length > 0 || items.length > 0) && (
+        <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
+          {/* Source */}
+          {tiktokItemCount > 0 && (
+            <>
+              {([
+                { k: "manual", label: lang === "zh" ? "手动添加" : lang === "ms" ? "Tambah manual" : "Manual", n: items.length - tiktokItemCount },
+                { k: "tiktok", label: "TikTok", n: tiktokItemCount },
+              ] as const).map((f) => {
+                const on = sourceFilter === f.k;
+                return (
+                  <button
+                    key={f.k}
+                    type="button"
+                    onClick={() => setSourceFilter(on ? "all" : f.k)}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                      on ? (f.k === "tiktok" ? "bg-black text-white" : "bg-primary text-primary-foreground") : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {f.label}
+                    <span className="text-[10px] font-bold opacity-70">{f.n}</span>
+                  </button>
+                );
+              })}
+            </>
+          )}
+
+          {/* Category */}
+          {categories.length > 0 && (
+            <select
+              value={activeCategory}
+              onChange={(e) => setActiveCategory(e.target.value)}
+              className={`flex-shrink-0 h-8 pl-3 pr-7 rounded-full text-xs font-semibold border-0 outline-none ${
+                activeCategory === "__all" ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"
               }`}
             >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      )}
+              <option value="__all">{lang === "zh" ? "全部分类" : lang === "ms" ? "Semua kategori" : "All categories"}</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>{formatCategory(c, t)}</option>
+              ))}
+            </select>
+          )}
 
-      {categories.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setActiveCategory("__all")}
-            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-              activeCategory === "__all"
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-foreground border-border"
+          {/* Health (applies to the desktop table and the picture grid) */}
+          <select
+            value={healthFilter}
+            onChange={(e) => setHealthFilter(e.target.value as typeof healthFilter)}
+            className={`${prodView === "grid" ? "" : "hidden lg:block"} flex-shrink-0 h-8 pl-3 pr-7 rounded-full text-xs font-semibold border-0 outline-none ${
+              healthFilter === "all" ? "bg-muted text-muted-foreground" : healthFilter === "delisted" ? "bg-rose-600 text-white" : "bg-primary text-primary-foreground"
             }`}
           >
-            {t("all")}
-          </button>
-          {categories.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setActiveCategory(c)}
-              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                activeCategory === c
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-card text-foreground border-border"
-              }`}
-            >
-              {formatCategory(c, t)}
-            </button>
-          ))}
-        </div>
-      )}
+            <option value="all">{lang === "zh" ? "全部状况" : lang === "ms" ? "Semua status" : "Any status"}</option>
+            <option value="profitable">{lang === "zh" ? "盈利良好" : lang === "ms" ? "Menguntungkan" : "Profitable"}</option>
+            <option value="low_profit">{lang === "zh" ? "低利润" : lang === "ms" ? "Untung Rendah" : "Low Profit"}</option>
+            <option value="loss_making">{lang === "zh" ? "亏本" : lang === "ms" ? "Rugi" : "Loss-Making"}</option>
+            <option value="low_stock">{lang === "zh" ? "库存低" : lang === "ms" ? "Stok Rendah" : "Low Stock"}</option>
+            <option value="out_of_stock">{lang === "zh" ? "断货" : lang === "ms" ? "Kehabisan" : "Out of Stock"}</option>
+            <option value="delisted">
+              {(lang === "zh" ? "TikTok 已下架" : lang === "ms" ? "Dinyahsenarai di TikTok" : "Delisted on TikTok") + (delistedCount > 0 ? ` (${delistedCount})` : "")}
+            </option>
+          </select>
 
-      {/* Desktop-only health/profit filter chips */}
-      <div className="hidden lg:flex lg:gap-2 lg:flex-wrap">
-        {(
-          [
-            { k: "all", label: lang === "zh" ? "全部" : lang === "ms" ? "Semua" : "All" },
-            { k: "profitable", label: lang === "zh" ? "盈利良好" : lang === "ms" ? "Menguntungkan" : "Profitable" },
-            { k: "low_profit", label: lang === "zh" ? "低利润" : lang === "ms" ? "Untung Rendah" : "Low Profit" },
-            { k: "loss_making", label: lang === "zh" ? "亏本" : lang === "ms" ? "Rugi" : "Loss-Making" },
-            { k: "low_stock", label: lang === "zh" ? "库存低" : lang === "ms" ? "Stok Rendah" : "Low Stock" },
-            { k: "out_of_stock", label: lang === "zh" ? "断货" : lang === "ms" ? "Kehabisan" : "Out of Stock" },
-            {
-              k: "delisted",
-              label: `${lang === "zh" ? "TikTok 已下架" : lang === "ms" ? "Dinyahsenarai di TikTok" : "Delisted on TikTok"}${
-                delistedCount > 0 ? ` (${delistedCount})` : ""
-              }`,
-            },
-          ] as const
-        ).map((f) => (
-          <button
-            key={f.k}
-            type="button"
-            onClick={() => setHealthFilter(f.k)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-              healthFilter === f.k
-                ? f.k === "delisted"
-                  ? "bg-rose-600 text-white border-rose-600"
-                  : "bg-primary text-primary-foreground border-primary"
-                : f.k === "delisted" && delistedCount > 0
-                  ? "bg-rose-500/10 text-rose-700 border-rose-300"
-                  : "bg-card text-foreground border-border"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Layout switch */}
-      {!loading && items.length > 0 && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {(prodView === "grid" ? desktopVisible : visible).length} {lang === "zh" ? "个产品" : lang === "ms" ? "produk" : "products"}
-          </span>
-          <div className="ml-auto">
-            <ViewSwitch
-              value={prodView}
-              onChange={setProdView}
-              options={[
-                { key: "list", label: lang === "zh" ? "列表" : lang === "ms" ? "Senarai" : "List", icon: ListIcon },
-                { key: "grid", label: lang === "zh" ? "图片" : lang === "ms" ? "Gambar" : "Pictures", icon: LayoutGrid },
-              ]}
-            />
-          </div>
+          {!loading && items.length > 0 && (
+            <span className="ml-auto flex-shrink-0 pl-2 text-[11px] text-muted-foreground">
+              {(prodView === "grid" ? desktopVisible : visible).length} {lang === "zh" ? "个" : lang === "ms" ? "produk" : "items"}
+            </span>
+          )}
         </div>
       )}
 

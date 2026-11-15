@@ -990,153 +990,151 @@ function OrdersPage() {
         </button>
       )}
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-        <input
-          type="search"
-          inputMode="search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={t("search_orders_placeholder")}
-          className="w-full h-10 pl-9 pr-9 rounded-2xl bg-card border border-border text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground active:bg-muted"
-            aria-label="clear"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
-      <div className="-mx-5 px-5 overflow-x-auto scrollbar-none" id="tour-orders-filters">
-        <div className="flex gap-2 w-max">
-          {filters.filter((f) => f !== "Other" || otherStatusCount > 0 || active === "Other").map((f) => {
-            const isActive = active === f;
-            const label = f === "All" ? t("all") : f === "Paid" ? t("paid") : f === "Unpaid" ? t("unpaid") : f === "Other"
-              ? `${lang === "zh" ? "已取消 / 退款" : lang === "ms" ? "Batal / Pulang" : "Cancelled / refunded"} (${otherStatusCount})`
-              : t("pending");
-            return (
-              <button
-                key={f}
-                onClick={() => setActive(f)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {label}
-                {f === "Unpaid" && unpaidCount > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? "bg-white/25" : "bg-red-500 text-white"}`}>
-                    {unpaidCount}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+      {/* Filters, compact: row 1 = search + date + layout; row 2 = one
+          scrolling strip with status, source and category. (They used to
+          take six rows.) */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <input
+            type="search"
+            inputMode="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t("search_orders_placeholder")}
+            className="w-full h-10 pl-9 pr-9 rounded-2xl bg-card border border-border text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground active:bg-muted"
+              aria-label="clear"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
+        <button
+          type="button"
+          onClick={() => setDateOpen((v) => !v)}
+          aria-label={lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date"}
+          className={`h-10 shrink-0 px-3 rounded-2xl text-xs font-semibold flex items-center gap-1.5 border transition-colors ${
+            dateFilterActive ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border"
+          }`}
+        >
+          <Calendar className="h-4 w-4" />
+          <span className="hidden sm:inline">{lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date"}</span>
+        </button>
+        <ViewSwitch
+          value={ordersView}
+          onChange={setOrdersView}
+          options={[
+            { key: "list", label: lang === "zh" ? "列表" : lang === "ms" ? "Senarai" : "List", icon: ListIcon },
+            { key: "products", label: lang === "zh" ? "按产品" : lang === "ms" ? "Ikut produk" : "By product", icon: LayoutGrid },
+          ]}
+        />
       </div>
 
-      {/* Source: always shown, so manual and TikTok orders are one tap apart.
-          Other sources (order form, dine-in...) appear only when they exist. */}
       {(() => {
         const extra = Array.from(sourceCounts.keys())
           .filter((k) => k !== "manual" && k !== "tiktok")
           .sort((a, b) => (sourceCounts.get(b) ?? 0) - (sourceCounts.get(a) ?? 0));
-        const keys = ["all", "manual", "tiktok", ...extra];
+        const sourceKeys = ["all", "manual", "tiktok", ...extra];
+        const allCats = Array.from(new Set(Object.values(orderCategories).flatMap((set) => Array.from(set))));
+        const chip = (activeChip: boolean, dark = false) =>
+          `shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-colors ${
+            activeChip
+              ? dark ? "bg-black text-white" : "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground"
+          }`;
         return (
-          <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
-            <div className="inline-flex gap-1 p-1 rounded-2xl bg-muted/60 border border-border/50 w-max">
-              {keys.map((k) => {
+          <div className="-mx-5 px-5 overflow-x-auto scrollbar-none" id="tour-orders-filters">
+            <div className="flex items-center gap-1.5 w-max">
+              {/* Status */}
+              {filters.filter((f) => f !== "Other" || otherStatusCount > 0 || active === "Other").map((f) => {
+                const isActive = active === f;
+                const label = f === "All" ? t("all") : f === "Paid" ? t("paid") : f === "Unpaid" ? t("unpaid") : f === "Other"
+                  ? `${lang === "zh" ? "取消/退款" : lang === "ms" ? "Batal/Pulang" : "Cancelled"} ${otherStatusCount}`
+                  : t("pending");
+                return (
+                  <button key={f} onClick={() => setActive(f)} className={chip(isActive)}>
+                    {label}
+                    {f === "Unpaid" && unpaidCount > 0 && (
+                      <span className={`text-[10px] font-bold px-1.5 rounded-full ${isActive ? "bg-white/25" : "bg-red-500 text-white"}`}>
+                        {unpaidCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              <span className="shrink-0 mx-1 h-5 w-px bg-border" aria-hidden />
+
+              {/* Source */}
+              {sourceKeys.filter((k) => k !== "all").map((k) => {
                 const isActive = sourceFilter === k;
-                const count = k === "all" ? orders.length : (sourceCounts.get(k) ?? 0);
-                const name = k === "all"
-                  ? (lang === "zh" ? "全部" : lang === "ms" ? "Semua" : "All")
-                  : orderSourceLabel(k, lang);
                 return (
                   <button
                     key={k}
                     type="button"
-                    onClick={() => setSourceFilter(k)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
-                      isActive
-                        ? k === "tiktok"
-                          ? "bg-black text-white shadow-sm"
-                          : "bg-card text-foreground shadow-sm"
-                        : "text-muted-foreground"
-                    }`}
+                    onClick={() => setSourceFilter(isActive ? "all" : k)}
+                    className={chip(isActive, k === "tiktok")}
                   >
-                    {name}
-                    <span className={`text-[10px] font-bold ${isActive && k === "tiktok" ? "text-white/70" : "text-muted-foreground"}`}>{count}</span>
+                    {orderSourceLabel(k, lang)}
+                    <span className="text-[10px] font-bold opacity-70">{sourceCounts.get(k) ?? 0}</span>
                   </button>
                 );
               })}
+
+              {/* Category (a dropdown, not one chip per category) */}
+              {allCats.length > 0 && (
+                <>
+                  <span className="shrink-0 mx-1 h-5 w-px bg-border" aria-hidden />
+                  <select
+                    value={activeCategoryFilter}
+                    onChange={(e) => setActiveCategoryFilter(e.target.value)}
+                    className={`shrink-0 h-8 pl-3 pr-7 rounded-full text-xs font-semibold border-0 outline-none ${
+                      activeCategoryFilter === "__all" ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"
+                    }`}
+                  >
+                    <option value="__all">{lang === "zh" ? "全部分类" : lang === "ms" ? "Semua kategori" : "All categories"}</option>
+                    {allCats.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </>
+              )}
             </div>
           </div>
         );
       })()}
 
-      {(() => {
-        const allCats = Array.from(new Set(Object.values(orderCategories).flatMap((s) => Array.from(s))));
-        if (allCats.length === 0) return null;
-        return (
-          <div className="-mx-5 px-5 overflow-x-auto scrollbar-none">
-            <div className="flex gap-2 w-max">
-              <button
-                onClick={() => setActiveCategoryFilter("__all")}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${activeCategoryFilter === "__all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-              >
-                {lang === "zh" ? "全部分类" : lang === "ms" ? "Semua kategori" : "All categories"}
+      {/* Active date range / product: only shown when set */}
+      {(dateFilterActive || productFilter) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {dateFilterActive && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold pl-3 pr-1 py-1">
+              <Calendar className="h-3 w-3" /> {dateFrom || "…"} – {dateTo || "…"}
+              <button type="button" onClick={() => { setDateFrom(""); setDateTo(""); }} aria-label="clear" className="h-5 w-5 rounded-full bg-primary/15 flex items-center justify-center">
+                <X className="h-3 w-3" />
               </button>
-              {allCats.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setActiveCategoryFilter(c)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${activeCategoryFilter === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* Date range filter */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setDateOpen((v) => !v)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors border ${
-              dateFilterActive
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-foreground border-border"
-            }`}
-          >
-            <Calendar className="h-3.5 w-3.5" />
-            {lang === "zh" ? "时间" : lang === "ms" ? "Tarikh" : "Date"}
-            {dateFilterActive && <span className="text-[10px] opacity-80">●</span>}
-          </button>
-          {dateFilterActive && (
-            <button
-              type="button"
-              onClick={() => { setDateFrom(""); setDateTo(""); }}
-              className="text-[11px] text-muted-foreground underline"
-            >
-              {lang === "zh" ? "清除" : lang === "ms" ? "Buang" : "Clear"}
-            </button>
-          )}
-          {dateFilterActive && (
-            <span className="text-[11px] text-muted-foreground ml-auto">
-              {visibleByCategory.length} {lang === "zh" ? "条结果" : lang === "ms" ? "hasil" : "results"}
             </span>
           )}
+          {productFilter && (
+            <span className="min-w-0 inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold pl-3 pr-1 py-1">
+              <span className="truncate">{lang === "zh" ? "产品" : lang === "ms" ? "Produk" : "Product"}: {productFilter.name}</span>
+              <button type="button" onClick={() => setProductFilter(null)} aria-label="clear" className="h-5 w-5 rounded-full bg-primary/15 flex items-center justify-center">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+          <span className="text-[11px] text-muted-foreground ml-auto">
+            {visibleByCategory.length} {lang === "zh" ? "条结果" : lang === "ms" ? "hasil" : "results"}
+          </span>
         </div>
+      )}
+
         {dateOpen && (
           <div className="rounded-2xl bg-card border border-border/60 p-3 space-y-2 shadow-[var(--shadow-card)]">
             <div className="grid grid-cols-2 gap-2">
@@ -1190,42 +1188,6 @@ function OrdersPage() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Layout switch + "showing one product" chip */}
-      {!loading && (
-        <div className="flex items-center gap-2">
-          {productFilter ? (
-            <span className="min-w-0 inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold pl-3 pr-1 py-1">
-              <span className="truncate">{lang === "zh" ? "产品" : lang === "ms" ? "Produk" : "Product"}: {productFilter.name}</span>
-              <button
-                type="button"
-                onClick={() => setProductFilter(null)}
-                aria-label={lang === "zh" ? "清除" : "Clear"}
-                className="h-5 w-5 rounded-full bg-primary/15 flex items-center justify-center"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ) : (
-            <span className="text-xs text-muted-foreground">
-              {ordersView === "products"
-                ? `${productTiles.length} ${lang === "zh" ? "个产品" : lang === "ms" ? "produk" : "products"}`
-                : `${visibleByCategory.length} ${lang === "zh" ? "张订单" : lang === "ms" ? "pesanan" : "orders"}`}
-            </span>
-          )}
-          <div className="ml-auto">
-            <ViewSwitch
-              value={ordersView}
-              onChange={setOrdersView}
-              options={[
-                { key: "list", label: lang === "zh" ? "列表" : lang === "ms" ? "Senarai" : "List", icon: ListIcon },
-                { key: "products", label: lang === "zh" ? "按产品" : lang === "ms" ? "Ikut produk" : "By product", icon: LayoutGrid },
-              ]}
-            />
-          </div>
-        </div>
-      )}
 
       {/* By product: picture tiles; tap one to see all of its orders */}
       {!loading && ordersView === "products" && (

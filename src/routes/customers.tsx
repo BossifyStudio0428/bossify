@@ -600,116 +600,113 @@ function CustomersPage() {
         </div>
       )}
 
-      <div className="space-y-5 lg:space-y-0 lg:flex lg:flex-wrap lg:items-center lg:gap-4">
-      <div className="relative lg:flex-1 lg:min-w-[280px]">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t(searchKey)}
-          className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
-        />
-      </div>
-
-      {tiktokCustomerCount > 0 && (
-        <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide lg:order-last lg:basis-full">
-          {(
-            [
-              { k: "all", label: `${lang === "zh" ? "全部来源" : lang === "ms" ? "Semua sumber" : "All sources"} (${customers.length})` },
-              { k: "tiktok", label: `TikTok (${tiktokCustomerCount})` },
-              { k: "own", label: `${lang === "zh" ? "自己的客户" : lang === "ms" ? "Pelanggan sendiri" : "Own customers"} (${customers.length - tiktokCustomerCount})` },
-            ] as const
-          ).map((f) => (
-            <button
-              key={f.k}
-              type="button"
-              onClick={() => setSourceFilter(f.k)}
-              className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${
-                sourceFilter === f.k
-                  ? f.k === "tiktok"
-                    ? "bg-black text-white"
-                    : "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+      {/* Filters, compact: row 1 = search + date + layout; row 2 = one
+          scrolling strip with source, status, sort and package. */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t(searchKey)}
+            className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
+          />
         </div>
-      )}
-
-      {bizType !== "retail" && (
-        <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide lg:order-last lg:basis-full">
-          <button
-            onClick={() => setStatusFilter("all")}
-            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-          >
-            {t("all_statuses")}
-          </button>
-          {CUSTOMER_STATUS_ORDER.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${statusFilter === s ? CUSTOMER_STATUS_STYLES[s] + " ring-2 ring-offset-1 ring-current" : "bg-muted text-muted-foreground"}`}
-            >
-              <span className={`inline-block h-1.5 w-1.5 rounded-full ${CUSTOMER_STATUS_DOT[s]}`} /> {t(`cs_${s}` as any)}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 scrollbar-hide lg:shrink-0 lg:mx-0 lg:px-0">
-        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground pr-1">
-          {t("sort_by")}
-        </span>
-        {([
-          { id: "recent", label: t("sort_recent"), icon: Clock },
-          { id: "most_orders", label: t("sort_most_orders"), icon: Package },
-          { id: "top_spender", label: t("sort_top_spender"), icon: Gem },
-        ] as const).map((opt) => (
-          <button
-            key={opt.id}
-            type="button"
-            onClick={() => setSortBy(opt.id)}
-            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${
-              sortBy === opt.id
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            <opt.icon className="h-3 w-3 inline-block mr-1 -mt-0.5" />{opt.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-2 lg:shrink-0">
         <button
           type="button"
           onClick={() => setDateOpen((v) => !v)}
-          className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors border ${
-            dateFilterActive
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-card text-foreground border-border"
+          aria-label={dateLabel}
+          className={`h-10 shrink-0 px-3 rounded-2xl text-xs font-semibold flex items-center gap-1.5 border transition-colors ${
+            dateFilterActive ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border"
           }`}
         >
-          <Calendar className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{dateLabel}
-          {dateFilterActive && <span className="text-[10px] opacity-80">●</span>}
+          <Calendar className="h-4 w-4" />
+          <span className="hidden sm:inline">{dateLabel}</span>
         </button>
-        {dateFilterActive && (
-          <button
-            type="button"
-            onClick={() => { setDateFrom(""); setDateTo(""); }}
-            className="text-[11px] text-muted-foreground underline"
-          >
-            {lang === "zh" ? "清除" : lang === "ms" ? "Buang" : "Clear"}
-          </button>
-        )}
-        {dateFilterActive && (
-          <span className="text-[11px] text-muted-foreground ml-auto">
-            {visible.length} {lang === "zh" ? "条结果" : lang === "ms" ? "hasil" : "results"}
-          </span>
+        {!loading && customers.length > 0 && !(bizType === "education" && viewMode === "kanban") && (
+          <ViewSwitch
+            value={custView}
+            onChange={setCustView}
+            options={[
+              { key: "list", label: lang === "zh" ? "列表" : lang === "ms" ? "Senarai" : "List", icon: List },
+              { key: "grid", label: lang === "zh" ? "方格" : lang === "ms" ? "Grid" : "Grid", icon: LayoutGrid },
+            ]}
+          />
         )}
       </div>
+
+      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
+        {/* Source */}
+        {tiktokCustomerCount > 0 && ([
+          { k: "own", label: lang === "zh" ? "自己的客户" : lang === "ms" ? "Sendiri" : "Own", n: customers.length - tiktokCustomerCount },
+          { k: "tiktok", label: "TikTok", n: tiktokCustomerCount },
+        ] as const).map((f) => {
+          const on = sourceFilter === f.k;
+          return (
+            <button
+              key={f.k}
+              type="button"
+              onClick={() => setSourceFilter(on ? "all" : f.k)}
+              className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 transition active:scale-95 ${
+                on ? (f.k === "tiktok" ? "bg-black text-white" : "bg-primary text-primary-foreground") : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {f.label}
+              <span className="text-[10px] font-bold opacity-70">{f.n}</span>
+            </button>
+          );
+        })}
+
+        {/* Status (non-retail) */}
+        {bizType !== "retail" && (
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className={`shrink-0 h-8 pl-3 pr-7 rounded-full text-xs font-semibold border-0 outline-none ${
+              statusFilter === "all" ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"
+            }`}
+          >
+            <option value="all">{t("all_statuses")}</option>
+            {CUSTOMER_STATUS_ORDER.map((st) => (
+              <option key={st} value={st}>{t(`cs_${st}` as any)}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Sort */}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          aria-label={t("sort_by")}
+          className="shrink-0 h-8 pl-3 pr-7 rounded-full text-xs font-semibold border-0 outline-none bg-muted text-muted-foreground"
+        >
+          <option value="recent">{t("sort_by")}: {t("sort_recent")}</option>
+          <option value="most_orders">{t("sort_by")}: {t("sort_most_orders")}</option>
+          <option value="top_spender">{t("sort_by")}: {t("sort_top_spender")}</option>
+        </select>
+
+        {/* Package (property) */}
+        {bizType === "property" && packageOptions.length > 0 && (
+          <select
+            value={packageFilter}
+            onChange={(e) => setPackageFilter(e.target.value)}
+            className={`shrink-0 h-8 pl-3 pr-7 rounded-full text-xs font-semibold border-0 outline-none ${
+              packageFilter === "all" ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"
+            }`}
+          >
+            <option value="all">{t("all_packages")}</option>
+            <option value="__none__">{t("no_package")}</option>
+            {packageOptions.map(([id, name]) => (
+              <option key={id} value={id}>{name}</option>
+            ))}
+          </select>
+        )}
+
+        {!loading && customers.length > 0 && (
+          <span className="ml-auto shrink-0 pl-2 text-[11px] text-muted-foreground">
+            {visible.length} {lang === "zh" ? "个" : lang === "ms" ? "pelanggan" : "shown"}
+          </span>
+        )}
       </div>
 
       {dateOpen && (
@@ -743,50 +740,6 @@ function CustomersPage() {
         </div>
       )}
 
-      {bizType === "property" && packageOptions.length > 0 && (
-        <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
-          <button
-            onClick={() => setPackageFilter("all")}
-            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${packageFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-          >
-            <Package className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />{t("all_packages")}
-          </button>
-          <button
-            onClick={() => setPackageFilter("__none__")}
-            className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${packageFilter === "__none__" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-          >
-            {t("no_package")}
-          </button>
-          {packageOptions.map(([id, name]) => (
-            <button
-              key={id}
-              onClick={() => setPackageFilter(id)}
-              className={`shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full transition active:scale-95 ${packageFilter === id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-            >
-              {name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Layout switch */}
-      {!loading && customers.length > 0 && !(bizType === "education" && viewMode === "kanban") && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {visible.length} {lang === "zh" ? "个客户" : lang === "ms" ? "pelanggan" : "customers"}
-          </span>
-          <div className="ml-auto">
-            <ViewSwitch
-              value={custView}
-              onChange={setCustView}
-              options={[
-                { key: "list", label: lang === "zh" ? "列表" : lang === "ms" ? "Senarai" : "List", icon: List },
-                { key: "grid", label: lang === "zh" ? "方格" : lang === "ms" ? "Grid" : "Grid", icon: LayoutGrid },
-              ]}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Square tiles */}
       {!loading && customers.length > 0 && custView === "grid" && !(bizType === "education" && viewMode === "kanban") && (
