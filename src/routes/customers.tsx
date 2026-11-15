@@ -16,6 +16,7 @@ import { CasesKanban, type EduStageInfo } from "@/components/CasesKanban";
 import { PhoneInput } from "@/components/PhoneInput";
 import { stripEmoji } from "@/lib/wa";
 import { orderContributionProfit, PAID_STATUSES, isPaidStatus } from "@/lib/orderMath";
+import { ViewSwitch, useViewMode } from "@/components/ViewSwitch";
 
 function buildWA(phone: string, message: string) {
   const cleaned = phone.replace(/[^0-9]/g, "");
@@ -102,6 +103,8 @@ function CustomersPage() {
   const [eduDetails, setEduDetails] = useState<Record<string, { university_preference: string | null; application_status: string | null }>>({});
   const [eduInfo, setEduInfo] = useState<Record<string, EduStageInfo>>({});
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  // List or square tiles (remembered on this device).
+  const [custView, setCustView] = useViewMode("customers", ["list", "grid"] as const, "list");
   const [newCustomerOpen, setNewCustomerOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", followup_date: "", note: "" });
   const [newCustomerErrors, setNewCustomerErrors] = useState<Record<string, string>>({});
@@ -766,7 +769,63 @@ function CustomersPage() {
         </div>
       )}
 
-      <div className="lg:hidden space-y-3">
+      {/* Layout switch */}
+      {!loading && customers.length > 0 && !(bizType === "education" && viewMode === "kanban") && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {visible.length} {lang === "zh" ? "个客户" : lang === "ms" ? "pelanggan" : "customers"}
+          </span>
+          <div className="ml-auto">
+            <ViewSwitch
+              value={custView}
+              onChange={setCustView}
+              options={[
+                { key: "list", label: lang === "zh" ? "列表" : lang === "ms" ? "Senarai" : "List", icon: List },
+                { key: "grid", label: lang === "zh" ? "方格" : lang === "ms" ? "Grid" : "Grid", icon: LayoutGrid },
+              ]}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Square tiles */}
+      {!loading && customers.length > 0 && custView === "grid" && !(bizType === "education" && viewMode === "kanban") && (
+        visible.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-10">{t("no_customers")}</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {visible.map((c) => {
+              const tiktok = !!c.platform_buyer_id;
+              const owed = orderAgg[c.id]?.outstanding ?? 0;
+              return (
+                <Link
+                  key={c.id}
+                  to="/customer/$customerId"
+                  params={{ customerId: c.id }}
+                  className="aspect-square rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-3 flex flex-col items-center justify-center text-center gap-1 active:scale-[0.98] transition-transform"
+                >
+                  <div className={`h-12 w-12 rounded-full flex items-center justify-center font-bold text-lg ${tiktok ? "bg-black text-white" : "bg-primary/15 text-primary"}`}>
+                    {c.name.charAt(0).toUpperCase()}
+                  </div>
+                  <p className="w-full text-sm font-semibold text-foreground truncate">{c.name}</p>
+                  <CustomerSourceBadge customer={c} lang={lang} />
+                  <p className="text-[11px] text-muted-foreground">
+                    {c.total_orders} {t(ordersWordKey)}
+                  </p>
+                  <p className="text-sm font-bold text-primary">RM {Number(c.total_spent ?? 0).toFixed(0)}</p>
+                  {owed > 0 && (
+                    <p className="text-[10px] font-semibold text-amber-700">
+                      {lang === "zh" ? "未收" : lang === "ms" ? "Belum bayar" : "Owes"} RM {owed.toFixed(0)}
+                    </p>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      <div className={`${custView === "grid" && !(bizType === "education" && viewMode === "kanban") ? "hidden" : "lg:hidden"} space-y-3`}>
         {loading && (
           <div className="flex justify-center py-10 lg:col-span-full">
             <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
@@ -901,7 +960,7 @@ function CustomersPage() {
       </div>
 
       {!loading && customers.length > 0 && (
-        <div className="hidden lg:block lg:space-y-5">
+        <div className={`${custView === "grid" ? "hidden" : "hidden lg:block"} lg:space-y-5`}>
           <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
             <table className="w-full text-sm">
               <thead>
