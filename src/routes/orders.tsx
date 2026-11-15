@@ -740,7 +740,8 @@ function OrdersPage() {
         m.set(p.key, cur);
       }
     }
-    return Array.from(m.values()).sort((a, b) => b.orders - a.orders || b.sales - a.sales);
+    // Grids are A-Z (Chinese names by pinyin).
+    return Array.from(m.values()).sort((a, b) => a.name.localeCompare(b.name, lang === "zh" ? "zh-Hans-CN" : undefined, { sensitivity: "base", numeric: true }));
   })();
 
   const salesTrendByDay = new Map<string, number>();
