@@ -229,17 +229,24 @@ function CustomerDetail() {
             {customer.platform_buyer_id && (
               <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
                 <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-black text-white">TikTok</span>
-                {lang === "zh"
-                  ? "TikTok 买家，TikTok 不提供姓名和电话；可以自己改名"
-                  : lang === "ms"
-                    ? "Pembeli TikTok — TikTok tidak beri nama/telefon; anda boleh namakan semula"
-                    : "TikTok buyer — TikTok shares no name or phone; you can rename"}
+                {lang === "zh" ? "TikTok 买家编号" : lang === "ms" ? "ID pembeli TikTok" : "TikTok buyer ID"}
+                <button
+                  type="button"
+                  onClick={() => { navigator.clipboard?.writeText(customer.platform_buyer_id ?? "").then(() => toast.success(lang === "zh" ? "已复制" : "Copied")).catch(() => {}); }}
+                  className="font-mono text-foreground underline decoration-dotted"
+                  title={customer.platform_buyer_id ?? ""}
+                >
+                  …{(customer.platform_buyer_id ?? "").slice(-8)}
+                </button>
               </p>
             )}
             {customer.phone ? (
               <a href={`tel:${customer.phone}`} className="text-sm text-primary">{customer.phone}</a>
             ) : (
               <span className="text-xs text-muted-foreground">—</span>
+            )}
+            {customer.address && (
+              <p className="text-xs text-muted-foreground max-w-xs">📍 {customer.address}</p>
             )}
             {bizType === "retail" ? (
               (() => {
@@ -451,17 +458,24 @@ function CustomerDetail() {
         {customer.platform_buyer_id && (
           <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
             <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-black text-white">TikTok</span>
-            {lang === "zh"
-              ? "TikTok 买家，TikTok 不提供姓名和电话；可以自己改名"
-              : lang === "ms"
-                ? "Pembeli TikTok — TikTok tidak beri nama/telefon; anda boleh namakan semula"
-                : "TikTok buyer — TikTok shares no name or phone; you can rename"}
+            {lang === "zh" ? "TikTok 买家编号" : lang === "ms" ? "ID pembeli TikTok" : "TikTok buyer ID"}
+            <button
+              type="button"
+              onClick={() => { navigator.clipboard?.writeText(customer.platform_buyer_id ?? "").then(() => toast.success(lang === "zh" ? "已复制" : "Copied")).catch(() => {}); }}
+              className="font-mono text-foreground underline decoration-dotted"
+              title={customer.platform_buyer_id ?? ""}
+            >
+              …{(customer.platform_buyer_id ?? "").slice(-8)}
+            </button>
           </p>
         )}
         {customer.phone ? (
           <a href={`tel:${customer.phone}`} className="text-sm text-primary">{customer.phone}</a>
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
+        )}
+        {customer.address && (
+          <p className="text-xs text-muted-foreground max-w-xs">📍 {customer.address}</p>
         )}
         {bizType === "retail" ? (
           (() => {

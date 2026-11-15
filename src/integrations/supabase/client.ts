@@ -60,6 +60,8 @@ export type CustomerRow = {
   source?: string | null;
   /** TikTok buyer id (same value as orders.platform_buyer_id) for TikTok rows. */
   platform_buyer_id?: string | null;
+  /** Delivery address (TikTok customers: from their latest TikTok order). */
+  address?: string | null;
 };
 
 export type CustomerStatus = "enquiry" | "in_progress" | "completed" | "rejected";

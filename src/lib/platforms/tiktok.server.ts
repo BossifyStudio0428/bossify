@@ -171,6 +171,25 @@ export type TikTokOrderDetail = {
   update_time?: number;
   shipping_type?: string;
   tracking_number?: string;
+  // Buyer / delivery details, per TikTok Shop's Get Order Detail docs. NOT yet
+  // seen in a real payload for this shop — TikTok may mask them (e.g. a
+  // phone like "(+60)12****89") or leave them out depending on market and
+  // fulfilment type, so every use below treats them as optional.
+  recipient_address?: {
+    name?: string;
+    first_name?: string;
+    last_name?: string;
+    phone_number?: string;
+    full_address?: string;
+    address_detail?: string;
+    address_line1?: string;
+    address_line2?: string;
+    postal_code?: string;
+    region_code?: string;
+    district_info?: Array<{ address_level_name?: string; address_name?: string }>;
+  };
+  buyer_email?: string;
+  buyer_message?: string;
 };
 
 /**

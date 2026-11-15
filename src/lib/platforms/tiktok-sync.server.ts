@@ -268,6 +268,11 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
 
     const productSummary = engineItems.map((it) => it.productName).join(", ");
 
+    // Buyer details TikTok sends with the order, when it sends them. A
+    // masked phone (with "*") is useless for calling or WhatsApp, so it's
+    // left out; names and addresses are kept as TikTok gives them.
+    const buyer = tiktokBuyerDetails(detail);
+
     const { error: updErr } = await supabaseAdmin
       .from("orders" as any)
       .update({
@@ -282,6 +287,9 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
         affiliate_commission: 0,
         financial_status: "complete",
         platform_buyer_id: detail.user_id ?? null,
+        ...(buyer.name ? { customer_name: buyer.name } : {}),
+        ...(buyer.phone ? { phone: buyer.phone } : {}),
+        ...(buyer.address ? { delivery_address: buyer.address } : {}),
         // Corrects the webhook's initial guess: a COD order isn't truly
         // "Paid" until it's delivered (cash collected on delivery), which
         // mapTikTokStatus now accounts for using the real is_cod flag.
@@ -320,29 +328,7 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
     // Never blocks the order sync (e.g. if tiktok-customers.sql hasn't run).
     if (detail.user_id) {
       try {
-        const buyerId = String(detail.user_id);
-        const { data: existingCust, error: custReadErr } = await supabaseAdmin
-          .from("customers" as any)
-          .select("id")
-          .eq("user_id", userId)
-          .eq("platform_buyer_id", buyerId)
-          .maybeSingle();
-        if (!custReadErr) {
-          const now = new Date().toISOString();
-          if (existingCust) {
-            await supabaseAdmin.from("customers" as any).update({ last_order_at: now } as any).eq("id", (existingCust as any).id);
-          } else {
-            await supabaseAdmin.from("customers" as any).insert({
-              user_id: userId,
-              name: `TikTok #${buyerId.slice(-6)}`,
-              source: "tiktok",
-              platform_buyer_id: buyerId,
-              total_orders: 0,
-              total_spent: 0,
-              last_order_at: now,
-            } as any);
-          }
-        }
+        await upsertTikTokCustomer(userId, String(detail.user_id), buyer);
       } catch {
         // non-fatal
       }
@@ -405,4 +391,80 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
   }
 
   return result;
+}
+
+type TikTokBuyer = { name: string | null; phone: string | null; address: string | null };
+
+function clean(v: unknown): string | null {
+  const t = typeof v === "string" ? v.trim() : "";
+  return t ? t : null;
+}
+
+/** Name / phone / address from a TikTok order, when TikTok includes them. */
+function tiktokBuyerDetails(detail: TikTokOrderDetail): TikTokBuyer {
+  const ra = detail.recipient_address;
+  if (!ra) return { name: null, phone: null, address: null };
+  const name = clean(ra.name) ?? clean([ra.first_name, ra.last_name].filter(Boolean).join(" "));
+  const rawPhone = clean(ra.phone_number);
+  const phone = rawPhone && !rawPhone.includes("*") ? rawPhone.replace(/[^\d+]/g, "") || null : null;
+  const district = (ra.district_info ?? [])
+    .map((d) => clean(d.address_name))
+    .filter(Boolean)
+    .join(", ");
+  const address =
+    clean(ra.full_address) ??
+    clean([ra.address_detail ?? [ra.address_line1, ra.address_line2].filter(Boolean).join(" "), district, ra.postal_code].filter(Boolean).join(", "));
+  return { name, phone, address };
+}
+
+/**
+ * Makes sure this TikTok buyer has a row in the customer list, keyed by
+ * TikTok's buyer id. A new row takes TikTok's recipient name, or
+ * "TikTok #<last 6>" when there is none. An existing row keeps a name the
+ * seller typed; only the auto "TikTok #" placeholder is upgraded to a real
+ * name. Phone fills in only when empty; address follows the latest order.
+ * Totals are recalculated from orders by the customers page.
+ */
+async function upsertTikTokCustomer(userId: string, buyerId: string, buyer: TikTokBuyer) {
+  const now = new Date().toISOString();
+  const placeholder = `TikTok #${buyerId.slice(-6)}`;
+  // customers.address comes from stock-audit-round2.sql; fall back without it.
+  let withAddress = true;
+  let read = await supabaseAdmin
+    .from("customers" as any)
+    .select("id,name,phone,address")
+    .eq("user_id", userId)
+    .eq("platform_buyer_id", buyerId)
+    .maybeSingle();
+  if (read.error) {
+    withAddress = false;
+    read = await supabaseAdmin
+      .from("customers" as any)
+      .select("id,name,phone")
+      .eq("user_id", userId)
+      .eq("platform_buyer_id", buyerId)
+      .maybeSingle();
+    if (read.error) return; // tiktok-customers.sql not applied — skip quietly
+  }
+  const existing = read.data as any;
+  if (existing) {
+    const update: Record<string, unknown> = { last_order_at: now };
+    if (buyer.name && String(existing.name ?? "").startsWith("TikTok #")) update.name = buyer.name;
+    if (buyer.phone && !existing.phone) update.phone = buyer.phone;
+    if (withAddress && buyer.address) update.address = buyer.address;
+    await supabaseAdmin.from("customers" as any).update(update as any).eq("id", existing.id);
+    return;
+  }
+  const row: Record<string, unknown> = {
+    user_id: userId,
+    name: buyer.name ?? placeholder,
+    phone: buyer.phone,
+    source: "tiktok",
+    platform_buyer_id: buyerId,
+    total_orders: 0,
+    total_spent: 0,
+    last_order_at: now,
+  };
+  if (withAddress && buyer.address) row.address = buyer.address;
+  await supabaseAdmin.from("customers" as any).insert(row as any);
 }
