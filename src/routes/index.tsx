@@ -32,16 +32,12 @@ import { TeamBanner } from "@/components/TeamBanner";
 import { SuspendedTeamBanner } from "@/components/SuspendedTeamBanner";
 import { PendingInviteBanner } from "@/components/PendingInviteBanner";
 import { orderGrossProfit, isPaidStatus } from "@/lib/orderMath";
+import { orderStatusLabel, orderStatusClass } from "@/lib/orderStatus";
 import { RETAIL_ONLY_MODE, HIDE_TEAM_PLAN } from "@/lib/featureFlags";
 import { RetailOverview } from "@/components/RetailOverview";
 
 export const Route = createFileRoute("/")({ component: Index });
 
-const statusStyles: Record<string, string> = {
-  Paid: "bg-emerald-500/15 text-emerald-700",
-  Unpaid: "bg-red-500/15 text-red-600",
-  Pending: "bg-amber-500/15 text-amber-700",
-};
 
 function Index() {
   // Retail-only pivot: replace the legacy multi-vertical dashboard with
@@ -952,9 +948,9 @@ function Index() {
                   RM {Number(o.amount).toFixed(0)}
                 </p>
                 <span
-                  className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}
+                  className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${orderStatusClass(o.status)}`}
                 >
-                  {o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending")}
+                  {orderStatusLabel(o.status, lang)}
                 </span>
                 {o.phone && (
                   <a

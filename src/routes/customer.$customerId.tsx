@@ -16,14 +16,10 @@ import { AdditionalServices } from "@/components/AdditionalServices";
 import { reqStatusKey } from "@/routes/requirements";
 import { stripEmoji } from "@/lib/wa";
 import { orderContributionProfit, isPaidStatus } from "@/lib/orderMath";
+import { orderStatusLabel, orderStatusClass } from "@/lib/orderStatus";
 
 export const Route = createFileRoute("/customer/$customerId")({ component: CustomerDetail });
 
-const statusStyles: Record<string, string> = {
-  Paid: "bg-emerald-500/15 text-emerald-700",
-  Unpaid: "bg-red-500/15 text-red-600",
-  Pending: "bg-amber-500/15 text-amber-700",
-};
 
 const CUSTOMER_STATUS_ORDER: CustomerStatus[] = ["enquiry", "in_progress", "completed", "rejected"];
 const CUSTOMER_STATUS_STYLES: Record<CustomerStatus, string> = {
@@ -100,24 +96,9 @@ function CustomerDetail() {
 
   const handleDelete = async () => {
     if (!customer) return;
-    // Never for TikTok customers: this also deletes the customer's orders.
+    // Never for TikTok customers: the next sync would create the row again.
     if (customer.platform_buyer_id) { setConfirmDelete(false); return; }
-    const phoneDigits = (customer.phone || "").replace(/\D/g, "");
-    if (phoneDigits) {
-      const { error: phoneOrdersError } = await supabase
-        .from("orders")
-        .delete()
-        .eq("user_id", customer.user_id)
-        .eq("phone", phoneDigits);
-      if (phoneOrdersError) { toast.error(phoneOrdersError.message); return; }
-    }
-    const { error: nameOrdersError } = await supabase
-      .from("orders")
-      .delete()
-      .eq("user_id", customer.user_id)
-      .is("phone", null)
-      .eq("customer_name", customer.name);
-    if (nameOrdersError) { toast.error(nameOrdersError.message); return; }
+    // Orders are kept — only the customer record and follow-ups go.
     const { error: followUpError } = await supabase
       .from("follow_ups")
       .delete()
@@ -449,7 +430,7 @@ function CustomerDetail() {
                         {profit === null ? "—" : `RM ${profit.toFixed(2)}`}
                       </td>
                       <td className="px-4 py-2.5">
-                        <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}>{o.status}</span>
+                        <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${orderStatusClass(o.status)}`}>{orderStatusLabel(o.status, lang)}</span>
                       </td>
                       <td className="px-4 py-2.5 text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</td>
                     </tr>
@@ -619,8 +600,8 @@ function CustomerDetail() {
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold">RM {Number(o.amount).toFixed(0)}</p>
-                <span className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[o.status]}`}>
-                  {o.status}
+                <span className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${orderStatusClass(o.status)}`}>
+                  {orderStatusLabel(o.status, lang)}
                 </span>
               </div>
             </div>

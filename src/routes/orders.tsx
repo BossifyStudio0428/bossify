@@ -20,6 +20,7 @@ import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { orderCost, orderGrossProfit, orderContributionProfit, isPaidStatus } from "@/lib/orderMath";
 import { OrderSourceBadge, orderSourceKey, orderSourceLabel } from "@/components/OrderSourceBadge";
+import { orderStatusLabel, orderStatusClass, orderStatusDot } from "@/lib/orderStatus";
 import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -31,8 +32,8 @@ import {
 
 export const Route = createFileRoute("/orders")({ component: OrdersPage });
 
-type Filter = "All" | OrderStatus;
-const filters: Filter[] = ["All", "Unpaid", "Paid", "Pending"];
+type Filter = "All" | OrderStatus | "Other";
+const filters: Filter[] = ["All", "Unpaid", "Paid", "Pending", "Other"];
 
 const statusStyles: Record<OrderStatus, string> = {
   Paid: "bg-emerald-500/15 text-emerald-700",
@@ -664,7 +665,16 @@ function OrdersPage() {
     }
     return true;
   };
-  const byStatus = active === "All" ? orders : orders.filter((o) => o.status === active);
+  // "Paid" also covers Shipped / Delivered (still paid, just further along);
+  // Cancelled / Refunded / anything else lives under "Other".
+  const byStatus = active === "All"
+    ? orders
+    : active === "Paid"
+      ? orders.filter((o) => isPaidStatus(o.status))
+      : active === "Other"
+        ? orders.filter((o) => !isPaidStatus(o.status) && o.status !== "Unpaid" && o.status !== "Pending")
+        : orders.filter((o) => o.status === active);
+  const otherStatusCount = orders.filter((o) => !isPaidStatus(o.status) && o.status !== "Unpaid" && o.status !== "Pending").length;
   const bySource = sourceFilter === "all" ? byStatus : byStatus.filter((o) => orderSourceKey(o) === sourceFilter);
   const byDate = bySource.filter((o) => inDateRange(o.created_at));
   // Sources that actually occur, with counts, for the filter chips.
@@ -713,6 +723,8 @@ function OrdersPage() {
     { name: t("paid"), value: byDate.filter((o) => isPaidStatus(o.status)).length, color: "#10B981" },
     { name: t("unpaid"), value: byDate.filter((o) => o.status === "Unpaid").length, color: "#DC2626" },
     { name: t("pending"), value: byDate.filter((o) => o.status === "Pending").length, color: "#F59E0B" },
+    { name: orderStatusLabel("Cancelled", lang), value: byDate.filter((o) => (o.status as string) === "Cancelled").length, color: "#94A3B8" },
+    { name: orderStatusLabel("Refunded", lang), value: byDate.filter((o) => (o.status as string) === "Refunded").length, color: "#8B5CF6" },
   ].filter((d) => d.value > 0);
   const dateFilterActive = !!(dateFrom || dateTo);
   const todayCount = orders.filter((o) => new Date(o.created_at).toDateString() === new Date().toDateString()).length;
@@ -960,9 +972,11 @@ function OrdersPage() {
 
       <div className="-mx-5 px-5 overflow-x-auto scrollbar-none" id="tour-orders-filters">
         <div className="flex gap-2 w-max">
-          {filters.map((f) => {
+          {filters.filter((f) => f !== "Other" || otherStatusCount > 0 || active === "Other").map((f) => {
             const isActive = active === f;
-            const label = f === "All" ? t("all") : f === "Paid" ? t("paid") : f === "Unpaid" ? t("unpaid") : t("pending");
+            const label = f === "All" ? t("all") : f === "Paid" ? t("paid") : f === "Unpaid" ? t("unpaid") : f === "Other"
+              ? `${lang === "zh" ? "已取消 / 退款" : lang === "ms" ? "Batal / Pulang" : "Cancelled / refunded"} (${otherStatusCount})`
+              : t("pending");
             return (
               <button
                 key={f}
@@ -1131,7 +1145,7 @@ function OrdersPage() {
         {loading && <p className="text-center text-sm text-muted-foreground py-10">{t("loading")}</p>}
 
         {!loading && visibleByCategory.map((o) => {
-          const statusLabel = o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending");
+          const statusLabel = orderStatusLabel(o.status, lang);
           const removing = removingId === o.id;
           const firstUnpaidId = visible.find((x) => x.status === "Unpaid")?.id;
           return (
@@ -1172,9 +1186,9 @@ function OrdersPage() {
                         <button
                           onClick={(e) => e.stopPropagation()}
                           aria-label={statusLabel}
-                          className={`text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 active:scale-95 transition ${statusStyles[o.status]}`}
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 active:scale-95 transition ${orderStatusClass(o.status)}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${o.status === "Paid" ? "bg-emerald-500 animate-pulse" : o.status === "Unpaid" ? "bg-red-500" : "bg-amber-500"}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${orderStatusDot(o.status)}`} />
                           {statusLabel} ▾
                         </button>
                       </DropdownMenuTrigger>
@@ -1464,7 +1478,7 @@ function OrdersPage() {
           </thead>
           <tbody>
             {!loading && visibleByCategory.map((o) => {
-              const statusLabel = o.status === "Paid" ? t("paid") : o.status === "Unpaid" ? t("unpaid") : t("pending");
+              const statusLabel = orderStatusLabel(o.status, lang);
               const cost = orderCost({ amount: o.amount, cost: o.cost, gross_profit: o.gross_profit });
               const realProfit = orderContributionProfit({
                 amount: o.amount,
@@ -1505,7 +1519,7 @@ function OrdersPage() {
                     RM {realProfit.toFixed(2)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyles[o.status]}`}>{statusLabel}</span>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${orderStatusClass(o.status)}`}>{statusLabel}</span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
                     {hydrated ? formatTime(o.created_at) : ""}
@@ -1570,8 +1584,8 @@ function OrdersPage() {
               <Row label={t("product")} value={`${detail.product} x${detail.quantity}`} />
               <Row label={t("price")} value={`RM ${Number(detail.amount).toFixed(2)}`} />
               <Row label={t("payment_status")} value={
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[detail.status]}`}>
-                  {detail.status}
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${orderStatusClass(detail.status)}`}>
+                  {orderStatusLabel(detail.status, lang)}
                 </span>
               } />
               {detail.delivery_address && (

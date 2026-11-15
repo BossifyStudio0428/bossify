@@ -98,7 +98,7 @@ export const Route = createFileRoute("/api/public/webhooks/tiktok")({
         // placeholder.
         const { data: existingOrder } = await supabaseAdmin
           .from("orders")
-          .select("id, financial_status")
+          .select("id, financial_status, platform_metadata")
           .eq("user_id", userId)
           .eq("platform_order_id", orderId)
           .maybeSingle();
@@ -106,7 +106,18 @@ export const Route = createFileRoute("/api/public/webhooks/tiktok")({
         if (existingOrder) {
           const { error: updateErr } = await supabaseAdmin
             .from("orders")
-            .update({ status: mappedStatus, platform_metadata: payload } as any)
+            // Merge, never replace: platform_metadata also holds the Order
+            // Detail / finance data and the "platform fee is still an
+            // estimate" flag the settlement re-check looks for. Replacing it
+            // with the raw webhook payload wiped those, so the real fee was
+            // never fetched.
+            .update({
+              status: mappedStatus,
+              platform_metadata: {
+                ...(((existingOrder as any).platform_metadata ?? {}) as Record<string, unknown>),
+                last_webhook: payload,
+              },
+            } as any)
             .eq("id", (existingOrder as any).id);
           if (updateErr) {
             console.error("[tiktok webhook] order status update error", updateErr);

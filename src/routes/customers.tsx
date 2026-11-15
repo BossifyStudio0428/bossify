@@ -136,36 +136,15 @@ function CustomersPage() {
   const doDelete = async () => {
     if (!confirmDelete || !user) return;
     const c = confirmDelete;
-    // TikTok customers can't be deleted: the normal delete also removes the
-    // customer's orders, and the next sync would create the row again.
+    // TikTok customers can't be deleted: the next sync would create the row again.
     if (c.platform_buyer_id) { setConfirmDelete(null); return; }
     setRemovingId(c.id);
     setConfirmDelete(null);
     setTimeout(async () => {
-      const phoneDigits = (c.phone || "").replace(/\D/g, "");
-      if (phoneDigits) {
-        const { error: phoneOrdersError } = await supabase
-          .from("orders")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("phone", phoneDigits);
-        if (phoneOrdersError) {
-          toast.error(phoneOrdersError.message);
-          setRemovingId(null);
-          return;
-        }
-      }
-      const { error: nameOrdersError } = await supabase
-        .from("orders")
-        .delete()
-        .eq("user_id", user.id)
-        .is("phone", null)
-        .eq("customer_name", c.name);
-      if (nameOrdersError) {
-        toast.error(nameOrdersError.message);
-        setRemovingId(null);
-        return;
-      }
+      // Orders are kept: deleting a customer only removes the customer
+      // record and its follow-ups. (It used to also delete every order
+      // matched by phone, or by name when there was no phone — which could
+      // wipe another customer's orders that happened to share the name.)
       const { error: followUpError } = await supabase.from("follow_ups").delete().eq("user_id", user.id).eq("customer_id", c.id);
       if (followUpError) {
         toast.error(followUpError.message);

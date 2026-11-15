@@ -71,11 +71,14 @@ async function scheduleEvening(userId: string) {
   if (!(await ensurePermission(plugin))) return;
   const start = new Date(); start.setHours(0, 0, 0, 0);
   const { data } = await supabase
-    .from("orders").select("amount,status,gross_profit,created_at").eq("user_id", userId)
+    .from("orders").select("amount,status,gross_profit,created_at,financial_status").eq("user_id", userId)
     .gte("created_at", start.toISOString());
   const orders = data ?? [];
   const revenue = orders.filter((o: any) => isPaidStatus(o.status)).reduce((s: number, o: any) => s + Number(o.amount || 0), 0);
-  const profit = orders.reduce((s: number, o: any) => s + Number(o.gross_profit || 0), 0);
+  // Same rule as revenue: paid / shipped / delivered orders with real numbers.
+  const profit = orders
+    .filter((o: any) => isPaidStatus(o.status) && o.financial_status !== "pending")
+    .reduce((s: number, o: any) => s + Number(o.gross_profit || 0), 0);
   const body = `Today: ${orders.length} orders · RM ${revenue.toFixed(2)} · profit RM ${profit.toFixed(2)} 🎉`;
   await plugin.schedule({
     notifications: [{
