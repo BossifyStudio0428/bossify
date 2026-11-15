@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Minus, Plus, Search, Package, AlertTriangle, XCircle, TrendingUp, Wallet } from "lucide-react";
 import { toast } from "sonner";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { ChartsToggle, ChartsPanel, DonutCard, StatsCard, useChartsOpen } from "@/components/Insights";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
@@ -74,6 +74,7 @@ function StockPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [lowThreshold, setLowThreshold] = useState<number>(getCachedPrefs().low_stock_threshold);
+  const [chartsOpen, setChartsOpen] = useChartsOpen("stock");
 
   useEffect(() => {
     if (!user) return;
@@ -232,42 +233,39 @@ function StockPage() {
         />
       </div>
 
-      {/* Desktop-only Stock Health donut */}
-      {healthData.length > 0 && (
-        <div className="hidden lg:block mt-4 rounded-2xl bg-card border border-border/60 p-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
-            {lang === "zh" ? "库存健康度" : lang === "ms" ? "Kesihatan Stok" : "Stock Health"}
-          </p>
-          <div className="flex items-center gap-6">
-            <ResponsiveContainer width={180} height={180}>
-              <PieChart>
-                <Pie data={healthData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={70} paddingAngle={2}>
-                  {healthData.map((d, i) => <Cell key={i} fill={d.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-col gap-2">
-              {healthData.map((d) => (
-                <span key={d.name} className="inline-flex items-center gap-2 text-sm text-foreground">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} />
-                  {d.name} <span className="text-muted-foreground">({d.value})</span>
-                </span>
-              ))}
-            </div>
-          </div>
+      <div className="mt-4 flex items-center gap-2">
+        <div className="flex-1 min-w-0 flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-3 h-11">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={t("search")}
+            className="flex-1 bg-transparent text-sm outline-none"
+          />
+        </div>
+        <ChartsToggle open={chartsOpen} onToggle={() => setChartsOpen(!chartsOpen)} lang={lang} />
+      </div>
+
+      {/* Charts drop down here, only when asked for */}
+      {chartsOpen && !loading && rows.length > 0 && (
+        <div className="mt-3">
+          <ChartsPanel>
+            <StatsCard
+              title={lang === "zh" ? "库存概况" : lang === "ms" ? "Ringkasan stok" : "Stock snapshot"}
+              stats={[
+                { label: lang === "zh" ? "库存成本价值" : lang === "ms" ? "Nilai stok" : "Stock value", value: `RM ${totalStockValue.toFixed(0)}` },
+                { label: lang === "zh" ? "库存低" : lang === "ms" ? "Stok rendah" : "Low stock", value: String(lowStockCount), tone: lowStockCount > 0 ? "warn" : undefined },
+                { label: lang === "zh" ? "断货" : lang === "ms" ? "Habis" : "Out of stock", value: String(outOfStockCount), tone: outOfStockCount > 0 ? "warn" : undefined },
+              ]}
+            />
+            <DonutCard
+              title={lang === "zh" ? "库存健康度" : lang === "ms" ? "Kesihatan stok" : "Stock health"}
+              centerLabel={lang === "zh" ? "产品" : lang === "ms" ? "Produk" : "Products"}
+              data={healthData}
+            />
+          </ChartsPanel>
         </div>
       )}
-
-      <div className="mt-4 flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-3 h-11">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t("search")}
-          className="flex-1 bg-transparent text-sm outline-none"
-        />
-      </div>
 
       <div className="mt-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
         <span className="text-[11px] text-muted-foreground shrink-0">{t("stock_sort_label")}:</span>

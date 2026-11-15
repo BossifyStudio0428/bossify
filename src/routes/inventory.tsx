@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Trash2, Pencil, ImageIcon, RefreshCw, Package, AlertTriangle, Search, Lock, XCircle, TrendingDown, LayoutGrid, List as ListIcon } from "lucide-react";
 import { ViewSwitch, useViewMode } from "@/components/ViewSwitch";
+import { ChartsToggle, ChartsPanel, DonutCard, StatsCard, useChartsOpen, CHART_COLORS } from "@/components/Insights";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { InvRow } from "@/lib/inventoryTypes";
@@ -194,6 +195,7 @@ function InventoryPage() {
   const [lowThreshold, setLowThreshold] = useState<number>(getCachedPrefs().low_stock_threshold);
   // Cards (or table on desktop) vs picture grid, remembered on this device.
   const [prodView, setProdView] = useViewMode("products", ["list", "grid"] as const, "list");
+  const [chartsOpen, setChartsOpen] = useChartsOpen("products");
   const [tiktokConnected, setTiktokConnected] = useState(false);
   // Show only TikTok-synced products, only manually added ones, or both.
   const [sourceFilter, setSourceFilter] = useState<"all" | "tiktok" | "manual">("all");
@@ -565,37 +567,6 @@ function InventoryPage() {
         </div>
       )}
 
-      {!loading && items.length > 0 && (() => {
-        const outCount = items.filter((i) => i.stock <= 0).length;
-        const lowCount = items.filter((i) => i.stock > 0 && i.stock <= lowThreshold).length;
-        const healthyCount = items.filter((i) => i.stock > lowThreshold).length;
-        const total = Math.max(1, outCount + lowCount + healthyCount);
-        const segs = [
-          { key: "healthy", count: healthyCount, color: "bg-emerald-500", label: lang === "zh" ? "\u5e93\u5b58\u5145\u8db3" : lang === "ms" ? "Sihat" : "Healthy" },
-          { key: "low", count: lowCount, color: "bg-amber-500", label: lang === "zh" ? "\u5e93\u5b58\u4f4e" : lang === "ms" ? "Rendah" : "Low" },
-          { key: "out", count: outCount, color: "bg-red-500", label: lang === "zh" ? "\u65ad\u8d27" : lang === "ms" ? "Kehabisan" : "Out of stock" },
-        ].filter((s) => s.count > 0);
-        return (
-          <div className="lg:hidden rounded-2xl bg-card border border-border/60 p-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
-              {lang === "zh" ? "\u5e93\u5b58\u5065\u5eb7\u5ea6" : lang === "ms" ? "Kesihatan Inventori" : "Inventory health"}
-            </p>
-            <div className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted">
-              {segs.map((s) => (
-                <div key={s.key} className={s.color} style={{ width: `${(s.count / total) * 100}%` }} />
-              ))}
-            </div>
-            <div className="mt-2 flex items-center gap-3 flex-wrap">
-              {segs.map((s) => (
-                <span key={s.key} className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <span className={`h-2 w-2 rounded-full ${s.color}`} />
-                  {s.label} ({s.count})
-                </span>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
 
       {lowItems.length > 0 && (
         <button
@@ -621,6 +592,7 @@ function InventoryPage() {
             className="w-full rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 transition"
           />
         </div>
+        <ChartsToggle open={chartsOpen} onToggle={() => setChartsOpen(!chartsOpen)} lang={lang} />
         {!loading && items.length > 0 && (
           <ViewSwitch
             value={prodView}
@@ -632,6 +604,37 @@ function InventoryPage() {
           />
         )}
       </div>
+
+      {/* Charts drop down here, at the top, only when asked for */}
+      {chartsOpen && !loading && items.length > 0 && (() => {
+        const out = items.filter((i) => i.stock <= 0).length;
+        const low = items.filter((i) => i.stock > 0 && i.stock <= lowThreshold).length;
+        const healthy = items.length - out - low;
+        const noCost = items.filter((i) => !(Number((i as any).cost_price ?? 0) > 0)).length;
+        const value = items.reduce((sum, i) => sum + Math.max(0, Number(i.stock ?? 0)) * Number((i as any).cost_price ?? 0), 0);
+        const units = items.reduce((sum, i) => sum + Math.max(0, Number(i.stock ?? 0)), 0);
+        return (
+          <ChartsPanel>
+            <StatsCard
+              title={lang === "zh" ? "产品概况" : lang === "ms" ? "Ringkasan produk" : "Product snapshot"}
+              stats={[
+                { label: lang === "zh" ? "库存件数" : lang === "ms" ? "Unit stok" : "Units in stock", value: String(units) },
+                { label: lang === "zh" ? "库存成本价值" : lang === "ms" ? "Nilai stok (kos)" : "Stock value (cost)", value: `RM ${value.toFixed(0)}` },
+                { label: lang === "zh" ? "没填成本" : lang === "ms" ? "Tiada kos" : "No cost yet", value: String(noCost), tone: noCost > 0 ? "warn" : undefined },
+              ]}
+            />
+            <DonutCard
+              title={lang === "zh" ? "库存健康度" : lang === "ms" ? "Kesihatan stok" : "Stock health"}
+              centerLabel={lang === "zh" ? "产品" : lang === "ms" ? "Produk" : "Products"}
+              data={[
+                { name: lang === "zh" ? "库存充足" : lang === "ms" ? "Sihat" : "Healthy", value: healthy, color: CHART_COLORS.emerald },
+                { name: lang === "zh" ? "库存低" : lang === "ms" ? "Rendah" : "Low", value: low, color: CHART_COLORS.amber },
+                { name: lang === "zh" ? "断货" : lang === "ms" ? "Habis" : "Out of stock", value: out, color: CHART_COLORS.red },
+              ]}
+            />
+          </ChartsPanel>
+        );
+      })()}
 
       {(tiktokItemCount > 0 || categories.length > 0 || items.length > 0) && (
         <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
@@ -710,7 +713,8 @@ function InventoryPage() {
           <p className="text-center text-sm text-muted-foreground py-10">{t("no_products")}</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {desktopVisible.map((it) => {
+            {/* Grid is A-Z (Chinese names by pinyin) */}
+            {[...desktopVisible].sort((a, b) => a.name.localeCompare(b.name, lang === "zh" ? "zh-Hans-CN" : undefined, { sensitivity: "base", numeric: true })).map((it) => {
               const low = it.stock <= lowThreshold;
               const out = it.stock <= 0;
               const hasCost = Number((it as any).cost_price ?? 0) > 0;

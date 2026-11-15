@@ -17,6 +17,7 @@ import { PhoneInput } from "@/components/PhoneInput";
 import { stripEmoji } from "@/lib/wa";
 import { orderContributionProfit, PAID_STATUSES, isPaidStatus } from "@/lib/orderMath";
 import { ViewSwitch, useViewMode } from "@/components/ViewSwitch";
+import { ChartsToggle, ChartsPanel, DonutCard, StatsCard, useChartsOpen } from "@/components/Insights";
 
 function buildWA(phone: string, message: string) {
   const cleaned = phone.replace(/[^0-9]/g, "");
@@ -105,6 +106,7 @@ function CustomersPage() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   // List or square tiles (remembered on this device).
   const [custView, setCustView] = useViewMode("customers", ["list", "grid"] as const, "list");
+  const [chartsOpen, setChartsOpen] = useChartsOpen("customers");
   const [newCustomerOpen, setNewCustomerOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", followup_date: "", note: "" });
   const [newCustomerErrors, setNewCustomerErrors] = useState<Record<string, string>>({});
@@ -623,6 +625,7 @@ function CustomersPage() {
           <Calendar className="h-4 w-4" />
           <span className="hidden sm:inline">{dateLabel}</span>
         </button>
+        <ChartsToggle open={chartsOpen} onToggle={() => setChartsOpen(!chartsOpen)} lang={lang} />
         {!loading && customers.length > 0 && !(bizType === "education" && viewMode === "kanban") && (
           <ViewSwitch
             value={custView}
@@ -634,6 +637,25 @@ function CustomersPage() {
           />
         )}
       </div>
+
+      {/* Charts drop down here, at the top, only when asked for */}
+      {chartsOpen && !loading && customers.length > 0 && (
+        <ChartsPanel>
+          <StatsCard
+            title={lang === "zh" ? "客户概况" : lang === "ms" ? "Ringkasan pelanggan" : "Customer snapshot"}
+            stats={[
+              { label: lang === "zh" ? "平均每单" : lang === "ms" ? "Purata pesanan" : "Avg. order", value: `RM ${avgOrderValue.toFixed(0)}` },
+              { label: lang === "zh" ? "回购率" : lang === "ms" ? "Kadar ulangan" : "Repeat rate", value: `${repeatRate.toFixed(0)}%`, tone: repeatRate >= 30 ? "good" : undefined },
+              { label: lang === "zh" ? "有欠款的客户" : lang === "ms" ? "Ada hutang" : "Owe money", value: String(withOutstandingCount), tone: withOutstandingCount > 0 ? "warn" : undefined },
+            ]}
+          />
+          <DonutCard
+            title={lang === "zh" ? "客户分布" : lang === "ms" ? "Taburan pelanggan" : "Customer mix"}
+            centerLabel={lang === "zh" ? "客户" : lang === "ms" ? "Pelanggan" : "Customers"}
+            data={distributionData}
+          />
+        </ChartsPanel>
+      )}
 
       <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
         {/* Source */}
@@ -748,7 +770,8 @@ function CustomersPage() {
           <p className="text-center text-sm text-muted-foreground py-10">{t("no_customers")}</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {visible.map((c) => {
+            {/* Grid is A-Z (Chinese names by pinyin) */}
+            {[...visible].sort((a, b) => a.name.localeCompare(b.name, lang === "zh" ? "zh-Hans-CN" : undefined, { sensitivity: "base", numeric: true })).map((c) => {
               const tiktok = !!c.platform_buyer_id;
               const owed = orderAgg[c.id]?.outstanding ?? 0;
               return (
@@ -1010,55 +1033,6 @@ function CustomersPage() {
             </table>
           </div>
 
-          <div className="grid grid-cols-3 gap-5 items-start">
-            <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                {lang === "zh" ? "客户洞察" : lang === "ms" ? "Wawasan Pelanggan" : "Customer Insights"}
-              </p>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{lang === "zh" ? "平均订单金额" : lang === "ms" ? "Purata Nilai Pesanan" : "Avg. Order Value"}</span>
-                <span className="font-semibold text-foreground">RM {avgOrderValue.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{lang === "zh" ? "回购率" : lang === "ms" ? "Kadar Ulangan" : "Repeat Rate"}</span>
-                <span className="font-semibold text-foreground">{repeatRate.toFixed(0)}%</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{lang === "zh" ? "有未付款的客户" : lang === "ms" ? "Ada Belum Bayar" : "With Outstanding"}</span>
-                <span className={`font-semibold ${withOutstandingCount > 0 ? "text-amber-600" : "text-foreground"}`}>{withOutstandingCount}</span>
-              </div>
-            </div>
-
-            {distributionData.length > 0 && (
-              <div className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] p-4 space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {lang === "zh" ? "客户分布" : lang === "ms" ? "Taburan Pelanggan" : "Customer Distribution"}
-                </p>
-                <div className="h-40">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={distributionData} dataKey="value" nameKey="name" innerRadius={38} outerRadius={60} paddingAngle={2}>
-                        {distributionData.map((d, i) => <Cell key={i} fill={d.color} />)}
-                      </Pie>
-                      <Tooltip formatter={(v: number) => [v, lang === "zh" ? "位客户" : "customers"]} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="space-y-1.5">
-                  {distributionData.map((d, i) => (
-                    <div key={i} className="flex items-center justify-between text-xs">
-                      <span className="flex items-center gap-1.5 text-muted-foreground">
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
-                        {d.name}
-                      </span>
-                      <span className="font-semibold text-foreground">{d.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          </div>
         </div>
       )}
 

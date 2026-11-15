@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
+import { ChartsToggle, ChartsPanel, DonutCard, TrendCard, useChartsOpen, CHART_COLORS } from "@/components/Insights";
 
 type Range = "week" | "month" | "all";
 
@@ -30,7 +30,7 @@ function CostBreakdownPage() {
   const { isBusiness } = useSubscription();
   const [range, setRange] = useState<Range>("month");
   const [loading, setLoading] = useState(true);
-  const [chartsOpen, setChartsOpen] = useState(false);
+  const [chartsOpen, setChartsOpen] = useChartsOpen("profit");
 
   const [revenue, setRevenue] = useState(0);
   const [productCost, setProductCost] = useState(0);
@@ -249,7 +249,7 @@ function CostBreakdownPage() {
         <h1 className="text-lg font-bold text-foreground">{title}</h1>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         {(["week", "month", "all"] as Range[]).map((r) => (
           <button
             key={r}
@@ -259,7 +259,71 @@ function CostBreakdownPage() {
             {r === "week" ? (lang === "zh" ? "本周" : lang === "ms" ? "Minggu ini" : "This week") : r === "month" ? (lang === "zh" ? "本月" : lang === "ms" ? "Bulan ini" : "This month") : (lang === "zh" ? "全部" : lang === "ms" ? "Semua" : "All time")}
           </button>
         ))}
+        <div className="ml-auto">
+          <ChartsToggle open={chartsOpen} onToggle={() => setChartsOpen(!chartsOpen)} lang={lang} />
+        </div>
       </div>
+
+      {/* Charts drop down here, at the top, only when asked for */}
+      {chartsOpen && (
+        <ChartsPanel>
+          <DonutCard
+            title={lang === "zh" ? "钱花在哪里" : lang === "ms" ? "Ke mana wang pergi" : "Where the money goes"}
+            centerLabel={lang === "zh" ? "总成本" : lang === "ms" ? "Jumlah kos" : "Total cost"}
+            format={(n) => `RM ${n.toFixed(0)}`}
+            data={[
+              { name: lang === "zh" ? "商品成本" : lang === "ms" ? "Kos produk" : "Product cost", value: netProductCost, color: CHART_COLORS.red },
+              { name: lang === "zh" ? "包装" : lang === "ms" ? "Bungkusan" : "Packaging", value: packagingCost, color: CHART_COLORS.amber },
+              { name: lang === "zh" ? "平台费" : lang === "ms" ? "Yuran platform" : "Platform fee", value: platformFee, color: CHART_COLORS.purple },
+              { name: lang === "zh" ? "运费" : lang === "ms" ? "Penghantaran" : "Shipping", value: shippingCost, color: CHART_COLORS.sky },
+              { name: lang === "zh" ? "营业费用" : lang === "ms" ? "Perbelanjaan operasi" : "Operating expenses", value: totalOperatingExpenses, color: CHART_COLORS.pink },
+            ]}
+          />
+          <DonutCard
+            title={lang === "zh" ? "每 RM 100 销售" : lang === "ms" ? "Setiap RM 100 jualan" : "Out of every RM 100 sales"}
+            centerLabel={lang === "zh" ? "销售额" : lang === "ms" ? "Jualan" : "Sales"}
+            format={(n) => `RM ${n.toFixed(0)}`}
+            data={(() => {
+              const sales = Math.max(0, netRevenue);
+              // Same net profit the page shows below; everything else is costs.
+              const profit = Math.min(sales, Math.max(0, netProfit));
+              return [
+                { name: lang === "zh" ? "成本和费用" : lang === "ms" ? "Kos & yuran" : "Costs & fees", value: sales - profit, color: CHART_COLORS.slate },
+                { name: lang === "zh" ? "净利润" : lang === "ms" ? "Untung bersih" : "Net profit", value: profit, color: CHART_COLORS.emerald },
+              ];
+            })()}
+          />
+          <TrendCard
+            title={lang === "zh" ? "利润走势" : lang === "ms" ? "Trend untung" : "Profit trend"}
+            data={desktopTrend}
+            xKey="day"
+            format={(n) => `RM ${n.toFixed(2)}`}
+            series={[
+              { key: "revenue", name: lang === "zh" ? "销售额" : lang === "ms" ? "Jualan" : "Sales", color: CHART_COLORS.sky },
+              { key: "cost", name: lang === "zh" ? "总成本" : lang === "ms" ? "Jumlah kos" : "Total costs", color: CHART_COLORS.red },
+              { key: "profit", name: lang === "zh" ? "真实利润" : lang === "ms" ? "Untung sebenar" : "Real profit", color: CHART_COLORS.emerald },
+            ]}
+            right={
+              <div className="flex gap-1">
+                {([
+                  { k: 7, label: lang === "zh" ? "7天" : "7D" },
+                  { k: 30, label: lang === "zh" ? "30天" : "30D" },
+                  { k: 90, label: lang === "zh" ? "3个月" : "3M" },
+                  { k: 365, label: lang === "zh" ? "1年" : "1Y" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.k}
+                    onClick={() => setTrendRangeDays(opt.k)}
+                    className={`px-2 py-1 rounded-full text-[11px] font-semibold ${trendRangeDays === opt.k ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            }
+          />
+        </ChartsPanel>
+      )}
 
       {!isBusiness && (range === "all" || dateFilterActive) && (
         <p className="text-[11px] text-amber-700 bg-amber-500/10 rounded-lg px-2.5 py-1.5">
@@ -444,128 +508,6 @@ function CostBreakdownPage() {
             />
           </div>
 
-          {/* Charts are tucked away: the figures above already say
-              everything, so the graphs only open when asked for. */}
-          <button
-            type="button"
-            onClick={() => setChartsOpen((v) => !v)}
-            aria-expanded={chartsOpen}
-            className="w-full flex items-center justify-between gap-3 rounded-2xl bg-card border border-border/60 px-4 py-3.5 text-sm font-semibold text-foreground shadow-[var(--shadow-card)]"
-          >
-            <span>
-              {chartsOpen
-                ? (lang === "zh" ? "收起图表" : lang === "ms" ? "Sembunyi carta" : "Hide charts")
-                : (lang === "zh" ? "显示图表" : lang === "ms" ? "Tunjuk carta" : "Show charts")}
-            </span>
-            <ChevronLeft className={`h-4 w-4 text-muted-foreground transition-transform ${chartsOpen ? "rotate-90" : "-rotate-90"}`} />
-          </button>
-          {chartsOpen && (
-            <>
-          {(() => {
-            const chartData = [
-              { name: lang === "zh" ? "商品成本" : lang === "ms" ? "Produk" : "Product", value: productCost, color: "#F87171" },
-              { name: lang === "zh" ? "包装" : lang === "ms" ? "Bungkus" : "Packaging", value: packagingCost, color: "#FBBF24" },
-              { name: lang === "zh" ? "平台费" : lang === "ms" ? "Yuran" : "Platform Fee", value: platformFee, color: "#6C4AB6" },
-              { name: lang === "zh" ? "运费" : lang === "ms" ? "Hantar" : "Shipping", value: shippingCost, color: "#60A5FA" },
-              { name: lang === "zh" ? "营业费用" : lang === "ms" ? "Operasi" : "Opex", value: totalOperatingExpenses, color: "#EC4899" },
-            ].filter((d) => d.value > 0);
-            return (
-              <div className="lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 space-y-4">
-                {chartData.length > 0 && (
-                  <div className="rounded-2xl bg-card border border-border/60 p-4">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
-                      {lang === "zh" ? "各项成本比较" : lang === "ms" ? "Perbandingan Kos" : "Cost Comparison"}
-                    </p>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <BarChart data={chartData}>
-                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                        <YAxis tick={{ fontSize: 10 }} />
-                        <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-                        <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                          {chartData.map((d, i) => <Cell key={i} fill={d.color} />)}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-
-                {chartData.length > 0 && (
-                  <div className="rounded-2xl bg-card border border-border/60 p-4">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
-                      {lang === "zh" ? "成本占比" : lang === "ms" ? "Peratusan Kos" : "Cost Share"}
-                    </p>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label={(e: any) => `${e.name}`}>
-                          {chartData.map((d, i) => <Cell key={i} fill={d.color} />)}
-                        </Pie>
-                        <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          <div className="lg:hidden rounded-2xl bg-card border border-border/60 p-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
-              {lang === "zh" ? "净利润走势（近14天）" : lang === "ms" ? "Trend Untung (14 hari)" : "Net Profit Trend (14 days)"}
-            </p>
-            <ResponsiveContainer width="100%" height={160}>
-              <LineChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="day" tick={{ fontSize: 9 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-                <Line type="monotone" dataKey="profit" stroke="#6C4AB6" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Desktop-only Profit Trend — Revenue / Total Costs / Real Profit */}
-          <div className="hidden lg:block rounded-2xl bg-card border border-border/60 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase">
-                {lang === "zh" ? "利润走势" : lang === "ms" ? "Trend Untung" : "Profit Trend"}
-              </p>
-              <div className="flex gap-1">
-                {([
-                  { k: 7, label: "7D" },
-                  { k: 30, label: "30D" },
-                  { k: 90, label: "3M" },
-                  { k: 180, label: "6M" },
-                  { k: 365, label: "1Y" },
-                ] as const).map((opt) => (
-                  <button
-                    key={opt.k}
-                    onClick={() => setTrendRangeDays(opt.k)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${trendRangeDays === opt.k ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mb-2 text-[11px]">
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-[#60A5FA]" /> {lang === "zh" ? "销售额" : lang === "ms" ? "Jualan" : "Revenue"}</span>
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-[#F87171]" /> {lang === "zh" ? "总成本" : lang === "ms" ? "Jumlah Kos" : "Total Costs"}</span>
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-[#10B981]" /> {lang === "zh" ? "真实利润" : lang === "ms" ? "Untung Sebenar" : "Real Profit"}</span>
-            </div>
-            <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={desktopTrend}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="day" tick={{ fontSize: 10 }} interval={Math.max(0, Math.ceil(trendRangeDays / 10) - 1)} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(v: number) => `RM ${v.toFixed(2)}`} />
-                <Line type="monotone" dataKey="revenue" stroke="#60A5FA" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="cost" stroke="#F87171" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="profit" stroke="#10B981" strokeWidth={2.5} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-            </>
-          )}
         </>
       )}
     </div>
