@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, Trash2, Pencil, ImageIcon, RefreshCw, Package, AlertTriangle, Search, Lock, XCircle, TrendingDown } from "lucide-react";
+import { Plus, Trash2, Pencil, ImageIcon, RefreshCw, Package, AlertTriangle, Search, Lock, XCircle, TrendingDown, LayoutGrid, List as ListIcon } from "lucide-react";
+import { ViewSwitch, useViewMode } from "@/components/ViewSwitch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { InvRow } from "@/lib/inventoryTypes";
@@ -191,6 +192,8 @@ function InventoryPage() {
   const [sheet, setSheet] = useState<Sheet>({ kind: "none" });
   const [showStock, setShowStock] = useState<boolean>(true);
   const [lowThreshold, setLowThreshold] = useState<number>(getCachedPrefs().low_stock_threshold);
+  // Cards (or table on desktop) vs picture grid, remembered on this device.
+  const [prodView, setProdView] = useViewMode("products", ["list", "grid"] as const, "list");
   const [tiktokConnected, setTiktokConnected] = useState(false);
   // Show only TikTok-synced products, only manually added ones, or both.
   const [sourceFilter, setSourceFilter] = useState<"all" | "tiktok" | "manual">("all");
@@ -711,7 +714,85 @@ function InventoryPage() {
         ))}
       </div>
 
-      <div className="lg:hidden space-y-3">
+      {/* Layout switch */}
+      {!loading && items.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {(prodView === "grid" ? desktopVisible : visible).length} {lang === "zh" ? "个产品" : lang === "ms" ? "produk" : "products"}
+          </span>
+          <div className="ml-auto">
+            <ViewSwitch
+              value={prodView}
+              onChange={setProdView}
+              options={[
+                { key: "list", label: lang === "zh" ? "列表" : lang === "ms" ? "Senarai" : "List", icon: ListIcon },
+                { key: "grid", label: lang === "zh" ? "图片" : lang === "ms" ? "Gambar" : "Pictures", icon: LayoutGrid },
+              ]}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Picture grid: one tile per product / variant */}
+      {!loading && items.length > 0 && prodView === "grid" && (
+        desktopVisible.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-10">{t("no_products")}</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {desktopVisible.map((it) => {
+              const low = it.stock <= lowThreshold;
+              const out = it.stock <= 0;
+              const hasCost = Number((it as any).cost_price ?? 0) > 0;
+              return (
+                <div key={it.id} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden flex flex-col">
+                  <Link to="/inventory/$itemId" params={{ itemId: it.id }} className="block">
+                    <div className="relative aspect-square bg-muted/50 flex items-center justify-center overflow-hidden">
+                      {it.image_url ? (
+                        <img src={it.image_url} alt={it.name} loading="lazy" className="h-full w-full object-cover" />
+                      ) : (
+                        <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+                      )}
+                      <span className="absolute top-1.5 left-1.5"><SourceBadge item={it} lang={lang} /></span>
+                      {(out || low) && (
+                        <span className={`absolute top-1.5 right-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${out ? "bg-red-600 text-white" : "bg-amber-400 text-amber-950"}`}>
+                          {out ? (lang === "zh" ? "断货" : lang === "ms" ? "Habis" : "Out") : t("low_stock_badge")}
+                        </span>
+                      )}
+                    </div>
+                    <div className="px-2.5 pt-2">
+                      <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug min-h-[2.5em]">{it.name}</p>
+                    </div>
+                  </Link>
+                  <div className="px-2.5 pb-2.5 pt-1 mt-auto flex items-end justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-primary">RM {Number(it.price ?? 0).toFixed(2)}</p>
+                      <button
+                        type="button"
+                        onClick={() => setSheet({ kind: "cost", item: it })}
+                        className={`text-[10px] ${hasCost ? "text-muted-foreground" : "font-semibold text-amber-700"}`}
+                      >
+                        {hasCost
+                          ? `${lang === "zh" ? "成本" : lang === "ms" ? "Kos" : "Cost"} RM ${Number((it as any).cost_price).toFixed(2)}`
+                          : (lang === "zh" ? "+ 填成本" : lang === "ms" ? "+ Isi kos" : "+ Add cost")}
+                      </button>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-[10px] text-muted-foreground">{lang === "zh" ? "库存" : lang === "ms" ? "Stok" : "Stock"}</p>
+                      <EditableStock
+                        value={it.stock}
+                        onCommit={(n) => adjust(it, n)}
+                        className={`text-base font-bold ${out || low ? "text-red-500" : "text-foreground"}`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      <div className={`${prodView === "grid" ? "hidden" : "lg:hidden"} space-y-3`}>
         {loading && (
           <div className="flex justify-center py-10">
             <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
@@ -939,7 +1020,7 @@ function InventoryPage() {
       </div>
 
       {/* Desktop: products table */}
-      <div className="hidden lg:block rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
+      <div className={`${prodView === "grid" ? "hidden" : "hidden lg:block"} rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden`}>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/60 bg-muted/30 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
