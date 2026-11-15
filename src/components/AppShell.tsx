@@ -3,6 +3,7 @@ import { Home, ClipboardList, Plus, Package, Users, Briefcase, Building2, Wallet
 import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { I18nProvider, useI18n } from "@/contexts/I18nContext";
 import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionProvider, useSubscription } from "@/contexts/SubscriptionContext";
@@ -742,22 +743,8 @@ const DesktopTopBar = memo(function DesktopTopBar() {
 
   return (
     <header className="sticky top-0 z-30 hidden h-16 w-full items-center gap-3 border-b border-border bg-background/90 px-8 backdrop-blur lg:flex">
-      <Link
-        to="/search"
-        aria-label={
-          lang === "zh"
-            ? "搜索订单、商品、客户"
-            : lang === "ms"
-              ? "Cari pesanan, produk, pelanggan"
-              : "Search orders, products, customers"
-        }
-        className="flex h-10 w-full max-w-[420px] items-center gap-2 rounded-full border border-border bg-card px-4 text-[13.5px] text-muted-foreground transition-colors hover:border-primary/40"
-      >
-        <SearchIcon className="h-4 w-4 shrink-0" />
-        <span className="truncate">
-          {lang === "zh" ? "搜索订单、商品、客户…" : lang === "ms" ? "Cari pesanan, produk, pelanggan…" : "Search orders, products, customers…"}
-        </span>
-      </Link>
+      {/* Real search box with results right underneath (no jump to a separate page) */}
+      <GlobalSearch />
 
       <div className="ml-auto flex items-center gap-2.5">
         <Link
