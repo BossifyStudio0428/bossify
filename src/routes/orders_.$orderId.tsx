@@ -348,8 +348,19 @@ function OrderDetailPage() {
       // database does that from the items as they were). Move stock by the
       // difference so it matches the edited items. TikTok orders are left
       // to the TikTok sync.
+      // Only for orders the database marked as having taken stock out
+      // (stock_applied) — older orders that never did must not be adjusted.
       const nowPaid = isPaidStatus(form.status as string);
+      let stockApplied = false;
       if (nowPaid && (order as any).order_source !== "tiktok") {
+        const { data: fresh, error: freshErr } = await supabase
+          .from("orders")
+          .select("stock_applied" as any)
+          .eq("id", order.id)
+          .maybeSingle();
+        stockApplied = !freshErr && (fresh as any)?.stock_applied === true;
+      }
+      if (stockApplied) {
         const diff = new Map<string, number>();
         for (const l of oldLines) if (l.product_id) diff.set(l.product_id, (diff.get(l.product_id) ?? 0) + l.quantity);
         if (matchedItem?.id) diff.set(matchedItem.id, (diff.get(matchedItem.id) ?? 0) - newQuantity);

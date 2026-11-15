@@ -115,7 +115,14 @@ BEGIN
 END;
 $function$;
 
--- Same name as before, so the two existing triggers on orders pick it up.
+-- orders.stock_applied remembers whether THIS order actually took stock
+-- out. Only those orders give stock back. Existing orders start as false:
+-- some of them (e.g. order-form orders) never took stock out under the old
+-- rules, so giving stock back for them would wrongly increase it.
+ALTER TABLE public.orders
+  ADD COLUMN IF NOT EXISTS stock_applied boolean NOT NULL DEFAULT false;
+
+-- Runs BEFORE the row is saved so it can record stock_applied on the row.
 CREATE OR REPLACE FUNCTION public.deduct_stock_on_order()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -136,18 +143,33 @@ BEGIN
                     AND OLD.financial_status IS DISTINCT FROM 'pending';
   END IF;
 
-  IF _paid_now AND NOT _paid_before THEN
+  IF _paid_now AND NOT _paid_before AND NOT NEW.stock_applied THEN
     PERFORM public.order_stock_apply(NEW, -1, 'order_sale');
-  ELSIF _paid_before AND NEW.status IN ('Unpaid', 'Pending', 'Cancelled') THEN
+    NEW.stock_applied := true;
+  ELSIF NOT _paid_now AND NEW.stock_applied AND NEW.status IN ('Unpaid', 'Pending', 'Cancelled') THEN
     PERFORM public.order_stock_apply(NEW, 1, 'order_unpaid');
+    NEW.stock_applied := false;
   END IF;
 
   RETURN NEW;
 END;
 $function$;
 
--- Deleting a paid order gives its stock back — unless a refund on it
--- already restocked goods (that would count them twice).
+DROP TRIGGER IF EXISTS deduct_stock_on_order_insert ON public.orders;
+DROP TRIGGER IF EXISTS deduct_stock_on_order_update ON public.orders;
+
+CREATE TRIGGER deduct_stock_on_order_insert
+BEFORE INSERT ON public.orders
+FOR EACH ROW
+EXECUTE FUNCTION public.deduct_stock_on_order();
+
+CREATE TRIGGER deduct_stock_on_order_update
+BEFORE UPDATE OF status ON public.orders
+FOR EACH ROW
+EXECUTE FUNCTION public.deduct_stock_on_order();
+
+-- Deleting a paid order gives its stock back — only if it took stock out,
+-- and not if a refund on it already restocked goods.
 CREATE OR REPLACE FUNCTION public.restock_on_order_delete()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -155,8 +177,8 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $function$
 BEGIN
-  IF COALESCE(OLD.status, '') IN ('Paid', 'Shipped', 'Delivered')
-     AND OLD.financial_status IS DISTINCT FROM 'pending'
+  IF OLD.stock_applied
+     AND COALESCE(OLD.status, '') IN ('Paid', 'Shipped', 'Delivered')
      AND NOT EXISTS (
        SELECT 1 FROM public.order_adjustments a
         WHERE a.order_id = OLD.id AND a.restocked = true
