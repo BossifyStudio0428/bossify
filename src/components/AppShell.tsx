@@ -463,13 +463,16 @@ function ShellInner() {
             </div>
           </header>
 
-          <main className="flex-1 pb-28 lg:pb-0 relative overflow-x-hidden">
-            <div className="lg:mx-auto lg:w-full lg:max-w-[1280px] lg:px-8 lg:py-6">
+          <main className="flex-1 flex flex-col pb-28 lg:pb-0 relative overflow-x-hidden">
+            {/* Column that fills the screen so the footer always sits at the
+                very bottom, even on short pages (it used to float right under
+                the content, mid-screen). */}
+            <div className="flex-1 flex flex-col lg:mx-auto lg:w-full lg:max-w-[1280px] lg:px-8 lg:py-6">
               {/* key={pathname} replays the fade/rise on every route change
                   (Overview -> Orders -> Products, etc) — desktop only via
                   .bf-page-transition's own scoping is unnecessary here since
                   the animation itself is cheap and reduced-motion-safe. */}
-              <div key={location.pathname} className="bf-page-transition">
+              <div key={location.pathname} className="bf-page-transition flex-1">
                 <Outlet />
               </div>
               <AppFooter />
@@ -493,7 +496,7 @@ function ShellInner() {
 const AppFooter = memo(function AppFooter() {
   const { t, lang } = useI18n();
   return (
-    <footer className="mt-8 pb-2 px-2 text-center">
+    <footer className="mt-auto pt-10 pb-2 px-2 text-center">
       <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
         <img src={bossifyLogo} alt="Bossify" className="h-4 w-4 rounded object-cover" />
         {lang === "zh" ? "由 ZH Studio 打造" : lang === "ms" ? "Dikuasakan oleh ZH Studio" : "Powered by ZH Studio"}
