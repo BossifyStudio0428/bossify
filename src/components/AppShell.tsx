@@ -4,6 +4,7 @@ import { memo, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { useBusinessProfile } from "@/hooks/use-business-profile";
 import { I18nProvider, useI18n } from "@/contexts/I18nContext";
 import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionProvider, useSubscription } from "@/contexts/SubscriptionContext";
@@ -740,6 +741,7 @@ const DesktopTopBar = memo(function DesktopTopBar() {
   const navigate = useNavigate();
   const { guideLabel } = useDesktopNav();
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
+  const { avatarUrl } = useBusinessProfile();
 
   return (
     <header className="sticky top-0 z-30 hidden h-16 w-full items-center gap-3 border-b border-border bg-background/90 px-8 backdrop-blur lg:flex">
@@ -781,10 +783,10 @@ const DesktopTopBar = memo(function DesktopTopBar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-[12px] font-bold text-primary-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-[12px] font-bold text-primary-foreground overflow-hidden"
               aria-label={t("more_profile")}
             >
-              {initials}
+              {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">

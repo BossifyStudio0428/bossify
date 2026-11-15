@@ -16,6 +16,7 @@ import { CampaignBanner } from "@/components/CampaignBanner";
 import { getCachedPrefs, loadPrefs } from "@/lib/notifPrefs";
 import { fetchPeriodAdjustments, type PeriodAdjustments } from "@/lib/refundAdjustments";
 import { getPlatformConnection } from "@/lib/platformConnect.functions";
+import { useBusinessProfile } from "@/hooks/use-business-profile";
 import {
   renderTemplate,
   getReminderTemplate,
@@ -595,7 +596,9 @@ export function RetailOverview() {
   // never greet someone by a name they never set.
   const greetingHour = new Date().getHours();
   const greetingKey = greetingHour < 12 ? "good_morning" : greetingHour < 18 ? "good_afternoon" : "good_evening";
-  const sellerName = waProfile.businessName && waProfile.businessName !== "us" ? waProfile.businessName : null;
+  const bizProfile = useBusinessProfile();
+  const bizAvatar = bizProfile.avatarUrl;
+  const sellerName = bizProfile.businessName || (waProfile.businessName && waProfile.businessName !== "us" ? waProfile.businessName : null);
   const todayDateLabel = new Date().toLocaleDateString(
     lang === "zh" ? "zh-CN" : lang === "ms" ? "ms-MY" : "en-MY",
     { weekday: "short", day: "numeric", month: "short" },
@@ -611,7 +614,14 @@ export function RetailOverview() {
     <>
     <div className="px-4 pt-4 pb-6 lg:hidden">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <Link to="/business-profile" aria-label="business profile" className="h-12 w-12 shrink-0 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center text-lg font-bold overflow-hidden shadow-[var(--shadow-card)]">
+          {bizAvatar ? (
+            <img src={bizAvatar} alt="" className="h-full w-full object-cover" />
+          ) : (
+            (sellerName || "B").slice(0, 1).toUpperCase()
+          )}
+        </Link>
+        <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold text-foreground leading-snug break-words">
             {t(greetingKey)}
             {sellerName ? `, ${sellerName}` : ""}
@@ -929,7 +939,14 @@ export function RetailOverview() {
       <div className="flex items-start justify-between gap-4 mb-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold text-foreground">{t("ro_title")}</h1>
+            <Link to="/business-profile" aria-label="business profile" className="h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground flex items-center justify-center text-base font-bold overflow-hidden">
+              {bizAvatar ? (
+                <img src={bizAvatar} alt="" className="h-full w-full object-cover" />
+              ) : (
+                (sellerName || "B").slice(0, 1).toUpperCase()
+              )}
+            </Link>
+            <h1 className="text-2xl font-bold text-foreground">{sellerName || t("ro_title")}</h1>
             <TikTokStatusPill connected={tiktokConnected} lang={lang} />
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">{t("ro_subtitle")}</p>

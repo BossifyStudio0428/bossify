@@ -166,6 +166,18 @@ export const Route = createFileRoute("/api/public/oauth/tiktok/callback")({
               { onConflict: "user_id,platform" }
             );
           if (error) throw new Error(error.message);
+
+          // Business name: take the TikTok shop name if the seller hasn't set one.
+          if (shopName && userId) {
+            try {
+              const { data: prof } = await supabaseAdmin.from("profiles").select("business_name").eq("id", userId!).maybeSingle();
+              if (!String((prof as any)?.business_name ?? "").trim()) {
+                await supabaseAdmin.from("profiles").update({ business_name: shopName } as any).eq("id", userId!);
+              }
+            } catch {
+              // non-fatal
+            }
+          }
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           return htmlResponse(mode === "login" ? "Login failed" : "Connect failed", msg, 500);
