@@ -14,13 +14,14 @@ import { exportOrdersListPDF } from "@/lib/pdf";
 import { createNotification } from "@/lib/notify";
 import { notifySituation } from "@/lib/autoNotify";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { ChevronDown, MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search, Plus, Globe, Calendar, Send, Lock, Download, Link2, Clock, Store, Car, Utensils, ShoppingBag, CheckCircle2, AlertCircle } from "lucide-react";
+import { ChevronDown, LayoutGrid, List as ListIcon, ImageIcon, MoreVertical, Pencil, Trash2, Check, Upload, Paperclip, FileCheck2, X, Copy, MessageCircle, QrCode, Eye, Phone, MapPin, Search, Plus, Globe, Calendar, Send, Lock, Download, Link2, Clock, Store, Car, Utensils, ShoppingBag, CheckCircle2, AlertCircle } from "lucide-react";
 import { PhoneActionSheet } from "@/components/PhoneActionSheet";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { orderCost, orderGrossProfit, orderContributionProfit, isPaidStatus } from "@/lib/orderMath";
 import { OrderSourceBadge, orderSourceKey, orderSourceLabel } from "@/components/OrderSourceBadge";
 import { orderStatusLabel, orderStatusClass, orderStatusDot } from "@/lib/orderStatus";
+import { ViewSwitch, useViewMode } from "@/components/ViewSwitch";
 import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -78,6 +79,11 @@ function OrdersPage() {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("__all");
   const [loading, setLoading] = useState(true);
   const [productImages, setProductImages] = useState<Record<string, string>>({});
+  // Line items per order (product, quantity, unit price) — powers the
+  // "by product" picture grid and the per-product order filter.
+  const [orderProducts, setOrderProducts] = useState<Record<string, Array<{ key: string; name: string; qty: number; unitPrice: number }>>>({});
+  const [ordersView, setOrdersView] = useViewMode("orders", ["list", "products"] as const, "list");
+  const [productFilter, setProductFilter] = useState<{ key: string; name: string } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [detail, setDetail] = useState<OrderRow | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -233,8 +239,17 @@ function OrdersPage() {
     // filter if ANY of its line items belong to that category.
     const { data: items } = await supabase
       .from("order_items" as any)
-      .select("order_id,product_id")
+      .select("order_id,product_id,product_name,quantity,unit_price_at_sale")
       .in("order_id", ((data ?? []) as any[]).map((o) => o.id));
+    {
+      const byOrder: Record<string, Array<{ key: string; name: string; qty: number; unitPrice: number }>> = {};
+      for (const it of ((items ?? []) as any[])) {
+        const name = String(it.product_name ?? "").trim() || "—";
+        const key = it.product_id ? `id:${it.product_id}` : `name:${name.toLowerCase()}`;
+        (byOrder[it.order_id] ??= []).push({ key, name, qty: Number(it.quantity ?? 0), unitPrice: Number(it.unit_price_at_sale ?? 0) });
+      }
+      setOrderProducts(byOrder);
+    }
     const productIds = Array.from(new Set(((items ?? []) as any[]).map((i) => i.product_id).filter(Boolean)));
     if (productIds.length > 0) {
       const { data: invRows } = await supabase.from("inventory").select("id,category").in("id", productIds);
@@ -697,9 +712,36 @@ function OrdersPage() {
         return hay.includes(q);
       })
     : byDate;
-  const visibleByCategory = activeCategoryFilter === "__all"
+  const visibleByCategoryBase = activeCategoryFilter === "__all"
     ? visible
     : visible.filter((o) => orderCategories[o.id]?.has(activeCategoryFilter));
+  // Products in an order: its line items, or (older orders without line
+  // items) the order's own product text and quantity.
+  const productsOf = (o: OrderRow) =>
+    orderProducts[o.id] ?? [{
+      key: `name:${String(o.product ?? "").trim().toLowerCase() || "—"}`,
+      name: String(o.product ?? "").trim() || "—",
+      qty: Number(o.quantity ?? 1),
+      unitPrice: Number(o.quantity ?? 1) > 0 ? Number(o.amount ?? 0) / Number(o.quantity ?? 1) : Number(o.amount ?? 0),
+    }];
+  const visibleByCategory = productFilter
+    ? visibleByCategoryBase.filter((o) => productsOf(o).some((p) => p.key === productFilter.key))
+    : visibleByCategoryBase;
+  // "By product" grid: one tile per product across the orders on screen.
+  const productTiles = (() => {
+    const m = new Map<string, { key: string; name: string; orders: number; units: number; sales: number }>();
+    for (const o of visibleByCategoryBase) {
+      const seen = new Set<string>();
+      for (const p of productsOf(o)) {
+        const cur = m.get(p.key) ?? { key: p.key, name: p.name, orders: 0, units: 0, sales: 0 };
+        if (!seen.has(p.key)) { cur.orders += 1; seen.add(p.key); }
+        cur.units += p.qty;
+        if (isPaidStatus(o.status)) cur.sales += p.unitPrice * p.qty;
+        m.set(p.key, cur);
+      }
+    }
+    return Array.from(m.values()).sort((a, b) => b.orders - a.orders || b.sales - a.sales);
+  })();
 
   const salesTrendByDay = new Map<string, number>();
   for (const o of byDate) {
@@ -1150,7 +1192,78 @@ function OrdersPage() {
         )}
       </div>
 
-      <div className="lg:hidden space-y-3">
+      {/* Layout switch + "showing one product" chip */}
+      {!loading && (
+        <div className="flex items-center gap-2">
+          {productFilter ? (
+            <span className="min-w-0 inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold pl-3 pr-1 py-1">
+              <span className="truncate">{lang === "zh" ? "产品" : lang === "ms" ? "Produk" : "Product"}: {productFilter.name}</span>
+              <button
+                type="button"
+                onClick={() => setProductFilter(null)}
+                aria-label={lang === "zh" ? "清除" : "Clear"}
+                className="h-5 w-5 rounded-full bg-primary/15 flex items-center justify-center"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              {ordersView === "products"
+                ? `${productTiles.length} ${lang === "zh" ? "个产品" : lang === "ms" ? "produk" : "products"}`
+                : `${visibleByCategory.length} ${lang === "zh" ? "张订单" : lang === "ms" ? "pesanan" : "orders"}`}
+            </span>
+          )}
+          <div className="ml-auto">
+            <ViewSwitch
+              value={ordersView}
+              onChange={setOrdersView}
+              options={[
+                { key: "list", label: lang === "zh" ? "列表" : lang === "ms" ? "Senarai" : "List", icon: ListIcon },
+                { key: "products", label: lang === "zh" ? "按产品" : lang === "ms" ? "Ikut produk" : "By product", icon: LayoutGrid },
+              ]}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* By product: picture tiles; tap one to see all of its orders */}
+      {!loading && ordersView === "products" && (
+        productTiles.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-10">{t("no_orders_here")}</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {productTiles.map((p) => {
+              const img = productImages[p.name.trim().toLowerCase()];
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => { setProductFilter({ key: p.key, name: p.name }); setOrdersView("list"); }}
+                  className="text-left rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden active:scale-[0.98] transition-transform"
+                >
+                  <div className="aspect-square bg-muted/50 flex items-center justify-center overflow-hidden">
+                    {img ? (
+                      <img src={img} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+                    )}
+                  </div>
+                  <div className="p-2.5 space-y-0.5">
+                    <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug min-h-[2.5em]">{p.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {p.orders} {lang === "zh" ? "单" : lang === "ms" ? "pesanan" : "orders"} · {p.units} {lang === "zh" ? "件" : lang === "ms" ? "unit" : "units"}
+                    </p>
+                    <p className="text-xs font-bold text-primary">RM {p.sales.toFixed(2)}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      <div className={`${ordersView === "products" ? "hidden" : "lg:hidden"} space-y-3`}>
         {loading && <p className="text-center text-sm text-muted-foreground py-10">{t("loading")}</p>}
 
         {!loading && visibleByCategory.map((o) => {
@@ -1471,7 +1584,7 @@ function OrdersPage() {
       )}
 
       {/* Desktop: orders table */}
-      <div className="hidden lg:block rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
+      <div className={`${ordersView === "products" ? "hidden" : "hidden lg:block"} rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden`}>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/60 bg-muted/30 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
