@@ -119,6 +119,10 @@ $function$;
 -- out. Only those orders give stock back. Existing orders start as false:
 -- some of them (e.g. order-form orders) never took stock out under the old
 -- rules, so giving stock back for them would wrongly increase it.
+-- Internal helper: only the triggers below may use it. Without this, any
+-- signed-in user could call it from the app and move other people's stock.
+REVOKE ALL ON FUNCTION public.order_stock_apply(public.orders, integer, text) FROM PUBLIC, anon, authenticated;
+
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS stock_applied boolean NOT NULL DEFAULT false;
 
