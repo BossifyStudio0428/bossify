@@ -44,7 +44,6 @@ function CostBreakdownPage() {
   const [trend, setTrend] = useState<Array<{ day: string; profit: number }>>([]);
   const [desktopTrend, setDesktopTrend] = useState<Array<{ day: string; revenue: number; cost: number; profit: number }>>([]);
   const [trendRangeDays, setTrendRangeDays] = useState<number>(30);
-  const [productProfit, setProductProfit] = useState<Array<{ name: string; revenue: number; cost: number; profit: number }>>([]);
   const [activeCategory, setActiveCategory] = useState<string>("__all");
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState<string>("");
@@ -124,29 +123,9 @@ function CostBreakdownPage() {
         setProductCost(relevantItems.reduce((s, r) => s + Number(r.unit_cost_at_sale ?? 0) * Number(r.quantity ?? 0), 0));
         setPackagingCost(relevantItems.reduce((s, r) => s + Number(r.packaging_cost_at_sale ?? 0) * Number(r.quantity ?? 0), 0));
 
-        // Desktop "Profit by Product" — revenue/cost aggregated per product
-        // name from the same already-fetched line items (no extra query).
-        const prodMap = new Map<string, { revenue: number; cost: number }>();
-        for (const r of relevantItems) {
-          const name = r.product_name || "—";
-          const qty = Number(r.quantity ?? 0);
-          const rev = Number(r.unit_price_at_sale ?? 0) * qty;
-          const cst = (Number(r.unit_cost_at_sale ?? 0) + Number(r.packaging_cost_at_sale ?? 0)) * qty;
-          const ex = prodMap.get(name) ?? { revenue: 0, cost: 0 };
-          ex.revenue += rev;
-          ex.cost += cst;
-          prodMap.set(name, ex);
-        }
-        setProductProfit(
-          Array.from(prodMap.entries())
-            .map(([name, v]) => ({ name, revenue: v.revenue, cost: v.cost, profit: v.revenue - v.cost }))
-            .sort((a, b) => b.profit - a.profit)
-            .slice(0, 8),
-        );
       } else {
         setProductCost(0);
         setPackagingCost(0);
-        setProductProfit([]);
       }
 
       setRevenue(orderRows.reduce((s, o) => s + Number(o.amount ?? 0), 0));
@@ -424,33 +403,6 @@ function CostBreakdownPage() {
                   ? `${estimateCount} pesanan masih anggaran yuran, akan dikemaskini bila TikTok selesai`
                   : `${estimateCount} order(s) still using an estimated platform fee — updates automatically once TikTok settles`}
             </p>
-          )}
-
-          {/* Desktop-only Profit by Product */}
-          {productProfit.length > 0 && (
-            <div className="hidden lg:block rounded-2xl bg-card border border-border/60 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">
-                  {lang === "zh" ? "各商品利润" : lang === "ms" ? "Untung Mengikut Produk" : "Profit by Product"}
-                </p>
-                <Link to="/product-profit" className="text-[11px] font-semibold text-primary hover:underline">
-                  {lang === "zh" ? "查看全部" : lang === "ms" ? "Lihat semua" : "View all"}
-                </Link>
-              </div>
-              <div className="divide-y divide-border/40">
-                {productProfit.map((p, i) => (
-                  <div key={p.name + i} className="flex items-center gap-3 py-2">
-                    {i === 0 ? <Trophy className="h-4 w-4 text-amber-500 shrink-0" /> : <span className="w-4 text-center text-xs text-muted-foreground shrink-0">{i + 1}</span>}
-                    <span className="flex-1 min-w-0 truncate text-sm text-foreground">{p.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">RM {p.revenue.toFixed(2)}</span>
-                    <span className={`inline-flex items-center gap-1 text-sm font-bold shrink-0 w-28 justify-end ${p.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                      {p.profit >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                      RM {p.profit.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
 
           <div className="rounded-2xl bg-card border border-border/60 p-4 divide-y divide-border/40">
