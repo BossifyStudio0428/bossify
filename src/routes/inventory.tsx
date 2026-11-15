@@ -16,6 +16,7 @@ import { notifySituation } from "@/lib/autoNotify";
 import { getNotifMessage } from "@/lib/notifMessages";
 import { ProductFormSheet, QtySheet, ConfirmSheet } from "@/components/InventorySheets";
 import { QuickCostSheet } from "@/components/QuickCostEditor";
+import { EditableStock } from "@/components/EditableStock";
 import { StockTabs } from "@/components/StockTabs";
 import { formatUnit, formatCategory } from "@/lib/labels";
 import { HIDE_ORDER_FORM } from "@/lib/featureFlags";
@@ -803,7 +804,7 @@ function InventoryPage() {
                           </div>
                         </div>
                         <div className="flex items-baseline gap-1.5">
-                          <span className={`text-lg font-bold ${vLow ? "text-red-500" : "text-foreground"}`}>{v.stock}</span>
+                          <EditableStock value={v.stock} onCommit={(n) => adjust(v, n)} className={`text-lg font-bold ${vLow ? "text-red-500" : "text-foreground"}`} />
                           <span className="text-xs text-muted-foreground">{formatUnit(v.unit, t)} {t("left")}</span>
                           {v.price ? (
                             <span className="ml-auto text-xs font-semibold text-primary">
@@ -900,7 +901,7 @@ function InventoryPage() {
                 </div>
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className={`text-2xl font-bold ${low ? "text-red-500" : "text-foreground"}`}>{it.stock}</span>
+                <EditableStock value={it.stock} onCommit={(n) => adjust(it, n)} className={`text-2xl font-bold ${low ? "text-red-500" : "text-foreground"}`} />
                 <span className="text-xs text-muted-foreground">{formatUnit(it.unit, t)} {t("left")}</span>
                 {it.price ? (
                   <span className="ml-auto text-xs font-semibold text-primary">
@@ -1007,7 +1008,7 @@ function InventoryPage() {
                     {margin === null ? "—" : `${margin.toFixed(0)}%`}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className={low || out ? "font-bold text-red-500" : "font-semibold text-foreground"}>{it.stock}</span>
+                    <EditableStock value={it.stock} onCommit={(n) => adjust(it, n)} className={low || out ? "font-bold text-red-500" : "font-semibold text-foreground"} />
                     <span className="text-muted-foreground"> {formatUnit(it.unit, t)}</span>
                   </td>
                   <td className="px-4 py-3">

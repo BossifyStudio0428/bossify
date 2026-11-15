@@ -14,6 +14,7 @@ import { formatUnit } from "@/lib/labels";
 import { calculateWeightedAverageCost, calculateUnitLandedCost } from "@/lib/orderMath";
 import { logInventoryChange } from "@/lib/inventoryAudit";
 import { adjustStockAtomic } from "@/lib/inventoryStock";
+import { EditableStock } from "@/components/EditableStock";
 
 export const Route = createFileRoute("/inventory_/$itemId")({ component: InventoryDetail });
 
@@ -296,7 +297,7 @@ function InventoryDetail() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">{t("current_stock")}</span>
             <span className={`text-2xl font-bold ${item.stock <= lowThreshold ? "text-red-500" : "text-foreground"}`}>
-              {item.stock} <span className="text-xs font-normal text-muted-foreground">{formatUnit(item.unit, t)}</span>
+              <EditableStock value={item.stock} onCommit={(n) => adjust(n)} /> <span className="text-xs font-normal text-muted-foreground">{formatUnit(item.unit, t)}</span>
             </span>
           </div>
           <div className="grid grid-cols-2 gap-2">

@@ -10,6 +10,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { getCachedPrefs, loadPrefs } from "@/lib/notifPrefs";
 import { logInventoryChange } from "@/lib/inventoryAudit";
 import { adjustStockAtomic } from "@/lib/inventoryStock";
+import { EditableStock } from "@/components/EditableStock";
 
 type Row = {
   id: string;
@@ -338,7 +339,7 @@ function StockPage() {
                     >
                       <Minus className="h-4 w-4" />
                     </button>
-                    <span className="w-8 text-center text-sm font-bold">{Number(r.stock ?? 0)}</span>
+                    <EditableStock value={Number(r.stock ?? 0)} onCommit={(n) => adjust(r, n - Number(r.stock ?? 0))} className="min-w-8 justify-center text-sm font-bold" />
                     <button
                       aria-label="increment"
                       onClick={() => adjust(r, 1)}
@@ -406,7 +407,7 @@ function StockPage() {
                         >
                           <Minus className="h-3.5 w-3.5" />
                         </button>
-                        <span className="w-8 text-center text-sm font-bold">{Number(r.stock ?? 0)}</span>
+                        <EditableStock value={Number(r.stock ?? 0)} onCommit={(n) => adjust(r, n - Number(r.stock ?? 0))} className="min-w-8 justify-center text-sm font-bold" />
                         <button
                           aria-label="increment"
                           onClick={() => adjust(r, 1)}
