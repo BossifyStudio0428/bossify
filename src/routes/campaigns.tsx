@@ -101,199 +101,194 @@ function CampaignsListPage() {
     }
   };
 
-  const title = lang === "zh" ? "活动" : lang === "ms" ? "Kempen" : "Campaigns";
-  const subtitle =
-    lang === "zh"
-      ? "11.11、双12、新年促销 — 自己设定活动，看每个活动赚多少"
-      : lang === "ms"
-        ? "11.11, 12.12, jualan Tahun Baru — cipta kempen sendiri, lihat untung setiap satu"
-        : "11.11, 12.12, festive sales — set up your own campaigns and see how much each one earns";
+  const L = (zh: string, en: string, ms: string) => (lang === "zh" ? zh : lang === "ms" ? ms : en);
+  const title = L("活动", "Campaigns", "Kempen");
+  const subtitle = L(
+    "11.11、双12、新年促销 — 自己设定活动，看每个活动赚多少",
+    "11.11, 12.12, festive sales — set up your own campaigns and see how much each one earns",
+    "11.11, 12.12, jualan perayaan — cipta kempen sendiri, lihat untung setiap satu",
+  );
+  const daysUntil = (d: string) => Math.ceil((new Date(`${d}T00:00:00`).getTime() - Date.now()) / 86400000);
+  const daysLeft = (d: string) => Math.max(0, Math.ceil((new Date(`${d}T23:59:59`).getTime() - Date.now()) / 86400000));
+  const groups = (["live", "upcoming", "ended"] as const).map((st) => ({
+    st,
+    label: st === "live" ? L("进行中", "Live now", "Aktif") : st === "upcoming" ? L("未开始", "Coming up", "Akan datang") : L("已结束", "Ended", "Tamat"),
+    items: rows.filter((c) => statusOf(c) === st),
+  }));
+  const inputCls = "w-full rounded-xl bg-muted/40 border border-border/60 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15";
 
   return (
-    <div className="px-4 pt-4 pb-28 space-y-4 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
+    <div className="px-4 pt-4 pb-28 space-y-5 lg:max-w-5xl lg:mx-auto lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
-        <Link to="/" className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
+        <Link to="/" aria-label={L("返回", "Back", "Kembali")} className="h-9 w-9 rounded-full bg-card border border-border/60 flex items-center justify-center text-muted-foreground active:scale-95 transition-transform">
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-lg font-bold text-foreground">{title}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-bold text-foreground">{title}</h1>
+          <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
+        </div>
+        {rows.length > 0 && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="hidden lg:inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+          >
+            <Plus className="h-4 w-4" /> {L("新增活动", "New campaign", "Kempen baharu")}
+          </button>
+        )}
       </div>
-      <p className="text-xs text-muted-foreground -mt-3 ml-11">{subtitle}</p>
 
-      {showCreate && (
-        <div className="rounded-2xl bg-card border border-border/60 p-3.5 space-y-2.5">
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">
-              {lang === "zh" ? "活动名称" : lang === "ms" ? "Nama kempen" : "Campaign name"}
-            </label>
-            <input
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder={lang === "zh" ? "例如：双12大促" : lang === "ms" ? "cth: Jualan 12.12" : "e.g. 12.12 Sale"}
-              className="w-full rounded-xl bg-background border border-border/60 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="flex gap-2">
-            <div className="flex-1 space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">
-                {lang === "zh" ? "开始日期" : lang === "ms" ? "Tarikh mula" : "Start date"}
-              </label>
-              <input
-                type="date"
-                value={form.start}
-                onChange={(e) => setForm((f) => ({ ...f, start: e.target.value }))}
-                className="w-full rounded-xl bg-background border border-border/60 px-3 py-2 text-sm"
-              />
+      {/* Counts */}
+      {!loading && rows.length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {groups.map((g) => (
+            <div key={g.st} className="rounded-2xl bg-card border border-border/60 shadow-[var(--shadow-card)] px-3 py-2.5">
+              <p className={`text-xl font-bold ${g.st === "live" ? "text-primary" : g.st === "upcoming" ? "text-amber-600" : "text-muted-foreground"}`}>{g.items.length}</p>
+              <p className="text-[11px] text-muted-foreground">{g.label}</p>
             </div>
-            <div className="flex-1 space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">
-                {lang === "zh" ? "结束日期" : lang === "ms" ? "Tarikh tamat" : "End date"}
-              </label>
-              <input
-                type="date"
-                value={form.end}
-                onChange={(e) => setForm((f) => ({ ...f, end: e.target.value }))}
-                className="w-full rounded-xl bg-background border border-border/60 px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">
-              {lang === "zh" ? "销售目标 (RM，可选)" : lang === "ms" ? "Sasaran jualan (RM, pilihan)" : "Sales target (RM, optional)"}
-            </label>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={form.targetRevenue}
-              onChange={(e) => setForm((f) => ({ ...f, targetRevenue: e.target.value }))}
-              className="w-full rounded-xl bg-background border border-border/60 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowCreate(false)}
-              className="flex-1 py-2.5 rounded-xl border border-border/60 text-sm font-semibold text-muted-foreground"
-            >
-              {lang === "zh" ? "取消" : lang === "ms" ? "Batal" : "Cancel"}
-            </button>
-            <button
-              disabled={saving}
-              onClick={create}
-              className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
-            >
-              {saving ? "…" : lang === "zh" ? "创建活动" : lang === "ms" ? "Cipta kempen" : "Create campaign"}
-            </button>
-          </div>
+          ))}
         </div>
       )}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground text-center py-10">…</p>
-      ) : rows.length === 0 && !showCreate ? (
-        <div className="rounded-2xl bg-card border border-border/60 p-6 text-center space-y-3">
-          <Flame className="h-8 w-8 text-primary mx-auto" />
-          <p className="text-sm text-muted-foreground">
-            {lang === "zh"
-              ? "还没有活动，点击下面新增一个（11.11、双12、新年促销都可以）"
-              : lang === "ms"
-                ? "Belum ada kempen — tambah satu di bawah (11.11, 12.12, jualan Tahun Baru, dll)"
-                : "No campaigns yet — add one below (11.11, 12.12, festive sales, anything)"}
+        <p className="text-sm text-muted-foreground text-center py-10">{L("加载中…", "Loading…", "Memuatkan…")}</p>
+      ) : rows.length === 0 ? (
+        <div className="rounded-3xl bg-gradient-to-br from-primary to-fuchsia-600 text-white p-6 text-center space-y-3 shadow-[var(--shadow-soft)]">
+          <span className="mx-auto h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center">
+            <Flame className="h-7 w-7" />
+          </span>
+          <p className="text-lg font-bold">{L("开始你的第一个活动", "Start your first campaign", "Mulakan kempen pertama anda")}</p>
+          <p className="text-sm opacity-90">
+            {L("11.11、双12、新年促销都可以。设目标、特价、备货、追发货，活动结束还会告诉你比平常多赚多少。",
+              "11.11, 12.12, festive sales — anything. Set a target, promo prices, prep stock, track shipping, and see how much more you made than usual.",
+              "11.11, 12.12, jualan perayaan. Tetapkan sasaran, harga promosi, sedia stok, jejak penghantaran, dan lihat berapa lebih untung berbanding biasa.")}
           </p>
           <button
             onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold active:scale-95 transition-transform"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-primary text-sm font-bold active:scale-95 transition-transform"
           >
-            <Plus className="h-4 w-4" /> {lang === "zh" ? "新增活动" : lang === "ms" ? "Kempen baharu" : "New campaign"}
+            <Plus className="h-4 w-4" /> {L("新增活动", "New campaign", "Kempen baharu")}
           </button>
         </div>
       ) : (
-        <div className="space-y-2.5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:items-start">
-          {rows.map((c) => {
-            const status = statusOf(c);
-            const targetPct =
-              c.targetRevenue && c.targetRevenue > 0 && c.stats
-                ? Math.min(100, Math.round((c.stats.revenue / c.targetRevenue) * 100))
-                : null;
-            return (
-              <Link
-                key={c.id}
-                to="/campaigns/$campaignId"
-                params={{ campaignId: c.id }}
-                className="block rounded-2xl bg-card border border-border/60 p-3.5 active:scale-[0.99] transition-transform"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                      <Flame className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">{c.name}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {c.start} → {c.end}
+        groups.filter((g) => g.items.length > 0).map((g) => (
+          <section key={g.st} className="space-y-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-1">{g.label}</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {g.items.map((c) => {
+                const st = statusOf(c);
+                const targetPct =
+                  c.targetRevenue && c.targetRevenue > 0 && c.stats
+                    ? Math.min(100, Math.round((c.stats.revenue / c.targetRevenue) * 100))
+                    : null;
+                const band = st === "live" ? "from-primary to-fuchsia-600" : st === "upcoming" ? "from-amber-500 to-orange-500" : "from-slate-500 to-slate-400";
+                const when =
+                  st === "upcoming"
+                    ? L(`${daysUntil(c.start)} 天后开始`, `Starts in ${daysUntil(c.start)}d`, `Mula dalam ${daysUntil(c.start)} hari`)
+                    : st === "live"
+                      ? L(`还剩 ${daysLeft(c.end)} 天`, `${daysLeft(c.end)}d left`, `${daysLeft(c.end)} hari lagi`)
+                      : L("已结束", "Ended", "Tamat");
+                return (
+                  <Link
+                    key={c.id}
+                    to="/campaigns/$campaignId"
+                    params={{ campaignId: c.id }}
+                    className="block rounded-3xl bg-card border border-border/60 shadow-[var(--shadow-card)] overflow-hidden active:scale-[0.99] transition-transform"
+                  >
+                    <div className={`bg-gradient-to-br ${band} text-white px-4 py-3`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-base font-bold leading-snug min-w-0 break-words">{c.name}</p>
+                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20">{when}</span>
+                      </div>
+                      <p className="text-[11px] opacity-90 mt-0.5">{c.start} → {c.end}</p>
+                    </div>
+                    <div className="px-4 py-3 space-y-2.5">
+                      {c.stats ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <p className="text-sm font-bold text-foreground truncate">{money(c.stats.revenue)}</p>
+                            <p className="text-[10px] text-muted-foreground">{L("销售额", "Sales", "Jualan")}</p>
+                          </div>
+                          <div>
+                            <p className={`text-sm font-bold truncate ${c.stats.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>{money(c.stats.profit)}</p>
+                            <p className="text-[10px] text-muted-foreground">{L("利润", "Profit", "Untung")}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-foreground">{c.stats.count}</p>
+                            <p className="text-[10px] text-muted-foreground">{L("订单", "Orders", "Pesanan")}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">{L("还没开始，先去备货、设特价", "Not started yet — prep stock and set promo prices", "Belum bermula — sedia stok dan harga promosi")}</p>
+                      )}
+                      {targetPct != null && (
+                        <div>
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+                            <span>{L("目标", "Target", "Sasaran")} {money(c.targetRevenue ?? 0)}</span>
+                            <span className="font-bold text-primary">{targetPct}%</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full bg-primary rounded-full" style={{ width: `${targetPct}%` }} />
+                          </div>
+                        </div>
+                      )}
+                      <p className="text-[11px] font-semibold text-primary flex items-center gap-0.5">
+                        {L("打开活动", "Open campaign", "Buka kempen")} <ChevronRight className="h-3.5 w-3.5" />
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span
-                      className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                        status === "live"
-                          ? "bg-emerald-500/15 text-emerald-700"
-                          : status === "upcoming"
-                            ? "bg-amber-500/15 text-amber-700"
-                            : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {status === "live"
-                        ? lang === "zh"
-                          ? "进行中"
-                          : lang === "ms"
-                            ? "Aktif"
-                            : "Live"
-                        : status === "upcoming"
-                          ? lang === "zh"
-                            ? "未开始"
-                            : lang === "ms"
-                              ? "Akan datang"
-                              : "Upcoming"
-                          : lang === "zh"
-                            ? "已结束"
-                            : lang === "ms"
-                              ? "Tamat"
-                              : "Ended"}
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </div>
-                {c.stats && (
-                  <div className="mt-2.5 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
-                      {lang === "zh"
-                        ? `销售额 ${money(c.stats.revenue)} · 利润 ${money(c.stats.profit)}`
-                        : lang === "ms"
-                          ? `Jualan ${money(c.stats.revenue)} · Untung ${money(c.stats.profit)}`
-                          : `Revenue ${money(c.stats.revenue)} · Profit ${money(c.stats.profit)}`}
-                    </p>
-                    {targetPct != null && <p className="text-xs font-bold text-primary">{targetPct}%</p>}
-                  </div>
-                )}
-                {targetPct != null && (
-                  <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full bg-primary rounded-full" style={{ width: `${targetPct}%` }} />
-                  </div>
-                )}
-              </Link>
-            );
-          })}
-        </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))
       )}
 
       {rows.length > 0 && !showCreate && (
         <button
           onClick={() => setShowCreate(true)}
-          className="fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-primary"
+          className="lg:hidden fixed fab-above-nav left-1/2 -translate-x-1/2 z-30 h-12 px-5 rounded-full text-primary-foreground font-semibold shadow-[var(--shadow-soft)] flex items-center gap-2 active:scale-[0.98] transition-transform bg-primary"
         >
           <Plus className="h-5 w-5" strokeWidth={2.5} />
-          {lang === "zh" ? "新增活动" : lang === "ms" ? "Kempen baharu" : "New campaign"}
+          {L("新增活动", "New campaign", "Kempen baharu")}
         </button>
+      )}
+
+      {/* New campaign sheet */}
+      {showCreate && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={() => setShowCreate(false)}>
+          <div className="w-full max-w-[420px] bg-card rounded-t-3xl sm:rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold flex items-center gap-2"><Flame className="h-4 w-4 text-primary" /> {L("新增活动", "New campaign", "Kempen baharu")}</h3>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">{L("活动名称", "Campaign name", "Nama kempen")}</label>
+              <input
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder={L("例如：双12大促", "e.g. 12.12 Sale", "cth: Jualan 12.12")}
+                className={inputCls}
+              />
+            </div>
+            <div className="flex gap-2">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">{L("开始日期", "Start date", "Tarikh mula")}</label>
+                <input type="date" value={form.start} onChange={(e) => setForm((f) => ({ ...f, start: e.target.value }))} className={inputCls} />
+              </div>
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">{L("结束日期", "End date", "Tarikh tamat")}</label>
+                <input type="date" value={form.end} onChange={(e) => setForm((f) => ({ ...f, end: e.target.value }))} className={inputCls} />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">{L("销售目标 (RM，可选)", "Sales target (RM, optional)", "Sasaran jualan (RM, pilihan)")}</label>
+              <input type="number" inputMode="decimal" value={form.targetRevenue} onChange={(e) => setForm((f) => ({ ...f, targetRevenue: e.target.value }))} className={inputCls} />
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button onClick={() => setShowCreate(false)} className="py-3 rounded-xl bg-muted text-foreground text-sm font-semibold">{L("取消", "Cancel", "Batal")}</button>
+              <button disabled={saving} onClick={create} className="py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60">
+                {saving ? "…" : L("创建活动", "Create campaign", "Cipta kempen")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
