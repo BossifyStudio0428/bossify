@@ -313,20 +313,55 @@ function OrderDetailPage() {
       return;
     }
 
-    // Keep the order_items snapshot in sync with the edited line.
-    try {
-      await supabase.from("order_items" as any).delete().eq("order_id", order.id);
-      await supabase.from("order_items" as any).insert({
-        order_id: order.id,
-        product_id: matchedItem?.id ?? null,
-        product_name: newProductName,
-        quantity: newQuantity,
-        unit_price_at_sale: unitPriceAtSale,
-        unit_cost_at_sale: unitCost,
-        packaging_cost_at_sale: packagingCost,
-      });
-    } catch (e) {
-      console.error("[orders.$orderId] order_items sync failed", e);
+    // Rewrite the order_items snapshot only when the product or quantity
+    // actually changed. (Rewriting it on every save collapsed a multi-item
+    // order-form order into one unmatched line.)
+    const lineChanged =
+      newProductName !== String(order.product ?? "").trim() || newQuantity !== Number(order.quantity ?? 0);
+    if (lineChanged) {
+      const oldLines = orderLineItems.map((it) => ({ product_id: it.product_id, quantity: Number(it.quantity ?? 0) }));
+      try {
+        await supabase.from("order_items" as any).delete().eq("order_id", order.id);
+        await supabase.from("order_items" as any).insert({
+          order_id: order.id,
+          product_id: matchedItem?.id ?? null,
+          product_name: newProductName,
+          quantity: newQuantity,
+          unit_price_at_sale: unitPriceAtSale,
+          unit_cost_at_sale: unitCost,
+          packaging_cost_at_sale: packagingCost,
+        });
+        setOrderLineItems([{
+          product_id: matchedItem?.id ?? null,
+          product_name: newProductName,
+          quantity: newQuantity,
+          unit_price_at_sale: unitPriceAtSale,
+          unit_cost_at_sale: unitCost,
+          packaging_cost_at_sale: packagingCost,
+        }]);
+      } catch (e) {
+        console.error("[orders.$orderId] order_items sync failed", e);
+      }
+
+      // Stock: a paid order already took the OLD items out of stock (when it
+      // first became paid, or just now if this edit made it paid — the
+      // database does that from the items as they were). Move stock by the
+      // difference so it matches the edited items. TikTok orders are left
+      // to the TikTok sync.
+      const nowPaid = isPaidStatus(form.status as string);
+      if (nowPaid && (order as any).order_source !== "tiktok") {
+        const diff = new Map<string, number>();
+        for (const l of oldLines) if (l.product_id) diff.set(l.product_id, (diff.get(l.product_id) ?? 0) + l.quantity);
+        if (matchedItem?.id) diff.set(matchedItem.id, (diff.get(matchedItem.id) ?? 0) - newQuantity);
+        for (const [pid, back] of diff) {
+          if (back === 0) continue;
+          const res = await adjustStockAtomic(pid, back);
+          if (res.stock !== null) {
+            const name = inventory.find((i) => i.id === pid)?.name ?? newProductName;
+            logInventoryChange({ userId: user.id, productId: pid, productName: name, fieldName: "stock", oldValue: res.stock - back, newValue: res.stock, source: "order_edit" });
+          }
+        }
+      }
     }
 
     toast.success(t("order_updated"));

@@ -273,6 +273,23 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
     // left out; names and addresses are kept as TikTok gives them.
     const buyer = tiktokBuyerDetails(detail);
 
+    // Replace order_items with the real, matched line items BEFORE the
+    // order is marked complete: the stock trigger runs on that update and
+    // moves stock by these line items (products not linked to TikTok go
+    // down; TikTok-linked ones are left to the product sync).
+    await supabaseAdmin.from("order_items" as any).delete().eq("order_id", localOrder.id);
+    await supabaseAdmin.from("order_items" as any).insert(
+      engineItems.map((it) => ({
+        order_id: localOrder.id,
+        product_id: it.productId,
+        product_name: it.productName,
+        quantity: it.quantity,
+        unit_price_at_sale: it.unitPriceAtSale,
+        unit_cost_at_sale: it.unitCostAtSale,
+        packaging_cost_at_sale: it.packagingCostAtSale,
+      })),
+    );
+
     const { error: updErr } = await supabaseAdmin
       .from("orders" as any)
       .update({
@@ -306,19 +323,6 @@ export async function syncPendingTikTokOrders(userId: string): Promise<SyncResul
       continue;
     }
 
-    // Replace order_items with the real, matched line items.
-    await supabaseAdmin.from("order_items" as any).delete().eq("order_id", localOrder.id);
-    await supabaseAdmin.from("order_items" as any).insert(
-      engineItems.map((it) => ({
-        order_id: localOrder.id,
-        product_id: it.productId,
-        product_name: it.productName,
-        quantity: it.quantity,
-        unit_price_at_sale: it.unitPriceAtSale,
-        unit_cost_at_sale: it.unitCostAtSale,
-        packaging_cost_at_sale: it.packagingCostAtSale,
-      })),
-    );
 
     // Make sure this TikTok buyer has a row in the customer list. TikTok
     // gives no name/phone, so the row is keyed by the buyer id and named

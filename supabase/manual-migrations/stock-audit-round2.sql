@@ -32,6 +32,10 @@ ALTER TABLE public.customers
 --     asks whether goods came back;
 --   * TikTok orders on TikTok-linked products are still skipped (the product
 --     sync applies TikTok's own stock change);
+--   * a TikTok order that is still a placeholder (financial_status
+--     'pending', no real line items yet) is ignored; it counts once the
+--     order sync fills it in. Before, a TikTok order for a product that is
+--     NOT linked to TikTok never reduced stock at all;
 --   * every change is written to Inventory History.
 
 CREATE OR REPLACE FUNCTION public.order_stock_apply(_o public.orders, _sign integer, _source text)
@@ -122,8 +126,14 @@ DECLARE
   _paid_now boolean := NEW.status IN ('Paid', 'Shipped', 'Delivered');
   _paid_before boolean := false;
 BEGIN
+  -- TikTok placeholder (no real line items yet): nothing to move.
+  IF NEW.financial_status IS NOT DISTINCT FROM 'pending' THEN
+    RETURN NEW;
+  END IF;
+  -- A placeholder never moved stock, so it doesn't count as "paid before".
   IF TG_OP = 'UPDATE' THEN
-    _paid_before := COALESCE(OLD.status, '') IN ('Paid', 'Shipped', 'Delivered');
+    _paid_before := COALESCE(OLD.status, '') IN ('Paid', 'Shipped', 'Delivered')
+                    AND OLD.financial_status IS DISTINCT FROM 'pending';
   END IF;
 
   IF _paid_now AND NOT _paid_before THEN
@@ -146,6 +156,7 @@ SET search_path TO 'public'
 AS $function$
 BEGIN
   IF COALESCE(OLD.status, '') IN ('Paid', 'Shipped', 'Delivered')
+     AND OLD.financial_status IS DISTINCT FROM 'pending'
      AND NOT EXISTS (
        SELECT 1 FROM public.order_adjustments a
         WHERE a.order_id = OLD.id AND a.restocked = true

@@ -17,8 +17,11 @@ const HISTORY_LIMIT = 24; // messages kept as conversation context per turn
 const langName = (l: string) => (l === "zh" ? "Chinese (Simplified)" : l === "ms" ? "Bahasa Malaysia" : "English");
 
 function startOfThisMonthUTC(): string {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  // Start of the current month in Malaysia time (UTC+8), as a UTC timestamp.
+  // (Plain UTC put the first 8 hours of each month into the previous one.)
+  const MYT = 8 * 60 * 60 * 1000;
+  const local = new Date(Date.now() + MYT);
+  return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), 1) - MYT).toISOString();
 }
 
 /** Pulls a compact, current snapshot of the seller's own data — kept small
