@@ -250,16 +250,16 @@ async function startStripeCheckout(opts: {
   try { payload = JSON.parse(text); } catch { throw new Error(`Invalid response: ${text.slice(0, 200)}`); }
   if (payload.error) throw new Error(payload.error);
   if (!payload.url) throw new Error("No checkout URL returned");
-  // Stripe Checkout refuses to render inside iframes (preview/embeds),
-  // so open the hosted page in the top-level window / new tab.
-  const opened = window.open(payload.url, "_blank", "noopener,noreferrer");
-  if (!opened) {
-    // Popup blocked — fall back to top-frame navigation.
-    if (window.top && window.top !== window.self) {
-      window.top.location.href = payload.url;
-    } else {
-      window.location.href = payload.url;
-    }
+  // Go to Stripe Checkout in THIS tab; Stripe sends the user back to
+  // /payment-success afterwards. (It used to window.open() a new tab with
+  // "noopener" — which always returns null even when the tab DID open — and
+  // then treated that as "popup blocked" and navigated this tab too, so two
+  // checkout pages appeared.) Stripe refuses to render inside iframes, so in
+  // an embedded preview navigate the top window instead.
+  if (window.top && window.top !== window.self) {
+    window.top.location.href = payload.url;
+  } else {
+    window.location.href = payload.url;
   }
 }
 
